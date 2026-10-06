@@ -1,7 +1,7 @@
 /**
- * SegmentedControl — 3-option selector
- * Active option: gold pill background with dark text.
- * Inactive: transparent with muted text.
+ * SegmentedControl — tab navigation
+ * Matches the reference design: flat labels with a gold underline
+ * for the active tab (no pill/background).
  */
 import React, { useRef } from 'react';
 import {
@@ -42,7 +42,6 @@ export function SegmentedControl({
     <View
       style={[
         styles.container,
-        { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
         style,
       ]}
       accessible
@@ -66,7 +65,7 @@ export function SegmentedControl({
               style={[
                 styles.label,
                 {
-                  color: isActive ? dark[100] : theme.colors.foregroundMuted,
+                  color: isActive ? theme.colors.foreground : theme.colors.foregroundMuted,
                   fontFamily: isActive ? fontFamily.semibold : fontFamily.regular,
                 },
               ]}
@@ -83,19 +82,19 @@ export function SegmentedControl({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    borderRadius: 22,
-    borderWidth: 1,
-    padding: 3,
     height: 44,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: dark[400],
   },
   option: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 19,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   },
   optionActive: {
-    backgroundColor: gold[400],
+    borderBottomColor: gold[400],
   },
   label: {
     fontSize: fontSize.sm,

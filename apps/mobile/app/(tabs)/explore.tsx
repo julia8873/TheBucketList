@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator, TextInput, FlatList, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { Typography, useTheme, spacing, Avatar, radii, Icon } from '@bucketlist/ui';
@@ -22,22 +23,25 @@ function useDebounce<T>(value: T, delay: number): T {
 export default function ExploreScreen() {
   const { theme } = useTheme();
   const router = useRouter();
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 500);
-  
+
   const { data: exploreData, fetchNextPage, hasNextPage, isFetchingNextPage } = useExploreFeed();
   const { data: searchResults, isLoading: isSearchLoading } = useSearchUsers(debouncedSearch);
 
   const buckets = exploreData?.pages.flatMap((page) => page.items) || [];
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.header}>
+        <Typography variant="h1" color={theme.colors.foreground} style={styles.title}>
+          Explorar
+        </Typography>
         <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
           <Icon icon={Search} size={20} color={theme.colors.foregroundMuted} />
           <TextInput
-            placeholder="Search users..."
+            placeholder="Buscar personas e ideas"
             value={searchQuery}
             onChangeText={setSearchQuery}
             style={[styles.searchInput, { color: theme.colors.foreground }]}
@@ -56,14 +60,14 @@ export default function ExploreScreen() {
               data={searchResults || []}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
-                <Pressable 
+                <Pressable
                   style={styles.userRow}
                   onPress={() => router.push(`/profile/${item.id}` as any)}
                 >
-                  <Avatar 
-                    source={item.avatar_url ? { uri: item.avatar_url } : undefined} 
-                    fallback={item.display_name?.charAt(0) || item.username?.charAt(0) || '?'} 
-                    size="md" 
+                  <Avatar
+                    source={item.avatar_url ? { uri: item.avatar_url } : undefined}
+                    fallback={item.display_name?.charAt(0) || item.username?.charAt(0) || '?'}
+                    size="md"
                   />
                   <View style={styles.userInfo}>
                     <Typography variant="body" style={{ fontWeight: 'bold' }}>{item.display_name || item.username}</Typography>
@@ -84,7 +88,7 @@ export default function ExploreScreen() {
         <FlashList
           data={buckets}
           renderItem={({ item, index }) => (
-            <FeedCard 
+            <FeedCard
               // Fake feed event wrapper to match FeedCard signature
               event={{ actor: item.user, bucket: item, type: 'new_bucket', created_at: item.created_at }}
               index={index}
@@ -100,7 +104,7 @@ export default function ExploreScreen() {
           onEndReachedThreshold={0.5}
           ListHeaderComponent={
             <Typography variant="h3" style={styles.sectionTitle}>
-              Public Goals
+              Ideas para empezar
             </Typography>
           }
           ListFooterComponent={
@@ -112,7 +116,7 @@ export default function ExploreScreen() {
           }
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -122,10 +126,13 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: spacing[4],
-    paddingTop: spacing[6],
+    paddingTop: spacing[3],
     paddingBottom: spacing[4],
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#ccc',
+  },
+  title: {
+    marginBottom: spacing[3],
   },
   searchContainer: {
     flexDirection: 'row',

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { Typography, useTheme, spacing, EmptyState } from '@bucketlist/ui';
@@ -35,15 +36,15 @@ export default function FeedScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.header}>
-        <Typography variant="h2">Feed</Typography>
+        <Typography variant="h1">Momentos de amigos</Typography>
       </View>
 
       <FlashList
         data={flatData}
         renderItem={({ item, index }) => (
-          <FeedCard 
+          <FeedCard
             event={item}
             index={index}
             onPress={() => router.push(`/bucket/${item.bucket_id}` as any)}
@@ -73,7 +74,7 @@ export default function FeedScreen() {
           />
         }
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -87,7 +88,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: spacing[4],
-    paddingTop: spacing[6], // roughly status bar height fallback
+    paddingTop: spacing[3],
     paddingBottom: spacing[4],
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#ccc', // fallback

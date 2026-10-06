@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ActivityIndicator, FlatList, Pressable, ImageBackground, Dimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Typography, useTheme, spacing, Avatar, Icon } from '@bucketlist/ui';
@@ -22,7 +23,7 @@ export default function CurrentUserProfileScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { t } = useTranslation();
-  
+
   const { data: followsData } = useUserFollows(user?.id);
   const followingCount = followsData?.length || 0;
 
@@ -62,7 +63,7 @@ export default function CurrentUserProfileScreen() {
   const completedMoments = buckets?.filter(b => b.status === 'completed' && b.bucket_photos?.length > 0) || [];
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
@@ -89,10 +90,10 @@ export default function CurrentUserProfileScreen() {
             {/* Top Profile Area */}
             <View style={styles.profileTop}>
               <View style={styles.avatarContainer}>
-                <Avatar 
-                  uri={profile?.avatar_url} 
-                  initials={profile?.display_name?.charAt(0) || profile?.username?.charAt(0) || '?'} 
-                  size="xl" 
+                <Avatar
+                  uri={profile?.avatar_url}
+                  initials={profile?.display_name?.charAt(0) || profile?.username?.charAt(0) || '?'}
+                  size="xl"
                 />
               </View>
               <View style={styles.profileTextInfo}>
@@ -110,11 +111,11 @@ export default function CurrentUserProfileScreen() {
                 </View>
               </View>
             </View>
-            
+
             <Typography variant="body" style={{ color: '#aaa', marginTop: spacing[4] }}>
               {profile?.bio || 'Exploring the world, one dream at a time.'}
             </Typography>
-            
+
             {/* Stats Row */}
             <View style={styles.statsRow}>
               <View style={styles.statBox}>
@@ -134,11 +135,11 @@ export default function CurrentUserProfileScreen() {
         renderItem={({ item }) => {
           const photo = item.bucket_photos[0];
           return (
-            <Pressable 
+            <Pressable
               style={styles.gridCard}
               onPress={() => router.push(`/bucket/${item.id}` as any)}
             >
-              <ImageBackground 
+              <ImageBackground
                 source={{ uri: storageApi.getPublicUrl(photo.thumb_path || photo.storage_path) }}
                 style={styles.gridImage}
                 imageStyle={{ borderRadius: 12 }}
@@ -166,25 +167,25 @@ export default function CurrentUserProfileScreen() {
           )
         }
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { justifyContent: 'center', alignItems: 'center' },
-  header: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    paddingHorizontal: spacing[4], 
-    paddingTop: spacing[6], 
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing[4],
+    paddingTop: spacing[3],
     paddingBottom: spacing[4],
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center' },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: spacing[2] },
   iconButton: { padding: spacing[2] },
-  profileInfo: { 
+  profileInfo: {
     paddingVertical: spacing[4],
   },
   profileTop: {
@@ -206,11 +207,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing[2],
   },
-  statsRow: { 
-    flexDirection: 'row', 
-    marginTop: spacing[6], 
-    width: '100%', 
-    justifyContent: 'space-around', 
+  statsRow: {
+    flexDirection: 'row',
+    marginTop: spacing[6],
+    width: '100%',
+    justifyContent: 'space-around',
     alignItems: 'center',
     paddingVertical: spacing[4],
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -222,12 +223,12 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#333',
   },
-  statBox: { 
+  statBox: {
     alignItems: 'center',
     flex: 1,
   },
-  sectionTitle: { 
-    alignSelf: 'flex-start', 
+  sectionTitle: {
+    alignSelf: 'flex-start',
     marginTop: spacing[8],
     marginBottom: spacing[4],
     color: '#D4AF37',

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, Pressable, ScrollView, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, Typography, SectionLabel, SegmentedControl, FilterChip, TaskRow, AlbumCard, NewAlbumCard, NoAlbumRow, FAB, spacing } from '@bucketlist/ui';
+import { useTheme, Typography, SegmentedControl, FilterChip, TaskRow, AlbumCard, NewAlbumCard, NoAlbumRow, FAB, spacing } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
@@ -22,32 +22,31 @@ export default function MyListScreen() {
   const { theme } = useTheme();
   const router = useRouter();
   const { user } = useAuthStore();
-  
+
   const [activeTab, setActiveTab] = useState('list');
   const [filter, setFilter] = useState<FilterType>('all');
-  
+
   const { data: buckets, isLoading } = useBuckets(user?.id);
   const deleteBucket = useDeleteBucket();
   const { data: albums, isLoading: isLoadingAlbums } = useAlbums(user?.id);
 
   // Compute stats
   const totalCount = buckets?.length || 0;
-  const sharedCount = buckets?.filter((b) => b.visibility === 'public' || b.visibility === 'followers').length || 0;
 
   // Filter items
   const filteredBuckets = useMemo(() => {
     if (!buckets) return [];
-    
+
     return buckets.filter((b) => {
       if (filter === 'all') return true;
       if (filter === 'completed') return b.status === 'completed';
-      
+
       const deadline = b.deadline ? new Date(b.deadline) : null;
       const expired = deadline ? (isPast(deadline) && differenceInDays(deadline, new Date()) < 0) : false;
-      
+
       if (filter === 'expired') return expired && b.status !== 'completed';
       if (filter === 'active') return b.status !== 'completed' && !expired;
-      
+
       return true;
     }).sort((a, b) => {
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
@@ -60,15 +59,11 @@ export default function MyListScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
-      
-      {/* ── Header (always visible, full width) ─────────── */}
+
+      {/* ── Header: exact title hierarchy from the reference ── */}
       <View style={styles.header}>
-        <SectionLabel highlight="MI" rest="LISTA" />
         <Typography variant="h1" color={theme.colors.foreground} style={styles.title}>
-          Organiza tus sueños
-        </Typography>
-        <Typography variant="body" color={theme.colors.foregroundMuted}>
-          {totalCount} tareas · {sharedCount} compartidas
+          Mi Lista
         </Typography>
       </View>
 
@@ -87,8 +82,8 @@ export default function MyListScreen() {
 
       {/* ── Filters (only for list tab) ─────────────────── */}
       {activeTab === 'list' && (
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filtersContainer}
           style={{ flexGrow: 0, marginBottom: 16 }}
@@ -113,8 +108,8 @@ export default function MyListScreen() {
               const categoryColor = item.category?.color || categoryColors.other;
               const subtasksTotal = item.item_subtasks?.length || 0;
               const subtasksDone = item.item_subtasks?.filter((s: any) => s.done).length || 0;
-              
-              const meta = item.category?.name_es 
+
+              const meta = item.category?.name_es
                 ? `${item.category.name_es}${subtasksTotal > 0 ? ` · ${subtasksDone} de ${subtasksTotal} pasos` : ''}`
                 : undefined;
 
@@ -168,7 +163,7 @@ export default function MyListScreen() {
             )}
           />
         )}
-        
+
         {activeTab === 'albums' && (
           <ScrollView contentContainerStyle={styles.albumsContent}>
             {/* Label */}
@@ -197,11 +192,11 @@ export default function MyListScreen() {
             {/* Sin álbum row */}
             <NoAlbumRow
               count={(buckets || []).filter((b: any) => !b.album_id).length}
-              onPress={() => {}}
+              onPress={() => { }}
             />
           </ScrollView>
         )}
-        
+
         {activeTab === 'calendar' && (
           <CalendarTab />
         )}
@@ -223,16 +218,14 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: 12,
-    paddingBottom: 24,
-    gap: 4,
+    paddingBottom: 8,
   },
   title: {
-    marginTop: 4,
-    marginBottom: 4,
+    marginBottom: 0,
   },
   tabsContainer: {
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   filtersContainer: {
     flexDirection: 'row',
