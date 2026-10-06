@@ -17,6 +17,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   TextInput,
+  PanResponder,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -65,6 +66,157 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const COVER_HEIGHT = 220;
 const BADGES_OVERLAP = 32;
 // Cuánto se meten las etiquetas sobre la portada.
+
+type SubtaskItemProps = {
+  st: any;
+  index: number;
+  isOwner: boolean;
+  theme: any;
+  onToggle: (subtask: any) => void;
+  onChange: (subtask: any, text: string) => void;
+  onDelete: (subtask: any) => void;
+  onMove: (fromIndex: number, toIndex: number) => void;
+};
+
+function SubtaskItem({ st, index, isOwner, theme, onToggle, onChange, onDelete, onMove }: SubtaskItemProps) {
+  const translateX = useRef(new Animated.Value(0)).current;
+  const dragY = useRef(new Animated.Value(0)).current;
+  const [dragging, setDragging] = useState(false);
+  const draggingRef = useRef(false);
+  const dragStartedAt = useRef<number | null>(null);
+  const startY = useRef(0);
+  const dragTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const swipeResponder = useRef(PanResponder.create({
+    onMoveShouldSetPanResponder: (_, gesture) =>
+      isOwner &&
+      gesture.dx < -16 &&
+      Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.8,
+    onPanResponderMove: (_, gesture) => {
+      if (gesture.dx < 0) translateX.setValue(Math.max(-110, gesture.dx));
+    },
+    onPanResponderRelease: (_, gesture) => {
+      if (gesture.dx < -85 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.5) {
+        Animated.timing(translateX, {
+          toValue: -SCREEN_WIDTH,
+          duration: 180,
+          useNativeDriver: true,
+        }).start(() => onDelete(st));
+      } else {
+        Animated.spring(translateX, { toValue: 0, useNativeDriver: true }).start();
+      }
+    },
+    onPanResponderTerminate: () => {
+      Animated.spring(translateX, { toValue: 0, useNativeDriver: true }).start();
+    },
+  })).current;
+
+  const handleResponder = useRef(PanResponder.create({
+    onStartShouldSetPanResponder: () => isOwner,
+    onMoveShouldSetPanResponder: () => isOwner,
+    onPanResponderGrant: (_, gesture) => {
+      startY.current = gesture.y0;
+      dragStartedAt.current = Date.now();
+      dragTimer.current = setTimeout(() => {
+        if (dragStartedAt.current !== null) {
+          draggingRef.current = true;
+          setDragging(true);
+        }
+      }, 450);
+    },
+    onPanResponderMove: (_, gesture) => {
+      if (!draggingRef.current) return;
+      dragY.setValue(gesture.moveY - startY.current);
+    },
+    onPanResponderRelease: (_, gesture) => {
+      if (draggingRef.current) {
+        const rowHeight = 62;
+        const offset = gesture.moveY - startY.current;
+        const targetIndex = Math.max(0, index + Math.round(offset / rowHeight));
+        dragY.setValue(0);
+        draggingRef.current = false;
+        setDragging(false);
+        dragStartedAt.current = null;
+        if (dragTimer.current) clearTimeout(dragTimer.current);
+        onMove(index, targetIndex);
+      } else {
+        dragStartedAt.current = null;
+        if (dragTimer.current) clearTimeout(dragTimer.current);
+      }
+    },
+    onPanResponderTerminate: () => {
+      dragStartedAt.current = null;
+      if (dragTimer.current) clearTimeout(dragTimer.current);
+      dragY.setValue(0);
+      draggingRef.current = false;
+      setDragging(false);
+    },
+  })).current;
+
+  return (
+    <View style={styles.swipeRowShell}>
+      {isOwner && (
+        <View style={[styles.deleteBackground, { backgroundColor: theme.colors.error }]}>
+          <Trash2 color="#fff" size={20} strokeWidth={2} />
+          <Typography variant="caption" color="#fff" style={{ marginLeft: 6, fontWeight: '700' }}>
+            Eliminar
+          </Typography>
+        </View>
+      )}
+      <Animated.View
+        {...swipeResponder.panHandlers}
+        style={[
+          styles.subtaskRow,
+          { backgroundColor: theme.colors.background },
+          dragging && styles.subtaskDragging,
+          { transform: [{ translateX }, { translateY: dragY }] },
+        ]}
+      >
+        <Pressable onPress={() => onToggle(st)}>
+          {st.done ? (
+            <CheckCircle2 color={gold[400]} size={22} strokeWidth={1.8} fill={dark[200]} />
+          ) : (
+            <Circle color={theme.colors.foregroundMuted} size={22} strokeWidth={1.8} />
+          )}
+        </Pressable>
+
+        {isOwner ? (
+          <TextInput
+            defaultValue={st.title}
+            style={[
+              styles.subtaskText,
+              { padding: 0, color: st.done ? theme.colors.foreground : theme.colors.foregroundMuted },
+              st.done && styles.subtaskDoneText,
+            ]}
+            onChangeText={(newText) => onChange(st, newText)}
+          />
+        ) : (
+          <Typography
+            variant="body"
+            color={st.done ? theme.colors.foreground : theme.colors.foregroundMuted}
+            style={[styles.subtaskText, st.done && styles.subtaskDoneText]}
+          >
+            {st.title}
+          </Typography>
+        )}
+
+        {isOwner && (
+          <View
+            {...handleResponder.panHandlers}
+            style={styles.dragHandle}
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel="Mantén pulsado para reorganizar el paso"
+          >
+            <View style={styles.dragHandleLine} />
+            <View style={styles.dragHandleLine} />
+            <View style={styles.dragHandleLine} />
+          </View>
+        )}
+      </Animated.View>
+    </View>
+  );
+}
 
 export default function BucketDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -168,7 +320,7 @@ export default function BucketDetailScreen() {
 
   const isOwner = bucket.user_id === user?.id;
   const photos: any[] = bucket.bucket_photos || [];
-  const subtasks: any[] = bucket.item_subtasks || [];
+  const subtasks: any[] = [...(bucket.item_subtasks || [])].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
   const comments: any[] = commentsData || [];
   const subtasksDone = subtasks.filter((s) => s.done).length;
 
@@ -413,6 +565,51 @@ export default function BucketDetailScreen() {
       const { error } = await supabase.from('item_subtasks').update({ title: newText.trim() }).eq('id', st.id);
       if (!error) void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
     }, 500);
+  };
+
+  const handleDeleteSubtask = (st: any) => {
+    queryClient.setQueryData(['bucketDetail', id], (oldData: any) => {
+      if (!oldData) return oldData;
+      return { ...oldData, item_subtasks: (oldData.item_subtasks || []).filter((s: any) => s.id !== st.id) };
+    });
+
+    void supabase.from('item_subtasks').delete().eq('id', st.id).then(({ error }) => {
+      if (error) {
+        Alert.alert('No se pudo eliminar el paso', error.message);
+        void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+        return;
+      }
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+      void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+    });
+  };
+
+  const handleMoveSubtask = async (fromIndex: number, toIndex: number) => {
+    const clampedToIndex = Math.max(0, Math.min(toIndex, subtasks.length - 1));
+    if (fromIndex === clampedToIndex || clampedToIndex < 0 || clampedToIndex >= subtasks.length) return;
+
+    const reordered = [...subtasks];
+    const [moved] = reordered.splice(fromIndex, 1);
+    reordered.splice(clampedToIndex, 0, moved);
+
+    queryClient.setQueryData(['bucketDetail', id], (oldData: any) =>
+      oldData ? { ...oldData, item_subtasks: reordered.map((st, index) => ({ ...st, position: index })) } : oldData,
+    );
+
+    const results = await Promise.all(
+      reordered.map((st, index) =>
+        supabase.from('item_subtasks').update({ position: index }).eq('id', st.id),
+      ),
+    );
+
+    const error = results.find((result) => result.error)?.error;
+    if (error) {
+      Alert.alert('No se pudo reorganizar los pasos', error.message);
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+      return;
+    }
+
+    void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
   };
 
   const handleTitleChange = (newTitle: string) => {
@@ -661,36 +858,18 @@ export default function BucketDetailScreen() {
                   PASOS · {subtasksDone} DE {subtasks.length}
                 </Typography>
               </View>
-              {subtasks.map((st: any) => (
-                <View key={st.id} style={styles.subtaskRow}>
-                  <Pressable onPress={() => void toggleSubtask(st)}>
-                    {st.done ? (
-                      <CheckCircle2 color={gold[400]} size={22} strokeWidth={1.8} fill={dark[200]} />
-                    ) : (
-                      <Circle color={theme.colors.foregroundMuted} size={22} strokeWidth={1.8} />
-                    )}
-                  </Pressable>
-
-                  {isOwner ? (
-                    <TextInput
-                      defaultValue={st.title}
-                      style={[
-                        styles.subtaskText,
-                        { padding: 0, color: st.done ? theme.colors.foreground : theme.colors.foregroundMuted },
-                        st.done && styles.subtaskDoneText,
-                      ]}
-                      onChangeText={(newText) => handleSubtaskChange(st, newText)}
-                    />
-                  ) : (
-                    <Typography
-                      variant="body"
-                      color={st.done ? theme.colors.foreground : theme.colors.foregroundMuted}
-                      style={[styles.subtaskText, st.done && styles.subtaskDoneText]}
-                    >
-                      {st.title}
-                    </Typography>
-                  )}
-                </View>
+              {subtasks.map((st: any, index: number) => (
+                <SubtaskItem
+                  key={st.id}
+                  st={st}
+                  index={index}
+                  isOwner={isOwner}
+                  theme={theme}
+                  onToggle={(subtask) => void toggleSubtask(subtask)}
+                  onChange={handleSubtaskChange}
+                  onDelete={handleDeleteSubtask}
+                  onMove={(fromIndex, toIndex) => void handleMoveSubtask(fromIndex, toIndex)}
+                />
               ))}
 
               {/* Añadir paso */}
@@ -738,11 +917,11 @@ export default function BucketDetailScreen() {
                     </Pressable>
                   ))}
                   {isOwner && (
-                    <Pressable 
+                    <Pressable
                       style={[
                         styles.photoAddThumb,
                         photos.length <= 1 && { width: '100%', height: 72, flexDirection: 'row' }
-                      ]} 
+                      ]}
                       onPress={() => void pickAndUploadPhotos()}
                     >
                       <Camera color={gold[400]} size={24} strokeWidth={1.8} />
@@ -835,12 +1014,16 @@ export default function BucketDetailScreen() {
       {isOwner && (
         <View style={[styles.actionBar, { borderTopColor: dark[400], backgroundColor: theme.colors.background }]}>
           <Pressable
-            style={[styles.actionBtn, styles.actionBtnFilled, { backgroundColor: gold[400] }]}
-            onPress={() => void pickAndUploadPhotos()}
+            style={[styles.actionBtn, styles.actionBtnFilled, { backgroundColor: bucket.status === 'completed' ? dark[300] : gold[400] }]}
+            onPress={() => void handleChangeStatus(bucket.status === 'completed' ? 'pending' : 'completed')}
           >
-            <Camera color="#000" size={18} strokeWidth={2} />
-            <Typography variant="bodySemibold" color="#000" style={{ marginLeft: 8 }}>
-              Subir foto
+            {bucket.status === 'completed' ? (
+              <X color="#fff" size={18} strokeWidth={2} />
+            ) : (
+              <CheckCircle2 color="#000" size={18} strokeWidth={2} />
+            )}
+            <Typography variant="bodySemibold" color={bucket.status === 'completed' ? '#fff' : '#000'} style={{ marginLeft: 8 }}>
+              {bucket.status === 'completed' ? 'Marcar como pendiente' : 'Marcar como completado'}
             </Typography>
           </Pressable>
         </View>
@@ -1155,6 +1338,24 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     fontSize: 13,
   },
+  swipeRowShell: {
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  deleteBackground: {
+    ...StyleSheet.absoluteFillObject,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 18,
+  },
+  subtaskDragging: {
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 8,
+  },
   subtaskRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1166,6 +1367,20 @@ const styles = StyleSheet.create({
   subtaskText: {
     flex: 1,
     fontSize: 16,
+  },
+  dragHandle: {
+    width: 34,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    marginLeft: 4,
+  },
+  dragHandleLine: {
+    width: 20,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: dark[500],
   },
   subtaskDoneText: {
     textDecorationLine: 'line-through',
