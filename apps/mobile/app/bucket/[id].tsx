@@ -80,9 +80,11 @@ export default function BucketDetailScreen() {
   const [sheetVisible, setSheetVisible] = useState(false);
   const [sheetMode, setSheetMode] = useState<'menu' | 'visibility' | 'albums'>('menu');
   const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
+  const [newSubtaskText, setNewSubtaskText] = useState('');
   const [albums, setAlbums] = useState<any[]>([]);
   const [albumsLoading, setAlbumsLoading] = useState(false);
   const sheetTranslateY = useRef(new Animated.Value(420)).current;
+  const subtaskTimeouts = useRef<Record<string, NodeJS.Timeout>>({});
   const addComment = useAddComment();
   const copyBucket = useCopyBucket();
   const toggleReaction = useToggleReaction();
@@ -362,6 +364,18 @@ export default function BucketDetailScreen() {
 
   const toggleSubtask = async (subtask: any) => {
     const nextDone = !subtask.done;
+    
+    // Optimistic update
+    queryClient.setQueryData(['bucketDetail', id], (oldData: any) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        item_subtasks: (oldData.item_subtasks || []).map((st: any) =>
+          st.id === subtask.id ? { ...st, done: nextDone } : st
+        )
+      };
+    });
+
     const { error } = await supabase
       .from('item_subtasks')
       .update({ done: nextDone })
@@ -369,11 +383,52 @@ export default function BucketDetailScreen() {
 
     if (error) {
       Alert.alert('No se pudo actualizar el paso', error.message);
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
       return;
     }
 
     void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
     void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+  };
+
+  const handleSubtaskChange = (st: any, newText: string) => {
+    // Optimistic update
+    queryClient.setQueryData(['bucketDetail', id], (oldData: any) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        item_subtasks: (oldData.item_subtasks || []).map((s: any) =>
+          s.id === st.id ? { ...s, title: newText } : s
+        )
+      };
+    });
+
+    if (subtaskTimeouts.current[st.id]) {
+      clearTimeout(subtaskTimeouts.current[st.id]);
+    }
+
+    subtaskTimeouts.current[st.id] = setTimeout(async () => {
+      if (!newText.trim()) return;
+      const { error } = await supabase.from('item_subtasks').update({ title: newText.trim() }).eq('id', st.id);
+      if (!error) void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+    }, 500);
+  };
+
+  const handleAddSubtask = async () => {
+    const text = newSubtaskText.trim();
+    if (!text) return;
+    setNewSubtaskText('');
+    const { error } = await supabase.from('item_subtasks').insert({
+      bucket_id: id,
+      title: text,
+      done: false,
+      position: subtasks.length
+    });
+    if (error) {
+      Alert.alert('Error', error.message);
+    } else {
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+    }
   };
 
   // ── Cover image ────────────────────────────────────────────────────────────
@@ -547,47 +602,50 @@ export default function BucketDetailScreen() {
                 </Typography>
               </View>
               {subtasks.map((st: any) => (
-                <Pressable key={st.id} style={styles.subtaskRow} onPress={() => void toggleSubtask(st)}>
-                  {st.done ? (
-                    <CheckCircle2 color={gold[400]} size={22} strokeWidth={1.8} fill={dark[200]} />
+                <View key={st.id} style={styles.subtaskRow}>
+                  <Pressable onPress={() => void toggleSubtask(st)}>
+                    {st.done ? (
+                      <CheckCircle2 color={gold[400]} size={22} strokeWidth={1.8} fill={dark[200]} />
+                    ) : (
+                      <Circle color={theme.colors.foregroundMuted} size={22} strokeWidth={1.8} />
+                    )}
+                  </Pressable>
+                  
+                  {isOwner ? (
+                    <TextInput
+                      defaultValue={st.title}
+                      style={[
+                        styles.subtaskText,
+                        { padding: 0, color: st.done ? theme.colors.foreground : theme.colors.foregroundMuted },
+                        st.done && styles.subtaskDoneText,
+                      ]}
+                      onChangeText={(newText) => handleSubtaskChange(st, newText)}
+                    />
                   ) : (
-                    <Circle color={theme.colors.foregroundMuted} size={22} strokeWidth={1.8} />
+                    <Typography
+                      variant="body"
+                      color={st.done ? theme.colors.foreground : theme.colors.foregroundMuted}
+                      style={[styles.subtaskText, st.done && styles.subtaskDoneText]}
+                    >
+                      {st.title}
+                    </Typography>
                   )}
-                  <Typography
-                    variant="body"
-                    color={st.done ? theme.colors.foreground : theme.colors.foregroundMuted}
-                    style={[styles.subtaskText, st.done && styles.subtaskDoneText]}
-                  >
-                    {st.title}
-                  </Typography>
-                </Pressable>
+                </View>
               ))}
 
               {/* Añadir paso */}
               {isOwner && (
                 <View style={[styles.subtaskRow, { opacity: 0.7 }]}>
-                  <Plus color={theme.colors.foregroundMuted} size={22} strokeWidth={1.8} />
+                  <Pressable onPress={handleAddSubtask}>
+                    <Plus color={theme.colors.foregroundMuted} size={22} strokeWidth={1.8} />
+                  </Pressable>
                   <TextInput
                     placeholder="Añadir paso..."
                     placeholderTextColor={theme.colors.foregroundMuted}
                     style={[styles.subtaskText, { flex: 1, padding: 0, color: theme.colors.foreground }]}
-                    onSubmitEditing={async (e) => {
-                      const text = e.nativeEvent.text.trim();
-                      if (!text) return;
-                      // @ts-ignore
-                      e.target.clear();
-                      const { error } = await supabase.from('item_subtasks').insert({
-                        bucket_id: id,
-                        title: text,
-                        done: false,
-                        position: subtasks.length
-                      });
-                      if (error) {
-                        Alert.alert('Error', error.message);
-                      } else {
-                        void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
-                      }
-                    }}
+                    value={newSubtaskText}
+                    onChangeText={setNewSubtaskText}
+                    onSubmitEditing={handleAddSubtask}
                   />
                 </View>
               )}
@@ -1020,7 +1078,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   subtaskDoneText: {
-    // no strikethrough — matching the design
+    textDecorationLine: 'line-through',
   },
 
   // ── Photos section ─────────────────────────────────────────────────────────
