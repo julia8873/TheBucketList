@@ -79,7 +79,7 @@ export default function BucketDetailScreen() {
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [sheetMode, setSheetMode] = useState<'menu' | 'visibility' | 'albums' | 'status'>('menu');
-  const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
+  const [viewingPhotoIndex, setViewingPhotoIndex] = useState<number | null>(null);
   const [newSubtaskText, setNewSubtaskText] = useState('');
   const [albums, setAlbums] = useState<any[]>([]);
   const [albumsLoading, setAlbumsLoading] = useState(false);
@@ -365,7 +365,7 @@ export default function BucketDetailScreen() {
 
   const toggleSubtask = async (subtask: any) => {
     const nextDone = !subtask.done;
-    
+
     // Optimistic update
     queryClient.setQueryData(['bucketDetail', id], (oldData: any) => {
       if (!oldData) return oldData;
@@ -670,7 +670,7 @@ export default function BucketDetailScreen() {
                       <Circle color={theme.colors.foregroundMuted} size={22} strokeWidth={1.8} />
                     )}
                   </Pressable>
-                  
+
                   {isOwner ? (
                     <TextInput
                       defaultValue={st.title}
@@ -721,22 +721,36 @@ export default function BucketDetailScreen() {
                   FOTOS{photos.length > 0 ? ` · ${photos.length}` : ''}
                 </Typography>
                 <View style={styles.photosGrid}>
-                  {photos.map((photo) => (
+                  {photos.map((photo, index) => (
                     <Pressable
                       key={photo.id}
-                      onPress={() => setViewingPhoto(storageApi.getPublicUrl(photo.storage_path))}
-                      style={styles.photoThumb}
+                      onPress={() => setViewingPhotoIndex(index)}
+                      style={[
+                        styles.photoThumb,
+                        photos.length === 1 && { width: '100%', height: (SCREEN_WIDTH - 40) * 1.25 }
+                      ]}
                     >
                       <Image
-                        source={{ uri: storageApi.getPublicUrl(photo.thumb_path || photo.storage_path) }}
+                        source={{ uri: storageApi.getPublicUrl(photo.storage_path) }}
                         style={styles.photoThumbImage}
                         resizeMode="cover"
                       />
                     </Pressable>
                   ))}
                   {isOwner && (
-                    <Pressable style={styles.photoAddThumb} onPress={() => void pickAndUploadPhotos()}>
+                    <Pressable 
+                      style={[
+                        styles.photoAddThumb,
+                        photos.length <= 1 && { width: '100%', height: 72, flexDirection: 'row' }
+                      ]} 
+                      onPress={() => void pickAndUploadPhotos()}
+                    >
                       <Camera color={gold[400]} size={24} strokeWidth={1.8} />
+                      {photos.length <= 1 && (
+                        <Typography variant="bodySemibold" color={gold[400]} style={{ marginLeft: 10 }}>
+                          Añadir foto
+                        </Typography>
+                      )}
                     </Pressable>
                   )}
                 </View>
@@ -748,49 +762,71 @@ export default function BucketDetailScreen() {
 
       {/* ── Fullscreen photo viewer ─────────────────────────────────────── */}
       <Modal
-        visible={viewingPhoto !== null}
+        visible={viewingPhotoIndex !== null}
         transparent
         animationType="fade"
-        onRequestClose={() => setViewingPhoto(null)}
+        onRequestClose={() => setViewingPhotoIndex(null)}
       >
         <View style={styles.photoViewerBackdrop}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setViewingPhoto(null)} />
-
-          {/* Nav */}
           <View style={styles.photoViewerNav}>
-            <Pressable style={styles.photoViewerBtn} onPress={() => setViewingPhoto(null)}>
+            <Pressable style={styles.photoViewerBtn} onPress={() => setViewingPhotoIndex(null)}>
               <X color="#fff" size={22} strokeWidth={2} />
-            </Pressable>
-            <Pressable
-              style={styles.photoViewerBtn}
-              onPress={async () => {
-                if (!viewingPhoto) return;
-                try {
-                  const { status } = await MediaLibrary.requestPermissionsAsync();
-                  if (status !== 'granted') {
-                    Alert.alert('Permiso denegado', 'Activa el permiso de galería en ajustes.');
-                    return;
-                  }
-                  const filename = viewingPhoto.split('/').pop() ?? 'foto.jpg';
-                  const localUri = FileSystem.cacheDirectory + filename;
-                  await FileSystem.downloadAsync(viewingPhoto, localUri);
-                  await MediaLibrary.saveToLibraryAsync(localUri);
-                  Alert.alert('Guardada', 'La foto se ha guardado en tu galería.');
-                } catch {
-                  Alert.alert('Error', 'No se pudo descargar la foto.');
-                }
-              }}
-            >
-              <Download color="#fff" size={22} strokeWidth={2} />
             </Pressable>
           </View>
 
-          {viewingPhoto && (
-            <Image
-              source={{ uri: viewingPhoto }}
-              style={styles.photoViewerImage}
-              resizeMode="contain"
+          {viewingPhotoIndex !== null && (
+            <FlatList
+              data={photos}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.id}
+              initialScrollIndex={viewingPhotoIndex}
+              getItemLayout={(data, index) => ({ length: SCREEN_WIDTH, offset: SCREEN_WIDTH * index, index })}
+              onMomentumScrollEnd={(e) => {
+                const newIndex = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+                setViewingPhotoIndex(newIndex);
+              }}
+              renderItem={({ item }) => (
+                <View style={{ width: SCREEN_WIDTH, height: '100%', justifyContent: 'center' }}>
+                  <Image
+                    source={{ uri: storageApi.getPublicUrl(item.storage_path) }}
+                    style={{ width: SCREEN_WIDTH, height: '100%' }}
+                    resizeMode="contain"
+                  />
+                </View>
+              )}
             />
+          )}
+
+          {viewingPhotoIndex !== null && photos[viewingPhotoIndex] && (
+            <View style={[styles.actionBar, { borderTopColor: 'transparent', position: 'absolute', bottom: 40, width: '100%', paddingHorizontal: 20 }]}>
+              <Pressable
+                style={[styles.actionBtn, styles.actionBtnFilled, { backgroundColor: gold[400] }]}
+                onPress={async () => {
+                  try {
+                    const { status } = await MediaLibrary.requestPermissionsAsync();
+                    if (status !== 'granted') {
+                      Alert.alert('Permiso denegado', 'Activa el permiso de galería en ajustes.');
+                      return;
+                    }
+                    const url = storageApi.getPublicUrl(photos[viewingPhotoIndex].storage_path);
+                    const filename = url.split('/').pop() ?? 'foto.jpg';
+                    const localUri = FileSystem.cacheDirectory + filename;
+                    await FileSystem.downloadAsync(url, localUri);
+                    await MediaLibrary.saveToLibraryAsync(localUri);
+                    Alert.alert('Guardada', 'La foto se ha guardado en tu galería.');
+                  } catch {
+                    Alert.alert('Error', 'No se pudo descargar la foto.');
+                  }
+                }}
+              >
+                <Download color="#000" size={18} strokeWidth={2} />
+                <Typography variant="bodySemibold" color="#000" style={{ marginLeft: 8 }}>
+                  Descargar
+                </Typography>
+              </Pressable>
+            </View>
           )}
         </View>
       </Modal>
@@ -889,12 +925,8 @@ export default function BucketDetailScreen() {
 
             {sheetMode === 'status' && (
               <>
-                <View style={styles.sheetHeader}>
-                  <Pressable style={styles.backSheetButton} onPress={() => setSheetMode('menu')}>
-                    <ArrowLeft color={theme.colors.foreground} size={20} />
-                  </Pressable>
+                <View style={[styles.sheetHeader, { justifyContent: 'center' }]}>
                   <Typography variant="h3" color={theme.colors.foreground}>Estado</Typography>
-                  <View style={{ width: 36 }} />
                 </View>
                 <View style={styles.sheetOptions}>
                   {([
@@ -921,12 +953,8 @@ export default function BucketDetailScreen() {
 
             {sheetMode === 'visibility' && (
               <>
-                <View style={styles.sheetHeader}>
-                  <Pressable style={styles.backSheetButton} onPress={() => setSheetMode('menu')}>
-                    <ArrowLeft color={theme.colors.foreground} size={20} />
-                  </Pressable>
+                <View style={[styles.sheetHeader, { justifyContent: 'center' }]}>
                   <Typography variant="h3" color={theme.colors.foreground}>Visibilidad</Typography>
-                  <View style={{ width: 36 }} />
                 </View>
                 <View style={styles.sheetOptions}>
                   {([
@@ -1155,8 +1183,8 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   photoThumb: {
-    width: (SCREEN_WIDTH - 40 - 20) / 3,
-    height: (SCREEN_WIDTH - 40 - 20) / 3,
+    width: (SCREEN_WIDTH - 40 - 10) / 2,
+    height: ((SCREEN_WIDTH - 40 - 10) / 2) * 1.3,
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: dark[300],
@@ -1166,8 +1194,8 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   photoAddThumb: {
-    width: (SCREEN_WIDTH - 40 - 20) / 3,
-    height: (SCREEN_WIDTH - 40 - 20) / 3,
+    width: (SCREEN_WIDTH - 40 - 10) / 2,
+    height: ((SCREEN_WIDTH - 40 - 10) / 2) * 1.3,
     borderRadius: 12,
     borderWidth: 2,
     borderStyle: 'dashed',
