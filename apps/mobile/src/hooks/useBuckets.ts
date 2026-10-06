@@ -49,8 +49,12 @@ export function useUpdateBucket() {
       }
       return bucketApi.updateBucket(id, data);
     },
-    onSuccess: () => {
+    onSuccess: (_updatedBucket, variables) => {
+      // Refresh both the list queries and the detail screen. The detail
+      // screen uses its own cache key, so invalidating only ['buckets']
+      // leaves the old title/description visible after returning from edit.
       void queryClient.invalidateQueries({ queryKey: BUCKETS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', variables.id] });
     },
   });
 }
