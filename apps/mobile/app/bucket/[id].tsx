@@ -56,7 +56,11 @@ import { useDeleteBucket } from '../../src/hooks/useBuckets';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const COVER_HEIGHT = 220;
+const COVER_HEIGHT = 300;
+// Cuánto se meten las etiquetas (Completada · Pública · Álbum) sobre la portada.
+// Las etiquetas miden ~32 px: con 16 px la parte negra las cruza por la mitad
+// (mitad superior sobre el degradado, mitad inferior sobre el negro sólido).
+const BADGES_OVERLAP = 16;
 
 export default function BucketDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -121,6 +125,19 @@ export default function BucketDetailScreen() {
     enabled: !!id,
   });
 
+  // Los hooks deben ejecutarse siempre, antes de cualquier return anticipado.
+  useEffect(() => {
+    if (!sheetVisible) return;
+    sheetTranslateY.setValue(420);
+    Animated.spring(sheetTranslateY, {
+      toValue: 0,
+      damping: 24,
+      stiffness: 220,
+      mass: 0.8,
+      useNativeDriver: true,
+    }).start();
+  }, [sheetVisible, sheetTranslateY]);
+
   if (isLoading) {
     return (
       <View style={[styles.container, styles.center, { backgroundColor: theme.colors.background }]}>
@@ -161,18 +178,6 @@ export default function BucketDetailScreen() {
       console.error('Unable to share moment', error);
     }
   };
-
-  useEffect(() => {
-    if (!sheetVisible) return;
-    sheetTranslateY.setValue(420);
-    Animated.spring(sheetTranslateY, {
-      toValue: 0,
-      damping: 24,
-      stiffness: 220,
-      mass: 0.8,
-      useNativeDriver: true,
-    }).start();
-  }, [sheetVisible, sheetTranslateY]);
 
   const openMoreMenu = () => {
     setSheetMode('menu');
@@ -279,55 +284,59 @@ export default function BucketDetailScreen() {
     closeSheet();
   };
 
-  const uploadPhotos = async () => {
+  // Selecciona fotos de la galería y las sube a esta tarea.
+  const pickAndUploadPhotos = async () => {
     if (!user) return;
 
-    closeSheet(async () => {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert('Permiso necesario', 'Necesitamos acceso a tus fotos para subirlas a este momento.');
-        return;
-      }
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permiso necesario', 'Necesitamos acceso a tus fotos para subirlas a este momento.');
+      return;
+    }
 
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsMultipleSelection: true,
-        selectionLimit: 6,
-        quality: 1,
-      });
-
-      if (result.canceled || !result.assets.length) return;
-
-      try {
-        for (const asset of result.assets) {
-          const processed = await processBucketImage(asset.uri);
-          const paths = await storageApi.uploadPhoto(
-            user.id,
-            id,
-            processed.original.uri,
-            processed.thumbnail.uri,
-          );
-
-          const { error } = await supabase.from('bucket_photos').insert({
-            bucket_id: id,
-            user_id: user.id,
-            storage_path: paths.photoPath,
-            thumb_path: paths.thumbPath,
-            width: processed.original.width,
-            height: processed.original.height,
-            size_bytes: processed.original.sizeBytes,
-            thumb_size_bytes: processed.thumbnail.sizeBytes,
-          });
-
-          if (error) throw error;
-        }
-
-        invalidateBucket();
-        Alert.alert('Fotos subidas', 'Las fotos se han añadido al momento.');
-      } catch (error: any) {
-        Alert.alert('No se pudieron subir las fotos', error?.message || 'Inténtalo de nuevo.');
-      }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: true,
+      selectionLimit: 6,
+      quality: 1,
     });
+
+    if (result.canceled || !result.assets.length) return;
+
+    try {
+      for (const asset of result.assets) {
+        const processed = await processBucketImage(asset.uri);
+        const paths = await storageApi.uploadPhoto(
+          user.id,
+          id,
+          processed.original.uri,
+          processed.thumbnail.uri,
+        );
+
+        const { error } = await supabase.from('bucket_photos').insert({
+          bucket_id: id,
+          user_id: user.id,
+          storage_path: paths.photoPath,
+          thumb_path: paths.thumbPath,
+          width: processed.original.width,
+          height: processed.original.height,
+          size_bytes: processed.original.sizeBytes,
+          thumb_size_bytes: processed.thumbnail.sizeBytes,
+        });
+
+        if (error) throw error;
+      }
+
+      invalidateBucket();
+      Alert.alert('Fotos subidas', 'Las fotos se han añadido al momento.');
+    } catch (error: any) {
+      Alert.alert('No se pudieron subir las fotos', error?.message || 'Inténtalo de nuevo.');
+    }
+  };
+
+  // Desde el menú de opciones: cierra el menú y después abre la galería.
+  const uploadPhotos = () => {
+    closeSheet(() => void pickAndUploadPhotos());
   };
 
   const handleDelete = () => {
@@ -424,16 +433,16 @@ export default function BucketDetailScreen() {
 
           {/* Bottom gradient fade */}
           <LinearGradient
-            // El cambio de color se retrasa para que ocurra a la altura
-            // del comienzo del texto, no sobre la parte superior de la portada.
+            // La foto/degradado se funde con el fondo negro justo al final de la
+            // portada, que es donde terminan las etiquetas.
             colors={[
               'transparent',
               'transparent',
-              'rgba(0,0,0,0.12)',
-              'rgba(0,0,0,0.72)',
+              'rgba(0,0,0,0.25)',
+              'rgba(0,0,0,0.80)',
               theme.colors.background,
             ]}
-            locations={[0, 0.48, 0.66, 0.84, 1]}
+            locations={[0, 0.45, 0.68, 0.88, 1]}
             start={{ x: 0.5, y: 0 }}
             end={{ x: 0.5, y: 1 }}
             style={styles.coverGradient}
@@ -590,17 +599,19 @@ export default function BucketDetailScreen() {
       </ScrollView>
 
       {/* ── Bottom action bar ─────────────────────────────────────────────── */}
-      <View style={[styles.actionBar, { borderTopColor: dark[400], backgroundColor: theme.colors.background }]}>
-        <Pressable
-          style={[styles.actionBtn, styles.actionBtnFilled, { backgroundColor: gold[400] }]}
-          onPress={() => void shareMoment()}
-        >
-          <Share2 color="#000" size={18} strokeWidth={2} />
-          <Typography variant="bodySemibold" color="#000" style={{ marginLeft: 8 }}>
-            Compartir momento
-          </Typography>
-        </Pressable>
-      </View>
+      {isOwner && (
+        <View style={[styles.actionBar, { borderTopColor: dark[400], backgroundColor: theme.colors.background }]}>
+          <Pressable
+            style={[styles.actionBtn, styles.actionBtnFilled, { backgroundColor: gold[400] }]}
+            onPress={() => void pickAndUploadPhotos()}
+          >
+            <Camera color="#000" size={18} strokeWidth={2} />
+            <Typography variant="bodySemibold" color="#000" style={{ marginLeft: 8 }}>
+              Subir foto
+            </Typography>
+          </Pressable>
+        </View>
+      )}
 
       <Modal
         visible={sheetVisible}
@@ -798,12 +809,10 @@ const styles = StyleSheet.create({
   },
   coverGradient: {
     position: 'absolute',
-    bottom: -250,
+    bottom: 0,
     left: 0,
     right: 0,
-    // Se prolonga bastante por debajo de la portada para que la transición
-    // visible ocurra cerca del comienzo del título y del contenido.
-    height: COVER_HEIGHT + 250,
+    height: COVER_HEIGHT,
     zIndex: 0,
     pointerEvents: 'none',
   },
@@ -816,6 +825,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
+    // Baja los botones para que no queden pegados al borde superior del móvil.
+    paddingTop: 14,
   },
   navButton: {
     width: 40,
@@ -827,7 +838,7 @@ const styles = StyleSheet.create({
   },
   dotsRow: {
     position: 'absolute',
-    bottom: 52,
+    bottom: BADGES_OVERLAP + 14,
     left: 0,
     right: 0,
     flexDirection: 'row',
@@ -846,12 +857,14 @@ const styles = StyleSheet.create({
     zIndex: 2,
     paddingHorizontal: 20,
     paddingTop: 0,
+    // Sube el contenido para que las etiquetas queden sobre la portada.
+    marginTop: -BADGES_OVERLAP,
   },
   badges: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 10,
+    marginBottom: 18,
   },
   badge: {
     flexDirection: 'row',
@@ -1032,6 +1045,7 @@ const styles = StyleSheet.create({
   },
   actionBtn: {
     flex: 1,
+    flexDirection: 'row',
     height: 52,
     borderRadius: 26,
     alignItems: 'center',
