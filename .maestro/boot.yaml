@@ -1,0 +1,6 @@
+appId: com.bucketlist.mobile
+---
+- launchApp:
+    clearState: true
+- assertVisible: "TheBucketList"
+- takeScreenshot: app_boot_success

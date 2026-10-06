@@ -1,0 +1,32 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@bucketlist/ui": [
+        "../../packages/ui/src/index.ts"
+      ],
+      "@bucketlist/shared": [
+        "../../packages/shared/src/index.ts"
+      ]
+    },
+    "jsx": "react-native",
+    "allowImportingTsExtensions": false
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.d.ts",
+    "expo-env.d.ts",
+    ".expo/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "android",
+    "ios"
+  ]
+}

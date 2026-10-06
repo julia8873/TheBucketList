@@ -1,0 +1,32 @@
+appId: com.bucketlist.app
+---
+- launchApp:
+    clearState: true
+
+# Auth
+- tapOn: "Get Started"
+- tapOn: "Sign Up"
+- inputText: "maestro@example.com"
+- tapOn: "Password"
+- inputText: "password123"
+- tapOn: "Sign Up"
+
+# Wait for Feed
+- assertVisible: "Feed"
+
+# Create Bucket
+- tapOn: "My List"
+- tapOn: "Add Goal"
+- inputText: "Skydiving in Dubai"
+- tapOn: "Save"
+
+# Complete Bucket
+- tapOn: "Skydiving in Dubai"
+- tapOn: "Mark Completed"
+# (Skipping photo logic for basic E2E)
+- tapOn: "Save"
+
+# Feed verification
+- tapOn: "Feed"
+- assertVisible: "completed a goal"
+- assertVisible: "Skydiving in Dubai"

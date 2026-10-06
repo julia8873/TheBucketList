@@ -1,0 +1,86 @@
+name: Release APK
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-apk:
+    name: Build APK/AAB
+    runs-on: ubuntu-latest
+    environment: production  # requires manual approval in GitHub Environments
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Expo prebuild
+        working-directory: apps/mobile
+        run: npx expo prebuild --platform android --clean
+        env:
+          APP_ENV: prod
+          EXPO_PUBLIC_SUPABASE_URL_PROD: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL_PROD }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY_PROD: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY_PROD }}
+          EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID }}
+
+      - name: Copy google-services.json
+        run: |
+          echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > apps/mobile/android/app/google-services.json
+
+      - name: Build release APK
+        working-directory: apps/mobile/android
+        run: ./gradlew assembleRelease
+        env:
+          SIGNING_KEY_STORE_BASE64: ${{ secrets.SIGNING_KEY_STORE_BASE64 }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_STORE_PASSWORD: ${{ secrets.SIGNING_KEY_STORE_PASSWORD }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+
+      - name: Get version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "TheBucketList ${{ steps.version.outputs.VERSION }}"
+          body: |
+            ## What's new in ${{ steps.version.outputs.VERSION }}
+
+            See [CHANGELOG.md](CHANGELOG.md) for details.
+
+            ### Installation
+            Download the APK below and install it on your Android device.
+            Enable "Install from unknown sources" if prompted.
+
+            ### PWA
+            Visit https://bucketlist.pages.dev and install from your browser.
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: |
+            apps/mobile/android/app/build/outputs/apk/release/*.apk
+            apps/mobile/android/app/build/outputs/bundle/release/*.aab
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

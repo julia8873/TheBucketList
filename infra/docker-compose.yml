@@ -1,0 +1,107 @@
+version: '3.9'
+
+# ──────────────────────────────────────────────────────────────────────────────
+# TheBucketList — Local Development Stack
+# Usage: cd infra && docker compose up -d   OR   make up
+#
+# Prerequisites: Docker Desktop, Supabase CLI (runs separately via `supabase start`)
+# Supabase stack (postgres, auth, rest, realtime, storage, studio) is managed
+# by the Supabase CLI, not docker-compose, to keep configuration canonical.
+# ──────────────────────────────────────────────────────────────────────────────
+
+networks:
+  bucketlist:
+    driver: bridge
+
+volumes:
+  metro_cache:
+  gradle_cache:
+  android_sdk:
+
+services:
+
+  # ── Expo Metro bundler ────────────────────────────────────────────────────
+  metro:
+    image: node:20.18-alpine3.20    # fixed version
+    container_name: bucketlist-metro
+    working_dir: /workspace
+    command: sh -c "npm install && cd apps/mobile && npx expo start --host 0.0.0.0 --port 8081"
+    ports:
+      - "8081:8081"
+      - "19000:19000"   # Expo DevTools
+    volumes:
+      - ../:/workspace
+      - metro_cache:/workspace/apps/mobile/.metro-cache
+    environment:
+      - EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
+      - APP_ENV=local
+    env_file:
+      - ../.env
+    networks:
+      - bucketlist
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  # ── PWA (nginx serving the built static export) ────────────────────────────
+  web:
+    image: nginx:1.27.2-alpine3.20   # fixed version
+    container_name: bucketlist-web
+    ports:
+      - "3000:80"
+    volumes:
+      - ../web-build:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - bucketlist
+    depends_on:
+      - metro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:80/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    profiles:
+      - web  # only start when needed: docker compose --profile web up
+
+  # ── Android builder (JDK 17 + Android SDK + Gradle) ──────────────────────
+  # Used ONLY for `make apk` — not started in normal dev flow.
+  android-builder:
+    image: reactnativecommunity/react-native-android:14   # fixed, includes JDK17 + SDK
+    container_name: bucketlist-android-builder
+    working_dir: /workspace
+    volumes:
+      - ../:/workspace
+      - gradle_cache:/root/.gradle
+      - android_sdk:/opt/android-sdk
+    environment:
+      - ANDROID_HOME=/opt/android-sdk
+      - APP_ENV=local
+    env_file:
+      - ../.env
+    networks:
+      - bucketlist
+    profiles:
+      - build  # only start when needed: docker compose --profile build run android-builder ...
+
+  # ── Tests (lint, typecheck, Jest, pgTAP) ────────────────────────────────
+  tests:
+    image: node:20.18-alpine3.20
+    container_name: bucketlist-tests
+    working_dir: /workspace
+    command: sh -c "npm ci && npm run lint && npm run typecheck && npm run test"
+    volumes:
+      - ../:/workspace
+    environment:
+      - CI=true
+    env_file:
+      - ../.env
+    networks:
+      - bucketlist
+    profiles:
+      - test  # docker compose --profile test run tests

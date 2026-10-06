@@ -1,0 +1,78 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { bucketApi } from '../services/api/bucket';
+import { useOfflineStore } from '../stores/offline.store';
+import type { CreateBucketForm, UpdateBucketForm } from '@bucketlist/shared';
+
+export const BUCKETS_QUERY_KEY = ['buckets'];
+
+export function useBuckets(userId?: string) {
+  return useQuery({
+    queryKey: [...BUCKETS_QUERY_KEY, userId],
+    queryFn: () => bucketApi.getBuckets(userId),
+  });
+}
+
+export function useCreateBucket() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: CreateBucketForm) => {
+      const isOnline = useOfflineStore.getState().isOnline;
+      if (!isOnline) {
+        useOfflineStore.getState().addMutation({
+          type: 'CREATE_BUCKET',
+          payload: data,
+        });
+        return { ...data, id: `temp-${Date.now()}`, status: 'pending' };
+      }
+      return bucketApi.createBucket(data);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: BUCKETS_QUERY_KEY });
+    },
+  });
+}
+
+export function useUpdateBucket() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateBucketForm }) => {
+      const isOnline = useOfflineStore.getState().isOnline;
+      if (!isOnline) {
+        useOfflineStore.getState().addMutation({
+          type: 'UPDATE_BUCKET',
+          bucketId: id,
+          payload: data,
+        });
+        return { ...data, id };
+      }
+      return bucketApi.updateBucket(id, data);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: BUCKETS_QUERY_KEY });
+    },
+  });
+}
+
+export function useDeleteBucket() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const isOnline = useOfflineStore.getState().isOnline;
+      if (!isOnline) {
+        useOfflineStore.getState().addMutation({
+          type: 'DELETE_BUCKET',
+          bucketId: id,
+          payload: {},
+        });
+        return id;
+      }
+      return bucketApi.deleteBucket(id);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: BUCKETS_QUERY_KEY });
+    },
+  });
+}

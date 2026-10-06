@@ -1,0 +1,61 @@
+name: Anti-pause (Keep Supabase Alive)
+
+on:
+  schedule:
+    # Every 5 days at 06:00 UTC — well within the 7-day pause window
+    - cron: '0 6 */5 * *'
+  workflow_dispatch:  # allow manual trigger
+
+jobs:
+  ping:
+    name: Ping Supabase Staging + Prod
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping staging
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ secrets.SUPABASE_URL_STAGING }}/rest/v1/app_config?select=key&limit=1" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY_STAGING }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY_STAGING }}")
+          echo "Staging status: $STATUS"
+          [ "$STATUS" = "200" ] || echo "Warning: staging returned $STATUS"
+
+      - name: Ping production
+        if: ${{ secrets.SUPABASE_URL_PROD != '' }}
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ secrets.SUPABASE_URL_PROD }}/rest/v1/app_config?select=key&limit=1" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY_PROD }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY_PROD }}")
+          echo "Production status: $STATUS"
+          [ "$STATUS" = "200" ] || echo "Warning: production returned $STATUS"
+
+      - name: Weekly backup (prod)
+        # Run backup on Mondays (weekday 1)
+        if: ${{ github.event_name == 'schedule' && secrets.SUPABASE_DB_URL_PROD != '' }}
+        run: |
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          echo "Backup timestamp: $TIMESTAMP"
+          # pg_dump is run via Supabase's pg connection URL
+          PGPASSWORD="${{ secrets.SUPABASE_DB_PASSWORD_PROD }}" pg_dump \
+            "${{ secrets.SUPABASE_DB_URL_PROD }}" \
+            --no-password \
+            --format=custom \
+            --no-acl \
+            --no-owner \
+            -f "backup_${TIMESTAMP}.dump" || true
+          # Encrypt and clean up
+          if [ -f "backup_${TIMESTAMP}.dump" ]; then
+            gpg --symmetric --batch --passphrase "${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}" \
+                "backup_${TIMESTAMP}.dump"
+            rm "backup_${TIMESTAMP}.dump"
+            echo "Backup encrypted: backup_${TIMESTAMP}.dump.gpg"
+          fi
+
+      - name: Upload encrypted backup
+        if: ${{ secrets.SUPABASE_DB_URL_PROD != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_id }}
+          path: "*.dump.gpg"
+          retention-days: 30
