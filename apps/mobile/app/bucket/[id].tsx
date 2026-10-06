@@ -78,13 +78,15 @@ export default function BucketDetailScreen() {
 
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [sheetVisible, setSheetVisible] = useState(false);
-  const [sheetMode, setSheetMode] = useState<'menu' | 'visibility' | 'albums'>('menu');
+  const [sheetMode, setSheetMode] = useState<'menu' | 'visibility' | 'albums' | 'status'>('menu');
   const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
   const [newSubtaskText, setNewSubtaskText] = useState('');
   const [albums, setAlbums] = useState<any[]>([]);
   const [albumsLoading, setAlbumsLoading] = useState(false);
   const sheetTranslateY = useRef(new Animated.Value(420)).current;
   const subtaskTimeouts = useRef<Record<string, NodeJS.Timeout>>({});
+  const titleTimeout = useRef<NodeJS.Timeout | null>(null);
+  const descTimeout = useRef<NodeJS.Timeout | null>(null);
   const addComment = useAddComment();
   const copyBucket = useCopyBucket();
   const toggleReaction = useToggleReaction();
@@ -213,19 +215,16 @@ export default function BucketDetailScreen() {
     void queryClient.invalidateQueries({ queryKey: ['albums'] });
   };
 
-  const handleMarkCompleted = async () => {
-    if (bucket.status === 'completed') {
-      closeSheet(() => Alert.alert('Ya está completada', 'Esta tarea ya está marcada como completada.'));
-      return;
-    }
-
+  const handleChangeStatus = async (status: string) => {
+    queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, status } : oldData);
     const { error } = await supabase
       .from('buckets')
-      .update({ status: 'completed' })
+      .update({ status })
       .eq('id', id);
 
     if (error) {
-      closeSheet(() => Alert.alert('No se pudo completar', error.message));
+      Alert.alert('No se pudo cambiar el estado', error.message);
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
       return;
     }
 
@@ -234,6 +233,7 @@ export default function BucketDetailScreen() {
   };
 
   const handleChangeVisibility = async (visibility: 'public' | 'followers' | 'private') => {
+    queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, visibility } : oldData);
     const { error } = await supabase
       .from('buckets')
       .update({ visibility })
@@ -241,6 +241,7 @@ export default function BucketDetailScreen() {
 
     if (error) {
       Alert.alert('No se pudo cambiar la visibilidad', error.message);
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
       return;
     }
 
@@ -414,6 +415,31 @@ export default function BucketDetailScreen() {
     }, 500);
   };
 
+  const handleTitleChange = (newTitle: string) => {
+    queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, title: newTitle } : oldData);
+    if (titleTimeout.current) clearTimeout(titleTimeout.current);
+    titleTimeout.current = setTimeout(async () => {
+      if (!newTitle.trim()) return;
+      const { error } = await supabase.from('buckets').update({ title: newTitle.trim() }).eq('id', id);
+      if (!error) {
+        void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+        void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+      }
+    }, 500);
+  };
+
+  const handleDescriptionChange = (newDesc: string) => {
+    queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, description: newDesc } : oldData);
+    if (descTimeout.current) clearTimeout(descTimeout.current);
+    descTimeout.current = setTimeout(async () => {
+      const { error } = await supabase.from('buckets').update({ description: newDesc.trim() }).eq('id', id);
+      if (!error) {
+        void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+        void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+      }
+    }, 500);
+  };
+
   const handleAddSubtask = async () => {
     const text = newSubtaskText.trim();
     if (!text) return;
@@ -509,17 +535,33 @@ export default function BucketDetailScreen() {
           {/* Badges */}
           <View style={styles.badges}>
             {/* Status */}
-            <View style={[styles.badge, styles.badgeGold]}>
+            <Pressable
+              style={[styles.badge, styles.badgeGold]}
+              onPress={() => {
+                if (isOwner) {
+                  setSheetMode('status');
+                  setSheetVisible(true);
+                }
+              }}
+            >
               <Typography variant="caption" color={gold[400]} style={{ fontWeight: '700' }}>
                 {statusLabel(bucket.status)}
               </Typography>
-            </View>
+            </Pressable>
             {/* Visibility */}
-            <View style={[styles.badge, styles.badgeMuted]}>
+            <Pressable
+              style={[styles.badge, styles.badgeMuted]}
+              onPress={() => {
+                if (isOwner) {
+                  setSheetMode('visibility');
+                  setSheetVisible(true);
+                }
+              }}
+            >
               <Typography variant="caption" color={theme.colors.foreground} style={{ fontWeight: '600' }}>
                 {visibilityLabel(bucket.visibility)}
               </Typography>
-            </View>
+            </Pressable>
             {/* Category */}
             {bucket.category?.name_es && (
               <View style={[styles.badge, styles.badgeMuted]}>
@@ -532,9 +574,18 @@ export default function BucketDetailScreen() {
           </View>
 
           {/* Title */}
-          <Typography variant="h1" color={theme.colors.foreground} style={styles.title}>
-            {bucket.title}
-          </Typography>
+          {isOwner ? (
+            <TextInput
+              style={[styles.title, { color: theme.colors.foreground, padding: 0 }]}
+              defaultValue={bucket.title}
+              onChangeText={handleTitleChange}
+              multiline
+            />
+          ) : (
+            <Typography variant="h1" color={theme.colors.foreground} style={styles.title}>
+              {bucket.title}
+            </Typography>
+          )}
 
           {/* Meta */}
           <View style={styles.meta}>
@@ -560,11 +611,20 @@ export default function BucketDetailScreen() {
           </View>
 
           {/* Description */}
-          {bucket.description && (
+          {isOwner ? (
+            <TextInput
+              style={[styles.description, { color: theme.colors.foregroundMuted, padding: 0 }]}
+              defaultValue={bucket.description || ''}
+              onChangeText={handleDescriptionChange}
+              placeholder="Añadir descripción..."
+              placeholderTextColor={theme.colors.foregroundMuted}
+              multiline
+            />
+          ) : bucket.description ? (
             <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.description}>
               {bucket.description}
             </Typography>
-          )}
+          ) : null}
 
           {/* Stats */}
           <View style={styles.statsRow}>
@@ -787,28 +847,6 @@ export default function BucketDetailScreen() {
                   )}
 
                   {isOwner && (
-                    <Pressable style={styles.sheetOption} onPress={() => void handleMarkCompleted()}>
-                      <View style={styles.sheetIcon}><CheckCircle2 color={gold[400]} size={21} /></View>
-                      <View style={styles.sheetOptionText}>
-                        <Typography variant="bodySemibold">{bucket.status === 'completed' ? 'Completada' : 'Marcar como completado'}</Typography>
-                        <Typography variant="caption" color={theme.colors.foregroundMuted}>Actualiza el estado de la tarea</Typography>
-                      </View>
-                    </Pressable>
-                  )}
-
-                  {isOwner && (
-                    <Pressable style={styles.sheetOption} onPress={() => setSheetMode('visibility')}>
-                      <View style={styles.sheetIcon}>
-                        {bucket.visibility === 'public' ? <Eye color={gold[400]} size={21} /> : bucket.visibility === 'followers' ? <Users color={gold[400]} size={21} /> : <Lock color={gold[400]} size={21} />}
-                      </View>
-                      <View style={styles.sheetOptionText}>
-                        <Typography variant="bodySemibold">Cambiar visibilidad</Typography>
-                        <Typography variant="caption" color={theme.colors.foregroundMuted}>{visibilityLabel(bucket.visibility)}</Typography>
-                      </View>
-                    </Pressable>
-                  )}
-
-                  {isOwner && (
                     <Pressable style={styles.sheetOption} onPress={() => void loadAlbums()}>
                       <View style={styles.sheetIcon}><FolderPlus color={gold[400]} size={21} /></View>
                       <View style={styles.sheetOptionText}>
@@ -817,14 +855,6 @@ export default function BucketDetailScreen() {
                       </View>
                     </Pressable>
                   )}
-
-                  <Pressable style={styles.sheetOption} onPress={() => closeSheet(() => router.push(`/(modals)/edit-bucket?id=${id}` as any))}>
-                    <View style={styles.sheetIcon}><Pencil color={gold[400]} size={21} /></View>
-                    <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold">Editar</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>Modifica los datos del momento</Typography>
-                    </View>
-                  </Pressable>
 
                   {!isOwner && user && (
                     <Pressable
@@ -853,6 +883,38 @@ export default function BucketDetailScreen() {
                       </View>
                     </Pressable>
                   )}
+                </View>
+              </>
+            )}
+
+            {sheetMode === 'status' && (
+              <>
+                <View style={styles.sheetHeader}>
+                  <Pressable style={styles.backSheetButton} onPress={() => setSheetMode('menu')}>
+                    <ArrowLeft color={theme.colors.foreground} size={20} />
+                  </Pressable>
+                  <Typography variant="h3" color={theme.colors.foreground}>Estado</Typography>
+                  <View style={{ width: 36 }} />
+                </View>
+                <View style={styles.sheetOptions}>
+                  {([
+                    { value: 'pending', title: 'Pendiente', subtitle: 'La tarea está por hacer', icon: Circle },
+                    { value: 'in_progress', title: 'En progreso', subtitle: 'La tarea está en curso', icon: MoreHorizontal },
+                    { value: 'completed', title: 'Completada', subtitle: 'La tarea ya se ha realizado', icon: CheckCircle2 },
+                    { value: 'expired', title: 'Cancelada', subtitle: 'La tarea ha sido cancelada o caducada', icon: X },
+                  ] as const).map((item) => {
+                    const IconComponent = item.icon;
+                    return (
+                      <Pressable key={item.value} style={styles.sheetOption} onPress={() => void handleChangeStatus(item.value)}>
+                        <View style={styles.sheetIcon}><IconComponent color={gold[400]} size={21} /></View>
+                        <View style={styles.sheetOptionText}>
+                          <Typography variant="bodySemibold">{item.title}</Typography>
+                          <Typography variant="caption" color={theme.colors.foregroundMuted}>{item.subtitle}</Typography>
+                        </View>
+                        {bucket.status === item.value && <Check color={gold[400]} size={21} />}
+                      </Pressable>
+                    );
+                  })}
                 </View>
               </>
             )}
