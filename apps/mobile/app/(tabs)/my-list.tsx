@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, Platform, Pressable, ScrollView } from 'react-native';
+import { View, StyleSheet, Pressable, ScrollView, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, Typography, SectionLabel, SegmentedControl, FilterChip, TaskRow, AlbumCard, NewAlbumCard, FAB, spacing } from '@bucketlist/ui';
-import { FlashList, MasonryFlashList } from '@shopify/flash-list';
+import { useTheme, Typography, SectionLabel, SegmentedControl, FilterChip, TaskRow, AlbumCard, NewAlbumCard, NoAlbumRow, FAB, spacing } from '@bucketlist/ui';
+import { gold } from '@bucketlist/ui/src/tokens/colors';
+import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { Swipeable } from 'react-native-gesture-handler';
 
@@ -14,6 +15,8 @@ import { categoryColors } from '@bucketlist/ui/src/tokens/colors';
 import { isPast, differenceInDays } from 'date-fns';
 
 type FilterType = 'all' | 'active' | 'completed' | 'expired';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function MyListScreen() {
   const { theme } = useTheme();
@@ -47,7 +50,6 @@ export default function MyListScreen() {
       
       return true;
     }).sort((a, b) => {
-      // Sort by created_at desc (newest first)
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
   }, [buckets, filter]);
@@ -56,9 +58,10 @@ export default function MyListScreen() {
     router.push('/(modals)/create-bucket');
   };
 
-  const renderHeader = () => (
-    <View>
-      {/* ── Header ─────────────────────────────────────── */}
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
+      
+      {/* ── Header (always visible, full width) ─────────── */}
       <View style={styles.header}>
         <SectionLabel highlight="MI" rest="LISTA" />
         <Typography variant="h1" color={theme.colors.foreground} style={styles.title}>
@@ -69,7 +72,7 @@ export default function MyListScreen() {
         </Typography>
       </View>
 
-      {/* ── Tabs ───────────────────────────────────────── */}
+      {/* ── Tabs (always visible, full width) ───────────── */}
       <View style={styles.tabsContainer}>
         <SegmentedControl
           options={[
@@ -82,7 +85,7 @@ export default function MyListScreen() {
         />
       </View>
 
-      {/* ── Filters ────────────────────────────────────── */}
+      {/* ── Filters (only for list tab) ─────────────────── */}
       {activeTab === 'list' && (
         <ScrollView 
           horizontal 
@@ -96,12 +99,7 @@ export default function MyListScreen() {
           <FilterChip label="Caducados" active={filter === 'expired'} onPress={() => setFilter('expired')} />
         </ScrollView>
       )}
-    </View>
-  );
 
-  return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
-      
       {/* ── Content ────────────────────────────────────── */}
       <View style={styles.content}>
         {activeTab === 'list' && (
@@ -110,27 +108,17 @@ export default function MyListScreen() {
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
             estimatedItemSize={80}
-            ListHeaderComponent={renderHeader}
             ItemSeparatorComponent={() => <View style={{ height: spacing[3] }} />}
             renderItem={({ item }) => {
               const categoryColor = item.category?.color || categoryColors.other;
-              // Extract subtasks progress (assuming API returns item_subtasks, if not it will just skip progress bar)
               const subtasksTotal = item.item_subtasks?.length || 0;
               const subtasksDone = item.item_subtasks?.filter((s: any) => s.done).length || 0;
-              
-              // Find thumbnail photo if any
-              // (In real app, we need to join bucket_photos or use cover_url. Assuming no cover_url for now).
               
               const meta = item.category?.name_es 
                 ? `${item.category.name_es}${subtasksTotal > 0 ? ` · ${subtasksDone} de ${subtasksTotal} pasos` : ''}`
                 : undefined;
 
               const renderRightActions = (progress: any, dragX: any) => {
-                const scale = dragX.interpolate({
-                  inputRange: [-80, 0],
-                  outputRange: [1, 0.5],
-                  extrapolate: 'clamp',
-                });
                 return (
                   <Pressable
                     style={{
@@ -141,7 +129,7 @@ export default function MyListScreen() {
                       borderRadius: 16,
                       height: '100%',
                       width: 100,
-                      marginLeft: -20, // To hide behind the item
+                      marginLeft: -20,
                     }}
                     onPress={() => {
                       deleteBucket.mutate(item.id);
@@ -182,43 +170,40 @@ export default function MyListScreen() {
         )}
         
         {activeTab === 'albums' && (
-          <MasonryFlashList
-            data={[{ isNewCard: true, id: 'new-album' }, ...(albums || [])]}
-            keyExtractor={(item: any) => item.id}
-            numColumns={2}
-            contentContainerStyle={styles.listContent}
-            estimatedItemSize={200}
-            ListHeaderComponent={renderHeader}
-            renderItem={({ item, index }) => {
-              const isRightColumn = index % 2 !== 0;
-              const marginStyle = isRightColumn ? { marginLeft: 8 } : { marginRight: 8 };
+          <ScrollView contentContainerStyle={styles.albumsContent}>
+            {/* Label */}
+            <View style={styles.albumsLabelRow}>
+              <Typography variant="caption" color={gold[400]} style={styles.albumsLabelHighlight}>TUS </Typography>
+              <Typography variant="caption" color="#FFF" style={styles.albumsLabel}>ÁLBUMES</Typography>
+            </View>
 
-              if (item.isNewCard) {
-                return (
-                  <View style={[{ marginBottom: 16 }, marginStyle]}>
-                    <NewAlbumCard onPress={() => console.log('Create album')} />
-                  </View>
-                );
-              }
+            {/* Grid */}
+            <View style={styles.albumGrid}>
+              {(albums || []).map((item: any, index: number) => (
+                <AlbumCard
+                  key={item.id}
+                  title={item.title}
+                  totalTasks={item.total_tasks ?? 0}
+                  completedTasks={item.completed_tasks ?? 0}
+                  coverUri={item.cover_path}
+                  isShared={item.is_shared}
+                  colorIndex={index}
+                  onPress={() => router.push(`/album/${item.id}` as any)}
+                />
+              ))}
+              <NewAlbumCard onPress={() => console.log('Create album')} />
+            </View>
 
-              return (
-                <View style={[{ marginBottom: 16 }, marginStyle]}>
-                  <AlbumCard
-                    title={item.title}
-                    totalTasks={item.total_tasks}
-                    completedTasks={item.completed_tasks}
-                    coverUri={item.cover_path}
-                    isShared={item.is_shared}
-                    onPress={() => router.push(`/album/${item.id}` as any)}
-                  />
-                </View>
-              );
-            }}
-          />
+            {/* Sin álbum row */}
+            <NoAlbumRow
+              count={(buckets || []).filter((b: any) => !b.album_id).length}
+              onPress={() => {}}
+            />
+          </ScrollView>
         )}
         
         {activeTab === 'calendar' && (
-          <CalendarTab ListHeaderComponent={renderHeader()} />
+          <CalendarTab />
         )}
       </View>
 
@@ -260,7 +245,32 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 20,
-    paddingBottom: 120, // space for FAB + TabBar
+    paddingBottom: 120,
+  },
+  albumsContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 120,
+  },
+  albumsLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  albumsLabelHighlight: {
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    fontSize: 14,
+  },
+  albumsLabel: {
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    fontSize: 14,
+  },
+  albumGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 12,
   },
   empty: {
     paddingTop: 60,

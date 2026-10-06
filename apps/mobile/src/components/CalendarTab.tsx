@@ -10,7 +10,7 @@ import { useAuthStore } from '../stores/auth.store';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { useRouter } from 'expo-router';
 
-export function CalendarTab({ ListHeaderComponent }: { ListHeaderComponent?: React.ReactNode }) {
+export function CalendarTab() {
   const { theme } = useTheme();
   const router = useRouter();
   const { user } = useAuthStore();
@@ -49,7 +49,6 @@ export function CalendarTab({ ListHeaderComponent }: { ListHeaderComponent?: Rea
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
-      {ListHeaderComponent}
       
       {/* Month Navigation */}
       <View style={styles.header}>
