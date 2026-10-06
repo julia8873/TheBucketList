@@ -77,6 +77,8 @@ export function useDeleteBucket() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: BUCKETS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: ['feed'] });
+      void queryClient.invalidateQueries({ queryKey: ['explore'] });
     },
   });
 }

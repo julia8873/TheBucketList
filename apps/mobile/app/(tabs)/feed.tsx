@@ -16,7 +16,16 @@ export default function FeedScreen() {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } = useFeed(user?.id);
 
   const flatData = useMemo(() => {
-    return data?.pages.flatMap((page) => page.items) || [];
+    const allItems = data?.pages.flatMap((page) => page.items) || [];
+    const uniqueItems = [];
+    const seen = new Set();
+    for (const item of allItems) {
+      if (item && item.bucket_id && !seen.has(item.bucket_id)) {
+        seen.add(item.bucket_id);
+        uniqueItems.push(item);
+      }
+    }
+    return uniqueItems;
   }, [data]);
 
   if (isLoading) {

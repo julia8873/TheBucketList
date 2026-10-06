@@ -12,7 +12,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#FAF8F5"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.bucketlist.app",
@@ -54,6 +56,14 @@
         {
           "photosPermission": "TheBucketList needs access to your photos to add them to completed items.",
           "cameraPermission": "TheBucketList needs access to your camera to capture the moment."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "TheBucketList needs access to your photos to save the pictures you download.",
+          "savePhotosPermission": "TheBucketList needs permission to save photos to your gallery.",
+          "isAccessMediaLocationEnabled": false
         }
       ],
       [

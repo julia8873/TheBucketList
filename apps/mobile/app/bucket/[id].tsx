@@ -16,11 +16,14 @@ import {
   Animated,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  TextInput,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
+import * as MediaLibrary from 'expo-media-library';
+import * as FileSystem from 'expo-file-system';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Typography, useTheme } from '@bucketlist/ui';
 import {
@@ -44,6 +47,8 @@ import {
   Trash2,
   X,
   ListPlus,
+  Plus,
+  Download,
 } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -54,13 +59,12 @@ import { useAuthStore } from '../../src/stores/auth.store';
 import { useAddComment, useCopyBucket, useToggleReaction } from '../../src/hooks/useSocial';
 import { useDeleteBucket } from '../../src/hooks/useBuckets';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
+import { BucketCover } from '../../src/components/BucketCover';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const COVER_HEIGHT = 300;
-// Cuánto se meten las etiquetas (Completada · Pública · Álbum) sobre la portada.
-// Las etiquetas miden ~32 px: con 16 px la parte negra las cruza por la mitad
-// (mitad superior sobre el degradado, mitad inferior sobre el negro sólido).
-const BADGES_OVERLAP = 16;
+const COVER_HEIGHT = 220;
+const BADGES_OVERLAP = 32;
+// Cuánto se meten las etiquetas sobre la portada.
 
 export default function BucketDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -69,9 +73,13 @@ export default function BucketDetailScreen() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
 
+  const insets = useSafeAreaInsets();
+  const coverTotalHeight = COVER_HEIGHT + insets.top;
+
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [sheetMode, setSheetMode] = useState<'menu' | 'visibility' | 'albums'>('menu');
+  const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
   const [albums, setAlbums] = useState<any[]>([]);
   const [albumsLoading, setAlbumsLoading] = useState(false);
   const sheetTranslateY = useRef(new Animated.Value(420)).current;
@@ -402,50 +410,26 @@ export default function BucketDetailScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* ── Cover ──────────────────────────────────────────────────────── */}
-        <View style={styles.coverContainer}>
-          {/* Photo pager */}
-          {photos.length > 0 ? (
-            <FlatList
-              data={photos}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onScroll={handlePhotoScroll}
-              scrollEventThrottle={16}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <Image
-                  source={{ uri: storageApi.getPublicUrl(item.storage_path) }}
-                  style={styles.coverImage}
-                />
-              )}
-              style={{ width: SCREEN_WIDTH, height: COVER_HEIGHT }}
-            />
-          ) : (
-            // Fallback gradient cover using category color or default
-            <LinearGradient
-              colors={[bucket.category?.color || '#C5763A', '#1A0D00']}
-              start={{ x: 0.5, y: 0 }}
-              end={{ x: 0.5, y: 1 }}
-              style={styles.coverImage}
-            />
-          )}
-
+        <BucketCover
+          value={bucket.cover_image}
+          title={bucket.title}
+          categorySlug={bucket.category?.slug}
+          seed={bucket.id}
+          style={{ width: SCREEN_WIDTH, height: coverTotalHeight }}
+        >
           {/* Bottom gradient fade */}
           <LinearGradient
-            // La foto/degradado se funde con el fondo negro justo al final de la
-            // portada, que es donde terminan las etiquetas.
             colors={[
-              'transparent',
+              'rgba(0,0,0,0.15)',
               'transparent',
               'rgba(0,0,0,0.25)',
               'rgba(0,0,0,0.80)',
               theme.colors.background,
             ]}
-            locations={[0, 0.45, 0.68, 0.88, 1]}
+            locations={[0, 0.35, 0.65, 0.88, 1]}
             start={{ x: 0.5, y: 0 }}
             end={{ x: 0.5, y: 1 }}
-            style={styles.coverGradient}
+            style={StyleSheet.absoluteFill}
           />
 
           {/* Nav buttons */}
@@ -462,22 +446,7 @@ export default function BucketDetailScreen() {
               </Pressable>
             </View>
           </SafeAreaView>
-
-          {/* Photo dots */}
-          {photos.length > 1 && (
-            <View style={styles.dotsRow}>
-              {photos.map((_, i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.dot,
-                    { backgroundColor: i === activePhotoIndex ? gold[400] : 'rgba(255,255,255,0.4)' }
-                  ]}
-                />
-              ))}
-            </View>
-          )}
-        </View>
+        </BucketCover>
 
         {/* ── Content ─────────────────────────────────────────────────────── */}
         <View style={styles.content}>
@@ -570,7 +539,7 @@ export default function BucketDetailScreen() {
           <View style={[styles.divider, { backgroundColor: dark[400] }]} />
 
           {/* Subtasks */}
-          {subtasks.length > 0 && (
+          {(subtasks.length > 0 || isOwner) && (
             <View style={styles.subtasksSection}>
               <View style={styles.subtasksHeader}>
                 <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
@@ -593,10 +562,120 @@ export default function BucketDetailScreen() {
                   </Typography>
                 </Pressable>
               ))}
+
+              {/* Añadir paso */}
+              {isOwner && (
+                <View style={[styles.subtaskRow, { opacity: 0.7 }]}>
+                  <Plus color={theme.colors.foregroundMuted} size={22} strokeWidth={1.8} />
+                  <TextInput
+                    placeholder="Añadir paso..."
+                    placeholderTextColor={theme.colors.foregroundMuted}
+                    style={[styles.subtaskText, { flex: 1, padding: 0, color: theme.colors.foreground }]}
+                    onSubmitEditing={async (e) => {
+                      const text = e.nativeEvent.text.trim();
+                      if (!text) return;
+                      // @ts-ignore
+                      e.target.clear();
+                      const { error } = await supabase.from('item_subtasks').insert({
+                        bucket_id: id,
+                        title: text,
+                        done: false,
+                        position: subtasks.length
+                      });
+                      if (error) {
+                        Alert.alert('Error', error.message);
+                      } else {
+                        void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+                      }
+                    }}
+                  />
+                </View>
+              )}
             </View>
+          )}
+
+          {/* ── Fotos ──────────────────────────────────────────────────────── */}
+          {(photos.length > 0 || isOwner) && (
+            <>
+              <View style={[styles.divider, { backgroundColor: dark[400], marginTop: 20 }]} />
+              <View style={styles.photosSection}>
+                <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
+                  FOTOS{photos.length > 0 ? ` · ${photos.length}` : ''}
+                </Typography>
+                <View style={styles.photosGrid}>
+                  {photos.map((photo) => (
+                    <Pressable
+                      key={photo.id}
+                      onPress={() => setViewingPhoto(storageApi.getPublicUrl(photo.storage_path))}
+                      style={styles.photoThumb}
+                    >
+                      <Image
+                        source={{ uri: storageApi.getPublicUrl(photo.thumb_path || photo.storage_path) }}
+                        style={styles.photoThumbImage}
+                        resizeMode="cover"
+                      />
+                    </Pressable>
+                  ))}
+                  {isOwner && (
+                    <Pressable style={styles.photoAddThumb} onPress={() => void pickAndUploadPhotos()}>
+                      <Camera color={gold[400]} size={24} strokeWidth={1.8} />
+                    </Pressable>
+                  )}
+                </View>
+              </View>
+            </>
           )}
         </View>
       </ScrollView>
+
+      {/* ── Fullscreen photo viewer ─────────────────────────────────────── */}
+      <Modal
+        visible={viewingPhoto !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setViewingPhoto(null)}
+      >
+        <View style={styles.photoViewerBackdrop}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setViewingPhoto(null)} />
+
+          {/* Nav */}
+          <View style={styles.photoViewerNav}>
+            <Pressable style={styles.photoViewerBtn} onPress={() => setViewingPhoto(null)}>
+              <X color="#fff" size={22} strokeWidth={2} />
+            </Pressable>
+            <Pressable
+              style={styles.photoViewerBtn}
+              onPress={async () => {
+                if (!viewingPhoto) return;
+                try {
+                  const { status } = await MediaLibrary.requestPermissionsAsync();
+                  if (status !== 'granted') {
+                    Alert.alert('Permiso denegado', 'Activa el permiso de galería en ajustes.');
+                    return;
+                  }
+                  const filename = viewingPhoto.split('/').pop() ?? 'foto.jpg';
+                  const localUri = FileSystem.cacheDirectory + filename;
+                  await FileSystem.downloadAsync(viewingPhoto, localUri);
+                  await MediaLibrary.saveToLibraryAsync(localUri);
+                  Alert.alert('Guardada', 'La foto se ha guardado en tu galería.');
+                } catch {
+                  Alert.alert('Error', 'No se pudo descargar la foto.');
+                }
+              }}
+            >
+              <Download color="#fff" size={22} strokeWidth={2} />
+            </Pressable>
+          </View>
+
+          {viewingPhoto && (
+            <Image
+              source={{ uri: viewingPhoto }}
+              style={styles.photoViewerImage}
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
 
       {/* ── Bottom action bar ─────────────────────────────────────────────── */}
       {isOwner && (
@@ -942,6 +1021,70 @@ const styles = StyleSheet.create({
   },
   subtaskDoneText: {
     // no strikethrough — matching the design
+  },
+
+  // ── Photos section ─────────────────────────────────────────────────────────
+  photosSection: {
+    marginTop: 14,
+    marginBottom: 6,
+  },
+  photosGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 14,
+  },
+  photoThumb: {
+    width: (SCREEN_WIDTH - 40 - 20) / 3,
+    height: (SCREEN_WIDTH - 40 - 20) / 3,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: dark[300],
+  },
+  photoThumbImage: {
+    width: '100%',
+    height: '100%',
+  },
+  photoAddThumb: {
+    width: (SCREEN_WIDTH - 40 - 20) / 3,
+    height: (SCREEN_WIDTH - 40 - 20) / 3,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: gold[400],
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(212,168,46,0.06)',
+  },
+
+  // ── Fullscreen photo viewer ─────────────────────────────────────────────────
+  photoViewerBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  photoViewerNav: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 56 : 32,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    zIndex: 10,
+  },
+  photoViewerBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoViewerImage: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_WIDTH * 1.25,
   },
 
   // ── iOS-style bottom sheet ───────────────────────────────────────────────
