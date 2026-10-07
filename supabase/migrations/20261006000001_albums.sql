@@ -7,6 +7,7 @@ CREATE TABLE albums (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   owner_id uuid NOT NULL REFERENCES profiles ON DELETE CASCADE,
   title text NOT NULL,
+  description text,
   cover_path text,
   visibility text DEFAULT 'private' CHECK (visibility IN ('public', 'followers', 'private')),
   is_shared bool DEFAULT false,

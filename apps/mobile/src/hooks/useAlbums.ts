@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
+import { useAuthStore } from '../stores/auth.store';
 
 export const ALBUMS_QUERY_KEY = ['albums'];
 
@@ -18,36 +19,62 @@ export function useAlbums(userId?: string) {
     queryKey: [...ALBUMS_QUERY_KEY, userId],
     queryFn: async (): Promise<AlbumWithProgress[]> => {
       if (!userId) return [];
-      
-      const { data, error } = await supabase
+
+      const { data: albumsData, error } = await supabase
         .from('albums')
-        .select(`
-          id, title, cover_path, visibility, is_shared,
-          album_progress ( total_tasks, completed_tasks )
-        `)
+        .select('*')
         .eq('owner_id', userId)
         .order('created_at', { ascending: false });
-        
+
       if (error) throw error;
       
-      // Map the nested view response to a flat object
-      return (data || []).map(album => {
-        // Handle array wrap from left join if needed, or single object
-        const progress = Array.isArray(album.album_progress) 
-          ? album.album_progress[0] 
-          : album.album_progress;
-          
+      if (!albumsData || albumsData.length === 0) return [];
+
+      const { data: progressData } = await supabase
+        .from('album_progress')
+        .select('*')
+        .in('album_id', albumsData.map(a => a.id));
+
+      return albumsData.map(album => {
+        const prog = progressData?.find(p => p.album_id === album.id);
+
         return {
           id: album.id,
           title: album.title,
           cover_path: album.cover_path,
           visibility: album.visibility,
           is_shared: album.is_shared,
-          total_tasks: progress?.total_tasks || 0,
-          completed_tasks: progress?.completed_tasks || 0,
+          total_tasks: prog?.total_tasks || 0,
+          completed_tasks: prog?.completed_tasks || 0,
         };
       });
     },
     enabled: !!userId,
+  });
+}
+
+export function useCreateAlbum() {
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+
+  return useMutation({
+    mutationFn: async (data: { title: string; description?: string; visibility: string }) => {
+      const { data: newAlbum, error } = await supabase
+        .from('albums')
+        .insert({
+          title: data.title,
+          description: data.description || '',
+          visibility: data.visibility,
+          owner_id: user?.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return newAlbum;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ALBUMS_QUERY_KEY });
+    },
   });
 }

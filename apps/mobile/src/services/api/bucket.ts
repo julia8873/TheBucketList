@@ -11,7 +11,7 @@ export const bucketApi = {
   getBuckets: async (userId?: string) => {
     let query = supabase
       .from('buckets')
-      .select('*, item_subtasks(*)');
+      .select('*, item_subtasks(*), album_items(album_id)');
 
     if (userId) {
       query = query.eq('user_id', userId);
@@ -20,8 +20,12 @@ export const bucketApi = {
     const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) throw error;
-    // We can cast the result to an array of Buckets with item_subtasks joined
-    return data as any[]; 
+    
+    // We map the album_items relation to a single album_id for easier UI handling
+    return data.map((b: any) => ({
+      ...b,
+      album_id: b.album_items && b.album_items.length > 0 ? b.album_items[0].album_id : null
+    }));
   },
 
   createBucket: async (payload: CreateBucketForm) => {

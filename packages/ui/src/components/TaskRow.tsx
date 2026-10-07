@@ -26,6 +26,8 @@ interface TaskRowProps {
   thumbnailUri?: string;
   subtasksDone?: number;
   subtasksTotal?: number;
+  counterCount?: number;
+  counterTarget?: number;
   onPress?: () => void;
   style?: ViewStyle;
 }
@@ -38,12 +40,16 @@ export function TaskRow({
   thumbnailUri,
   subtasksDone = 0,
   subtasksTotal = 0,
+  counterCount = 0,
+  counterTarget,
   onPress,
   style,
 }: TaskRowProps) {
   const { theme } = useTheme();
-  const hasProgress = subtasksTotal > 0;
-  const progress = hasProgress ? subtasksDone / subtasksTotal : 0;
+  const hasSubtaskProgress = subtasksTotal > 0;
+  const subtaskProgress = hasSubtaskProgress ? subtasksDone / subtasksTotal : 0;
+  const hasCounterProgress = (counterTarget ?? 0) > 0;
+  const counterProgress = hasCounterProgress ? Math.min(1, counterCount / counterTarget!) : 0;
 
   return (
     <Pressable
@@ -73,9 +79,16 @@ export function TaskRow({
             {meta}
           </Text>
         ) : null}
-        {hasProgress ? (
+        {hasSubtaskProgress ? (
           <ProgressBar
-            value={Math.round(progress * 100)}
+            value={Math.round(subtaskProgress * 100)}
+            style={styles.progress}
+            colorOverride={gold[400]}
+          />
+        ) : null}
+        {hasCounterProgress ? (
+          <ProgressBar
+            value={Math.round(counterProgress * 100)}
             style={styles.progress}
             colorOverride={gold[400]}
           />

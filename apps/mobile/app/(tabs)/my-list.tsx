@@ -10,6 +10,8 @@ import { Swipeable } from 'react-native-gesture-handler';
 import { useBuckets, useDeleteBucket } from '../../src/hooks/useBuckets';
 import { useAlbums } from '../../src/hooks/useAlbums';
 import { useAuthStore } from '../../src/stores/auth.store';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '../../src/services/supabase';
 import { CalendarTab } from '../../src/components/CalendarTab';
 import { categoryColors } from '@bucketlist/ui/src/tokens/colors';
 import { isPast, differenceInDays } from 'date-fns';
@@ -29,6 +31,26 @@ export default function MyListScreen() {
   const { data: buckets, isLoading } = useBuckets(user?.id);
   const deleteBucket = useDeleteBucket();
   const { data: albums, isLoading: isLoadingAlbums } = useAlbums(user?.id);
+
+  // Consulta de relación tareas ↔ álbumes para contar correctamente
+  const { data: albumItems } = useQuery({
+    queryKey: ['albums', 'items', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('album_items')
+        .select('album_id, bucket_id');
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user?.id,
+  });
+
+  const unassignedCount = useMemo(() => {
+    if (!buckets) return 0;
+    if (!albumItems) return buckets.length;
+    const inAnyAlbum = new Set(albumItems.map((i) => i.bucket_id));
+    return buckets.filter((b) => !inAnyAlbum.has(b.id)).length;
+  }, [buckets, albumItems]);
 
   // Compute stats
   const totalCount = buckets?.length || 0;
@@ -149,6 +171,8 @@ export default function MyListScreen() {
                     thumbnailColor={categoryColor}
                     subtasksDone={subtasksDone}
                     subtasksTotal={subtasksTotal}
+                    counterCount={(item as any).counter_count}
+                    counterTarget={(item as any).counter_target}
                     onPress={() => router.push(`/bucket/${item.id}`)}
                   />
                 </Swipeable>
@@ -186,13 +210,13 @@ export default function MyListScreen() {
                   onPress={() => router.push(`/album/${item.id}` as any)}
                 />
               ))}
-              <NewAlbumCard onPress={() => console.log('Create album')} />
+              <NewAlbumCard onPress={() => router.push('/(modals)/create-album')} />
             </View>
 
             {/* Sin álbum row */}
             <NoAlbumRow
-              count={(buckets || []).filter((b: any) => !b.album_id).length}
-              onPress={() => { }}
+              count={unassignedCount}
+              onPress={() => router.push('/album/unassigned')}
             />
           </ScrollView>
         )}

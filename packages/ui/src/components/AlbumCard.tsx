@@ -96,7 +96,7 @@ export function AlbumCard({
       <View style={styles.bottom}>
         <Text style={styles.title} numberOfLines={2}>{title}</Text>
         <Text style={styles.meta}>
-          {totalTasks} tareas · {completedTasks} hechas
+          {totalTasks} {totalTasks === 1 ? 'tarea' : 'tareas'} · {completedTasks} {completedTasks === 1 ? 'hecha' : 'hechas'}
         </Text>
         {/* Progress bar */}
         <View style={styles.progressTrack}>

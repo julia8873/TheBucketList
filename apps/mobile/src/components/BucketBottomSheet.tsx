@@ -197,7 +197,9 @@ export function BucketBottomSheet({
                       <View style={styles.sheetIcon}><FolderOpen color={gold[400]} size={21} /></View>
                       <View style={styles.sheetOptionText}>
                         <Typography variant="bodySemibold">{album.title}</Typography>
-                        <Typography variant="caption" color={theme.colors.foregroundMuted}>{visibilityLabel(album.visibility)}</Typography>
+                        <Typography variant="caption" color={theme.colors.foregroundMuted}>
+                          {album.visibility ? visibilityLabel(album.visibility) : ''}
+                        </Typography>
                       </View>
                     </Pressable>
                   ))}

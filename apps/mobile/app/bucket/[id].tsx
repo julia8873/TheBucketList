@@ -8,7 +8,7 @@ import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Typography, useTheme } from '@bucketlist/ui';
-import { ArrowLeft, Share2, MoreHorizontal, MapPin, Calendar, Heart, MessageCircle, FolderOpen, CheckCircle2, Circle, Camera, Check, Eye, Lock, Users, FolderPlus, Pencil, Trash2, X, ListPlus, Plus, Download } from 'lucide-react-native';
+import { ArrowLeft, Share2, MoreHorizontal, MapPin, Calendar, Heart, MessageCircle, FolderOpen, CheckCircle2, Circle, Camera, Check, Eye, Lock, Users, FolderPlus, Pencil, Trash2, X, ListPlus, Plus, Minus, Download } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { supabase } from '../../src/services/supabase';
@@ -17,9 +17,10 @@ import { processBucketImage } from '@bucketlist/shared';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useAddComment, useCopyBucket, useToggleReaction } from '../../src/hooks/useSocial';
 import { useDeleteBucket } from '../../src/hooks/useBuckets';
+import { useAlbums } from '../../src/hooks/useAlbums';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { BucketCover } from '../../src/components/BucketCover';
-import { SubtaskItem } from '../../src/components/SubtaskItem';
+import { SubtaskList } from '../../src/components/SubtaskList';
 import { BucketPhotoViewer } from '../../src/components/BucketPhotoViewer';
 import { BucketBottomSheet } from '../../src/components/BucketBottomSheet';
 import { styles } from './BucketDetail.styles';
@@ -28,6 +29,15 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const COVER_HEIGHT = 220;
 const BADGES_OVERLAP = 32;
 // Cuánto se meten las etiquetas sobre la portada.
+
+function ProgressBar({ value, total, color, track }: { value: number; total: number; color: string; track: string }) {
+  const pct = total > 0 ? Math.min(1, value / total) : 0;
+  return (
+    <View style={{ height: 6, borderRadius: 3, backgroundColor: track, overflow: 'hidden' }}>
+      <View style={{ width: `${pct * 100}%`, height: '100%', borderRadius: 3, backgroundColor: color }} />
+    </View>
+  );
+}
 
 export default function BucketDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -44,16 +54,19 @@ export default function BucketDetailScreen() {
   const [sheetMode, setSheetMode] = useState<'menu' | 'visibility' | 'albums' | 'status'>('menu');
   const [viewingPhotoIndex, setViewingPhotoIndex] = useState<number | null>(null);
   const [newSubtaskText, setNewSubtaskText] = useState('');
-  const [albums, setAlbums] = useState<any[]>([]);
-  const [albumsLoading, setAlbumsLoading] = useState(false);
+  const [scrollEnabled, setScrollEnabled] = useState(true);
   const sheetTranslateY = useRef(new Animated.Value(420)).current;
   const subtaskTimeouts = useRef<Record<string, NodeJS.Timeout>>({});
   const titleTimeout = useRef<NodeJS.Timeout | null>(null);
   const descTimeout = useRef<NodeJS.Timeout | null>(null);
+  const counterLabelTimeout = useRef<NodeJS.Timeout | null>(null);
+  const counterTargetTimeout = useRef<NodeJS.Timeout | null>(null);
+  const counterCountTimeout = useRef<NodeJS.Timeout | null>(null);
   const addComment = useAddComment();
   const copyBucket = useCopyBucket();
   const toggleReaction = useToggleReaction();
   const deleteBucket = useDeleteBucket();
+  const { data: albumsData, isLoading: albumsLoading } = useAlbums(user?.id);
 
   const { data: bucket, isLoading } = useQuery({
     queryKey: ['bucketDetail', id],
@@ -65,10 +78,25 @@ export default function BucketDetailScreen() {
           user:profiles!buckets_user_id_fkey(*),
           category:categories(*),
           item_subtasks(*),
-          bucket_photos(*)
+          bucket_photos(*),
+          album_items(album_id)
         `)
         .eq('id', id)
         .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+
+  const { data: bucketAlbum } = useQuery({
+    queryKey: ['bucketAlbum', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('album_items')
+        .select('album_id')
+        .eq('bucket_id', id)
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -173,7 +201,7 @@ export default function BucketDetailScreen() {
   };
 
   const invalidateBucket = () => {
-    void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+    void queryClient.invalidateQueries({ queryKey: ['bucketAlbum', id] });
     void queryClient.invalidateQueries({ queryKey: ['buckets'] });
     void queryClient.invalidateQueries({ queryKey: ['albums'] });
   };
@@ -212,26 +240,15 @@ export default function BucketDetailScreen() {
     closeSheet();
   };
 
-  const loadAlbums = async () => {
-    if (!user) return;
-    setAlbumsLoading(true);
-    const { data, error } = await supabase
-      .from('albums')
-      .select('id, title, visibility')
-      .eq('owner_id', user.id)
-      .order('created_at', { ascending: false });
-
-    setAlbumsLoading(false);
-    if (error) {
-      Alert.alert('No se pudieron cargar las carpetas', error.message);
-      return;
-    }
-    setAlbums(data || []);
+  const loadAlbums = () => {
     setSheetMode('albums');
   };
 
   const moveToAlbum = async (albumId: string | null) => {
     if (!user) return;
+
+    const fail = (message: string) =>
+      closeSheet(() => Alert.alert('No se pudo mover la tarea', message));
 
     const { error: removeError } = await supabase
       .from('album_items')
@@ -239,7 +256,7 @@ export default function BucketDetailScreen() {
       .eq('bucket_id', id);
 
     if (removeError) {
-      Alert.alert('No se pudo mover la tarea', removeError.message);
+      fail(removeError.message);
       return;
     }
 
@@ -249,7 +266,7 @@ export default function BucketDetailScreen() {
         .insert({ album_id: albumId, bucket_id: id, position: 0 });
 
       if (insertError) {
-        Alert.alert('No se pudo mover la tarea', insertError.message);
+        fail(insertError.message);
         return;
       }
     }
@@ -301,6 +318,7 @@ export default function BucketDetailScreen() {
         if (error) throw error;
       }
 
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
       invalidateBucket();
       Alert.alert('Fotos subidas', 'Las fotos se han añadido al momento.');
     } catch (error: any) {
@@ -324,6 +342,64 @@ export default function BucketDetailScreen() {
         },
       ]);
     });
+  };
+
+  const updateCounter = async (patch: Record<string, any>) => {
+    queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, ...patch } : oldData);
+
+    const { error } = await supabase.from('buckets').update(patch).eq('id', id);
+    if (error) {
+      Alert.alert('No se pudo actualizar el contador', error.message);
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+      return;
+    }
+    // No se invalida bucketDetail: con toques rápidos, un refetch antiguo pisaría el número
+    void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+  };
+
+  const changeCounter = (delta: number) => {
+    // Se lee de la caché y no del render, para que los toques rápidos no se pierdan
+    const current = queryClient.getQueryData<any>(['bucketDetail', id])?.counter_count ?? 0;
+    void updateCounter({ counter_count: Math.max(0, current + delta) });
+  };
+
+  const handleCounterCountChange = (n: number) => {
+    queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, counter_count: n } : oldData);
+    if (counterCountTimeout.current) clearTimeout(counterCountTimeout.current);
+    counterCountTimeout.current = setTimeout(() => {
+      void updateCounter({ counter_count: n });
+    }, 500);
+  };
+
+  const handleCounterLabelChange = (text: string) => {
+    queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, counter_label: text } : oldData);
+    if (counterLabelTimeout.current) clearTimeout(counterLabelTimeout.current);
+    counterLabelTimeout.current = setTimeout(() => {
+      void supabase.from('buckets').update({ counter_label: text.trim() || null }).eq('id', id);
+    }, 500);
+  };
+
+  const handleCounterTargetChange = (text: string) => {
+    const n = parseInt(text.replace(/[^0-9]/g, ''), 10);
+    const value = Number.isFinite(n) && n > 0 ? n : null;
+
+    queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, counter_target: value } : oldData);
+    if (counterTargetTimeout.current) clearTimeout(counterTargetTimeout.current);
+    counterTargetTimeout.current = setTimeout(() => {
+      void supabase.from('buckets').update({ counter_target: value }).eq('id', id);
+    }, 500);
+  };
+
+  const removeCounter = () => {
+    Alert.alert('Quitar contador', 'Se perderá la cuenta actual.', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Quitar',
+        style: 'destructive',
+        onPress: () =>
+          void updateCounter({ counter_enabled: false, counter_count: 0, counter_label: null, counter_target: null }),
+      },
+    ]);
   };
 
   const toggleSubtask = async (subtask: any) => {
@@ -495,6 +571,7 @@ export default function BucketDetailScreen() {
 
       <ScrollView
         style={{ flex: 1 }}
+        scrollEnabled={scrollEnabled}
         contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
@@ -570,15 +647,24 @@ export default function BucketDetailScreen() {
                 {visibilityLabel(bucket.visibility)}
               </Typography>
             </Pressable>
-            {/* Category */}
-            {bucket.category?.name_es && (
-              <View style={[styles.badge, styles.badgeMuted]}>
-                <FolderOpen color={theme.colors.foregroundMuted} size={13} strokeWidth={1.8} style={{ marginRight: 4 }} />
-                <Typography variant="caption" color={theme.colors.foreground} style={{ fontWeight: '600' }}>
-                  {bucket.category.name_es}
-                </Typography>
-              </View>
-            )}
+
+            {/* Album */}
+            <Pressable
+              style={[styles.badge, styles.badgeMuted]}
+              onPress={() => {
+                if (isOwner) {
+                  setSheetVisible(true);
+                  void loadAlbums();
+                }
+              }}
+            >
+              <FolderOpen color={theme.colors.foregroundMuted} size={13} strokeWidth={1.8} style={{ marginRight: 4 }} />
+              <Typography variant="caption" color={theme.colors.foreground} style={{ fontWeight: '600' }}>
+                {bucketAlbum?.album_id && albumsData 
+                  ? albumsData.find((a: any) => a.id === bucketAlbum.album_id)?.title || 'Sin álbum'
+                  : 'Sin álbum'}
+              </Typography>
+            </Pressable>
           </View>
 
           {/* Title */}
@@ -593,6 +679,17 @@ export default function BucketDetailScreen() {
             <Typography variant="h1" color={theme.colors.foreground} style={styles.title}>
               {bucket.title}
             </Typography>
+          )}
+
+          {/* Etiquetas */}
+          {bucket.category?.name_es && (
+            <View style={{ flexDirection: 'row', marginTop: 12, marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
+              <View style={[styles.badge, { backgroundColor: bucket.category.color || theme.colors.border }]}>
+                <Typography variant="caption" color="#FFF" style={{ fontWeight: '600' }}>
+                  {bucket.category.name_es}
+                </Typography>
+              </View>
+            </View>
           )}
 
           {/* Meta */}
@@ -661,6 +758,174 @@ export default function BucketDetailScreen() {
           {/* Divider */}
           <View style={[styles.divider, { backgroundColor: dark[400] }]} />
 
+          {/* Contador */}
+          {(bucket.counter_enabled || isOwner) && (
+            <View style={{ marginBottom: 24 }}>
+              <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
+                CONTADOR
+              </Typography>
+
+              {bucket.counter_enabled ? (
+                <>
+                  <View
+                    style={{
+                      marginTop: 12,
+                      padding: 16,
+                      borderRadius: 16,
+                      borderWidth: 1,
+                      borderColor: dark[400],
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <View style={{ flex: 1, paddingRight: 12 }}>
+                      {isOwner ? (
+                        <TextInput
+                          defaultValue={bucket.counter_label || ''}
+                          onChangeText={handleCounterLabelChange}
+                          placeholder="¿Qué cuentas?"
+                          placeholderTextColor={theme.colors.foregroundMuted}
+                          style={{ padding: 0, color: theme.colors.foregroundMuted, marginBottom: 4 }}
+                        />
+                      ) : bucket.counter_label ? (
+                        <Typography variant="body" color={theme.colors.foregroundMuted} style={{ marginBottom: 4 }}>
+                          {bucket.counter_label}
+                        </Typography>
+                      ) : null}
+
+                      {isOwner ? (
+                        <TextInput
+                          defaultValue={String(bucket.counter_count ?? 0)}
+                          onChangeText={(text) => {
+                            const n = parseInt(text.replace(/[^0-9]/g, ''), 10);
+                            if (!Number.isNaN(n)) {
+                              handleCounterCountChange(n);
+                            }
+                          }}
+                          keyboardType="number-pad"
+                          style={{
+                            padding: 0,
+                            color: theme.colors.foreground,
+                            fontFamily: 'PlayfairDisplay_700Bold', // H1 equivalent
+                            fontSize: 32,
+                            lineHeight: 38,
+                          }}
+                        />
+                      ) : (
+                        <Typography variant="h1" color={theme.colors.foreground}>
+                          {bucket.counter_count ?? 0}
+                        </Typography>
+                      )}
+                    </View>
+
+                    {isOwner && (
+                      <View style={{ flexDirection: 'row', gap: 8 }}>
+                        <Pressable
+                          onPress={() => changeCounter(-1)}
+                          style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 18,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderWidth: 1,
+                            borderColor: dark[400],
+                          }}
+                        >
+                          <Minus color={theme.colors.foregroundMuted} size={18} strokeWidth={2} />
+                        </Pressable>
+                        <Pressable
+                          onPress={() => changeCounter(1)}
+                          style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 18,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: gold[400],
+                          }}
+                        >
+                          <Plus color="#000" size={18} strokeWidth={2.4} />
+                        </Pressable>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Barra y objetivo (independiente de la barra de pasos) */}
+                  {(bucket.counter_target || isOwner) && (
+                    <View style={{ marginTop: 16 }}>
+                      {bucket.counter_target ? (
+                        <ProgressBar
+                          value={bucket.counter_count ?? 0}
+                          total={bucket.counter_target}
+                          color={gold[400]}
+                          track={dark[400]}
+                        />
+                      ) : null}
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+                        <Typography variant="bodySemibold" color={theme.colors.foregroundMuted}>
+                          {bucket.counter_target ? `${bucket.counter_count ?? 0} de ${bucket.counter_target}` : 'Sin objetivo'}
+                        </Typography>
+                        {isOwner && (
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <Typography variant="body" color={theme.colors.foreground}>Objetivo</Typography>
+                            <TextInput
+                              defaultValue={bucket.counter_target ? String(bucket.counter_target) : ''}
+                              onChangeText={handleCounterTargetChange}
+                              keyboardType="number-pad"
+                              placeholder="0"
+                              placeholderTextColor={theme.colors.foregroundMuted}
+                              style={{
+                                minWidth: 56,
+                                paddingVertical: 6,
+                                paddingHorizontal: 12,
+                                borderRadius: 10,
+                                borderWidth: 1,
+                                borderColor: gold[400],
+                                backgroundColor: dark[400],
+                                textAlign: 'center',
+                                color: gold[400],
+                                fontWeight: 'bold',
+                              }}
+                            />
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  )}
+
+                  {isOwner && (
+                    <Pressable onPress={removeCounter} style={{ alignSelf: 'flex-start', marginTop: 10 }}>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>
+                        Quitar contador
+                      </Typography>
+                    </Pressable>
+                  )}
+                </>
+              ) : (
+                <Pressable
+                  onPress={() => void updateCounter({ counter_enabled: true, counter_count: 0 })}
+                  style={{
+                    marginTop: 12,
+                    height: 56,
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    borderStyle: 'dashed',
+                    borderColor: dark[400],
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Plus color={gold[400]} size={20} strokeWidth={1.8} />
+                  <Typography variant="bodySemibold" color={gold[400]} style={{ marginLeft: 8 }}>
+                    Añadir contador
+                  </Typography>
+                </Pressable>
+              )}
+            </View>
+          )}
+
           {/* Subtasks */}
           {(subtasks.length > 0 || isOwner) && (
             <View style={styles.subtasksSection}>
@@ -669,19 +934,21 @@ export default function BucketDetailScreen() {
                   PASOS · {subtasksDone} DE {subtasks.length}
                 </Typography>
               </View>
-              {subtasks.map((st: any, index: number) => (
-                <SubtaskItem
-                  key={st.id}
-                  st={st}
-                  index={index}
-                  isOwner={isOwner}
-                  theme={theme}
-                  onToggle={(subtask) => void toggleSubtask(subtask)}
-                  onChange={handleSubtaskChange}
-                  onDelete={handleDeleteSubtask}
-                  onMove={(fromIndex, toIndex) => void handleMoveSubtask(fromIndex, toIndex)}
-                />
-              ))}
+              {subtasks.length > 0 && (
+                <View style={{ marginTop: 10, marginBottom: 8 }}>
+                  <ProgressBar value={subtasksDone} total={subtasks.length} color={gold[400]} track={dark[400]} />
+                </View>
+              )}
+              <SubtaskList
+                subtasks={subtasks}
+                isOwner={isOwner}
+                theme={theme}
+                onToggle={(subtask) => void toggleSubtask(subtask)}
+                onChange={handleSubtaskChange}
+                onDelete={handleDeleteSubtask}
+                onMove={(from, to) => void handleMoveSubtask(from, to)}
+                onDraggingChange={(dragging) => setScrollEnabled(!dragging)}
+              />
 
               {/* Añadir paso */}
               {isOwner && (
@@ -795,7 +1062,7 @@ export default function BucketDetailScreen() {
         setSheetMode={setSheetMode}
         albumsLoading={albumsLoading}
         moveToAlbum={moveToAlbum}
-        albums={albums}
+        albums={albumsData ?? []}
       />
     </View>
   );
