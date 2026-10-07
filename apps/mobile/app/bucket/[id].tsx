@@ -8,7 +8,7 @@ import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Typography, useTheme } from '@bucketlist/ui';
-import { ArrowLeft, Share2, MoreHorizontal, MapPin, Calendar, Heart, MessageCircle, FolderOpen, CheckCircle2, Circle, Camera, Check, Eye, Lock, Users, FolderPlus, Pencil, Trash2, X, ListPlus, Plus, Minus, Download } from 'lucide-react-native';
+import { ArrowLeft, Share2, MoreHorizontal, MapPin, Calendar, Heart, MessageCircle, FolderOpen, CheckCircle2, Circle, Camera, Check, Eye, Lock, Users, FolderPlus, Pencil, Trash2, X, ListPlus, Plus, Minus, Download, ArrowUp, ArrowDown } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { supabase } from '../../src/services/supabase';
@@ -141,6 +141,10 @@ export default function BucketDetailScreen() {
     }).start();
   }, [sheetVisible, sheetTranslateY]);
 
+  const [photoSearchQuery, setPhotoSearchQuery] = useState('');
+  const [photoSortField, setPhotoSortField] = useState<'date' | 'title'>('date');
+  const [photoSortDir, setPhotoSortDir] = useState<'desc' | 'asc'>('desc');
+
   if (isLoading) {
     return (
       <View style={[styles.container, styles.center, { backgroundColor: theme.colors.background }]}>
@@ -158,7 +162,21 @@ export default function BucketDetailScreen() {
   }
 
   const isOwner = bucket.user_id === user?.id;
-  const photos: any[] = bucket.bucket_photos || [];
+  let photos: any[] = bucket.bucket_photos || [];
+  
+  if (photoSearchQuery.trim()) {
+    const q = photoSearchQuery.toLowerCase();
+    photos = photos.filter((p: any) => p.title?.toLowerCase().includes(q));
+  }
+  photos.sort((a, b) => {
+    if (photoSortField === 'title') {
+      const cmp = (a.title || '').localeCompare(b.title || '');
+      return photoSortDir === 'asc' ? cmp : -cmp;
+    }
+    const da = new Date(a.created_at || 0).getTime();
+    const db = new Date(b.created_at || 0).getTime();
+    return photoSortDir === 'asc' ? da - db : db - da;
+  });
   const subtasks: any[] = [...(bucket.item_subtasks || [])].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
   const comments: any[] = commentsData || [];
   const subtasksDone = subtasks.filter((s) => s.done).length;
@@ -386,7 +404,9 @@ export default function BucketDetailScreen() {
     queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, counter_target: value } : oldData);
     if (counterTargetTimeout.current) clearTimeout(counterTargetTimeout.current);
     counterTargetTimeout.current = setTimeout(() => {
-      void supabase.from('buckets').update({ counter_target: value }).eq('id', id);
+      void supabase.from('buckets').update({ counter_target: value }).eq('id', id).then(({ error }) => {
+        if (error) console.error('Failed to update counter_target:', error);
+      });
     }, 500);
   };
 
@@ -970,13 +990,49 @@ export default function BucketDetailScreen() {
           )}
 
           {/* ── Fotos ──────────────────────────────────────────────────────── */}
-          {(photos.length > 0 || isOwner) && (
+          {(bucket.bucket_photos?.length > 0 || isOwner) && (
             <>
               <View style={[styles.divider, { backgroundColor: dark[400], marginTop: 20 }]} />
               <View style={styles.photosSection}>
-                <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
-                  FOTOS{photos.length > 0 ? ` · ${photos.length}` : ''}
-                </Typography>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
+                    FOTOS{bucket.bucket_photos?.length > 0 ? ` · ${bucket.bucket_photos?.length}` : ''}
+                  </Typography>
+                  {bucket.bucket_photos?.length > 0 && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <Pressable onPress={() => setPhotoSortField(prev => prev === 'date' ? 'title' : 'date')}>
+                        <Typography variant="caption" color={theme.colors.foregroundMuted}>
+                          {photoSortField === 'date' ? 'Por fecha' : 'Por nombre'}
+                        </Typography>
+                      </Pressable>
+                      <Pressable onPress={() => setPhotoSortDir(prev => prev === 'desc' ? 'asc' : 'desc')}>
+                        {photoSortDir === 'desc' ? (
+                          <ArrowDown color={theme.colors.foregroundMuted} size={16} />
+                        ) : (
+                          <ArrowUp color={theme.colors.foregroundMuted} size={16} />
+                        )}
+                      </Pressable>
+                    </View>
+                  )}
+                </View>
+
+                {bucket.bucket_photos?.length > 0 && (
+                  <TextInput
+                    placeholder="Buscar foto..."
+                    placeholderTextColor={theme.colors.foregroundMuted}
+                    value={photoSearchQuery}
+                    onChangeText={setPhotoSearchQuery}
+                    style={{
+                      backgroundColor: dark[400],
+                      borderRadius: 12,
+                      paddingHorizontal: 16,
+                      paddingVertical: 10,
+                      color: theme.colors.foreground,
+                      marginBottom: 16,
+                    }}
+                  />
+                )}
+
                 <View style={styles.photosGrid}>
                   {photos.map((photo, index) => (
                     <Pressable
@@ -984,7 +1040,7 @@ export default function BucketDetailScreen() {
                       onPress={() => setViewingPhotoIndex(index)}
                       style={[
                         styles.photoThumb,
-                        photos.length === 1 && { width: '100%', height: (SCREEN_WIDTH - 40) * 1.25 }
+                        photos.length === 1 && { width: '100%', height: (SCREEN_WIDTH - 40) * 1.25, marginBottom: 40 }
                       ]}
                     >
                       <Image
@@ -992,18 +1048,26 @@ export default function BucketDetailScreen() {
                         style={styles.photoThumbImage}
                         resizeMode="cover"
                       />
+                      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.5)', padding: 6 }}>
+                        <Typography variant="caption" color="#fff" numberOfLines={1}>
+                          {photo.title || 'Sin título'}
+                        </Typography>
+                        <Typography variant="caption" color="rgba(255,255,255,0.7)">
+                          {photo.created_at ? new Date(photo.created_at).toLocaleDateString() : ''}
+                        </Typography>
+                      </View>
                     </Pressable>
                   ))}
                   {isOwner && (
                     <Pressable
                       style={[
                         styles.photoAddThumb,
-                        photos.length <= 1 && { width: '100%', height: 72, flexDirection: 'row' }
+                        photos.length === 0 && { width: '100%', height: 72, flexDirection: 'row' }
                       ]}
                       onPress={() => void pickAndUploadPhotos()}
                     >
                       <Camera color={gold[400]} size={24} strokeWidth={1.8} />
-                      {photos.length <= 1 && (
+                      {photos.length === 0 && (
                         <Typography variant="bodySemibold" color={gold[400]} style={{ marginLeft: 10 }}>
                           Añadir foto
                         </Typography>
@@ -1022,6 +1086,19 @@ export default function BucketDetailScreen() {
         photos={photos}
         viewingPhotoIndex={viewingPhotoIndex}
         setViewingPhotoIndex={setViewingPhotoIndex}
+        isOwner={isOwner}
+        onUpdateTitle={(photoId, title) => {
+          queryClient.setQueryData(['bucketDetail', id], (oldData: any) => {
+            if (!oldData) return oldData;
+            return {
+              ...oldData,
+              bucket_photos: (oldData.bucket_photos || []).map((p: any) => p.id === photoId ? { ...p, title } : p),
+            };
+          });
+          void supabase.from('bucket_photos').update({ title: title.trim() || null }).eq('id', photoId).then(({ error }) => {
+            if (error) console.error('Failed to update photo title:', error);
+          });
+        }}
       />
 
       {/* ── Bottom action bar ─────────────────────────────────────────────── */}

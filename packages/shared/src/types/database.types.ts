@@ -1,32 +1,99 @@
-
+﻿
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
   
-  "graphql_public": {
+  "public": {
           Tables: {
-            [_ in never]: never
-          }
-          Views: {
-            [_ in never]: never
-          }
-          Functions: {
-            "graphql":
-{ Args: { "extensions"?: Json,"operationName"?: string,"query"?: string,"variables"?: Json }; Returns: Json
-                           }
-          }
-          Enums: {
-            [_ in never]: never
-          }
-          CompositeTypes: {
-            [_ in never]: never
-          }
-        },"public": {
-          Tables: {
-            "app_config": {
+            "album_items": {
+                  Row: {
+                    "album_id": string,"bucket_id": string,"position": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "album_id": string,"bucket_id": string,"position"?: number | null
+                  }
+                  Update: {
+                    "album_id"?: string,"bucket_id"?: string,"position"?: number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "album_items_album_id_fkey"
+      columns: ["album_id"]
+isOneToOne: false
+      referencedRelation: "album_progress"
+      referencedColumns: ["album_id"]
+    },{
+      foreignKeyName: "album_items_album_id_fkey"
+      columns: ["album_id"]
+isOneToOne: false
+      referencedRelation: "albums"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "album_items_bucket_id_fkey"
+      columns: ["bucket_id"]
+isOneToOne: true
+      referencedRelation: "buckets"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"album_members": {
+                  Row: {
+                    "album_id": string,"role": string | null,"status": string | null,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "album_id": string,"role"?: string | null,"status"?: string | null,"user_id": string
+                  }
+                  Update: {
+                    "album_id"?: string,"role"?: string | null,"status"?: string | null,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "album_members_album_id_fkey"
+      columns: ["album_id"]
+isOneToOne: false
+      referencedRelation: "album_progress"
+      referencedColumns: ["album_id"]
+    },{
+      foreignKeyName: "album_members_album_id_fkey"
+      columns: ["album_id"]
+isOneToOne: false
+      referencedRelation: "albums"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "album_members_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"albums": {
+                  Row: {
+                    "cover_path": string | null,"created_at": string | null,"description": string | null,"id": string,"is_shared": boolean | null,"owner_id": string,"title": string,"visibility": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "cover_path"?: string | null,"created_at"?: string | null,"description"?: string | null,"id"?: string,"is_shared"?: boolean | null,"owner_id": string,"title": string,"visibility"?: string | null
+                  }
+                  Update: {
+                    "cover_path"?: string | null,"created_at"?: string | null,"description"?: string | null,"id"?: string,"is_shared"?: boolean | null,"owner_id"?: string,"title"?: string,"visibility"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "albums_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"app_config": {
                   Row: {
                     "key": string,"note": string | null,"value": NonNullable<Json>
                   }
+                  ComputedFields: never
                   Insert: {
                     "key": string,"note"?: string | null,"value": NonNullable<Json>
                   }
@@ -38,13 +105,14 @@ export type Database = {
                   ]
                 },"bucket_photos": {
                   Row: {
-                    "bucket_id": string,"created_at": string | null,"height": number | null,"id": string,"size_bytes": number,"storage_path": string,"thumb_path": string | null,"thumb_size_bytes": number | null,"user_id": string,"width": number | null
+                    "bucket_id": string,"created_at": string | null,"height": number | null,"id": string,"size_bytes": number,"storage_path": string,"thumb_path": string | null,"thumb_size_bytes": number | null,"title": string | null,"user_id": string,"width": number | null
                   }
+                  ComputedFields: never
                   Insert: {
-                    "bucket_id": string,"created_at"?: string | null,"height"?: number | null,"id"?: string,"size_bytes": number,"storage_path": string,"thumb_path"?: string | null,"thumb_size_bytes"?: number | null,"user_id": string,"width"?: number | null
+                    "bucket_id": string,"created_at"?: string | null,"height"?: number | null,"id"?: string,"size_bytes": number,"storage_path": string,"thumb_path"?: string | null,"thumb_size_bytes"?: number | null,"title"?: string | null,"user_id": string,"width"?: number | null
                   }
                   Update: {
-                    "bucket_id"?: string,"created_at"?: string | null,"height"?: number | null,"id"?: string,"size_bytes"?: number,"storage_path"?: string,"thumb_path"?: string | null,"thumb_size_bytes"?: number | null,"user_id"?: string,"width"?: number | null
+                    "bucket_id"?: string,"created_at"?: string | null,"height"?: number | null,"id"?: string,"size_bytes"?: number,"storage_path"?: string,"thumb_path"?: string | null,"thumb_size_bytes"?: number | null,"title"?: string | null,"user_id"?: string,"width"?: number | null
                   }
                   Relationships: [
                     {
@@ -63,13 +131,14 @@ isOneToOne: false
                   ]
                 },"buckets": {
                   Row: {
-                    "category_id": string | null,"completed_at": string | null,"copied_from_id": string | null,"copied_from_user_id": string | null,"counter_count": number,"counter_enabled": boolean,"counter_label": string | null,"counter_target": number | null,"created_at": string | null,"deadline": string | null,"description": string | null,"id": string,"location_lat": number | null,"location_lng": number | null,"location_text": string | null,"status": string | null,"template_id": string | null,"title": string,"updated_at": string | null,"user_id": string,"visibility": string | null
+                    "category_id": string | null,"completed_at": string | null,"copied_from_id": string | null,"copied_from_user_id": string | null,"counter_count": number,"counter_enabled": boolean,"counter_label": string | null,"counter_target": number | null,"cover_image": string | null,"created_at": string | null,"deadline": string | null,"description": string | null,"id": string,"location_lat": number | null,"location_lng": number | null,"location_text": string | null,"status": string | null,"template_id": string | null,"title": string,"updated_at": string | null,"user_id": string,"visibility": string | null
                   }
+                  ComputedFields: never
                   Insert: {
-                    "category_id"?: string | null,"completed_at"?: string | null,"copied_from_id"?: string | null,"copied_from_user_id"?: string | null,"counter_count"?: number,"counter_enabled"?: boolean,"counter_label"?: string | null,"counter_target"?: number | null,"created_at"?: string | null,"deadline"?: string | null,"description"?: string | null,"id"?: string,"location_lat"?: number | null,"location_lng"?: number | null,"location_text"?: string | null,"status"?: string | null,"template_id"?: string | null,"title": string,"updated_at"?: string | null,"user_id": string,"visibility"?: string | null
+                    "category_id"?: string | null,"completed_at"?: string | null,"copied_from_id"?: string | null,"copied_from_user_id"?: string | null,"counter_count"?: number,"counter_enabled"?: boolean,"counter_label"?: string | null,"counter_target"?: number | null,"cover_image"?: string | null,"created_at"?: string | null,"deadline"?: string | null,"description"?: string | null,"id"?: string,"location_lat"?: number | null,"location_lng"?: number | null,"location_text"?: string | null,"status"?: string | null,"template_id"?: string | null,"title": string,"updated_at"?: string | null,"user_id": string,"visibility"?: string | null
                   }
                   Update: {
-                    "category_id"?: string | null,"completed_at"?: string | null,"copied_from_id"?: string | null,"copied_from_user_id"?: string | null,"counter_count"?: number,"counter_enabled"?: boolean,"counter_label"?: string | null,"counter_target"?: number | null,"created_at"?: string | null,"deadline"?: string | null,"description"?: string | null,"id"?: string,"location_lat"?: number | null,"location_lng"?: number | null,"location_text"?: string | null,"status"?: string | null,"template_id"?: string | null,"title"?: string,"updated_at"?: string | null,"user_id"?: string,"visibility"?: string | null
+                    "category_id"?: string | null,"completed_at"?: string | null,"copied_from_id"?: string | null,"copied_from_user_id"?: string | null,"counter_count"?: number,"counter_enabled"?: boolean,"counter_label"?: string | null,"counter_target"?: number | null,"cover_image"?: string | null,"created_at"?: string | null,"deadline"?: string | null,"description"?: string | null,"id"?: string,"location_lat"?: number | null,"location_lng"?: number | null,"location_text"?: string | null,"status"?: string | null,"template_id"?: string | null,"title"?: string,"updated_at"?: string | null,"user_id"?: string,"visibility"?: string | null
                   }
                   Relationships: [
                     {
@@ -108,6 +177,7 @@ isOneToOne: false
                   Row: {
                     "color": string,"icon": string,"id": string,"name_en": string,"name_es": string,"slug": string
                   }
+                  ComputedFields: never
                   Insert: {
                     "color": string,"icon": string,"id"?: string,"name_en": string,"name_es": string,"slug": string
                   }
@@ -121,6 +191,7 @@ isOneToOne: false
                   Row: {
                     "body": string,"bucket_id": string,"created_at": string | null,"id": string,"updated_at": string | null,"user_id": string
                   }
+                  ComputedFields: never
                   Insert: {
                     "body": string,"bucket_id": string,"created_at"?: string | null,"id"?: string,"updated_at"?: string | null,"user_id": string
                   }
@@ -146,6 +217,7 @@ isOneToOne: false
                   Row: {
                     "actor_id": string,"bucket_id": string | null,"created_at": string | null,"id": string,"type": string | null
                   }
+                  ComputedFields: never
                   Insert: {
                     "actor_id": string,"bucket_id"?: string | null,"created_at"?: string | null,"id"?: string,"type"?: string | null
                   }
@@ -171,6 +243,7 @@ isOneToOne: false
                   Row: {
                     "created_at": string | null,"follower_id": string,"following_id": string,"status": string | null
                   }
+                  ComputedFields: never
                   Insert: {
                     "created_at"?: string | null,"follower_id": string,"following_id": string,"status"?: string | null
                   }
@@ -196,6 +269,7 @@ isOneToOne: false
                   Row: {
                     "bucket_id": string,"created_at": string | null,"done": boolean | null,"id": string,"position": number | null,"title": string
                   }
+                  ComputedFields: never
                   Insert: {
                     "bucket_id": string,"created_at"?: string | null,"done"?: boolean | null,"id"?: string,"position"?: number | null,"title": string
                   }
@@ -215,6 +289,7 @@ isOneToOne: false
                   Row: {
                     "comment_push": boolean | null,"deadline_push": boolean | null,"follow_push": boolean | null,"friend_completed_push": boolean | null,"quiet_end": string | null,"quiet_start": string | null,"reaction_push": boolean | null,"updated_at": string | null,"user_id": string
                   }
+                  ComputedFields: never
                   Insert: {
                     "comment_push"?: boolean | null,"deadline_push"?: boolean | null,"follow_push"?: boolean | null,"friend_completed_push"?: boolean | null,"quiet_end"?: string | null,"quiet_start"?: string | null,"reaction_push"?: boolean | null,"updated_at"?: string | null,"user_id": string
                   }
@@ -234,6 +309,7 @@ isOneToOne: true
                   Row: {
                     "actor_id": string | null,"bucket_id": string | null,"comment_id": string | null,"created_at": string | null,"id": string,"is_read": boolean | null,"recipient_id": string,"type": string
                   }
+                  ComputedFields: never
                   Insert: {
                     "actor_id"?: string | null,"bucket_id"?: string | null,"comment_id"?: string | null,"created_at"?: string | null,"id"?: string,"is_read"?: boolean | null,"recipient_id": string,"type": string
                   }
@@ -271,6 +347,7 @@ isOneToOne: false
                   Row: {
                     "avatar_url": string | null,"bio": string | null,"created_at": string | null,"display_name": string | null,"id": string,"storage_used_bytes": number | null,"updated_at": string | null,"username": string,"visibility": string | null
                   }
+                  ComputedFields: never
                   Insert: {
                     "avatar_url"?: string | null,"bio"?: string | null,"created_at"?: string | null,"display_name"?: string | null,"id": string,"storage_used_bytes"?: number | null,"updated_at"?: string | null,"username": string,"visibility"?: string | null
                   }
@@ -284,6 +361,7 @@ isOneToOne: false
                   Row: {
                     "created_at": string | null,"id": string,"platform": string | null,"token": string,"user_id": string
                   }
+                  ComputedFields: never
                   Insert: {
                     "created_at"?: string | null,"id"?: string,"platform"?: string | null,"token": string,"user_id": string
                   }
@@ -303,6 +381,7 @@ isOneToOne: false
                   Row: {
                     "bucket_id": string,"created_at": string | null,"emoji": string,"id": string,"user_id": string
                   }
+                  ComputedFields: never
                   Insert: {
                     "bucket_id": string,"created_at"?: string | null,"emoji": string,"id"?: string,"user_id": string
                   }
@@ -328,6 +407,7 @@ isOneToOne: false
                   Row: {
                     "bucket_id": string | null,"comment_id": string | null,"created_at": string | null,"id": string,"reason": string,"reporter_id": string,"resolved": boolean | null
                   }
+                  ComputedFields: never
                   Insert: {
                     "bucket_id"?: string | null,"comment_id"?: string | null,"created_at"?: string | null,"id"?: string,"reason": string,"reporter_id": string,"resolved"?: boolean | null
                   }
@@ -355,54 +435,11 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"shared_list_members": {
-                  Row: {
-                    "list_id": string,"role": string | null,"user_id": string
-                  }
-                  Insert: {
-                    "list_id": string,"role"?: string | null,"user_id": string
-                  }
-                  Update: {
-                    "list_id"?: string,"role"?: string | null,"user_id"?: string
-                  }
-                  Relationships: [
-                    {
-      foreignKeyName: "shared_list_members_list_id_fkey"
-      columns: ["list_id"]
-isOneToOne: false
-      referencedRelation: "shared_lists"
-      referencedColumns: ["id"]
-    },{
-      foreignKeyName: "shared_list_members_user_id_fkey"
-      columns: ["user_id"]
-isOneToOne: false
-      referencedRelation: "profiles"
-      referencedColumns: ["id"]
-    }
-                  ]
-                },"shared_lists": {
-                  Row: {
-                    "created_at": string | null,"description": string | null,"id": string,"name": string,"owner_id": string,"visibility": string | null
-                  }
-                  Insert: {
-                    "created_at"?: string | null,"description"?: string | null,"id"?: string,"name": string,"owner_id": string,"visibility"?: string | null
-                  }
-                  Update: {
-                    "created_at"?: string | null,"description"?: string | null,"id"?: string,"name"?: string,"owner_id"?: string,"visibility"?: string | null
-                  }
-                  Relationships: [
-                    {
-      foreignKeyName: "shared_lists_owner_id_fkey"
-      columns: ["owner_id"]
-isOneToOne: false
-      referencedRelation: "profiles"
-      referencedColumns: ["id"]
-    }
-                  ]
                 },"templates": {
                   Row: {
                     "category_id": string | null,"created_at": string | null,"creator_id": string | null,"description": string | null,"id": string,"is_official": boolean | null,"title": string,"use_count": number | null
                   }
+                  ComputedFields: never
                   Insert: {
                     "category_id"?: string | null,"created_at"?: string | null,"creator_id"?: string | null,"description"?: string | null,"id"?: string,"is_official"?: boolean | null,"title": string,"use_count"?: number | null
                   }
@@ -427,10 +464,27 @@ isOneToOne: false
                 }
           }
           Views: {
-            [_ in never]: never
+            "album_progress": {
+                  Row: {
+                    "album_id": string | null,"completed_tasks": number | null,"total_tasks": number | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                }
           }
           Functions: {
-            "is_following":
+            "auth_is_album_owner":
+{ Args: { "album_uuid": string }; Returns: boolean
+                           },
+"calendar_month":
+{ Args: { "p_month": number,"p_tz"?: string,"p_user_id": string,"p_year": number }; Returns: Json
+                           },
+"delete_user":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"is_following":
 { Args: { "target_user_id": string }; Returns: boolean
                            }
           }
@@ -549,11 +603,7 @@ export type CompositeTypes<
   : never
 
 export const Constants = {
-  "graphql_public": {
-          Enums: {
-            
-          }
-        },"public": {
+  "public": {
           Enums: {
             
           }

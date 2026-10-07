@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, View, Pressable, FlatList, Image, Dimensions, Platform, Alert, StyleSheet } from 'react-native';
+import { Modal, View, Pressable, FlatList, Image, Dimensions, Platform, Alert, StyleSheet, TextInput } from 'react-native';
 import { X, Download } from 'lucide-react-native';
 import { Typography } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
@@ -13,14 +13,18 @@ type BucketPhotoViewerProps = {
   photos: any[];
   viewingPhotoIndex: number | null;
   setViewingPhotoIndex: (index: number | null) => void;
+  isOwner?: boolean;
+  onUpdateTitle?: (photoId: string, title: string) => void;
 };
 
-export function BucketPhotoViewer({ photos, viewingPhotoIndex, setViewingPhotoIndex }: BucketPhotoViewerProps) {
+export function BucketPhotoViewer({ photos, viewingPhotoIndex, setViewingPhotoIndex, isOwner, onUpdateTitle }: BucketPhotoViewerProps) {
   return (
     <Modal
       visible={viewingPhotoIndex !== null}
-      transparent
+      transparent={true}
       animationType="fade"
+      presentationStyle="overFullScreen"
+      statusBarTranslucent={true}
       onRequestClose={() => setViewingPhotoIndex(null)}
     >
       <View style={styles.photoViewerBackdrop}>
@@ -53,6 +57,45 @@ export function BucketPhotoViewer({ photos, viewingPhotoIndex, setViewingPhotoIn
               </View>
             )}
           />
+        )}
+
+        {viewingPhotoIndex !== null && photos[viewingPhotoIndex] && (
+          <View style={{
+            position: 'absolute',
+            top: Platform.OS === 'ios' ? 56 : 32,
+            left: 20,
+            right: 80,
+            backgroundColor: 'rgba(20, 20, 20, 0.85)',
+            paddingHorizontal: 16,
+            paddingVertical: 10,
+            borderRadius: 22,
+            borderWidth: 1,
+            borderColor: 'rgba(255,255,255,0.1)',
+            zIndex: 10,
+            justifyContent: 'center',
+          }}>
+            {isOwner ? (
+              <TextInput
+                placeholder="Añadir título..."
+                placeholderTextColor="rgba(255,255,255,0.5)"
+                defaultValue={photos[viewingPhotoIndex].title || ''}
+                onChangeText={(text) => onUpdateTitle?.(photos[viewingPhotoIndex].id, text)}
+                style={{
+                  color: '#fff',
+                  fontSize: 16,
+                  fontFamily: 'PlayfairDisplay_700Bold',
+                  textAlign: 'left',
+                }}
+              />
+            ) : (
+              <Typography variant="bodySemibold" color="#fff" style={{ textAlign: 'left' }}>
+                {photos[viewingPhotoIndex].title || ''}
+              </Typography>
+            )}
+            <Typography variant="caption" color="rgba(255,255,255,0.7)" style={{ textAlign: 'left', fontSize: 11, marginTop: 2 }}>
+              {photos[viewingPhotoIndex].created_at ? new Date(photos[viewingPhotoIndex].created_at).toLocaleDateString() : ''}
+            </Typography>
+          </View>
         )}
 
         {viewingPhotoIndex !== null && photos[viewingPhotoIndex] && (
@@ -92,7 +135,7 @@ export function BucketPhotoViewer({ photos, viewingPhotoIndex, setViewingPhotoIn
 const styles = StyleSheet.create({
   photoViewerBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.95)',
+    backgroundColor: '#000',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -102,7 +145,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     paddingHorizontal: 20,
     zIndex: 10,
   },
@@ -110,7 +153,9 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: '#1a1a1a',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
