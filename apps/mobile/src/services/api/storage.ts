@@ -78,6 +78,15 @@ export const storageApi = {
     }
   },
 
+  uploadSingle: async (path: string, uri: string, contentType: string = 'image/jpeg') => {
+    const data = await uriToArrayBuffer(uri);
+    const { error } = await supabase.storage
+      .from('photos')
+      .upload(path, data, { contentType, upsert: true });
+    if (error) throw error;
+    return supabase.storage.from('photos').getPublicUrl(path).data.publicUrl;
+  },
+
   getPublicUrl: (path: string) => {
     return supabase.storage.from('photos').getPublicUrl(path).data.publicUrl;
   }

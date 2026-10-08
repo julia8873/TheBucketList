@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal, View, Pressable, Animated, ActivityIndicator, Alert, StyleSheet } from 'react-native';
 import { Typography } from '@bucketlist/ui';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
-import { X, Camera, FolderPlus, ListPlus, Trash2, Circle, MoreHorizontal, CheckCircle2, Check, Eye, Users, Lock, ArrowLeft, FolderOpen } from 'lucide-react-native';
+import { X, Camera, FolderPlus, ListPlus, Trash2, Circle, MoreHorizontal, CheckCircle2, Check, Eye, Users, Lock, ArrowLeft, FolderOpen, Image as ImageIcon } from 'lucide-react-native';
 import { styles } from '../../app/bucket/BucketDetail.styles';
 
 type BucketBottomSheetProps = {
@@ -13,6 +13,7 @@ type BucketBottomSheetProps = {
   theme: any;
   isOwner: boolean;
   uploadPhotos: () => void;
+  uploadCover: () => void;
   loadAlbums: () => void;
   user: any;
   copyBucket: any;
@@ -28,7 +29,7 @@ type BucketBottomSheetProps = {
 };
 
 export function BucketBottomSheet({
-  sheetVisible, sheetMode, sheetTranslateY, closeSheet, theme, isOwner, uploadPhotos, loadAlbums, user, copyBucket, id, handleDelete, bucket, handleChangeStatus, handleChangeVisibility, setSheetMode, albumsLoading, moveToAlbum, albums
+  sheetVisible, sheetMode, sheetTranslateY, closeSheet, theme, isOwner, uploadPhotos, uploadCover, loadAlbums, user, copyBucket, id, handleDelete, bucket, handleChangeStatus, handleChangeVisibility, setSheetMode, albumsLoading, moveToAlbum, albums
 }: BucketBottomSheetProps) {
   const visibilityLabel = (v: string) => {
     switch (v) {
@@ -72,6 +73,16 @@ export function BucketBottomSheet({
                     <View style={styles.sheetOptionText}>
                       <Typography variant="bodySemibold">Subir fotos</Typography>
                       <Typography variant="caption" color={theme.colors.foregroundMuted}>Añade recuerdos a este momento</Typography>
+                    </View>
+                  </Pressable>
+                )}
+
+                {isOwner && (
+                  <Pressable style={styles.sheetOption} onPress={() => void uploadCover()}>
+                    <View style={styles.sheetIcon}><ImageIcon color={gold[400]} size={21} /></View>
+                    <View style={styles.sheetOptionText}>
+                      <Typography variant="bodySemibold">Cambiar portada</Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>Sube una imagen para la cabecera</Typography>
                     </View>
                   </Pressable>
                 )}

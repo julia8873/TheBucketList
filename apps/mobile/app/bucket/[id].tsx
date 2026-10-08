@@ -372,6 +372,49 @@ export default function BucketDetailScreen() {
     closeSheet(() => void pickAndUploadPhotos());
   };
 
+  const pickAndUploadCover = async () => {
+    if (!user) return;
+
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permiso necesario', 'Necesitamos acceso a tus fotos para la portada.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 1,
+    });
+
+    if (result.canceled || !result.assets.length) return;
+
+    try {
+      const processed = await processBucketImage(result.assets[0].uri);
+      
+      const path = `covers/${id}_${Date.now()}.jpg`;
+      const publicUrl = await storageApi.uploadSingle(path, processed.original.uri);
+
+      const { error } = await supabase
+        .from('buckets')
+        .update({ cover_image: publicUrl })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, cover_image: publicUrl } : oldData);
+      invalidateBucket();
+      Alert.alert('Portada actualizada', 'La portada se ha actualizado correctamente.');
+    } catch (error: any) {
+      Alert.alert('No se pudo actualizar la portada', error?.message || 'Inténtalo de nuevo.');
+    }
+  };
+
+  const uploadCover = () => {
+    closeSheet(() => void pickAndUploadCover());
+  };
+
   const handleDelete = () => {
     closeSheet(() => {
       Alert.alert('Eliminar tarea', '¿Seguro que quieres eliminar esta tarea? No se puede deshacer.', [
@@ -1160,6 +1203,7 @@ export default function BucketDetailScreen() {
         theme={theme}
         isOwner={isOwner}
         uploadPhotos={uploadPhotos}
+        uploadCover={uploadCover}
         loadAlbums={loadAlbums}
         user={user}
         copyBucket={copyBucket}
