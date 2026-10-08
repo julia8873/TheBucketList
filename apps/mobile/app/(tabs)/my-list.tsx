@@ -12,7 +12,9 @@ import { useAlbums } from '../../src/hooks/useAlbums';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../src/services/supabase';
+import { storageApi } from '../../src/services/api/storage';
 import { CalendarTab } from '../../src/components/CalendarTab';
+import { BucketCover } from '../../src/components/BucketCover';
 import { categoryColors } from '@bucketlist/ui/src/tokens/colors';
 import { isPast, differenceInDays } from 'date-fns';
 
@@ -135,6 +137,9 @@ export default function MyListScreen() {
                 ? `${item.category.name_es}${subtasksTotal > 0 ? ` · ${subtasksDone} de ${subtasksTotal} pasos` : ''}`
                 : undefined;
 
+              const coverPath = item.cover_image || (item.bucket_photos?.[0]?.thumb_path || item.bucket_photos?.[0]?.storage_path);
+              const coverUrl = coverPath ? storageApi.getPublicUrl(coverPath) : undefined;
+
               const renderRightActions = (progress: any, dragX: any) => {
                 return (
                   <Pressable
@@ -168,7 +173,16 @@ export default function MyListScreen() {
                     title={item.title}
                     meta={meta}
                     deadline={item.deadline}
-                    thumbnailColor={categoryColor}
+                    thumbnailElement={
+                      <BucketCover
+                        value={item.cover_image}
+                        title={item.title}
+                        categorySlug={item.category?.slug}
+                        seed={item.id}
+                        iconSize={40}
+                        style={StyleSheet.absoluteFill}
+                      />
+                    }
                     subtasksDone={subtasksDone}
                     subtasksTotal={subtasksTotal}
                     counterCount={(item as any).counter_count}

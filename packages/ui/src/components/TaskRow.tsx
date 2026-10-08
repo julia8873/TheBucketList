@@ -28,6 +28,7 @@ interface TaskRowProps {
   subtasksTotal?: number;
   counterCount?: number;
   counterTarget?: number;
+  thumbnailElement?: React.ReactNode;
   onPress?: () => void;
   style?: ViewStyle;
 }
@@ -42,6 +43,7 @@ export function TaskRow({
   subtasksTotal = 0,
   counterCount = 0,
   counterTarget,
+  thumbnailElement,
   onPress,
   style,
 }: TaskRowProps) {
@@ -64,8 +66,11 @@ export function TaskRow({
     >
       {/* Thumbnail */}
       <View style={[styles.thumbnail, { backgroundColor: thumbnailColor }]}>
-        {thumbnailUri ? (
-          <Image source={{ uri: thumbnailUri }} style={styles.thumbnailImg} />
+        {thumbnailElement ? (
+          thumbnailElement
+        ) : thumbnailUri ? (
+          // Use cover resize mode so the image fills the square nicely
+          <Image source={{ uri: thumbnailUri }} style={styles.thumbnailImg} resizeMode="cover" />
         ) : null}
       </View>
 

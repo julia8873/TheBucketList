@@ -12,13 +12,15 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../src/services/supabase';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { categoryColors } from '@bucketlist/ui/src/tokens/colors';
+import { storageApi } from '../../src/services/api/storage';
+import { BucketCover } from '../../src/components/BucketCover';
 
 export default function AlbumScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { theme } = useTheme();
   const router = useRouter();
   const { user } = useAuthStore();
-  
+
   const { data: buckets } = useBuckets(user?.id);
   const deleteBucket = useDeleteBucket();
   const { data: albums } = useAlbums(user?.id);
@@ -84,6 +86,9 @@ export default function AlbumScreen() {
               ? `${item.category.name_es}${subtasksTotal > 0 ? ` · ${subtasksDone} de ${subtasksTotal} pasos` : ''}`
               : undefined;
 
+            const coverPath = item.cover_image || (item.bucket_photos?.[0]?.thumb_path || item.bucket_photos?.[0]?.storage_path);
+            const coverUrl = coverPath ? storageApi.getPublicUrl(coverPath) : undefined;
+
             const renderRightActions = (progress: any, dragX: any) => {
               return (
                 <Pressable
@@ -117,7 +122,16 @@ export default function AlbumScreen() {
                   title={item.title}
                   meta={meta}
                   deadline={item.deadline}
-                  thumbnailColor={categoryColor}
+                  thumbnailElement={
+                    <BucketCover
+                      value={item.cover_image}
+                      title={item.title}
+                      categorySlug={item.category?.slug}
+                      seed={item.id}
+                      iconSize={40}
+                      style={StyleSheet.absoluteFill}
+                    />
+                  }
                   subtasksDone={subtasksDone}
                   subtasksTotal={subtasksTotal}
                   counterCount={(item as any).counter_count}

@@ -11,7 +11,7 @@ export const bucketApi = {
   getBuckets: async (userId?: string) => {
     let query = supabase
       .from('buckets')
-      .select('*, item_subtasks(*), album_items(album_id)');
+      .select('*, item_subtasks(*), album_items(album_id), bucket_photos(thumb_path, storage_path)');
 
     if (userId) {
       query = query.eq('user_id', userId);

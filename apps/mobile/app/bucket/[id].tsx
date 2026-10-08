@@ -144,6 +144,29 @@ export default function BucketDetailScreen() {
   const [photoSearchQuery, setPhotoSearchQuery] = useState('');
   const [photoSortField, setPhotoSortField] = useState<'date' | 'title'>('date');
   const [photoSortDir, setPhotoSortDir] = useState<'desc' | 'asc'>('desc');
+  const [photoSortMenuOpen, setPhotoSortMenuOpen] = useState(false);
+  const [sortMenuPos, setSortMenuPos] = useState({ top: 0, right: 20 });
+  const sortTriggerRef = useRef<View>(null);
+
+  const openSortMenu = () => {
+    sortTriggerRef.current?.measureInWindow((x, y, w, h) => {
+      setSortMenuPos({
+        top: y + h + 6,
+        right: Dimensions.get('window').width - (x + w),
+      });
+      setPhotoSortMenuOpen(true);
+    });
+  };
+
+  const handleSortOption = (field: 'date' | 'title') => {
+    if (photoSortField === field) {
+      setPhotoSortDir(prev => (prev === 'desc' ? 'asc' : 'desc'));
+    } else {
+      setPhotoSortField(field);
+      setPhotoSortDir(field === 'date' ? 'desc' : 'asc');
+      setPhotoSortMenuOpen(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -999,27 +1022,36 @@ export default function BucketDetailScreen() {
                     FOTOS{bucket.bucket_photos?.length > 0 ? ` · ${bucket.bucket_photos?.length}` : ''}
                   </Typography>
                   {bucket.bucket_photos?.length > 0 && (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                      <Pressable onPress={() => setPhotoSortField(prev => prev === 'date' ? 'title' : 'date')}>
-                        <Typography variant="caption" color={theme.colors.foregroundMuted}>
-                          {photoSortField === 'date' ? 'Por fecha' : 'Por nombre'}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>
+                        Ordenar por:
+                      </Typography>
+                      <Pressable
+                        ref={sortTriggerRef}
+                        collapsable={false}
+                        onPress={openSortMenu}
+                        hitSlop={8}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+                      >
+                        <Typography variant="caption" color={gold[400]}>
+                          {photoSortField === 'date' ? 'Fecha' : 'Nombre'}
                         </Typography>
-                      </Pressable>
-                      <Pressable onPress={() => setPhotoSortDir(prev => prev === 'desc' ? 'asc' : 'desc')}>
                         {photoSortDir === 'desc' ? (
-                          <ArrowDown color={theme.colors.foregroundMuted} size={16} />
+                          <ArrowDown color={gold[400]} size={14} />
                         ) : (
-                          <ArrowUp color={theme.colors.foregroundMuted} size={16} />
+                          <ArrowUp color={gold[400]} size={14} />
                         )}
                       </Pressable>
                     </View>
                   )}
                 </View>
 
+
+
                 {bucket.bucket_photos?.length > 0 && (
                   <TextInput
                     placeholder="Buscar foto..."
-                    placeholderTextColor={theme.colors.foregroundMuted}
+                    placeholderTextColor="rgba(255,255,255,0.5)"
                     value={photoSearchQuery}
                     onChangeText={setPhotoSearchQuery}
                     style={{
@@ -1027,7 +1059,7 @@ export default function BucketDetailScreen() {
                       borderRadius: 12,
                       paddingHorizontal: 16,
                       paddingVertical: 10,
-                      color: theme.colors.foreground,
+                      color: '#FFF',
                       marginBottom: 16,
                     }}
                   />
@@ -1141,6 +1173,73 @@ export default function BucketDetailScreen() {
         moveToAlbum={moveToAlbum}
         albums={albumsData ?? []}
       />
+
+      {/* Sort Menu Modal */}
+      <Modal
+        visible={photoSortMenuOpen}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setPhotoSortMenuOpen(false)}
+      >
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={() => setPhotoSortMenuOpen(false)}
+        >
+          <View
+            style={{
+              position: 'absolute',
+              top: sortMenuPos.top,
+              right: sortMenuPos.right,
+              minWidth: 130,
+              backgroundColor: dark[400],
+              borderRadius: 12,
+              overflow: 'hidden',
+              elevation: 8,
+              shadowColor: '#000',
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              shadowOffset: { width: 0, height: 4 },
+            }}
+          >
+            {([
+              { field: 'date', label: 'Fecha' },
+              { field: 'title', label: 'Nombre' },
+            ] as const).map((option, i) => {
+              const selected = photoSortField === option.field;
+              return (
+                <Pressable
+                  key={option.field}
+                  onPress={() => handleSortOption(option.field)}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    paddingHorizontal: 14,
+                    paddingVertical: 11,
+                    borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth,
+                    borderTopColor: 'rgba(255,255,255,0.1)',
+                  }}
+                >
+                  <Typography
+                    variant={selected ? 'bodySemibold' : 'body'}
+                    color={selected ? gold[400] : theme.colors.foreground}
+                  >
+                    {option.label}
+                  </Typography>
+                  {selected &&
+                    (photoSortDir === 'desc' ? (
+                      <ArrowDown color={gold[400]} size={16} />
+                    ) : (
+                      <ArrowUp color={gold[400]} size={16} />
+                    ))}
+                </Pressable>
+              );
+            })}
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
