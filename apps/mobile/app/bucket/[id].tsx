@@ -390,8 +390,11 @@ export default function BucketDetailScreen() {
 
     if (result.canceled || !result.assets.length) return;
 
+    const asset = result.assets[0];
+    if (!asset) return;
+
     try {
-      const processed = await processBucketImage(result.assets[0].uri);
+      const processed = await processBucketImage(asset.uri);
       
       const path = `covers/${id}_${Date.now()}.jpg`;
       const publicUrl = await storageApi.uploadSingle(path, processed.original.uri);

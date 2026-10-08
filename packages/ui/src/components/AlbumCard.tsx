@@ -56,6 +56,41 @@ export function AlbumCard({
   const progress = totalTasks > 0 ? completedTasks / totalTasks : 0;
   const [g1, g2] = COVER_GRADIENTS[colorIndex % COVER_GRADIENTS.length] || ['#1B4D3E', '#0A2E25'];
 
+  let parsedCover: any = null;
+  if (coverUri && coverUri.startsWith('{')) {
+    try {
+      parsedCover = JSON.parse(coverUri);
+    } catch (e) {
+      // Not JSON
+    }
+  }
+
+  let backgroundContent;
+  if (parsedCover) {
+    if (parsedCover.type === 'image' && parsedCover.uri) {
+      backgroundContent = <Image source={{ uri: parsedCover.uri }} style={StyleSheet.absoluteFill} contentFit="cover" />;
+    } else if ((parsedCover.type === 'gradient' || parsedCover.type === 'solid') && parsedCover.colors) {
+      backgroundContent = (
+        <LinearGradient
+          colors={parsedCover.colors}
+          start={parsedCover.diagonal ? { x: 0, y: 0 } : { x: 0.3, y: 0 }}
+          end={parsedCover.diagonal ? { x: 1, y: 1 } : { x: 0.7, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      );
+    } else {
+      backgroundContent = (
+        <LinearGradient colors={[g1, g2]} start={{ x: 0.3, y: 0 }} end={{ x: 0.7, y: 1 }} style={StyleSheet.absoluteFill} />
+      );
+    }
+  } else if (coverUri) {
+    backgroundContent = <Image source={{ uri: coverUri }} style={StyleSheet.absoluteFill} contentFit="cover" />;
+  } else {
+    backgroundContent = (
+      <LinearGradient colors={[g1, g2]} start={{ x: 0.3, y: 0 }} end={{ x: 0.7, y: 1 }} style={StyleSheet.absoluteFill} />
+    );
+  }
+
   return (
     <Pressable
       onPress={onPress}
@@ -66,16 +101,7 @@ export function AlbumCard({
       ]}
     >
       {/* Background: photo or gradient */}
-      {coverUri ? (
-        <Image source={{ uri: coverUri }} style={StyleSheet.absoluteFill} contentFit="cover" />
-      ) : (
-        <LinearGradient
-          colors={[g1, g2]}
-          start={{ x: 0.3, y: 0 }}
-          end={{ x: 0.7, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-      )}
+      {backgroundContent}
 
       {/* Bottom gradient so text is readable */}
       <LinearGradient

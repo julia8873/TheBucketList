@@ -58,7 +58,7 @@ export function useCreateAlbum() {
   const { user } = useAuthStore();
 
   return useMutation({
-    mutationFn: async (data: { title: string; description?: string; visibility: string }) => {
+    mutationFn: async (data: { title: string; description?: string; visibility: string; cover_path?: string; is_shared?: boolean }) => {
       const { data: newAlbum, error } = await supabase
         .from('albums')
         .insert({
@@ -66,6 +66,8 @@ export function useCreateAlbum() {
           description: data.description || '',
           visibility: data.visibility,
           owner_id: user?.id,
+          cover_path: data.cover_path || null,
+          is_shared: data.is_shared || false,
         })
         .select()
         .single();
@@ -78,3 +80,23 @@ export function useCreateAlbum() {
     },
   });
 }
+
+export function useDeleteAlbum() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('albums')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ALBUMS_QUERY_KEY });
+    },
+  });
+}
+
