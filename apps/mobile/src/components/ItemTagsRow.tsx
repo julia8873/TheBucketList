@@ -21,7 +21,7 @@ export function ItemTagsRow({ bucketId, isOwner }: ItemTagsRowProps) {
     const tags: TagItem[] = (itemTags ?? [])
         .map((it: any) => it.tag)
         .filter(Boolean)
-        .map((t: any) => ({ id: t.id, name: t.name, color: t.color }));
+        .map((t: any) => ({ id: t.id, name: t.name, color: t.color, emoji: t.emoji ?? null }));
 
     if (tags.length === 0 && !isOwner) return null;
 
@@ -37,6 +37,7 @@ export function ItemTagsRow({ bucketId, isOwner }: ItemTagsRowProps) {
                     label={t.name}
                     variant="colored"
                     color={t.color}
+                    emoji={t.emoji}
                     onPress={isOwner ? () => setOpen(true) : undefined}
                 />
             ))}

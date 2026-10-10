@@ -29,6 +29,8 @@ interface TaskRowProps {
   counterCount?: number;
   counterTarget?: number;
   thumbnailElement?: React.ReactNode;
+  /** Etiquetas de la tarea (se pintan entre el título y la meta). */
+  tagsElement?: React.ReactNode;
   onPress?: () => void;
   style?: ViewStyle;
   expiredAction?: boolean;
@@ -45,6 +47,7 @@ export function TaskRow({
   counterCount = 0,
   counterTarget,
   thumbnailElement,
+  tagsElement,
   onPress,
   style,
   expiredAction,
@@ -81,6 +84,7 @@ export function TaskRow({
         <Text style={[styles.title, { color: '#FFFFFF' }]} numberOfLines={2}>
           {title}
         </Text>
+        {tagsElement ? <View style={styles.tags}>{tagsElement}</View> : null}
         {meta ? (
           <Text style={[styles.meta, { color: '#9A9A9A' }]} numberOfLines={1}>
             {meta}
@@ -143,6 +147,12 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.serif,
     fontSize: 16,
     lineHeight: 22,
+  },
+  tags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginVertical: 2,
   },
   meta: {
     fontFamily: fontFamily.regular,

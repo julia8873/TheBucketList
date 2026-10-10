@@ -17,24 +17,20 @@ import {
 import { Search, X, ChevronLeft } from 'lucide-react-native';
 import { TagChip } from '@bucketlist/ui';
 import { useTags, useCreateTag } from '../hooks/useTags';
+import { TagAppearanceFields } from './TagAppearanceFields';
+import { TAG_COLORS, TAG_NAME_MAX, defaultColorForEmoji, defaultEmojiFor, hexToRgba } from '../constants/tagPresets';
 
 export interface TagItem {
     id: string;
     name: string;
     color: string;
+    emoji?: string | null;
 }
 
 const SCREEN_H = Dimensions.get('window').height;
 const SHEET_H = Math.min(690, SCREEN_H * 0.88);
 
-const COLORS = [
-    { name: 'dorado', value: '#D4B13A' },
-    { name: 'naranja', value: '#E8884A' },
-    { name: 'azul', value: '#3F7FD0' },
-    { name: 'morado', value: '#7A3FD0' },
-    { name: 'verde', value: '#1E8A5E' },
-    { name: 'rojo', value: '#C0453A' },
-];
+const COLORS = TAG_COLORS;
 
 const SUGGESTED = ['Naturaleza', 'Fotografía', 'Aniversario', 'En solitario'];
 
@@ -66,7 +62,9 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
     const [mode, setMode] = useState<'list' | 'create'>('list');
     const [query, setQuery] = useState('');
     const [name, setName] = useState('');
-    const [color, setColor] = useState(COLORS[0]!.value);
+    const [color, setColor] = useState<string>(COLORS[0]!.value);
+    const [emoji, setEmoji] = useState<string | null>(null);
+    const [createSession, setCreateSession] = useState(0);
     const [submitError, setSubmitError] = useState<string | null>(null);
 
     const { data: tags = [], isLoading, isError, refetch } = useTags();
@@ -151,16 +149,20 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
     };
 
     const openCreate = (prefill = '') => {
-        setName(prefill.slice(0, 24));
+        setName(prefill.slice(0, TAG_NAME_MAX));
         setColor(nextColor);
+        setEmoji(null);
+        setCreateSession((n) => n + 1);
         setSubmitError(null);
         switchMode('create');
     };
 
     const pickSuggestion = async (label: string) => {
         try {
-            const created = await createTag.mutateAsync({ name: label, color: nextColor });
-            setDraft((d) => [...d, { id: created.id, name: created.name, color: created.color }]);
+            const sugEmoji = defaultEmojiFor(label);
+            const sugColor = (sugEmoji && defaultColorForEmoji(sugEmoji)) || nextColor;
+            const created = await createTag.mutateAsync({ name: label, color: sugColor, emoji: sugEmoji });
+            setDraft((d) => [...d, { id: created.id, name: created.name, color: created.color, emoji: created.emoji }]);
         } catch {
             setSubmitError('No se pudo crear la etiqueta. Inténtalo de nuevo.');
         }
@@ -171,8 +173,8 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
         if (!n || duplicate) return;
         setSubmitError(null);
         try {
-            const created = await createTag.mutateAsync({ name: n, color });
-            setDraft((d) => [...d, { id: created.id, name: created.name, color: created.color }]);
+            const created = await createTag.mutateAsync({ name: n, color, emoji });
+            setDraft((d) => [...d, { id: created.id, name: created.name, color: created.color, emoji: created.emoji }]);
             setQuery('');
             switchMode('list');
         } catch {
@@ -254,6 +256,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
                                 label={t.name}
                                 variant="colored"
                                 color={t.color}
+                                emoji={t.emoji}
                                 onPress={() => toggle(t)}
                             />
                         ))}
@@ -308,13 +311,13 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
                     style={[styles.nameInput, !!errorText && { borderColor: '#C0453A' }]}
                     value={name}
                     onChangeText={(t) => {
-                        setName(t.slice(0, 24));
+                        setName(t.slice(0, TAG_NAME_MAX));
                         setSubmitError(null);
                     }}
                     placeholder="Ej. Luna de miel"
                     placeholderTextColor="#6B6B6B"
                     autoFocus
-                    maxLength={24}
+                    maxLength={TAG_NAME_MAX}
                     returnKeyType="done"
                     onSubmitEditing={() => void submitCreate()}
                 />
@@ -329,27 +332,26 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
                     </View>
                 )}
 
-                <SectionLabel gold="COLOR" />
-                <View style={styles.colorRow}>
-                    {COLORS.map((c) => {
-                        const active = color === c.value;
-                        return (
-                            <Pressable
-                                key={c.value}
-                                onPress={() => setColor(c.value)}
-                                accessibilityLabel={`Color ${c.name}`}
-                                style={[styles.colorRing, active && { borderColor: '#D4B13A' }]}
-                            >
-                                <View style={[styles.colorDot, { backgroundColor: c.value }]} />
-                            </Pressable>
-                        );
-                    })}
-                </View>
+                <TagAppearanceFields
+                    key={createSession}
+                    name={name}
+                    emoji={emoji}
+                    color={color}
+                    autoColor
+                    onChange={(next) => {
+                        if (next.emoji !== undefined) setEmoji(next.emoji);
+                        if (next.color !== undefined) setColor(next.color);
+                    }}
+                />
 
                 <SectionLabel gold="VISTA" rest="PREVIA" />
-                <View style={styles.previewChip}>
-                    <View style={[styles.previewDot, { backgroundColor: color }]} />
-                    <Text style={styles.previewText}>{name.trim() || 'Nueva etiqueta'}</Text>
+                <View style={[styles.previewChip, { borderColor: hexToRgba(color, 0.4), backgroundColor: hexToRgba(color, 0.14) }]}>
+                    {emoji ? (
+                        <Text style={styles.previewEmoji}>{emoji}</Text>
+                    ) : (
+                        <View style={[styles.previewDot, { backgroundColor: color }]} />
+                    )}
+                    <Text style={[styles.previewText, { color: '#F5F5F5' }]}>{name.trim() || 'Nueva etiqueta'}</Text>
                 </View>
 
                 <View style={styles.btnRow}>
@@ -518,6 +520,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(212, 177, 58, 0.12)',
     },
     previewDot: { width: 10, height: 10, borderRadius: 5, marginRight: 8 },
+    previewEmoji: { fontSize: 16, marginRight: 8 },
     previewText: { fontFamily: 'Inter_500Medium', fontSize: 15, color: '#D4B13A' },
     btnRow: { flexDirection: 'row', gap: 12, marginTop: 28, paddingBottom: 16 },
 });

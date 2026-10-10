@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { View, StyleSheet, Pressable, ScrollView, Dimensions, Alert, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, Typography, SegmentedControl, FilterChip, TaskRow, AlbumCard, NewAlbumCard, NoAlbumRow, FAB, spacing, useToast, Input } from '@bucketlist/ui';
+import { useTheme, Typography, SegmentedControl, FilterChip, TaskRow, AlbumCard, NewAlbumCard, NoAlbumRow, FAB, spacing, useToast, Input, TagChip } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Swipeable } from 'react-native-gesture-handler';
-import { Search, Trash2, CheckCircle2, X } from 'lucide-react-native';
+import { Search, Trash2, CheckCircle2, X, Tag as TagIcon } from 'lucide-react-native';
 import { Text, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -18,6 +18,9 @@ import { supabase } from '../../src/services/supabase';
 import { storageApi } from '../../src/services/api/storage';
 import { CalendarTab } from '../../src/components/CalendarTab';
 import { BucketCover } from '../../src/components/BucketCover';
+import { TagFilterSheet } from '../../src/components/TagFilterSheet';
+import { useTags, useTagUsage, type Tag } from '../../src/hooks/useTags';
+import { hexToRgba } from '../../src/constants/tagPresets';
 import { categoryColors } from '@bucketlist/ui/src/tokens/colors';
 import { isPast, differenceInCalendarDays } from 'date-fns';
 
@@ -40,8 +43,12 @@ export default function MyListScreen() {
   }, [params.filter]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [tagSheetOpen, setTagSheetOpen] = useState(false);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
   const { data: buckets, isLoading } = useBuckets(user?.id);
+  const { data: allTags } = useTags();
+  const { data: tagUsage } = useTagUsage();
   const deleteBucket = useDeleteBucket();
   const updateBucket = useUpdateBucket();
   const { data: albums, isLoading: isLoadingAlbums } = useAlbums(user?.id);
@@ -68,9 +75,35 @@ export default function MyListScreen() {
     return buckets.filter((b) => !inAnyAlbum.has(b.id)).length;
   }, [buckets, albumItems]);
 
-  // Compute stats
   const totalCount = buckets?.length || 0;
-  const completedCount = buckets?.filter(b => b.status === 'completed').length || 0;
+
+  // ── Etiquetas ──────────────────────────────────────────────────────────────
+  const tagsById = useMemo(() => {
+    const map = new Map<string, Tag>();
+    (allTags ?? []).forEach((t) => map.set(t.id, t));
+    return map;
+  }, [allTags]);
+
+  // Si se elimina una etiqueta que estaba en el filtro, se quita del filtro.
+  React.useEffect(() => {
+    if (!allTags) return;
+    setSelectedTagIds((prev) => {
+      const next = prev.filter((id) => tagsById.has(id));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [allTags, tagsById]);
+
+  const selectedTags = useMemo(
+    () => selectedTagIds.map((id) => tagsById.get(id)).filter(Boolean) as Tag[],
+    [selectedTagIds, tagsById],
+  );
+
+  const tagExtra = useMemo(() => ({ tagsById, byItem: tagUsage?.byItem, selectedTagIds }), [tagsById, tagUsage, selectedTagIds]);
+
+  const toggleSearch = () => {
+    if (isSearching) setSearchQuery('');
+    setIsSearching((v) => !v);
+  };
 
   // Filter items
   const filteredBuckets = useMemo(() => {
@@ -89,6 +122,11 @@ export default function MyListScreen() {
       return true;
     });
 
+    if (selectedTagIds.length > 0) {
+      const wanted = new Set(selectedTagIds);
+      result = result.filter((b: any) => (tagUsage?.byItem[b.id] ?? []).some((id) => wanted.has(id)));
+    }
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter((b: any) =>
@@ -102,7 +140,7 @@ export default function MyListScreen() {
     return result.sort((a: any, b: any) => {
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
-  }, [buckets, filter, searchQuery]);
+  }, [buckets, filter, searchQuery, selectedTagIds, tagUsage]);
 
   const listData = useMemo(() => {
     if (!filteredBuckets) return [];
@@ -163,6 +201,26 @@ export default function MyListScreen() {
     } else if (item.location) {
       meta += ` · ${item.location}`;
     }
+
+    // Etiquetas de la tarea: máximo 2 chips + "+N"
+    const itemTags = ((tagUsage?.byItem[item.id] ?? [])
+      .map((id: string) => tagsById.get(id))
+      .filter(Boolean) as Tag[]).sort(
+      (a, b) =>
+        Number(selectedTagIds.includes(b.id)) - Number(selectedTagIds.includes(a.id)) ||
+        a.name.localeCompare(b.name),
+    );
+    const tagsElement =
+      itemTags.length > 0 ? (
+        <>
+          {itemTags.slice(0, 2).map((t) => (
+            <TagChip key={t.id} label={t.name} variant="colored" color={t.color} emoji={t.emoji} size="sm" />
+          ))}
+          {itemTags.length > 2 && (
+            <TagChip label={`+${itemTags.length - 2}`} variant="colored" color="#8A8A8A" size="sm" />
+          )}
+        </>
+      ) : undefined;
 
     const coverPath = item.cover_image || (item.bucket_photos?.[0]?.thumb_path || item.bucket_photos?.[0]?.storage_path);
     const isPreset = coverPath?.startsWith('preset:');
@@ -268,6 +326,7 @@ export default function MyListScreen() {
               />
             )
           }
+          tagsElement={tagsElement}
           subtasksDone={subtasksDone}
           subtasksTotal={subtasksTotal}
           counterCount={(item as any).counter_count}
@@ -284,6 +343,17 @@ export default function MyListScreen() {
       {/* ── Header: exact title hierarchy from the reference ── */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Mi Lista</Text>
+        {(activeTab === 'list' || activeTab === 'albums') && (
+          <Pressable
+            onPress={toggleSearch}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={isSearching ? 'Cerrar búsqueda' : 'Buscar'}
+            style={styles.searchBtn}
+          >
+            {isSearching ? <X size={26} color="#FFF" strokeWidth={1.8} /> : <Search size={26} color="#FFF" strokeWidth={1.8} />}
+          </Pressable>
+        )}
       </View>
 
       {/* ── Tabs (always visible, full width) ───────────── */}
@@ -300,12 +370,13 @@ export default function MyListScreen() {
       </View>
 
       {/* ── Search Bar ──────────────────────────────────── */}
-      {(activeTab === 'list' || activeTab === 'albums') && (
+      {isSearching && (activeTab === 'list' || activeTab === 'albums') && (
         <View style={{ paddingHorizontal: 20, marginBottom: 16 }}>
           <Input
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder={activeTab === 'list' ? 'Buscar tareas...' : 'Buscar álbumes...'}
+            autoFocus
             leftIcon={<Search size={18} color="#9A9A9A" />}
             rightIcon={
               searchQuery.trim() ? (
@@ -328,41 +399,70 @@ export default function MyListScreen() {
             keyExtractor={(item: any) => item.id || item.title}
             contentContainerStyle={styles.listContent}
             estimatedItemSize={80}
+            extraData={tagExtra}
             ItemSeparatorComponent={() => <View style={{ height: spacing[3] }} />}
             renderItem={renderTaskItem}
             ListHeaderComponent={
               <View>
-                {/* Stats */}
-                <View style={[styles.statsContainer, { marginHorizontal: 0 }]}>
-                  <View style={styles.statColumn}>
-                    <Text style={styles.statNumber}>{completedCount}</Text>
-                    <Text style={styles.statLabel}>Completadas</Text>
-                  </View>
-                  <View style={styles.statDivider} />
-                  <View style={styles.statColumn}>
-                    <Text style={styles.statNumber}>{totalCount}</Text>
-                    <Text style={styles.statLabel}>En la lista</Text>
-                  </View>
-                </View>
-
                 {/* Filtros */}
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.filtersContainer}
-                  style={{ flexGrow: 0, marginBottom: 16, marginHorizontal: -20 }}
+                  style={{ flexGrow: 0, marginBottom: 10, marginHorizontal: -20 }}
                 >
                   <FilterChip label="Todas" active={filter === 'all'} onPress={() => setFilter('all')} />
                   <FilterChip label="En curso" active={filter === 'active'} onPress={() => setFilter('active')} />
                   <FilterChip label="Completadas" active={filter === 'completed'} onPress={() => setFilter('completed')} />
                   <FilterChip label="Se me escapó" active={filter === 'expired'} onPress={() => setFilter('expired')} />
                 </ScrollView>
+
+                {/* Filtro por etiquetas */}
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                  contentContainerStyle={styles.filtersContainer}
+                  style={{ flexGrow: 0, marginBottom: 16, marginHorizontal: -20 }}
+                >
+                  <Pressable
+                    onPress={() => setTagSheetOpen(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Filtrar por etiquetas"
+                    style={[styles.tagFilterBtn, selectedTags.length > 0 && styles.tagFilterBtnActive]}
+                  >
+                    <TagIcon size={16} color={selectedTags.length > 0 ? gold[400] : '#E5E5E5'} strokeWidth={1.9} />
+                    <Text style={[styles.tagFilterText, selectedTags.length > 0 && { color: gold[400] }]}>
+                      {selectedTags.length > 0 ? `Etiquetas · ${selectedTags.length}` : 'Etiquetas'}
+                    </Text>
+                  </Pressable>
+
+                  {selectedTags.map((t) => (
+                    <Pressable
+                      key={t.id}
+                      onPress={() => setSelectedTagIds((ids) => ids.filter((id) => id !== t.id))}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Quitar etiqueta ${t.name}`}
+                      style={styles.activeTagChip}
+                    >
+                      {t.emoji ? (
+                        <View style={[styles.activeTagEmoji, { backgroundColor: hexToRgba(t.color, 0.3) }]}>
+                          <Text style={styles.activeTagEmojiText}>{t.emoji}</Text>
+                        </View>
+                      ) : (
+                        <View style={[styles.activeTagDot, { backgroundColor: t.color }]} />
+                      )}
+                      <Text style={styles.activeTagText} numberOfLines={1}>{t.name}</Text>
+                      <X size={15} color="#E5E5E5" strokeWidth={2} />
+                    </Pressable>
+                  ))}
+                </ScrollView>
               </View>
             }
             ListEmptyComponent={() => (
               <View style={styles.empty}>
                 <Typography variant="body" color={theme.colors.foregroundMuted}>
-                  No hay tareas aquí.
+                  {selectedTagIds.length > 0 ? 'No hay tareas con esas etiquetas.' : 'No hay tareas aquí.'}
                 </Typography>
               </View>
             )}
@@ -407,6 +507,19 @@ export default function MyListScreen() {
         )}
       </View>
 
+      <TagFilterSheet
+        visible={tagSheetOpen}
+        selectedIds={selectedTagIds}
+        onChange={setSelectedTagIds}
+        matchCount={filteredBuckets.length}
+        totalCount={totalCount}
+        onClose={() => setTagSheetOpen(false)}
+        onManage={() => {
+          setTagSheetOpen(false);
+          router.push('/tags' as any);
+        }}
+      />
+
       {/* ── FAB ────────────────────────────────────────── */}
       {activeTab === 'list' && (
         <FAB onPress={handleCreate} bottomOffset={24} />
@@ -430,42 +543,66 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: 'PlayfairDisplay_700Bold',
-    fontSize: 26,
+    fontSize: 32,
     color: '#FFF',
+  },
+  searchBtn: {
+    width: 44,
+    height: 44,
+    marginRight: -10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tagFilterBtn: {
+    height: 34,
+    paddingHorizontal: 14,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: '#333333',
+    backgroundColor: '#1A1A1A',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  tagFilterBtnActive: {
+    borderColor: gold[400],
+    backgroundColor: 'transparent',
+  },
+  tagFilterText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 13,
+    color: '#E5E5E5',
+  },
+  activeTagChip: {
+    height: 34,
+    paddingHorizontal: 14,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
+    backgroundColor: '#1A1A1A',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  activeTagDot: { width: 8, height: 8, borderRadius: 4 },
+  activeTagEmoji: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    marginLeft: -6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeTagEmojiText: { fontSize: 11, lineHeight: 14, textAlign: 'center' },
+  activeTagText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 13,
+    color: '#F5F5F5',
+    maxWidth: 140,
   },
   tabsContainer: {
     paddingHorizontal: 20,
     marginBottom: 20,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#2A2A2A',
-    marginBottom: 16,
-    marginHorizontal: 20,
-  },
-  statColumn: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statDivider: {
-    width: 1,
-    height: '100%',
-    backgroundColor: '#2A2A2A',
-  },
-  statNumber: {
-    fontFamily: 'PlayfairDisplay_700Bold',
-    fontSize: 18,
-    color: '#FFF',
-  },
-  statLabel: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 12,
-    color: '#9A9A9A',
-    marginTop: 2,
   },
   filtersContainer: {
     flexDirection: 'row',
