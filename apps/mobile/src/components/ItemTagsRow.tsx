@@ -42,9 +42,9 @@ export function ItemTagsRow({ bucketId, isOwner }: ItemTagsRowProps) {
                 />
             ))}
 
-            {isOwner && (
+            {isOwner && tags.length === 0 && (
                 <TagChip
-                    label={tags.length === 0 ? '+ Añadir etiquetas' : '+ Editar'}
+                    label="+ Añadir etiqueta"
                     variant="create"
                     onPress={() => setOpen(true)}
                 />

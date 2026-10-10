@@ -14,8 +14,8 @@ import { useAuthStore } from '../../src/stores/auth.store';
 function Logo() {
   return (
     <Text style={styles.logo} accessibilityRole="header">
-      <Text style={{ color: gold[400] }}>TheBucket</Text>
-      <Text style={{ color: '#FFFFFF' }}>List</Text>
+      <Text style={{ color: gold[400] }}>Momentos</Text>
+      <Text style={{ color: '#FFFFFF' }}> de amigos</Text>
     </Text>
   );
 }
@@ -90,7 +90,6 @@ export default function FeedScreen() {
         ) : null}
       </Pressable>
 
-      <SectionLabel highlight="Momentos" rest="de amigos" style={styles.section} />
     </View>
   );
 

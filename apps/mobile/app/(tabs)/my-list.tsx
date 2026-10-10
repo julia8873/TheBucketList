@@ -158,7 +158,7 @@ export default function MyListScreen() {
     });
 
     if (expired.length > 0) {
-      return [...activeOrCompleted, { isHeader: true, title: 'SE ME ESCAPÓ' }, ...expired];
+      return [...activeOrCompleted, { isHeader: true, title: 'VENCIDAS' }, ...expired];
     }
     return activeOrCompleted;
   }, [filteredBuckets, filter]);
@@ -414,7 +414,7 @@ export default function MyListScreen() {
                   <FilterChip label="Todas" active={filter === 'all'} onPress={() => setFilter('all')} />
                   <FilterChip label="En curso" active={filter === 'active'} onPress={() => setFilter('active')} />
                   <FilterChip label="Completadas" active={filter === 'completed'} onPress={() => setFilter('completed')} />
-                  <FilterChip label="Se me escapó" active={filter === 'expired'} onPress={() => setFilter('expired')} />
+                  <FilterChip label="Vencidas" active={filter === 'expired'} onPress={() => setFilter('expired')} />
                 </ScrollView>
 
                 {/* Filtro por etiquetas */}
