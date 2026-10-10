@@ -51,54 +51,6 @@ export default function TabsLayout() {
     >
       {/* ── Visible tabs ─────────────────────────────────────── */}
       <Tabs.Screen
-        name="feed"
-        options={{
-          title: t('nav.feed'),
-          tabBarIcon: ({ color, focused }) => (
-            <View style={{ alignItems: 'center' }}>
-              {focused && (
-                <View style={{
-                  width: 28, height: 3, borderRadius: 2,
-                  backgroundColor: gold[400],
-                  position: 'absolute',
-                  top: Platform.OS === 'ios' ? -10 : -16,
-                }} />
-              )}
-              <Home
-                color={color}
-                size={24}
-                strokeWidth={1.8}
-              />
-            </View>
-          ),
-          tabBarAccessibilityLabel: t('nav.feed'),
-        }}
-      />
-      <Tabs.Screen
-        name="my-list"
-        options={{
-          title: t('nav.my_list'),
-          tabBarIcon: ({ color, focused }) => (
-            <View style={{ alignItems: 'center' }}>
-              {focused && (
-                <View style={{
-                  width: 28, height: 3, borderRadius: 2,
-                  backgroundColor: gold[400],
-                  position: 'absolute',
-                  top: Platform.OS === 'ios' ? -10 : -16,
-                }} />
-              )}
-              <ShoppingBag
-                color={color}
-                size={24}
-                strokeWidth={1.8}
-              />
-            </View>
-          ),
-          tabBarAccessibilityLabel: t('nav.my_list'),
-        }}
-      />
-      <Tabs.Screen
         name="explore"
         options={{
           title: t('nav.explore'),
@@ -109,7 +61,7 @@ export default function TabsLayout() {
                   width: 28, height: 3, borderRadius: 2,
                   backgroundColor: gold[400],
                   position: 'absolute',
-                  top: Platform.OS === 'ios' ? -10 : -16,
+                  top: Platform.OS === 'ios' ? -10 : -10,
                 }} />
               )}
               <Compass
@@ -123,6 +75,54 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="my-list"
+        options={{
+          title: t('nav.my_list'),
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{ alignItems: 'center' }}>
+              {focused && (
+                <View style={{
+                  width: 28, height: 3, borderRadius: 2,
+                  backgroundColor: gold[400],
+                  position: 'absolute',
+                  top: Platform.OS === 'ios' ? -10 : -10,
+                }} />
+              )}
+              <ShoppingBag
+                color={color}
+                size={24}
+                strokeWidth={1.8}
+              />
+            </View>
+          ),
+          tabBarAccessibilityLabel: t('nav.my_list'),
+        }}
+      />
+      <Tabs.Screen
+        name="feed"
+        options={{
+          title: t('nav.feed'),
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{ alignItems: 'center' }}>
+              {focused && (
+                <View style={{
+                  width: 28, height: 3, borderRadius: 2,
+                  backgroundColor: gold[400],
+                  position: 'absolute',
+                  top: Platform.OS === 'ios' ? -10 : -10,
+                }} />
+              )}
+              <Home
+                color={color}
+                size={24}
+                strokeWidth={1.8}
+              />
+            </View>
+          ),
+          tabBarAccessibilityLabel: t('nav.feed'),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: t('nav.profile'),
@@ -133,7 +133,7 @@ export default function TabsLayout() {
                   width: 28, height: 3, borderRadius: 2,
                   backgroundColor: gold[400],
                   position: 'absolute',
-                  top: Platform.OS === 'ios' ? -10 : -16,
+                  top: Platform.OS === 'ios' ? -10 : -10,
                 }} />
               )}
               <User
