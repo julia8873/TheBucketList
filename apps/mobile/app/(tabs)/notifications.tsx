@@ -17,13 +17,15 @@ export default function NotificationsScreen() {
   const markAllAsRead = useMarkAllAsRead();
 
   const handleNotificationPress = (notification: any) => {
-    if (!notification.read) {
+    if (!notification.is_read) {
       markAsRead.mutate(notification.id);
     }
     
     // Navigate based on type
-    if (notification.type === 'follow' || notification.type === 'follow_request') {
+    if (notification.type === 'follow' || notification.type === 'follow_accepted') {
       router.push(`/profile/${notification.actor_id}` as any);
+    } else if (notification.type === 'follow_request') {
+      router.push('/friends?tab=requests' as any);
     } else if (notification.type === 'reaction' || notification.type === 'comment' || notification.type === 'friend_completed' || notification.type === 'deadline') {
       if (notification.bucket_id) {
         router.push(`/bucket/${notification.bucket_id}` as any);
@@ -36,6 +38,7 @@ export default function NotificationsScreen() {
       case 'reaction': return <Heart size={16} color={theme.colors.primary} />;
       case 'comment': return <MessageCircle size={16} color={theme.colors.primary} />;
       case 'follow': 
+      case 'follow_accepted':
       case 'follow_request': return <UserPlus size={16} color={theme.colors.success} />;
       case 'friend_completed': return <CheckCircle size={16} color={theme.colors.success} />;
       case 'deadline': return <Bell size={16} color={theme.colors.error} />;
@@ -51,6 +54,7 @@ export default function NotificationsScreen() {
       case 'comment': return `${actorName} commented on your goal.`;
       case 'follow': return `${actorName} started following you.`;
       case 'follow_request': return `${actorName} requested to follow you.`;
+      case 'follow_accepted': return `${actorName} accepted your follow request.`;
       case 'friend_completed': return `${actorName} completed a goal!`;
       case 'deadline': return `A goal deadline is approaching.`;
       default: return `You have a new notification.`;
@@ -65,7 +69,7 @@ export default function NotificationsScreen() {
     );
   }
 
-  const unreadCount = notifications?.filter(n => !n.read).length || 0;
+  const unreadCount = notifications?.filter(n => !n.is_read).length || 0;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -90,7 +94,7 @@ export default function NotificationsScreen() {
           <Pressable 
             style={[
               styles.notificationRow, 
-              !item.read && { backgroundColor: theme.colors.surface }
+              !item.is_read && { backgroundColor: theme.colors.surface }
             ]}
             onPress={() => handleNotificationPress(item)}
           >
@@ -112,7 +116,7 @@ export default function NotificationsScreen() {
             </View>
             
             <View style={styles.content}>
-              <Typography variant="body" style={!item.read ? { fontWeight: 'bold' } : undefined}>
+              <Typography variant="body" style={!item.is_read ? { fontWeight: 'bold' } : undefined}>
                 {getMessageForType(item)}
               </Typography>
               <Typography variant="caption" color="textMuted">
@@ -120,7 +124,7 @@ export default function NotificationsScreen() {
               </Typography>
             </View>
 
-            {!item.read && (
+            {!item.is_read && (
               <View style={[styles.unreadDot, { backgroundColor: theme.colors.primary }]} />
             )}
           </Pressable>

@@ -36,7 +36,7 @@ export function useUnreadCount(userId?: string) {
         .from('notifications')
         .select('*', { count: 'exact', head: true })
         .eq('recipient_id', userId)
-        .eq('read', false);
+        .eq('is_read', false);
       
       if (error) throw error;
       return count || 0;
@@ -92,7 +92,7 @@ export function useMarkAsRead() {
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('notifications')
-        .update({ read: true })
+        .update({ is_read: true })
         .eq('id', id);
       if (error) throw error;
     },
@@ -111,9 +111,9 @@ export function useMarkAllAsRead() {
     mutationFn: async (userId: string) => {
       const { error } = await supabase
         .from('notifications')
-        .update({ read: true })
+        .update({ is_read: true })
         .eq('recipient_id', userId)
-        .eq('read', false);
+        .eq('is_read', false);
       if (error) throw error;
     },
     onSuccess: () => {

@@ -1,199 +1,235 @@
 import React from 'react';
-import { View, StyleSheet, Pressable, Image } from 'react-native';
-import { Typography, Card, Avatar, Icon, spacing, useTheme, radii } from '@bucketlist/ui';
-import Animated, { FadeInUp, Layout } from 'react-native-reanimated';
-import { MapPin, MessageCircle, Share } from 'lucide-react-native';
-import { formatDistanceToNow } from 'date-fns';
-import { storageApi } from '../services/api/storage';
-import { useToggleReaction } from '../hooks/useSocial';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInUp } from 'react-native-reanimated';
+import { useRouter } from 'expo-router';
+import { Check, Heart, MessageCircle } from 'lucide-react-native';
+import { Avatar, fontFamily, gold } from '@bucketlist/ui';
+import { BucketCover } from './BucketCover';
 import { useAuthStore } from '../stores/auth.store';
+import { useCopiedBucketIds, useCopyBucket, useToggleLike } from '../hooks/useSocial';
+import { daysBetween, timeAgo } from '../utils/timeAgo';
+import { displayNameOf, initialsOf } from '../utils/initials';
 
 interface FeedCardProps {
+  /** { actor, bucket, type, created_at } — en explorar se construye al vuelo. */
   event: any;
   onPress: () => void;
   index: number;
 }
 
-const EMOJIS = ['👏', '🔥', '❤️', '🌟'];
-
+/**
+ * Momento de un amigo: cabecera (avatar, nombre, @usuario, hace X h),
+ * portada con título y lugar, acciones (me gusta, comentarios, "Yo también")
+ * y pie con los días que tardó en completarla.
+ */
 export function FeedCard({ event, onPress, index }: FeedCardProps) {
-  const { theme } = useTheme();
+  const router = useRouter();
   const { user } = useAuthStore();
-  const toggleReaction = useToggleReaction();
-  
-  const actor = event.actor;
-  const bucket = event.bucket;
-  
+  const toggleLike = useToggleLike();
+  const copyBucket = useCopyBucket();
+  const { data: copiedIds } = useCopiedBucketIds(user?.id);
+
+  const actor = event?.actor;
+  const bucket = event?.bucket;
   if (!actor || !bucket) return null;
 
-  const isCompleted = event.type === 'completed';
-  const photos = bucket.bucket_photos || [];
-  const primaryPhoto = photos.length > 0 ? photos[0] : null;
-  
-  const reactions = bucket.reactions || [];
-  const reactionCounts = reactions.reduce((acc: Record<string, number>, r: any) => {
-    acc[r.emoji] = (acc[r.emoji] || 0) + 1;
-    return acc;
-  }, {});
-  
-  // Default to 👏 if no specific reaction exists for the preview
-  const primaryReactionEmoji = '👏';
-  const primaryReactionCount = reactionCounts[primaryReactionEmoji] || 0;
-  
-  const commentsCount = bucket.comments?.[0]?.count || 0;
+  const isOwn = !!user && bucket.user_id === user.id;
+  const photo = bucket.bucket_photos?.[0];
+  const coverValue: string | null = photo?.storage_path ?? bucket.cover_image ?? null;
 
-  const handleReact = () => {
+  const reactions: Array<{ emoji: string; user_id: string }> = bucket.reactions ?? [];
+  const likeCount = reactions.length;
+  const liked = !!user && reactions.some((r) => r.user_id === user.id);
+  const commentCount: number = bucket.comments?.[0]?.count ?? 0;
+
+  const alreadyCopied = !!copiedIds?.includes(bucket.id);
+
+  const isCompleted = (event.type ?? 'completed') === 'completed' && bucket.status === 'completed';
+  const days = isCompleted ? daysBetween(bucket.created_at, bucket.completed_at ?? event.created_at) : null;
+  const durationText =
+    days === null
+      ? null
+      : days === 0
+        ? 'Completada el mismo día.'
+        : `Completada en ${days} ${days === 1 ? 'día' : 'días'}.`;
+  const caption = [durationText, bucket.description?.trim()].filter(Boolean).join(' ');
+
+  const openProfile = () => {
+    if (isOwn) {
+      router.push('/(tabs)/profile' as any);
+    } else {
+      router.push(`/profile/${actor.id}` as any);
+    }
+  };
+
+  const handleLike = () => {
     if (!user) return;
-    toggleReaction.mutate({ bucketId: bucket.id, userId: user.id, emoji: '👏' });
+    toggleLike.mutate({ bucketId: bucket.id, userId: user.id });
+  };
+
+  const handleCopy = () => {
+    if (!user || alreadyCopied || copyBucket.isPending) return;
+    copyBucket.mutate(
+      { bucketId: bucket.id, userId: user.id },
+      { onError: (error: any) => Alert.alert('No se pudo añadir', error?.message ?? 'Inténtalo de nuevo.') }
+    );
   };
 
   return (
-    <Animated.View
-      entering={FadeInUp.delay(index * 100).springify()}
-      layout={Layout.springify()}
-      style={styles.container}
-    >
-      <Card variant="elevated" style={styles.card}>
-        <Pressable onPress={onPress}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Avatar 
-              uri={actor.avatar_url} 
-              initials={actor.display_name?.charAt(0) || actor.username?.charAt(0) || '?'} 
-              size="sm" 
-            />
-            <View style={styles.headerText}>
-              <Typography variant="body" style={{ fontWeight: '600', color: theme.colors.foreground }}>
-                {actor.display_name || actor.username}
-              </Typography>
-              <Typography variant="body" color="textSecondary" style={{ marginTop: 2, fontSize: 15 }}>
-                {bucket.title}
-              </Typography>
-            </View>
-          </View>
+    <Animated.View entering={FadeInUp.delay(Math.min(index, 4) * 80).springify()} style={styles.container}>
+      {/* Cabecera */}
+      <Pressable onPress={openProfile} style={styles.header} accessibilityRole="button">
+        <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="lg" goldRing />
+        <View style={styles.headerText}>
+          <Text style={styles.name} numberOfLines={1}>
+            {displayNameOf(actor)}
+          </Text>
+          <Text style={styles.handle} numberOfLines={1}>
+            @{actor.username}
+          </Text>
+        </View>
+        <Text style={styles.time}>{timeAgo(event.created_at ?? bucket.completed_at ?? bucket.created_at)}</Text>
+      </Pressable>
 
-          {/* Body Row */}
-          <View style={styles.bodyRow}>
-            {primaryPhoto && (
-              <Image 
-                source={{ uri: storageApi.getPublicUrl(primaryPhoto.thumb_path || primaryPhoto.storage_path) }}
-                style={styles.mainImage}
-              />
-            )}
-            
-            <View style={styles.rightContent}>
-              {bucket.location_text && (
-                <View style={[styles.locationPill, { backgroundColor: theme.colors.surface }]}>
-                  <Icon icon={MapPin} size={12} color={theme.colors.foreground} />
-                  <Typography variant="caption" style={{ marginLeft: 4, fontWeight: '500' }}>
-                    {bucket.location_text}
-                  </Typography>
-                </View>
-              )}
-              
-              <Typography variant="caption" color="textSecondary" style={styles.description} numberOfLines={4}>
-                {bucket.description || 'No description provided.'}
-              </Typography>
-              
-              <View style={styles.spacer} />
-              
-              {/* Actions Footer */}
-              <View style={styles.actionsFooter}>
-                <Pressable style={styles.actionButton} onPress={handleReact}>
-                  <Typography variant="body">👏</Typography>
-                  <Typography variant="body" style={styles.actionText}>{primaryReactionCount}</Typography>
-                </Pressable>
-                
-                <Pressable style={styles.actionButton}>
-                  <Icon icon={MessageCircle} size={18} color={theme.colors.foregroundMuted} />
-                  <Typography variant="body" style={styles.actionText}>{commentsCount}</Typography>
-                </Pressable>
-                
-                <View style={styles.spacer} />
-                
-                <Pressable style={styles.shareButton}>
-                  <Icon icon={Share} size={18} color={theme.colors.foregroundMuted} />
-                </Pressable>
-              </View>
-            </View>
+      {/* Portada */}
+      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={bucket.title}>
+        <BucketCover
+          value={coverValue}
+          title={bucket.title}
+          categorySlug={bucket.category?.slug}
+          seed={bucket.id}
+          iconSize={170}
+          style={styles.cover}
+        >
+          <LinearGradient
+            colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.78)']}
+            locations={[0.35, 1]}
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+          />
+          <View style={styles.coverText} pointerEvents="none">
+            <Text style={styles.coverTitle} numberOfLines={2}>
+              {bucket.title}
+            </Text>
+            {bucket.location_text ? (
+              <Text style={styles.coverLocation} numberOfLines={1}>
+                {bucket.location_text}
+              </Text>
+            ) : null}
           </View>
+        </BucketCover>
+      </Pressable>
+
+      {/* Acciones */}
+      <View style={styles.actions}>
+        <Pressable
+          onPress={handleLike}
+          style={styles.action}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={liked ? 'Quitar me gusta' : 'Me gusta'}
+          accessibilityState={{ selected: liked }}
+        >
+          <Heart size={24} color={liked ? gold[400] : '#F2EFE8'} fill={liked ? gold[400] : 'transparent'} strokeWidth={1.8} />
+          <Text style={styles.count}>{likeCount}</Text>
         </Pressable>
-      </Card>
+
+        <Pressable onPress={onPress} style={styles.action} hitSlop={8} accessibilityRole="button" accessibilityLabel="Comentarios">
+          <MessageCircle size={24} color="#F2EFE8" strokeWidth={1.8} />
+          <Text style={styles.count}>{commentCount}</Text>
+        </Pressable>
+
+        <View style={styles.flex} />
+
+        {!isOwn && (
+          <Pressable
+            onPress={handleCopy}
+            disabled={alreadyCopied || copyBucket.isPending}
+            style={({ pressed }) => [styles.copyButton, alreadyCopied && styles.copyButtonDone, { opacity: pressed ? 0.75 : 1 }]}
+            accessibilityRole="button"
+            accessibilityLabel={alreadyCopied ? 'Ya está en tu lista' : 'Yo también'}
+          >
+            {alreadyCopied ? <Check size={16} color="#9A9A9A" style={styles.copyIcon} /> : null}
+            <Text style={[styles.copyText, alreadyCopied && { color: '#9A9A9A' }]}>
+              {alreadyCopied ? 'En tu lista' : 'Yo también'}
+            </Text>
+          </Pressable>
+        )}
+      </View>
+
+      {caption ? <Text style={styles.caption}>{caption}</Text> : null}
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[3],
-  },
-  card: {
-    padding: spacing[4],
-    borderRadius: radii['2xl'],
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 3,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 18,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing[4],
+    gap: 12,
+    marginBottom: 12,
   },
-  headerText: {
-    marginLeft: spacing[3],
-    flex: 1,
-    justifyContent: 'center',
+  headerText: { flex: 1 },
+  name: { fontFamily: fontFamily.semibold, fontSize: 16, color: '#FFFFFF' },
+  handle: { fontFamily: fontFamily.regular, fontSize: 13, color: '#9A9A9A', marginTop: 1 },
+  time: { fontFamily: fontFamily.regular, fontSize: 13, color: '#9A9A9A', alignSelf: 'flex-start', marginTop: 4 },
+  cover: {
+    width: '100%',
+    aspectRatio: 1.4,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
   },
-  bodyRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    minHeight: 140,
+  coverText: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    bottom: 18,
   },
-  mainImage: {
-    width: 140,
-    height: 140,
-    borderRadius: radii.xl,
-    backgroundColor: '#eee',
+  coverTitle: {
+    fontFamily: fontFamily.serifBold,
+    fontSize: 27,
+    lineHeight: 32,
+    color: '#FFFFFF',
   },
-  rightContent: {
-    flex: 1,
-    marginLeft: spacing[4],
+  coverLocation: {
+    fontFamily: fontFamily.regular,
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.78)',
+    marginTop: 3,
   },
-  locationPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: radii.full,
-    marginBottom: spacing[2],
-  },
-  description: {
-    lineHeight: 18,
-    fontSize: 13,
-  },
-  spacer: {
-    flex: 1,
-  },
-  actionsFooter: {
+  actions: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing[3],
+    gap: 22,
+    marginTop: 14,
   },
-  actionButton: {
+  action: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  count: { fontFamily: fontFamily.medium, fontSize: 15, color: '#F2EFE8' },
+  flex: { flex: 1 },
+  copyButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: spacing[4],
+    height: 40,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: gold[400],
   },
-  actionText: {
-    marginLeft: 6,
-    color: '#666',
-    fontWeight: '500',
+  copyButtonDone: { borderColor: '#2A2A2A', backgroundColor: '#161616' },
+  copyIcon: { marginRight: 6 },
+  copyText: { fontFamily: fontFamily.semibold, fontSize: 14, color: gold[400] },
+  caption: {
+    fontFamily: fontFamily.regular,
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#CFCFCF',
+    marginTop: 12,
   },
-  shareButton: {
-    padding: 4,
-  }
 });

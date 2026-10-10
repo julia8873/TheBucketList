@@ -1,69 +1,76 @@
 import { supabase } from '../supabase';
 
+const PAGE_SIZE = 10;
+
 export const feedApi = {
+  /**
+   * "Momentos de amigos": tareas completadas por la gente a la que sigo (aceptada) y por mí.
+   * La visibilidad de cada tarea la filtra RLS (privadas, solo seguidores, cuentas privadas).
+   * Para incluir también tareas nuevas, añade 'new_bucket' al .in('type', [...]).
+   */
   getFeed: async (userId: string, pageParam: number = 0) => {
-    const limit = 10;
-    
-    // In a real app with large data, it's better to use an RPC function for the feed
-    // to filter by followed users and apply cursor pagination securely.
-    // For this MVP, we query feed_events and join data.
-    
-    // We only want feed events from people the user follows (and the user themselves)
-    // First, get following IDs
-    const { data: follows } = await supabase
+    const { data: follows, error: followsErr } = await supabase
       .from('follows')
       .select('following_id')
       .eq('follower_id', userId)
       .eq('status', 'accepted');
-      
-    const followingIds = follows?.map(f => f.following_id) || [];
-    const targetIds = [...followingIds, userId];
+    if (followsErr) throw followsErr;
+
+    const targetIds = [...(follows ?? []).map((f: any) => f.following_id as string), userId];
 
     const { data, error } = await supabase
       .from('feed_events')
-      .select(`
+      .select(
+        `
         *,
-        actor:profiles(*),
+        actor:profiles!actor_id(id, username, display_name, avatar_url),
         bucket:buckets!inner(
           *,
+          category:categories(slug),
           bucket_photos(thumb_path, storage_path),
           reactions(emoji, user_id),
           comments:comments(count)
         )
-      `)
+      `
+      )
       .in('actor_id', targetIds)
-      // Only show if bucket is not private OR if the actor is the current user
-      .or(`visibility.neq.private,user_id.eq.${userId}`, { referencedTable: 'bucket' })
+      .in('type', ['completed'])
       .order('created_at', { ascending: false })
-      .range(pageParam * limit, (pageParam + 1) * limit - 1);
+      .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1);
 
     if (error) throw error;
-    
+
+    const items = data ?? [];
     return {
-      items: data,
-      nextCursor: data.length === limit ? pageParam + 1 : undefined,
+      items,
+      nextCursor: items.length === PAGE_SIZE ? pageParam + 1 : undefined,
     };
   },
-  
+
   getExploreFeed: async (pageParam: number = 0) => {
     const limit = 15;
     const { data, error } = await supabase
       .from('buckets')
-      .select(`
+      .select(
+        `
         *,
-        user:profiles(*),
+        user:profiles!buckets_user_id_fkey(id, username, display_name, avatar_url),
+        category:categories(slug),
         bucket_photos(thumb_path, storage_path),
-        reactions(emoji, user_id)
-      `)
+        reactions(emoji, user_id),
+        comments:comments(count)
+      `
+      )
       .eq('visibility', 'public')
       .order('created_at', { ascending: false })
       .range(pageParam * limit, (pageParam + 1) * limit - 1);
-      
+
     if (error) throw error;
-    
+
+    const items = data ?? [];
     return {
-      items: data,
-      nextCursor: data.length === limit ? pageParam + 1 : undefined,
+      items,
+      nextCursor: items.length === limit ? pageParam + 1 : undefined,
     };
-  }
+  },
 };
