@@ -89,14 +89,13 @@ export default function BucketDetailScreen() {
     enabled: !!id,
   });
 
-  const { data: bucketAlbum } = useQuery({
+  const { data: bucketAlbums } = useQuery({
     queryKey: ['bucketAlbum', id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('album_items')
         .select('album_id')
-        .eq('bucket_id', id)
-        .maybeSingle();
+        .eq('bucket_id', id);
       if (error) throw error;
       return data;
     },
@@ -186,7 +185,7 @@ export default function BucketDetailScreen() {
 
   const isOwner = bucket.user_id === user?.id;
   let photos: any[] = bucket.bucket_photos || [];
-  
+
   if (photoSearchQuery.trim()) {
     const q = photoSearchQuery.toLowerCase();
     photos = photos.filter((p: any) => p.title?.toLowerCase().includes(q));
@@ -285,33 +284,33 @@ export default function BucketDetailScreen() {
     setSheetMode('albums');
   };
 
-  const moveToAlbum = async (albumId: string | null) => {
+  const toggleAlbum = async (albumId: string) => {
     if (!user) return;
+    const isCurrentlySelected = bucketAlbums?.some((a: any) => a.album_id === albumId);
 
-    const fail = (message: string) =>
-      closeSheet(() => Alert.alert('No se pudo mover la tarea', message));
+    if (isCurrentlySelected) {
+      const { error } = await supabase
+        .from('album_items')
+        .delete()
+        .eq('bucket_id', id)
+        .eq('album_id', albumId);
+      if (error) Alert.alert('Error', error.message);
+    } else {
+      const { error } = await supabase
+        .from('album_items')
+        .insert({ album_id: albumId, bucket_id: id, position: 0 });
+      if (error) Alert.alert('Error', error.message);
+    }
+    invalidateBucket();
+  };
 
-    const { error: removeError } = await supabase
+  const removeAllAlbums = async () => {
+    if (!user) return;
+    const { error } = await supabase
       .from('album_items')
       .delete()
       .eq('bucket_id', id);
-
-    if (removeError) {
-      fail(removeError.message);
-      return;
-    }
-
-    if (albumId) {
-      const { error: insertError } = await supabase
-        .from('album_items')
-        .insert({ album_id: albumId, bucket_id: id, position: 0 });
-
-      if (insertError) {
-        fail(insertError.message);
-        return;
-      }
-    }
-
+    if (error) Alert.alert('Error', error.message);
     invalidateBucket();
     closeSheet();
   };
@@ -395,7 +394,7 @@ export default function BucketDetailScreen() {
 
     try {
       const processed = await processBucketImage(asset.uri);
-      
+
       const path = `covers/${id}_${Date.now()}.jpg`;
       const publicUrl = await storageApi.uploadSingle(path, processed.original.uri);
 
@@ -749,8 +748,10 @@ export default function BucketDetailScreen() {
             >
               <FolderOpen color={theme.colors.foregroundMuted} size={13} strokeWidth={1.8} style={{ marginRight: 4 }} />
               <Typography variant="caption" color={theme.colors.foreground} style={{ fontWeight: '600' }}>
-                {bucketAlbum?.album_id && albumsData 
-                  ? albumsData.find((a: any) => a.id === bucketAlbum.album_id)?.title || 'Sin álbum'
+                {bucketAlbums && bucketAlbums.length > 0
+                  ? (bucketAlbums.length === 1
+                    ? (albumsData?.find((a: any) => a.id === bucketAlbums[0]?.album_id)?.title || 'Sin álbum')
+                    : `${bucketAlbums.length} álbumes`)
                   : 'Sin álbum'}
               </Typography>
             </Pressable>
@@ -1217,8 +1218,10 @@ export default function BucketDetailScreen() {
         handleChangeVisibility={handleChangeVisibility}
         setSheetMode={setSheetMode}
         albumsLoading={albumsLoading}
-        moveToAlbum={moveToAlbum}
+        toggleAlbum={toggleAlbum}
+        removeAllAlbums={removeAllAlbums}
         albums={albumsData ?? []}
+        bucketAlbums={bucketAlbums ?? []}
       />
 
       {/* Sort Menu Modal */}

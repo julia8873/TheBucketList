@@ -1,5 +1,5 @@
-import React from 'react';
-import { Modal, View, Pressable, Animated, ActivityIndicator, Alert, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { Modal, View, Pressable, Animated, ActivityIndicator, Alert, StyleSheet, TextInput } from 'react-native';
 import { Typography } from '@bucketlist/ui';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { X, Camera, FolderPlus, ListPlus, Trash2, Circle, MoreHorizontal, CheckCircle2, Check, Eye, Users, Lock, ArrowLeft, FolderOpen, Image as ImageIcon } from 'lucide-react-native';
@@ -24,13 +24,16 @@ type BucketBottomSheetProps = {
   handleChangeVisibility: (visibility: 'public' | 'followers' | 'private') => void;
   setSheetMode: (mode: 'menu' | 'status' | 'visibility' | 'albums') => void;
   albumsLoading: boolean;
-  moveToAlbum: (albumId: string | null) => void;
+  toggleAlbum: (albumId: string) => void;
+  removeAllAlbums: () => void;
   albums: any[];
+  bucketAlbums: any[];
 };
 
 export function BucketBottomSheet({
-  sheetVisible, sheetMode, sheetTranslateY, closeSheet, theme, isOwner, uploadPhotos, uploadCover, loadAlbums, user, copyBucket, id, handleDelete, bucket, handleChangeStatus, handleChangeVisibility, setSheetMode, albumsLoading, moveToAlbum, albums
+  sheetVisible, sheetMode, sheetTranslateY, closeSheet, theme, isOwner, uploadPhotos, uploadCover, loadAlbums, user, copyBucket, id, handleDelete, bucket, handleChangeStatus, handleChangeVisibility, setSheetMode, albumsLoading, toggleAlbum, removeAllAlbums, albums, bucketAlbums
 }: BucketBottomSheetProps) {
+  const [albumSearchQuery, setAlbumSearchQuery] = useState('');
   const visibilityLabel = (v: string) => {
     switch (v) {
       case 'public': return 'Pública';
@@ -189,31 +192,51 @@ export function BucketBottomSheet({
                 <Pressable style={styles.backSheetButton} onPress={() => setSheetMode('menu')}>
                   <ArrowLeft color={theme.colors.foreground} size={20} />
                 </Pressable>
-                <Typography variant="h3" color={theme.colors.foreground}>Mover a carpeta</Typography>
+                <Typography variant="h3" color={theme.colors.foreground}>Seleccionar carpetas</Typography>
                 <View style={{ width: 36 }} />
               </View>
               {albumsLoading ? (
                 <View style={styles.sheetLoading}><ActivityIndicator color={gold[400]} /></View>
               ) : (
                 <View style={styles.sheetOptions}>
-                  <Pressable style={styles.sheetOption} onPress={() => void moveToAlbum(null)}>
+                  <View style={{ paddingHorizontal: 20, paddingBottom: 10 }}>
+                    <TextInput
+                      style={{
+                        backgroundColor: theme.colors.background,
+                        color: theme.colors.foreground,
+                        padding: 12,
+                        borderRadius: 12,
+                        fontSize: 16,
+                      }}
+                      placeholder="Buscar carpeta..."
+                      placeholderTextColor={theme.colors.foregroundMuted}
+                      value={albumSearchQuery}
+                      onChangeText={setAlbumSearchQuery}
+                    />
+                  </View>
+                  <Pressable style={styles.sheetOption} onPress={() => void removeAllAlbums()}>
                     <View style={styles.sheetIcon}><FolderOpen color={gold[400]} size={21} /></View>
                     <View style={styles.sheetOptionText}>
                       <Typography variant="bodySemibold">Sin carpeta</Typography>
                       <Typography variant="caption" color={theme.colors.foregroundMuted}>Dejar la tarea fuera de álbumes</Typography>
                     </View>
+                    {bucketAlbums.length === 0 && <Check color={gold[400]} size={21} />}
                   </Pressable>
-                  {albums.map((album) => (
-                    <Pressable key={album.id} style={styles.sheetOption} onPress={() => void moveToAlbum(album.id)}>
-                      <View style={styles.sheetIcon}><FolderOpen color={gold[400]} size={21} /></View>
-                      <View style={styles.sheetOptionText}>
-                        <Typography variant="bodySemibold">{album.title}</Typography>
-                        <Typography variant="caption" color={theme.colors.foregroundMuted}>
-                          {album.visibility ? visibilityLabel(album.visibility) : ''}
-                        </Typography>
-                      </View>
-                    </Pressable>
-                  ))}
+                  {albums.filter((a) => a.title?.toLowerCase().includes(albumSearchQuery.toLowerCase())).map((album) => {
+                    const isSelected = bucketAlbums.some(ba => ba.album_id === album.id);
+                    return (
+                      <Pressable key={album.id} style={styles.sheetOption} onPress={() => void toggleAlbum(album.id)}>
+                        <View style={styles.sheetIcon}><FolderOpen color={gold[400]} size={21} /></View>
+                        <View style={styles.sheetOptionText}>
+                          <Typography variant="bodySemibold">{album.title}</Typography>
+                          <Typography variant="caption" color={theme.colors.foregroundMuted}>
+                            {album.visibility ? visibilityLabel(album.visibility) : ''}
+                          </Typography>
+                        </View>
+                        {isSelected && <Check color={gold[400]} size={21} />}
+                      </Pressable>
+                    );
+                  })}
                   {albums.length === 0 && (
                     <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.emptySheetText}>No tienes carpetas creadas todavía.</Typography>
                   )}

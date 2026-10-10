@@ -65,8 +65,8 @@ export function SegmentedControl({
               style={[
                 styles.label,
                 {
-                  color: isActive ? theme.colors.foreground : theme.colors.foregroundMuted,
-                  fontFamily: isActive ? fontFamily.semibold : fontFamily.regular,
+                  color: isActive ? '#111111' : '#CFCFCF',
+                  fontFamily: fontFamily.semibold,
                 },
               ]}
             >
@@ -82,22 +82,24 @@ export function SegmentedControl({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    height: 44,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: dark[400],
+    height: 40,
+    backgroundColor: '#141414',
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
+    borderRadius: 20,
+    padding: 3,
   },
   option: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+    borderRadius: 18,
+    backgroundColor: 'transparent',
   },
   optionActive: {
-    borderBottomColor: gold[400],
+    backgroundColor: '#D4B13A',
   },
   label: {
-    fontSize: fontSize.sm,
-    letterSpacing: 0,
+    fontSize: 14,
   },
 });

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { useTheme } from '@bucketlist/ui';
-import { Home, Archive, Compass, User } from 'lucide-react-native';
+import { Home, ShoppingBag, Compass, User } from 'lucide-react-native';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { registerForPushNotificationsAsync } from '../../src/services/notifications';
 import { useTranslation } from 'react-i18next';
@@ -13,7 +13,7 @@ function TabBarBackground() {
     <View
       style={{
         flex: 1,
-        backgroundColor: dark[150], // #121212 tabbar color
+        backgroundColor: '#0E0E0E',
       }}
     />
   );
@@ -36,15 +36,14 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarShowLabel: false,
         tabBarActiveTintColor: gold[400],
-        tabBarInactiveTintColor: '#666666',
+        tabBarInactiveTintColor: '#8A8A8A',
         tabBarStyle: {
-          backgroundColor: dark[150],   // #121212
-          borderTopColor: dark[400],    // #2A2A2A
+          backgroundColor: '#0E0E0E',
+          borderTopColor: '#2A2A2A',
           borderTopWidth: 1,
           height: Platform.OS === 'ios' ? 84 : 60,
           paddingBottom: Platform.OS === 'ios' ? 28 : 8,
         },
-        // Gold bar on active tab (28px wide, 3px tall, at top of tab bar)
         tabBarItemStyle: {
           borderTopWidth: 0,
         },
@@ -62,7 +61,7 @@ export default function TabsLayout() {
                   width: 28, height: 3, borderRadius: 2,
                   backgroundColor: gold[400],
                   position: 'absolute',
-                  top: Platform.OS === 'ios' ? -10 : -12,
+                  top: Platform.OS === 'ios' ? -10 : -16,
                 }} />
               )}
               <Home
@@ -86,10 +85,10 @@ export default function TabsLayout() {
                   width: 28, height: 3, borderRadius: 2,
                   backgroundColor: gold[400],
                   position: 'absolute',
-                  top: Platform.OS === 'ios' ? -10 : -12,
+                  top: Platform.OS === 'ios' ? -10 : -16,
                 }} />
               )}
-              <Archive
+              <ShoppingBag
                 color={color}
                 size={24}
                 strokeWidth={1.8}
@@ -110,7 +109,7 @@ export default function TabsLayout() {
                   width: 28, height: 3, borderRadius: 2,
                   backgroundColor: gold[400],
                   position: 'absolute',
-                  top: Platform.OS === 'ios' ? -10 : -12,
+                  top: Platform.OS === 'ios' ? -10 : -16,
                 }} />
               )}
               <Compass
@@ -134,7 +133,7 @@ export default function TabsLayout() {
                   width: 28, height: 3, borderRadius: 2,
                   backgroundColor: gold[400],
                   position: 'absolute',
-                  top: Platform.OS === 'ios' ? -10 : -12,
+                  top: Platform.OS === 'ios' ? -10 : -16,
                 }} />
               )}
               <User

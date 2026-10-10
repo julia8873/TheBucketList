@@ -6,6 +6,9 @@ import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { Swipeable } from 'react-native-gesture-handler';
+import { Search } from 'lucide-react-native';
+import { Text, Image } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { useBuckets, useDeleteBucket } from '../../src/hooks/useBuckets';
 import { useAlbums } from '../../src/hooks/useAlbums';
@@ -56,6 +59,7 @@ export default function MyListScreen() {
 
   // Compute stats
   const totalCount = buckets?.length || 0;
+  const completedCount = buckets?.filter(b => b.status === 'completed').length || 0;
 
   // Filter items
   const filteredBuckets = useMemo(() => {
@@ -77,18 +81,38 @@ export default function MyListScreen() {
     });
   }, [buckets, filter]);
 
+  const listData = useMemo(() => {
+    if (!filteredBuckets) return [];
+    if (filter !== 'all') return filteredBuckets;
+    
+    const activeOrCompleted = filteredBuckets.filter(b => {
+      const deadline = b.deadline ? new Date(b.deadline) : null;
+      const expired = deadline ? (isPast(deadline) && differenceInDays(deadline, new Date()) < 0) : false;
+      return !expired || b.status === 'completed';
+    });
+    
+    const expired = filteredBuckets.filter(b => {
+      const deadline = b.deadline ? new Date(b.deadline) : null;
+      return deadline ? (isPast(deadline) && differenceInDays(deadline, new Date()) < 0) && b.status !== 'completed' : false;
+    });
+    
+    if (expired.length > 0) {
+      return [...activeOrCompleted, { isHeader: true, title: 'SE ME ESCAPÓ' }, ...expired];
+    }
+    return activeOrCompleted;
+  }, [filteredBuckets, filter]);
+
   const handleCreate = () => {
     router.push('/(modals)/create-bucket');
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: '#0E0E0E' }]} edges={['top']}>
 
       {/* ── Header: exact title hierarchy from the reference ── */}
       <View style={styles.header}>
-        <Typography variant="h1" color={theme.colors.foreground} style={styles.title}>
-          Mi Lista
-        </Typography>
+        <Text style={styles.headerTitle}>Mi Lista</Text>
+        <Search size={22} color="#FFF" />
       </View>
 
       {/* ── Tabs (always visible, full width) ───────────── */}
@@ -104,6 +128,21 @@ export default function MyListScreen() {
         />
       </View>
 
+      {/* ── Stats ───────────────────────────────────────── */}
+      {activeTab === 'list' && (
+        <View style={styles.statsContainer}>
+          <View style={styles.statColumn}>
+            <Text style={styles.statNumber}>{completedCount}</Text>
+            <Text style={styles.statLabel}>Completadas</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statColumn}>
+            <Text style={styles.statNumber}>{totalCount}</Text>
+            <Text style={styles.statLabel}>En la lista</Text>
+          </View>
+        </View>
+      )}
+
       {/* ── Filters (only for list tab) ─────────────────── */}
       {activeTab === 'list' && (
         <ScrollView
@@ -112,10 +151,10 @@ export default function MyListScreen() {
           contentContainerStyle={styles.filtersContainer}
           style={{ flexGrow: 0, marginBottom: 16 }}
         >
-          <FilterChip label="Todos" active={filter === 'all'} onPress={() => setFilter('all')} />
-          <FilterChip label="Activos" active={filter === 'active'} onPress={() => setFilter('active')} />
-          <FilterChip label="Completados" active={filter === 'completed'} onPress={() => setFilter('completed')} />
-          <FilterChip label="Caducados" active={filter === 'expired'} onPress={() => setFilter('expired')} />
+          <FilterChip label="Todas" active={filter === 'all'} onPress={() => setFilter('all')} />
+          <FilterChip label="En curso" active={filter === 'active'} onPress={() => setFilter('active')} />
+          <FilterChip label="Completadas" active={filter === 'completed'} onPress={() => setFilter('completed')} />
+          <FilterChip label="Se me escapó" active={filter === 'expired'} onPress={() => setFilter('expired')} />
         </ScrollView>
       )}
 
@@ -123,22 +162,55 @@ export default function MyListScreen() {
       <View style={styles.content}>
         {activeTab === 'list' && (
           <FlashList
-            data={filteredBuckets}
-            keyExtractor={(item) => item.id}
+            data={listData}
+            keyExtractor={(item: any) => item.id || item.title}
             contentContainerStyle={styles.listContent}
             estimatedItemSize={80}
             ItemSeparatorComponent={() => <View style={{ height: spacing[3] }} />}
-            renderItem={({ item }) => {
+            renderItem={({ item }: { item: any }) => {
+              if (item.isHeader) {
+                return (
+                  <View style={{ marginTop: 28, marginBottom: 4 }}>
+                    <Text style={styles.expiredHeader}>{item.title}</Text>
+                  </View>
+                );
+              }
+
               const categoryColor = item.category?.color || categoryColors.other;
               const subtasksTotal = item.item_subtasks?.length || 0;
               const subtasksDone = item.item_subtasks?.filter((s: any) => s.done).length || 0;
 
-              const meta = item.category?.name_es
-                ? `${item.category.name_es}${subtasksTotal > 0 ? ` · ${subtasksDone} de ${subtasksTotal} pasos` : ''}`
-                : undefined;
+              const deadlineDate = item.deadline ? new Date(item.deadline) : null;
+              const isItemExpired = deadlineDate ? (isPast(deadlineDate) && differenceInDays(deadlineDate, new Date()) < 0) : false;
+              const daysAgo = deadlineDate ? Math.abs(differenceInDays(deadlineDate, new Date())) : 0;
+
+              let meta = item.category?.name_es || 'Sin categoría';
+              if (isItemExpired && item.status !== 'completed') {
+                meta = `Caducó hace ${daysAgo} días`;
+              } else if (subtasksTotal > 0) {
+                meta += ` · ${subtasksDone} de ${subtasksTotal} pasos`;
+              } else if (item.location) {
+                meta += ` · ${item.location}`;
+              } else {
+                meta += ` · Sin fecha`;
+              }
 
               const coverPath = item.cover_image || (item.bucket_photos?.[0]?.thumb_path || item.bucket_photos?.[0]?.storage_path);
-              const coverUrl = coverPath ? storageApi.getPublicUrl(coverPath) : undefined;
+              const isPreset = coverPath?.startsWith('preset:');
+              const hasActualImage = !!coverPath && !isPreset;
+              const imageUri = hasActualImage ? (coverPath.startsWith('http') ? coverPath : storageApi.getPublicUrl(coverPath)) : null;
+
+              let gradientColors: readonly [string, string, ...string[]] = ['#2A2A2A', '#3A3A3A'];
+              const catName = item.category?.name_es?.toLowerCase() || item.category?.slug?.toLowerCase() || '';
+              if (catName.includes('viaj') || catName === 'travel') {
+                gradientColors = ['#0F5C4A', '#1E8A5E'];
+              } else if (catName.includes('aventura') || catName === 'adventure') {
+                gradientColors = ['#2F6DB5', '#8EC5F2'];
+              } else if (catName.includes('deporte') || catName === 'sport') {
+                gradientColors = ['#F29A5C', '#D2562B'];
+              } else {
+                gradientColors = ['#5C4A0F', '#8A7A1E']; // coherent gold-ish fallback
+              }
 
               const renderRightActions = (progress: any, dragX: any) => {
                 return (
@@ -173,15 +245,20 @@ export default function MyListScreen() {
                     title={item.title}
                     meta={meta}
                     deadline={item.deadline}
+                    expiredAction={isItemExpired && item.status !== 'completed'}
                     thumbnailElement={
-                      <BucketCover
-                        value={item.cover_image}
-                        title={item.title}
-                        categorySlug={item.category?.slug}
-                        seed={item.id}
-                        iconSize={40}
-                        style={StyleSheet.absoluteFill}
-                      />
+                      isItemExpired && item.status !== 'completed' ? (
+                        <View style={{ flex: 1, backgroundColor: '#202020', borderRadius: 12 }} />
+                      ) : imageUri ? (
+                        <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+                      ) : (
+                        <LinearGradient
+                          colors={gradientColors}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={StyleSheet.absoluteFill}
+                        />
+                      )
                     }
                     subtasksDone={subtasksDone}
                     subtasksTotal={subtasksTotal}
@@ -256,14 +333,49 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: 12,
-    paddingBottom: 8,
+    paddingBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  title: {
-    marginBottom: 0,
+  headerTitle: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 26,
+    color: '#FFF',
   },
   tabsContainer: {
     paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#2A2A2A',
     marginBottom: 16,
+    marginHorizontal: 20,
+  },
+  statColumn: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statDivider: {
+    width: 1,
+    height: '100%',
+    backgroundColor: '#2A2A2A',
+  },
+  statNumber: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 18,
+    color: '#FFF',
+  },
+  statLabel: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    color: '#9A9A9A',
+    marginTop: 2,
   },
   filtersContainer: {
     flexDirection: 'row',
@@ -273,6 +385,12 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  expiredHeader: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 13,
+    color: '#8A8A80',
+    letterSpacing: 1.5,
   },
   listContent: {
     paddingHorizontal: 20,

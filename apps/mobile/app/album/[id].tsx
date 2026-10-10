@@ -146,7 +146,7 @@ export default function AlbumDetailScreen() {
             {task.title}
           </Text>
           <Text style={styles.taskSub}>{subTitle}</Text>
-          {!isDone && task.stepsTotal && task.stepsTotal > 0 && (
+          {!isDone && task.stepsTotal !== undefined && task.stepsTotal > 0 && (
             <View style={styles.taskStepsTrack}>
               <View style={[styles.taskStepsFill, { width: `${((task.stepsCompleted || 0) / task.stepsTotal) * 100}%` }]} />
             </View>
@@ -171,7 +171,7 @@ export default function AlbumDetailScreen() {
     <View style={styles.container}>
       <ScrollView 
         style={styles.scroll} 
-        contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + (id === 'unassigned' ? 40 : 120) }}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#D4B13A" />
         }
@@ -191,43 +191,49 @@ export default function AlbumDetailScreen() {
           >
             <ChevronLeft size={22} color="#F3EEE3" strokeWidth={1.8} />
           </Pressable>
-          <Pressable 
-            accessibilityRole="button" 
-            accessibilityLabel="Compartir" 
-            style={[styles.heroBtn, { right: 64, top: Math.max(52, insets.top) }]} 
-            onPress={handleShare}
-          >
-            <ShareIcon size={22} color="#F3EEE3" strokeWidth={1.8} />
-          </Pressable>
-          <Pressable 
-            accessibilityRole="button" 
-            accessibilityLabel="Más opciones" 
-            style={[styles.heroBtn, { right: 12, top: Math.max(52, insets.top) }]} 
-            onPress={handleMore}
-          >
-            <MoreHorizontal size={22} color="#F3EEE3" strokeWidth={1.8} />
-          </Pressable>
+          {id !== 'unassigned' && (
+            <>
+              <Pressable 
+                accessibilityRole="button" 
+                accessibilityLabel="Compartir" 
+                style={[styles.heroBtn, { right: 64, top: Math.max(52, insets.top) }]} 
+                onPress={handleShare}
+              >
+                <ShareIcon size={22} color="#F3EEE3" strokeWidth={1.8} />
+              </Pressable>
+              <Pressable 
+                accessibilityRole="button" 
+                accessibilityLabel="Más opciones" 
+                style={[styles.heroBtn, { right: 12, top: Math.max(52, insets.top) }]} 
+                onPress={handleMore}
+              >
+                <MoreHorizontal size={22} color="#F3EEE3" strokeWidth={1.8} />
+              </Pressable>
+            </>
+          )}
         </View>
 
         {/* Chips */}
-        <View style={styles.chipsRow}>
-          <View style={[styles.chip, styles.chipStatus]}>
-            <Text style={styles.chipStatusText}>{statusLabel}</Text>
+        {id !== 'unassigned' && (
+          <View style={styles.chipsRow}>
+            <View style={[styles.chip, styles.chipStatus]}>
+              <Text style={styles.chipStatusText}>{statusLabel}</Text>
+            </View>
+            <View style={styles.chip}>
+              {isShared ? (
+                <>
+                  <Users size={16} color="#F3EEE3" strokeWidth={1.8} />
+                  <Text style={styles.chipText}>Compartido</Text>
+                </>
+              ) : (
+                <>
+                  <Lock size={16} color="#F3EEE3" strokeWidth={1.8} />
+                  <Text style={styles.chipText}>Privado</Text>
+                </>
+              )}
+            </View>
           </View>
-          <View style={styles.chip}>
-            {isShared ? (
-              <>
-                <Users size={16} color="#F3EEE3" strokeWidth={1.8} />
-                <Text style={styles.chipText}>Compartido</Text>
-              </>
-            ) : (
-              <>
-                <Lock size={16} color="#F3EEE3" strokeWidth={1.8} />
-                <Text style={styles.chipText}>Privado</Text>
-              </>
-            )}
-          </View>
-        </View>
+        )}
 
         {/* Title */}
         <Text style={styles.title}>{title}</Text>
@@ -252,10 +258,12 @@ export default function AlbumDetailScreen() {
                 <Text style={{ color: '#D4B13A' }}>PENDIENTES</Text>
                 <Text style={{ color: '#FFF' }}> · {pendientes.length}</Text>
               </Text>
-              <Pressable style={styles.addBtn} onPress={() => router.push(`/add-task?albumId=${id}`)}>
-                <Plus size={16} color="#D4B13A" strokeWidth={2} />
-                <Text style={styles.addBtnText}>Añadir</Text>
-              </Pressable>
+              {id !== 'unassigned' && (
+                <Pressable style={styles.addBtn} onPress={() => router.push(`/add-task?albumId=${id}`)}>
+                  <Plus size={16} color="#D4B13A" strokeWidth={2} />
+                  <Text style={styles.addBtnText}>Añadir</Text>
+                </Pressable>
+              )}
             </View>
             <View style={styles.taskList}>
               {pendientes.map(renderTask)}
@@ -280,14 +288,16 @@ export default function AlbumDetailScreen() {
       </ScrollView>
 
       {/* Bottom Bar */}
-      <View style={[styles.bottomBar, { paddingBottom: Math.max(30, insets.bottom) }]}>
-        <Pressable style={styles.btnEdit} onPress={() => router.push(`/(modals)/create-album?id=${id}`)}>
-          <Text style={styles.btnEditText}>Editar</Text>
-        </Pressable>
-        <Pressable style={styles.btnAdd} onPress={() => router.push(`/add-task?albumId=${id}`)}>
-          <Text style={styles.btnAddText}>Añadir tarea</Text>
-        </Pressable>
-      </View>
+      {id !== 'unassigned' && (
+        <View style={[styles.bottomBar, { paddingBottom: Math.max(30, insets.bottom) }]}>
+          <Pressable style={styles.btnEdit} onPress={() => router.push(`/(modals)/create-album?id=${id}`)}>
+            <Text style={styles.btnEditText}>Editar</Text>
+          </Pressable>
+          <Pressable style={styles.btnAdd} onPress={() => router.push(`/add-task?albumId=${id}`)}>
+            <Text style={styles.btnAddText}>Añadir tarea</Text>
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 }

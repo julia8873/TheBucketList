@@ -15,7 +15,7 @@ import { differenceInDays, isPast } from 'date-fns';
 
 // ── Pill ──────────────────────────────────────────────────────────────────────
 
-export type PillVariant = 'gold' | 'neutral' | 'warning' | 'warning-strong' | 'muted';
+export type PillVariant = 'gold' | 'neutral' | 'warning' | 'warning-strong' | 'muted' | 'outline-gold';
 
 interface PillProps {
   label: string;
@@ -42,6 +42,8 @@ function getPillColors(
   switch (variant) {
     case 'gold':
       return { bg: '#201B0E', border: '#5A4A1C', text: gold[400] };
+    case 'outline-gold':
+      return { bg: 'transparent', border: '#D4B13A', text: '#D4B13A' };
     case 'warning':
       return { bg: amber[900], border: amber[100], text: amber[500] };
     case 'warning-strong':
@@ -72,35 +74,28 @@ export function UrgencyChip({ deadline, style }: UrgencyChipProps) {
   let variant: PillVariant;
 
   if (expired) {
-    const daysAgo = Math.abs(daysLeft);
-    label = daysAgo === 1 ? 'Ayer' : `Hace ${daysAgo} días`;
-    variant = 'muted';
+    return null; // Expired tasks don't show the badge in this design
   } else if (daysLeft <= 1) {
     label = daysLeft === 0 ? 'Hoy' : 'Mañana';
-    variant = 'warning-strong';
-  } else if (daysLeft <= 7) {
-    label = `${daysLeft} días`;
-    variant = 'warning';
   } else {
     label = `${daysLeft} días`;
-    variant = 'gold';
   }
+  variant = 'outline-gold';
 
   return <Pill label={label} variant={variant} style={style} />;
 }
 
 const styles = StyleSheet.create({
   pill: {
-    height: 30,
-    paddingHorizontal: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
     borderRadius: 15,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   label: {
-    fontFamily: fontFamily.semibold,
-    fontSize: fontSize.xs,
-    letterSpacing: 0.2,
+    fontFamily: fontFamily.medium,
+    fontSize: 12,
   },
 });

@@ -31,6 +31,7 @@ interface TaskRowProps {
   thumbnailElement?: React.ReactNode;
   onPress?: () => void;
   style?: ViewStyle;
+  expiredAction?: boolean;
 }
 
 export function TaskRow({
@@ -46,6 +47,7 @@ export function TaskRow({
   thumbnailElement,
   onPress,
   style,
+  expiredAction,
 }: TaskRowProps) {
   const { theme } = useTheme();
   const hasSubtaskProgress = subtasksTotal > 0;
@@ -58,7 +60,7 @@ export function TaskRow({
       onPress={onPress}
       style={({ pressed }) => [
         styles.row,
-        { backgroundColor: theme.colors.surface, opacity: pressed ? 0.85 : 1 },
+        { backgroundColor: '#161616', opacity: pressed ? 0.85 : 1 },
         style,
       ]}
       accessibilityRole="button"
@@ -76,11 +78,11 @@ export function TaskRow({
 
       {/* Content */}
       <View style={styles.content}>
-        <Text style={[styles.title, { color: theme.colors.foreground }]} numberOfLines={2}>
+        <Text style={[styles.title, { color: '#FFFFFF' }]} numberOfLines={2}>
           {title}
         </Text>
         {meta ? (
-          <Text style={[styles.meta, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
+          <Text style={[styles.meta, { color: '#9A9A9A' }]} numberOfLines={1}>
             {meta}
           </Text>
         ) : null}
@@ -100,8 +102,12 @@ export function TaskRow({
         ) : null}
       </View>
 
-      {/* Urgency chip */}
-      {deadline ? (
+      {/* Urgency chip or Expired Action */}
+      {expiredAction ? (
+        <Text style={{ color: '#D4B13A', fontFamily: fontFamily.semibold, fontSize: 14 }}>
+          Reprogramar
+        </Text>
+      ) : deadline ? (
         <UrgencyChip deadline={deadline} style={styles.chip} />
       ) : null}
     </Pressable>
@@ -113,13 +119,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    borderRadius: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
     gap: 12,
   },
   thumbnail: {
     width: 56,
     height: 56,
-    borderRadius: 12,
+    borderRadius: 10,
     overflow: 'hidden',
     flexShrink: 0,
   },
@@ -133,17 +141,19 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: fontFamily.serif,
-    fontSize: fontSize.lg,
+    fontSize: 16,
     lineHeight: 22,
   },
   meta: {
     fontFamily: fontFamily.regular,
-    fontSize: fontSize.xs,
+    fontSize: 13,
   },
   progress: {
     marginTop: 4,
     height: 3,
     borderRadius: 2,
+    backgroundColor: '#333333',
+    width: '100%', // Takes up the full flex width
   },
   chip: {
     flexShrink: 0,

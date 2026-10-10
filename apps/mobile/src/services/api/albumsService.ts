@@ -26,6 +26,55 @@ export const albumsService = {
   async getAlbum(id: string, userId?: string): Promise<AlbumDetail> {
     if (!userId) throw new Error('Not authenticated');
 
+    if (id === 'unassigned') {
+      const { data: allUserBuckets, error: bucketsError } = await supabase
+        .from('buckets')
+        .select(`
+          id, title, deadline, cover_image, status, 
+          category_id, counter_count, counter_target,
+          categories ( name_es, color, slug ),
+          item_subtasks ( id, done ),
+          album_items ( album_id )
+        `)
+        .eq('user_id', userId);
+
+      if (bucketsError) throw bucketsError;
+
+      const unassignedBuckets = allUserBuckets?.filter(b => !b.album_items || b.album_items.length === 0) || [];
+
+      const tasks = unassignedBuckets.map(b => {
+        const cat = b.categories as any;
+        const subtasks = b.item_subtasks as any[];
+        
+        let stepsTotal = subtasks ? subtasks.length : 0;
+        let stepsCompleted = subtasks ? subtasks.filter(s => s.done).length : 0;
+        
+        if (stepsTotal === 0 && b.counter_target && b.counter_target > 0) {
+           stepsTotal = b.counter_target;
+           stepsCompleted = b.counter_count || 0;
+        }
+
+        return {
+          id: b.id,
+          title: b.title,
+          categoryName: cat?.name_es || 'Sin categoría',
+          coverKey: 'aurora',
+          isCompleted: b.status === 'completed',
+          dueDate: b.deadline || undefined,
+          stepsTotal,
+          stepsCompleted,
+        };
+      });
+
+      return {
+        id: 'unassigned',
+        title: 'Sin álbum',
+        coverKey: 'aurora',
+        isShared: false,
+        tasks,
+      };
+    }
+
     // Fetch album details
     const { data: album, error: albumError } = await supabase
       .from('albums')
@@ -60,7 +109,7 @@ export const albumsService = {
       const { data: buckets, error: bucketsError } = await supabase
         .from('buckets')
         .select(`
-          id, title, deadline, cover_image, is_completed, 
+          id, title, deadline, cover_image, status, 
           category_id, counter_count, counter_target,
           categories ( name_es, color, slug ),
           item_subtasks ( id, done )
@@ -87,7 +136,7 @@ export const albumsService = {
           title: b.title,
           categoryName: cat?.name_es || 'Sin categoría',
           coverKey: coverKey, // we just use album's cover for task gradient if no task cover, but let's use album's coverKey
-          isCompleted: b.is_completed || false,
+          isCompleted: b.status === 'completed',
           dueDate: b.deadline || undefined,
           stepsTotal,
           stepsCompleted,

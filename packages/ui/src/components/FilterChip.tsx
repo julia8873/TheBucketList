@@ -25,8 +25,8 @@ export function FilterChip({ label, active = false, onPress, style, accessibilit
       style={({ pressed }) => [
         styles.chip,
         {
-          backgroundColor: active ? '#201B0E' : 'transparent',
-          borderColor: active ? gold[400] : theme.colors.border,
+          backgroundColor: active ? 'transparent' : '#1A1A1A',
+          borderColor: active ? gold[400] : '#333333',
           opacity: pressed ? 0.75 : 1,
         },
         style,
@@ -39,8 +39,8 @@ export function FilterChip({ label, active = false, onPress, style, accessibilit
         style={[
           styles.label,
           {
-            color: active ? gold[400] : theme.colors.foregroundMuted,
-            fontFamily: active ? fontFamily.semibold : fontFamily.regular,
+            color: active ? gold[400] : '#E5E5E5',
+            fontFamily: fontFamily.medium,
           },
         ]}
       >
@@ -52,14 +52,14 @@ export function FilterChip({ label, active = false, onPress, style, accessibilit
 
 const styles = StyleSheet.create({
   chip: {
-    height: 36,
+    height: 34,
     paddingHorizontal: 16,
-    borderRadius: 18,
+    borderRadius: 17,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   label: {
-    fontSize: fontSize.sm,
+    fontSize: 13,
   },
 });

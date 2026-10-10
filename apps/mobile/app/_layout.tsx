@@ -1,6 +1,6 @@
 import 'react-native-url-polyfill/auto';
 import React, { useEffect, useCallback } from 'react';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -108,7 +108,20 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { override } = useThemeStore();
+  const { session, isInitialized } = useAuthStore();
+  const router = useRouter();
+  const segments = useSegments();
   const colorScheme = override === 'system' ? undefined : override;
+
+  useEffect(() => {
+    if (!isInitialized) return;
+    const inAuthGroup = segments[0] === '(auth)';
+    if (session && inAuthGroup) {
+      router.replace('/(tabs)/feed');
+    } else if (!session && !inAuthGroup) {
+      router.replace('/(auth)/welcome');
+    }
+  }, [session, isInitialized, segments]);
 
   return (
     <>

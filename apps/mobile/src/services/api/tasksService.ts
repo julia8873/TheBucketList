@@ -43,14 +43,12 @@ export const tasksService = {
 
     const { data, error } = await supabase
       .from('buckets')
-      .select('id, title, location_text, categories(name_es), album_items(album_id)')
+      .select('id, title, location_text, categories(name_es)')
       .eq('user_id', userAuth.user.id);
 
     if (error) throw error;
 
-    const unassigned = data.filter(b => !b.album_items || b.album_items.length === 0);
-
-    return unassigned.map(b => ({
+    return data.map(b => ({
       id: b.id,
       title: b.title,
       categoryName: (b.categories as any)?.name_es || 'Sin categoría',
@@ -62,14 +60,14 @@ export const tasksService = {
   async assignTasksToAlbum(albumId: string, taskIds: string[]): Promise<void> {
     if (!taskIds.length) return;
     
-    const itemsToInsert = taskIds.map(id => ({
+    const itemsToUpsert = taskIds.map(id => ({
       album_id: albumId,
       bucket_id: id,
     }));
 
     const { error } = await supabase
       .from('album_items')
-      .insert(itemsToInsert);
+      .upsert(itemsToUpsert);
 
     if (error) throw error;
   },
