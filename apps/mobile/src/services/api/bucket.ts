@@ -87,6 +87,7 @@ export const bucketApi = {
       location_lat: payload.location_lat,
       location_lng: payload.location_lng,
       status: payload.status as 'pending' | 'in_progress' | 'completed' | 'expired' | 'archived' | undefined,
+      completed_at: payload.completed_at ? payload.completed_at.toISOString() : undefined,
     };
 
     // Remove undefined fields

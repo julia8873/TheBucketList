@@ -3,6 +3,7 @@ import { View, StyleSheet, Alert, Share, ActivityIndicator, ScrollView, Image, P
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
@@ -55,6 +56,7 @@ export default function BucketDetailScreen() {
   const [viewingPhotoIndex, setViewingPhotoIndex] = useState<number | null>(null);
   const [newSubtaskText, setNewSubtaskText] = useState('');
   const [scrollEnabled, setScrollEnabled] = useState(true);
+  const [datePickerConfig, setDatePickerConfig] = useState<{ visible: boolean, type: 'deadline' | 'completed_at', date: Date } | null>(null);
   const sheetTranslateY = useRef(new Animated.Value(420)).current;
   const subtaskTimeouts = useRef<Record<string, NodeJS.Timeout>>({});
   const titleTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -793,15 +795,21 @@ export default function BucketDetailScreen() {
               </View>
             )}
             {bucket.status === 'completed' && (
-              <View style={styles.metaRow}>
+              <Pressable 
+                style={styles.metaRow}
+                onPress={() => isOwner && setDatePickerConfig({ visible: true, type: 'completed_at', date: new Date(bucket.completed_at || bucket.updated_at || new Date()) })}
+              >
                 <CheckCircle2 color={gold[400]} size={16} strokeWidth={1.8} />
                 <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText}>
                   Completada el {format(new Date(bucket.completed_at || bucket.updated_at || new Date()), 'd \'de\' MMMM \'de\' yyyy', { locale: es })}
                 </Typography>
-              </View>
+              </Pressable>
             )}
             {bucket.deadline && (
-              <View style={styles.metaRow}>
+              <Pressable 
+                style={styles.metaRow}
+                onPress={() => isOwner && setDatePickerConfig({ visible: true, type: 'deadline', date: new Date(bucket.deadline!) })}
+              >
                 <Calendar color={gold[400]} size={16} strokeWidth={1.8} />
                 <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText}>
                   {bucket.status === 'completed' 
@@ -809,7 +817,7 @@ export default function BucketDetailScreen() {
                     : `Vence el ${format(new Date(bucket.deadline), 'd \'de\' MMMM \'de\' yyyy', { locale: es })}`
                   }
                 </Typography>
-              </View>
+              </Pressable>
             )}
           </View>
 
@@ -1298,6 +1306,56 @@ export default function BucketDetailScreen() {
           </View>
         </Pressable>
       </Modal>
+
+      {datePickerConfig && datePickerConfig.visible && (
+        Platform.OS === 'ios' ? (
+          <Modal transparent animationType="slide" visible={true}>
+            <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+              <View style={{ backgroundColor: '#1C1C1E', padding: 20, borderTopLeftRadius: 16, borderTopRightRadius: 16 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10 }}>
+                  <Pressable onPress={() => setDatePickerConfig(null)}>
+                    <Typography variant="bodySemibold" color="#0A84FF">Hecho</Typography>
+                  </Pressable>
+                </View>
+                <DateTimePicker
+                  value={datePickerConfig.date}
+                  mode="date"
+                  display="spinner"
+                  themeVariant="dark"
+                  onChange={async (_event, date) => {
+                    if (date) {
+                      setDatePickerConfig({ ...datePickerConfig, date });
+                      const type = datePickerConfig.type;
+                      queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, [type]: date.toISOString() } : oldData);
+                      await supabase.from('buckets').update({ [type]: date.toISOString() }).eq('id', id);
+                      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+                      void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+                      void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
+                    }
+                  }}
+                />
+              </View>
+            </View>
+          </Modal>
+        ) : (
+          <DateTimePicker
+            value={datePickerConfig.date}
+            mode="date"
+            display="default"
+            onChange={async (event, date) => {
+              const type = datePickerConfig.type;
+              setDatePickerConfig(null);
+              if (event.type === 'set' && date) {
+                queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, [type]: date.toISOString() } : oldData);
+                await supabase.from('buckets').update({ [type]: date.toISOString() }).eq('id', id);
+                void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+                void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+                void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
+              }
+            }}
+          />
+        )
+      )}
     </View>
   );
 }

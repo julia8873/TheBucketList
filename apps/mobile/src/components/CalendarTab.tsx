@@ -21,8 +21,9 @@ export function CalendarTab() {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1; // 1-12
   
-  // Use user's timezone if possible, default UTC for simplicity in this example
-  const { data: monthData, isLoading } = useCalendar(user?.id, year, month);
+  // Use user's timezone
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  const { data: monthData, isLoading } = useCalendar(user?.id, year, month, tz);
 
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));

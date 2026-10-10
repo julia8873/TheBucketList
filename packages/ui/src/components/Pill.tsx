@@ -11,7 +11,7 @@ import { View, Text, StyleSheet, type ViewStyle } from 'react-native';
 import { fontFamily, fontSize } from '../tokens/typography';
 import { gold, amber, dark } from '../tokens/colors';
 import { useTheme } from '../theme/useTheme';
-import { differenceInDays, isPast } from 'date-fns';
+import { differenceInCalendarDays, isPast } from 'date-fns';
 
 // ── Pill ──────────────────────────────────────────────────────────────────────
 
@@ -67,8 +67,8 @@ export function UrgencyChip({ deadline, style }: UrgencyChipProps) {
   if (!deadline) return null;
 
   const date = typeof deadline === 'string' ? new Date(deadline) : deadline;
-  const daysLeft = differenceInDays(date, new Date());
-  const expired = isPast(date) && daysLeft < 0;
+  const daysLeft = differenceInCalendarDays(date, new Date());
+  const expired = daysLeft < 0; // if it's in the past and calendar difference < 0
 
   let label: string;
   let variant: PillVariant;

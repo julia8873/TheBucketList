@@ -21,6 +21,7 @@ export const createBucketSchema = z.object({
 
 export const updateBucketSchema = createBucketSchema.partial().extend({
   status: z.enum(['pending', 'in_progress', 'completed', 'expired', 'archived']).optional(),
+  completed_at: z.date().optional().nullable(),
 });
 
 export type SubtaskForm = z.infer<typeof subtaskSchema>;

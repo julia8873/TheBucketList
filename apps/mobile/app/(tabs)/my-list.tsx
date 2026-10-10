@@ -6,7 +6,7 @@ import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { Swipeable } from 'react-native-gesture-handler';
-import { Search } from 'lucide-react-native';
+import { Search, Trash2 } from 'lucide-react-native';
 import { Text, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -19,7 +19,7 @@ import { storageApi } from '../../src/services/api/storage';
 import { CalendarTab } from '../../src/components/CalendarTab';
 import { BucketCover } from '../../src/components/BucketCover';
 import { categoryColors } from '@bucketlist/ui/src/tokens/colors';
-import { isPast, differenceInDays } from 'date-fns';
+import { isPast, differenceInCalendarDays } from 'date-fns';
 
 type FilterType = 'all' | 'active' | 'completed' | 'expired';
 
@@ -70,7 +70,7 @@ export default function MyListScreen() {
       if (filter === 'completed') return b.status === 'completed';
 
       const deadline = b.deadline ? new Date(b.deadline) : null;
-      const expired = deadline ? (isPast(deadline) && differenceInDays(deadline, new Date()) < 0) : false;
+      const expired = deadline ? (isPast(deadline) && differenceInCalendarDays(deadline, new Date()) < 0) : false;
 
       if (filter === 'expired') return expired && b.status !== 'completed';
       if (filter === 'active') return b.status !== 'completed' && !expired;
@@ -87,13 +87,13 @@ export default function MyListScreen() {
     
     const activeOrCompleted = filteredBuckets.filter(b => {
       const deadline = b.deadline ? new Date(b.deadline) : null;
-      const expired = deadline ? (isPast(deadline) && differenceInDays(deadline, new Date()) < 0) : false;
+      const expired = deadline ? (isPast(deadline) && differenceInCalendarDays(deadline, new Date()) < 0) : false;
       return !expired || b.status === 'completed';
     });
     
     const expired = filteredBuckets.filter(b => {
       const deadline = b.deadline ? new Date(b.deadline) : null;
-      return deadline ? (isPast(deadline) && differenceInDays(deadline, new Date()) < 0) && b.status !== 'completed' : false;
+      return deadline ? (isPast(deadline) && differenceInCalendarDays(deadline, new Date()) < 0) && b.status !== 'completed' : false;
     });
     
     if (expired.length > 0) {
@@ -181,8 +181,8 @@ export default function MyListScreen() {
               const subtasksDone = item.item_subtasks?.filter((s: any) => s.done).length || 0;
 
               const deadlineDate = item.deadline ? new Date(item.deadline) : null;
-              const isItemExpired = deadlineDate ? (isPast(deadlineDate) && differenceInDays(deadlineDate, new Date()) < 0) : false;
-              const daysAgo = deadlineDate ? Math.abs(differenceInDays(deadlineDate, new Date())) : 0;
+              const isItemExpired = deadlineDate ? (isPast(deadlineDate) && differenceInCalendarDays(deadlineDate, new Date()) < 0) : false;
+              const daysAgo = deadlineDate ? Math.abs(differenceInCalendarDays(deadlineDate, new Date())) : 0;
 
               let meta = item.category?.name_es || 'Sin categoría';
               if (isItemExpired && item.status !== 'completed') {
@@ -218,20 +218,17 @@ export default function MyListScreen() {
                     style={{
                       backgroundColor: theme.colors.error,
                       justifyContent: 'center',
-                      alignItems: 'flex-end',
-                      paddingRight: 20,
+                      alignItems: 'center',
                       borderRadius: 16,
                       height: '100%',
-                      width: 100,
-                      marginLeft: -20,
+                      width: 65,
+                      marginLeft: 10,
                     }}
                     onPress={() => {
                       deleteBucket.mutate(item.id);
                     }}
                   >
-                    <Typography variant="bodySemibold" color={theme.colors.errorForeground}>
-                      Eliminar
-                    </Typography>
+                    <Trash2 color={theme.colors.errorForeground} size={24} />
                   </Pressable>
                 );
               };

@@ -29,6 +29,7 @@ export function useCreateBucket() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: BUCKETS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
     },
   });
 }
@@ -55,6 +56,7 @@ export function useUpdateBucket() {
       // leaves the old title/description visible after returning from edit.
       void queryClient.invalidateQueries({ queryKey: BUCKETS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', variables.id] });
+      void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
     },
   });
 }
@@ -79,6 +81,7 @@ export function useDeleteBucket() {
       void queryClient.invalidateQueries({ queryKey: BUCKETS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ['feed'] });
       void queryClient.invalidateQueries({ queryKey: ['explore'] });
+      void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
     },
   });
 }
