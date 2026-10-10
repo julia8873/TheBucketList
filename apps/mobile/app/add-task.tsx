@@ -256,7 +256,7 @@ export default function AddTaskScreen() {
             const isSelected = selectedIds.has(task.id);
             const thumbGradient = GRADIENTS[task.coverKey as keyof typeof GRADIENTS] || GRADIENTS.aurora;
             const isDiagonal = task.coverKey === 'dorado';
-            const subTitle = `${task.categoryName} · ${task.location || 'Sin fecha'}`;
+            const subTitle = task.location ? `${task.categoryName} · ${task.location}` : task.categoryName;
 
             return (
               <Pressable

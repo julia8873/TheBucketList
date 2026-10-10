@@ -116,7 +116,7 @@ export default function AlbumDetailScreen() {
     if (task.isCompleted) return `${task.categoryName} · Completada`;
     if (task.stepsTotal && task.stepsTotal > 0) return `${task.categoryName} · ${task.stepsCompleted || 0} de ${task.stepsTotal} pasos`;
     if (task.location) return `${task.categoryName} · ${task.location}`;
-    return `${task.categoryName} · Sin fecha`;
+    return task.categoryName;
   };
 
   const renderTask = (task: TaskItem) => {

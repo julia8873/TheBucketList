@@ -1,16 +1,16 @@
-import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, Pressable, ScrollView, Dimensions } from 'react-native';
+import React, { useState, useMemo, useRef } from 'react';
+import { View, StyleSheet, Pressable, ScrollView, Dimensions, Alert, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, Typography, SegmentedControl, FilterChip, TaskRow, AlbumCard, NewAlbumCard, NoAlbumRow, FAB, spacing } from '@bucketlist/ui';
+import { useTheme, Typography, SegmentedControl, FilterChip, TaskRow, AlbumCard, NewAlbumCard, NoAlbumRow, FAB, spacing, useToast } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { Swipeable } from 'react-native-gesture-handler';
-import { Search, Trash2 } from 'lucide-react-native';
+import { Search, Trash2, CheckCircle2 } from 'lucide-react-native';
 import { Text, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { useBuckets, useDeleteBucket } from '../../src/hooks/useBuckets';
+import { useBuckets, useDeleteBucket, useUpdateBucket } from '../../src/hooks/useBuckets';
 import { useAlbums } from '../../src/hooks/useAlbums';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useQuery } from '@tanstack/react-query';
@@ -35,7 +35,10 @@ export default function MyListScreen() {
 
   const { data: buckets, isLoading } = useBuckets(user?.id);
   const deleteBucket = useDeleteBucket();
+  const updateBucket = useUpdateBucket();
   const { data: albums, isLoading: isLoadingAlbums } = useAlbums(user?.id);
+  const toast = useToast();
+  const swipeableRefs = useRef(new Map<string, Swipeable>());
 
   // Consulta de relación tareas ↔ álbumes para contar correctamente
   const { data: albumItems } = useQuery({
@@ -191,8 +194,6 @@ export default function MyListScreen() {
                 meta += ` · ${subtasksDone} de ${subtasksTotal} pasos`;
               } else if (item.location) {
                 meta += ` · ${item.location}`;
-              } else {
-                meta += ` · Sin fecha`;
               }
 
               const coverPath = item.cover_image || (item.bucket_photos?.[0]?.thumb_path || item.bucket_photos?.[0]?.storage_path);
@@ -216,27 +217,69 @@ export default function MyListScreen() {
                 return (
                   <Pressable
                     style={{
+                      width: 130,
                       backgroundColor: theme.colors.error,
+                      borderTopRightRadius: 14,
+                      borderBottomRightRadius: 14,
+                      alignItems: 'flex-end',
                       justifyContent: 'center',
-                      alignItems: 'center',
-                      borderRadius: 16,
-                      height: '100%',
-                      width: 65,
-                      marginLeft: 10,
+                      paddingRight: 25,
                     }}
-                    onPress={() => {
-                      deleteBucket.mutate(item.id);
-                    }}
+                    onPress={() => deleteBucket.mutate(item.id)}
                   >
+                    <View style={{ position: 'absolute', left: -100, top: 0, bottom: 0, width: 100, backgroundColor: theme.colors.error }} />
                     <Trash2 color={theme.colors.errorForeground} size={24} />
+                  </Pressable>
+                );
+              };
+
+              const renderLeftActions = (progress: any, dragX: any) => {
+                if (item.status === 'completed') return null;
+                return (
+                  <Pressable
+                    style={{
+                      width: 130,
+                      backgroundColor: '#34C759',
+                      borderTopLeftRadius: 14,
+                      borderBottomLeftRadius: 14,
+                      alignItems: 'flex-start',
+                      justifyContent: 'center',
+                      paddingLeft: 25,
+                    }}
+                    onPress={() => updateBucket.mutate({ id: item.id, data: { status: 'completed', completed_at: new Date() } as any })}
+                  >
+                    <View style={{ position: 'absolute', right: -100, top: 0, bottom: 0, width: 100, backgroundColor: '#34C759' }} />
+                    <CheckCircle2 color="#FFFFFF" size={24} />
                   </Pressable>
                 );
               };
 
               return (
                 <Swipeable
+                  ref={(ref) => {
+                    if (ref) swipeableRefs.current.set(item.id, ref);
+                    else swipeableRefs.current.delete(item.id);
+                  }}
                   renderRightActions={renderRightActions}
+                  renderLeftActions={renderLeftActions}
                   overshootRight={false}
+                  overshootLeft={false}
+                  onSwipeableOpen={(direction) => {
+                    if (direction === 'left' && item.status !== 'completed') {
+                      updateBucket.mutate({ id: item.id, data: { status: 'completed', completed_at: new Date() } as any });
+                      toast.show({ message: 'Tarea completada 🎉' });
+                      swipeableRefs.current.get(item.id)?.close();
+                    } else if (direction === 'right') {
+                      Alert.alert(
+                        'Eliminar tarea',
+                        '¿Estás seguro de que quieres eliminar esta tarea?',
+                        [
+                          { text: 'Cancelar', style: 'cancel', onPress: () => swipeableRefs.current.get(item.id)?.close() },
+                          { text: 'Eliminar', style: 'destructive', onPress: () => deleteBucket.mutate(item.id) }
+                        ]
+                      );
+                    }
+                  }}
                 >
                   <TaskRow
                     title={item.title}

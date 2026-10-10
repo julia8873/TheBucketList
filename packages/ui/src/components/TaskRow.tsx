@@ -60,7 +60,7 @@ export function TaskRow({
       onPress={onPress}
       style={({ pressed }) => [
         styles.row,
-        { backgroundColor: '#161616', opacity: pressed ? 0.85 : 1 },
+        { backgroundColor: pressed ? '#202020' : '#161616' },
         style,
       ]}
       accessibilityRole="button"
