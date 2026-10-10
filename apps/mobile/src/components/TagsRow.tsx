@@ -1,65 +1,73 @@
-import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { Text, Pressable, StyleSheet } from 'react-native';
 import { Tag, ChevronRight } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
-import { useTagPickerStore } from '../stores/tagPicker.store';
+import { TagPickerSheet, type TagItem } from './TagPickerSheet';
 
 interface TagsRowProps {
-  selectedTags: any[];
+  selectedTags: TagItem[];
+  onChange: (tags: TagItem[]) => void;
 }
 
-export function TagsRow({ selectedTags }: TagsRowProps) {
-  const router = useRouter();
-  const { setSelectedTags } = useTagPickerStore();
-
-  const handlePress = () => {
-    setSelectedTags(selectedTags);
-    router.push('/(modals)/tag-picker');
-  };
+export function TagsRow({ selectedTags, onChange }: TagsRowProps) {
+  const [open, setOpen] = useState(false);
 
   let displayValue = 'Ninguna';
   let textColor = '#6B6B6B';
 
   if (selectedTags.length > 0) {
     textColor = '#D4B13A';
-    if (selectedTags.length <= 2) {
-      displayValue = selectedTags.map(t => t.name).join(', ');
-    } else {
-      displayValue = `${selectedTags[0].name}, ${selectedTags[1].name} +${selectedTags.length - 2}`;
-    }
+    displayValue =
+      selectedTags.length <= 2
+        ? selectedTags.map((t) => t.name).join(', ')
+        : `${selectedTags[0]!.name}, ${selectedTags[1]!.name} +${selectedTags.length - 2}`;
   }
 
   return (
-    <Pressable style={styles.settingRow} onPress={handlePress}>
-      <Tag color="#D4B13A" size={24} />
-      <Text style={styles.settingLabel}>Etiquetas</Text>
-      <Text style={[styles.settingValue, { color: textColor }]} numberOfLines={1}>
-        {displayValue}
-      </Text>
-      <ChevronRight color="#6B6B6B" size={20} />
-    </Pressable>
+    <>
+      <Pressable
+        style={styles.settingRow}
+        onPress={() => setOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel="Etiquetas"
+      >
+        <Tag color="#D4B13A" size={24} />
+        <Text style={styles.settingLabel}>Etiquetas</Text>
+        <Text style={[styles.settingValue, { color: textColor }]} numberOfLines={1}>
+          {displayValue}
+        </Text>
+        <ChevronRight color="#6B6B6B" size={20} />
+      </Pressable>
+
+      <TagPickerSheet
+        visible={open}
+        selectedTags={selectedTags}
+        onChange={onChange}
+        onClose={() => setOpen(false)}
+      />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   settingRow: {
+    height: 72,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingHorizontal: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#2A2A2A',
   },
   settingLabel: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: 16,
     color: '#FFF',
     fontFamily: 'Inter_500Medium',
-    fontSize: 16,
+    fontSize: 18,
   },
   settingValue: {
     fontFamily: 'Inter_400Regular',
-    fontSize: 15,
+    fontSize: 17,
     marginRight: 4,
-    maxWidth: 150,
+    maxWidth: 170,
   },
 });

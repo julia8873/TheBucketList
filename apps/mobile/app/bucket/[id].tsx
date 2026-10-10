@@ -25,6 +25,7 @@ import { SubtaskList } from '../../src/components/SubtaskList';
 import { BucketPhotoViewer } from '../../src/components/BucketPhotoViewer';
 import { BucketBottomSheet } from '../../src/components/BucketBottomSheet';
 import { styles } from './BucketDetail.styles';
+import { ItemTagsRow } from '../../src/components/ItemTagsRow';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const COVER_HEIGHT = 220;
@@ -144,7 +145,7 @@ export default function BucketDetailScreen() {
 
   const [isAddingTag, setIsAddingTag] = useState(false);
   const [newTagText, setNewTagText] = useState('');
-  
+
   const handleRemoveTag = async (tagToRemove: string) => {
     const currentTags = bucket.tags || [];
     const newTags = currentTags.filter((t: string) => t !== tagToRemove);
@@ -802,68 +803,7 @@ export default function BucketDetailScreen() {
           )}
 
           {/* Etiquetas */}
-          {(isOwner || (bucket.tags && bucket.tags.length > 0) || bucket.category?.name_es) && (
-            <View style={{ flexDirection: 'row', marginTop: 12, marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
-              {bucket.tags?.length > 0 ? (
-                bucket.tags.map((tagText: string, index: number) => (
-                  <Pressable 
-                    key={`${tagText}-${index}`} 
-                    style={[styles.badge, { backgroundColor: bucket.category?.name_es === tagText ? (bucket.category.color || theme.colors.border) : '#1A1A1A', borderWidth: 1, borderColor: bucket.category?.name_es === tagText ? 'transparent' : '#333', flexDirection: 'row', alignItems: 'center' }]}
-                    onPress={() => isOwner ? handleRemoveTag(tagText) : undefined}
-                  >
-                    <Typography variant="caption" color={bucket.category?.name_es === tagText ? "#FFF" : "#E5E5E5"} style={{ fontWeight: '600' }}>
-                      {tagText}
-                    </Typography>
-                    {isOwner && (
-                      <X color={bucket.category?.name_es === tagText ? "#FFF" : "#E5E5E5"} size={12} style={{ marginLeft: 4 }} />
-                    )}
-                  </Pressable>
-                ))
-              ) : bucket.category?.name_es ? (
-                <Pressable 
-                  style={[styles.badge, { backgroundColor: bucket.category?.color || theme.colors.border, flexDirection: 'row', alignItems: 'center' }]}
-                  onPress={() => isOwner ? handleRemoveTag(bucket.category.name_es) : undefined}
-                >
-                  <Typography variant="caption" color="#FFF" style={{ fontWeight: '600' }}>
-                    {bucket.category.name_es}
-                  </Typography>
-                  {isOwner && (
-                    <X color="#FFF" size={12} style={{ marginLeft: 4 }} />
-                  )}
-                </Pressable>
-              ) : null}
-              
-              {/* Añadir Tag */}
-              {isOwner && (
-                isAddingTag ? (
-                  <View style={[styles.badge, { backgroundColor: '#1A1A1A', borderWidth: 1, borderColor: gold[400], paddingVertical: 4, paddingHorizontal: 8 }]}>
-                    <TextInput
-                      style={{ color: '#FFF', fontSize: 13, minWidth: 60, padding: 0 }}
-                      autoFocus
-                      value={newTagText}
-                      onChangeText={setNewTagText}
-                      onSubmitEditing={handleAddTag}
-                      onBlur={() => {
-                        setIsAddingTag(false);
-                        setNewTagText('');
-                      }}
-                      placeholder="Nueva..."
-                      placeholderTextColor="#666"
-                    />
-                  </View>
-                ) : (
-                  <Pressable 
-                    style={[styles.badge, { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#555', borderStyle: 'dashed' }]}
-                    onPress={() => setIsAddingTag(true)}
-                  >
-                    <Typography variant="caption" color="#999" style={{ fontWeight: '600' }}>
-                      + Añadir
-                    </Typography>
-                  </Pressable>
-                )
-              )}
-            </View>
-          )}
+          <ItemTagsRow bucketId={id as string} isOwner={isOwner} />
 
           {/* Meta */}
           <View style={styles.meta}>
@@ -876,7 +816,7 @@ export default function BucketDetailScreen() {
               </View>
             )}
             {bucket.status === 'completed' && (
-              <Pressable 
+              <Pressable
                 style={styles.metaRow}
                 onPress={() => isOwner && setDatePickerConfig({ visible: true, type: 'completed_at', date: new Date(bucket.completed_at || bucket.updated_at || new Date()) })}
               >
@@ -887,13 +827,13 @@ export default function BucketDetailScreen() {
               </Pressable>
             )}
             {bucket.deadline && (
-              <Pressable 
+              <Pressable
                 style={styles.metaRow}
                 onPress={() => isOwner && setDatePickerConfig({ visible: true, type: 'deadline', date: new Date(bucket.deadline!) })}
               >
                 <Calendar color={gold[400]} size={16} strokeWidth={1.8} />
                 <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText}>
-                  {bucket.status === 'completed' 
+                  {bucket.status === 'completed'
                     ? `Programada para el ${format(new Date(bucket.deadline), 'd \'de\' MMMM \'de\' yyyy', { locale: es })}`
                     : `Vence el ${format(new Date(bucket.deadline), 'd \'de\' MMMM \'de\' yyyy', { locale: es })}`
                   }

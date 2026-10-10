@@ -85,10 +85,10 @@ export default function MyListScreen() {
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-            result = result.filter((b: any) => 
-        b.title?.toLowerCase().includes(q) || 
-        b.location?.toLowerCase().includes(q) || 
-        b.category?.name_es?.toLowerCase().includes(q) || 
+      result = result.filter((b: any) =>
+        b.title?.toLowerCase().includes(q) ||
+        b.location?.toLowerCase().includes(q) ||
+        b.category?.name_es?.toLowerCase().includes(q) ||
         b.category?.name_en?.toLowerCase().includes(q)
       );
     }
@@ -101,18 +101,18 @@ export default function MyListScreen() {
   const listData = useMemo(() => {
     if (!filteredBuckets) return [];
     if (filter !== 'all') return filteredBuckets;
-    
+
     const activeOrCompleted = filteredBuckets.filter(b => {
       const deadline = b.deadline ? new Date(b.deadline) : null;
       const expired = deadline ? (isPast(deadline) && differenceInCalendarDays(deadline, new Date()) < 0) : false;
       return !expired || b.status === 'completed';
     });
-    
+
     const expired = filteredBuckets.filter(b => {
       const deadline = b.deadline ? new Date(b.deadline) : null;
       return deadline ? (isPast(deadline) && differenceInCalendarDays(deadline, new Date()) < 0) && b.status !== 'completed' : false;
     });
-    
+
     if (expired.length > 0) {
       return [...activeOrCompleted, { isHeader: true, title: 'SE ME ESCAPÓ' }, ...expired];
     }
@@ -133,143 +133,143 @@ export default function MyListScreen() {
 
 
   const renderTaskItem = ({ item }: { item: any }) => {
-              if (item.isHeader) {
-                return (
-                  <View style={{ marginTop: 28, marginBottom: 4 }}>
-                    <Text style={styles.expiredHeader}>{item.title}</Text>
-                  </View>
-                );
-              }
+    if (item.isHeader) {
+      return (
+        <View style={{ marginTop: 28, marginBottom: 4 }}>
+          <Text style={styles.expiredHeader}>{item.title}</Text>
+        </View>
+      );
+    }
 
-              const categoryColor = item.category?.color || categoryColors.other;
-              const subtasksTotal = item.item_subtasks?.length || 0;
-              const subtasksDone = item.item_subtasks?.filter((s: any) => s.done).length || 0;
+    const categoryColor = item.category?.color || categoryColors.other;
+    const subtasksTotal = item.item_subtasks?.length || 0;
+    const subtasksDone = item.item_subtasks?.filter((s: any) => s.done).length || 0;
 
-              const deadlineDate = item.deadline ? new Date(item.deadline) : null;
-              const isItemExpired = deadlineDate ? (isPast(deadlineDate) && differenceInCalendarDays(deadlineDate, new Date()) < 0) : false;
-              const daysAgo = deadlineDate ? Math.abs(differenceInCalendarDays(deadlineDate, new Date())) : 0;
+    const deadlineDate = item.deadline ? new Date(item.deadline) : null;
+    const isItemExpired = deadlineDate ? (isPast(deadlineDate) && differenceInCalendarDays(deadlineDate, new Date()) < 0) : false;
+    const daysAgo = deadlineDate ? Math.abs(differenceInCalendarDays(deadlineDate, new Date())) : 0;
 
-              let meta = item.category?.name_es || 'Sin categoría';
-              if (isItemExpired && item.status !== 'completed') {
-                meta = `Caducó hace ${daysAgo} días`;
-              } else if (subtasksTotal > 0) {
-                meta += ` · ${subtasksDone} de ${subtasksTotal} pasos`;
-              } else if (item.location) {
-                meta += ` · ${item.location}`;
-              }
+    let meta = item.category?.name_es || 'Sin categoría';
+    if (isItemExpired && item.status !== 'completed') {
+      meta = `Caducó hace ${daysAgo} días`;
+    } else if (subtasksTotal > 0) {
+      meta += ` · ${subtasksDone} de ${subtasksTotal} pasos`;
+    } else if (item.location) {
+      meta += ` · ${item.location}`;
+    }
 
-              const coverPath = item.cover_image || (item.bucket_photos?.[0]?.thumb_path || item.bucket_photos?.[0]?.storage_path);
-              const isPreset = coverPath?.startsWith('preset:');
-              const hasActualImage = !!coverPath && !isPreset;
-              const imageUri = hasActualImage ? (coverPath.startsWith('http') ? coverPath : storageApi.getPublicUrl(coverPath)) : null;
+    const coverPath = item.cover_image || (item.bucket_photos?.[0]?.thumb_path || item.bucket_photos?.[0]?.storage_path);
+    const isPreset = coverPath?.startsWith('preset:');
+    const hasActualImage = !!coverPath && !isPreset;
+    const imageUri = hasActualImage ? (coverPath.startsWith('http') ? coverPath : storageApi.getPublicUrl(coverPath)) : null;
 
-              let gradientColors: readonly [string, string, ...string[]] = ['#2A2A2A', '#3A3A3A'];
-              const catName = item.category?.name_es?.toLowerCase() || item.category?.slug?.toLowerCase() || '';
-              if (catName.includes('viaj') || catName === 'travel') {
-                gradientColors = ['#0F5C4A', '#1E8A5E'];
-              } else if (catName.includes('aventura') || catName === 'adventure') {
-                gradientColors = ['#2F6DB5', '#8EC5F2'];
-              } else if (catName.includes('deporte') || catName === 'sport') {
-                gradientColors = ['#F29A5C', '#D2562B'];
-              } else {
-                gradientColors = ['#5C4A0F', '#8A7A1E']; // coherent gold-ish fallback
-              }
+    let gradientColors: readonly [string, string, ...string[]] = ['#2A2A2A', '#3A3A3A'];
+    const catName = item.category?.name_es?.toLowerCase() || item.category?.slug?.toLowerCase() || '';
+    if (catName.includes('viaj') || catName === 'travel') {
+      gradientColors = ['#0F5C4A', '#1E8A5E'];
+    } else if (catName.includes('aventura') || catName === 'adventure') {
+      gradientColors = ['#2F6DB5', '#8EC5F2'];
+    } else if (catName.includes('deporte') || catName === 'sport') {
+      gradientColors = ['#F29A5C', '#D2562B'];
+    } else {
+      gradientColors = ['#5C4A0F', '#8A7A1E']; // coherent gold-ish fallback
+    }
 
-              const renderRightActions = (progress: any, dragX: any) => {
-                return (
-                  <Pressable
-                    style={{
-                      width: 130,
-                      backgroundColor: theme.colors.error,
-                      borderTopRightRadius: 14,
-                      borderBottomRightRadius: 14,
-                      alignItems: 'flex-end',
-                      justifyContent: 'center',
-                      paddingRight: 25,
-                    }}
-                    onPress={() => deleteBucket.mutate(item.id)}
-                  >
-                    <View style={{ position: 'absolute', left: -100, top: 0, bottom: 0, width: 100, backgroundColor: theme.colors.error }} />
-                    <Trash2 color={theme.colors.errorForeground} size={24} />
-                  </Pressable>
-                );
-              };
+    const renderRightActions = (progress: any, dragX: any) => {
+      return (
+        <Pressable
+          style={{
+            width: 130,
+            backgroundColor: theme.colors.error,
+            borderTopRightRadius: 14,
+            borderBottomRightRadius: 14,
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            paddingRight: 25,
+          }}
+          onPress={() => deleteBucket.mutate(item.id)}
+        >
+          <View style={{ position: 'absolute', left: -100, top: 0, bottom: 0, width: 100, backgroundColor: theme.colors.error }} />
+          <Trash2 color={theme.colors.errorForeground} size={24} />
+        </Pressable>
+      );
+    };
 
-              const renderLeftActions = (progress: any, dragX: any) => {
-                if (item.status === 'completed') return null;
-                return (
-                  <Pressable
-                    style={{
-                      width: 130,
-                      backgroundColor: '#34C759',
-                      borderTopLeftRadius: 14,
-                      borderBottomLeftRadius: 14,
-                      alignItems: 'flex-start',
-                      justifyContent: 'center',
-                      paddingLeft: 25,
-                    }}
-                    onPress={() => updateBucket.mutate({ id: item.id, data: { status: 'completed', completed_at: new Date() } as any })}
-                  >
-                    <View style={{ position: 'absolute', right: -100, top: 0, bottom: 0, width: 100, backgroundColor: '#34C759' }} />
-                    <CheckCircle2 color="#FFFFFF" size={24} />
-                  </Pressable>
-                );
-              };
+    const renderLeftActions = (progress: any, dragX: any) => {
+      if (item.status === 'completed') return null;
+      return (
+        <Pressable
+          style={{
+            width: 130,
+            backgroundColor: '#34C759',
+            borderTopLeftRadius: 14,
+            borderBottomLeftRadius: 14,
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+            paddingLeft: 25,
+          }}
+          onPress={() => updateBucket.mutate({ id: item.id, data: { status: 'completed', completed_at: new Date() } as any })}
+        >
+          <View style={{ position: 'absolute', right: -100, top: 0, bottom: 0, width: 100, backgroundColor: '#34C759' }} />
+          <CheckCircle2 color="#FFFFFF" size={24} />
+        </Pressable>
+      );
+    };
 
-              return (
-                <Swipeable
-                  ref={(ref) => {
-                    if (ref) swipeableRefs.current.set(item.id, ref);
-                    else swipeableRefs.current.delete(item.id);
-                  }}
-                  renderRightActions={renderRightActions}
-                  renderLeftActions={renderLeftActions}
-                  overshootRight={false}
-                  overshootLeft={false}
-                  onSwipeableOpen={(direction) => {
-                    if (direction === 'left' && item.status !== 'completed') {
-                      updateBucket.mutate({ id: item.id, data: { status: 'completed', completed_at: new Date() } as any });
-                      toast.show({ message: 'Tarea completada 🎉' });
-                      swipeableRefs.current.get(item.id)?.close();
-                    } else if (direction === 'right') {
-                      Alert.alert(
-                        'Eliminar tarea',
-                        '¿Estás seguro de que quieres eliminar esta tarea?',
-                        [
-                          { text: 'Cancelar', style: 'cancel', onPress: () => swipeableRefs.current.get(item.id)?.close() },
-                          { text: 'Eliminar', style: 'destructive', onPress: () => deleteBucket.mutate(item.id) }
-                        ]
-                      );
-                    }
-                  }}
-                >
-                  <TaskRow
-                    title={item.title}
-                    meta={meta}
-                    deadline={item.deadline}
-                    expiredAction={isItemExpired && item.status !== 'completed'}
-                    thumbnailElement={
-                      isItemExpired && item.status !== 'completed' ? (
-                        <View style={{ flex: 1, backgroundColor: '#202020', borderRadius: 12 }} />
-                      ) : imageUri ? (
-                        <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-                      ) : (
-                        <LinearGradient
-                          colors={gradientColors}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                          style={StyleSheet.absoluteFill}
-                        />
-                      )
-                    }
-                    subtasksDone={subtasksDone}
-                    subtasksTotal={subtasksTotal}
-                    counterCount={(item as any).counter_count}
-                    counterTarget={(item as any).counter_target}
-                    onPress={() => router.push(`/bucket/${item.id}`)}
-                  />
-                </Swipeable>
-              );
+    return (
+      <Swipeable
+        ref={(ref) => {
+          if (ref) swipeableRefs.current.set(item.id, ref);
+          else swipeableRefs.current.delete(item.id);
+        }}
+        renderRightActions={renderRightActions}
+        renderLeftActions={renderLeftActions}
+        overshootRight={false}
+        overshootLeft={false}
+        onSwipeableOpen={(direction) => {
+          if (direction === 'left' && item.status !== 'completed') {
+            updateBucket.mutate({ id: item.id, data: { status: 'completed', completed_at: new Date() } as any });
+            toast.show({ message: 'Tarea completada 🎉' });
+            swipeableRefs.current.get(item.id)?.close();
+          } else if (direction === 'right') {
+            Alert.alert(
+              'Eliminar tarea',
+              '¿Estás seguro de que quieres eliminar esta tarea?',
+              [
+                { text: 'Cancelar', style: 'cancel', onPress: () => swipeableRefs.current.get(item.id)?.close() },
+                { text: 'Eliminar', style: 'destructive', onPress: () => deleteBucket.mutate(item.id) }
+              ]
+            );
+          }
+        }}
+      >
+        <TaskRow
+          title={item.title}
+          meta={meta}
+          deadline={item.deadline}
+          expiredAction={isItemExpired && item.status !== 'completed'}
+          thumbnailElement={
+            isItemExpired && item.status !== 'completed' ? (
+              <View style={{ flex: 1, backgroundColor: '#202020', borderRadius: 12 }} />
+            ) : imageUri ? (
+              <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+            ) : (
+              <LinearGradient
+                colors={gradientColors}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+            )
+          }
+          subtasksDone={subtasksDone}
+          subtasksTotal={subtasksTotal}
+          counterCount={(item as any).counter_count}
+          counterTarget={(item as any).counter_target}
+          onPress={() => router.push(`/bucket/${item.id}`)}
+        />
+      </Swipeable>
+    );
   };
 
   return (
@@ -312,35 +312,7 @@ export default function MyListScreen() {
         </View>
       )}
 
-      {/* ── Stats ───────────────────────────────────────── */}
-      {activeTab === 'list' && (
-        <View style={styles.statsContainer}>
-          <View style={styles.statColumn}>
-            <Text style={styles.statNumber}>{completedCount}</Text>
-            <Text style={styles.statLabel}>Completadas</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statColumn}>
-            <Text style={styles.statNumber}>{totalCount}</Text>
-            <Text style={styles.statLabel}>En la lista</Text>
-          </View>
-        </View>
-      )}
 
-      {/* ── Filters (only for list tab) ─────────────────── */}
-      {activeTab === 'list' && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filtersContainer}
-          style={{ flexGrow: 0, marginBottom: 16 }}
-        >
-          <FilterChip label="Todas" active={filter === 'all'} onPress={() => setFilter('all')} />
-          <FilterChip label="En curso" active={filter === 'active'} onPress={() => setFilter('active')} />
-          <FilterChip label="Completadas" active={filter === 'completed'} onPress={() => setFilter('completed')} />
-          <FilterChip label="Se me escapó" active={filter === 'expired'} onPress={() => setFilter('expired')} />
-        </ScrollView>
-      )}
 
       {/* ── Content ────────────────────────────────────── */}
       <View style={styles.content}>
@@ -352,7 +324,35 @@ export default function MyListScreen() {
             estimatedItemSize={80}
             ItemSeparatorComponent={() => <View style={{ height: spacing[3] }} />}
             renderItem={renderTaskItem}
+            ListHeaderComponent={
+              <View>
+                {/* Stats */}
+                <View style={[styles.statsContainer, { marginHorizontal: 0 }]}>
+                  <View style={styles.statColumn}>
+                    <Text style={styles.statNumber}>{completedCount}</Text>
+                    <Text style={styles.statLabel}>Completadas</Text>
+                  </View>
+                  <View style={styles.statDivider} />
+                  <View style={styles.statColumn}>
+                    <Text style={styles.statNumber}>{totalCount}</Text>
+                    <Text style={styles.statLabel}>En la lista</Text>
+                  </View>
+                </View>
 
+                {/* Filtros */}
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.filtersContainer}
+                  style={{ flexGrow: 0, marginBottom: 16, marginHorizontal: -20 }}
+                >
+                  <FilterChip label="Todas" active={filter === 'all'} onPress={() => setFilter('all')} />
+                  <FilterChip label="En curso" active={filter === 'active'} onPress={() => setFilter('active')} />
+                  <FilterChip label="Completadas" active={filter === 'completed'} onPress={() => setFilter('completed')} />
+                  <FilterChip label="Se me escapó" active={filter === 'expired'} onPress={() => setFilter('expired')} />
+                </ScrollView>
+              </View>
+            }
             ListEmptyComponent={() => (
               <View style={styles.empty}>
                 <Typography variant="body" color={theme.colors.foregroundMuted}>
