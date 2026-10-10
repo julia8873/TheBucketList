@@ -193,13 +193,13 @@ export default function MyListScreen() {
     const isItemExpired = deadlineDate ? (isPast(deadlineDate) && differenceInCalendarDays(deadlineDate, new Date()) < 0) : false;
     const daysAgo = deadlineDate ? Math.abs(differenceInCalendarDays(deadlineDate, new Date())) : 0;
 
-    let meta = item.category?.name_es || 'Sin categoría';
+    let meta = '';
     if (isItemExpired && item.status !== 'completed') {
       meta = `Caducó hace ${daysAgo} días`;
     } else if (subtasksTotal > 0) {
-      meta += ` · ${subtasksDone} de ${subtasksTotal} pasos`;
+      meta = `${subtasksDone} de ${subtasksTotal} pasos`;
     } else if (item.location) {
-      meta += ` · ${item.location}`;
+      meta = item.location;
     }
 
     // Etiquetas de la tarea: máximo 2 chips + "+N"

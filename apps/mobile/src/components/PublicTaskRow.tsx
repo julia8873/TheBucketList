@@ -14,7 +14,6 @@ interface PublicTaskRowProps {
 }
 
 function buildMeta(bucket: any): string {
-  const category: string | undefined = bucket.category?.name_es;
   const subtasks: Array<{ done: boolean }> = bucket.item_subtasks ?? [];
   const done = subtasks.filter((s) => s.done).length;
 
@@ -28,7 +27,7 @@ function buildMeta(bucket: any): string {
   } else {
     detail = 'Sin fecha';
   }
-  return [category, detail].filter(Boolean).join(' · ');
+  return detail;
 }
 
 function buildProgress(bucket: any): number | null {
