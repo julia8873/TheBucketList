@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { View, StyleSheet, Pressable, ScrollView, Dimensions, Alert, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, Typography, SegmentedControl, FilterChip, TaskRow, AlbumCard, NewAlbumCard, NoAlbumRow, FAB, spacing, useToast } from '@bucketlist/ui';
+import { useTheme, Typography, SegmentedControl, FilterChip, TaskRow, AlbumCard, NewAlbumCard, NoAlbumRow, FAB, spacing, useToast, Input } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { Swipeable } from 'react-native-gesture-handler';
-import { Search, Trash2, CheckCircle2 } from 'lucide-react-native';
+import { Search, Trash2, CheckCircle2, X } from 'lucide-react-native';
 import { Text, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -32,6 +32,8 @@ export default function MyListScreen() {
 
   const [activeTab, setActiveTab] = useState('list');
   const [filter, setFilter] = useState<FilterType>('all');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const { data: buckets, isLoading } = useBuckets(user?.id);
   const deleteBucket = useDeleteBucket();
@@ -68,7 +70,7 @@ export default function MyListScreen() {
   const filteredBuckets = useMemo(() => {
     if (!buckets) return [];
 
-    return buckets.filter((b) => {
+    let result = buckets.filter((b: any) => {
       if (filter === 'all') return true;
       if (filter === 'completed') return b.status === 'completed';
 
@@ -79,10 +81,22 @@ export default function MyListScreen() {
       if (filter === 'active') return b.status !== 'completed' && !expired;
 
       return true;
-    }).sort((a, b) => {
+    });
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+            result = result.filter((b: any) => 
+        b.title?.toLowerCase().includes(q) || 
+        b.location?.toLowerCase().includes(q) || 
+        b.category?.name_es?.toLowerCase().includes(q) || 
+        b.category?.name_en?.toLowerCase().includes(q)
+      );
+    }
+
+    return result.sort((a: any, b: any) => {
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
-  }, [buckets, filter]);
+  }, [buckets, filter, searchQuery]);
 
   const listData = useMemo(() => {
     if (!filteredBuckets) return [];
@@ -105,72 +119,20 @@ export default function MyListScreen() {
     return activeOrCompleted;
   }, [filteredBuckets, filter]);
 
+  const filteredAlbums = useMemo(() => {
+    if (!albums) return [];
+    if (!searchQuery.trim()) return albums;
+    const q = searchQuery.toLowerCase();
+    return albums.filter((a: any) => a.title?.toLowerCase().includes(q) || a.description?.toLowerCase().includes(q));
+  }, [albums, searchQuery]);
+
   const handleCreate = () => {
     router.push('/(modals)/create-bucket');
   };
 
-  return (
-    <SafeAreaView style={[styles.container, { backgroundColor: '#0E0E0E' }]} edges={['top']}>
 
-      {/* ── Header: exact title hierarchy from the reference ── */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Mi Lista</Text>
-        <Search size={22} color="#FFF" />
-      </View>
 
-      {/* ── Tabs (always visible, full width) ───────────── */}
-      <View style={styles.tabsContainer}>
-        <SegmentedControl
-          options={[
-            { key: 'list', label: 'Lista' },
-            { key: 'albums', label: 'Álbumes' },
-            { key: 'calendar', label: 'Calendario' },
-          ]}
-          selected={activeTab}
-          onChange={setActiveTab}
-        />
-      </View>
-
-      {/* ── Stats ───────────────────────────────────────── */}
-      {activeTab === 'list' && (
-        <View style={styles.statsContainer}>
-          <View style={styles.statColumn}>
-            <Text style={styles.statNumber}>{completedCount}</Text>
-            <Text style={styles.statLabel}>Completadas</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statColumn}>
-            <Text style={styles.statNumber}>{totalCount}</Text>
-            <Text style={styles.statLabel}>En la lista</Text>
-          </View>
-        </View>
-      )}
-
-      {/* ── Filters (only for list tab) ─────────────────── */}
-      {activeTab === 'list' && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filtersContainer}
-          style={{ flexGrow: 0, marginBottom: 16 }}
-        >
-          <FilterChip label="Todas" active={filter === 'all'} onPress={() => setFilter('all')} />
-          <FilterChip label="En curso" active={filter === 'active'} onPress={() => setFilter('active')} />
-          <FilterChip label="Completadas" active={filter === 'completed'} onPress={() => setFilter('completed')} />
-          <FilterChip label="Se me escapó" active={filter === 'expired'} onPress={() => setFilter('expired')} />
-        </ScrollView>
-      )}
-
-      {/* ── Content ────────────────────────────────────── */}
-      <View style={styles.content}>
-        {activeTab === 'list' && (
-          <FlashList
-            data={listData}
-            keyExtractor={(item: any) => item.id || item.title}
-            contentContainerStyle={styles.listContent}
-            estimatedItemSize={80}
-            ItemSeparatorComponent={() => <View style={{ height: spacing[3] }} />}
-            renderItem={({ item }: { item: any }) => {
+  const renderTaskItem = ({ item }: { item: any }) => {
               if (item.isHeader) {
                 return (
                   <View style={{ marginTop: 28, marginBottom: 4 }}>
@@ -308,7 +270,89 @@ export default function MyListScreen() {
                   />
                 </Swipeable>
               );
-            }}
+  };
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: '#0E0E0E' }]} edges={['top']}>
+
+      {/* ── Header: exact title hierarchy from the reference ── */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Mi Lista</Text>
+      </View>
+
+      {/* ── Tabs (always visible, full width) ───────────── */}
+      <View style={styles.tabsContainer}>
+        <SegmentedControl
+          options={[
+            { key: 'list', label: 'Lista' },
+            { key: 'albums', label: 'Álbumes' },
+            { key: 'calendar', label: 'Calendario' },
+          ]}
+          selected={activeTab}
+          onChange={setActiveTab}
+        />
+      </View>
+
+      {/* ── Search Bar ──────────────────────────────────── */}
+      {(activeTab === 'list' || activeTab === 'albums') && (
+        <View style={{ paddingHorizontal: 20, marginBottom: 16 }}>
+          <Input
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder={activeTab === 'list' ? 'Buscar tareas...' : 'Buscar álbumes...'}
+            leftIcon={<Search size={18} color="#9A9A9A" />}
+            rightIcon={
+              searchQuery.trim() ? (
+                <Pressable onPress={() => setSearchQuery('')} hitSlop={10}>
+                  <X size={18} color="#9A9A9A" />
+                </Pressable>
+              ) : undefined
+            }
+          />
+        </View>
+      )}
+
+      {/* ── Stats ───────────────────────────────────────── */}
+      {activeTab === 'list' && (
+        <View style={styles.statsContainer}>
+          <View style={styles.statColumn}>
+            <Text style={styles.statNumber}>{completedCount}</Text>
+            <Text style={styles.statLabel}>Completadas</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statColumn}>
+            <Text style={styles.statNumber}>{totalCount}</Text>
+            <Text style={styles.statLabel}>En la lista</Text>
+          </View>
+        </View>
+      )}
+
+      {/* ── Filters (only for list tab) ─────────────────── */}
+      {activeTab === 'list' && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filtersContainer}
+          style={{ flexGrow: 0, marginBottom: 16 }}
+        >
+          <FilterChip label="Todas" active={filter === 'all'} onPress={() => setFilter('all')} />
+          <FilterChip label="En curso" active={filter === 'active'} onPress={() => setFilter('active')} />
+          <FilterChip label="Completadas" active={filter === 'completed'} onPress={() => setFilter('completed')} />
+          <FilterChip label="Se me escapó" active={filter === 'expired'} onPress={() => setFilter('expired')} />
+        </ScrollView>
+      )}
+
+      {/* ── Content ────────────────────────────────────── */}
+      <View style={styles.content}>
+        {activeTab === 'list' && (
+          <FlashList
+            data={listData}
+            keyExtractor={(item: any) => item.id || item.title}
+            contentContainerStyle={styles.listContent}
+            estimatedItemSize={80}
+            ItemSeparatorComponent={() => <View style={{ height: spacing[3] }} />}
+            renderItem={renderTaskItem}
+
             ListEmptyComponent={() => (
               <View style={styles.empty}>
                 <Typography variant="body" color={theme.colors.foregroundMuted}>
@@ -329,7 +373,7 @@ export default function MyListScreen() {
 
             {/* Grid */}
             <View style={styles.albumGrid}>
-              {(albums || []).map((item: any, index: number) => (
+              {(filteredAlbums || []).map((item: any, index: number) => (
                 <AlbumCard
                   key={item.id}
                   title={item.title}

@@ -7,6 +7,7 @@ export const ALBUMS_QUERY_KEY = ['albums'];
 export interface AlbumWithProgress {
   id: string;
   title: string;
+  description: string | null;
   cover_path: string | null;
   visibility: string;
   is_shared: boolean;
@@ -41,6 +42,7 @@ export function useAlbums(userId?: string) {
         return {
           id: album.id,
           title: album.title,
+          description: album.description,
           cover_path: album.cover_path,
           visibility: album.visibility,
           is_shared: album.is_shared,
