@@ -1,175 +1,112 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, Text, Pressable, StyleSheet, type TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Typography, Button, Input, spacing, useTheme, Icon } from '@bucketlist/ui';
-import { Chrome, Mail, Lock } from 'lucide-react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { supabase } from '../../src/services/supabase';
 import { useTranslation } from 'react-i18next';
-import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
-
-WebBrowser.maybeCompleteAuthSession();
+import { useTheme, fontFamily } from '@bucketlist/ui';
+import { supabase } from '../../src/services/supabase';
+import { useGoogleAuth } from '../../src/hooks/useGoogleAuth';
+import { mapAuthError } from '../../src/utils/authErrors';
+import {
+  AuthScreen, AuthInput, PillButton, GoogleButton, OrDivider, SwitchLink,
+} from '../../src/components/auth/AuthParts';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const { t } = useTranslation();
-  const [email, setEmail] = useState('');
+  const passwordRef = useRef<TextInput>(null);
+
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [magicLinkLoading, setMagicLinkLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-  });
+  const google = useGoogleAuth((msg) => setError(mapAuthError(msg, t)));
+  const canSubmit = identifier.trim().length > 0 && password.length > 0;
 
-  React.useEffect(() => {
-    if (response?.type === 'success') {
-      const { id_token } = response.params;
-      if (id_token) {
-        supabase.auth.signInWithIdToken({
-          provider: 'google',
-          token: id_token,
-        }).then(({ error }) => {
-          if (error) setError(error.message);
-        });
-      }
-    }
-  }, [response]);
-
-  const handleLogin = async () => {
-    if (!email || !password) {
-      setError(t('errors.auth_failed'));
-      return;
-    }
+  const submit = async () => {
+    if (!canSubmit || loading) return;
     setLoading(true);
     setError(null);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) {
-        setError(error.message);
-        Alert.alert('Error de inicio de sesión', error.message);
-        setLoading(false);
+      const id = identifier.trim();
+      if (id.includes('@')) {
+        const { error: err } = await supabase.auth.signInWithPassword({ email: id.toLowerCase(), password });
+        if (err) throw err;
       } else {
-        router.replace('/(tabs)/feed');
+        // Login con nombre de usuario: lo resuelve una Edge Function (el correo nunca llega al cliente)
+        const { data, error: fnErr } = await supabase.functions.invoke('login-with-username', {
+          body: { identifier: id, password },
+        });
+        if (fnErr || !data?.session) {
+          throw new Error(fnErr?.name === 'FunctionsFetchError' ? 'Failed to fetch' : 'Invalid login credentials');
+        }
+        const { error: sessErr } = await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+        if (sessErr) throw sessErr;
       }
-    } catch (err: any) {
+      // El RootNavigator redirige en cuanto cambia la sesión.
+    } catch (e) {
+      setError(mapAuthError((e as Error)?.message, t));
+    } finally {
       setLoading(false);
-      setError(err.message || 'Network error');
-      Alert.alert('Error fatal', err.message || 'No se pudo conectar al servidor. Revisa tu conexión o el Firewall de Windows.');
-    }
-  };
-
-  const handleMagicLink = async () => {
-    if (!email) {
-      setError(t('errors.auth_failed'));
-      return;
-    }
-    setMagicLinkLoading(true);
-    setError(null);
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: 'bucketlist://verify' },
-    });
-    setMagicLinkLoading(false);
-    if (error) {
-      setError(error.message);
-    } else {
-      Alert.alert('Éxito', t('auth.magic_link_sent') || 'Magic link sent!');
     }
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
-        style={styles.keyboardView}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.header}>
-            <Typography variant="h2" style={styles.title}>{t('auth.welcome_title')}</Typography>
-            <Typography variant="body" color="textSecondary">
-              {t('auth.welcome_subtitle')}
-            </Typography>
-          </View>
-
-          <View style={styles.form}>
-            <Button
-              title={t('auth.google')}
-              variant="secondary"
-              leftIcon={<Icon icon={Chrome} />}
-              onPress={() => promptAsync()}
-              disabled={!request}
-            />
-
-            <View style={styles.divider}>
-              <View style={[styles.line, { backgroundColor: theme.colors.border }]} />
-              <Typography variant="caption" color="textMuted">{t('common.or')}</Typography>
-              <View style={[styles.line, { backgroundColor: theme.colors.border }]} />
-            </View>
-
-            <Input
-              label={t('auth.email')}
-              placeholder="you@example.com"
-              autoCapitalize="none"
-              keyboardType="email-address"
-              value={email}
-              onChangeText={(text) => { setEmail(text); setError(null); }}
-              leftIcon={<Icon icon={Mail} />}
-            />
-            
-            <Input
-              label={t('auth.password')}
-              placeholder="••••••••"
-              secureTextEntry
-              value={password}
-              onChangeText={(text) => { setPassword(text); setError(null); }}
-              leftIcon={<Icon icon={Lock} />}
-            />
-
-            {error && <Typography variant="caption" color="error">{error}</Typography>}
-
-            <Button
-              title={t('auth.sign_in')}
-              size="lg"
-              onPress={() => void handleLogin()}
-              loading={loading}
-              style={styles.submitBtn}
-            />
-
-            <Button
-              title={t('auth.magic_link')}
-              variant="secondary"
-              onPress={() => void handleMagicLink()}
-              loading={magicLinkLoading}
-            />
-
-            <Button
-              title={t('auth.no_account')}
-              variant="link"
-              onPress={() => router.push('/(auth)/register')}
-            />
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+    <AuthScreen
+      title={t('auth.login_title')}
+      subtitle={t('auth.login_subtitle')}
+      onBack={() => (router.canGoBack() ? router.back() : router.replace('/(auth)/welcome'))}
+      footer={
+        <>
+          <PillButton title={t('auth.enter')} onPress={() => void submit()} loading={loading} disabled={!canSubmit} />
+          <OrDivider />
+          <GoogleButton title={t('auth.google')} onPress={google.start} disabled={!google.ready} loading={google.loading} />
+          <SwitchLink
+            prompt={t('auth.new_here')}
+            action={t('auth.create_account_link')}
+            onPress={() => router.replace('/(auth)/register')}
+          />
+        </>
+      }
+    >
+      <AuthInput
+        label={t('auth.identifier_label')}
+        placeholder="tu@correo.com"
+        value={identifier}
+        onChangeText={(v) => { setIdentifier(v); setError(null); }}
+        keyboardType="email-address"
+        textContentType="username"
+        autoComplete="username"
+        returnKeyType="next"
+        onSubmitEditing={() => passwordRef.current?.focus()}
+      />
+      <AuthInput
+        ref={passwordRef}
+        label={t('auth.password')}
+        placeholder={t('auth.password_placeholder')}
+        value={password}
+        onChangeText={(v) => { setPassword(v); setError(null); }}
+        password
+        textContentType="password"
+        autoComplete="password"
+        returnKeyType="go"
+        onSubmitEditing={() => void submit()}
+        error={error}
+      />
+      <View style={styles.forgotRow}>
+        <Pressable onPress={() => router.push('/(auth)/forgot-password')} hitSlop={8} accessibilityRole="link">
+          <Text style={[styles.forgot, { color: theme.colors.primary }]}>{t('auth.forgot_password')}</Text>
+        </Pressable>
+      </View>
+    </AuthScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  keyboardView: { flex: 1 },
-  scrollContent: { flexGrow: 1, padding: spacing[6], justifyContent: 'center' },
-  header: { marginBottom: spacing[8] },
-  title: { marginBottom: spacing[2] },
-  form: { gap: spacing[4] },
-  submitBtn: { marginTop: spacing[4] },
-  divider: { flexDirection: 'row', alignItems: 'center', gap: spacing[4], marginVertical: spacing[2] },
-  line: { flex: 1, height: 1 },
+  forgotRow: { alignItems: 'flex-end' },
+  forgot: { fontFamily: fontFamily.medium, fontSize: 12 },
 });

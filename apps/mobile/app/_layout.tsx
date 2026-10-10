@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import * as Linking from 'expo-linking';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Font from 'expo-font';
 import {
@@ -108,20 +109,65 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { override } = useThemeStore();
-  const { session, isInitialized } = useAuthStore();
+  const { session, isInitialized, onboardingCompleted, isRecovering, setOnboardingCompleted, setRecovering } = useAuthStore();
   const router = useRouter();
   const segments = useSegments();
   const colorScheme = override === 'system' ? undefined : override;
+  const userId = session?.user.id;
+
+  // Enlaces del correo (confirmar cuenta / restablecer contraseña): …#access_token=…&refresh_token=…&type=…
+  useEffect(() => {
+    const handleUrl = async (url: string | null) => {
+      if (!url) return;
+      const fragment = url.split('#')[1];
+      if (!fragment) return;
+      const params = new URLSearchParams(fragment);
+      const access_token = params.get('access_token');
+      const refresh_token = params.get('refresh_token');
+      if (!access_token || !refresh_token) return;
+      const isRecovery = params.get('type') === 'recovery';
+      if (isRecovery) setRecovering(true);
+      const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+      if (error) setRecovering(false);
+    };
+    void Linking.getInitialURL().then(handleUrl);
+    const sub = Linking.addEventListener('url', (e) => void handleUrl(e.url));
+    return () => sub.remove();
+  }, []);
+
+  // ¿Ha completado el onboarding este usuario?
+  useEffect(() => {
+    if (!userId) { setOnboardingCompleted(null); return; }
+    let cancelled = false;
+    void supabase
+      .from('profiles')
+      .select('onboarding_completed')
+      .eq('id', userId)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        console.log('ONBOARDING', JSON.stringify({ data, error }));
+        // Ante un error no bloqueamos al usuario fuera de la app
+        setOnboardingCompleted(error || !data ? true : data.onboarding_completed !== false);
+      });
+    return () => { cancelled = true; };
+  }, [userId]);
 
   useEffect(() => {
     if (!isInitialized) return;
-    const inAuthGroup = segments[0] === '(auth)';
-    if (session && inAuthGroup) {
-      router.replace('/(tabs)/feed');
-    } else if (!session && !inAuthGroup) {
-      router.replace('/(auth)/welcome');
+    const group = segments[0];
+    if (!session) {
+      if (group !== '(auth)') router.replace('/(auth)/welcome');
+      return;
     }
-  }, [session, isInitialized, segments]);
+    if (isRecovering) return; // dejar terminar "nueva contraseña"
+    if (onboardingCompleted === null) return; // cargando perfil
+    if (!onboardingCompleted) {
+      if (group !== '(onboarding)') router.replace('/(onboarding)/username');
+      return;
+    }
+    if (group === '(auth)') router.replace('/(tabs)/feed');
+  }, [session, isInitialized, onboardingCompleted, isRecovering, segments]);
 
   return (
     <>
@@ -130,6 +176,7 @@ function RootNavigator() {
         <Stack.Screen name="index" options={{ title: "TheBucketList" }} />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(onboarding)" />
         <Stack.Screen name="(modals)" options={{ presentation: 'modal' }} />
         <Stack.Screen name="design-system" />
       </Stack>

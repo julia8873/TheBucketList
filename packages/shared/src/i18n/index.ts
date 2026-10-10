@@ -9,9 +9,13 @@ void i18n.use(initReactI18next).init({
     en: { translation: en },
     es: { translation: es },
   },
+  lng: 'es',
   fallbackLng: 'en',
   interpolation: { escapeValue: false },
   compatibilityJSON: 'v3',
 });
+
+console.log('I18N', i18n.language, i18n.exists('auth.create_account_link'),
+  Object.keys(i18n.getResourceBundle(i18n.language, 'translation')?.auth ?? {}).length);
 
 export default i18n;

@@ -198,9 +198,15 @@ export function Button({
       ) : (
         <>
           {leftIcon}
-          <Animated.Text style={[sz.text, variantStyle.text]}>
-            {children ?? title}
-          </Animated.Text>
+          {(children !== undefined || title !== undefined) ? (
+            typeof children === 'string' || typeof children === 'number' || typeof title === 'string' ? (
+              <Animated.Text style={[sz.text, variantStyle.text]}>
+                {children ?? title}
+              </Animated.Text>
+            ) : (
+              children
+            )
+          ) : null}
           {rightIcon}
         </>
       )}
