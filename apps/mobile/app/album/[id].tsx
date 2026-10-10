@@ -109,7 +109,7 @@ export default function AlbumDetailScreen() {
     if (diffDays === 0) return 'Hoy';
     if (diffDays === 1) return 'Mañana';
     if (diffDays > 1) return `${diffDays} días`;
-    return `Caducó hace ${Math.abs(diffDays)} días`;
+    return null; // Expired tasks don't show a badge on the right
   };
 
   const getSubTitle = (task: TaskItem) => {
@@ -146,6 +146,11 @@ export default function AlbumDetailScreen() {
             {task.title}
           </Text>
           <Text style={styles.taskSub}>{subTitle}</Text>
+          {!isDone && task.dueDate && new Date(task.dueDate).getTime() < new Date().setHours(0,0,0,0) && (
+            <Text style={[styles.taskSub, { color: '#EF4444', marginTop: 2 }]}>
+              Programada para: {new Date(task.dueDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
+            </Text>
+          )}
           {!isDone && task.stepsTotal !== undefined && task.stepsTotal > 0 && (
             <View style={styles.taskStepsTrack}>
               <View style={[styles.taskStepsFill, { width: `${((task.stepsCompleted || 0) / task.stepsTotal) * 100}%` }]} />

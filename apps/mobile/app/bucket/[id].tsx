@@ -792,12 +792,20 @@ export default function BucketDetailScreen() {
                 </Typography>
               </View>
             )}
+            {bucket.status === 'completed' && (
+              <View style={styles.metaRow}>
+                <CheckCircle2 color={gold[400]} size={16} strokeWidth={1.8} />
+                <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText}>
+                  Completada el {format(new Date(bucket.completed_at || bucket.updated_at || new Date()), 'd \'de\' MMMM \'de\' yyyy', { locale: es })}
+                </Typography>
+              </View>
+            )}
             {bucket.deadline && (
               <View style={styles.metaRow}>
                 <Calendar color={gold[400]} size={16} strokeWidth={1.8} />
                 <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText}>
-                  {bucket.status === 'completed'
-                    ? `Completada el ${format(new Date(bucket.updated_at || bucket.deadline), 'd \'de\' MMMM \'de\' yyyy', { locale: es })}`
+                  {bucket.status === 'completed' 
+                    ? `Programada para el ${format(new Date(bucket.deadline), 'd \'de\' MMMM \'de\' yyyy', { locale: es })}`
                     : `Vence el ${format(new Date(bucket.deadline), 'd \'de\' MMMM \'de\' yyyy', { locale: es })}`
                   }
                 </Typography>
