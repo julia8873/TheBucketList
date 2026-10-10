@@ -1,9 +1,92 @@
-﻿
+
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
   
-  "public": {
+  "graphql_public": {
+          Tables: {
+            [_ in never]: never
+          }
+            tags: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          color: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          color: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          color?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tags_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      item_tags: {
+        Row: {
+          item_id: string
+          tag_id: string
+          created_at: string
+        }
+        Insert: {
+          item_id: string
+          tag_id: string
+          created_at?: string
+        }
+        Update: {
+          item_id?: string
+          tag_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_tags_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "buckets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    Views: {
+            [_ in never]: never
+          }
+          Functions: {
+            "graphql":
+{ Args: { "extensions"?: Json,"operationName"?: string,"query"?: string,"variables"?: Json }; Returns: Json
+                           }
+          }
+          Enums: {
+            [_ in never]: never
+          }
+          CompositeTypes: {
+            [_ in never]: never
+          }
+        },"public": {
           Tables: {
             "album_items": {
                   Row: {
@@ -32,7 +115,7 @@ isOneToOne: false
     },{
       foreignKeyName: "album_items_bucket_id_fkey"
       columns: ["bucket_id"]
-isOneToOne: true
+isOneToOne: false
       referencedRelation: "buckets"
       referencedColumns: ["id"]
     }
@@ -131,14 +214,14 @@ isOneToOne: false
                   ]
                 },"buckets": {
                   Row: {
-                    "category_id": string | null,"completed_at": string | null,"copied_from_id": string | null,"copied_from_user_id": string | null,"counter_count": number,"counter_enabled": boolean,"counter_label": string | null,"counter_target": number | null,"cover_image": string | null,"created_at": string | null,"deadline": string | null,"description": string | null,"id": string,"location_lat": number | null,"location_lng": number | null,"location_text": string | null,"status": string | null,"template_id": string | null,"title": string,"updated_at": string | null,"user_id": string,"visibility": string | null
+                    "category_id": string | null,"completed_at": string | null,"copied_from_id": string | null,"copied_from_user_id": string | null,"counter_count": number,"counter_enabled": boolean,"counter_label": string | null,"counter_target": number | null,"cover_image": string | null,"created_at": string | null,"deadline": string | null,"description": string | null,"id": string,"location_lat": number | null,"location_lng": number | null,"location_text": string | null,"status": string | null,"tags": (string)[] | null,"template_id": string | null,"title": string,"updated_at": string | null,"user_id": string,"visibility": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "category_id"?: string | null,"completed_at"?: string | null,"copied_from_id"?: string | null,"copied_from_user_id"?: string | null,"counter_count"?: number,"counter_enabled"?: boolean,"counter_label"?: string | null,"counter_target"?: number | null,"cover_image"?: string | null,"created_at"?: string | null,"deadline"?: string | null,"description"?: string | null,"id"?: string,"location_lat"?: number | null,"location_lng"?: number | null,"location_text"?: string | null,"status"?: string | null,"template_id"?: string | null,"title": string,"updated_at"?: string | null,"user_id": string,"visibility"?: string | null
+                    "category_id"?: string | null,"completed_at"?: string | null,"copied_from_id"?: string | null,"copied_from_user_id"?: string | null,"counter_count"?: number,"counter_enabled"?: boolean,"counter_label"?: string | null,"counter_target"?: number | null,"cover_image"?: string | null,"created_at"?: string | null,"deadline"?: string | null,"description"?: string | null,"id"?: string,"location_lat"?: number | null,"location_lng"?: number | null,"location_text"?: string | null,"status"?: string | null,"tags"?: (string)[] | null,"template_id"?: string | null,"title": string,"updated_at"?: string | null,"user_id": string,"visibility"?: string | null
                   }
                   Update: {
-                    "category_id"?: string | null,"completed_at"?: string | null,"copied_from_id"?: string | null,"copied_from_user_id"?: string | null,"counter_count"?: number,"counter_enabled"?: boolean,"counter_label"?: string | null,"counter_target"?: number | null,"cover_image"?: string | null,"created_at"?: string | null,"deadline"?: string | null,"description"?: string | null,"id"?: string,"location_lat"?: number | null,"location_lng"?: number | null,"location_text"?: string | null,"status"?: string | null,"template_id"?: string | null,"title"?: string,"updated_at"?: string | null,"user_id"?: string,"visibility"?: string | null
+                    "category_id"?: string | null,"completed_at"?: string | null,"copied_from_id"?: string | null,"copied_from_user_id"?: string | null,"counter_count"?: number,"counter_enabled"?: boolean,"counter_label"?: string | null,"counter_target"?: number | null,"cover_image"?: string | null,"created_at"?: string | null,"deadline"?: string | null,"description"?: string | null,"id"?: string,"location_lat"?: number | null,"location_lng"?: number | null,"location_text"?: string | null,"status"?: string | null,"tags"?: (string)[] | null,"template_id"?: string | null,"title"?: string,"updated_at"?: string | null,"user_id"?: string,"visibility"?: string | null
                   }
                   Relationships: [
                     {
@@ -463,7 +546,72 @@ isOneToOne: false
                   ]
                 }
           }
-          Views: {
+            tags: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          color: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          color: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          color?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tags_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      item_tags: {
+        Row: {
+          item_id: string
+          tag_id: string
+          created_at: string
+        }
+        Insert: {
+          item_id: string
+          tag_id: string
+          created_at?: string
+        }
+        Update: {
+          item_id?: string
+          tag_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_tags_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "buckets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    Views: {
             "album_progress": {
                   Row: {
                     "album_id": string | null,"completed_tasks": number | null,"total_tasks": number | null
@@ -603,7 +751,11 @@ export type CompositeTypes<
   : never
 
 export const Constants = {
-  "public": {
+  "graphql_public": {
+          Enums: {
+            
+          }
+        },"public": {
           Enums: {
             
           }

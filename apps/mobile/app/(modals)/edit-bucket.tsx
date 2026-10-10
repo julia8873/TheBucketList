@@ -15,6 +15,9 @@ import { Typography, Button, Input, useTheme } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
 import { useUpdateBucket } from '../../src/hooks/useBuckets';
 import type { UpdateBucketForm } from '@bucketlist/shared';
+import { TagsRow } from '../../src/components/TagsRow';
+import { useTagPickerStore } from '../../src/stores/tagPicker.store';
+import { useItemTags, useSyncItemTags } from '../../src/hooks/useTags';
 
 export default function EditBucketModal() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -30,6 +33,19 @@ export default function EditBucketModal() {
     const [locationText, setLocationText] = useState('');
     const [deadline, setDeadline] = useState<Date | null>(null);
     const [showDatePicker, setShowDatePicker] = useState(false);
+    
+    const { selectedTags, setSelectedTags } = useTagPickerStore();
+    const { data: itemTagsData } = useItemTags(id as string);
+    const syncTags = useSyncItemTags();
+
+    // Set initial tags
+    useEffect(() => {
+        if (itemTagsData && itemTagsData.length > 0) {
+            setSelectedTags(itemTagsData.map((it: any) => it.tag));
+        } else {
+            setSelectedTags([]);
+        }
+    }, [itemTagsData]);
 
     useEffect(() => {
         if (!id) return;
@@ -86,7 +102,13 @@ export default function EditBucketModal() {
     };
 
     if (loading) {
-        return (
+        // Auto-sync tags when changed
+    useEffect(() => {
+        if (!loading && id) {
+            syncTags.mutate({ bucketId: id as string, selectedTagIds: selectedTags.map(t => t.id) });
+        }
+    }, [selectedTags]);
+    return (
             <View
                 style={[
                     styles.center,
@@ -101,6 +123,12 @@ export default function EditBucketModal() {
         );
     }
 
+    // Auto-sync tags when changed
+    useEffect(() => {
+        if (!loading && id) {
+            syncTags.mutate({ bucketId: id as string, selectedTagIds: selectedTags.map(t => t.id) });
+        }
+    }, [selectedTags]);
     return (
         <KeyboardAvoidingView
             style={[
@@ -235,6 +263,10 @@ export default function EditBucketModal() {
                             </Button>
                         )}
 
+                        </View>
+
+                        <View style={{ backgroundColor: '#161616', borderRadius: 16, borderWidth: 1, borderColor: '#2A2A2A', overflow: 'hidden' }}>
+                            <TagsRow selectedTags={selectedTags} />
                         {showDatePicker && (
                             <DateTimePicker
                                 value={deadline || new Date()}

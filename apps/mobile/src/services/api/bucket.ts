@@ -28,7 +28,7 @@ export const bucketApi = {
     }));
   },
 
-  createBucket: async (payload: CreateBucketForm) => {
+  createBucket: async (payload: CreateBucketForm & { cover_image?: string | null, album_id?: string | null, tag_ids?: string[] }) => {
     // 1. Get current user
     const { data: userData, error: userError } = await supabase.auth.getUser();
     if (userError || !userData.user) throw new Error('Not authenticated');
@@ -45,6 +45,8 @@ export const bucketApi = {
       location_lat: payload.location_lat || null,
       location_lng: payload.location_lng || null,
       status: 'pending',
+      cover_image: payload.cover_image || null,
+
     };
 
     const { data: bucket, error: bucketError } = await supabase
@@ -70,6 +72,30 @@ export const bucketApi = {
 
       if (subtasksError) {
         console.error('Failed to insert subtasks', subtasksError);
+      }
+    }
+
+    // 5. Insert tags relation if any
+    if (payload.tag_ids && payload.tag_ids.length > 0) {
+      const tagsInsert = payload.tag_ids.map(id => ({
+        item_id: (bucket as Bucket).id,
+        tag_id: id
+      }));
+      const { error: tagsError } = await supabase.from('item_tags').insert(tagsInsert);
+      if (tagsError) console.error('Failed to insert item_tags', tagsError);
+    }
+    
+    // 4. Insert album relation if any
+    if (payload.album_id) {
+      const { error: albumError } = await supabase
+        .from('album_items')
+        .insert({
+          album_id: payload.album_id,
+          bucket_id: (bucket as Bucket).id
+        });
+        
+      if (albumError) {
+        console.error('Failed to insert album relation', albumError);
       }
     }
 

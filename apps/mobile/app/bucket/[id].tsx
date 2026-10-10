@@ -142,6 +142,34 @@ export default function BucketDetailScreen() {
     }).start();
   }, [sheetVisible, sheetTranslateY]);
 
+  const [isAddingTag, setIsAddingTag] = useState(false);
+  const [newTagText, setNewTagText] = useState('');
+  
+  const handleRemoveTag = async (tagToRemove: string) => {
+    const currentTags = bucket.tags || [];
+    const newTags = currentTags.filter((t: string) => t !== tagToRemove);
+    queryClient.setQueryData(['bucketDetail', id], (old: any) => old ? { ...old, tags: newTags } : old);
+    await supabase.from('buckets').update({ tags: newTags }).eq('id', id);
+  };
+
+  const handleAddTag = async () => {
+    if (!newTagText.trim()) {
+      setIsAddingTag(false);
+      return;
+    }
+    const currentTags = bucket.tags || [];
+    if (currentTags.includes(newTagText.trim())) {
+      setNewTagText('');
+      setIsAddingTag(false);
+      return;
+    }
+    const newTags = [...currentTags, newTagText.trim()];
+    queryClient.setQueryData(['bucketDetail', id], (old: any) => old ? { ...old, tags: newTags } : old);
+    setNewTagText('');
+    setIsAddingTag(false);
+    await supabase.from('buckets').update({ tags: newTags }).eq('id', id);
+  };
+
   const [photoSearchQuery, setPhotoSearchQuery] = useState('');
   const [photoSortField, setPhotoSortField] = useState<'date' | 'title'>('date');
   const [photoSortDir, setPhotoSortDir] = useState<'desc' | 'asc'>('desc');
@@ -774,13 +802,66 @@ export default function BucketDetailScreen() {
           )}
 
           {/* Etiquetas */}
-          {bucket.category?.name_es && (
+          {(isOwner || (bucket.tags && bucket.tags.length > 0) || bucket.category?.name_es) && (
             <View style={{ flexDirection: 'row', marginTop: 12, marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
-              <View style={[styles.badge, { backgroundColor: bucket.category.color || theme.colors.border }]}>
-                <Typography variant="caption" color="#FFF" style={{ fontWeight: '600' }}>
-                  {bucket.category.name_es}
-                </Typography>
-              </View>
+              {bucket.tags?.length > 0 ? (
+                bucket.tags.map((tagText: string, index: number) => (
+                  <Pressable 
+                    key={`${tagText}-${index}`} 
+                    style={[styles.badge, { backgroundColor: bucket.category?.name_es === tagText ? (bucket.category.color || theme.colors.border) : '#1A1A1A', borderWidth: 1, borderColor: bucket.category?.name_es === tagText ? 'transparent' : '#333', flexDirection: 'row', alignItems: 'center' }]}
+                    onPress={() => isOwner ? handleRemoveTag(tagText) : undefined}
+                  >
+                    <Typography variant="caption" color={bucket.category?.name_es === tagText ? "#FFF" : "#E5E5E5"} style={{ fontWeight: '600' }}>
+                      {tagText}
+                    </Typography>
+                    {isOwner && (
+                      <X color={bucket.category?.name_es === tagText ? "#FFF" : "#E5E5E5"} size={12} style={{ marginLeft: 4 }} />
+                    )}
+                  </Pressable>
+                ))
+              ) : bucket.category?.name_es ? (
+                <Pressable 
+                  style={[styles.badge, { backgroundColor: bucket.category?.color || theme.colors.border, flexDirection: 'row', alignItems: 'center' }]}
+                  onPress={() => isOwner ? handleRemoveTag(bucket.category.name_es) : undefined}
+                >
+                  <Typography variant="caption" color="#FFF" style={{ fontWeight: '600' }}>
+                    {bucket.category.name_es}
+                  </Typography>
+                  {isOwner && (
+                    <X color="#FFF" size={12} style={{ marginLeft: 4 }} />
+                  )}
+                </Pressable>
+              ) : null}
+              
+              {/* Añadir Tag */}
+              {isOwner && (
+                isAddingTag ? (
+                  <View style={[styles.badge, { backgroundColor: '#1A1A1A', borderWidth: 1, borderColor: gold[400], paddingVertical: 4, paddingHorizontal: 8 }]}>
+                    <TextInput
+                      style={{ color: '#FFF', fontSize: 13, minWidth: 60, padding: 0 }}
+                      autoFocus
+                      value={newTagText}
+                      onChangeText={setNewTagText}
+                      onSubmitEditing={handleAddTag}
+                      onBlur={() => {
+                        setIsAddingTag(false);
+                        setNewTagText('');
+                      }}
+                      placeholder="Nueva..."
+                      placeholderTextColor="#666"
+                    />
+                  </View>
+                ) : (
+                  <Pressable 
+                    style={[styles.badge, { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#555', borderStyle: 'dashed' }]}
+                    onPress={() => setIsAddingTag(true)}
+                  >
+                    <Typography variant="caption" color="#999" style={{ fontWeight: '600' }}>
+                      + Añadir
+                    </Typography>
+                  </Pressable>
+                )
+              )}
             </View>
           )}
 

@@ -33,3 +33,5 @@ export { FAB } from './components/FAB';
 export { ToastProvider, useToast } from './components/Toast';
 export type { ToastOptions } from './components/Toast';
 export { BottomSheet } from './components/BottomSheet';
+
+export * from './components/TagChip';

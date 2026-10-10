@@ -10,6 +10,8 @@ import { createBucketSchema, type CreateBucketForm } from '@bucketlist/shared';
 import { useCreateBucket } from '../../src/hooks/useBuckets';
 import { supabase } from '../../src/services/supabase';
 import { LocationAutocomplete } from '../../src/components/LocationAutocomplete';
+import { TagsRow } from '../../src/components/TagsRow';
+import { useTagPickerStore } from '../../src/stores/tagPicker.store';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { ChevronLeft, Camera, MapPin, Calendar, Folder, Globe, Plus, X } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -38,6 +40,7 @@ export default function CreateBucketModal() {
   const [isTitleFocused, setIsTitleFocused] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isEditingLocation, setIsEditingLocation] = useState(false);
+  const { selectedTags, setSelectedTags } = useTagPickerStore();
   
   useEffect(() => {
     supabase.from('categories').select('*').then(({ data }) => {
@@ -48,7 +51,7 @@ export default function CreateBucketModal() {
     });
   }, []);
 
-  const { control, handleSubmit, setValue, watch } = useForm<CreateBucketForm>({
+  const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm<CreateBucketForm>({
     resolver: zodResolver(createBucketSchema),
     defaultValues: {
       title: '',
@@ -67,11 +70,15 @@ export default function CreateBucketModal() {
       position: i,
     }));
     
+    // Get IDs to save in item_tags
+    const tag_ids = selectedTags.map(t => t.id);
+
     // Reuse existing mutation fields, passing local states where appropriate
     const payload = {
       ...data,
       cover_image: coverImage,
       album_id: albumId,
+      tag_ids,
     } as any;
 
     createBucket.mutate(payload, {
@@ -175,31 +182,6 @@ export default function CreateBucketModal() {
           </Pressable>
         </View>
 
-        {/* CATEGORÍA */}
-        <Text style={styles.sectionLabel}><Text style={{ color: '#D4B13A' }}>CATEGORÍA</Text></Text>
-        <Controller
-          control={control}
-          name="category_id"
-          render={({ field: { onChange, value } }) => (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScroll}>
-              {categories.map((cat) => {
-                const isActive = value === cat.id;
-                return (
-                  <Pressable
-                    key={cat.id}
-                    style={[styles.catPill, isActive && styles.catPillActive]}
-                    onPress={() => onChange(cat.id)}
-                  >
-                    <Text style={[styles.catText, isActive && styles.catTextActive]}>
-                      {cat.name_es || cat.name_en}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          )}
-        />
-
         {/* AJUSTES */}
         <View style={styles.settingsCard}>
           {/* Ubicación */}
@@ -283,6 +265,9 @@ export default function CreateBucketModal() {
               <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }] }} />
             </View>
           </Pressable>
+
+          {/* Etiquetas */}
+          <TagsRow selectedTags={selectedTags} />
 
           {/* Pública */}
           <Controller
