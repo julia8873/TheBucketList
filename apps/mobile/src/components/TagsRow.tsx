@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Text, Pressable, StyleSheet } from 'react-native';
 import { Tag, ChevronRight } from 'lucide-react-native';
-import { TagPickerSheet, type TagItem } from './TagPickerSheet';
+import { TagAssignSheet, type TagItem } from './TagAssignSheet';
 
 interface TagsRowProps {
   selectedTags: TagItem[];
@@ -38,7 +38,7 @@ export function TagsRow({ selectedTags, onChange }: TagsRowProps) {
         <ChevronRight color="#6B6B6B" size={20} />
       </Pressable>
 
-      <TagPickerSheet
+      <TagAssignSheet
         visible={open}
         selectedTags={selectedTags}
         onChange={onChange}

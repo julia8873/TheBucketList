@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, Pressable, ScrollView, TextInput, StyleSheet, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
-import { Check, Search, Tag as TagIcon, X } from 'lucide-react-native';
+import { Check, Plus, Search, Tag as TagIcon, X } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FilterChip } from '@bucketlist/ui';
 import { TagSheetShell, TAG_SHEET_H } from './TagSheetShell';
@@ -14,12 +14,24 @@ interface TagFilterSheetProps {
   /** Ids de las etiquetas activas en el filtro. */
   selectedIds: string[];
   onChange: (ids: string[]) => void;
-  /** Nº de tareas que coinciden con la selección actual (botón "Ver N tareas"). */
-  matchCount: number;
-  /** Total de tareas (cuando no hay etiquetas elegidas). */
-  totalCount: number;
+  /** Nº de tareas que coinciden con la selección actual (botón "Ver N tareas"). Solo en modo filtro. */
+  matchCount?: number;
+  /** Total de tareas (cuando no hay etiquetas elegidas). Solo en modo filtro. */
+  totalCount?: number;
   onClose: () => void;
-  onManage: () => void;
+  /** Ir a la pantalla de gestión de etiquetas. */
+  onManage?: () => void;
+  /**
+   * `filter` (por defecto): filtrar la lista de tareas.
+   * `assign`: asignar etiquetas a una tarea (mismo menú, otro texto de botón y «Nueva etiqueta»).
+   */
+  mode?: 'filter' | 'assign';
+  /** Texto del botón principal (por defecto depende del modo). */
+  ctaLabel?: string;
+  /** Modo `assign`: crear una etiqueta nueva sin salir del menú. */
+  onCreate?: () => void;
+  /** Contenido extra dentro de la hoja (p. ej. otra hoja anidada). */
+  overlay?: React.ReactNode;
 }
 
 const SORTS: Array<{ key: TagSort; label: string }> = [
@@ -34,11 +46,16 @@ export function TagFilterSheet({
   visible,
   selectedIds,
   onChange,
-  matchCount,
-  totalCount,
+  matchCount = 0,
+  totalCount = 0,
   onClose,
   onManage,
+  mode = 'filter',
+  ctaLabel: ctaLabelProp,
+  onCreate,
+  overlay,
 }: TagFilterSheetProps) {
+  const assign = mode === 'assign';
   const insets = useSafeAreaInsets();
   const { data: tags = [], isLoading, isError, refetch } = useTags();
   const { data: usage } = useTagUsage();
@@ -73,7 +90,12 @@ export function TagFilterSheet({
 
   const n = selectedIds.length > 0 ? matchCount : totalCount;
   const ctaLabel =
-    selectedIds.length > 0 ? `Ver ${n} ${n === 1 ? 'tarea' : 'tareas'}` : 'Ver todas las tareas';
+    ctaLabelProp ??
+    (assign
+      ? 'Guardar etiquetas'
+      : selectedIds.length > 0
+        ? `Ver ${n} ${n === 1 ? 'tarea' : 'tareas'}`
+        : 'Ver todas las tareas');
 
   return (
     <TagSheetShell visible={visible} onClose={onClose} fixedHeight={TAG_SHEET_H}>
@@ -138,7 +160,11 @@ export function TagFilterSheet({
           </View>
         ) : list.length === 0 ? (
           <Text style={styles.stateText}>
-            {tags.length === 0 ? 'Aún no tienes etiquetas. Crea la primera desde «Gestionar etiquetas».' : `Ninguna etiqueta coincide con «${query.trim()}».`}
+            {tags.length === 0
+              ? assign
+                ? 'Aún no tienes etiquetas. Crea la primera con «Nueva etiqueta».'
+                : 'Aún no tienes etiquetas. Crea la primera desde «Gestionar etiquetas».'
+              : `Ninguna etiqueta coincide con «${query.trim()}».`}
           </Text>
         ) : (
           list.map((t) => {
@@ -185,11 +211,20 @@ export function TagFilterSheet({
         <Pressable style={styles.cta} onPress={onClose} accessibilityRole="button">
           <Text style={styles.ctaText}>{ctaLabel}</Text>
         </Pressable>
-        <Pressable style={styles.manage} onPress={onManage} hitSlop={8} accessibilityRole="button">
-          <TagIcon size={18} color={GOLD} strokeWidth={2} />
-          <Text style={styles.manageText}>Gestionar etiquetas</Text>
-        </Pressable>
+        {assign && onCreate ? (
+          <Pressable style={styles.manage} onPress={onCreate} hitSlop={8} accessibilityRole="button">
+            <Plus size={18} color={GOLD} strokeWidth={2.2} />
+            <Text style={styles.manageText}>Nueva etiqueta</Text>
+          </Pressable>
+        ) : onManage ? (
+          <Pressable style={styles.manage} onPress={onManage} hitSlop={8} accessibilityRole="button">
+            <TagIcon size={18} color={GOLD} strokeWidth={2} />
+            <Text style={styles.manageText}>Gestionar etiquetas</Text>
+          </Pressable>
+        ) : null}
       </View>
+
+      {overlay}
     </TagSheetShell>
   );
 }

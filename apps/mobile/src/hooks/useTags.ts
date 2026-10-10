@@ -30,9 +30,14 @@ export class TagError extends Error {
 }
 
 const isMissingTable = (e: any) => e?.code === '42P01';
-// PostgREST devuelve PGRST204 cuando se envía una columna que no existe (migración del emoji sin aplicar).
+// PostgREST devuelve PGRST204 cuando se envía una columna que no existe (migración del emoji sin aplicar
+// o schema cache sin recargar); Postgres devuelve 42703.
 const isMissingEmojiColumn = (e: any) =>
-  e?.code === 'PGRST204' || e?.code === '42703' || /emoji/i.test(e?.message ?? '');
+  e?.code === 'PGRST204' || e?.code === '42703' || /column.*emoji|emoji.*column/i.test(e?.message ?? '');
+
+// Antes se reintentaba sin emoji y se daba por guardado: el emoji se perdía en silencio.
+const EMOJI_COLUMN_MESSAGE =
+  'La base de datos no tiene la columna «emoji» en las etiquetas. Aplica la migración 20261010190000_tags_emoji.sql y recarga el schema cache de Supabase.';
 
 const toTagError = (e: any, fallback: string) => {
   if (e?.code === '23505') return new TagError('Ya existe una etiqueta con ese nombre', '23505');
@@ -113,7 +118,7 @@ export const useItemTags = (bucketId: string) => {
         .from('item_tags')
         .select('*, tag:tags(*)')
         .eq('item_id', bucketId);
-        
+
       if (error && error.code === '42P01') return [];
       if (error) throw error;
       return data || [];
@@ -139,12 +144,19 @@ export const useCreateTag = () => {
 
       let res = await supabase.from('tags').insert({ ...base, emoji: emoji || null }).select().single();
       if (res.error && isMissingEmojiColumn(res.error)) {
+        if (emoji) throw new TagError(EMOJI_COLUMN_MESSAGE, res.error.code);
         res = await supabase.from('tags').insert(base).select().single();
       }
       if (res.error) throw toTagError(res.error, 'No se pudo crear la etiqueta');
       return res.data as Tag;
     },
-    onSuccess: () => invalidateTagQueries(queryClient),
+    onSuccess: (saved) => {
+      // Se refleja al instante en todas las listas y luego se revalida.
+      queryClient.setQueriesData<Tag[]>({ queryKey: ['tags'] }, (old) =>
+        old ? [saved, ...old.filter((t) => t.id !== saved.id)] : old,
+      );
+      invalidateTagQueries(queryClient);
+    },
   });
 };
 
@@ -157,12 +169,19 @@ export const useUpdateTag = () => {
 
       let res = await supabase.from('tags').update({ ...base, emoji: emoji || null }).eq('id', id).select().single();
       if (res.error && isMissingEmojiColumn(res.error)) {
+        if (emoji) throw new TagError(EMOJI_COLUMN_MESSAGE, res.error.code);
         res = await supabase.from('tags').update(base).eq('id', id).select().single();
       }
       if (res.error) throw toTagError(res.error, 'No se pudieron guardar los cambios');
       return res.data as Tag;
     },
-    onSuccess: () => invalidateTagQueries(queryClient),
+    onSuccess: (saved) => {
+      // Se refleja al instante en todas las listas y luego se revalida.
+      queryClient.setQueriesData<Tag[]>({ queryKey: ['tags'] }, (old) =>
+        old?.map((t) => (t.id === saved.id ? { ...t, ...saved } : t)),
+      );
+      invalidateTagQueries(queryClient);
+    },
   });
 };
 
@@ -190,16 +209,16 @@ export const useSyncItemTags = () => {
         .from('item_tags')
         .select('tag_id')
         .eq('item_id', bucketId);
-        
+
       if (fetchError && fetchError.code === '42P01') return; // Migration not applied
       if (fetchError) throw fetchError;
-      
+
       const currentIds = (current || []).map(r => r.tag_id);
-      
+
       // 2. Diff
       const toAdd = selectedTagIds.filter(id => !currentIds.includes(id));
       const toRemove = currentIds.filter(id => !selectedTagIds.includes(id));
-      
+
       // 3. Delete removed
       if (toRemove.length > 0) {
         await supabase
@@ -208,7 +227,7 @@ export const useSyncItemTags = () => {
           .eq('item_id', bucketId)
           .in('tag_id', toRemove);
       }
-      
+
       // 4. Insert new
       if (toAdd.length > 0) {
         await supabase

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View } from 'react-native';
 import { TagChip } from '@bucketlist/ui';
 import { useItemTags, useSyncItemTags } from '../hooks/useTags';
-import { TagPickerSheet, type TagItem } from './TagPickerSheet';
+import { TagAssignSheet, type TagItem } from './TagAssignSheet';
 
 interface ItemTagsRowProps {
     bucketId: string;
@@ -51,7 +51,7 @@ export function ItemTagsRow({ bucketId, isOwner }: ItemTagsRowProps) {
             )}
 
             {isOwner && (
-                <TagPickerSheet
+                <TagAssignSheet
                     visible={open}
                     selectedTags={tags}
                     onChange={handleChange}
