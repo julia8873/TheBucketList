@@ -20,6 +20,7 @@ import {
 } from '@expo-google-fonts/playfair-display';
 import { ThemeProvider, ToastProvider } from '@bucketlist/ui';
 import { useThemeStore, hydrateThemeStore } from '../src/stores/theme.store';
+import { hydrateLanguageStore } from '../src/stores/language.store';
 import { useAuthStore } from '../src/stores/auth.store';
 import { supabase } from '../src/services/supabase';
 import 'intl-pluralrules';
@@ -50,6 +51,7 @@ export default function RootLayout() {
     async function prepare() {
       try {
         await hydrateThemeStore();
+        await hydrateLanguageStore();
         await Font.loadAsync({
           Inter_400Regular,
           Inter_500Medium,

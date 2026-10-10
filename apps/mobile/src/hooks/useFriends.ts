@@ -52,6 +52,16 @@ export function useIncomingRequestCount(userId?: string) {
   });
 }
 
+/** Personas a las que sigo / que me siguen (pestaña "Cuentas"). */
+export function useConnections(userId: string | undefined, kind: 'following' | 'followers') {
+  return useQuery({
+    queryKey: [...FRIENDS_QUERY_KEY, 'connections', kind, userId],
+    queryFn: () => (kind === 'following' ? friendsApi.getFollowing(userId!) : friendsApi.getFollowers(userId!)),
+    enabled: !!userId,
+    staleTime: 0,
+  });
+}
+
 export function useAcceptRequest(myId?: string) {
   const queryClient = useQueryClient();
   return useMutation({

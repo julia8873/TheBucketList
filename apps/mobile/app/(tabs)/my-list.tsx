@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, Typography, SegmentedControl, FilterChip, TaskRow, AlbumCard, NewAlbumCard, NoAlbumRow, FAB, spacing, useToast, Input } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { FlashList } from '@shopify/flash-list';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Search, Trash2, CheckCircle2, X } from 'lucide-react-native';
 import { Text, Image } from 'react-native';
@@ -31,7 +31,13 @@ export default function MyListScreen() {
   const { user } = useAuthStore();
 
   const [activeTab, setActiveTab] = useState('list');
-  const [filter, setFilter] = useState<FilterType>('all');
+  const params = useLocalSearchParams<{ filter?: string }>();
+  const [filter, setFilter] = useState<FilterType>(
+    params.filter === 'completed' || params.filter === 'active' || params.filter === 'expired' ? params.filter : 'all',
+  );
+  React.useEffect(() => {
+    if (params.filter === 'completed' || params.filter === 'active' || params.filter === 'expired') setFilter(params.filter);
+  }, [params.filter]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 

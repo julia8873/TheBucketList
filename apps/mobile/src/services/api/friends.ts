@@ -28,6 +28,13 @@ export interface PersonLite {
   avatar_url: string | null;
 }
 
+export interface ConnectionPerson extends PersonLite {
+  visibility: string;
+  /** Mi relación con esa persona (¿la sigo yo?). */
+  follow_status: FollowStatus;
+  public_count: number;
+}
+
 export interface FollowRequest {
   created_at: string | null;
   person: PersonLite;
@@ -124,5 +131,41 @@ export const friendsApi = {
       .match({ follower_id: followerId, following_id: myId, status: 'pending' });
     if (error) throw error;
     return true;
+  },
+
+  /** Personas a las que sigo (solicitudes ya aceptadas). */
+  getFollowing: async (userId: string): Promise<ConnectionPerson[]> => {
+    const { data, error } = await supabase
+      .from('follows')
+      .select(`created_at, person:profiles!following_id(${PERSON_FIELDS}, visibility)`)
+      .eq('follower_id', userId)
+      .eq('status', 'accepted')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []).flatMap((row: any) => {
+      const person = one<any>(row.person);
+      return person ? [{ ...person, follow_status: 'accepted' as FollowStatus, public_count: 0 }] : [];
+    });
+  },
+
+  /** Personas que me siguen, marcando si yo también las sigo. */
+  getFollowers: async (userId: string): Promise<ConnectionPerson[]> => {
+    const [followersRes, mineRes] = await Promise.all([
+      supabase
+        .from('follows')
+        .select(`created_at, person:profiles!follower_id(${PERSON_FIELDS}, visibility)`)
+        .eq('following_id', userId)
+        .eq('status', 'accepted')
+        .order('created_at', { ascending: false }),
+      supabase.from('follows').select('following_id, status').eq('follower_id', userId),
+    ]);
+    if (followersRes.error) throw followersRes.error;
+    const mine = new Map<string, FollowStatus>(
+      (mineRes.data ?? []).map((r: any) => [r.following_id as string, r.status as FollowStatus]),
+    );
+    return (followersRes.data ?? []).flatMap((row: any) => {
+      const person = one<any>(row.person);
+      return person ? [{ ...person, follow_status: mine.get(person.id) ?? ('none' as FollowStatus), public_count: 0 }] : [];
+    });
   },
 };

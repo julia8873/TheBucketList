@@ -33,6 +33,11 @@ function setFollowStatusInCaches(queryClient: QueryClient, targetId: string, sta
       old?.map((p) => (p.id === targetId ? { ...p, follow_status: status } : p))
   );
   queryClient.setQueriesData(
+    { queryKey: [...FRIENDS_QUERY_KEY, 'connections'] },
+    (old: Array<{ id: string; follow_status: FollowStatus }> | undefined) =>
+      old?.map((p) => (p.id === targetId ? { ...p, follow_status: status } : p))
+  );
+  queryClient.setQueriesData(
     { queryKey: [...FRIENDS_QUERY_KEY, 'stats', targetId] },
     (old: ProfileStats | undefined) => (old ? { ...old, follow_status: status } : old)
   );

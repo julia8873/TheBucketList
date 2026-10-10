@@ -21,6 +21,7 @@ import {
   useAcceptRequest,
   useIncomingRequests,
   useOutgoingRequests,
+  useConnections,
   usePeopleSearch,
   useRejectRequest,
 } from '../src/hooks/useFriends';
@@ -29,6 +30,7 @@ import { displayNameOf } from '../src/utils/initials';
 import type { PersonResult } from '../src/services/api/friends';
 
 type Tab = 'accounts' | 'requests';
+type ConnectionKind = 'following' | 'followers';
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -62,10 +64,13 @@ export default function FriendsScreen() {
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [kind, setKind] = useState<ConnectionKind>('following');
   const debounced = useDebounce(query, 350);
   const term = debounced.trim().replace(/^@/, '');
 
   const search = usePeopleSearch(debounced);
+  const following = useConnections(user?.id, 'following');
+  const followers = useConnections(user?.id, 'followers');
   const incoming = useIncomingRequests(user?.id);
   const outgoing = useOutgoingRequests(user?.id);
   const accept = useAcceptRequest(user?.id);
@@ -112,12 +117,60 @@ export default function FriendsScreen() {
   // ── Pestaña "Cuentas" ───────────────────────────────────────────────────────
   const renderAccounts = () => {
     if (term.length < 2) {
+      const list = (kind === 'following' ? following.data : followers.data) ?? [];
+      const loading = (kind === 'following' ? following.isLoading : followers.isLoading) && list.length === 0;
       return (
-        <EmptyState
-          icon={Search}
-          title="Encuentra a tus amigos"
-          message="Busca por nombre o por @usuario para seguirles y ver sus momentos."
-        />
+        <View>
+          <View style={styles.chips}>
+            {([
+              ['following', `Siguiendo · ${following.data?.length ?? 0}`],
+              ['followers', `Seguidores · ${followers.data?.length ?? 0}`],
+            ] as const).map(([key, label]) => {
+              const on = kind === key;
+              return (
+                <Pressable
+                  key={key}
+                  onPress={() => setKind(key)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: on }}
+                  style={[styles.chip, on && styles.chipOn]}
+                >
+                  <Text style={[styles.chipText, on && { color: gold[400] }]}>{label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {loading ? (
+            <ActivityIndicator style={styles.loader} color={gold[400]} />
+          ) : list.length === 0 ? (
+            <EmptyState
+              icon={Search}
+              title={kind === 'following' ? 'Aún no sigues a nadie' : 'Aún no tienes seguidores'}
+              message={
+                kind === 'following'
+                  ? 'Busca por nombre o por @usuario para seguir a tus amigos y ver sus momentos.'
+                  : 'Cuando alguien te siga aparecerá aquí.'
+              }
+            />
+          ) : (
+            list.map((person) => (
+              <PersonRow
+                key={person.id}
+                person={person}
+                subtitle={`@${person.username}`}
+                onPress={() => openProfile(person.id)}
+                right={
+                  <FollowButton
+                    status={person.follow_status}
+                    isPrivate={person.visibility === 'private'}
+                    onPress={() => onFollowPress(person)}
+                  />
+                }
+              />
+            ))
+          )}
+        </View>
       );
     }
     if (search.isLoading || (query.trim() !== debounced.trim() && !search.data)) {
@@ -289,7 +342,7 @@ export default function FriendsScreen() {
               onBlur={() => setFocused(false)}
               placeholder="Buscar personas"
               placeholderTextColor="#7A7A7A"
-              autoFocus={params.tab !== 'requests'}
+              autoFocus={false}
               autoCapitalize="none"
               autoCorrect={false}
               returnKeyType="search"
@@ -323,16 +376,16 @@ export default function FriendsScreen() {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         refreshControl={
-          tab === 'requests' ? (
-            <RefreshControl
-              refreshing={refreshing}
-              tintColor={gold[400]}
-              onRefresh={() => {
-                void incoming.refetch();
-                void outgoing.refetch();
-              }}
-            />
-          ) : undefined
+          <RefreshControl
+            refreshing={tab === 'requests' ? refreshing : following.isRefetching || followers.isRefetching}
+            tintColor={gold[400]}
+            onRefresh={() => {
+              void incoming.refetch();
+              void outgoing.refetch();
+              void following.refetch();
+              void followers.refetch();
+            }}
+          />
         }
       >
         {tab === 'accounts' ? renderAccounts() : renderRequests()}
@@ -342,6 +395,10 @@ export default function FriendsScreen() {
 }
 
 const styles = StyleSheet.create({
+  chips: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  chip: { height: 38, paddingHorizontal: 16, borderRadius: 19, borderWidth: 1, borderColor: '#2A2A2A', backgroundColor: '#161616', alignItems: 'center', justifyContent: 'center' },
+  chipOn: { borderColor: gold[400], backgroundColor: '#2A2411' },
+  chipText: { fontFamily: fontFamily.medium, fontSize: 14, color: '#F2EFE8' },
   container: { flex: 1 },
   header: {
     flexDirection: 'row',

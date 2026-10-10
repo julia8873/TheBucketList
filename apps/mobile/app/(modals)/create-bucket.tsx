@@ -52,6 +52,17 @@ export default function CreateBucketModal() {
     }
   });
 
+  // Visibilidad por defecto elegida en Ajustes
+  useEffect(() => {
+    void supabase.auth.getUser().then(async ({ data }) => {
+      const id = data.user?.id;
+      if (!id) return;
+      const { data: p } = await supabase.from('profiles').select('default_task_visibility').eq('id', id).maybeSingle();
+      const v = (p as any)?.default_task_visibility;
+      if (v === 'public' || v === 'followers' || v === 'private') setValue('visibility', v);
+    });
+  }, [setValue]);
+
   useEffect(() => {
     supabase.from('categories').select('*').then(({ data }) => {
       if (data) {
@@ -107,7 +118,7 @@ export default function CreateBucketModal() {
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,

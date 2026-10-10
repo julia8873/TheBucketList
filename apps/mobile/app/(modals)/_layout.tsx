@@ -9,6 +9,7 @@ export default function ModalsLayout() {
       <Stack.Screen name="edit-profile" options={{ presentation: 'modal' }} />
       <Stack.Screen name="edit-bucket" options={{ presentation: 'modal' }} />
       <Stack.Screen name="notification-prefs" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="change-credential" options={{ presentation: 'modal' }} />
     </Stack>
   );
 }

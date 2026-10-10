@@ -1,199 +1,313 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TextInput, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { Typography, useTheme, spacing, Avatar, Button, Icon, radii } from '@bucketlist/ui';
-import { Camera, ArrowLeft } from 'lucide-react-native';
+import { Camera, ChevronLeft, Lock } from 'lucide-react-native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import { Avatar, fontFamily, useTheme } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
 import { useAuthStore } from '../../src/stores/auth.store';
-import { processBucketImage } from '@bucketlist/shared';
-import { useQueryClient } from '@tanstack/react-query';
+import { OptionDialog } from '../../src/components/SettingsParts';
+import { initialsOf } from '../../src/utils/initials';
+import { uploadAvatar } from '../../src/services/api/avatar';
+
+const BIO_MAX = 120;
+const USERNAME_RE = /^[a-z0-9._]{3,20}$/;
+
+type UsernameState = 'idle' | 'invalid' | 'checking' | 'available' | 'taken';
 
 export default function EditProfileScreen() {
   const { theme } = useTheme();
   const router = useRouter();
-  const { user } = useAuthStore();
   const queryClient = useQueryClient();
-  
-  const [loading, setLoading] = useState(false);
-  const [profile, setProfile] = useState<any>(null);
-  
+  const { t } = useTranslation();
+  const { user } = useAuthStore();
+
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', user!.id).single();
+      if (error) throw error;
+      return data as any;
+    },
+    enabled: !!user?.id,
+  });
+
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
+  const [bioFocused, setBioFocused] = useState(false);
+  const [usernameState, setUsernameState] = useState<UsernameState>('idle');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      supabase.from('profiles').select('*').eq('id', user.id).single().then(({ data }) => {
-        if (data) {
-          setProfile(data);
-          setDisplayName(data.display_name || '');
-          setUsername(data.username || '');
-          setBio(data.bio || '');
-          setAvatarUri(data.avatar_url);
-        }
-      });
+    if (profile && !hydrated) {
+      setDisplayName(profile.display_name ?? '');
+      setUsername(profile.username ?? '');
+      setBio(profile.bio ?? '');
+      setAvatarUri(profile.avatar_url ?? null);
+      setHydrated(true);
     }
-  }, [user]);
+  }, [profile, hydrated]);
+
+  // Disponibilidad del usuario (con debounce)
+  useEffect(() => {
+    if (!hydrated || !user) return;
+    const clean = username.trim().toLowerCase();
+    if (clean === profile?.username) { setUsernameState('idle'); return; }
+    if (!USERNAME_RE.test(clean)) { setUsernameState('invalid'); return; }
+    setUsernameState('checking');
+    const id = setTimeout(async () => {
+      const { data } = await supabase.from('profiles').select('id').eq('username', clean).neq('id', user.id).limit(1);
+      setUsernameState(data && data.length > 0 ? 'taken' : 'available');
+    }, 400);
+    return () => clearTimeout(id);
+  }, [username, hydrated, profile?.username, user]);
+
+  const dirty = useMemo(
+    () =>
+      hydrated &&
+      (displayName.trim() !== (profile?.display_name ?? '') ||
+        username.trim().toLowerCase() !== (profile?.username ?? '') ||
+        bio.trim() !== (profile?.bio ?? '') ||
+        avatarUri !== (profile?.avatar_url ?? null)),
+    [hydrated, displayName, username, bio, avatarUri, profile],
+  );
+
+  const usernameOk = usernameState === 'idle' || usernameState === 'available';
+  const canSave = dirty && usernameOk && displayName.trim().length > 0 && !saving;
+
+  const [photoMenu, setPhotoMenu] = useState(false);
 
   const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') return;
-    
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+      if (!result.canceled && result.assets[0]) {
+        setError(null);
+        setAvatarUri(result.assets[0].uri);
+      }
+    } catch {
+      setError(t('profile.photo_permission'));
+    }
+  };
 
-    if (!result.canceled && result.assets[0]) {
-      setAvatarUri(result.assets[0].uri);
+  const onPhotoOption = (key: 'gallery' | 'remove') => {
+    if (key === 'remove') {
+      setAvatarUri(null);
+    } else {
+      // Deja que el diálogo se cierre antes de abrir la galería
+      setTimeout(() => void pickImage(), 250);
     }
   };
 
   const handleSave = async () => {
-    if (!user) return;
-    setLoading(true);
-
+    if (!user || !canSave) return;
+    setSaving(true);
+    setError(null);
     try {
-      let finalAvatarUrl = profile.avatar_url;
+      // null = foto quitada; http = la actual sin cambios; ruta local = foto nueva
+      let finalAvatarUrl: string | null = avatarUri && avatarUri.startsWith('http') ? avatarUri : null;
 
-      // If a new avatar was picked (uri doesn't start with http, meaning it's a local file)
+      // Foto nueva (ruta local, no http)
       if (avatarUri && !avatarUri.startsWith('http')) {
-        const processed = await processBucketImage(avatarUri);
-        
-        // Fetch as blob
-        const res = await fetch(processed.thumbnail.uri); // Avatar just needs thumbnail size
-        const blob = await res.blob();
-        
-        const path = `avatars/${user.id}_${Date.now()}.jpg`;
-        const { error: uploadError } = await supabase.storage
-          .from('photos')
-          .upload(path, blob, { contentType: 'image/jpeg', upsert: true });
-          
-        if (uploadError) throw uploadError;
-        
-        const { data } = supabase.storage.from('photos').getPublicUrl(path);
-        finalAvatarUrl = data.publicUrl;
+        finalAvatarUrl = await uploadAvatar(user.id, avatarUri);
       }
 
-      const { error } = await supabase.from('profiles').update({
-        display_name: displayName,
-        username,
-        bio,
-        avatar_url: finalAvatarUrl
-      }).eq('id', user.id);
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          display_name: displayName.trim(),
+          username: username.trim().toLowerCase(),
+          bio: bio.trim(),
+          avatar_url: finalAvatarUrl,
+        })
+        .eq('id', user.id);
 
-      if (error) throw error;
-      
-      void queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
+      if (updateError) {
+        if ((updateError as any).code === '23505') {
+          setUsernameState('taken');
+          throw new Error(t('errors.username_taken'));
+        }
+        throw updateError;
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
+      void queryClient.invalidateQueries({ queryKey: ['feed'] });
       router.back();
     } catch (err: any) {
-      console.error(err);
-      alert(err.message || 'Failed to update profile');
+      setError(err?.message || t('profile.save_failed'));
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  return (
-    <KeyboardAvoidingView style={[styles.container, { backgroundColor: theme.colors.background }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={styles.header}>
-        <Button variant="ghost" size="sm" onPress={() => router.back()} style={{ padding: 0, width: 40 }}>
-          <Icon icon={ArrowLeft} size={24} color={theme.colors.foreground} />
-        </Button>
-        <Typography variant="h3" style={{ flex: 1, textAlign: 'center' }}>Edit Profile</Typography>
-        <Button variant="ghost" size="sm" onPress={handleSave} loading={loading} style={{ width: 60 }}>
-          Save
-        </Button>
-      </View>
+  const fieldStyle = [styles.field, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }];
+  const Label = ({ gold, rest }: { gold: string; rest?: string }) => (
+    <Text style={[styles.label, { color: theme.colors.foreground }]}>
+      <Text style={{ color: theme.colors.primary }}>{gold}</Text>
+      {rest ? ` ${rest}` : ''}
+    </Text>
+  );
 
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.avatarSection}>
-          <Avatar 
-            source={avatarUri ? { uri: avatarUri } : undefined} 
-            fallback={displayName.charAt(0) || '?'} 
-            size="xl" 
-          />
-          <Button 
-            variant="secondary" 
-            size="sm" 
-            leftIcon={<Icon icon={Camera} size={16} color={theme.colors.foreground} />}
-            style={{ marginTop: spacing[4] }}
-            onPress={pickImage}
+  const statusText =
+    usernameState === 'available' ? { text: t('profile.available'), color: theme.colors.primary }
+      : usernameState === 'taken' ? { text: t('errors.username_taken'), color: theme.colors.error }
+        : usernameState === 'invalid' ? { text: t('profile.username_invalid'), color: theme.colors.error }
+          : null;
+
+  if (isLoading || !hydrated) {
+    return (
+      <View style={[styles.container, styles.center, { backgroundColor: theme.colors.background }]}>
+        <ActivityIndicator color={theme.colors.primary} />
+      </View>
+    );
+  }
+
+  return (
+    <SafeAreaView edges={['top', 'bottom']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <View style={styles.header}>
+          <Pressable
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.back', { defaultValue: 'Volver' })}
+            style={[styles.back, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
           >
-            Change Photo
-          </Button>
+            <ChevronLeft size={22} color={theme.colors.foreground} />
+          </Pressable>
+          <Text style={[styles.title, { color: theme.colors.foreground }]}>{t('profile.edit')}</Text>
         </View>
 
-        <View style={styles.formGroup}>
-          <Typography variant="label" style={styles.label}>Display Name</Typography>
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <View style={styles.avatarSection}>
+            <Pressable onPress={() => setPhotoMenu(true)} accessibilityRole="button" accessibilityLabel={t('profile.change_photo')}>
+              <Avatar
+                uri={avatarUri}
+                initials={initialsOf({ display_name: displayName, username })}
+                size="xl"
+                goldRing
+              />
+              <View style={[styles.camera, { backgroundColor: theme.colors.primary }]}>
+                <Camera size={18} color={theme.colors.primaryForeground} />
+              </View>
+            </Pressable>
+            <Pressable onPress={() => setPhotoMenu(true)} hitSlop={8} accessibilityRole="button">
+              <Text style={[styles.changePhoto, { color: theme.colors.primary }]}>{t('profile.change_photo')}</Text>
+            </Pressable>
+          </View>
+
+          <Label gold={t('profile.display_name')} />
           <TextInput
-            style={[styles.input, { color: theme.colors.foreground, backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
             value={displayName}
             onChangeText={setDisplayName}
+            maxLength={40}
+            placeholderTextColor={theme.colors.foregroundSubtle}
+            style={[fieldStyle, styles.input, { color: theme.colors.foreground }]}
           />
-        </View>
 
-        <View style={styles.formGroup}>
-          <Typography variant="label" style={styles.label}>Username</Typography>
-          <TextInput
-            style={[styles.input, { color: theme.colors.foreground, backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
-            value={username}
-            onChangeText={setUsername}
-            autoCapitalize="none"
-          />
-        </View>
+          <Label gold={t('profile.username_a')} rest={t('profile.username_b')} />
+          <View style={[fieldStyle, styles.usernameRow]}>
+            <Text style={[styles.input, { color: theme.colors.foregroundMuted, paddingHorizontal: 0 }]}>@ </Text>
+            <TextInput
+              value={username}
+              onChangeText={(v) => setUsername(v.replace(/\s/g, '').toLowerCase())}
+              autoCapitalize="none"
+              autoCorrect={false}
+              maxLength={20}
+              style={[styles.input, { color: theme.colors.foreground, flex: 1, paddingHorizontal: 0 }]}
+            />
+            {usernameState === 'checking' ? <ActivityIndicator size="small" color={theme.colors.primary} /> : null}
+          </View>
+          {statusText ? <Text style={[styles.hint, { color: statusText.color }]}>{statusText.text}</Text> : null}
 
-        <View style={styles.formGroup}>
-          <Typography variant="label" style={styles.label}>Bio</Typography>
+          <Label gold={t('profile.bio_a')} rest={t('profile.bio_b')} />
           <TextInput
-            style={[styles.input, { color: theme.colors.foreground, backgroundColor: theme.colors.surface, borderColor: theme.colors.border, height: 100 }]}
             value={bio}
-            onChangeText={setBio}
+            onChangeText={(v) => setBio(v.slice(0, BIO_MAX))}
+            onFocus={() => setBioFocused(true)}
+            onBlur={() => setBioFocused(false)}
             multiline
             textAlignVertical="top"
+            placeholder={t('profile.bio_placeholder')}
+            placeholderTextColor={theme.colors.foregroundSubtle}
+            style={[
+              fieldStyle, styles.bio,
+              { color: theme.colors.foreground },
+              bioFocused && { borderColor: theme.colors.primary },
+            ]}
           />
+          <Text style={[styles.counter, { color: theme.colors.foregroundMuted }]}>{bio.length}/{BIO_MAX}</Text>
+
+          <Label gold={t('profile.email_a')} rest={t('profile.email_b')} />
+          <View style={[fieldStyle, styles.usernameRow, { justifyContent: 'space-between' }]}>
+            <Text style={[styles.input, { color: theme.colors.foregroundMuted, paddingHorizontal: 0 }]} numberOfLines={1}>
+              {user?.email}
+            </Text>
+            <Lock size={18} color={theme.colors.foregroundSubtle} />
+          </View>
+
+          {error ? <Text style={[styles.hint, { color: theme.colors.error, marginTop: 14 }]}>{error}</Text> : null}
+        </ScrollView>
+
+        <View style={[styles.footer, { borderTopColor: theme.colors.border, backgroundColor: theme.colors.background }]}>
+          <Pressable
+            onPress={() => void handleSave()}
+            disabled={!canSave}
+            accessibilityRole="button"
+            style={[styles.cta, { backgroundColor: theme.colors.primary, opacity: canSave ? 1 : 0.4 }]}
+          >
+            {saving ? (
+              <ActivityIndicator color={theme.colors.primaryForeground} />
+            ) : (
+              <Text style={[styles.ctaText, { color: theme.colors.primaryForeground }]}>{t('profile.save_changes')}</Text>
+            )}
+          </Pressable>
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+      <OptionDialog<'gallery' | 'remove'>
+        visible={photoMenu}
+        title={t('profile.photo_options', { defaultValue: 'Foto de perfil' })}
+        options={[
+          { key: 'gallery', label: t('profile.photo_choose', { defaultValue: 'Elegir de la galería' }) },
+          ...(avatarUri ? [{ key: 'remove' as const, label: t('profile.photo_remove', { defaultValue: 'Quitar foto' }), danger: true }] : []),
+        ]}
+        onSelect={onPhotoOption}
+        onClose={() => setPhotoMenu(false)}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing[4],
-    paddingTop: spacing[6],
-    paddingBottom: spacing[4],
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#ccc',
-  },
-  content: {
-    padding: spacing[4],
-  },
-  avatarSection: {
-    alignItems: 'center',
-    marginBottom: spacing[8],
-    marginTop: spacing[4],
-  },
-  formGroup: {
-    marginBottom: spacing[4],
-  },
-  label: {
-    marginBottom: spacing[2],
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[3],
-    fontSize: 16,
-  }
+  container: { flex: 1 },
+  center: { alignItems: 'center', justifyContent: 'center' },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 20, paddingTop: 12 },
+  back: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  title: { fontFamily: fontFamily.serifBold, fontSize: 30 },
+  content: { paddingHorizontal: 20, paddingBottom: 24 },
+  avatarSection: { alignItems: 'center', marginTop: 24, gap: 10 },
+  camera: { position: 'absolute', right: -2, bottom: -2, width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  changePhoto: { fontFamily: fontFamily.semibold, fontSize: 15, padding: 6 },
+  label: { fontFamily: fontFamily.serifBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase', marginTop: 22, marginBottom: 8 },
+  field: { borderWidth: 1, borderRadius: 16 },
+  input: { fontFamily: fontFamily.regular, fontSize: 16, height: 52, paddingHorizontal: 16 },
+  usernameRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 4 },
+  bio: { minHeight: 96, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 14, fontFamily: fontFamily.regular, fontSize: 16, lineHeight: 23 },
+  counter: { textAlign: 'right', fontFamily: fontFamily.regular, fontSize: 13, marginTop: 6 },
+  hint: { fontFamily: fontFamily.regular, fontSize: 13, marginTop: 6 },
+  footer: { paddingHorizontal: 20, paddingTop: 14, paddingBottom: 14, borderTopWidth: StyleSheet.hairlineWidth },
+  cta: { height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center' },
+  ctaText: { fontFamily: fontFamily.semibold, fontSize: 17 },
 });
