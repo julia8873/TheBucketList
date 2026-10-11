@@ -14,16 +14,20 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { ChevronLeft, MapPin, Calendar, Eye, X, Users, Plus } from 'lucide-react-native';
+import { ChevronLeft, MapPin, Calendar, Eye, X, Users, Plus, Folder } from 'lucide-react-native';
 import { TagChip } from '@bucketlist/ui';
 import type { UpdateBucketForm } from '@bucketlist/shared';
 import { supabase } from '../../src/services/supabase';
 import { useUpdateBucket } from '../../src/hooks/useBuckets';
 import { useItemTags, useSyncItemTags } from '../../src/hooks/useTags';
-import { LocationAutocomplete } from '../../src/components/LocationAutocomplete';
+import { useAlbums } from '../../src/hooks/useAlbums';
+import { useAuthStore } from '../../src/stores/auth.store';
+import { useQueryClient } from '@tanstack/react-query';
+import { LocationPickerModal } from '../../src/components/LocationPickerModal';
 import { TagsRow } from '../../src/components/TagsRow';
 import type { TagItem } from '../../src/components/TagPickerSheet';
 import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
+import { AlbumPickerSheet } from '../../src/components/AlbumPickerSheet';
 
 type Visibility = 'public' | 'followers' | 'private';
 
@@ -55,6 +59,14 @@ export default function EditBucketModal() {
     const [selectedCollaborators, setSelectedCollaborators] = useState<CollaboratorItem[]>([]);
     const [showCollaboratorPicker, setShowCollaboratorPicker] = useState(false);
     const collaboratorsInitialized = useRef(false);
+
+    // Álbum
+    const queryClient = useQueryClient();
+    const { user } = useAuthStore();
+    const { data: albums = [] } = useAlbums(user?.id);
+    const [albumId, setAlbumId] = useState<string | null>(null);
+    const [showAlbumPicker, setShowAlbumPicker] = useState(false);
+    const initialAlbumId = useRef<string | null>(null);
 
     useEffect(() => {
         if (!id || collaboratorsInitialized.current) return;
@@ -111,6 +123,18 @@ export default function EditBucketModal() {
                 setDeadline(data.deadline ? new Date(data.deadline) : null);
                 setLoading(false);
             });
+
+        supabase
+            .from('album_items')
+            .select('album_id')
+            .eq('bucket_id', id)
+            .maybeSingle()
+            .then(({ data }) => {
+                if (data?.album_id) {
+                    setAlbumId(data.album_id);
+                    initialAlbumId.current = data.album_id;
+                }
+            });
     }, [id, router]);
 
     const isSaving = updateBucket.isPending || syncTags.isPending;
@@ -154,6 +178,18 @@ export default function EditBucketModal() {
             if (toRemoveIds.length > 0) {
                 await supabase.from('bucket_collaborators').delete().eq('bucket_id', id).in('user_id', toRemoveIds);
             }
+
+            // Sync album if changed
+            if (albumId !== initialAlbumId.current) {
+                await supabase.from('album_items').delete().eq('bucket_id', id);
+                if (albumId) {
+                    await supabase.from('album_items').insert({ bucket_id: id, album_id: albumId, position: 0 });
+                }
+                void queryClient.invalidateQueries({ queryKey: ['bucketAlbum', id] });
+                void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+                void queryClient.invalidateQueries({ queryKey: ['albums'] });
+            }
+
             router.back();
         } catch (error: any) {
             Alert.alert('No se pudo guardar', error?.message ?? 'Inténtalo de nuevo.');
@@ -217,30 +253,19 @@ export default function EditBucketModal() {
                     {/* AJUSTES */}
                     <View style={styles.settingsCard}>
                         {/* Ubicación */}
-                        {!isEditingLocation ? (
-                            <Pressable style={styles.settingRow} onPress={() => setIsEditingLocation(true)}>
-                                <MapPin color="#D4B13A" size={24} />
-                                <Text style={styles.settingLabel}>Ubicación</Text>
+                        <Pressable style={styles.settingRow} onPress={() => setIsEditingLocation(true)}>
+                            <MapPin color="#D4B13A" size={24} />
+                            <Text style={styles.settingLabel}>Ubicación</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                                 <Text
                                     style={[styles.settingValue, !locationText && { color: '#6B6B6B' }]}
                                     numberOfLines={1}
                                 >
                                     {locationText || 'Sin ubicación'}
                                 </Text>
-                            </Pressable>
-                        ) : (
-                            <View style={[styles.settingRow, { paddingHorizontal: 10 }]}>
-                                <LocationAutocomplete
-                                    value={locationText}
-                                    onChangeLocation={(loc) => {
-                                        setLocationText(loc?.text ?? '');
-                                        setLocationLat(loc ? loc.lat : null);
-                                        setLocationLng(loc ? loc.lng : null);
-                                        setIsEditingLocation(false);
-                                    }}
-                                />
+                                <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }] }} />
                             </View>
-                        )}
+                        </Pressable>
 
                         {/* Fecha límite */}
                         <Pressable style={styles.settingRow} onPress={() => setShowDatePicker(true)}>
@@ -271,6 +296,18 @@ export default function EditBucketModal() {
                                 }}
                             />
                         )}
+
+                        {/* Álbum */}
+                        <Pressable style={styles.settingRow} onPress={() => setShowAlbumPicker(true)}>
+                            <Folder color="#D4B13A" size={24} />
+                            <Text style={styles.settingLabel}>Álbum</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                <Text style={[styles.settingValue, !albumId && { color: '#6B6B6B' }]}>
+                                    {albumId ? albums.find(a => a.id === albumId)?.title || 'Seleccionado' : 'Sin álbum'}
+                                </Text>
+                                <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }] }} />
+                            </View>
+                        </Pressable>
 
                         {/* Etiquetas */}
                         <TagsRow selectedTags={selectedTags} onChange={setSelectedTags} />
@@ -330,6 +367,24 @@ export default function EditBucketModal() {
                     selected={selectedCollaborators}
                     onChange={setSelectedCollaborators}
                     onClose={() => setShowCollaboratorPicker(false)}
+                />
+
+                <AlbumPickerSheet
+                    visible={showAlbumPicker}
+                    selectedAlbumId={albumId}
+                    onSelectAlbum={setAlbumId}
+                    onClose={() => setShowAlbumPicker(false)}
+                />
+
+                <LocationPickerModal
+                    visible={isEditingLocation}
+                    value={locationText}
+                    onChangeLocation={(loc) => {
+                        setLocationText(loc?.text ?? '');
+                        setLocationLat(loc ? loc.lat : null);
+                        setLocationLng(loc ? loc.lng : null);
+                    }}
+                    onClose={() => setIsEditingLocation(false)}
                 />
 
                 {/* BOTTOM BAR */}

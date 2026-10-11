@@ -9,10 +9,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { createBucketSchema, type CreateBucketForm } from '@bucketlist/shared';
 import { useCreateBucket } from '../../src/hooks/useBuckets';
 import { supabase } from '../../src/services/supabase';
-import { LocationAutocomplete } from '../../src/components/LocationAutocomplete';
+import { LocationPickerModal } from '../../src/components/LocationPickerModal';
 import { TagsRow } from '../../src/components/TagsRow';
 import type { TagItem } from '../../src/components/TagPickerSheet';
 import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
+import { AlbumPickerSheet } from '../../src/components/AlbumPickerSheet';
+import { useAlbums } from '../../src/hooks/useAlbums';
+import { useAuthStore } from '../../src/stores/auth.store';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { ChevronLeft, Camera, MapPin, Calendar, Folder, Globe, Plus, X, Users, Flag } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -30,10 +33,12 @@ export default function CreateBucketModal() {
   const router = useRouter();
   const createBucket = useCreateBucket();
   const insets = useSafeAreaInsets();
+  const { user } = useAuthStore();
+  const { data: albums = [] } = useAlbums(user?.id);
 
   const [coverImage, setCoverImage] = useState<string>('preset:green');
   const [albumId, setAlbumId] = useState<string | null>(null);
-  const [albums, setAlbums] = useState<any[]>([]);
+  const [showAlbumPicker, setShowAlbumPicker] = useState(false);
 
   const [steps, setSteps] = useState<{ id: string; title: string }[]>([]);
 
@@ -65,12 +70,6 @@ export default function CreateBucketModal() {
       if (v === 'public' || v === 'followers' || v === 'private') setValue('visibility', v);
     });
   }, [setValue]);
-
-  useEffect(() => {
-    supabase.from('albums').select('*').then(({ data }) => {
-      if (data) setAlbums(data);
-    });
-  }, []);
 
   const titleValue = watch('title');
 
@@ -243,35 +242,17 @@ export default function CreateBucketModal() {
             <Controller
               control={control}
               name="location_text"
-              render={({ field: { onChange, value } }) => (
-                <View>
-                  {!isEditingLocation ? (
-                    <Pressable style={styles.settingRow} onPress={() => setIsEditingLocation(true)}>
-                      <MapPin color="#D4B13A" size={24} />
-                      <Text style={styles.settingLabel}>Ubicación</Text>
-                      <Text style={[styles.settingValue, !value && { color: '#6B6B6B' }]} numberOfLines={1}>
-                        {value || 'Sin ubicación'}
-                      </Text>
-                    </Pressable>
-                  ) : (
-                    <View style={[styles.settingRow, { paddingHorizontal: 10 }]}>
-                      <LocationAutocomplete
-                        value={value || ''}
-                        onChangeLocation={(loc) => {
-                          onChange(loc?.text);
-                          if (loc) {
-                            setValue('location_lat', loc.lat);
-                            setValue('location_lng', loc.lng);
-                          } else {
-                            setValue('location_lat', null);
-                            setValue('location_lng', null);
-                          }
-                          setIsEditingLocation(false);
-                        }}
-                      />
-                    </View>
-                  )}
-                </View>
+              render={({ field: { value } }) => (
+                <Pressable style={styles.settingRow} onPress={() => setIsEditingLocation(true)}>
+                  <MapPin color="#D4B13A" size={24} />
+                  <Text style={styles.settingLabel}>Ubicación</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Text style={[styles.settingValue, !value && { color: '#6B6B6B' }]} numberOfLines={1}>
+                      {value || 'Sin ubicación'}
+                    </Text>
+                    <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }] }} />
+                  </View>
+                </Pressable>
               )}
             />
 
@@ -304,13 +285,7 @@ export default function CreateBucketModal() {
             />
 
             {/* Álbum */}
-            <Pressable style={styles.settingRow} onPress={() => {
-              if (albums.length > 0) {
-                const idx = albums.findIndex(a => a.id === albumId);
-                const next = albums[(idx + 1) % albums.length];
-                setAlbumId(next.id);
-              }
-            }}>
+            <Pressable style={styles.settingRow} onPress={() => setShowAlbumPicker(true)}>
               <Folder color="#D4B13A" size={24} />
               <Text style={styles.settingLabel}>Álbum</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -411,6 +386,24 @@ export default function CreateBucketModal() {
           selected={selectedCollaborators}
           onChange={setSelectedCollaborators}
           onClose={() => setShowCollaboratorPicker(false)}
+        />
+
+        <AlbumPickerSheet
+          visible={showAlbumPicker}
+          selectedAlbumId={albumId}
+          onSelectAlbum={setAlbumId}
+          onClose={() => setShowAlbumPicker(false)}
+        />
+
+        <LocationPickerModal
+          visible={isEditingLocation}
+          value={watch('location_text') || ''}
+          onChangeLocation={(loc) => {
+            setValue('location_text', loc?.text || '');
+            setValue('location_lat', loc ? loc.lat : null);
+            setValue('location_lng', loc ? loc.lng : null);
+          }}
+          onClose={() => setIsEditingLocation(false)}
         />
 
         {/* BOTTOM BAR */}

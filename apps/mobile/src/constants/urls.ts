@@ -3,7 +3,11 @@ import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 
 /** APP_ENV: 'local' | 'staging' | 'prod' */
-const APP_ENV = (Constants.expoConfig?.extra?.APP_ENV as string | undefined) ?? 'local';
+const APP_ENV =
+  process.env['EXPO_PUBLIC_APP_ENV'] ??
+  (Constants.expoConfig?.extra?.APP_ENV as string | undefined) ??
+  process.env['APP_ENV'] ??
+  'local';
 
 function getHostIp(): string | undefined {
   const hostUri = Constants.expoConfig?.hostUri;
@@ -28,10 +32,10 @@ function getHostIp(): string | undefined {
  */
 export function getSupabaseUrl(): string {
   if (APP_ENV === 'prod') {
-    return process.env['EXPO_PUBLIC_SUPABASE_URL_PROD'] ?? '';
+    return process.env['EXPO_PUBLIC_SUPABASE_URL_PROD'] || process.env['EXPO_PUBLIC_SUPABASE_URL'] || '';
   }
   if (APP_ENV === 'staging') {
-    return process.env['EXPO_PUBLIC_SUPABASE_URL_STAGING'] ?? '';
+    return process.env['EXPO_PUBLIC_SUPABASE_URL_STAGING'] || process.env['EXPO_PUBLIC_SUPABASE_URL'] || '';
   }
   // local
   if (Device.isDevice) {
@@ -55,10 +59,10 @@ export function getSupabaseUrl(): string {
 
 export function getSupabaseAnonKey(): string {
   if (APP_ENV === 'prod') {
-    return process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY_PROD'] ?? '';
+    return process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY_PROD'] || process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY'] || '';
   }
   if (APP_ENV === 'staging') {
-    return process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY_STAGING'] ?? '';
+    return process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY_STAGING'] || process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY'] || '';
   }
   const k = process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY'] ?? process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY_LOCAL'];
   if (k && !k.includes('CRFA0NiK')) {

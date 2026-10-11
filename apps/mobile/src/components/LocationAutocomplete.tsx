@@ -14,12 +14,20 @@ interface LocationAutocompleteProps {
   value: string;
   onChangeLocation: (location: { text: string; lat: number; lng: number } | null) => void;
   error?: string;
+  label?: string;
+  placeholder?: string;
 }
 
 // Simple in-memory cache
 const searchCache: Record<string, LocationResult[]> = {};
 
-export function LocationAutocomplete({ value, onChangeLocation, error }: LocationAutocompleteProps) {
+export function LocationAutocomplete({
+  value,
+  onChangeLocation,
+  error,
+  label = 'Ubicación',
+  placeholder = 'Buscar ciudad o lugar...',
+}: LocationAutocompleteProps) {
   const { theme } = useTheme();
   const [query, setQuery] = useState(value);
   const [results, setResults] = useState<LocationResult[]>([]);
@@ -93,8 +101,8 @@ export function LocationAutocomplete({ value, onChangeLocation, error }: Locatio
   return (
     <View style={styles.container}>
       <Input
-        label="Location"
-        placeholder="Search for a city or place..."
+        label={label}
+        placeholder={placeholder}
         value={query}
         onChangeText={handleChangeText}
         error={error}
