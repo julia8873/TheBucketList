@@ -699,7 +699,7 @@ const styles = StyleSheet.create({
   previewContainer: {
     marginTop: 20,
     marginHorizontal: 20,
-    height: 180,
+    height: 230,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#262626',

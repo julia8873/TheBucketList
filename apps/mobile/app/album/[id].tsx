@@ -16,7 +16,7 @@ import {
   Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   ChevronLeft,
@@ -698,179 +698,164 @@ export default function AlbumDetailScreen() {
             style={StyleSheet.absoluteFill}
           />
 
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Volver"
-            style={[styles.heroBtn, { left: 20, top: Math.max(52, insets.top) }]}
-            onPress={() => router.back()}
-          >
-            <ChevronLeft size={22} color="#F3EEE3" strokeWidth={1.8} />
-          </Pressable>
+          {/* Nav overlay */}
+          <SafeAreaView style={styles.navOverlay} edges={['top']}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Volver"
+              style={styles.heroBtn}
+              onPress={() => router.back()}
+            >
+              <ChevronLeft size={22} color="#F3EEE3" strokeWidth={1.8} />
+            </Pressable>
 
-          {id !== 'unassigned' && (
-            <View style={{ position: 'absolute', right: 12, top: Math.max(52, insets.top), flexDirection: 'row', gap: 8 }}>
-              {currentUserId && (
+            {id !== 'unassigned' && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                {currentUserId && (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={isFav ? 'Quitar de favoritos' : 'Marcar como favorito'}
+                    style={styles.heroBtn}
+                    onPress={() => toggleFavoriteAlbum.mutate({ albumId: id, currentlyFavorite: isFav })}
+                  >
+                    <Star
+                      size={20}
+                      color={isFav ? '#D4B13A' : '#F3EEE3'}
+                      fill={isFav ? '#D4B13A' : 'transparent'}
+                      strokeWidth={1.8}
+                    />
+                  </Pressable>
+                )}
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={isFav ? 'Quitar de favoritos' : 'Marcar como favorito'}
+                  accessibilityLabel="Compartir"
                   style={styles.heroBtn}
-                  onPress={() => toggleFavoriteAlbum.mutate({ albumId: id, currentlyFavorite: isFav })}
+                  onPress={handleShare}
                 >
-                  <Star
-                    size={20}
-                    color={isFav ? '#D4B13A' : '#F3EEE3'}
-                    fill={isFav ? '#D4B13A' : 'transparent'}
-                    strokeWidth={1.8}
-                  />
+                  <ShareIcon size={20} color="#F3EEE3" strokeWidth={1.8} />
                 </Pressable>
-              )}
-              {canEdit && (
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel="Cambiar portada"
+                  accessibilityLabel="Más opciones"
                   style={styles.heroBtn}
-                  onPress={() => void pickAndUploadCover()}
+                  onPress={handleMore}
                 >
-                  <Camera size={20} color="#F3EEE3" strokeWidth={1.8} />
+                  <MoreHorizontal size={20} color="#F3EEE3" strokeWidth={1.8} />
                 </Pressable>
-              )}
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Compartir"
-                style={styles.heroBtn}
-                onPress={handleShare}
-              >
-                <ShareIcon size={22} color="#F3EEE3" strokeWidth={1.8} />
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Más opciones"
-                style={styles.heroBtn}
-                onPress={handleMore}
-              >
-                <MoreHorizontal size={22} color="#F3EEE3" strokeWidth={1.8} />
-              </Pressable>
-            </View>
-          )}
+              </View>
+            )}
+          </SafeAreaView>
         </View>
 
         {/* Chips */}
         {id !== 'unassigned' && (
-          <View style={styles.chipsRow}>
-            {/* Estado clickeable */}
-            <Pressable
-              style={[
-                styles.chip,
-                styles.chipStatus,
-                isAlbumClosed && { borderColor: '#D4B13A', backgroundColor: '#2C2512' },
-                !isAlbumClosed && areAllCompleted && { borderColor: '#22C55E', backgroundColor: 'rgba(34,197,94,0.14)' },
-                canEdit && styles.chipPressable,
-              ]}
-              onPress={() => {
-                if (canEdit) {
-                  setSheetMode('status');
-                  setSheetVisible(true);
-                }
-              }}
-            >
-              {isAlbumClosed ? (
-                <>
-                  <Lock size={14} color="#D4B13A" strokeWidth={2} />
-                  <Text style={[styles.chipStatusText, { color: '#D4B13A' }]}>Cerrado</Text>
-                </>
-              ) : areAllCompleted ? (
-                <>
-                  <Check size={14} color="#22C55E" strokeWidth={2.5} />
-                  <Text style={[styles.chipStatusText, { color: '#22C55E' }]}>Completado</Text>
-                </>
-              ) : (
-                <Text style={styles.chipStatusText}>En curso</Text>
-              )}
-            </Pressable>
-
-            {/* Prioridad clickeable */}
-            <Pressable
-              style={[styles.chip, canEdit && styles.chipPressable]}
-              onPress={() => {
-                if (canEdit) {
-                  setSheetMode('priority');
-                  setSheetVisible(true);
-                }
-              }}
-            >
-              <Flag
-                size={14}
-                color={
-                  album.priority === 'high' || album.priority === 'urgent'
-                    ? '#EF4444'
-                    : album.priority === 'low'
-                    ? '#10B981'
-                    : '#D4B13A'
-                }
-                strokeWidth={2}
-              />
-              <Text
-                style={[
-                  styles.chipText,
-                  {
-                    color:
-                      album.priority === 'high' || album.priority === 'urgent'
-                        ? '#EF4444'
-                        : album.priority === 'low'
-                        ? '#10B981'
-                        : '#D4B13A',
-                    fontWeight: '600',
-                  },
-                ]}
-              >
-                {album.priority === 'high' || album.priority === 'urgent'
-                  ? 'Alta'
-                  : album.priority === 'low'
-                  ? 'Baja'
-                  : 'Media'}
-              </Text>
-            </Pressable>
-
-            {/* Visibilidad clickeable para cambiar al instante */}
-            <Pressable
-              style={[styles.chip, canEdit && styles.chipPressable]}
-              onPress={() => {
-                if (canEdit) {
-                  setSheetMode('visibility');
-                  setSheetVisible(true);
-                }
-              }}
-            >
-              {album.visibility === 'public' ? (
-                <>
-                  <Globe size={15} color="#F3EEE3" strokeWidth={1.8} />
-                  <Text style={styles.chipText}>Público</Text>
-                </>
-              ) : album.visibility === 'followers' ? (
-                <>
-                  <Users size={15} color="#F3EEE3" strokeWidth={1.8} />
-                  <Text style={styles.chipText}>Solo amigos</Text>
-                </>
-              ) : (
-                <>
-                  <Lock size={15} color="#F3EEE3" strokeWidth={1.8} />
-                  <Text style={styles.chipText}>Privado</Text>
-                </>
-              )}
-            </Pressable>
-
-            {/* Compartido clickeable para gestionar colaboradores */}
-            {isShared && (
+          <View style={styles.chipsContainer}>
+            <View style={styles.chipsRow}>
+              {/* Estado clickeable */}
               <Pressable
-                style={[styles.chip, styles.chipShared, canEdit && styles.chipPressable]}
+                style={[
+                  styles.chip,
+                  styles.chipStatus,
+                  isAlbumClosed && { borderColor: '#D4B13A', backgroundColor: '#2C2512' },
+                  !isAlbumClosed && areAllCompleted && { borderColor: '#22C55E', backgroundColor: 'rgba(34,197,94,0.14)' },
+                  canEdit && styles.chipPressable,
+                ]}
                 onPress={() => {
-                  if (canEdit) setShowCollaboratorPicker(true);
+                  if (canEdit) {
+                    setSheetMode('status');
+                    setSheetVisible(true);
+                  }
                 }}
               >
-                <Users size={15} color="#D4B13A" strokeWidth={1.8} />
-                <Text style={styles.chipSharedText}>Compartido</Text>
+                {isAlbumClosed ? (
+                  <>
+                    <Lock size={14} color="#D4B13A" strokeWidth={2} />
+                    <Text style={[styles.chipStatusText, { color: '#D4B13A' }]}>Cerrado</Text>
+                  </>
+                ) : areAllCompleted ? (
+                  <>
+                    <Check size={14} color="#22C55E" strokeWidth={2.5} />
+                    <Text style={[styles.chipStatusText, { color: '#22C55E' }]}>Completado</Text>
+                  </>
+                ) : (
+                  <Text style={styles.chipStatusText}>En curso</Text>
+                )}
               </Pressable>
-            )}
+
+              {/* Visibilidad clickeable para cambiar al instante */}
+              <Pressable
+                style={[styles.chip, canEdit && styles.chipPressable]}
+                onPress={() => {
+                  if (canEdit) {
+                    setSheetMode('visibility');
+                    setSheetVisible(true);
+                  }
+                }}
+              >
+                {album.visibility === 'public' ? (
+                  <>
+                    <Globe size={15} color="#F3EEE3" strokeWidth={1.8} />
+                    <Text style={styles.chipText}>Público</Text>
+                  </>
+                ) : album.visibility === 'followers' ? (
+                  <>
+                    <Users size={15} color="#F3EEE3" strokeWidth={1.8} />
+                    <Text style={styles.chipText}>Solo amigos</Text>
+                  </>
+                ) : (
+                  <>
+                    <Lock size={15} color="#F3EEE3" strokeWidth={1.8} />
+                    <Text style={styles.chipText}>Privado</Text>
+                  </>
+                )}
+              </Pressable>
+            </View>
+
+            {/* Fila de abajo: Prioridad clickeable */}
+            <View style={styles.chipsRowSecond}>
+              <Pressable
+                style={[styles.chip, canEdit && styles.chipPressable]}
+                onPress={() => {
+                  if (canEdit) {
+                    setSheetMode('priority');
+                    setSheetVisible(true);
+                  }
+                }}
+              >
+                <Flag
+                  size={14}
+                  color={
+                    album.priority === 'high' || album.priority === 'urgent'
+                      ? '#EF4444'
+                      : album.priority === 'low'
+                      ? '#10B981'
+                      : '#D4B13A'
+                  }
+                  strokeWidth={2}
+                />
+                <Text
+                  style={[
+                    styles.chipText,
+                    {
+                      color:
+                        album.priority === 'high' || album.priority === 'urgent'
+                          ? '#EF4444'
+                          : album.priority === 'low'
+                          ? '#10B981'
+                          : '#D4B13A',
+                      fontWeight: '600',
+                    },
+                  ]}
+                >
+                  Prioridad:{' '}
+                  {album.priority === 'high' || album.priority === 'urgent'
+                    ? 'Alta'
+                    : album.priority === 'low'
+                    ? 'Baja'
+                    : 'Media'}
+                </Text>
+              </Pressable>
+            </View>
           </View>
         )}
 
@@ -1224,6 +1209,25 @@ export default function AlbumDetailScreen() {
                   {canEdit && (
                     <Pressable
                       style={styles.sheetOption}
+                      onPress={() => {
+                        closeSheet(() => void pickAndUploadCover());
+                      }}
+                    >
+                      <View style={styles.sheetIconBox}>
+                        <Camera color="#D4B13A" size={20} />
+                      </View>
+                      <View style={styles.sheetOptionTexts}>
+                        <Text style={styles.sheetOptionTitle}>Cambiar portada</Text>
+                        <Text style={styles.sheetOptionSubtitle}>
+                          Elige una foto de tu galería
+                        </Text>
+                      </View>
+                    </Pressable>
+                  )}
+
+                  {canEdit && (
+                    <Pressable
+                      style={styles.sheetOption}
                       onPress={() => setSheetMode('priority')}
                     >
                       <View style={styles.sheetIconBox}>
@@ -1525,22 +1529,44 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   hero: {
-    height: 200,
+    height: 270,
     width: '100%',
   },
-  heroBtn: {
+  navOverlay: {
     position: 'absolute',
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(13,13,13,0.45)',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    zIndex: 10,
+  },
+  heroBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(13,13,13,0.55)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  chipsRow: {
-    flexDirection: 'row',
+  chipsContainer: {
     marginTop: 14,
     paddingHorizontal: 20,
+    gap: 8,
+  },
+  chipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+  },
+  chipsRowSecond: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
     gap: 8,
   },
   chip: {

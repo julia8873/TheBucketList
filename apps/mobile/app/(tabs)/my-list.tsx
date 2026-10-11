@@ -11,7 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { useBuckets, useDeleteBucket, useUpdateBucket } from '../../src/hooks/useBuckets';
 import { useAlbums } from '../../src/hooks/useAlbums';
-import { useUserFavorites } from '../../src/hooks/useFavorites';
+import { useUserFavorites, useToggleFavoriteAlbum } from '../../src/hooks/useFavorites';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../src/services/supabase';
@@ -99,6 +99,7 @@ export default function MyListScreen() {
 
   const { data: buckets, isLoading } = useBuckets(user?.id);
   const { isBucketFavorite, isAlbumFavorite, bucketIds: favBucketIds } = useUserFavorites(user?.id);
+  const toggleFavoriteAlbum = useToggleFavoriteAlbum();
   const { data: allTags } = useTags();
   const { data: tagUsage } = useTagUsage();
   const deleteBucket = useDeleteBucket();
@@ -919,6 +920,12 @@ export default function MyListScreen() {
                                 coverUri={item.cover_path}
                                 isShared={item.is_shared}
                                 isFavorite={isAlbumFavorite(item.id)}
+                                onToggleFavorite={() =>
+                                  toggleFavoriteAlbum.mutate({
+                                    albumId: item.id,
+                                    currentlyFavorite: isAlbumFavorite(item.id),
+                                  })
+                                }
                                 priority={item.priority}
                                 isClosed={item.is_closed}
                                 colorIndex={idx}
@@ -956,6 +963,12 @@ export default function MyListScreen() {
                       coverUri={item.cover_path}
                       isShared={item.is_shared}
                       isFavorite={isAlbumFavorite(item.id)}
+                      onToggleFavorite={() =>
+                        toggleFavoriteAlbum.mutate({
+                          albumId: item.id,
+                          currentlyFavorite: isAlbumFavorite(item.id),
+                        })
+                      }
                       priority={item.priority}
                       isClosed={item.is_closed}
                       colorIndex={index}

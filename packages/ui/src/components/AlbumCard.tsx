@@ -22,7 +22,7 @@ import { gold, dark, green } from '../tokens/colors';
 import { radii } from '../tokens/radii';
 
 const CARD_WIDTH = (Dimensions.get('window').width - 20 * 2 - 12) / 2;
-const CARD_HEIGHT = CARD_WIDTH * 1.18;
+const CARD_HEIGHT = CARD_WIDTH * 1.45;
 
 // ── Gradient cover colours used when no image ──────────────────────────────
 const COVER_GRADIENTS: Array<[string, string]> = [
@@ -39,6 +39,7 @@ interface AlbumCardProps {
   coverUri?: string | null;
   isShared?: boolean;
   isFavorite?: boolean;
+  onToggleFavorite?: () => void;
   priority?: 'low' | 'medium' | 'high' | 'urgent';
   isClosed?: boolean;
   colorIndex?: number;  // to pick a gradient when no cover
@@ -53,6 +54,7 @@ export function AlbumCard({
   coverUri,
   isShared = false,
   isFavorite = false,
+  onToggleFavorite,
   priority,
   isClosed = false,
   colorIndex = 0,
@@ -139,12 +141,29 @@ export function AlbumCard({
         ) : null}
       </View>
 
-      {/* Favorite badge */}
-      {isFavorite && (
+      {/* Favorite badge / button */}
+      {onToggleFavorite ? (
+        <Pressable
+          hitSlop={10}
+          onPress={(e) => {
+            e.stopPropagation();
+            onToggleFavorite();
+          }}
+          style={styles.favoriteBadge}
+          accessibilityRole="button"
+          accessibilityLabel={isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
+        >
+          <Star
+            size={14}
+            color={isFavorite ? gold[400] : 'rgba(255,255,255,0.7)'}
+            fill={isFavorite ? gold[400] : 'transparent'}
+          />
+        </Pressable>
+      ) : isFavorite ? (
         <View style={styles.favoriteBadge}>
           <Star size={14} color={gold[400]} fill={gold[400]} />
         </View>
-      )}
+      ) : null}
 
       {/* Bottom content */}
       <View style={styles.bottom}>
@@ -302,6 +321,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 3,
   },
   bottom: {
     position: 'absolute',
