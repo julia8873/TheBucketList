@@ -21,22 +21,51 @@ export function useAlbums(userId?: string) {
     queryFn: async (): Promise<AlbumWithProgress[]> => {
       if (!userId) return [];
 
-      const { data: albumsData, error } = await supabase
+      // 1. Albums owned by user
+      const { data: ownAlbums, error: ownErr } = await supabase
         .from('albums')
         .select('*')
         .eq('owner_id', userId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      
-      if (!albumsData || albumsData.length === 0) return [];
+      if (ownErr) throw ownErr;
+
+      // 2. Shared albums where user is an accepted member
+      let sharedAlbums: any[] = [];
+      try {
+        const { data: memberRows } = await supabase
+          .from('album_members')
+          .select('album_id')
+          .eq('user_id', userId)
+          .eq('status', 'accepted');
+
+        const sharedAlbumIds = (memberRows ?? []).map((m: any) => m.album_id);
+        if (sharedAlbumIds.length > 0) {
+          const { data: memberAlbums } = await supabase
+            .from('albums')
+            .select('*')
+            .in('id', sharedAlbumIds)
+            .order('created_at', { ascending: false });
+          sharedAlbums = memberAlbums ?? [];
+        }
+      } catch {
+        // Ignored
+      }
+
+      const ownIds = new Set((ownAlbums ?? []).map((a: any) => a.id));
+      const allAlbums = [
+        ...(ownAlbums ?? []),
+        ...sharedAlbums.filter((a: any) => !ownIds.has(a.id)),
+      ];
+
+      if (allAlbums.length === 0) return [];
 
       const { data: progressData } = await supabase
         .from('album_progress')
         .select('*')
-        .in('album_id', albumsData.map(a => a.id));
+        .in('album_id', allAlbums.map(a => a.id));
 
-      return albumsData.map(album => {
+      return allAlbums.map(album => {
         const prog = progressData?.find(p => p.album_id === album.id);
 
         return {
@@ -83,6 +112,28 @@ export function useCreateAlbum() {
   });
 }
 
+export function useUpdateAlbum() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { title?: string; description?: string; visibility?: string; cover_path?: string; is_shared?: boolean } }) => {
+      const { data: updatedAlbum, error } = await supabase
+        .from('albums')
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return updatedAlbum;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ALBUMS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ['album', variables.id] });
+    },
+  });
+}
+
 export function useDeleteAlbum() {
   const queryClient = useQueryClient();
 
@@ -101,4 +152,5 @@ export function useDeleteAlbum() {
     },
   });
 }
+
 

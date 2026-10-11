@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,13 +9,17 @@ import {
   Platform,
   KeyboardAvoidingView,
   Image,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, Users, Plus, Folder, ChevronRight, Image as ImageIcon, Palette } from 'lucide-react-native';
+import { ChevronLeft, Users, Plus, Globe, Lock, Check, X, Image as ImageIcon, Palette } from 'lucide-react-native';
 import { useTheme } from '@bucketlist/ui';
-import { useCreateAlbum } from '../../src/hooks/useAlbums';
+import { useCreateAlbum, useUpdateAlbum } from '../../src/hooks/useAlbums';
+import { supabase } from '../../src/services/supabase';
+import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
 import * as ImagePicker from 'expo-image-picker';
 
 type Cover = {
@@ -44,15 +48,94 @@ const SOLID_COVERS: Cover[] = [
 
 export default function CreateAlbumScreen() {
   const router = useRouter();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const isEditing = Boolean(id && id !== 'unassigned');
+
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [selectedCover, setSelectedCover] = useState(COVERS[1]!); // Atardecer
+  const [selectedCover, setSelectedCover] = useState<Cover>(COVERS[1]!); // Atardecer
+  const [visibility, setVisibility] = useState<'public' | 'followers' | 'private'>('private');
   const [isShared, setIsShared] = useState(false);
+  const [selectedCollaborators, setSelectedCollaborators] = useState<CollaboratorItem[]>([]);
+  const [initialCollaboratorIds, setInitialCollaboratorIds] = useState<string[]>([]);
+  const [showCollaboratorPicker, setShowCollaboratorPicker] = useState(false);
+  const [loadingInitial, setLoadingInitial] = useState(isEditing);
 
   const createAlbum = useCreateAlbum();
+  const updateAlbum = useUpdateAlbum();
+
+  // Load existing album data if in edit mode
+  useEffect(() => {
+    if (!isEditing || !id) return;
+
+    let isMounted = true;
+    async function loadAlbumData() {
+      try {
+        const { data: album, error } = await supabase
+          .from('albums')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error || !album) {
+          Alert.alert('Error', 'No se pudo cargar la información del álbum');
+          return;
+        }
+
+        if (!isMounted) return;
+        setName(album.title || '');
+        setDescription(album.description || '');
+        setVisibility((album.visibility as any) || 'private');
+        setIsShared(Boolean(album.is_shared));
+
+        if (album.cover_path) {
+          try {
+            const parsed = JSON.parse(album.cover_path);
+            const foundCover =
+              COVERS.find((c) => c.id === parsed.id) ||
+              SOLID_COVERS.find((c) => c.id === parsed.id) ||
+              parsed;
+            setSelectedCover(foundCover);
+          } catch {
+            // Ignored
+          }
+        }
+
+        // Load existing members
+        const { data: members } = await supabase
+          .from('album_members')
+          .select('user_id, status, profiles:user_id(id, username, display_name, avatar_url)')
+          .eq('album_id', id);
+
+        if (members && isMounted) {
+          const collabs: CollaboratorItem[] = members.map((m: any) => {
+            const p = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
+            return {
+              id: m.user_id,
+              username: p?.username || '',
+              display_name: p?.display_name || null,
+              avatar_url: p?.avatar_url || null,
+            };
+          });
+          setSelectedCollaborators(collabs);
+          setInitialCollaboratorIds(collabs.map((c) => c.id));
+        }
+      } catch (err) {
+        console.error('Error loading album for edit:', err);
+      } finally {
+        if (isMounted) setLoadingInitial(false);
+      }
+    }
+
+    void loadAlbumData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, isEditing]);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -63,31 +146,88 @@ export default function CreateAlbumScreen() {
     });
 
     if (!result.canceled && result.assets && result.assets[0]) {
-      setSelectedCover({ 
-        id: 'custom-img', 
-        type: 'image', 
-        uri: result.assets[0].uri 
+      setSelectedCover({
+        id: 'custom-img',
+        type: 'image',
+        uri: result.assets[0].uri,
       });
     }
   };
 
-  const handleCreate = () => {
+  const handleSave = async () => {
     if (!name.trim()) return;
-    
-    createAlbum.mutate(
-      {
-        title: name,
-        description: description,
-        visibility: isShared ? 'followers' : 'private',
-        cover_path: JSON.stringify(selectedCover),
-        is_shared: isShared,
-      },
-      {
-        onSuccess: () => {
-          router.back();
-        },
+
+    try {
+      if (isEditing && id) {
+        await updateAlbum.mutateAsync({
+          id,
+          data: {
+            title: name.trim(),
+            description: description.trim(),
+            visibility,
+            cover_path: JSON.stringify(selectedCover),
+            is_shared: isShared,
+          },
+        });
+
+        // Sync members
+        if (isShared) {
+          const currentSet = new Set(initialCollaboratorIds);
+          const newSet = new Set(selectedCollaborators.map((c) => c.id));
+
+          const toAdd = selectedCollaborators.filter((c) => !currentSet.has(c.id));
+          const toRemove = initialCollaboratorIds.filter((uid) => !newSet.has(uid));
+
+          if (toAdd.length > 0) {
+            await supabase.from('album_members').insert(
+              toAdd.map((c) => ({
+                album_id: id,
+                user_id: c.id,
+                role: 'member',
+                status: 'pending',
+              }))
+            );
+          }
+
+          if (toRemove.length > 0) {
+            await supabase
+              .from('album_members')
+              .delete()
+              .eq('album_id', id)
+              .in('user_id', toRemove);
+          }
+        } else {
+          // If toggled off shared, remove members
+          await supabase.from('album_members').delete().eq('album_id', id);
+        }
+
+        router.back();
+      } else {
+        const newAlbum = await createAlbum.mutateAsync({
+          title: name.trim(),
+          description: description.trim(),
+          visibility,
+          cover_path: JSON.stringify(selectedCover),
+          is_shared: isShared,
+        });
+
+        if (isShared && selectedCollaborators.length > 0 && newAlbum?.id) {
+          await supabase.from('album_members').insert(
+            selectedCollaborators.map((c) => ({
+              album_id: newAlbum.id,
+              user_id: c.id,
+              role: 'member',
+              status: 'pending',
+            }))
+          );
+        }
+
+        router.back();
       }
-    );
+    } catch (err: any) {
+      console.error('Error saving album:', err);
+      Alert.alert('Error', err?.message || 'No se pudo guardar el álbum.');
+    }
   };
 
   const SectionTitle = ({ highlight, rest }: { highlight: string; rest: string }) => (
@@ -97,19 +237,29 @@ export default function CreateAlbumScreen() {
     </View>
   );
 
+  const isSaving = createAlbum.isPending || updateAlbum.isPending;
+
+  if (loadingInitial) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#D4B13A" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
           {/* Cabecera */}
           <View style={[styles.header, { paddingTop: Math.max(insets.top, 52) }]}>
             <Pressable style={styles.backBtn} onPress={() => router.back()}>
               <ChevronLeft color="#F3EEE3" size={22} strokeWidth={2} />
             </Pressable>
-            <Text style={styles.headerTitle}>Nuevo álbum</Text>
+            <Text style={styles.headerTitle}>{isEditing ? 'Editar álbum' : 'Nuevo álbum'}</Text>
           </View>
 
           {/* Vista previa en vivo */}
@@ -129,20 +279,33 @@ export default function CreateAlbumScreen() {
               style={StyleSheet.absoluteFill}
             />
 
-            {isShared && (
-              <View style={styles.previewSharedBadge}>
-                <Text style={styles.previewSharedText}>Compartido</Text>
+            <View style={styles.previewBadgesRow}>
+              {isShared && (
+                <View style={styles.previewSharedBadge}>
+                  <Text style={styles.previewSharedText}>Compartido</Text>
+                </View>
+              )}
+              <View style={styles.previewVisibilityBadge}>
+                <Text style={styles.previewVisibilityText}>
+                  {visibility === 'public'
+                    ? 'Público'
+                    : visibility === 'followers'
+                    ? 'Solo amigos'
+                    : 'Privado'}
+                </Text>
               </View>
-            )}
+            </View>
 
             <View style={styles.previewBottom}>
               <Text style={styles.previewTitle} numberOfLines={1}>
                 {name.trim() ? name : 'Nuevo álbum'}
               </Text>
-              <Text style={styles.previewSubtitle}>0 tareas · 0 hechas</Text>
-              <View style={styles.progressBarTrack}>
-                {/* 0% fill so nothing inside */}
-              </View>
+              <Text style={styles.previewSubtitle}>
+                {isShared && selectedCollaborators.length > 0
+                  ? `${selectedCollaborators.length} colaborador${selectedCollaborators.length > 1 ? 'es' : ''}`
+                  : '0 tareas · 0 hechas'}
+              </Text>
+              <View style={styles.progressBarTrack} />
             </View>
           </View>
 
@@ -160,7 +323,7 @@ export default function CreateAlbumScreen() {
           </View>
 
           {/* Sección Descripción */}
-          <View style={[styles.section, { marginBottom: 12 }]}>
+          <View style={[styles.section, { marginBottom: 4 }]}>
             <SectionTitle highlight="DESCRIPCIÓN" rest=" DEL ÁLBUM" />
             <TextInput
               style={[
@@ -171,8 +334,8 @@ export default function CreateAlbumScreen() {
                   fontSize: 16,
                   fontFamily: 'Inter_400Regular',
                   paddingTop: 16,
-                  paddingBottom: 16
-                }
+                  paddingBottom: 16,
+                },
               ]}
               value={description}
               onChangeText={setDescription}
@@ -183,6 +346,72 @@ export default function CreateAlbumScreen() {
             />
           </View>
 
+          {/* Sección Visibilidad */}
+          <View style={styles.section}>
+            <SectionTitle highlight="VISIBILIDAD" rest=" DEL ÁLBUM" />
+            <View style={styles.visibilityContainer}>
+              {/* Opción 1: Público */}
+              <Pressable
+                style={[
+                  styles.visibilityOption,
+                  visibility === 'public' && styles.visibilityOptionActive,
+                ]}
+                onPress={() => setVisibility('public')}
+              >
+                <View style={[styles.visibilityIconBox, visibility === 'public' && styles.visibilityIconBoxActive]}>
+                  <Globe color={visibility === 'public' ? '#D4B13A' : '#8F8F8F'} size={20} strokeWidth={2} />
+                </View>
+                <View style={styles.visibilityTexts}>
+                  <Text style={[styles.visibilityTitle, visibility === 'public' && styles.visibilityTitleActive]}>
+                    Público
+                  </Text>
+                  <Text style={styles.visibilitySubtitle}>Visible para toda la comunidad</Text>
+                </View>
+                {visibility === 'public' && <Check color="#D4B13A" size={18} strokeWidth={2.5} />}
+              </Pressable>
+
+              {/* Opción 2: Solo amigos */}
+              <Pressable
+                style={[
+                  styles.visibilityOption,
+                  visibility === 'followers' && styles.visibilityOptionActive,
+                ]}
+                onPress={() => setVisibility('followers')}
+              >
+                <View style={[styles.visibilityIconBox, visibility === 'followers' && styles.visibilityIconBoxActive]}>
+                  <Users color={visibility === 'followers' ? '#D4B13A' : '#8F8F8F'} size={20} strokeWidth={2} />
+                </View>
+                <View style={styles.visibilityTexts}>
+                  <Text style={[styles.visibilityTitle, visibility === 'followers' && styles.visibilityTitleActive]}>
+                    Solo amigos
+                  </Text>
+                  <Text style={styles.visibilitySubtitle}>Visible solo para tus seguidores</Text>
+                </View>
+                {visibility === 'followers' && <Check color="#D4B13A" size={18} strokeWidth={2.5} />}
+              </Pressable>
+
+              {/* Opción 3: Privado */}
+              <Pressable
+                style={[
+                  styles.visibilityOption,
+                  visibility === 'private' && styles.visibilityOptionActive,
+                ]}
+                onPress={() => setVisibility('private')}
+              >
+                <View style={[styles.visibilityIconBox, visibility === 'private' && styles.visibilityIconBoxActive]}>
+                  <Lock color={visibility === 'private' ? '#D4B13A' : '#8F8F8F'} size={20} strokeWidth={2} />
+                </View>
+                <View style={styles.visibilityTexts}>
+                  <Text style={[styles.visibilityTitle, visibility === 'private' && styles.visibilityTitleActive]}>
+                    Privado
+                  </Text>
+                  <Text style={styles.visibilitySubtitle}>Solo tú y los colaboradores que invites</Text>
+                </View>
+                {visibility === 'private' && <Check color="#D4B13A" size={18} strokeWidth={2.5} />}
+              </Pressable>
+            </View>
+          </View>
+
           {/* Sección Portada */}
           <View style={styles.section}>
             <SectionTitle highlight="TU" rest=" PORTADA" />
@@ -191,7 +420,7 @@ export default function CreateAlbumScreen() {
                 style={[
                   styles.coverOption,
                   selectedCover.type === 'image' && styles.coverOptionSelected,
-                  { justifyContent: 'center', alignItems: 'center', backgroundColor: '#151515' }
+                  { justifyContent: 'center', alignItems: 'center', backgroundColor: '#151515' },
                 ]}
                 onPress={pickImage}
               >
@@ -202,10 +431,7 @@ export default function CreateAlbumScreen() {
                 return (
                   <Pressable
                     key={cover.id}
-                    style={[
-                      styles.coverOption,
-                      isSelected && styles.coverOptionSelected
-                    ]}
+                    style={[styles.coverOption, isSelected && styles.coverOptionSelected]}
                     onPress={() => setSelectedCover(cover)}
                   >
                     <LinearGradient
@@ -224,7 +450,7 @@ export default function CreateAlbumScreen() {
                 style={[
                   styles.coverOption,
                   selectedCover.id === 'custom-color' && styles.coverOptionSelected,
-                  { justifyContent: 'center', alignItems: 'center', backgroundColor: '#151515' }
+                  { justifyContent: 'center', alignItems: 'center', backgroundColor: '#151515' },
                 ]}
                 onPress={() => setSelectedCover({ id: 'custom-color', type: 'solid', colors: ['#D4B13A', '#D4B13A'] })}
               >
@@ -238,7 +464,7 @@ export default function CreateAlbumScreen() {
                     style={[
                       styles.coverOption,
                       isSelected && styles.coverOptionSelected,
-                      { backgroundColor: cover.colors![0] }
+                      { backgroundColor: cover.colors![0] },
                     ]}
                     onPress={() => setSelectedCover(cover)}
                   />
@@ -247,15 +473,15 @@ export default function CreateAlbumScreen() {
             </ScrollView>
           </View>
 
-          {/* Sección Compartir */}
+          {/* Sección Compartir / Colaboradores */}
           <View style={styles.section}>
-            <SectionTitle highlight="COMPARTIR" rest=" CON AMIGOS" />
+            <SectionTitle highlight="COLABORADORES" rest=" DEL ÁLBUM" />
             <View style={styles.card}>
               <View style={[styles.cardRow, isShared && styles.cardRowBorder]}>
                 <Users color="#D4B13A" size={22} strokeWidth={2} />
                 <View style={styles.cardTexts}>
                   <Text style={styles.cardTitle}>Álbum compartido</Text>
-                  <Text style={styles.cardSubtitle}>Completad las tareas juntos</Text>
+                  <Text style={styles.cardSubtitle}>Comparte las tareas y completadlas juntos</Text>
                 </View>
                 <Pressable
                   style={[styles.switchTrack, isShared && styles.switchTrackActive]}
@@ -266,50 +492,69 @@ export default function CreateAlbumScreen() {
               </View>
 
               {isShared && (
-                <View style={[styles.cardRow, { gap: 10 }]}>
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>MR</Text>
-                  </View>
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>DL</Text>
-                  </View>
-                  <Pressable style={styles.avatarAdd}>
-                    <Plus color="#D4B13A" size={20} strokeWidth={2} />
+                <View style={styles.collaboratorsContainer}>
+                  <Pressable
+                    style={styles.addCollabRow}
+                    onPress={() => setShowCollaboratorPicker(true)}
+                  >
+                    <View style={styles.addCollabIconCircle}>
+                      <Text style={{ fontSize: 16 }}>👤</Text>
+                      <Text style={{ fontSize: 15, color: '#D4B13A', fontWeight: '800', marginLeft: 1 }}>+</Text>
+                    </View>
+                    <Text style={styles.addCollabText}>
+                      {selectedCollaborators.length === 0
+                        ? 'Añadir colaboradores al álbum...'
+                        : `${selectedCollaborators.length} colaborador${selectedCollaborators.length > 1 ? 'es' : ''} seleccionado${selectedCollaborators.length > 1 ? 's' : ''}`}
+                    </Text>
+                    <Plus color="#D4B13A" size={18} strokeWidth={2.5} />
                   </Pressable>
-                  <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                    <Text style={styles.guestsText}>2 invitados</Text>
-                  </View>
+
+                  {selectedCollaborators.length > 0 && (
+                    <View style={styles.collaboratorChips}>
+                      {selectedCollaborators.map((c) => (
+                        <Pressable
+                          key={c.id}
+                          style={styles.collaboratorChip}
+                          onPress={() =>
+                            setSelectedCollaborators((prev) => prev.filter((x) => x.id !== c.id))
+                          }
+                        >
+                          <Text style={styles.collaboratorChipText}>
+                            {c.display_name || `@${c.username}`}
+                          </Text>
+                          <X color="#D4B13A" size={14} />
+                        </Pressable>
+                      ))}
+                    </View>
+                  )}
                 </View>
               )}
             </View>
           </View>
-
-          {/* Sección Añadir tareas sueltas */}
-          <View style={styles.section}>
-            <Pressable style={styles.card}>
-              <View style={styles.cardRow}>
-                <Folder color="#D4B13A" size={22} strokeWidth={2} />
-                <View style={styles.cardTexts}>
-                  <Text style={styles.cardTitle}>Añadir tareas sueltas</Text>
-                  <Text style={styles.cardSubtitle}>12 disponibles en Sin álbum</Text>
-                </View>
-                <ChevronRight color="#8F8F8F" size={18} strokeWidth={2} />
-              </View>
-            </Pressable>
-          </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
+      <CollaboratorPickerSheet
+        visible={showCollaboratorPicker}
+        selected={selectedCollaborators}
+        onChange={setSelectedCollaborators}
+        onClose={() => setShowCollaboratorPicker(false)}
+      />
+
       {/* Barra inferior fija */}
-      <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 30) }]}>
+      <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 24) }]}>
         <Pressable
-          style={[styles.createBtn, (!name.trim() || createAlbum.isPending) && styles.createBtnDisabled]}
-          disabled={!name.trim() || createAlbum.isPending}
-          onPress={handleCreate}
+          style={[styles.createBtn, (!name.trim() || isSaving) && styles.createBtnDisabled]}
+          disabled={!name.trim() || isSaving}
+          onPress={handleSave}
         >
-          <Text style={styles.createBtnText}>
-            {createAlbum.isPending ? 'Creando...' : 'Crear álbum'}
-          </Text>
+          {isSaving ? (
+            <ActivityIndicator color="#0D0D0D" />
+          ) : (
+            <Text style={styles.createBtnText}>
+              {isEditing ? 'Guardar cambios' : 'Crear álbum'}
+            </Text>
+          )}
         </Pressable>
       </View>
     </View>
@@ -346,19 +591,24 @@ const styles = StyleSheet.create({
   previewContainer: {
     marginTop: 20,
     marginHorizontal: 20,
-    height: 176,
+    height: 180,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#262626',
     overflow: 'hidden',
   },
-  previewSharedBadge: {
+  previewBadgesRow: {
     position: 'absolute',
     top: 14,
     left: 14,
-    height: 32,
-    paddingHorizontal: 14,
-    backgroundColor: 'rgba(13, 13, 13, 0.72)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  previewSharedBadge: {
+    height: 30,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(13, 13, 13, 0.76)',
     borderWidth: 1,
     borderColor: '#6B5A22',
     borderRadius: 999,
@@ -367,8 +617,23 @@ const styles = StyleSheet.create({
   },
   previewSharedText: {
     fontFamily: 'Inter_600SemiBold',
-    fontSize: 14,
+    fontSize: 13,
     color: '#D4B13A',
+  },
+  previewVisibilityBadge: {
+    height: 30,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(13, 13, 13, 0.76)',
+    borderWidth: 1,
+    borderColor: '#333333',
+    borderRadius: 999,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  previewVisibilityText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 13,
+    color: '#E2DCCF',
   },
   previewBottom: {
     position: 'absolute',
@@ -415,12 +680,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     letterSpacing: 0.6,
   },
-  sectionSubtitle: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 14,
-    color: '#A0A0A0',
-    marginBottom: 10,
-  },
   input: {
     height: 64,
     borderRadius: 16,
@@ -431,6 +690,51 @@ const styles = StyleSheet.create({
     fontFamily: 'PlayfairDisplay_600SemiBold',
     fontSize: 20,
     color: '#F3EEE3',
+  },
+  visibilityContainer: {
+    gap: 10,
+  },
+  visibilityOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 16,
+    backgroundColor: '#151515',
+    borderWidth: 1,
+    borderColor: '#262626',
+  },
+  visibilityOptionActive: {
+    borderColor: '#D4B13A',
+    backgroundColor: 'rgba(212, 177, 58, 0.06)',
+  },
+  visibilityIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#1F1F1F',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  visibilityIconBoxActive: {
+    backgroundColor: 'rgba(212, 177, 58, 0.16)',
+  },
+  visibilityTexts: {
+    flex: 1,
+  },
+  visibilityTitle: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 16,
+    color: '#F3EEE3',
+    marginBottom: 2,
+  },
+  visibilityTitleActive: {
+    color: '#D4B13A',
+  },
+  visibilitySubtitle: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    color: '#8F8F8F',
   },
   coversRow: {
     flexDirection: 'row',
@@ -453,6 +757,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#262626',
     borderRadius: 16,
+    overflow: 'hidden',
   },
   cardRow: {
     flexDirection: 'row',
@@ -478,8 +783,8 @@ const styles = StyleSheet.create({
   },
   cardSubtitle: {
     fontFamily: 'Inter_400Regular',
-    fontSize: 14,
-    color: '#A0A0A0',
+    fontSize: 13,
+    color: '#8F8F8F',
   },
   switchTrack: {
     width: 48,
@@ -502,35 +807,51 @@ const styles = StyleSheet.create({
     backgroundColor: '#0D0D0D',
     transform: [{ translateX: 20 }],
   },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1.5,
-    borderColor: '#D4B13A',
-    backgroundColor: '#2C2512',
+  collaboratorsContainer: {
+    padding: 16,
+  },
+  addCollabRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 12,
+    backgroundColor: '#1A1A1A',
+    borderWidth: 1,
+    borderColor: '#2D2D2D',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
-  avatarText: {
-    fontFamily: 'Inter_700Bold',
-    fontSize: 15,
-    color: '#D4B13A',
-  },
-  avatarAdd: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1.5,
-    borderColor: '#6B5A22',
-    borderStyle: 'dashed',
+  addCollabIconCircle: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  guestsText: {
+  addCollabText: {
+    flex: 1,
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
-    color: '#A0A0A0',
+    color: '#BDB7AA',
+  },
+  collaboratorChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 12,
+  },
+  collaboratorChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(212, 177, 58, 0.12)',
+    borderWidth: 1,
+    borderColor: '#D4B13A',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  collaboratorChipText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 13,
+    color: '#D4B13A',
   },
   bottomBar: {
     backgroundColor: '#0D0D0D',
@@ -538,7 +859,6 @@ const styles = StyleSheet.create({
     borderTopColor: '#262626',
     paddingTop: 14,
     paddingHorizontal: 20,
-    paddingBottom: 30, // will be Math.max(insets.bottom, 30) inline
   },
   createBtn: {
     height: 56,
@@ -561,3 +881,4 @@ const styles = StyleSheet.create({
     color: '#0D0D0D',
   },
 });
+

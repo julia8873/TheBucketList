@@ -54,12 +54,53 @@ export const bucketApi = {
       // Si falla la query de colaboradores, simplemente no los incluimos
     }
 
-    // Merge, dedup by id (own takes precedence)
-    const ownIds = new Set((ownData ?? []).map((b: any) => b.id));
-    const merged = [
-      ...(ownData ?? []),
-      ...collabBuckets.filter((b: any) => !ownIds.has(b.id)),
-    ];
+    // 3. Tasks from shared albums where user is an accepted member
+    let albumTasks: any[] = [];
+    try {
+      const { data: memberAlbums } = await supabase
+        .from('album_members')
+        .select('album_id')
+        .eq('user_id', userId)
+        .eq('status', 'accepted');
+
+      const memberAlbumIds = (memberAlbums ?? []).map((m: any) => m.album_id);
+      if (memberAlbumIds.length > 0) {
+        const { data: albumItemData } = await supabase
+          .from('album_items')
+          .select('bucket_id')
+          .in('album_id', memberAlbumIds);
+
+        const albumBucketIds = (albumItemData ?? []).map((ai: any) => ai.bucket_id);
+        if (albumBucketIds.length > 0) {
+          const { data: sharedAlbumBuckets } = await supabase
+            .from('buckets')
+            .select(baseSelect)
+            .in('id', albumBucketIds)
+            .order('created_at', { ascending: false });
+          albumTasks = sharedAlbumBuckets ?? [];
+        }
+      }
+    } catch {
+      // Ignored
+    }
+
+    // Merge, dedup by id (own takes precedence, then direct collab, then album collab)
+    const existingIds = new Set((ownData ?? []).map((b: any) => b.id));
+    const merged = [...(ownData ?? [])];
+
+    for (const b of collabBuckets) {
+      if (!existingIds.has(b.id)) {
+        existingIds.add(b.id);
+        merged.push(b);
+      }
+    }
+
+    for (const b of albumTasks) {
+      if (!existingIds.has(b.id)) {
+        existingIds.add(b.id);
+        merged.push(b);
+      }
+    }
 
     return merged.map((b: any) => ({
       ...b,

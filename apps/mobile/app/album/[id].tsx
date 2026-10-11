@@ -1,10 +1,14 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator, Alert, Share, RefreshControl } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator, Alert, Share, RefreshControl, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, Share as ShareIcon, MoreHorizontal, Lock, Users, Plus, Check } from 'lucide-react-native';
+import { ChevronLeft, Share as ShareIcon, MoreHorizontal, Lock, Users, Plus, Check, Globe } from 'lucide-react-native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAlbumDetail, useDeleteAlbumDetail, TaskItem } from '../../src/services/api/albumsService';
+import { supabase } from '../../src/services/supabase';
+import { useAuthStore } from '../../src/stores/auth.store';
+import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
 
 const GRADIENTS = {
   aurora: ['#0E4B43', '#1F8560'],
@@ -14,13 +18,113 @@ const GRADIENTS = {
   dorado: ['#3A2F18', '#5E4E1F'],
 };
 
+function getInitials(name?: string | null): string {
+  if (!name) return '?';
+  const parts = name.trim().split(/[\s._-]+/).filter(Boolean);
+  const first = parts[0];
+  const second = parts[1];
+  if (first && second && first[0] && second[0]) {
+    return `${first[0]}${second[0]}`.toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+}
+
 export default function AlbumDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   
+  const [showCollaboratorPicker, setShowCollaboratorPicker] = useState(false);
+
   const { data: album, isLoading, isError, refetch, isRefetching } = useAlbumDetail(id || '1');
   const deleteMutation = useDeleteAlbumDetail();
+
+  const { data: albumCollaborators = [], refetch: refetchCollaborators } = useQuery({
+    queryKey: ['albumCollaborators', id],
+    queryFn: async () => {
+      if (!id || id === 'unassigned') return [];
+      const { data, error } = await supabase
+        .from('album_members')
+        .select('user_id, status, profiles:user_id(id, username, display_name, avatar_url)')
+        .eq('album_id', id);
+      if (error) {
+        console.warn('Error fetching album collaborators:', error);
+        return [];
+      }
+      return (data || []).map((row: any) => {
+        const p = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+        return {
+          id: row.user_id,
+          username: p?.username || '',
+          display_name: p?.display_name || null,
+          avatar_url: p?.avatar_url || null,
+          status: row.status,
+        };
+      });
+    },
+    enabled: !!id && id !== 'unassigned',
+  });
+
+  const handleCollaboratorsChange = async (newCollabs: CollaboratorItem[]) => {
+    try {
+      const currentIds = new Set(albumCollaborators.map((c: any) => c.id));
+      const newIds = new Set(newCollabs.map((c) => c.id));
+
+      const toAdd = newCollabs.filter((c) => !currentIds.has(c.id));
+      const toRemoveIds = albumCollaborators
+        .filter((c: any) => !newIds.has(c.id))
+        .map((c: any) => c.id);
+
+      // Optimistic update
+      const existingStatusMap = new Map<string, string>(
+        albumCollaborators.map((c: any) => [c.id, c.status])
+      );
+      queryClient.setQueryData(
+        ['albumCollaborators', id],
+        newCollabs.map((c) => ({
+          ...c,
+          status: existingStatusMap.get(c.id) || 'pending',
+        }))
+      );
+
+      if (toAdd.length > 0) {
+        const { error: insErr } = await supabase.from('album_members').insert(
+          toAdd.map((c) => ({
+            album_id: id,
+            user_id: c.id,
+            role: 'member',
+            status: 'pending',
+          }))
+        );
+        if (insErr) console.warn('Error adding album members:', insErr);
+      }
+
+      if (toRemoveIds.length > 0) {
+        const { error: delErr } = await supabase
+          .from('album_members')
+          .delete()
+          .eq('album_id', id)
+          .in('user_id', toRemoveIds);
+        if (delErr) console.warn('Error removing album members:', delErr);
+      }
+
+      if (newCollabs.length > 0 && !album?.isShared) {
+        await supabase.from('albums').update({ is_shared: true }).eq('id', id);
+        void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+        void queryClient.invalidateQueries({ queryKey: ['albums'] });
+      }
+
+      void refetchCollaborators();
+      void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+      void queryClient.invalidateQueries({ queryKey: ['albums'] });
+    } catch (err) {
+      console.warn('Error updating album collaborators:', err);
+      void refetchCollaborators();
+    }
+  };
+
 
   const handleShare = async () => {
     if (!album) return;
@@ -224,24 +328,111 @@ export default function AlbumDetailScreen() {
             <View style={[styles.chip, styles.chipStatus]}>
               <Text style={styles.chipStatusText}>{statusLabel}</Text>
             </View>
+
+            {/* Visibilidad */}
             <View style={styles.chip}>
-              {isShared ? (
+              {album.visibility === 'public' ? (
                 <>
-                  <Users size={16} color="#F3EEE3" strokeWidth={1.8} />
-                  <Text style={styles.chipText}>Compartido</Text>
+                  <Globe size={15} color="#F3EEE3" strokeWidth={1.8} />
+                  <Text style={styles.chipText}>Público</Text>
+                </>
+              ) : album.visibility === 'followers' ? (
+                <>
+                  <Users size={15} color="#F3EEE3" strokeWidth={1.8} />
+                  <Text style={styles.chipText}>Solo amigos</Text>
                 </>
               ) : (
                 <>
-                  <Lock size={16} color="#F3EEE3" strokeWidth={1.8} />
+                  <Lock size={15} color="#F3EEE3" strokeWidth={1.8} />
                   <Text style={styles.chipText}>Privado</Text>
                 </>
               )}
             </View>
+
+            {/* Compartido */}
+            {isShared && (
+              <View style={[styles.chip, styles.chipShared]}>
+                <Users size={15} color="#D4B13A" strokeWidth={1.8} />
+                <Text style={styles.chipSharedText}>Compartido</Text>
+              </View>
+            )}
           </View>
         )}
 
         {/* Title */}
         <Text style={styles.title}>{title}</Text>
+
+        {/* Description */}
+        {album.description ? (
+          <Text style={styles.albumDescription}>{album.description}</Text>
+        ) : null}
+
+        {/* Colaboradores del álbum */}
+        {id !== 'unassigned' && (() => {
+          const isOwner = album.ownerId === user?.id;
+          const visibleCollaborators = albumCollaborators.filter((c: any) => {
+            if (c.status === 'accepted') return true;
+            if (c.status === 'pending') return isOwner || c.id === user?.id;
+            return false;
+          });
+
+          if (visibleCollaborators.length === 0 && !isOwner) return null;
+
+          return (
+            <View style={styles.collaboratorsSection}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.collaboratorsRow}
+              >
+                {visibleCollaborators.map((c: any) => {
+                  const isPending = c.status === 'pending';
+                  return (
+                    <Pressable
+                      key={c.id}
+                      onPress={() => isOwner && setShowCollaboratorPicker(true)}
+                      style={[
+                        styles.collaboratorCircle,
+                        isPending && styles.collaboratorCirclePending,
+                      ]}
+                    >
+                      {c.avatar_url ? (
+                        <Image
+                          source={{ uri: c.avatar_url }}
+                          style={[styles.collaboratorAvatarImg, isPending && { opacity: 0.35 }]}
+                        />
+                      ) : (
+                        <Text style={[styles.collaboratorInitials, isPending && { opacity: 0.35 }]}>
+                          {getInitials(c.display_name || c.username)}
+                        </Text>
+                      )}
+                      {isPending && (
+                        <View style={styles.pendingCenterOverlay}>
+                          <Text style={styles.pendingCenterText}>Pendiente</Text>
+                        </View>
+                      )}
+                    </Pressable>
+                  );
+                })}
+
+                {isOwner && (
+                  <Pressable
+                    style={styles.addCollaboratorCircle}
+                    onPress={() => setShowCollaboratorPicker(true)}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel="Añadir colaborador al álbum"
+                  >
+                    <View style={styles.addCollabIconRow}>
+                      <Text style={styles.addCollabEmoji}>👤</Text>
+                      <Text style={styles.addCollabPlus}>+</Text>
+                    </View>
+                  </Pressable>
+                )}
+              </ScrollView>
+            </View>
+          );
+        })()}
 
         {/* Progress Card */}
         <View style={styles.progressCard}>
@@ -254,6 +445,7 @@ export default function AlbumDetailScreen() {
             <Text style={styles.progressSub}>{completedCount} de {total} tareas completadas</Text>
           </View>
         </View>
+
 
         {/* Pendientes */}
         {pendientes.length > 0 && (
@@ -303,6 +495,19 @@ export default function AlbumDetailScreen() {
           </Pressable>
         </View>
       )}
+
+      {/* Collaborator Picker Sheet */}
+      <CollaboratorPickerSheet
+        visible={showCollaboratorPicker}
+        selected={albumCollaborators.map((c: any) => ({
+          id: c.id,
+          username: c.username,
+          display_name: c.display_name,
+          avatar_url: c.avatar_url,
+        }))}
+        onChange={handleCollaboratorsChange}
+        onClose={() => setShowCollaboratorPicker(false)}
+      />
     </View>
   );
 }
@@ -359,12 +564,21 @@ const styles = StyleSheet.create({
     borderColor: '#D4B13A',
     backgroundColor: '#2C2512',
   },
+  chipShared: {
+    borderColor: '#6B5A22',
+    backgroundColor: 'rgba(212, 177, 58, 0.12)',
+  },
   chipText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
     color: '#F3EEE3',
   },
   chipStatusText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 14,
+    color: '#D4B13A',
+  },
+  chipSharedText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
     color: '#D4B13A',
@@ -377,6 +591,90 @@ const styles = StyleSheet.create({
     marginTop: 14,
     marginHorizontal: 20,
   },
+  albumDescription: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 15,
+    color: '#A0A0A0',
+    marginTop: 6,
+    marginHorizontal: 20,
+  },
+  collaboratorsSection: {
+    marginHorizontal: 20,
+    marginTop: 14,
+  },
+  collaboratorsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  collaboratorCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: '#D4B13A',
+    backgroundColor: '#181818',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  collaboratorCirclePending: {
+    borderColor: 'rgba(212, 177, 58, 0.45)',
+    borderStyle: 'dashed',
+    backgroundColor: '#141414',
+  },
+  pendingCenterOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.62)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+  },
+  pendingCenterText: {
+    fontSize: 6.5,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#D4B13A',
+    letterSpacing: 0.2,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+  },
+  collaboratorAvatarImg: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 25,
+  },
+  collaboratorInitials: {
+    color: '#D4B13A',
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  addCollaboratorCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 1.8,
+    borderColor: '#D4B13A',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(212, 177, 58, 0.04)',
+  },
+  addCollabIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addCollabEmoji: {
+    fontSize: 18,
+  },
+  addCollabPlus: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#D4B13A',
+    marginLeft: 1,
+  },
+
   progressCard: {
     marginTop: 18,
     marginHorizontal: 20,

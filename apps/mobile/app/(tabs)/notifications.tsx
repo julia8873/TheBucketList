@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ActivityIndicator, FlatList, Pressable, Text, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Typography, useTheme, spacing, Avatar, Button, Icon } from '@bucketlist/ui';
-import { Check, Heart, MessageCircle, UserPlus, CheckCircle, Bell, Users, X } from 'lucide-react-native';
+import { Check, Heart, MessageCircle, UserPlus, CheckCircle, Bell, Users, X, Folder } from 'lucide-react-native';
 import { useNotifications, useMarkAsRead, useMarkAllAsRead } from '../../src/hooks/useNotifications';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { supabase } from '../../src/services/supabase';
@@ -23,17 +23,40 @@ export default function NotificationsScreen() {
   const handleCollaborationResponse = async (notification: any, accept: boolean) => {
     setRespondingId(notification.id);
     try {
-      await supabase
-        .from('bucket_collaborators')
-        .update({ status: accept ? 'accepted' : 'declined' })
-        .eq('bucket_id', notification.bucket_id)
-        .eq('user_id', user!.id);
-      markAsRead.mutate(notification.id);
-      void queryClient.invalidateQueries({ queryKey: ['buckets'] });
-      void queryClient.invalidateQueries({ queryKey: ['bucketCollaborators', notification.bucket_id] });
-      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', notification.bucket_id] });
-      if (accept && notification.bucket_id) {
-        router.push(`/bucket/${notification.bucket_id}` as any);
+      if (notification.type === 'album_invite') {
+        if (accept) {
+          await supabase
+            .from('album_members')
+            .update({ status: 'accepted' })
+            .eq('album_id', notification.album_id)
+            .eq('user_id', user!.id);
+        } else {
+          await supabase
+            .from('album_members')
+            .delete()
+            .eq('album_id', notification.album_id)
+            .eq('user_id', user!.id);
+        }
+        markAsRead.mutate(notification.id);
+        void queryClient.invalidateQueries({ queryKey: ['albums'] });
+        void queryClient.invalidateQueries({ queryKey: ['album', notification.album_id] });
+        void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+        if (accept && notification.album_id) {
+          router.push(`/album/${notification.album_id}` as any);
+        }
+      } else {
+        await supabase
+          .from('bucket_collaborators')
+          .update({ status: accept ? 'accepted' : 'declined' })
+          .eq('bucket_id', notification.bucket_id)
+          .eq('user_id', user!.id);
+        markAsRead.mutate(notification.id);
+        void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+        void queryClient.invalidateQueries({ queryKey: ['bucketCollaborators', notification.bucket_id] });
+        void queryClient.invalidateQueries({ queryKey: ['bucketDetail', notification.bucket_id] });
+        if (accept && notification.bucket_id) {
+          router.push(`/bucket/${notification.bucket_id}` as any);
+        }
       }
     } catch (e: any) {
       Alert.alert('Error', e?.message ?? 'No se pudo responder');
@@ -52,6 +75,10 @@ export default function NotificationsScreen() {
       router.push(`/profile/${notification.actor_id}` as any);
     } else if (notification.type === 'follow_request') {
       router.push('/friends?tab=requests' as any);
+    } else if (notification.type === 'album_invite') {
+      if (notification.album_id) {
+        router.push(`/album/${notification.album_id}` as any);
+      }
     } else if (notification.type === 'reaction' || notification.type === 'comment' || notification.type === 'friend_completed' || notification.type === 'deadline') {
       if (notification.bucket_id) {
         router.push(`/bucket/${notification.bucket_id}` as any);
@@ -69,6 +96,7 @@ export default function NotificationsScreen() {
       case 'friend_completed': return <CheckCircle size={16} color={theme.colors.success} />;
       case 'deadline': return <Bell size={16} color={theme.colors.error} />;
       case 'collaboration_invite': return <Users size={16} color="#D4B13A" />;
+      case 'album_invite': return <Folder size={16} color="#D4B13A" />;
       default: return <Bell size={16} color={theme.colors.foregroundMuted} />;
     }
   };
@@ -85,6 +113,7 @@ export default function NotificationsScreen() {
       case 'friend_completed': return `¡${actorName} completó una tarea!`;
       case 'deadline': return `Una tarea tiene la fecha límite próxima.`;
       case 'collaboration_invite': return notification.content || `${actorName} te ha invitado a colaborar.`;
+      case 'album_invite': return notification.content || `${actorName} te ha invitado a colaborar en un álbum.`;
       default: return `Tienes una nueva notificación.`;
     }
   };
@@ -150,7 +179,7 @@ export default function NotificationsScreen() {
               <Typography variant="caption" color="textMuted">
                 {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
               </Typography>
-              {item.type === 'collaboration_invite' && !item.is_read && (
+              {(item.type === 'collaboration_invite' || item.type === 'album_invite') && !item.is_read && (
                 <View style={styles.inviteActions}>
                   <Pressable
                     style={[styles.inviteBtn, styles.inviteBtnAccept]}

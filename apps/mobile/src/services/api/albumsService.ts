@@ -17,8 +17,12 @@ export interface TaskItem {
 export interface AlbumDetail {
   id: string;
   title: string;
+  description?: string;
   coverKey: string;
+  coverPath?: string;
+  visibility?: 'public' | 'followers' | 'private' | string;
   isShared: boolean;
+  ownerId?: string;
   tasks: TaskItem[];
 }
 
@@ -70,7 +74,9 @@ export const albumsService = {
         id: 'unassigned',
         title: 'Sin álbum',
         coverKey: 'aurora',
+        visibility: 'private',
         isShared: false,
+        ownerId: userId,
         tasks,
       };
     }
@@ -147,8 +153,12 @@ export const albumsService = {
     return {
       id: album.id,
       title: album.title,
+      description: album.description || undefined,
       coverKey: coverKey,
+      coverPath: album.cover_path || undefined,
+      visibility: album.visibility || 'private',
       isShared: album.is_shared || false,
+      ownerId: album.owner_id,
       tasks,
     };
   },
