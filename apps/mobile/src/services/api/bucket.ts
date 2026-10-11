@@ -9,26 +9,65 @@ type SubtaskInsert = Database['public']['Tables']['item_subtasks']['Insert'];
 
 export const bucketApi = {
   getBuckets: async (userId?: string) => {
-    let query = supabase
-      .from('buckets')
-      .select('*, category:categories(*), item_subtasks(*), album_items(album_id), bucket_photos(thumb_path, storage_path)');
+    const baseSelect = '*, category:categories(*), item_subtasks(*), album_items(album_id), bucket_photos(thumb_path, storage_path)';
 
-    if (userId) {
-      query = query.eq('user_id', userId);
+    if (!userId) {
+      const { data, error } = await supabase
+        .from('buckets')
+        .select(baseSelect)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((b: any) => ({
+        ...b,
+        album_id: b.album_items?.length > 0 ? b.album_items[0].album_id : null,
+      }));
     }
 
-    const { data, error } = await query.order('created_at', { ascending: false });
+    // 1. Own buckets
+    const { data: ownData, error: ownError } = await supabase
+      .from('buckets')
+      .select(baseSelect)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    if (ownError) throw ownError;
 
-    if (error) throw error;
-    
-    // We map the album_items relation to a single album_id for easier UI handling
-    return data.map((b: any) => ({
+    // 2. Collaborative buckets (accepted or pending invitation)
+    let collabBuckets: any[] = [];
+    try {
+      const { data: collabData } = await supabase
+        .from('bucket_collaborators')
+        .select('bucket_id')
+        .eq('user_id', userId)
+        .in('status', ['accepted', 'pending']);
+
+      const collabIds = (collabData ?? []).map((c: any) => c.bucket_id);
+
+      if (collabIds.length > 0) {
+        const { data: sharedData } = await supabase
+          .from('buckets')
+          .select(baseSelect)
+          .in('id', collabIds)
+          .order('created_at', { ascending: false });
+        collabBuckets = sharedData ?? [];
+      }
+    } catch {
+      // Si falla la query de colaboradores, simplemente no los incluimos
+    }
+
+    // Merge, dedup by id (own takes precedence)
+    const ownIds = new Set((ownData ?? []).map((b: any) => b.id));
+    const merged = [
+      ...(ownData ?? []),
+      ...collabBuckets.filter((b: any) => !ownIds.has(b.id)),
+    ];
+
+    return merged.map((b: any) => ({
       ...b,
-      album_id: b.album_items && b.album_items.length > 0 ? b.album_items[0].album_id : null
+      album_id: b.album_items?.length > 0 ? b.album_items[0].album_id : null,
     }));
   },
 
-  createBucket: async (payload: CreateBucketForm & { cover_image?: string | null, album_id?: string | null, tag_ids?: string[] }) => {
+  createBucket: async (payload: CreateBucketForm & { cover_image?: string | null, album_id?: string | null, tag_ids?: string[], collaborator_ids?: string[] }) => {
     // 1. Get current user
     const { data: userData, error: userError } = await supabase.auth.getUser();
     if (userError || !userData.user) throw new Error('Not authenticated');
@@ -83,6 +122,17 @@ export const bucketApi = {
       }));
       const { error: tagsError } = await supabase.from('item_tags').insert(tagsInsert);
       if (tagsError) console.error('Failed to insert item_tags', tagsError);
+    }
+    
+    // 6. Insert collaborators if any
+    if (payload.collaborator_ids && payload.collaborator_ids.length > 0) {
+      const collaboratorsInsert = payload.collaborator_ids.map(id => ({
+        bucket_id: (bucket as Bucket).id,
+        user_id: id,
+        status: 'pending'
+      }));
+      const { error: collabError } = await supabase.from('bucket_collaborators').insert(collaboratorsInsert);
+      if (collabError) console.error('Failed to insert collaborators', collabError);
     }
     
     // 4. Insert album relation if any

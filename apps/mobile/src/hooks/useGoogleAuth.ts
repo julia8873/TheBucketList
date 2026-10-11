@@ -14,6 +14,7 @@ export function useGoogleAuth(onError: (message: string) => void) {
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
     androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
   });
 
   useEffect(() => {
@@ -38,4 +39,4 @@ export function useGoogleAuth(onError: (message: string) => void) {
   }, [response]);
 
   return { start: () => void promptAsync(), ready: !!request, loading };
-}
+}

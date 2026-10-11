@@ -34,18 +34,32 @@ export default function LoginScreen() {
         const { error: err } = await supabase.auth.signInWithPassword({ email: id.toLowerCase(), password });
         if (err) throw err;
       } else {
-        // Login con nombre de usuario: lo resuelve una Edge Function (el correo nunca llega al cliente)
-        const { data, error: fnErr } = await supabase.functions.invoke('login-with-username', {
-          body: { identifier: id, password },
+        // Login con nombre de usuario: resolver vía RPC a auth.users
+        const { data: email, error: rpcErr } = await (supabase.rpc as any)('get_email_by_username', {
+          p_username: id,
         });
-        if (fnErr || !data?.session) {
-          throw new Error(fnErr?.name === 'FunctionsFetchError' ? 'Failed to fetch' : 'Invalid login credentials');
+
+        if (email) {
+          const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+          if (err) throw err;
+        } else {
+          // Si el RPC no devolvió correo, intentar función o lanzar credenciales inválidas
+          try {
+            const { data, error: fnErr } = await supabase.functions.invoke('login-with-username', {
+              body: { identifier: id, password },
+            });
+            if (fnErr || !data?.session) {
+              throw new Error('Invalid login credentials');
+            }
+            const { error: sessErr } = await supabase.auth.setSession({
+              access_token: data.session.access_token,
+              refresh_token: data.session.refresh_token,
+            });
+            if (sessErr) throw sessErr;
+          } catch {
+            throw new Error('Invalid login credentials');
+          }
         }
-        const { error: sessErr } = await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        });
-        if (sessErr) throw sessErr;
       }
       // El RootNavigator redirige en cuanto cambia la sesión.
     } catch (e) {

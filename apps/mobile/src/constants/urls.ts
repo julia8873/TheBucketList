@@ -18,12 +18,23 @@ export function getSupabaseUrl(): string {
     return process.env['EXPO_PUBLIC_SUPABASE_URL_STAGING'] ?? '';
   }
   // local
-  if (Platform.OS === 'android') {
-    if (!Device.isDevice) {
-      return process.env['EXPO_PUBLIC_SUPABASE_URL_EMULATOR'] ?? 'http://10.0.2.2:54321';
+  const debuggerHost = Constants.expoConfig?.hostUri?.split(':')[0];
+
+  if (Device.isDevice) {
+    const configuredLocal = process.env['EXPO_PUBLIC_SUPABASE_URL_LOCAL'];
+    if (configuredLocal && !configuredLocal.includes('127.0.0.1') && !configuredLocal.includes('localhost')) {
+      return configuredLocal;
     }
-    return process.env['EXPO_PUBLIC_SUPABASE_URL_LOCAL'] ?? 'http://192.168.1.73:54321';
+    if (debuggerHost) {
+      return `http://${debuggerHost}:54321`;
+    }
+    return 'http://192.168.1.73:54321';
   }
+
+  if (Platform.OS === 'android') {
+    return process.env['EXPO_PUBLIC_SUPABASE_URL_EMULATOR'] ?? 'http://10.0.2.2:54321';
+  }
+
   return process.env['EXPO_PUBLIC_SUPABASE_URL_LOCAL'] ?? 'http://127.0.0.1:54321';
 }
 

@@ -152,7 +152,7 @@ export const useCreateTag = () => {
     },
     onSuccess: (saved) => {
       // Se refleja al instante en todas las listas y luego se revalida.
-      queryClient.setQueriesData<Tag[]>({ queryKey: ['tags'] }, (old) =>
+      queryClient.setQueriesData<Tag[]>({ queryKey: ['tags'] }, (old: Tag[] | undefined) =>
         old ? [saved, ...old.filter((t) => t.id !== saved.id)] : old,
       );
       invalidateTagQueries(queryClient);
@@ -177,7 +177,7 @@ export const useUpdateTag = () => {
     },
     onSuccess: (saved) => {
       // Se refleja al instante en todas las listas y luego se revalida.
-      queryClient.setQueriesData<Tag[]>({ queryKey: ['tags'] }, (old) =>
+      queryClient.setQueriesData<Tag[]>({ queryKey: ['tags'] }, (old: Tag[] | undefined) =>
         old?.map((t) => (t.id === saved.id ? { ...t, ...saved } : t)),
       );
       invalidateTagQueries(queryClient);

@@ -12,8 +12,9 @@ import { supabase } from '../../src/services/supabase';
 import { LocationAutocomplete } from '../../src/components/LocationAutocomplete';
 import { TagsRow } from '../../src/components/TagsRow';
 import type { TagItem } from '../../src/components/TagPickerSheet';
+import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { ChevronLeft, Camera, MapPin, Calendar, Folder, Globe, Plus, X } from 'lucide-react-native';
+import { ChevronLeft, Camera, MapPin, Calendar, Folder, Globe, Plus, X, Users } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
@@ -41,6 +42,8 @@ export default function CreateBucketModal() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isEditingLocation, setIsEditingLocation] = useState(false);
   const [selectedTags, setSelectedTags] = useState<TagItem[]>([]);
+  const [selectedCollaborators, setSelectedCollaborators] = useState<CollaboratorItem[]>([]);
+  const [showCollaboratorPicker, setShowCollaboratorPicker] = useState(false);
 
   const { control, handleSubmit, setValue, getValues, watch, formState: { errors } } = useForm<CreateBucketForm>({
     resolver: zodResolver(createBucketSchema),
@@ -90,6 +93,7 @@ export default function CreateBucketModal() {
 
     // Get IDs to save in item_tags
     const tag_ids = selectedTags.map(t => t.id);
+    const collaborator_ids = selectedCollaborators.map(c => c.id);
 
     // Reuse existing mutation fields, passing local states where appropriate
     const payload = {
@@ -97,6 +101,7 @@ export default function CreateBucketModal() {
       cover_image: coverImage,
       album_id: albumId,
       tag_ids,
+      collaborator_ids,
     } as any;
 
     createBucket.mutate(payload, {
@@ -373,7 +378,45 @@ export default function CreateBucketModal() {
             </Pressable>
           </View>
 
+          {/* COLABORADORES */}
+          <Text style={styles.sectionLabel}>
+            <Text style={{ color: '#D4B13A' }}>COLABORADORES</Text>
+            {selectedCollaborators.length > 0 ? ` · ${selectedCollaborators.length}` : ''}
+          </Text>
+          <View style={styles.collaboratorsContainer}>
+            <Pressable style={styles.collaboratorRow} onPress={() => setShowCollaboratorPicker(true)}>
+              <Users color="#D4B13A" size={22} />
+              <Text style={styles.collaboratorPlaceholder} numberOfLines={1}>
+                {selectedCollaborators.length === 0
+                  ? 'Añadir colaboradores a esta tarea...'
+                  : `${selectedCollaborators.length} colaborador${selectedCollaborators.length > 1 ? 'es' : ''} añadido${selectedCollaborators.length > 1 ? 's' : ''}`}
+              </Text>
+              <Plus color="#D4B13A" size={20} />
+            </Pressable>
+
+            {selectedCollaborators.length > 0 && (
+              <View style={styles.collaboratorChips}>
+                {selectedCollaborators.map(c => (
+                  <Pressable
+                    key={c.id}
+                    style={styles.collaboratorChip}
+                    onPress={() => setSelectedCollaborators(prev => prev.filter(x => x.id !== c.id))}
+                  >
+                    <Text style={styles.collaboratorChipText}>{c.display_name || `@${c.username}`}</Text>
+                    <X color="#D4B13A" size={14} />
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
         </ScrollView>
+
+        <CollaboratorPickerSheet
+          visible={showCollaboratorPicker}
+          selected={selectedCollaborators}
+          onChange={setSelectedCollaborators}
+          onClose={() => setShowCollaboratorPicker(false)}
+        />
 
         {/* BOTTOM BAR */}
         <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
@@ -458,5 +501,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
     shadowColor: '#D4B13A', shadowOpacity: 0.3, shadowRadius: 16, elevation: 8
   },
-  submitText: { fontFamily: 'Inter_700Bold', fontSize: 20, color: '#111' }
+  submitText: { fontFamily: 'Inter_700Bold', fontSize: 20, color: '#111' },
+  collaboratorsContainer: { paddingBottom: 10 },
+  collaboratorRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    height: 62, borderRadius: 16,
+    backgroundColor: '#161616', borderWidth: 1, borderColor: '#2A2A2A',
+    paddingHorizontal: 18, marginTop: 4,
+  },
+  collaboratorPlaceholder: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 16, color: '#6B6B6B' },
+  collaboratorChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
+  collaboratorChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: 'rgba(212,177,58,0.12)', borderWidth: 1, borderColor: '#D4B13A',
+    borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6,
+  },
+  collaboratorChipText: { fontFamily: 'Inter_500Medium', fontSize: 13, color: '#D4B13A' },
 });

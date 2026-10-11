@@ -14,7 +14,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { ChevronLeft, MapPin, Calendar, Eye, X } from 'lucide-react-native';
+import { ChevronLeft, MapPin, Calendar, Eye, X, Users, Plus } from 'lucide-react-native';
 import { TagChip } from '@bucketlist/ui';
 import type { UpdateBucketForm } from '@bucketlist/shared';
 import { supabase } from '../../src/services/supabase';
@@ -23,6 +23,7 @@ import { useItemTags, useSyncItemTags } from '../../src/hooks/useTags';
 import { LocationAutocomplete } from '../../src/components/LocationAutocomplete';
 import { TagsRow } from '../../src/components/TagsRow';
 import type { TagItem } from '../../src/components/TagPickerSheet';
+import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
 
 type Visibility = 'public' | 'followers' | 'private';
 
@@ -49,6 +50,30 @@ export default function EditBucketModal() {
     const [selectedTags, setSelectedTags] = useState<TagItem[]>([]);
     const { data: itemTagsData } = useItemTags(id as string);
     const tagsInitialized = useRef(false);
+
+    // Colaboradores
+    const [selectedCollaborators, setSelectedCollaborators] = useState<CollaboratorItem[]>([]);
+    const [showCollaboratorPicker, setShowCollaboratorPicker] = useState(false);
+    const collaboratorsInitialized = useRef(false);
+
+    useEffect(() => {
+        if (!id || collaboratorsInitialized.current) return;
+        supabase
+            .from('bucket_collaborators')
+            .select('user_id, profiles!inner(id, username, display_name, avatar_url)')
+            .eq('bucket_id', id)
+            .then(({ data }) => {
+                if (data && data.length > 0) {
+                    setSelectedCollaborators(data.map((c: any) => ({
+                        id: c.profiles.id,
+                        username: c.profiles.username,
+                        display_name: c.profiles.display_name,
+                        avatar_url: c.profiles.avatar_url,
+                    })));
+                    collaboratorsInitialized.current = true;
+                }
+            });
+    }, [id]);
 
     useEffect(() => {
         if (itemTagsData && !tagsInitialized.current) {
@@ -112,6 +137,23 @@ export default function EditBucketModal() {
                 bucketId: id,
                 selectedTagIds: selectedTags.map((t) => t.id),
             });
+            // Sync collaborators: get existing, add new, remove removed
+            const { data: existingCollabs } = await supabase
+                .from('bucket_collaborators')
+                .select('user_id')
+                .eq('bucket_id', id);
+            const existingIds = new Set((existingCollabs ?? []).map((c: any) => c.user_id));
+            const newIds = new Set(selectedCollaborators.map(c => c.id));
+            // Add new
+            const toAdd = selectedCollaborators.filter(c => !existingIds.has(c.id));
+            if (toAdd.length > 0) {
+                await supabase.from('bucket_collaborators').insert(toAdd.map(c => ({ bucket_id: id, user_id: c.id, status: 'pending' })));
+            }
+            // Remove dropped
+            const toRemoveIds = [...existingIds].filter(uid => !newIds.has(uid));
+            if (toRemoveIds.length > 0) {
+                await supabase.from('bucket_collaborators').delete().eq('bucket_id', id).in('user_id', toRemoveIds);
+            }
             router.back();
         } catch (error: any) {
             Alert.alert('No se pudo guardar', error?.message ?? 'Inténtalo de nuevo.');
@@ -249,7 +291,46 @@ export default function EditBucketModal() {
                             ))}
                         </View>
                     </View>
+
+                    {/* COLABORADORES */}
+                    <Text style={styles.sectionLabel}>
+                        <Text style={{ color: '#D4B13A' }}>COLABORADORES</Text>
+                        {selectedCollaborators.length > 0 ? ` · ${selectedCollaborators.length}` : ''}
+                    </Text>
+                    <View style={styles.collaboratorsContainer}>
+                        <Pressable style={styles.collaboratorRow} onPress={() => setShowCollaboratorPicker(true)}>
+                            <Users color="#D4B13A" size={22} />
+                            <Text style={styles.collaboratorPlaceholder} numberOfLines={1}>
+                                {selectedCollaborators.length === 0
+                                    ? 'Añadir colaboradores a esta tarea...'
+                                    : `${selectedCollaborators.length} colaborador${selectedCollaborators.length > 1 ? 'es' : ''} añadido${selectedCollaborators.length > 1 ? 's' : ''}`}
+                            </Text>
+                            <Plus color="#D4B13A" size={20} />
+                        </Pressable>
+
+                        {selectedCollaborators.length > 0 && (
+                            <View style={styles.collaboratorChips}>
+                                {selectedCollaborators.map(c => (
+                                    <Pressable
+                                        key={c.id}
+                                        style={styles.collaboratorChip}
+                                        onPress={() => setSelectedCollaborators(prev => prev.filter(x => x.id !== c.id))}
+                                    >
+                                        <Text style={styles.collaboratorChipText}>{c.display_name || `@${c.username}`}</Text>
+                                        <X color="#D4B13A" size={14} />
+                                    </Pressable>
+                                ))}
+                            </View>
+                        )}
+                    </View>
                 </ScrollView>
+
+                <CollaboratorPickerSheet
+                    visible={showCollaboratorPicker}
+                    selected={selectedCollaborators}
+                    onChange={setSelectedCollaborators}
+                    onClose={() => setShowCollaboratorPicker(false)}
+                />
 
                 {/* BOTTOM BAR */}
                 <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
@@ -366,4 +447,19 @@ const styles = StyleSheet.create({
         elevation: 8,
     },
     submitText: { fontFamily: 'Inter_700Bold', fontSize: 20, color: '#111' },
+    collaboratorsContainer: { paddingBottom: 10 },
+    collaboratorRow: {
+        flexDirection: 'row', alignItems: 'center', gap: 14,
+        height: 62, borderRadius: 16,
+        backgroundColor: '#161616', borderWidth: 1, borderColor: '#2A2A2A',
+        paddingHorizontal: 18, marginTop: 4,
+    },
+    collaboratorPlaceholder: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 16, color: '#6B6B6B' },
+    collaboratorChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
+    collaboratorChip: {
+        flexDirection: 'row', alignItems: 'center', gap: 6,
+        backgroundColor: 'rgba(212,177,58,0.12)', borderWidth: 1, borderColor: '#D4B13A',
+        borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6,
+    },
+    collaboratorChipText: { fontFamily: 'Inter_500Medium', fontSize: 13, color: '#D4B13A' },
 });
