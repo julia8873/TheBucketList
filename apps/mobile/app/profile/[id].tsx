@@ -4,16 +4,29 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, Lock, MoreHorizontal } from 'lucide-react-native';
-import { Avatar, EmptyState, FilterChip, SectionLabel, fontFamily, gold, useTheme } from '@bucketlist/ui';
+import {
+  Avatar,
+  EmptyState,
+  FilterChip,
+  SectionLabel,
+  SegmentedControl,
+  AlbumCard,
+  fontFamily,
+  gold,
+  useTheme,
+} from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useProfileStats } from '../../src/hooks/useFriends';
 import { useFollowUser, useUnfollowUser } from '../../src/hooks/useSocial';
+import { useUserFavorites, useToggleFavoriteAlbum } from '../../src/hooks/useFavorites';
+import type { AlbumWithProgress } from '../../src/hooks/useAlbums';
 import { FollowButton } from '../../src/components/FollowButton';
 import { PublicTaskRow } from '../../src/components/PublicTaskRow';
 import { displayNameOf, initialsOf } from '../../src/utils/initials';
 
 type Filter = 'all' | 'active' | 'completed';
+type AlbumFilter = 'all' | 'active' | 'completed' | 'closed';
 
 function Stat({ value, label, divider }: { value: number | string; label: string; divider?: boolean }) {
   return (
@@ -29,11 +42,16 @@ export default function PublicProfileScreen() {
   const { theme } = useTheme();
   const router = useRouter();
   const { user } = useAuthStore();
+  const [activeTab, setActiveTab] = useState<'list' | 'albums'>('list');
   const [filter, setFilter] = useState<Filter>('all');
+  const [albumFilter, setAlbumFilter] = useState<AlbumFilter>('all');
 
   const isOwnProfile = !!user && user.id === id;
   const followUser = useFollowUser();
   const unfollowUser = useUnfollowUser();
+
+  const { isAlbumFavorite } = useUserFavorites(user?.id);
+  const toggleFavoriteAlbum = useToggleFavoriteAlbum();
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['profile', id],
@@ -74,12 +92,97 @@ export default function PublicProfileScreen() {
     enabled: !!id && !!stats && !isLocked,
   });
 
+  // Álbumes públicos del usuario
+  const { data: publicAlbums, isLoading: albumsLoading } = useQuery({
+    queryKey: ['albums', 'public', id, followStatus],
+    queryFn: async (): Promise<AlbumWithProgress[]> => {
+      if (!id) return [];
+
+      // 1. Álbumes donde el usuario es el dueño y no son privados
+      const { data: ownAlbums, error: ownErr } = await supabase
+        .from('albums')
+        .select('*')
+        .eq('owner_id', id)
+        .neq('visibility', 'private')
+        .order('created_at', { ascending: false });
+
+      if (ownErr) throw ownErr;
+
+      // 2. Álbumes compartidos donde el usuario es colaborador aceptado y no son privados
+      let sharedAlbums: any[] = [];
+      try {
+        const { data: memberRows } = await supabase
+          .from('album_members')
+          .select('album_id')
+          .eq('user_id', id)
+          .eq('status', 'accepted');
+
+        const sharedAlbumIds = (memberRows ?? []).map((m: any) => m.album_id);
+        if (sharedAlbumIds.length > 0) {
+          const { data: memberAlbums } = await supabase
+            .from('albums')
+            .select('*')
+            .in('id', sharedAlbumIds)
+            .neq('visibility', 'private')
+            .order('created_at', { ascending: false });
+          sharedAlbums = memberAlbums ?? [];
+        }
+      } catch {
+        // Ignored
+      }
+
+      const ownIds = new Set((ownAlbums ?? []).map((a: any) => a.id));
+      const allAlbums = [
+        ...(ownAlbums ?? []),
+        ...sharedAlbums.filter((a: any) => !ownIds.has(a.id)),
+      ];
+
+      if (allAlbums.length === 0) return [];
+
+      const { data: progressData } = await supabase
+        .from('album_progress')
+        .select('*')
+        .in('album_id', allAlbums.map((a: any) => a.id));
+
+      return allAlbums.map((album: any) => {
+        const prog = progressData?.find((p: any) => p.album_id === album.id);
+        return {
+          id: album.id,
+          title: album.title,
+          description: album.description,
+          cover_path: album.cover_path,
+          visibility: album.visibility,
+          is_shared: album.is_shared,
+          priority: (album.priority || 'medium') as 'low' | 'medium' | 'high' | 'urgent',
+          is_closed: Boolean(album.is_closed),
+          closed_at: album.closed_at || null,
+          created_at: album.created_at || undefined,
+          total_tasks: prog?.total_tasks || 0,
+          completed_tasks: prog?.completed_tasks || 0,
+        };
+      });
+    },
+    enabled: !!id && !!stats && !isLocked,
+  });
+
   const filtered = useMemo(() => {
     const list = buckets ?? [];
     if (filter === 'completed') return list.filter((b: any) => b.status === 'completed');
     if (filter === 'active') return list.filter((b: any) => b.status === 'pending' || b.status === 'in_progress');
     return list;
   }, [buckets, filter]);
+
+  const filteredAlbums = useMemo(() => {
+    const list = publicAlbums ?? [];
+    if (albumFilter === 'closed') return list.filter((a) => a.is_closed);
+    if (albumFilter === 'completed') {
+      return list.filter((a) => !a.is_closed && a.total_tasks > 0 && a.completed_tasks >= a.total_tasks);
+    }
+    if (albumFilter === 'active') {
+      return list.filter((a) => !a.is_closed && (a.total_tasks === 0 || a.completed_tasks < a.total_tasks));
+    }
+    return list;
+  }, [publicAlbums, albumFilter]);
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed' as any));
 
@@ -194,12 +297,71 @@ export default function PublicProfileScreen() {
         </View>
       ) : (
         <>
-          <SectionLabel highlight="Tareas" rest={`públicas · ${taskCount}`} style={styles.sectionLabel} />
-          <View style={styles.filters}>
-            <FilterChip label="Todas" active={filter === 'all'} onPress={() => setFilter('all')} />
-            <FilterChip label="En curso" active={filter === 'active'} onPress={() => setFilter('active')} />
-            <FilterChip label="Completadas" active={filter === 'completed'} onPress={() => setFilter('completed')} />
+          <View style={styles.tabsContainer}>
+            <SegmentedControl
+              options={[
+                { key: 'list', label: 'Lista' },
+                { key: 'albums', label: 'Álbumes' },
+              ]}
+              selected={activeTab}
+              onChange={(val) => setActiveTab(val as 'list' | 'albums')}
+            />
           </View>
+
+          {activeTab === 'list' ? (
+            <>
+              <SectionLabel highlight="Tareas" rest={`públicas · ${taskCount}`} style={styles.sectionLabel} />
+              <View style={styles.filters}>
+                <FilterChip label="Todas" active={filter === 'all'} onPress={() => setFilter('all')} />
+                <FilterChip label="En curso" active={filter === 'active'} onPress={() => setFilter('active')} />
+                <FilterChip label="Completadas" active={filter === 'completed'} onPress={() => setFilter('completed')} />
+              </View>
+            </>
+          ) : (
+            <>
+              <SectionLabel highlight="Álbumes" rest={`públicos · ${publicAlbums?.length ?? 0}`} style={styles.sectionLabel} />
+              <View style={styles.filters}>
+                <FilterChip label="Todos" active={albumFilter === 'all'} onPress={() => setAlbumFilter('all')} />
+                <FilterChip label="En curso" active={albumFilter === 'active'} onPress={() => setAlbumFilter('active')} />
+                <FilterChip label="Completados" active={albumFilter === 'completed'} onPress={() => setAlbumFilter('completed')} />
+                <FilterChip label="Cerrados" active={albumFilter === 'closed'} onPress={() => setAlbumFilter('closed')} />
+              </View>
+              {albumsLoading ? (
+                <ActivityIndicator style={{ marginTop: 24 }} color={gold[400]} />
+              ) : filteredAlbums.length === 0 ? (
+                <Text style={styles.empty}>
+                  {albumFilter === 'all' ? 'Todavía no hay álbumes públicos que mostrar.' : 'No hay álbumes en este filtro.'}
+                </Text>
+              ) : (
+                <View style={styles.albumGrid}>
+                  {filteredAlbums.map((item, idx) => (
+                    <AlbumCard
+                      key={item.id}
+                      title={item.title}
+                      totalTasks={item.total_tasks ?? 0}
+                      completedTasks={item.completed_tasks ?? 0}
+                      coverUri={item.cover_path}
+                      isShared={item.is_shared}
+                      isFavorite={isAlbumFavorite(item.id)}
+                      onToggleFavorite={
+                        user
+                          ? () =>
+                              toggleFavoriteAlbum.mutate({
+                                albumId: item.id,
+                                currentlyFavorite: isAlbumFavorite(item.id),
+                              })
+                          : undefined
+                      }
+                      priority={item.priority}
+                      isClosed={item.is_closed}
+                      colorIndex={idx}
+                      onPress={() => router.push(`/album/${item.id}` as any)}
+                    />
+                  ))}
+                </View>
+              )}
+            </>
+          )}
         </>
       )}
     </View>
@@ -221,7 +383,7 @@ export default function PublicProfileScreen() {
       </View>
 
       <FlatList
-        data={isLocked ? [] : filtered}
+        data={isLocked || activeTab !== 'list' ? [] : filtered}
         keyExtractor={(item: any) => item.id}
         ListHeaderComponent={header}
         contentContainerStyle={styles.listContent}
@@ -234,7 +396,7 @@ export default function PublicProfileScreen() {
           />
         )}
         ListEmptyComponent={
-          isLocked ? null : bucketsLoading ? (
+          isLocked || activeTab !== 'list' ? null : bucketsLoading ? (
             <ActivityIndicator style={{ marginTop: 24 }} color={gold[400]} />
           ) : (
             <Text style={styles.empty}>
@@ -254,7 +416,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingTop: 10,
     paddingBottom: 6,
   },
@@ -268,7 +430,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#2A2A2A',
   },
-  listContent: { paddingHorizontal: 16, paddingBottom: 48 },
+  listContent: { paddingHorizontal: 20, paddingBottom: 48 },
+  tabsContainer: { marginTop: 22, marginBottom: 4 },
+  albumGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 6,
+    marginBottom: 20,
+  },
   identity: { flexDirection: 'row', alignItems: 'center', gap: 18, marginTop: 14 },
   identityText: { flex: 1, gap: 4 },
   name: { fontFamily: fontFamily.serifBold, fontSize: 30, lineHeight: 36, color: '#FFFFFF', letterSpacing: -0.3 },
