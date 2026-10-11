@@ -363,11 +363,11 @@ export default function AlbumDetailScreen() {
     }
   };
 
-  // Toggle single task completed / in_progress
+  // Toggle single task completed / pending
   const toggleTaskCompleted = async (task: TaskItem, e: any) => {
     e.stopPropagation();
     const nextCompleted = !task.isCompleted;
-    const nextStatus = nextCompleted ? 'completed' : 'in_progress';
+    const nextStatus = nextCompleted ? 'completed' : 'pending';
     const nextCompletedAt = nextCompleted ? new Date().toISOString() : null;
 
     // Optimistic update
@@ -402,7 +402,7 @@ export default function AlbumDetailScreen() {
     if (!album || album.tasks.length === 0) return;
     const areAllCompleted = album.tasks.every((t) => t.isCompleted);
     const nextCompleted = !areAllCompleted;
-    const nextStatus = nextCompleted ? 'completed' : 'in_progress';
+    const nextStatus = nextCompleted ? 'completed' : 'pending';
     const nextCompletedAt = nextCompleted ? new Date().toISOString() : null;
     const taskIds = album.tasks.map((t) => t.id);
 

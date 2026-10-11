@@ -337,7 +337,7 @@ export default function MyListScreen() {
     };
 
     const renderLeftActions = (progress: any, dragX: any) => {
-      if (!isItemOwner || item.status === 'completed') return null;
+      if (item.status === 'completed') return null;
       const opacity = progress.interpolate({
         inputRange: [0, 0.15, 1],
         outputRange: [0, 1, 1],

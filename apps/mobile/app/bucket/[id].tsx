@@ -378,10 +378,16 @@ export default function BucketDetailScreen() {
   };
 
   const handleChangeStatus = async (status: string) => {
-    queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, status } : oldData);
+    const patch: Record<string, any> = { status };
+    if (status !== 'completed') {
+      patch.completed_at = null;
+    } else {
+      patch.completed_at = new Date().toISOString();
+    }
+    queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, ...patch } : oldData);
     const { error } = await supabase
       .from('buckets')
-      .update({ status })
+      .update(patch)
       .eq('id', id);
 
     if (error) {
