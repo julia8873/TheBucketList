@@ -558,6 +558,37 @@ export default function MyListScreen() {
       );
     };
 
+    const handleConfirmComplete = () => {
+      Alert.alert(
+        '¿Marcar como completada?',
+        `¿Quieres marcar "${item.title}" como completada?`,
+        [
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+            onPress: () => {
+              swipeableRefs.current.get(item.id)?.close();
+            },
+          },
+          {
+            text: 'Completar',
+            style: 'default',
+            onPress: () => {
+              updateBucket.mutate(
+                { id: item.id, data: { status: 'completed', completed_at: new Date() } as any },
+                {
+                  onSuccess: () => {
+                    toast.show({ message: 'Tarea completada 🎉' });
+                  },
+                }
+              );
+              swipeableRefs.current.get(item.id)?.close();
+            },
+          },
+        ]
+      );
+    };
+
     const renderLeftActions = (progress: any, dragX: any) => {
       if (item.status === 'completed') return null;
       const opacity = progress.interpolate({
@@ -577,7 +608,7 @@ export default function MyListScreen() {
               alignItems: 'center',
               justifyContent: 'center',
             }}
-            onPress={() => updateBucket.mutate({ id: item.id, data: { status: 'completed', completed_at: new Date() } as any })}
+            onPress={handleConfirmComplete}
           >
             <CheckCircle2 color="#FFFFFF" size={24} />
           </Pressable>
@@ -598,19 +629,21 @@ export default function MyListScreen() {
         overshootRight={false}
         overshootLeft={false}
         onSwipeableOpen={(direction) => {
-          if (direction === 'left' && isItemOwner && item.status !== 'completed') {
-            updateBucket.mutate({ id: item.id, data: { status: 'completed', completed_at: new Date() } as any });
-            toast.show({ message: 'Tarea completada 🎉' });
-            swipeableRefs.current.get(item.id)?.close();
-          } else if (direction === 'right' && isItemOwner) {
-            Alert.alert(
-              'Eliminar tarea',
-              '¿Estás seguro de que quieres eliminar esta tarea?',
-              [
-                { text: 'Cancelar', style: 'cancel', onPress: () => swipeableRefs.current.get(item.id)?.close() },
-                { text: 'Eliminar', style: 'destructive', onPress: () => deleteBucket.mutate(item.id) }
-              ]
-            );
+          if (direction === 'left' && item.status !== 'completed') {
+            handleConfirmComplete();
+          } else if (direction === 'right') {
+            if (isItemOwner) {
+              Alert.alert(
+                'Eliminar tarea',
+                '¿Estás seguro de que quieres eliminar esta tarea?',
+                [
+                  { text: 'Cancelar', style: 'cancel', onPress: () => swipeableRefs.current.get(item.id)?.close() },
+                  { text: 'Eliminar', style: 'destructive', onPress: () => deleteBucket.mutate(item.id) }
+                ]
+              );
+            } else {
+              swipeableRefs.current.get(item.id)?.close();
+            }
           }
         }}
       >
