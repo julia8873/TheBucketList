@@ -1108,241 +1108,229 @@ export default function AlbumDetailScreen() {
                   </Pressable>
                 </View>
 
-                <View style={styles.sheetOptions}>
-                  {currentUserId && id !== 'unassigned' && (
-                    <Pressable
-                      style={styles.sheetOption}
-                      onPress={() => {
-                        toggleFavoriteAlbum.mutate({ albumId: id, currentlyFavorite: isFav });
-                        closeSheet();
-                      }}
-                    >
-                      <View style={styles.sheetIconBox}>
-                        <Star
-                          color="#D4B13A"
-                          fill={isFav ? '#D4B13A' : 'transparent'}
-                          size={20}
-                        />
-                      </View>
-                      <View style={styles.sheetOptionTexts}>
-                        <Text style={styles.sheetOptionTitle}>
-                          {isFav ? 'Quitar de favoritos' : 'Marcar como favorito'}
-                        </Text>
-                        <Text style={styles.sheetOptionSubtitle}>
-                          {isFav
-                            ? 'Elimina este álbum de tu lista de favoritos'
-                            : 'Guarda este álbum en tus favoritos'}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  )}
+                <ScrollView
+                  style={styles.sheetScroll}
+                  contentContainerStyle={styles.sheetScrollContent}
+                  showsVerticalScrollIndicator={false}
+                  bounces={false}
+                >
+                  <View style={styles.sheetOptions}>
+                    {currentUserId && id !== 'unassigned' && (
+                      <Pressable
+                        style={styles.sheetOption}
+                        onPress={() => {
+                          toggleFavoriteAlbum.mutate({ albumId: id, currentlyFavorite: isFav });
+                          closeSheet();
+                        }}
+                      >
+                        <View style={styles.sheetIconBox}>
+                          <Star
+                            color="#D4B13A"
+                            fill={isFav ? '#D4B13A' : 'transparent'}
+                            size={20}
+                          />
+                        </View>
+                        <View style={styles.sheetOptionTexts}>
+                          <Text style={styles.sheetOptionTitle}>
+                            {isFav ? 'Quitar de favoritos' : 'Marcar como favorito'}
+                          </Text>
+                          <Text style={styles.sheetOptionSubtitle}>
+                            {isFav
+                              ? 'Elimina este álbum de tu lista de favoritos'
+                              : 'Guarda este álbum en tus favoritos'}
+                          </Text>
+                        </View>
+                      </Pressable>
+                    )}
 
-                  {tasks.length > 0 && (
-                    <Pressable
-                      style={styles.sheetOption}
-                      onPress={() => void handleToggleAllTasks()}
-                    >
-                      <View style={styles.sheetIconBox}>
-                        {areAllCompleted ? (
-                          <RotateCcw color="#D4B13A" size={20} />
-                        ) : (
-                          <CheckCircle2 color="#D4B13A" size={20} />
-                        )}
-                      </View>
-                      <View style={styles.sheetOptionTexts}>
-                        <Text style={styles.sheetOptionTitle}>
-                          {areAllCompleted
-                            ? 'Marcar todas como pendientes'
-                            : 'Marcar todas como completadas'}
-                        </Text>
-                        <Text style={styles.sheetOptionSubtitle}>
-                          {areAllCompleted
-                            ? 'Revertir estado de todas las tareas'
-                            : 'Completa todas las tareas del álbum'}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  )}
+                    {tasks.length > 0 && (
+                      <Pressable
+                        style={styles.sheetOption}
+                        onPress={() => void handleToggleAllTasks()}
+                      >
+                        <View style={styles.sheetIconBox}>
+                          {areAllCompleted ? (
+                            <RotateCcw color="#D4B13A" size={20} />
+                          ) : (
+                            <CheckCircle2 color="#D4B13A" size={20} />
+                          )}
+                        </View>
+                        <View style={styles.sheetOptionTexts}>
+                          <Text style={styles.sheetOptionTitle}>
+                            {areAllCompleted
+                              ? 'Marcar todas como pendientes'
+                              : 'Marcar todas como completadas'}
+                          </Text>
+                          <Text style={styles.sheetOptionSubtitle}>
+                            {areAllCompleted
+                              ? 'Revertir estado de todas las tareas'
+                              : 'Completa todas las tareas del álbum'}
+                          </Text>
+                        </View>
+                      </Pressable>
+                    )}
 
-                  {canEdit && (
-                    <Pressable
-                      style={styles.sheetOption}
-                      onPress={() => {
-                        closeSheet(() => void pickAndUploadCover());
-                      }}
-                    >
-                      <View style={styles.sheetIconBox}>
-                        <Camera color="#D4B13A" size={20} />
-                      </View>
-                      <View style={styles.sheetOptionTexts}>
-                        <Text style={styles.sheetOptionTitle}>Cambiar portada</Text>
-                        <Text style={styles.sheetOptionSubtitle}>
-                          Elige una foto de tu galería
-                        </Text>
-                      </View>
-                    </Pressable>
-                  )}
+                    {canEdit && (
+                      <Pressable
+                        style={styles.sheetOption}
+                        onPress={() => {
+                          closeSheet(() => void pickAndUploadCover());
+                        }}
+                      >
+                        <View style={styles.sheetIconBox}>
+                          <Camera color="#D4B13A" size={20} />
+                        </View>
+                        <View style={styles.sheetOptionTexts}>
+                          <Text style={styles.sheetOptionTitle}>Cambiar portada</Text>
+                          <Text style={styles.sheetOptionSubtitle}>
+                            Elige una foto de tu galería
+                          </Text>
+                        </View>
+                      </Pressable>
+                    )}
 
-                  {canEdit && (
-                    <Pressable
-                      style={styles.sheetOption}
-                      onPress={() => {
-                        handleToggleCloseAlbum(!isAlbumClosed);
-                      }}
-                    >
-                      <View style={styles.sheetIconBox}>
-                        <Lock color="#D4B13A" size={20} />
-                      </View>
-                      <View style={styles.sheetOptionTexts}>
-                        <Text style={styles.sheetOptionTitle}>
-                          {isAlbumClosed ? 'Reabrir álbum' : 'Cerrar álbum para siempre'}
-                        </Text>
-                        <Text style={styles.sheetOptionSubtitle}>
-                          {isAlbumClosed
-                            ? 'Permite volver a añadir tareas al álbum'
-                            : 'Marca el álbum como cerrado y completado definitivamente'}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  )}
+                    {canEdit && (
+                      <Pressable
+                        style={styles.sheetOption}
+                        onPress={() => {
+                          handleToggleCloseAlbum(!isAlbumClosed);
+                        }}
+                      >
+                        <View style={styles.sheetIconBox}>
+                          <Lock color="#D4B13A" size={20} />
+                        </View>
+                        <View style={styles.sheetOptionTexts}>
+                          <Text style={styles.sheetOptionTitle}>
+                            {isAlbumClosed ? 'Reabrir álbum' : 'Cerrar álbum para siempre'}
+                          </Text>
+                          <Text style={styles.sheetOptionSubtitle}>
+                            {isAlbumClosed
+                              ? 'Permite volver a añadir tareas al álbum'
+                              : 'Marca el álbum como cerrado y completado definitivamente'}
+                          </Text>
+                        </View>
+                      </Pressable>
+                    )}
 
-                  {canEdit && (
-                    <Pressable
-                      style={styles.sheetOption}
-                      onPress={() => {
-                        closeSheet(() => void pickAndUploadCover());
-                      }}
-                    >
-                      <View style={styles.sheetIconBox}>
-                        <Camera color="#D4B13A" size={20} />
-                      </View>
-                      <View style={styles.sheetOptionTexts}>
-                        <Text style={styles.sheetOptionTitle}>Cambiar portada</Text>
-                        <Text style={styles.sheetOptionSubtitle}>
-                          Elige una foto de tu galería
-                        </Text>
-                      </View>
-                    </Pressable>
-                  )}
+                    {canEdit && (
+                      <Pressable
+                        style={styles.sheetOption}
+                        onPress={() => setSheetMode('priority')}
+                      >
+                        <View style={styles.sheetIconBox}>
+                          <Flag color="#D4B13A" size={20} />
+                        </View>
+                        <View style={styles.sheetOptionTexts}>
+                          <Text style={styles.sheetOptionTitle}>Cambiar prioridad</Text>
+                          <Text style={styles.sheetOptionSubtitle}>
+                            {album.priority === 'high' || album.priority === 'urgent'
+                              ? 'Prioridad Alta'
+                              : album.priority === 'low'
+                              ? 'Prioridad Baja'
+                              : 'Prioridad Media'}
+                          </Text>
+                        </View>
+                      </Pressable>
+                    )}
 
-                  {canEdit && (
-                    <Pressable
-                      style={styles.sheetOption}
-                      onPress={() => setSheetMode('priority')}
-                    >
-                      <View style={styles.sheetIconBox}>
-                        <Flag color="#D4B13A" size={20} />
-                      </View>
-                      <View style={styles.sheetOptionTexts}>
-                        <Text style={styles.sheetOptionTitle}>Cambiar prioridad</Text>
-                        <Text style={styles.sheetOptionSubtitle}>
-                          {album.priority === 'high' || album.priority === 'urgent'
-                            ? 'Prioridad Alta'
-                            : album.priority === 'low'
-                            ? 'Prioridad Baja'
-                            : 'Prioridad Media'}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  )}
+                    {canEdit && (
+                      <Pressable
+                        style={styles.sheetOption}
+                        onPress={() => setSheetMode('visibility')}
+                      >
+                        <View style={styles.sheetIconBox}>
+                          <Eye color="#D4B13A" size={20} />
+                        </View>
+                        <View style={styles.sheetOptionTexts}>
+                          <Text style={styles.sheetOptionTitle}>Cambiar visibilidad</Text>
+                          <Text style={styles.sheetOptionSubtitle}>
+                            {album.visibility === 'public'
+                              ? 'Público actualmente'
+                              : album.visibility === 'followers'
+                              ? 'Solo amigos actualmente'
+                              : 'Privado actualmente'}
+                          </Text>
+                        </View>
+                      </Pressable>
+                    )}
 
-                  {canEdit && (
-                    <Pressable
-                      style={styles.sheetOption}
-                      onPress={() => setSheetMode('visibility')}
-                    >
-                      <View style={styles.sheetIconBox}>
-                        <Eye color="#D4B13A" size={20} />
-                      </View>
-                      <View style={styles.sheetOptionTexts}>
-                        <Text style={styles.sheetOptionTitle}>Cambiar visibilidad</Text>
-                        <Text style={styles.sheetOptionSubtitle}>
-                          {album.visibility === 'public'
-                            ? 'Público actualmente'
-                            : album.visibility === 'followers'
-                            ? 'Solo amigos actualmente'
-                            : 'Privado actualmente'}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  )}
+                    {canEdit && (
+                      <Pressable
+                        style={styles.sheetOption}
+                        onPress={() => {
+                          closeSheet(() => setShowCollaboratorPicker(true));
+                        }}
+                      >
+                        <View style={styles.sheetIconBox}>
+                          <Users color="#D4B13A" size={20} />
+                        </View>
+                        <View style={styles.sheetOptionTexts}>
+                          <Text style={styles.sheetOptionTitle}>Gestionar colaboradores</Text>
+                          <Text style={styles.sheetOptionSubtitle}>
+                            Invita o quita personas de este álbum
+                          </Text>
+                        </View>
+                      </Pressable>
+                    )}
 
-                  {canEdit && (
-                    <Pressable
-                      style={styles.sheetOption}
-                      onPress={() => {
-                        closeSheet(() => setShowCollaboratorPicker(true));
-                      }}
-                    >
-                      <View style={styles.sheetIconBox}>
-                        <Users color="#D4B13A" size={20} />
-                      </View>
-                      <View style={styles.sheetOptionTexts}>
-                        <Text style={styles.sheetOptionTitle}>Gestionar colaboradores</Text>
-                        <Text style={styles.sheetOptionSubtitle}>
-                          Invita o quita personas de este álbum
-                        </Text>
-                      </View>
-                    </Pressable>
-                  )}
+                    {canEdit && (
+                      <Pressable
+                        style={styles.sheetOption}
+                        onPress={() => {
+                          closeSheet(() => router.push(`/(modals)/create-album?id=${id}`));
+                        }}
+                      >
+                        <View style={styles.sheetIconBox}>
+                          <Pencil color="#D4B13A" size={20} />
+                        </View>
+                        <View style={styles.sheetOptionTexts}>
+                          <Text style={styles.sheetOptionTitle}>Editar detalles completos</Text>
+                          <Text style={styles.sheetOptionSubtitle}>
+                            Nombre, portada, privacidad y más
+                          </Text>
+                        </View>
+                      </Pressable>
+                    )}
 
-                  {canEdit && (
-                    <Pressable
-                      style={styles.sheetOption}
-                      onPress={() => {
-                        closeSheet(() => router.push(`/(modals)/create-album?id=${id}`));
-                      }}
-                    >
-                      <View style={styles.sheetIconBox}>
-                        <Pencil color="#D4B13A" size={20} />
-                      </View>
-                      <View style={styles.sheetOptionTexts}>
-                        <Text style={styles.sheetOptionTitle}>Editar detalles completos</Text>
-                        <Text style={styles.sheetOptionSubtitle}>
-                          Nombre, portada, privacidad y más
-                        </Text>
-                      </View>
-                    </Pressable>
-                  )}
+                    {isOwner && (
+                      <Pressable
+                        style={[styles.sheetOption, { borderBottomWidth: 0 }]}
+                        onPress={confirmDeleteAlbum}
+                      >
+                        <View style={[styles.sheetIconBox, { backgroundColor: 'rgba(239, 68, 68, 0.12)' }]}>
+                          <Trash2 color="#EF4444" size={20} />
+                        </View>
+                        <View style={styles.sheetOptionTexts}>
+                          <Text style={[styles.sheetOptionTitle, { color: '#EF4444' }]}>
+                            Eliminar álbum
+                          </Text>
+                          <Text style={styles.sheetOptionSubtitle}>
+                            Las tareas se moverán a Sin álbum
+                          </Text>
+                        </View>
+                      </Pressable>
+                    )}
 
-                  {isOwner && (
-                    <Pressable
-                      style={[styles.sheetOption, { borderBottomWidth: 0 }]}
-                      onPress={confirmDeleteAlbum}
-                    >
-                      <View style={[styles.sheetIconBox, { backgroundColor: 'rgba(239, 68, 68, 0.12)' }]}>
-                        <Trash2 color="#EF4444" size={20} />
-                      </View>
-                      <View style={styles.sheetOptionTexts}>
-                        <Text style={[styles.sheetOptionTitle, { color: '#EF4444' }]}>
-                          Eliminar álbum
-                        </Text>
-                        <Text style={styles.sheetOptionSubtitle}>
-                          Las tareas se moverán a Sin álbum
-                        </Text>
-                      </View>
-                    </Pressable>
-                  )}
-
-                  {isCollaborator && (
-                    <Pressable
-                      style={[styles.sheetOption, { borderBottomWidth: 0 }]}
-                      onPress={confirmLeaveAlbum}
-                    >
-                      <View style={[styles.sheetIconBox, { backgroundColor: 'rgba(239, 68, 68, 0.12)' }]}>
-                        <Trash2 color="#EF4444" size={20} />
-                      </View>
-                      <View style={styles.sheetOptionTexts}>
-                        <Text style={[styles.sheetOptionTitle, { color: '#EF4444' }]}>
-                          Dejar de colaborar
-                        </Text>
-                        <Text style={styles.sheetOptionSubtitle}>
-                          El álbum dejará de aparecer en tu lista
-                        </Text>
-                      </View>
-                    </Pressable>
-                  )}
-                </View>
+                    {isCollaborator && (
+                      <Pressable
+                        style={[styles.sheetOption, { borderBottomWidth: 0 }]}
+                        onPress={confirmLeaveAlbum}
+                      >
+                        <View style={[styles.sheetIconBox, { backgroundColor: 'rgba(239, 68, 68, 0.12)' }]}>
+                          <Trash2 color="#EF4444" size={20} />
+                        </View>
+                        <View style={styles.sheetOptionTexts}>
+                          <Text style={[styles.sheetOptionTitle, { color: '#EF4444' }]}>
+                            Dejar de colaborar
+                          </Text>
+                          <Text style={styles.sheetOptionSubtitle}>
+                            El álbum dejará de aparecer en tu lista
+                          </Text>
+                        </View>
+                      </Pressable>
+                    )}
+                  </View>
+                </ScrollView>
               </>
             )}
 
@@ -1937,6 +1925,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.65)',
   },
   bottomSheet: {
+    maxHeight: '85%',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingTop: 10,
@@ -1945,6 +1934,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#151515',
     borderWidth: 1,
     borderColor: '#262626',
+  },
+  sheetScroll: {
+    flexGrow: 0,
+  },
+  sheetScrollContent: {
+    paddingBottom: 24,
   },
   sheetHandle: {
     alignSelf: 'center',
