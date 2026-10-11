@@ -173,7 +173,7 @@ function RootNavigator() {
       if (group !== '(onboarding)') router.replace('/(onboarding)/username');
       return;
     }
-    if (group === '(auth)') router.replace('/(tabs)/feed');
+    if (group === '(auth)') router.replace('/(tabs)/my-list');
   }, [session, isInitialized, onboardingCompleted, isRecovering, segments]);
 
   return (

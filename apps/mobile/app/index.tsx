@@ -9,5 +9,5 @@ export default function Index() {
   if (!session) return <Redirect href="/(auth)/welcome" />;
   if (onboardingCompleted === null) return null; // cargando perfil
   if (!onboardingCompleted) return <Redirect href="/(onboarding)/username" />;
-  return <Redirect href="/(tabs)/feed" />;
+  return <Redirect href="/(tabs)/my-list" />;
 }

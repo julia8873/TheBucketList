@@ -32,6 +32,7 @@ export default function TabsLayout() {
 
   return (
     <Tabs
+      initialRouteName="my-list"
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
