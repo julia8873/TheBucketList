@@ -40,6 +40,7 @@ export default function EditProfileScreen() {
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
+  const [email, setEmail] = useState('');
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [bioFocused, setBioFocused] = useState(false);
   const [usernameState, setUsernameState] = useState<UsernameState>('idle');
@@ -53,9 +54,10 @@ export default function EditProfileScreen() {
       setUsername(profile.username ?? '');
       setBio(profile.bio ?? '');
       setAvatarUri(profile.avatar_url ?? null);
+      setEmail(user?.email ?? '');
       setHydrated(true);
     }
-  }, [profile, hydrated]);
+  }, [profile, hydrated, user?.email]);
 
   // Disponibilidad del usuario (con debounce)
   useEffect(() => {
@@ -71,18 +73,23 @@ export default function EditProfileScreen() {
     return () => clearTimeout(id);
   }, [username, hydrated, profile?.username, user]);
 
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailClean = email.trim().toLowerCase();
+  const emailValid = emailClean.length > 0 && EMAIL_RE.test(emailClean);
+
   const dirty = useMemo(
     () =>
       hydrated &&
       (displayName.trim() !== (profile?.display_name ?? '') ||
         username.trim().toLowerCase() !== (profile?.username ?? '') ||
         bio.trim() !== (profile?.bio ?? '') ||
-        avatarUri !== (profile?.avatar_url ?? null)),
-    [hydrated, displayName, username, bio, avatarUri, profile],
+        avatarUri !== (profile?.avatar_url ?? null) ||
+        emailClean !== (user?.email ?? '').toLowerCase()),
+    [hydrated, displayName, username, bio, avatarUri, emailClean, profile, user?.email],
   );
 
   const usernameOk = usernameState === 'idle' || usernameState === 'available';
-  const canSave = dirty && usernameOk && displayName.trim().length > 0 && !saving;
+  const canSave = dirty && usernameOk && emailValid && displayName.trim().length > 0 && !saving;
 
   const [photoMenu, setPhotoMenu] = useState(false);
 
@@ -141,6 +148,29 @@ export default function EditProfileScreen() {
           throw new Error(t('errors.username_taken'));
         }
         throw updateError;
+      }
+
+      // Si el correo ha cambiado, actualizarlo directamente en auth.users sin enviar verificación
+      if (emailClean !== (user.email ?? '').toLowerCase()) {
+        const { error: emailErr } = await supabase.rpc('update_user_email', {
+          new_email: emailClean,
+        });
+
+        if (emailErr) {
+          throw new Error(emailErr.message || 'No se pudo actualizar el correo electrónico');
+        }
+
+        // Refrescar el usuario en auth store con el nuevo email
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData?.user) {
+          const currentSession = useAuthStore.getState().session;
+          if (currentSession) {
+            useAuthStore.getState().setSession({
+              ...currentSession,
+              user: userData.user,
+            });
+          }
+        }
       }
 
       await queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
@@ -251,12 +281,21 @@ export default function EditProfileScreen() {
           <Text style={[styles.counter, { color: theme.colors.foregroundMuted }]}>{bio.length}/{BIO_MAX}</Text>
 
           <Label gold={t('profile.email_a')} rest={t('profile.email_b')} />
-          <View style={[fieldStyle, styles.usernameRow, { justifyContent: 'space-between' }]}>
-            <Text style={[styles.input, { color: theme.colors.foregroundMuted, paddingHorizontal: 0 }]} numberOfLines={1}>
-              {user?.email}
+          <TextInput
+            value={email}
+            onChangeText={(v) => setEmail(v.replace(/\s/g, '').toLowerCase())}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="email-address"
+            placeholder="correo@ejemplo.com"
+            placeholderTextColor={theme.colors.foregroundSubtle}
+            style={[fieldStyle, styles.input, { color: theme.colors.foreground }]}
+          />
+          {emailClean.length > 0 && !emailValid ? (
+            <Text style={[styles.hint, { color: theme.colors.error }]}>
+              Formato de correo electrónico no válido
             </Text>
-            <Lock size={18} color={theme.colors.foregroundSubtle} />
-          </View>
+          ) : null}
 
           {error ? <Text style={[styles.hint, { color: theme.colors.error, marginTop: 14 }]}>{error}</Text> : null}
         </ScrollView>

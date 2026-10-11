@@ -259,7 +259,7 @@ const es = {
     min_chars: 'Mínimo 8 caracteres',
     passwords_dont_match: 'Las contraseñas no coinciden',
     update: 'Actualizar',
-    email_confirm_sent: 'Te hemos enviado un correo para confirmar el cambio.',
+    email_confirm_sent: 'Tu correo electrónico se ha actualizado correctamente.',
     password_updated: 'Tu contraseña se ha actualizado.',
     private_account: 'Cuenta privada',
     private_account_desc: 'Aprobarás quién puede seguirte',

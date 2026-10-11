@@ -31,12 +31,40 @@ export default function ChangeCredentialScreen() {
     if (!canSubmit || loading) return;
     setLoading(true);
     setError(null);
-    const { error: err } = isEmail
-      ? await supabase.auth.updateUser({ email: value.trim() })
-      : await supabase.auth.updateUser({ password: value });
+
+    if (isEmail) {
+      const cleanEmail = value.trim().toLowerCase();
+      const { error: rpcErr } = await supabase.rpc('update_user_email', { new_email: cleanEmail });
+      if (rpcErr) {
+        setLoading(false);
+        setError(rpcErr.message || 'No se pudo actualizar');
+        return;
+      }
+
+      // Refrescar el usuario en auth store con el nuevo email
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        const currentSession = useAuthStore.getState().session;
+        if (currentSession) {
+          useAuthStore.getState().setSession({
+            ...currentSession,
+            user: userData.user,
+          });
+        }
+      }
+
+      setLoading(false);
+      router.back();
+      return;
+    }
+
+    const { error: passErr } = await supabase.auth.updateUser({ password: value });
     setLoading(false);
-    if (err) setError(err.message);
-    else setDone(true);
+    if (passErr) {
+      setError(passErr.message || 'No se pudo actualizar');
+    } else {
+      setDone(true);
+    }
   };
 
   const inputStyle = [styles.input, { color: theme.colors.foreground, backgroundColor: theme.colors.surface, borderColor: theme.colors.border }];
@@ -67,7 +95,7 @@ export default function ChangeCredentialScreen() {
         <View style={styles.body}>
           {done ? (
             <Text style={[styles.info, { color: theme.colors.foreground }]}>
-              {isEmail ? t('settings.email_confirm_sent') : t('settings.password_updated')}
+              {t('settings.password_updated')}
             </Text>
           ) : (
             <>

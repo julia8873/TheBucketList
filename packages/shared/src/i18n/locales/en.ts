@@ -201,7 +201,7 @@ const en = {
     min_chars: 'At least 8 characters',
     passwords_dont_match: 'Passwords don\'t match',
     update: 'Update',
-    email_confirm_sent: 'We\'ve sent you an email to confirm the change.',
+    email_confirm_sent: 'Your email has been updated successfully.',
     password_updated: 'Your password has been updated.',
     private_account: 'Private account',
     private_account_desc: 'You approve who can follow you',
