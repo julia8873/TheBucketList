@@ -1,12 +1,33 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Pressable, ScrollView, ActivityIndicator } from 'react-native';
-import { Typography, useTheme, spacing, UrgencyChip } from '@bucketlist/ui';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
-import { format, addMonths, subMonths, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, startOfMonth, endOfMonth, parseISO } from 'date-fns';
+import React, { useState, useMemo } from 'react';
+import {
+  View,
+  StyleSheet,
+  Pressable,
+  ScrollView,
+  ActivityIndicator,
+  Text,
+  Image,
+} from 'react-native';
+import { Typography, useTheme, TaskRow } from '@bucketlist/ui';
+import { ChevronLeft, ChevronRight, AlertCircle, Calendar } from 'lucide-react-native';
+import {
+  format,
+  addMonths,
+  subMonths,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
+  isSameMonth,
+  isSameDay,
+  startOfMonth,
+  endOfMonth,
+} from 'date-fns';
 import { es } from 'date-fns/locale';
+import { LinearGradient } from 'expo-linear-gradient';
 
-import { useCalendar, CalendarDay, CalendarTask } from '../hooks/useCalendar';
+import { useBuckets } from '../hooks/useBuckets';
 import { useAuthStore } from '../stores/auth.store';
+import { storageApi } from '../services/api/storage';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { useRouter } from 'expo-router';
 
@@ -14,16 +35,12 @@ export function CalendarTab() {
   const { theme } = useTheme();
   const router = useRouter();
   const { user } = useAuthStore();
-  
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
-  
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth() + 1; // 1-12
-  
-  // Use user's timezone
-  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  const { data: monthData, isLoading } = useCalendar(user?.id, year, month, tz);
+  const [showUnscheduled, setShowUnscheduled] = useState(false);
+
+  const { data: buckets = [], isLoading } = useBuckets(user?.id);
 
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
@@ -33,40 +50,163 @@ export function CalendarTab() {
   const monthEnd = endOfMonth(currentDate);
   const startDate = startOfWeek(monthStart, { weekStartsOn: 1 }); // Monday
   const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
-  
   const daysInGrid = eachDayOfInterval({ start: startDate, end: endDate });
 
-  // Map dates to data
-  const dataMap = new Map<string, CalendarTask[]>();
-  if (monthData) {
-    monthData.forEach(d => {
-      dataMap.set(d.date, d.tasks);
+  // Map dates to tasks:
+  // - Completed tasks appear on the day they were completed
+  // - Pending tasks appear on the day of their deadline
+  const tasksByDay = useMemo(() => {
+    const map = new Map<string, any[]>();
+
+    (buckets || []).forEach((item: any) => {
+      let targetDate: string | null = null;
+
+      if (item.status === 'completed') {
+        const d = item.completed_at || item.updated_at || item.created_at;
+        if (d) {
+          try {
+            targetDate = format(new Date(d), 'yyyy-MM-dd');
+          } catch {
+            targetDate = null;
+          }
+        }
+      } else if (item.deadline) {
+        try {
+          targetDate = format(new Date(item.deadline), 'yyyy-MM-dd');
+        } catch {
+          targetDate = null;
+        }
+      }
+
+      if (targetDate) {
+        const existing = map.get(targetDate) || [];
+        existing.push(item);
+        map.set(targetDate, existing);
+      }
     });
-  }
+
+    return map;
+  }, [buckets]);
+
+  // Expired / overdue tasks (not completed and deadline has passed before today)
+  const expiredTasks = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return (buckets || []).filter((item: any) => {
+      if (item.status === 'completed') return false;
+      if (!item.deadline) return false;
+      try {
+        const d = new Date(item.deadline);
+        d.setHours(0, 0, 0, 0);
+        return d.getTime() < today.getTime();
+      } catch {
+        return false;
+      }
+    }).sort((a: any, b: any) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
+  }, [buckets]);
+
+  // Tasks without scheduled deadline (and not completed)
+  const unscheduledTasks = useMemo(() => {
+    return (buckets || []).filter((item: any) => item.status !== 'completed' && !item.deadline);
+  }, [buckets]);
+
+  // Completed tasks count for the current viewed month
+  const completedThisMonth = useMemo(() => {
+    return (buckets || []).filter((b: any) => {
+      if (b.status !== 'completed') return false;
+      const d = b.completed_at || b.updated_at;
+      if (!d) return false;
+      try {
+        return isSameMonth(new Date(d), currentDate);
+      } catch {
+        return false;
+      }
+    }).length;
+  }, [buckets, currentDate]);
 
   // Selected day tasks
   const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
-  const selectedTasks = dataMap.get(selectedDateStr) || [];
+  const selectedTasks = tasksByDay.get(selectedDateStr) || [];
+
+  const renderThumbnail = (task: any) => {
+    const coverPath =
+      task.cover_image ||
+      task.bucket_photos?.[0]?.thumb_path ||
+      task.bucket_photos?.[0]?.storage_path;
+    const isPreset = coverPath?.startsWith('preset:');
+    const hasActualImage = !!coverPath && !isPreset;
+    const imageUri = hasActualImage
+      ? coverPath.startsWith('http')
+        ? coverPath
+        : storageApi.getPublicUrl(coverPath)
+      : null;
+
+    if (imageUri) {
+      return <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />;
+    }
+
+    let gradientColors: readonly [string, string, ...string[]] = ['#2A2A2A', '#3A3A3A'];
+    const catName = task.category?.name_es?.toLowerCase() || task.category?.slug?.toLowerCase() || '';
+    if (catName.includes('viaj') || catName === 'travel') {
+      gradientColors = ['#0F5C4A', '#1E8A5E'];
+    } else if (catName.includes('aventura') || catName === 'adventure') {
+      gradientColors = ['#2F6DB5', '#8EC5F2'];
+    } else if (catName.includes('deporte') || catName === 'sport') {
+      gradientColors = ['#F29A5C', '#D2562B'];
+    } else {
+      gradientColors = ['#5C4A0F', '#8A7A1E'];
+    }
+
+    return (
+      <LinearGradient
+        colors={gradientColors}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+    );
+  };
+
+  const getMeta = (task: any) => {
+    const catName = task.category?.name_es || 'Sin categoría';
+    const subtasks = task.item_subtasks || [];
+    const subtasksTotal = subtasks.length;
+    const subtasksDone = subtasks.filter((s: any) => s.done).length;
+
+    if (task.status === 'completed') {
+      return `${catName} · Completada`;
+    }
+    if (subtasksTotal > 0) {
+      return `${catName} · ${subtasksDone} de ${subtasksTotal} pasos`;
+    }
+    return catName;
+  };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
-      
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 120 }}>
       {/* Month Navigation */}
       <View style={styles.header}>
         <View>
-          <Typography variant="h1" color={theme.colors.foreground} style={{ textTransform: 'capitalize' }}>
+          <Typography
+            variant="h1"
+            color={theme.colors.foreground}
+            style={{ textTransform: 'capitalize', fontSize: 26 }}
+          >
             {format(currentDate, 'MMMM yyyy', { locale: es })}
           </Typography>
-          <Typography variant="body" color={theme.colors.foregroundMuted} style={{ marginTop: 4 }}>
-            2 completadas este mes
+          <Typography variant="body" color={theme.colors.foregroundMuted} style={{ marginTop: 2 }}>
+            {completedThisMonth === 0
+              ? '0 completadas este mes'
+              : `${completedThisMonth} completada${completedThisMonth === 1 ? '' : 's'} este mes`}
           </Typography>
         </View>
-        <View style={{ flexDirection: 'row', gap: 16 }}>
-          <Pressable onPress={prevMonth} style={styles.navButton}>
-            <ChevronLeft color={theme.colors.foreground} size={24} />
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <Pressable onPress={prevMonth} style={styles.navButton} hitSlop={8}>
+            <ChevronLeft color={theme.colors.foreground} size={22} />
           </Pressable>
-          <Pressable onPress={nextMonth} style={styles.navButton}>
-            <ChevronRight color={theme.colors.foreground} size={24} />
+          <Pressable onPress={nextMonth} style={styles.navButton} hitSlop={8}>
+            <ChevronRight color={theme.colors.foreground} size={22} />
           </Pressable>
         </View>
       </View>
@@ -75,9 +215,7 @@ export function CalendarTab() {
       <View style={styles.weekdaysRow}>
         {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((day, i) => (
           <View key={i} style={styles.weekdayCell}>
-            <Typography variant="caption" color={theme.colors.foregroundMuted} style={{ fontFamily: 'Inter-Bold' }}>
-              {day}
-            </Typography>
+            <Text style={styles.weekdayText}>{day}</Text>
           </View>
         ))}
       </View>
@@ -93,52 +231,60 @@ export function CalendarTab() {
             const dateStr = format(day, 'yyyy-MM-dd');
             const isSelected = isSameDay(day, selectedDate);
             const isCurrentMonth = isSameMonth(day, currentDate);
-            
-            const tasks = dataMap.get(dateStr) || [];
-            
-            // Check if there are completed tasks or pending tasks
-            const hasCompleted = tasks.some(t => t.status === 'completed');
-            const hasPending = tasks.some(t => t.status !== 'completed');
-            
-            // If the day is selected, it might have a background color from tasks.
-            // The image shows Day 2 filled with Purple, Day 4 filled with Orange.
-            // Since we don't have categories color in useCalendar yet, we use generic colors.
-            // Let's use Gold if selected, or if there is a primary task category color, we could use it.
-            // For now, to exactly match: Day 4 is selected and filled orange? No, wait. 
-            // The user says "las tareas de ese dia que se vean como la imagen". The image shows a task card with an orange thumbnail.
-            
+            const isToday = isSameDay(day, new Date());
+
+            const tasks = tasksByDay.get(dateStr) || [];
+            const hasCompleted = tasks.some((t) => t.status === 'completed');
+            const hasPending = tasks.some((t) => {
+              if (t.status === 'completed') return false;
+              if (!t.deadline) return true;
+              const d = new Date(t.deadline);
+              d.setHours(0, 0, 0, 0);
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              return d.getTime() >= today.getTime();
+            });
+            const hasExpired = tasks.some((t) => {
+              if (t.status === 'completed') return false;
+              if (!t.deadline) return false;
+              const d = new Date(t.deadline);
+              d.setHours(0, 0, 0, 0);
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              return d.getTime() < today.getTime();
+            });
+
             return (
               <Pressable
                 key={i}
                 style={styles.dayCell}
                 onPress={() => setSelectedDate(day)}
               >
-                <View style={[
-                  styles.dayCircle,
-                  isSelected && { backgroundColor: 'transparent', borderColor: gold[400], borderWidth: 1 },
-                  !isSelected && tasks.length > 0 && { backgroundColor: tasks[0]?.status === 'completed' ? '#f97316' : '#7c3aed' },
-                  !isSelected && tasks.length === 0 && { backgroundColor: 'transparent' }
-                ]}>
-                  <Typography 
-                    variant="bodySemibold" 
-                    color={
-                      isSelected ? gold[400] : 
-                      (tasks.length > 0 && !isSelected) ? '#FFF' : 
-                      isCurrentMonth ? theme.colors.foreground : 
-                      theme.colors.foregroundMuted
-                    }
+                <View
+                  style={[
+                    styles.dayCircle,
+                    isSelected && styles.dayCircleSelected,
+                    isToday && !isSelected && styles.dayCircleToday,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.dayText,
+                      isSelected && styles.dayTextSelected,
+                      !isCurrentMonth && styles.dayTextOutside,
+                      isToday && !isSelected && styles.dayTextToday,
+                    ]}
                   >
                     {format(day, 'd')}
-                  </Typography>
+                  </Text>
                 </View>
-                
-                {/* Dots indicator (below circle, if selected it shows outline gold dot) */}
-                {isSelected ? null : (
-                  <View style={styles.dotsRow}>
-                    {hasCompleted && <View style={[styles.dot, { backgroundColor: '#f97316' }]} />}
-                    {hasPending && <View style={[styles.dot, { borderColor: gold[400], borderWidth: 1, backgroundColor: 'transparent' }]} />}
-                  </View>
-                )}
+
+                {/* Dots indicator below day number */}
+                <View style={styles.dotsRow}>
+                  {hasCompleted && <View style={[styles.dot, { backgroundColor: '#D4B13A' }]} />}
+                  {hasPending && <View style={[styles.dot, { backgroundColor: '#3A78C4' }]} />}
+                  {hasExpired && <View style={[styles.dot, { backgroundColor: '#EF4444' }]} />}
+                </View>
               </Pressable>
             );
           })}
@@ -148,41 +294,126 @@ export function CalendarTab() {
       {/* Legend */}
       <View style={styles.legendRow}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#f97316' }]} />
-          <Typography variant="caption" color={theme.colors.foregroundMuted}>Completada</Typography>
+          <View style={[styles.legendDot, { backgroundColor: '#D4B13A' }]} />
+          <Text style={styles.legendText}>Completada</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { borderColor: gold[400], borderWidth: 1, backgroundColor: 'transparent' }]} />
-          <Typography variant="caption" color={theme.colors.foregroundMuted}>Vence</Typography>
+          <View style={[styles.legendDot, { backgroundColor: '#3A78C4' }]} />
+          <Text style={styles.legendText}>Pendiente</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: '#EF4444' }]} />
+          <Text style={styles.legendText}>Vencida</Text>
         </View>
       </View>
 
-      {/* Selected Day Title */}
-      <Typography variant="h3" color={gold[400]} style={styles.selectedDayTitle}>
-        {format(selectedDate, 'd \'DE\' MMMM', { locale: es }).toUpperCase()}
-      </Typography>
-
-      {/* Selected Day Tasks */}
-      <View style={styles.tasksContainer}>
-        {selectedTasks.map(task => (
-          <Pressable 
-            key={task.id} 
-            style={[styles.taskCard, { backgroundColor: theme.colors.surface }]}
-            onPress={() => router.push(`/bucket/${task.id}` as any)}
-          >
-            <View style={[styles.taskThumbnail, { backgroundColor: task.status === 'completed' ? '#f97316' : '#7c3aed' }]} />
-            <View style={{ flex: 1 }}>
-              <Typography variant="bodySemibold" color={theme.colors.foreground} numberOfLines={1}>
-                {task.title}
-              </Typography>
-              <Typography variant="caption" color={theme.colors.foregroundMuted} style={{ marginTop: 4 }}>
-                {task.visibility} · {task.status === 'completed' ? 'Completado' : 'Pendiente'}
-              </Typography>
-            </View>
-            <ChevronRight color={theme.colors.foregroundMuted} size={20} />
-          </Pressable>
-        ))}
+      {/* ── SECCIÓN: Tareas del Día Seleccionado ── */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>
+          <Text style={{ color: '#D4B13A' }}>
+            {format(selectedDate, "d 'DE' MMMM", { locale: es }).toUpperCase()}
+          </Text>
+          {selectedTasks.length > 0 ? ` · ${selectedTasks.length}` : ''}
+        </Text>
       </View>
+
+      <View style={styles.tasksContainer}>
+        {selectedTasks.length === 0 ? (
+          <View style={styles.emptyDayContainer}>
+            <Calendar color="#3A3A3A" size={28} style={{ marginBottom: 6 }} />
+            <Text style={styles.emptyDayText}>No hay tareas programadas ni completadas este día</Text>
+          </View>
+        ) : (
+          selectedTasks.map((task) => {
+            const isExpired =
+              task.status !== 'completed' &&
+              task.deadline &&
+              new Date(task.deadline).getTime() < new Date().setHours(0, 0, 0, 0);
+
+            return (
+              <View key={task.id} style={{ marginBottom: 10 }}>
+                <TaskRow
+                  title={task.title}
+                  meta={getMeta(task)}
+                  deadline={task.deadline}
+                  thumbnailElement={renderThumbnail(task)}
+                  completed={task.status === 'completed'}
+                  expiredAction={isExpired}
+                  onPress={() => router.push(`/bucket/${task.id}`)}
+                />
+              </View>
+            );
+          })
+        )}
+      </View>
+
+      {/* ── SECCIÓN: TAREAS VENCIDAS ── */}
+      {expiredTasks.length > 0 && (
+        <View style={styles.expiredSection}>
+          <View style={styles.sectionHeaderRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={styles.expiredDot} />
+              <Text style={styles.sectionTitle}>
+                <Text style={{ color: '#EF4444' }}>VENCIDAS</Text> · {expiredTasks.length}
+              </Text>
+            </View>
+            <Text style={styles.expiredSectionSubtitle}>
+              {expiredTasks.length === 1 ? '1 pendiente de fecha' : `${expiredTasks.length} pendientes de fecha`}
+            </Text>
+          </View>
+
+          <View style={styles.tasksContainer}>
+            {expiredTasks.map((task) => (
+              <View key={task.id} style={{ marginBottom: 10 }}>
+                <TaskRow
+                  title={task.title}
+                  meta={getMeta(task)}
+                  deadline={task.deadline}
+                  thumbnailElement={renderThumbnail(task)}
+                  completed={false}
+                  expiredAction={true}
+                  onPress={() => router.push(`/bucket/${task.id}`)}
+                />
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* ── SECCIÓN: Tareas sin fecha asignada ── */}
+      {unscheduledTasks.length > 0 && (
+        <View style={styles.unscheduledSection}>
+          <Pressable
+            style={styles.unscheduledHeader}
+            onPress={() => setShowUnscheduled(!showUnscheduled)}
+          >
+            <Text style={styles.unscheduledTitle}>
+              SIN FECHA PROGRAMADA · {unscheduledTasks.length}
+            </Text>
+            <ChevronRight
+              color="#8F8F8F"
+              size={18}
+              style={{ transform: [{ rotate: showUnscheduled ? '90deg' : '0deg' }] }}
+            />
+          </Pressable>
+
+          {showUnscheduled && (
+            <View style={[styles.tasksContainer, { marginTop: 10 }]}>
+              {unscheduledTasks.map((task) => (
+                <View key={task.id} style={{ marginBottom: 10 }}>
+                  <TaskRow
+                    title={task.title}
+                    meta={getMeta(task)}
+                    thumbnailElement={renderThumbnail(task)}
+                    completed={false}
+                    onPress={() => router.push(`/bucket/${task.id}`)}
+                  />
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -197,34 +428,47 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     marginBottom: 16,
+    marginTop: 8,
   },
   navButton: {
-    padding: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#181818',
+    borderWidth: 1,
+    borderColor: '#262626',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   weekdaysRow: {
     flexDirection: 'row',
-    paddingHorizontal: 12,
-    marginBottom: 8,
+    paddingHorizontal: 16,
+    marginBottom: 6,
   },
   weekdayCell: {
     flex: 1,
     alignItems: 'center',
   },
+  weekdayText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 12,
+    color: '#8A8A8A',
+  },
   loaderContainer: {
-    height: 250,
+    height: 220,
     alignItems: 'center',
     justifyContent: 'center',
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
   },
   dayCell: {
-    width: '14.28%', // 100 / 7
-    aspectRatio: 0.8,
+    width: '14.28%',
+    aspectRatio: 0.85,
     alignItems: 'center',
-    paddingTop: 4,
+    paddingTop: 3,
   },
   dayCircle: {
     width: 32,
@@ -232,57 +476,137 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  dayCircleSelected: {
+    borderColor: '#D4B13A',
+    borderWidth: 1.5,
+    backgroundColor: 'rgba(212, 177, 58, 0.12)',
+  },
+  dayCircleToday: {
+    borderColor: '#383838',
+    borderWidth: 1,
+  },
+  dayText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 14,
+    color: '#F3EEE3',
+  },
+  dayTextSelected: {
+    color: '#D4B13A',
+    fontFamily: 'Inter_700Bold',
+  },
+  dayTextToday: {
+    color: '#FFF',
+    fontFamily: 'Inter_600SemiBold',
+  },
+  dayTextOutside: {
+    color: '#3F3F3F',
   },
   dotsRow: {
     flexDirection: 'row',
-    marginTop: 4,
-    gap: 4,
+    marginTop: 3,
+    gap: 3,
+    height: 6,
+    alignItems: 'center',
   },
   dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
   },
   legendRow: {
     flexDirection: 'row',
     paddingHorizontal: 20,
-    marginTop: 16,
+    marginTop: 12,
     gap: 16,
+    alignItems: 'center',
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   legendDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
-  selectedDayTitle: {
+  legendText: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    color: '#8A8A8A',
+  },
+  sectionHeader: {
     paddingHorizontal: 20,
     marginTop: 24,
-    marginBottom: 8,
-    fontFamily: 'PlayfairDisplay-Bold',
-    letterSpacing: 1,
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 15,
+    color: '#FFFFFF',
+    letterSpacing: 0.6,
   },
   tasksContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 100, // For the bottom tab bar and FAB
   },
-  taskCard: {
-    flexDirection: 'row',
+  emptyDayContainer: {
+    paddingVertical: 24,
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 12,
+    justifyContent: 'center',
+    backgroundColor: '#141414',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: dark[400],
+    borderColor: '#222',
   },
-  taskThumbnail: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
-    marginRight: 16,
+  emptyDayText: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    color: '#707070',
+    textAlign: 'center',
+  },
+  expiredSection: {
+    marginTop: 26,
+    borderTopWidth: 1,
+    borderTopColor: '#1E1E1E',
+    paddingTop: 18,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 12,
+  },
+  expiredDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#EF4444',
+  },
+  expiredSectionSubtitle: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    color: '#8A8A8A',
+  },
+  unscheduledSection: {
+    marginTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#1E1E1E',
+    paddingTop: 14,
+  },
+  unscheduledHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+  },
+  unscheduledTitle: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 13,
+    color: '#8A8A8A',
+    letterSpacing: 0.6,
   },
 });
