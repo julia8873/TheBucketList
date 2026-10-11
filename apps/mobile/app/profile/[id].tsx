@@ -247,11 +247,11 @@ export default function PublicProfileScreen() {
       <View style={styles.identity}>
         <Avatar uri={profile.avatar_url} initials={initialsOf(profile)} size="xl" goldRing />
         <View style={styles.identityText}>
-          <Text style={styles.name} numberOfLines={2}>
+          <Text style={styles.name} numberOfLines={2} ellipsizeMode="tail">
             {displayNameOf(profile)}
           </Text>
           <View style={styles.handleRow}>
-            <Text style={styles.handle}>@{profile.username}</Text>
+            <Text style={styles.handle} numberOfLines={1} ellipsizeMode="tail">@{profile.username}</Text>
             {isPrivate ? <Lock size={13} color="#9A9A9A" strokeWidth={1.8} /> : null}
           </View>
         </View>
@@ -439,12 +439,12 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 20,
   },
-  identity: { flexDirection: 'row', alignItems: 'center', gap: 18, marginTop: 14 },
-  identityText: { flex: 1, gap: 4 },
-  name: { fontFamily: fontFamily.serifBold, fontSize: 30, lineHeight: 36, color: '#FFFFFF', letterSpacing: -0.3 },
+  identity: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 14 },
+  identityText: { flex: 1, gap: 3 },
+  name: { fontFamily: fontFamily.serifBold, fontSize: 19, lineHeight: 24, color: '#FFFFFF', letterSpacing: -0.2 },
   handleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  handle: { fontFamily: fontFamily.regular, fontSize: 15, color: '#9A9A9A' },
-  bio: { fontFamily: fontFamily.regular, fontSize: 15, lineHeight: 22, color: '#E5E5E5', marginTop: 18 },
+  handle: { fontFamily: fontFamily.regular, fontSize: 13, color: '#9A9A9A' },
+  bio: { fontFamily: fontFamily.regular, fontSize: 14, lineHeight: 20, color: '#E5E5E5', marginTop: 14 },
   followWrap: { marginTop: 18 },
   editButton: {
     height: 46,

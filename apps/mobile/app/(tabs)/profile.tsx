@@ -122,9 +122,9 @@ export default function CurrentUserProfileScreen() {
         {/* Identidad */}
         <View style={styles.identity}>
           <Avatar uri={profile?.avatar_url} initials={initialsOf(profile)} size="xl" goldRing />
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={2}>{name}</Text>
-            <Text style={[styles.handle, { color: theme.colors.foregroundMuted }]}>@{profile?.username}</Text>
+          <View style={{ flex: 1, gap: 3 }}>
+            <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={2} ellipsizeMode="tail">{name}</Text>
+            <Text style={[styles.handle, { color: theme.colors.foregroundMuted }]} numberOfLines={1} ellipsizeMode="tail">@{profile?.username}</Text>
           </View>
         </View>
 
@@ -298,10 +298,10 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 12 },
   title: { fontFamily: fontFamily.serifBold, fontSize: 32 },
   roundBtn: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  identity: { flexDirection: 'row', alignItems: 'center', gap: 18, marginTop: 24 },
-  name: { fontFamily: fontFamily.serifBold, fontSize: 26, lineHeight: 30 },
-  handle: { fontFamily: fontFamily.regular, fontSize: 15, marginTop: 4 },
-  bio: { fontFamily: fontFamily.regular, fontSize: 16, lineHeight: 23, marginTop: 16 },
+  identity: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 20 },
+  name: { fontFamily: fontFamily.serifBold, fontSize: 19, lineHeight: 24 },
+  handle: { fontFamily: fontFamily.regular, fontSize: 13, marginTop: 2 },
+  bio: { fontFamily: fontFamily.regular, fontSize: 14, lineHeight: 20, marginTop: 14 },
   actions: { flexDirection: 'row', gap: 10, marginTop: 18 },
   btn: { flex: 1, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   btnText: { fontFamily: fontFamily.semibold, fontSize: 15 },
