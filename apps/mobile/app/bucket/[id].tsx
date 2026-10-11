@@ -9,7 +9,7 @@ import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Typography, useTheme } from '@bucketlist/ui';
-import { ArrowLeft, Share2, MoreHorizontal, MapPin, Calendar, Heart, MessageCircle, FolderOpen, CheckCircle2, Circle, Camera, Check, Eye, Lock, Users, FolderPlus, Pencil, Trash2, X, ListPlus, Plus, Minus, Download, ArrowUp, ArrowDown, Tag, Flag } from 'lucide-react-native';
+import { ArrowLeft, Share2, MoreHorizontal, MapPin, Calendar, Heart, MessageCircle, FolderOpen, CheckCircle2, Circle, Camera, Check, Eye, Lock, Users, FolderPlus, Pencil, Trash2, X, ListPlus, Plus, Minus, Download, ArrowUp, ArrowDown, Tag, Flag, Star } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { supabase } from '../../src/services/supabase';
@@ -19,6 +19,7 @@ import { useAuthStore } from '../../src/stores/auth.store';
 import { useAddComment, useCopyBucket, useToggleReaction } from '../../src/hooks/useSocial';
 import { useDeleteBucket } from '../../src/hooks/useBuckets';
 import { useAlbums } from '../../src/hooks/useAlbums';
+import { useUserFavorites, useToggleFavoriteBucket } from '../../src/hooks/useFavorites';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { BucketCover } from '../../src/components/BucketCover';
 import { SubtaskList } from '../../src/components/SubtaskList';
@@ -84,6 +85,9 @@ export default function BucketDetailScreen() {
   const copyBucket = useCopyBucket();
   const toggleReaction = useToggleReaction();
   const deleteBucket = useDeleteBucket();
+  const { isBucketFavorite } = useUserFavorites(user?.id);
+  const toggleFavorite = useToggleFavoriteBucket();
+  const isFav = isBucketFavorite(id);
   const { data: albumsData, isLoading: albumsLoading } = useAlbums(user?.id);
 
   const { data: categories = [] } = useQuery({
@@ -988,6 +992,21 @@ export default function BucketDetailScreen() {
               <ArrowLeft color="#FFF" size={20} strokeWidth={2} />
             </Pressable>
             <View style={{ flexDirection: 'row', gap: 10 }}>
+              {user && (
+                <Pressable
+                  style={styles.navButton}
+                  accessibilityRole="button"
+                  accessibilityLabel={isFav ? 'Quitar de favoritas' : 'Marcar como favorita'}
+                  onPress={() => toggleFavorite.mutate({ bucketId: id, currentlyFavorite: isFav })}
+                >
+                  <Star
+                    color={isFav ? gold[400] : '#FFF'}
+                    fill={isFav ? gold[400] : 'transparent'}
+                    size={20}
+                    strokeWidth={2}
+                  />
+                </Pressable>
+              )}
               <Pressable style={styles.navButton} onPress={() => void shareMoment()}>
                 <Share2 color="#FFF" size={20} strokeWidth={2} />
               </Pressable>
@@ -1714,6 +1733,10 @@ export default function BucketDetailScreen() {
         isOwner={isOwner}
         canEdit={canEdit}
         isCollaborator={isCollaborator}
+        isFavorite={isFav}
+        onToggleFavorite={() => {
+          toggleFavorite.mutate({ bucketId: id, currentlyFavorite: isFav });
+        }}
         onLeaveCollaboration={handleLeaveCollaboration}
         uploadPhotos={uploadPhotos}
         uploadCover={uploadCover}

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, View, Pressable, Animated, ActivityIndicator, Alert, StyleSheet, TextInput, ScrollView } from 'react-native';
 import { Typography } from '@bucketlist/ui';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
-import { X, Camera, FolderPlus, ListPlus, Trash2, Circle, MoreHorizontal, CheckCircle2, Check, Eye, Users, Lock, ArrowLeft, FolderOpen, Image as ImageIcon, Tag, LogOut, Flag } from 'lucide-react-native';
+import { X, Camera, FolderPlus, ListPlus, Trash2, Circle, MoreHorizontal, CheckCircle2, Check, Eye, Users, Lock, ArrowLeft, FolderOpen, Image as ImageIcon, Tag, LogOut, Flag, Star } from 'lucide-react-native';
 import { styles } from '../../app/bucket/BucketDetail.styles';
 
 type BucketBottomSheetProps = {
@@ -14,6 +14,8 @@ type BucketBottomSheetProps = {
   isOwner: boolean;
   canEdit?: boolean;
   isCollaborator?: boolean;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
   onLeaveCollaboration?: () => void;
   uploadPhotos: () => void;
   uploadCover: () => void;
@@ -37,7 +39,7 @@ type BucketBottomSheetProps = {
 };
 
 export function BucketBottomSheet({
-  sheetVisible, sheetMode, sheetTranslateY, closeSheet, theme, isOwner, canEdit, isCollaborator, onLeaveCollaboration, uploadPhotos, uploadCover, loadAlbums, user, copyBucket, id, handleDelete, bucket, handleChangeStatus, handleChangeVisibility, handleChangeCategory, handleChangePriority, setSheetMode, albumsLoading, toggleAlbum, removeAllAlbums, albums, bucketAlbums, categories
+  sheetVisible, sheetMode, sheetTranslateY, closeSheet, theme, isOwner, canEdit, isCollaborator, isFavorite, onToggleFavorite, onLeaveCollaboration, uploadPhotos, uploadCover, loadAlbums, user, copyBucket, id, handleDelete, bucket, handleChangeStatus, handleChangeVisibility, handleChangeCategory, handleChangePriority, setSheetMode, albumsLoading, toggleAlbum, removeAllAlbums, albums, bucketAlbums, categories
 }: BucketBottomSheetProps) {
   const [albumSearchQuery, setAlbumSearchQuery] = useState('');
   const visibilityLabel = (v: string) => {
@@ -85,6 +87,26 @@ export function BucketBottomSheet({
               </View>
 
               <View style={styles.sheetOptions}>
+                {user && onToggleFavorite && (
+                  <Pressable style={styles.sheetOption} onPress={onToggleFavorite}>
+                    <View style={styles.sheetIcon}>
+                      <Star
+                        color={gold[400]}
+                        fill={isFavorite ? gold[400] : 'transparent'}
+                        size={21}
+                      />
+                    </View>
+                    <View style={styles.sheetOptionText}>
+                      <Typography variant="bodySemibold">
+                        {isFavorite ? 'Quitar de favoritas' : 'Marcar como favorita'}
+                      </Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>
+                        {isFavorite ? 'Elimina la tarea de tus favoritas' : 'Añade la tarea a tus favoritas'}
+                      </Typography>
+                    </View>
+                  </Pressable>
+                )}
+
                 {canEdit && (
                   <Pressable style={styles.sheetOption} onPress={() => void uploadPhotos()}>
                     <View style={styles.sheetIcon}><Camera color={gold[400]} size={21} /></View>

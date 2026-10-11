@@ -34,6 +34,7 @@ import {
   Pencil,
   Trash2,
   X,
+  Star,
 } from 'lucide-react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
@@ -41,6 +42,7 @@ import { useAlbumDetail, useDeleteAlbumDetail, TaskItem } from '../../src/servic
 import { supabase } from '../../src/services/supabase';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
+import { useUserFavorites, useToggleFavoriteAlbum } from '../../src/hooks/useFavorites';
 
 const GRADIENTS = {
   aurora: ['#0E4B43', '#1F8560'],
@@ -68,6 +70,10 @@ export default function AlbumDetailScreen() {
   const queryClient = useQueryClient();
   const { user, session } = useAuthStore();
   const currentUserId = user?.id || session?.user?.id;
+  const { isAlbumFavorite } = useUserFavorites(currentUserId);
+  const toggleFavoriteAlbum = useToggleFavoriteAlbum();
+  const isFav = isAlbumFavorite(id);
+
   const isSelf = (targetId?: string | null) => {
     if (!targetId || !currentUserId) return false;
     return String(targetId).toLowerCase() === String(currentUserId).toLowerCase();
@@ -654,12 +660,27 @@ export default function AlbumDetailScreen() {
           </Pressable>
 
           {id !== 'unassigned' && (
-            <>
+            <View style={{ position: 'absolute', right: 12, top: Math.max(52, insets.top), flexDirection: 'row', gap: 8 }}>
+              {currentUserId && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={isFav ? 'Quitar de favoritos' : 'Marcar como favorito'}
+                  style={styles.heroBtn}
+                  onPress={() => toggleFavoriteAlbum.mutate({ albumId: id, currentlyFavorite: isFav })}
+                >
+                  <Star
+                    size={20}
+                    color={isFav ? '#D4B13A' : '#F3EEE3'}
+                    fill={isFav ? '#D4B13A' : 'transparent'}
+                    strokeWidth={1.8}
+                  />
+                </Pressable>
+              )}
               {canEdit && (
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Cambiar portada"
-                  style={[styles.heroBtn, { right: 116, top: Math.max(52, insets.top) }]}
+                  style={styles.heroBtn}
                   onPress={() => void pickAndUploadCover()}
                 >
                   <Camera size={20} color="#F3EEE3" strokeWidth={1.8} />
@@ -668,7 +689,7 @@ export default function AlbumDetailScreen() {
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Compartir"
-                style={[styles.heroBtn, { right: 64, top: Math.max(52, insets.top) }]}
+                style={styles.heroBtn}
                 onPress={handleShare}
               >
                 <ShareIcon size={22} color="#F3EEE3" strokeWidth={1.8} />
@@ -676,12 +697,12 @@ export default function AlbumDetailScreen() {
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Más opciones"
-                style={[styles.heroBtn, { right: 12, top: Math.max(52, insets.top) }]}
+                style={styles.heroBtn}
                 onPress={handleMore}
               >
                 <MoreHorizontal size={22} color="#F3EEE3" strokeWidth={1.8} />
               </Pressable>
-            </>
+            </View>
           )}
         </View>
 
@@ -985,6 +1006,34 @@ export default function AlbumDetailScreen() {
                 </View>
 
                 <View style={styles.sheetOptions}>
+                  {currentUserId && id !== 'unassigned' && (
+                    <Pressable
+                      style={styles.sheetOption}
+                      onPress={() => {
+                        toggleFavoriteAlbum.mutate({ albumId: id, currentlyFavorite: isFav });
+                        closeSheet();
+                      }}
+                    >
+                      <View style={styles.sheetIconBox}>
+                        <Star
+                          color="#D4B13A"
+                          fill={isFav ? '#D4B13A' : 'transparent'}
+                          size={20}
+                        />
+                      </View>
+                      <View style={styles.sheetOptionTexts}>
+                        <Text style={styles.sheetOptionTitle}>
+                          {isFav ? 'Quitar de favoritos' : 'Marcar como favorito'}
+                        </Text>
+                        <Text style={styles.sheetOptionSubtitle}>
+                          {isFav
+                            ? 'Elimina este álbum de tu lista de favoritos'
+                            : 'Guarda este álbum en tus favoritos'}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  )}
+
                   {tasks.length > 0 && (
                     <Pressable
                       style={styles.sheetOption}

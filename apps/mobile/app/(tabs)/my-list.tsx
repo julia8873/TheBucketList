@@ -6,11 +6,12 @@ import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Swipeable } from 'react-native-gesture-handler';
-import { Search, Trash2, CheckCircle2, X, Tag as TagIcon, ArrowDown, ArrowUp } from 'lucide-react-native';
+import { Search, Trash2, CheckCircle2, X, Tag as TagIcon, ArrowDown, ArrowUp, Star } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { useBuckets, useDeleteBucket, useUpdateBucket } from '../../src/hooks/useBuckets';
 import { useAlbums } from '../../src/hooks/useAlbums';
+import { useUserFavorites } from '../../src/hooks/useFavorites';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../src/services/supabase';
@@ -77,6 +78,7 @@ export default function MyListScreen() {
   };
 
   const { data: buckets, isLoading } = useBuckets(user?.id);
+  const { isBucketFavorite, isAlbumFavorite, bucketIds: favBucketIds } = useUserFavorites(user?.id);
   const { data: allTags } = useTags();
   const { data: tagUsage } = useTagUsage();
   const deleteBucket = useDeleteBucket();
@@ -129,8 +131,8 @@ export default function MyListScreen() {
   );
 
   const listExtra = useMemo(
-    () => ({ tagsById, byItem: tagUsage?.byItem, selectedTagIds, priorityFilter, sortField, sortDir }),
-    [tagsById, tagUsage, selectedTagIds, priorityFilter, sortField, sortDir],
+    () => ({ tagsById, byItem: tagUsage?.byItem, selectedTagIds, priorityFilter, sortField, sortDir, favBucketIds }),
+    [tagsById, tagUsage, selectedTagIds, priorityFilter, sortField, sortDir, favBucketIds],
   );
 
   const toggleSearch = () => {
@@ -189,27 +191,39 @@ export default function MyListScreen() {
       const isCompleted = (b: any) => b.status === 'completed';
       const isPending = (b: any) => !isCompleted(b) && !isExpired(b);
 
-      const pending = filteredBuckets
+      const favorites = filteredBuckets
+        .filter((b: any) => isBucketFavorite(b.id))
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      const nonFavorites = filteredBuckets.filter((b: any) => !isBucketFavorite(b.id));
+
+      const pending = nonFavorites
         .filter(isPending)
         .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      const completed = filteredBuckets
+      const completed = nonFavorites
         .filter(isCompleted)
         .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      const expired = filteredBuckets
+      const expired = nonFavorites
         .filter(isExpired)
         .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      let sections = [
+      let otherSections = [
         { key: 'pending', title: 'PENDIENTES', items: pending },
         { key: 'completed', title: 'COMPLETADAS', items: completed },
         { key: 'expired', title: 'VENCIDAS', items: expired },
       ];
 
       if (sortDir === 'asc') {
-        sections.reverse();
+        otherSections.reverse();
       }
+
+      // La sección de favoritas va al principio del todo
+      let sections = [
+        { key: 'favorites', title: 'FAVORITAS ⭐', items: favorites },
+        ...otherSections,
+      ];
 
       const result: any[] = [];
       for (const sec of sections) {
@@ -258,14 +272,22 @@ export default function MyListScreen() {
       return sortDir === 'asc' ? da - db : db - da;
     });
     return sorted;
-  }, [filteredBuckets, sortField, sortDir]);
+  }, [filteredBuckets, sortField, sortDir, isBucketFavorite, favBucketIds]);
 
   const filteredAlbums = useMemo(() => {
     if (!albums) return [];
-    if (!searchQuery.trim()) return albums;
-    const q = searchQuery.toLowerCase();
-    return albums.filter((a: any) => a.title?.toLowerCase().includes(q) || a.description?.toLowerCase().includes(q));
-  }, [albums, searchQuery]);
+    let list = albums;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter((a: any) => a.title?.toLowerCase().includes(q) || a.description?.toLowerCase().includes(q));
+    }
+    return [...list].sort((a: any, b: any) => {
+      const favA = isAlbumFavorite(a.id) ? 1 : 0;
+      const favB = isAlbumFavorite(b.id) ? 1 : 0;
+      if (favA !== favB) return favB - favA;
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    });
+  }, [albums, searchQuery, isAlbumFavorite]);
 
   const handleCreate = () => {
     router.push('/(modals)/create-bucket');
@@ -335,8 +357,32 @@ export default function MyListScreen() {
       </View>
     );
 
+    const isFav = isBucketFavorite(item.id);
+    const favoriteBadge = isFav ? (
+      <View
+        key="favorite-badge"
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 3,
+          paddingHorizontal: 6,
+          paddingVertical: 2,
+          borderRadius: 8,
+          backgroundColor: 'rgba(212, 177, 58, 0.18)',
+          borderWidth: 1,
+          borderColor: gold[400],
+        }}
+      >
+        <Star size={11} color={gold[400]} fill={gold[400]} />
+        <Text style={{ fontSize: 11, fontWeight: '700', color: gold[400] }}>
+          Favorita
+        </Text>
+      </View>
+    ) : null;
+
     const tagsElement = (
       <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+        {favoriteBadge}
         {priorityBadge}
         {itemTags.slice(0, 2).map((t) => (
           <TagChip key={t.id} label={t.name} variant="colored" color={t.color} emoji={t.emoji} size="sm" />
@@ -672,6 +718,7 @@ export default function MyListScreen() {
                   completedTasks={item.completed_tasks ?? 0}
                   coverUri={item.cover_path}
                   isShared={item.is_shared}
+                  isFavorite={isAlbumFavorite(item.id)}
                   colorIndex={index}
                   onPress={() => router.push(`/album/${item.id}` as any)}
                 />

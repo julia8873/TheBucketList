@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Plus, FolderOpen, ChevronRight } from 'lucide-react-native';
+import { Plus, FolderOpen, ChevronRight, Star } from 'lucide-react-native';
 
 import { useTheme } from '../theme/useTheme';
 import { fontFamily, fontSize } from '../tokens/typography';
@@ -38,6 +38,7 @@ interface AlbumCardProps {
   completedTasks: number;
   coverUri?: string | null;
   isShared?: boolean;
+  isFavorite?: boolean;
   colorIndex?: number;  // to pick a gradient when no cover
   onPress?: () => void;
   style?: ViewStyle;
@@ -49,6 +50,7 @@ export function AlbumCard({
   completedTasks,
   coverUri,
   isShared = false,
+  isFavorite = false,
   colorIndex = 0,
   onPress,
   style,
@@ -115,6 +117,13 @@ export function AlbumCard({
       {isShared && (
         <View style={styles.sharedBadge}>
           <Text style={styles.sharedText}>Compartido</Text>
+        </View>
+      )}
+
+      {/* Favorite badge */}
+      {isFavorite && (
+        <View style={styles.favoriteBadge}>
+          <Star size={14} color={gold[400]} fill={gold[400]} />
         </View>
       )}
 
@@ -194,6 +203,16 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.semibold,
     fontSize: fontSize.xs,
     color: '#FFF',
+  },
+  favoriteBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    padding: 6,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   bottom: {
     position: 'absolute',
