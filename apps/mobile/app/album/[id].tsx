@@ -1,10 +1,42 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator, Alert, Share, RefreshControl, Image } from 'react-native';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+  Share,
+  RefreshControl,
+  Image,
+  TextInput,
+  Modal,
+  Animated,
+  Platform,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, Share as ShareIcon, MoreHorizontal, Lock, Users, Plus, Check, Globe } from 'lucide-react-native';
+import {
+  ChevronLeft,
+  Share as ShareIcon,
+  MoreHorizontal,
+  Lock,
+  Users,
+  Plus,
+  Check,
+  Globe,
+  Camera,
+  CheckCircle2,
+  RotateCcw,
+  Eye,
+  Pencil,
+  Trash2,
+  X,
+} from 'lucide-react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import * as ImagePicker from 'expo-image-picker';
 import { useAlbumDetail, useDeleteAlbumDetail, TaskItem } from '../../src/services/api/albumsService';
 import { supabase } from '../../src/services/supabase';
 import { useAuthStore } from '../../src/stores/auth.store';
@@ -35,11 +67,43 @@ export default function AlbumDetailScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
-  
+
   const [showCollaboratorPicker, setShowCollaboratorPicker] = useState(false);
+  const [sheetVisible, setSheetVisible] = useState(false);
+  const [sheetMode, setSheetMode] = useState<'menu' | 'visibility'>('menu');
+  const sheetTranslateY = useRef(new Animated.Value(420)).current;
+
+  const titleTimeout = useRef<NodeJS.Timeout | null>(null);
+  const descTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const { data: album, isLoading, isError, refetch, isRefetching } = useAlbumDetail(id || '1');
   const deleteMutation = useDeleteAlbumDetail();
+
+  // Bottom sheet animation
+  useEffect(() => {
+    if (!sheetVisible) return;
+    sheetTranslateY.setValue(420);
+    Animated.spring(sheetTranslateY, {
+      toValue: 0,
+      damping: 24,
+      stiffness: 220,
+      mass: 0.8,
+      useNativeDriver: true,
+    }).start();
+  }, [sheetVisible, sheetTranslateY]);
+
+  const closeSheet = (after?: () => void) => {
+    Animated.timing(sheetTranslateY, {
+      toValue: 420,
+      duration: 180,
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished) {
+        setSheetVisible(false);
+        after?.();
+      }
+    });
+  };
 
   const { data: albumCollaborators = [], refetch: refetchCollaborators } = useQuery({
     queryKey: ['albumCollaborators', id],
@@ -67,6 +131,9 @@ export default function AlbumDetailScreen() {
     enabled: !!id && id !== 'unassigned',
   });
 
+  const isOwner = album?.ownerId === user?.id;
+
+  // Collaborators change handler
   const handleCollaboratorsChange = async (newCollabs: CollaboratorItem[]) => {
     try {
       const currentIds = new Set(albumCollaborators.map((c: any) => c.id));
@@ -125,6 +192,173 @@ export default function AlbumDetailScreen() {
     }
   };
 
+  // Inline Title Change
+  const handleTitleChange = (newTitle: string) => {
+    queryClient.setQueryData(['album', id, user?.id], (old: any) =>
+      old ? { ...old, title: newTitle } : old
+    );
+    if (titleTimeout.current) clearTimeout(titleTimeout.current);
+    titleTimeout.current = setTimeout(async () => {
+      if (!newTitle.trim()) return;
+      const { error } = await supabase
+        .from('albums')
+        .update({ title: newTitle.trim() })
+        .eq('id', id);
+      if (!error) {
+        void queryClient.invalidateQueries({ queryKey: ['albums'] });
+      }
+    }, 500);
+  };
+
+  // Inline Description Change
+  const handleDescriptionChange = (newDesc: string) => {
+    queryClient.setQueryData(['album', id, user?.id], (old: any) =>
+      old ? { ...old, description: newDesc } : old
+    );
+    if (descTimeout.current) clearTimeout(descTimeout.current);
+    descTimeout.current = setTimeout(async () => {
+      const { error } = await supabase
+        .from('albums')
+        .update({ description: newDesc.trim() })
+        .eq('id', id);
+      if (!error) {
+        void queryClient.invalidateQueries({ queryKey: ['albums'] });
+      }
+    }, 500);
+  };
+
+  // Visibility Change
+  const handleChangeVisibility = async (newVisibility: 'public' | 'followers' | 'private') => {
+    queryClient.setQueryData(['album', id, user?.id], (old: any) =>
+      old ? { ...old, visibility: newVisibility } : old
+    );
+    closeSheet();
+
+    const { error } = await supabase
+      .from('albums')
+      .update({ visibility: newVisibility })
+      .eq('id', id);
+
+    if (error) {
+      Alert.alert('Error', 'No se pudo cambiar la visibilidad');
+      void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+      return;
+    }
+
+    void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+    void queryClient.invalidateQueries({ queryKey: ['albums'] });
+  };
+
+  // Cover Change directly from album screen
+  const pickAndUploadCover = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const newCover = {
+          id: 'custom-img',
+          type: 'image',
+          uri: result.assets[0].uri,
+        };
+        const coverJson = JSON.stringify(newCover);
+
+        queryClient.setQueryData(['album', id, user?.id], (old: any) =>
+          old ? { ...old, coverPath: coverJson, coverKey: 'custom-img' } : old
+        );
+
+        const { error } = await supabase
+          .from('albums')
+          .update({ cover_path: coverJson })
+          .eq('id', id);
+
+        if (error) {
+          Alert.alert('Error', 'No se pudo actualizar la portada');
+          void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+          return;
+        }
+
+        void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+        void queryClient.invalidateQueries({ queryKey: ['albums'] });
+      }
+    } catch (err: any) {
+      Alert.alert('Error al seleccionar imagen', err?.message || 'Inténtalo de nuevo');
+    }
+  };
+
+  // Toggle single task completed / in_progress
+  const toggleTaskCompleted = async (task: TaskItem, e: any) => {
+    e.stopPropagation();
+    const nextCompleted = !task.isCompleted;
+    const nextStatus = nextCompleted ? 'completed' : 'in_progress';
+    const nextCompletedAt = nextCompleted ? new Date().toISOString() : null;
+
+    // Optimistic update
+    queryClient.setQueryData(['album', id, user?.id], (old: any) => {
+      if (!old) return old;
+      return {
+        ...old,
+        tasks: old.tasks.map((t: TaskItem) =>
+          t.id === task.id ? { ...t, isCompleted: nextCompleted } : t
+        ),
+      };
+    });
+
+    const { error } = await supabase
+      .from('buckets')
+      .update({ status: nextStatus, completed_at: nextCompletedAt })
+      .eq('id', task.id);
+
+    if (error) {
+      console.error('Error toggling task status:', error);
+      void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+      return;
+    }
+
+    void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+    void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+    void queryClient.invalidateQueries({ queryKey: ['bucketDetail', task.id] });
+  };
+
+  // Toggle all tasks completed / pending
+  const handleToggleAllTasks = async () => {
+    if (!album || album.tasks.length === 0) return;
+    const areAllCompleted = album.tasks.every((t) => t.isCompleted);
+    const nextCompleted = !areAllCompleted;
+    const nextStatus = nextCompleted ? 'completed' : 'in_progress';
+    const nextCompletedAt = nextCompleted ? new Date().toISOString() : null;
+    const taskIds = album.tasks.map((t) => t.id);
+
+    // Optimistic update
+    queryClient.setQueryData(['album', id, user?.id], (old: any) => {
+      if (!old) return old;
+      return {
+        ...old,
+        tasks: old.tasks.map((t: TaskItem) => ({ ...t, isCompleted: nextCompleted })),
+      };
+    });
+
+    closeSheet();
+
+    const { error } = await supabase
+      .from('buckets')
+      .update({ status: nextStatus, completed_at: nextCompletedAt })
+      .in('id', taskIds);
+
+    if (error) {
+      Alert.alert('Error', 'No se pudieron actualizar las tareas');
+      void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+      return;
+    }
+
+    void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+    void queryClient.invalidateQueries({ queryKey: ['albums'] });
+    void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+  };
 
   const handleShare = async () => {
     if (!album) return;
@@ -138,36 +372,25 @@ export default function AlbumDetailScreen() {
   };
 
   const handleMore = () => {
-    Alert.alert(
-      'Opciones',
-      '',
-      [
-        { text: 'Editar álbum', onPress: () => router.push(`/(modals)/create-album?id=${id}`) },
-        { 
-          text: 'Eliminar álbum', 
+    setSheetMode('menu');
+    setSheetVisible(true);
+  };
+
+  const confirmDeleteAlbum = () => {
+    closeSheet(() => {
+      Alert.alert('¿Eliminar este álbum?', 'Las tareas pasarán a Sin álbum.', [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar álbum',
           style: 'destructive',
           onPress: () => {
-            Alert.alert(
-              '¿Eliminar este álbum?',
-              'Las tareas pasarán a Sin álbum.',
-              [
-                { text: 'Cancelar', style: 'cancel' },
-                { 
-                  text: 'Eliminar álbum', 
-                  style: 'destructive', 
-                  onPress: () => {
-                    deleteMutation.mutate(id || '1', {
-                      onSuccess: () => router.back(),
-                    });
-                  } 
-                }
-              ]
-            );
-          }
+            deleteMutation.mutate(id || '1', {
+              onSuccess: () => router.back(),
+            });
+          },
         },
-        { text: 'Cancelar', style: 'cancel' }
-      ]
-    );
+      ]);
+    });
   };
 
   if (isLoading) {
@@ -186,100 +409,143 @@ export default function AlbumDetailScreen() {
     );
   }
 
-  const { title, coverKey, isShared, tasks } = album;
-  const pendientes = tasks.filter(t => !t.isCompleted).sort((a, b) => {
-    if (!a.dueDate) return 1;
-    if (!b.dueDate) return -1;
-    return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-  });
-  const hechas = tasks.filter(t => t.isCompleted);
-  
+  const { title, coverKey, coverPath, isShared, tasks } = album;
+  const pendientes = tasks
+    .filter((t) => !t.isCompleted)
+    .sort((a, b) => {
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+    });
+  const hechas = tasks.filter((t) => t.isCompleted);
+
   const total = tasks.length;
   const completedCount = hechas.length;
   const progressPercent = total === 0 ? 0 : Math.round((completedCount / total) * 100);
+  const areAllCompleted = total > 0 && completedCount === total;
+
+  let parsedCover: any = null;
+  if (coverPath) {
+    try {
+      parsedCover = JSON.parse(coverPath);
+    } catch {
+      // Ignored
+    }
+  }
 
   const gradientColors = GRADIENTS[coverKey as keyof typeof GRADIENTS] || GRADIENTS.aurora;
-  const heroColors = [gradientColors[0], gradientColors[1], '#0D0D0D'] as readonly [string, string, ...string[]];
-  const statusLabel = total === 0 ? 'En curso' : (completedCount === total ? 'Completado' : 'En curso');
+  const heroColors = [gradientColors[0], gradientColors[1], '#0D0D0D'] as readonly [
+    string,
+    string,
+    ...string[]
+  ];
+  const statusLabel =
+    total === 0 ? 'En curso' : completedCount === total ? 'Completado' : 'En curso';
 
   const getBadgeText = (dateStr?: string) => {
     if (!dateStr) return null;
     const date = new Date(dateStr);
     const today = new Date();
-    today.setHours(0,0,0,0);
-    date.setHours(0,0,0,0);
+    today.setHours(0, 0, 0, 0);
+    date.setHours(0, 0, 0, 0);
     const diffTime = date.getTime() - today.getTime();
     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
     if (diffDays === 0) return 'Hoy';
     if (diffDays === 1) return 'Mañana';
     if (diffDays > 1) return `${diffDays} días`;
-    return null; // Expired tasks don't show a badge on the right
+    return null;
   };
 
   const getSubTitle = (task: TaskItem) => {
     if (task.isCompleted) return `${task.categoryName} · Completada`;
-    if (task.stepsTotal && task.stepsTotal > 0) return `${task.categoryName} · ${task.stepsCompleted || 0} de ${task.stepsTotal} pasos`;
+    if (task.stepsTotal && task.stepsTotal > 0)
+      return `${task.categoryName} · ${task.stepsCompleted || 0} de ${task.stepsTotal} pasos`;
     if (task.location) return `${task.categoryName} · ${task.location}`;
     return task.categoryName;
   };
 
   const renderTask = (task: TaskItem) => {
     const isDone = task.isCompleted;
-    const thumbGradient = (GRADIENTS[task.coverKey as keyof typeof GRADIENTS] || GRADIENTS.aurora) as unknown as readonly [string, string, ...string[]];
+    const thumbGradient = (GRADIENTS[task.coverKey as keyof typeof GRADIENTS] ||
+      GRADIENTS.aurora) as unknown as readonly [string, string, ...string[]];
     const isDiagonal = task.coverKey === 'dorado';
     const subTitle = getSubTitle(task);
     const badge = getBadgeText(task.dueDate);
 
     return (
-      <Pressable 
-        key={task.id} 
-        style={styles.taskCard} 
+      <Pressable
+        key={task.id}
+        style={styles.taskCard}
         onPress={() => router.push(`/bucket/${task.id}`)}
         accessibilityRole="button"
       >
         <View style={[styles.taskThumbContainer, isDone && { opacity: 0.5 }]}>
           <LinearGradient
             colors={thumbGradient}
-            start={isDiagonal ? {x: 0, y: 0} : {x: 0.5, y: 0}}
-            end={isDiagonal ? {x: 1, y: 1} : {x: 0.5, y: 1}}
+            start={isDiagonal ? { x: 0, y: 0 } : { x: 0.5, y: 0 }}
+            end={isDiagonal ? { x: 1, y: 1 } : { x: 0.5, y: 1 }}
             style={styles.taskThumb}
           />
         </View>
         <View style={styles.taskContent}>
-          <Text style={[styles.taskTitle, isDone && { color: '#BDB7AA' }]} numberOfLines={2}>
+          <Text
+            style={[styles.taskTitle, isDone && { color: '#BDB7AA', textDecorationLine: 'line-through' }]}
+            numberOfLines={2}
+          >
             {task.title}
           </Text>
           <Text style={styles.taskSub}>{subTitle}</Text>
-          {!isDone && task.dueDate && new Date(task.dueDate).getTime() < new Date().setHours(0,0,0,0) && (
-            <Text style={[styles.taskSub, { color: '#EF4444', marginTop: 2 }]}>
-              Programada para: {new Date(task.dueDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
-            </Text>
-          )}
+          {!isDone &&
+            task.dueDate &&
+            new Date(task.dueDate).getTime() < new Date().setHours(0, 0, 0, 0) && (
+              <Text style={[styles.taskSub, { color: '#EF4444', marginTop: 2 }]}>
+                Programada para:{' '}
+                {new Date(task.dueDate).toLocaleDateString('es-ES', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })}
+              </Text>
+            )}
           {!isDone && task.stepsTotal !== undefined && task.stepsTotal > 0 && (
             <View style={styles.taskStepsTrack}>
-              <View style={[styles.taskStepsFill, { width: `${((task.stepsCompleted || 0) / task.stepsTotal) * 100}%` }]} />
+              <View
+                style={[
+                  styles.taskStepsFill,
+                  { width: `${((task.stepsCompleted || 0) / task.stepsTotal) * 100}%` },
+                ]}
+              />
             </View>
           )}
         </View>
-        {isDone ? (
-          <View style={styles.checkCircle}>
-            <Check size={16} color="#0D0D0D" strokeWidth={3} />
-          </View>
-        ) : (
-          badge && (
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {!isDone && badge && (
             <View style={styles.taskBadge}>
               <Text style={styles.taskBadgeText}>{badge}</Text>
             </View>
-          )
-        )}
+          )}
+
+          {/* Interactive Checkbox */}
+          <Pressable
+            hitSlop={8}
+            onPress={(e) => void toggleTaskCompleted(task, e)}
+            style={[
+              styles.checkCircleTouch,
+              isDone ? styles.checkCircleDone : styles.checkCircleEmpty,
+            ]}
+          >
+            {isDone && <Check size={16} color="#0D0D0D" strokeWidth={3} />}
+          </Pressable>
+        </View>
       </Pressable>
     );
   };
 
   return (
     <View style={styles.container}>
-      <ScrollView 
-        style={styles.scroll} 
+      <ScrollView
+        style={styles.scroll}
         contentContainerStyle={{ paddingBottom: insets.bottom + (id === 'unassigned' ? 40 : 120) }}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#D4B13A" />
@@ -287,33 +553,57 @@ export default function AlbumDetailScreen() {
       >
         {/* Hero */}
         <View style={styles.hero}>
+          {parsedCover?.type === 'image' && parsedCover?.uri ? (
+            <Image source={{ uri: parsedCover.uri }} style={StyleSheet.absoluteFill} />
+          ) : parsedCover?.type === 'solid' && parsedCover?.colors ? (
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: parsedCover.colors[0] }]} />
+          ) : (
+            <LinearGradient
+              colors={heroColors}
+              locations={[0, 0.55, 1]}
+              style={StyleSheet.absoluteFill}
+            />
+          )}
+
           <LinearGradient
-            colors={heroColors}
-            locations={[0, 0.55, 1]}
+            colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.6)', '#0D0D0D']}
+            locations={[0, 0.6, 1]}
             style={StyleSheet.absoluteFill}
           />
-          <Pressable 
-            accessibilityRole="button" 
-            accessibilityLabel="Volver" 
-            style={[styles.heroBtn, { left: 20, top: Math.max(52, insets.top) }]} 
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Volver"
+            style={[styles.heroBtn, { left: 20, top: Math.max(52, insets.top) }]}
             onPress={() => router.back()}
           >
             <ChevronLeft size={22} color="#F3EEE3" strokeWidth={1.8} />
           </Pressable>
+
           {id !== 'unassigned' && (
             <>
-              <Pressable 
-                accessibilityRole="button" 
-                accessibilityLabel="Compartir" 
-                style={[styles.heroBtn, { right: 64, top: Math.max(52, insets.top) }]} 
+              {isOwner && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Cambiar portada"
+                  style={[styles.heroBtn, { right: 116, top: Math.max(52, insets.top) }]}
+                  onPress={() => void pickAndUploadCover()}
+                >
+                  <Camera size={20} color="#F3EEE3" strokeWidth={1.8} />
+                </Pressable>
+              )}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Compartir"
+                style={[styles.heroBtn, { right: 64, top: Math.max(52, insets.top) }]}
                 onPress={handleShare}
               >
                 <ShareIcon size={22} color="#F3EEE3" strokeWidth={1.8} />
               </Pressable>
-              <Pressable 
-                accessibilityRole="button" 
-                accessibilityLabel="Más opciones" 
-                style={[styles.heroBtn, { right: 12, top: Math.max(52, insets.top) }]} 
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Más opciones"
+                style={[styles.heroBtn, { right: 12, top: Math.max(52, insets.top) }]}
                 onPress={handleMore}
               >
                 <MoreHorizontal size={22} color="#F3EEE3" strokeWidth={1.8} />
@@ -329,8 +619,16 @@ export default function AlbumDetailScreen() {
               <Text style={styles.chipStatusText}>{statusLabel}</Text>
             </View>
 
-            {/* Visibilidad */}
-            <View style={styles.chip}>
+            {/* Visibilidad clickeable para cambiar al instante */}
+            <Pressable
+              style={[styles.chip, isOwner && styles.chipPressable]}
+              onPress={() => {
+                if (isOwner) {
+                  setSheetMode('visibility');
+                  setSheetVisible(true);
+                }
+              }}
+            >
               {album.visibility === 'public' ? (
                 <>
                   <Globe size={15} color="#F3EEE3" strokeWidth={1.8} />
@@ -347,29 +645,53 @@ export default function AlbumDetailScreen() {
                   <Text style={styles.chipText}>Privado</Text>
                 </>
               )}
-            </View>
+            </Pressable>
 
-            {/* Compartido */}
+            {/* Compartido clickeable para gestionar colaboradores */}
             {isShared && (
-              <View style={[styles.chip, styles.chipShared]}>
+              <Pressable
+                style={[styles.chip, styles.chipShared, isOwner && styles.chipPressable]}
+                onPress={() => {
+                  if (isOwner) setShowCollaboratorPicker(true);
+                }}
+              >
                 <Users size={15} color="#D4B13A" strokeWidth={1.8} />
                 <Text style={styles.chipSharedText}>Compartido</Text>
-              </View>
+              </Pressable>
             )}
           </View>
         )}
 
-        {/* Title */}
-        <Text style={styles.title}>{title}</Text>
+        {/* Title (Inline editable con auto-save) */}
+        {isOwner && id !== 'unassigned' ? (
+          <TextInput
+            style={styles.titleInput}
+            defaultValue={title}
+            onChangeText={handleTitleChange}
+            multiline
+            placeholder="Nombre del álbum"
+            placeholderTextColor="#6B6B6B"
+          />
+        ) : (
+          <Text style={styles.title}>{title}</Text>
+        )}
 
-        {/* Description */}
-        {album.description ? (
+        {/* Description (Inline editable con auto-save) */}
+        {isOwner && id !== 'unassigned' ? (
+          <TextInput
+            style={styles.albumDescriptionInput}
+            defaultValue={album.description || ''}
+            onChangeText={handleDescriptionChange}
+            multiline
+            placeholder="Añade una descripción al álbum..."
+            placeholderTextColor="#6B6B6B"
+          />
+        ) : album.description ? (
           <Text style={styles.albumDescription}>{album.description}</Text>
         ) : null}
 
         {/* Colaboradores del álbum */}
         {id !== 'unassigned' && (() => {
-          const isOwner = album.ownerId === user?.id;
           const visibleCollaborators = albumCollaborators.filter((c: any) => {
             if (c.status === 'accepted') return true;
             if (c.status === 'pending') return isOwner || c.id === user?.id;
@@ -438,14 +760,37 @@ export default function AlbumDetailScreen() {
         <View style={styles.progressCard}>
           <Text style={styles.progressPercent}>{progressPercent}%</Text>
           <View style={styles.progressRight}>
-            <Text style={styles.progressTitle}>Progreso del álbum</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={styles.progressTitle}>Progreso del álbum</Text>
+            </View>
             <View style={styles.progressBarTrack}>
               <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
             </View>
-            <Text style={styles.progressSub}>{completedCount} de {total} tareas completadas</Text>
+            <Text style={styles.progressSub}>
+              {completedCount} de {total} tareas completadas
+            </Text>
           </View>
         </View>
 
+        {/* Botón rápido: Marcar todas completadas / Desmarcar todas */}
+        {id !== 'unassigned' && tasks.length > 0 && (
+          <Pressable
+            style={[styles.toggleAllBtn, areAllCompleted && styles.toggleAllBtnActive]}
+            onPress={() => void handleToggleAllTasks()}
+          >
+            {areAllCompleted ? (
+              <>
+                <RotateCcw size={15} color="#D4B13A" strokeWidth={2.2} />
+                <Text style={styles.toggleAllBtnText}>Desmarcar todas las tareas</Text>
+              </>
+            ) : (
+              <>
+                <CheckCircle2 size={16} color="#D4B13A" strokeWidth={2.2} />
+                <Text style={styles.toggleAllBtnText}>Marcar todas como completadas</Text>
+              </>
+            )}
+          </Pressable>
+        )}
 
         {/* Pendientes */}
         {pendientes.length > 0 && (
@@ -456,15 +801,16 @@ export default function AlbumDetailScreen() {
                 <Text style={{ color: '#FFF' }}> · {pendientes.length}</Text>
               </Text>
               {id !== 'unassigned' && (
-                <Pressable style={styles.addBtn} onPress={() => router.push(`/add-task?albumId=${id}`)}>
+                <Pressable
+                  style={styles.addBtn}
+                  onPress={() => router.push(`/add-task?albumId=${id}`)}
+                >
                   <Plus size={16} color="#D4B13A" strokeWidth={2} />
                   <Text style={styles.addBtnText}>Añadir</Text>
                 </Pressable>
               )}
             </View>
-            <View style={styles.taskList}>
-              {pendientes.map(renderTask)}
-            </View>
+            <View style={styles.taskList}>{pendientes.map(renderTask)}</View>
           </View>
         )}
 
@@ -477,9 +823,7 @@ export default function AlbumDetailScreen() {
                 <Text style={{ color: '#FFF' }}> · {hechas.length}</Text>
               </Text>
             </View>
-            <View style={styles.taskList}>
-              {hechas.map(renderTask)}
-            </View>
+            <View style={styles.taskList}>{hechas.map(renderTask)}</View>
           </View>
         )}
       </ScrollView>
@@ -487,10 +831,16 @@ export default function AlbumDetailScreen() {
       {/* Bottom Bar */}
       {id !== 'unassigned' && (
         <View style={[styles.bottomBar, { paddingBottom: Math.max(30, insets.bottom) }]}>
-          <Pressable style={styles.btnEdit} onPress={() => router.push(`/(modals)/create-album?id=${id}`)}>
+          <Pressable
+            style={styles.btnEdit}
+            onPress={() => router.push(`/(modals)/create-album?id=${id}`)}
+          >
             <Text style={styles.btnEditText}>Editar</Text>
           </Pressable>
-          <Pressable style={styles.btnAdd} onPress={() => router.push(`/add-task?albumId=${id}`)}>
+          <Pressable
+            style={styles.btnAdd}
+            onPress={() => router.push(`/add-task?albumId=${id}`)}
+          >
             <Text style={styles.btnAddText}>Añadir tarea</Text>
           </Pressable>
         </View>
@@ -508,6 +858,218 @@ export default function AlbumDetailScreen() {
         onChange={handleCollaboratorsChange}
         onClose={() => setShowCollaboratorPicker(false)}
       />
+
+      {/* Album Options & Visibility Bottom Sheet */}
+      <Modal
+        visible={sheetVisible}
+        transparent
+        animationType="none"
+        onRequestClose={() => closeSheet()}
+      >
+        <View style={styles.sheetBackdrop}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => closeSheet()} />
+          <Animated.View
+            style={[
+              styles.bottomSheet,
+              { transform: [{ translateY: sheetTranslateY }] },
+            ]}
+          >
+            <View style={styles.sheetHandle} />
+
+            {sheetMode === 'menu' && (
+              <>
+                <View style={styles.sheetHeader}>
+                  <Text style={styles.sheetHeaderText}>Opciones del álbum</Text>
+                  <Pressable style={styles.sheetCloseBtn} onPress={() => closeSheet()}>
+                    <X color="#8F8F8F" size={20} />
+                  </Pressable>
+                </View>
+
+                <View style={styles.sheetOptions}>
+                  {tasks.length > 0 && (
+                    <Pressable
+                      style={styles.sheetOption}
+                      onPress={() => void handleToggleAllTasks()}
+                    >
+                      <View style={styles.sheetIconBox}>
+                        {areAllCompleted ? (
+                          <RotateCcw color="#D4B13A" size={20} />
+                        ) : (
+                          <CheckCircle2 color="#D4B13A" size={20} />
+                        )}
+                      </View>
+                      <View style={styles.sheetOptionTexts}>
+                        <Text style={styles.sheetOptionTitle}>
+                          {areAllCompleted
+                            ? 'Marcar todas como pendientes'
+                            : 'Marcar todas como completadas'}
+                        </Text>
+                        <Text style={styles.sheetOptionSubtitle}>
+                          {areAllCompleted
+                            ? 'Revertir estado de todas las tareas'
+                            : 'Completa todas las tareas del álbum'}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  )}
+
+                  {isOwner && (
+                    <Pressable
+                      style={styles.sheetOption}
+                      onPress={() => {
+                        closeSheet(() => void pickAndUploadCover());
+                      }}
+                    >
+                      <View style={styles.sheetIconBox}>
+                        <Camera color="#D4B13A" size={20} />
+                      </View>
+                      <View style={styles.sheetOptionTexts}>
+                        <Text style={styles.sheetOptionTitle}>Cambiar portada</Text>
+                        <Text style={styles.sheetOptionSubtitle}>
+                          Elige una foto de tu galería
+                        </Text>
+                      </View>
+                    </Pressable>
+                  )}
+
+                  {isOwner && (
+                    <Pressable
+                      style={styles.sheetOption}
+                      onPress={() => setSheetMode('visibility')}
+                    >
+                      <View style={styles.sheetIconBox}>
+                        <Eye color="#D4B13A" size={20} />
+                      </View>
+                      <View style={styles.sheetOptionTexts}>
+                        <Text style={styles.sheetOptionTitle}>Cambiar visibilidad</Text>
+                        <Text style={styles.sheetOptionSubtitle}>
+                          {album.visibility === 'public'
+                            ? 'Público actualmente'
+                            : album.visibility === 'followers'
+                            ? 'Solo amigos actualmente'
+                            : 'Privado actualmente'}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  )}
+
+                  {isOwner && (
+                    <Pressable
+                      style={styles.sheetOption}
+                      onPress={() => {
+                        closeSheet(() => setShowCollaboratorPicker(true));
+                      }}
+                    >
+                      <View style={styles.sheetIconBox}>
+                        <Users color="#D4B13A" size={20} />
+                      </View>
+                      <View style={styles.sheetOptionTexts}>
+                        <Text style={styles.sheetOptionTitle}>Gestionar colaboradores</Text>
+                        <Text style={styles.sheetOptionSubtitle}>
+                          Invita o quita personas de este álbum
+                        </Text>
+                      </View>
+                    </Pressable>
+                  )}
+
+                  {isOwner && (
+                    <Pressable
+                      style={styles.sheetOption}
+                      onPress={() => {
+                        closeSheet(() => router.push(`/(modals)/create-album?id=${id}`));
+                      }}
+                    >
+                      <View style={styles.sheetIconBox}>
+                        <Pencil color="#D4B13A" size={20} />
+                      </View>
+                      <View style={styles.sheetOptionTexts}>
+                        <Text style={styles.sheetOptionTitle}>Editar detalles completos</Text>
+                        <Text style={styles.sheetOptionSubtitle}>
+                          Nombre, portada, privacidad y más
+                        </Text>
+                      </View>
+                    </Pressable>
+                  )}
+
+                  {isOwner && (
+                    <Pressable
+                      style={[styles.sheetOption, { borderBottomWidth: 0 }]}
+                      onPress={confirmDeleteAlbum}
+                    >
+                      <View style={[styles.sheetIconBox, { backgroundColor: 'rgba(239, 68, 68, 0.12)' }]}>
+                        <Trash2 color="#EF4444" size={20} />
+                      </View>
+                      <View style={styles.sheetOptionTexts}>
+                        <Text style={[styles.sheetOptionTitle, { color: '#EF4444' }]}>
+                          Eliminar álbum
+                        </Text>
+                        <Text style={styles.sheetOptionSubtitle}>
+                          Las tareas se moverán a Sin álbum
+                        </Text>
+                      </View>
+                    </Pressable>
+                  )}
+                </View>
+              </>
+            )}
+
+            {sheetMode === 'visibility' && (
+              <>
+                <View style={styles.sheetHeader}>
+                  <Text style={styles.sheetHeaderText}>Visibilidad del álbum</Text>
+                  <Pressable style={styles.sheetCloseBtn} onPress={() => closeSheet()}>
+                    <X color="#8F8F8F" size={20} />
+                  </Pressable>
+                </View>
+
+                <View style={styles.sheetOptions}>
+                  {([
+                    {
+                      value: 'public',
+                      title: 'Público',
+                      subtitle: 'Visible para toda la comunidad',
+                      icon: Globe,
+                    },
+                    {
+                      value: 'followers',
+                      title: 'Solo amigos',
+                      subtitle: 'Visible solo para tus seguidores',
+                      icon: Users,
+                    },
+                    {
+                      value: 'private',
+                      title: 'Privado',
+                      subtitle: 'Solo tú y los colaboradores que invites',
+                      icon: Lock,
+                    },
+                  ] as const).map((item) => {
+                    const IconComponent = item.icon;
+                    const isSelected = album.visibility === item.value;
+                    return (
+                      <Pressable
+                        key={item.value}
+                        style={styles.sheetOption}
+                        onPress={() => void handleChangeVisibility(item.value)}
+                      >
+                        <View style={[styles.sheetIconBox, isSelected && { backgroundColor: 'rgba(212, 177, 58, 0.2)' }]}>
+                          <IconComponent color={isSelected ? '#D4B13A' : '#8F8F8F'} size={20} />
+                        </View>
+                        <View style={styles.sheetOptionTexts}>
+                          <Text style={[styles.sheetOptionTitle, isSelected && { color: '#D4B13A' }]}>
+                            {item.title}
+                          </Text>
+                          <Text style={styles.sheetOptionSubtitle}>{item.subtitle}</Text>
+                        </View>
+                        {isSelected && <Check color="#D4B13A" size={20} strokeWidth={2.5} />}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </>
+            )}
+          </Animated.View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -560,6 +1122,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  chipPressable: {
+    borderColor: '#383838',
+  },
   chipStatus: {
     borderColor: '#D4B13A',
     backgroundColor: '#2C2512',
@@ -591,12 +1156,29 @@ const styles = StyleSheet.create({
     marginTop: 14,
     marginHorizontal: 20,
   },
+  titleInput: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 34,
+    lineHeight: 40,
+    color: '#F3EEE3',
+    marginTop: 14,
+    marginHorizontal: 20,
+    padding: 0,
+  },
   albumDescription: {
     fontFamily: 'Inter_400Regular',
     fontSize: 15,
     color: '#A0A0A0',
     marginTop: 6,
     marginHorizontal: 20,
+  },
+  albumDescriptionInput: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 15,
+    color: '#C0BAAF',
+    marginTop: 6,
+    marginHorizontal: 20,
+    padding: 0,
   },
   collaboratorsSection: {
     marginHorizontal: 20,
@@ -674,7 +1256,6 @@ const styles = StyleSheet.create({
     color: '#D4B13A',
     marginLeft: 1,
   },
-
   progressCard: {
     marginTop: 18,
     marginHorizontal: 20,
@@ -719,6 +1300,28 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
     color: '#A0A0A0',
+  },
+  toggleAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginHorizontal: 20,
+    marginTop: 12,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#383218',
+    backgroundColor: 'rgba(212, 177, 58, 0.08)',
+  },
+  toggleAllBtnActive: {
+    borderColor: '#423719',
+    backgroundColor: 'rgba(212, 177, 58, 0.12)',
+  },
+  toggleAllBtnText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 14,
+    color: '#D4B13A',
   },
   sectionContainer: {
     marginTop: 24,
@@ -810,16 +1413,23 @@ const styles = StyleSheet.create({
   },
   taskBadgeText: {
     fontFamily: 'Inter_500Medium',
-    fontSize: 14,
+    fontSize: 13,
     color: '#D4B13A',
   },
-  checkCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#D4B13A',
-    justifyContent: 'center',
+  checkCircleTouch: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkCircleDone: {
+    backgroundColor: '#D4B13A',
+  },
+  checkCircleEmpty: {
+    borderWidth: 1.5,
+    borderColor: '#4A4A4A',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
   },
   bottomBar: {
     position: 'absolute',
@@ -860,5 +1470,85 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_700Bold',
     fontSize: 17,
     color: '#0D0D0D',
+  },
+
+  // Bottom Sheet
+  sheetBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.65)',
+  },
+  bottomSheet: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingTop: 10,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+    paddingHorizontal: 20,
+    backgroundColor: '#151515',
+    borderWidth: 1,
+    borderColor: '#262626',
+  },
+  sheetHandle: {
+    alignSelf: 'center',
+    width: 42,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    marginBottom: 12,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    marginBottom: 8,
+  },
+  sheetHeaderText: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 22,
+    color: '#F3EEE3',
+  },
+  sheetCloseBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sheetOptions: {
+    gap: 2,
+  },
+  sheetOption: {
+    minHeight: 64,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#262626',
+  },
+  sheetIconBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(212,177,58,0.10)',
+    marginRight: 14,
+  },
+  sheetOptionTexts: {
+    flex: 1,
+  },
+  sheetOptionTitle: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 16,
+    color: '#F3EEE3',
+    marginBottom: 2,
+  },
+  sheetOptionSubtitle: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    color: '#8F8F8F',
   },
 });
