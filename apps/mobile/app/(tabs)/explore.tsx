@@ -8,6 +8,7 @@ import { Search } from 'lucide-react-native';
 import { useSearchUsers } from '../../src/hooks/useSocial';
 import { useExploreFeed } from '../../src/hooks/useFeed';
 import { FeedCard } from '../../src/components/FeedCard';
+import { useAuthStore } from '../../src/stores/auth.store';
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -23,14 +24,17 @@ function useDebounce<T>(value: T, delay: number): T {
 export default function ExploreScreen() {
   const { theme } = useTheme();
   const router = useRouter();
+  const { user } = useAuthStore();
 
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 500);
 
-  const { data: exploreData, fetchNextPage, hasNextPage, isFetchingNextPage } = useExploreFeed();
+  const { data: exploreData, fetchNextPage, hasNextPage, isFetchingNextPage } = useExploreFeed(user?.id);
   const { data: searchResults, isLoading: isSearchLoading } = useSearchUsers(debouncedSearch);
 
-  const buckets = exploreData?.pages.flatMap((page) => page.items) || [];
+  const buckets = (exploreData?.pages.flatMap((page) => page.items) || []).filter(
+    (b: any) => !user?.id || b.user_id !== user.id
+  );
 
   return (
     <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>

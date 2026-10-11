@@ -50,13 +50,16 @@ export default function FeedScreen() {
     const seen = new Set<string>();
     const unique: any[] = [];
     for (const item of all) {
+      if (item.actor_id === user?.id || item.bucket?.user_id === user?.id) {
+        continue;
+      }
       if (item?.bucket_id && !seen.has(item.bucket_id)) {
         seen.add(item.bucket_id);
         unique.push(item);
       }
     }
     return unique;
-  }, [data]);
+  }, [data, user?.id]);
 
   const openFriends = (tab?: 'requests') =>
     router.push((tab ? `/friends?tab=${tab}` : '/friends') as any);

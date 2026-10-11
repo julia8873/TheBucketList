@@ -1,6 +1,8 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { feedApi } from '../services/api/feed';
 
+import { useAuthStore } from '../stores/auth.store';
+
 export const FEED_QUERY_KEY = ['feed'];
 export const EXPLORE_QUERY_KEY = ['explore'];
 
@@ -14,10 +16,13 @@ export function useFeed(userId: string | undefined) {
   });
 }
 
-export function useExploreFeed() {
+export function useExploreFeed(explicitUserId?: string) {
+  const { user } = useAuthStore();
+  const userId = explicitUserId ?? user?.id;
+
   return useInfiniteQuery({
-    queryKey: EXPLORE_QUERY_KEY,
-    queryFn: ({ pageParam = 0 }) => feedApi.getExploreFeed(pageParam),
+    queryKey: [...EXPLORE_QUERY_KEY, userId],
+    queryFn: ({ pageParam = 0 }) => feedApi.getExploreFeed(pageParam, userId),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
   });

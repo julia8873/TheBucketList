@@ -4,9 +4,8 @@ const PAGE_SIZE = 10;
 
 export const feedApi = {
   /**
-   * "Momentos de amigos": tareas completadas por la gente a la que sigo (aceptada) y por mí.
-   * La visibilidad de cada tarea la filtra RLS (privadas, solo seguidores, cuentas privadas).
-   * Para incluir también tareas nuevas, añade 'new_bucket' al .in('type', [...]).
+   * "Momentos de amigos": tareas completadas únicamente por la gente a la que sigo (aceptada).
+   * Se excluyen explícitamente las tareas del propio usuario.
    */
   getFeed: async (userId: string, pageParam: number = 0) => {
     const { data: follows, error: followsErr } = await supabase
@@ -16,7 +15,17 @@ export const feedApi = {
       .eq('status', 'accepted');
     if (followsErr) throw followsErr;
 
-    const targetIds = [...(follows ?? []).map((f: any) => f.following_id as string), userId];
+    // Solo amigos seguidos (excluyendo al propio usuario)
+    const targetIds = (follows ?? [])
+      .map((f: any) => f.following_id as string)
+      .filter((id: string) => id !== userId);
+
+    if (targetIds.length === 0) {
+      return {
+        items: [],
+        nextCursor: undefined,
+      };
+    }
 
     const { data, error } = await supabase
       .from('feed_events')
@@ -34,22 +43,26 @@ export const feedApi = {
       `
       )
       .in('actor_id', targetIds)
+      .neq('actor_id', userId)
       .in('type', ['completed'])
       .order('created_at', { ascending: false })
       .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1);
 
     if (error) throw error;
 
-    const items = data ?? [];
+    // Filtrar cualquier evento o tarea que pertenezca al propio usuario
+    const items = (data ?? []).filter(
+      (item: any) => item.actor_id !== userId && item.bucket?.user_id !== userId
+    );
     return {
       items,
-      nextCursor: items.length === PAGE_SIZE ? pageParam + 1 : undefined,
+      nextCursor: (data ?? []).length === PAGE_SIZE ? pageParam + 1 : undefined,
     };
   },
 
-  getExploreFeed: async (pageParam: number = 0) => {
+  getExploreFeed: async (pageParam: number = 0, userId?: string) => {
     const limit = 15;
-    const { data, error } = await supabase
+    let query = supabase
       .from('buckets')
       .select(
         `
@@ -62,15 +75,24 @@ export const feedApi = {
       `
       )
       .eq('visibility', 'public')
-      .order('created_at', { ascending: false })
-      .range(pageParam * limit, (pageParam + 1) * limit - 1);
+      .order('created_at', { ascending: false });
+
+    // Excluir tareas del propio usuario en explorar
+    if (userId) {
+      query = query.neq('user_id', userId);
+    }
+
+    const { data, error } = await query.range(
+      pageParam * limit,
+      (pageParam + 1) * limit - 1
+    );
 
     if (error) throw error;
 
-    const items = data ?? [];
+    const items = (data ?? []).filter((b: any) => !userId || b.user_id !== userId);
     return {
       items,
-      nextCursor: items.length === limit ? pageParam + 1 : undefined,
+      nextCursor: (data ?? []).length === limit ? pageParam + 1 : undefined,
     };
   },
 };
