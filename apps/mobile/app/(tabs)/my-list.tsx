@@ -1,13 +1,12 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { View, StyleSheet, Pressable, ScrollView, Dimensions, Alert, Animated } from 'react-native';
+import { View, StyleSheet, Pressable, ScrollView, Dimensions, Alert, Animated, Modal, Text, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, Typography, SegmentedControl, FilterChip, TaskRow, AlbumCard, NewAlbumCard, NoAlbumRow, FAB, spacing, useToast, Input, TagChip } from '@bucketlist/ui';
-import { gold } from '@bucketlist/ui/src/tokens/colors';
+import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Swipeable } from 'react-native-gesture-handler';
-import { Search, Trash2, CheckCircle2, X, Tag as TagIcon } from 'lucide-react-native';
-import { Text, Image } from 'react-native';
+import { Search, Trash2, CheckCircle2, X, Tag as TagIcon, ArrowDown, ArrowUp } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { useBuckets, useDeleteBucket, useUpdateBucket } from '../../src/hooks/useBuckets';
@@ -25,6 +24,8 @@ import { categoryColors } from '@bucketlist/ui/src/tokens/colors';
 import { isPast, differenceInCalendarDays } from 'date-fns';
 
 type FilterType = 'all' | 'active' | 'completed' | 'expired';
+type SortField = 'status' | 'alphabetical' | 'created_at';
+type SortDir = 'asc' | 'desc';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -45,6 +46,33 @@ export default function MyListScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [tagSheetOpen, setTagSheetOpen] = useState(false);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+
+  // ── Orden de tareas ──────────────────────────────────────────────────────
+  const [sortField, setSortField] = useState<SortField>('status');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
+  const [sortMenuPos, setSortMenuPos] = useState({ top: 0, right: 20 });
+  const sortTriggerRef = useRef<View>(null);
+
+  const openSortMenu = () => {
+    sortTriggerRef.current?.measureInWindow((x, y, w, h) => {
+      setSortMenuPos({
+        top: y + h + 6,
+        right: Math.max(16, Dimensions.get('window').width - (x + w)),
+      });
+      setSortMenuOpen(true);
+    });
+  };
+
+  const handleSortOption = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir((prev) => (prev === 'desc' ? 'asc' : 'desc'));
+    } else {
+      setSortField(field);
+      setSortDir(field === 'alphabetical' ? 'asc' : 'desc');
+      setSortMenuOpen(false);
+    }
+  };
 
   const { data: buckets, isLoading } = useBuckets(user?.id);
   const { data: allTags } = useTags();
@@ -98,7 +126,10 @@ export default function MyListScreen() {
     [selectedTagIds, tagsById],
   );
 
-  const tagExtra = useMemo(() => ({ tagsById, byItem: tagUsage?.byItem, selectedTagIds }), [tagsById, tagUsage, selectedTagIds]);
+  const listExtra = useMemo(
+    () => ({ tagsById, byItem: tagUsage?.byItem, selectedTagIds, sortField, sortDir }),
+    [tagsById, tagUsage, selectedTagIds, sortField, sortDir],
+  );
 
   const toggleSearch = () => {
     if (isSearching) setSearchQuery('');
@@ -137,31 +168,68 @@ export default function MyListScreen() {
       );
     }
 
-    return result.sort((a: any, b: any) => {
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    });
+    return result;
   }, [buckets, filter, searchQuery, selectedTagIds, tagUsage]);
 
   const listData = useMemo(() => {
-    if (!filteredBuckets) return [];
-    if (filter !== 'all') return filteredBuckets;
+    if (!filteredBuckets || filteredBuckets.length === 0) return [];
 
-    const activeOrCompleted = filteredBuckets.filter(b => {
-      const deadline = b.deadline ? new Date(b.deadline) : null;
-      const expired = deadline ? (isPast(deadline) && differenceInCalendarDays(deadline, new Date()) < 0) : false;
-      return !expired || b.status === 'completed';
-    });
+    if (sortField === 'status') {
+      const isExpired = (b: any) => {
+        const deadline = b.deadline ? new Date(b.deadline) : null;
+        return deadline ? (isPast(deadline) && differenceInCalendarDays(deadline, new Date()) < 0) && b.status !== 'completed' : false;
+      };
+      const isCompleted = (b: any) => b.status === 'completed';
+      const isPending = (b: any) => !isCompleted(b) && !isExpired(b);
 
-    const expired = filteredBuckets.filter(b => {
-      const deadline = b.deadline ? new Date(b.deadline) : null;
-      return deadline ? (isPast(deadline) && differenceInCalendarDays(deadline, new Date()) < 0) && b.status !== 'completed' : false;
-    });
+      const pending = filteredBuckets
+        .filter(isPending)
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-    if (expired.length > 0) {
-      return [...activeOrCompleted, { isHeader: true, title: 'VENCIDAS' }, ...expired];
+      const completed = filteredBuckets
+        .filter(isCompleted)
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      const expired = filteredBuckets
+        .filter(isExpired)
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      let sections = [
+        { key: 'pending', title: 'PENDIENTES', items: pending },
+        { key: 'completed', title: 'COMPLETADAS', items: completed },
+        { key: 'expired', title: 'VENCIDAS', items: expired },
+      ];
+
+      if (sortDir === 'asc') {
+        sections.reverse();
+      }
+
+      const result: any[] = [];
+      for (const sec of sections) {
+        if (sec.items.length > 0) {
+          result.push({ isHeader: true, id: `header-${sec.key}`, title: sec.title });
+          result.push(...sec.items);
+        }
+      }
+      return result;
     }
-    return activeOrCompleted;
-  }, [filteredBuckets, filter]);
+
+    if (sortField === 'alphabetical') {
+      const sorted = [...filteredBuckets].sort((a: any, b: any) => {
+        const cmp = (a.title || '').localeCompare(b.title || '', 'es', { sensitivity: 'base' });
+        return sortDir === 'asc' ? cmp : -cmp;
+      });
+      return sorted;
+    }
+
+    // sortField === 'created_at'
+    const sorted = [...filteredBuckets].sort((a: any, b: any) => {
+      const da = new Date(a.created_at || 0).getTime();
+      const db = new Date(b.created_at || 0).getTime();
+      return sortDir === 'asc' ? da - db : db - da;
+    });
+    return sorted;
+  }, [filteredBuckets, sortField, sortDir]);
 
   const filteredAlbums = useMemo(() => {
     if (!albums) return [];
@@ -174,13 +242,12 @@ export default function MyListScreen() {
     router.push('/(modals)/create-bucket');
   };
 
-
-
   const renderTaskItem = ({ item }: { item: any }) => {
     if (item.isHeader) {
+      const isFirst = listData.length > 0 && listData[0].id === item.id;
       return (
-        <View style={{ marginTop: 28, marginBottom: 4 }}>
-          <Text style={styles.expiredHeader}>{item.title}</Text>
+        <View style={{ marginTop: isFirst ? 6 : 22, marginBottom: 4 }}>
+          <Text style={styles.sectionHeader}>{item.title}</Text>
         </View>
       );
     }
@@ -331,6 +398,7 @@ export default function MyListScreen() {
           subtasksTotal={subtasksTotal}
           counterCount={(item as any).counter_count}
           counterTarget={(item as any).counter_target}
+          completed={item.status === 'completed'}
           onPress={() => router.push(`/bucket/${item.id}`)}
         />
       </Swipeable>
@@ -399,7 +467,8 @@ export default function MyListScreen() {
             keyExtractor={(item: any) => item.id || item.title}
             contentContainerStyle={styles.listContent}
             estimatedItemSize={80}
-            extraData={tagExtra}
+            extraData={listExtra}
+            getItemType={(item: any) => (item.isHeader ? 'header' : 'task')}
             ItemSeparatorComponent={() => <View style={{ height: spacing[3] }} />}
             renderItem={renderTaskItem}
             ListHeaderComponent={
@@ -457,6 +526,36 @@ export default function MyListScreen() {
                     </Pressable>
                   ))}
                 </ScrollView>
+
+                {/* Fila de Ordenar por */}
+                <View style={styles.sortRow}>
+                  <Typography variant="caption" color={theme.colors.foregroundMuted} style={styles.tasksCountLabel}>
+                    {filteredBuckets.length} {filteredBuckets.length === 1 ? 'TAREA' : 'TAREAS'}
+                  </Typography>
+                  <View style={styles.sortTriggerContainer}>
+                    <Typography variant="caption" color={theme.colors.foregroundMuted}>
+                      Ordenar por:
+                    </Typography>
+                    <Pressable
+                      ref={sortTriggerRef}
+                      collapsable={false}
+                      onPress={openSortMenu}
+                      hitSlop={8}
+                      style={styles.sortTriggerBtn}
+                      accessibilityRole="button"
+                      accessibilityLabel="Ordenar tareas"
+                    >
+                      <Typography variant="caption" color={gold[400]} style={{ fontWeight: '600' }}>
+                        {sortField === 'status' ? 'Estado' : sortField === 'alphabetical' ? 'Alfabético' : 'Fecha'}
+                      </Typography>
+                      {sortDir === 'desc' ? (
+                        <ArrowDown color={gold[400]} size={14} />
+                      ) : (
+                        <ArrowUp color={gold[400]} size={14} />
+                      )}
+                    </Pressable>
+                  </View>
+                </View>
               </View>
             }
             ListEmptyComponent={() => (
@@ -519,6 +618,76 @@ export default function MyListScreen() {
           router.push('/tags' as any);
         }}
       />
+
+      {/* ── Sort Menu Modal ────────────────────────────── */}
+      <Modal
+        visible={sortMenuOpen}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setSortMenuOpen(false)}
+      >
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={() => setSortMenuOpen(false)}
+        >
+          <View
+            style={{
+              position: 'absolute',
+              top: sortMenuPos.top,
+              right: sortMenuPos.right,
+              minWidth: 160,
+              backgroundColor: dark[300],
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: dark[400],
+              overflow: 'hidden',
+              elevation: 8,
+              shadowColor: '#000',
+              shadowOpacity: 0.35,
+              shadowRadius: 10,
+              shadowOffset: { width: 0, height: 4 },
+            }}
+          >
+            {([
+              { field: 'status' as const, label: 'Estado' },
+              { field: 'alphabetical' as const, label: 'Alfabético' },
+              { field: 'created_at' as const, label: 'Fecha de creación' },
+            ] as const).map((option, i) => {
+              const selected = sortField === option.field;
+              return (
+                <Pressable
+                  key={option.field}
+                  onPress={() => handleSortOption(option.field)}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    paddingHorizontal: 14,
+                    paddingVertical: 12,
+                    borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth,
+                    borderTopColor: 'rgba(255,255,255,0.1)',
+                  }}
+                >
+                  <Typography
+                    variant={selected ? 'bodySemibold' : 'body'}
+                    color={selected ? gold[400] : theme.colors.foreground}
+                  >
+                    {option.label}
+                  </Typography>
+                  {selected &&
+                    (sortDir === 'desc' ? (
+                      <ArrowDown color={gold[400]} size={16} />
+                    ) : (
+                      <ArrowUp color={gold[400]} size={16} />
+                    ))}
+                </Pressable>
+              );
+            })}
+          </View>
+        </Pressable>
+      </Modal>
 
       {/* ── FAB ────────────────────────────────────────── */}
       {activeTab === 'list' && (
@@ -613,11 +782,39 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
+  sectionHeader: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 13,
+    color: '#8A8A80',
+    letterSpacing: 1.5,
+  },
   expiredHeader: {
     fontFamily: 'PlayfairDisplay_700Bold',
     fontSize: 13,
     color: '#8A8A80',
     letterSpacing: 1.5,
+  },
+  sortRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+    marginTop: -4,
+  },
+  tasksCountLabel: {
+    letterSpacing: 1,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  sortTriggerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  sortTriggerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   listContent: {
     paddingHorizontal: 20,

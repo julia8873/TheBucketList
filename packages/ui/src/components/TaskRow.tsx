@@ -17,6 +17,7 @@ import { gold, dark } from '../tokens/colors';
 import { useTheme } from '../theme/useTheme';
 import { UrgencyChip } from './Pill';
 import { ProgressBar } from './ProgressBar';
+import { CheckCircle2 } from 'lucide-react-native';
 
 interface TaskRowProps {
   title: string;
@@ -34,6 +35,8 @@ interface TaskRowProps {
   onPress?: () => void;
   style?: ViewStyle;
   expiredAction?: boolean;
+  /** Si la tarea está completada: atenúa la fila y muestra un tick dorado. */
+  completed?: boolean;
 }
 
 export function TaskRow({
@@ -51,6 +54,7 @@ export function TaskRow({
   onPress,
   style,
   expiredAction,
+  completed = false,
 }: TaskRowProps) {
   const { theme } = useTheme();
   const hasSubtaskProgress = subtasksTotal > 0;
@@ -64,6 +68,7 @@ export function TaskRow({
       style={({ pressed }) => [
         styles.row,
         { backgroundColor: pressed ? '#202020' : '#161616' },
+        completed && styles.rowCompleted,
         style,
       ]}
       accessibilityRole="button"
@@ -81,7 +86,7 @@ export function TaskRow({
 
       {/* Content */}
       <View style={styles.content}>
-        <Text style={[styles.title, { color: '#FFFFFF' }]} numberOfLines={2}>
+        <Text style={[styles.title, { color: completed ? '#6A6A6A' : '#FFFFFF' }]} numberOfLines={2}>
           {title}
         </Text>
         {tagsElement ? <View style={styles.tags}>{tagsElement}</View> : null}
@@ -106,8 +111,10 @@ export function TaskRow({
         ) : null}
       </View>
 
-      {/* Urgency chip or Expired Action */}
-      {expiredAction ? (
+      {/* Urgency chip, completed tick, or Expired Action */}
+      {completed ? (
+        <CheckCircle2 size={22} color={gold[400]} strokeWidth={1.8} />
+      ) : expiredAction ? (
         <Text style={{ color: '#D4B13A', fontFamily: fontFamily.semibold, fontSize: 14 }}>
           Reprogramar
         </Text>
@@ -127,6 +134,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#2A2A2A',
     gap: 12,
+  },
+  rowCompleted: {
+    opacity: 0.45,
   },
   thumbnail: {
     width: 56,

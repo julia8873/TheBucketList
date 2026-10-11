@@ -30,6 +30,8 @@ export default function NotificationsScreen() {
         .eq('user_id', user!.id);
       markAsRead.mutate(notification.id);
       void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+      void queryClient.invalidateQueries({ queryKey: ['bucketCollaborators', notification.bucket_id] });
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', notification.bucket_id] });
       if (accept && notification.bucket_id) {
         router.push(`/bucket/${notification.bucket_id}` as any);
       }

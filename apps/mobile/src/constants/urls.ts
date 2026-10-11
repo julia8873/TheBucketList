@@ -5,6 +5,22 @@ import * as Device from 'expo-device';
 /** APP_ENV: 'local' | 'staging' | 'prod' */
 const APP_ENV = (Constants.expoConfig?.extra?.APP_ENV as string | undefined) ?? 'local';
 
+function getHostIp(): string | undefined {
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (hostUri) {
+    const ip = hostUri.split(':')[0];
+    if (ip && ip !== 'localhost' && ip !== '127.0.0.1') return ip;
+  }
+  const linkingUri = Constants.linkingUri;
+  if (linkingUri) {
+    const match = linkingUri.match(/\/\/([^:/]+)/);
+    if (match && match[1] && match[1] !== 'localhost' && match[1] !== '127.0.0.1') {
+      return match[1];
+    }
+  }
+  return undefined;
+}
+
 /**
  * Supabase URL — varies by environment AND platform.
  * Inside the Android emulator, `localhost` resolves to the emulator itself,
@@ -18,17 +34,16 @@ export function getSupabaseUrl(): string {
     return process.env['EXPO_PUBLIC_SUPABASE_URL_STAGING'] ?? '';
   }
   // local
-  const debuggerHost = Constants.expoConfig?.hostUri?.split(':')[0];
-
   if (Device.isDevice) {
+    const dynamicHost = getHostIp();
+    if (dynamicHost) {
+      return `http://${dynamicHost}:54321`;
+    }
     const configuredLocal = process.env['EXPO_PUBLIC_SUPABASE_URL_LOCAL'];
     if (configuredLocal && !configuredLocal.includes('127.0.0.1') && !configuredLocal.includes('localhost')) {
       return configuredLocal;
     }
-    if (debuggerHost) {
-      return `http://${debuggerHost}:54321`;
-    }
-    return 'http://192.168.1.73:54321';
+    return 'http://192.168.18.42:54321';
   }
 
   if (Platform.OS === 'android') {

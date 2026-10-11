@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Alert, Share, ActivityIndicator, ScrollView, Image, Pressable, FlatList, Dimensions, Platform, StatusBar, Modal, Animated, NativeSyntheticEvent, NativeScrollEvent, TextInput, PanResponder } from 'react-native';
+import { View, Text, StyleSheet, Alert, Share, ActivityIndicator, ScrollView, Image, Pressable, FlatList, Dimensions, Platform, StatusBar, Modal, Animated, NativeSyntheticEvent, NativeScrollEvent, TextInput, PanResponder } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -26,6 +26,7 @@ import { BucketPhotoViewer } from '../../src/components/BucketPhotoViewer';
 import { BucketBottomSheet } from '../../src/components/BucketBottomSheet';
 import { styles } from './BucketDetail.styles';
 import { ItemTagsRow } from '../../src/components/ItemTagsRow';
+import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const COVER_HEIGHT = 220;
@@ -39,6 +40,17 @@ function ProgressBar({ value, total, color, track }: { value: number; total: num
       <View style={{ width: `${pct * 100}%`, height: '100%', borderRadius: 3, backgroundColor: color }} />
     </View>
   );
+}
+
+function getInitials(name?: string | null): string {
+  if (!name) return '?';
+  const parts = name.trim().split(/[\s._-]+/).filter(Boolean);
+  const first = parts[0];
+  const second = parts[1];
+  if (first && second && first[0] && second[0]) {
+    return `${first[0]}${second[0]}`.toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
 }
 
 export default function BucketDetailScreen() {
@@ -58,6 +70,7 @@ export default function BucketDetailScreen() {
   const [newSubtaskText, setNewSubtaskText] = useState('');
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const [datePickerConfig, setDatePickerConfig] = useState<{ visible: boolean, type: 'deadline' | 'completed_at', date: Date } | null>(null);
+  const [showCollaboratorPicker, setShowCollaboratorPicker] = useState(false);
   const sheetTranslateY = useRef(new Animated.Value(420)).current;
   const subtaskTimeouts = useRef<Record<string, NodeJS.Timeout>>({});
   const titleTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -129,6 +142,73 @@ export default function BucketDetailScreen() {
     },
     enabled: !!id,
   });
+
+  const { data: collaborators = [], refetch: refetchCollaborators } = useQuery({
+    queryKey: ['bucketCollaborators', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('bucket_collaborators')
+        .select('user_id, status, profiles:user_id(id, username, display_name, avatar_url)')
+        .eq('bucket_id', id);
+      if (error) {
+        console.warn('Error fetching collaborators:', error);
+        return [];
+      }
+      return (data || []).map((row: any) => {
+        const p = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+        return {
+          id: row.user_id,
+          username: p?.username || '',
+          display_name: p?.display_name || null,
+          avatar_url: p?.avatar_url || null,
+          status: row.status,
+        };
+      });
+    },
+    enabled: !!id,
+  });
+
+  const handleCollaboratorsChange = async (newCollabs: CollaboratorItem[]) => {
+    try {
+      const currentIds = new Set(collaborators.map((c: any) => c.id));
+      const newIds = new Set(newCollabs.map(c => c.id));
+
+      const toAdd = newCollabs.filter(c => !currentIds.has(c.id));
+      const toRemoveIds = collaborators.filter((c: any) => !newIds.has(c.id)).map((c: any) => c.id);
+
+      // Optimistic update: preserve existing status if already set
+      const existingStatusMap = new Map<string, string>(collaborators.map((c: any) => [c.id, c.status]));
+      queryClient.setQueryData(['bucketCollaborators', id], newCollabs.map(c => ({
+        ...c,
+        status: existingStatusMap.get(c.id) || 'pending',
+      })));
+
+      if (toAdd.length > 0) {
+        const { error: insErr } = await supabase.from('bucket_collaborators').insert(
+          toAdd.map(c => ({
+            bucket_id: id,
+            user_id: c.id,
+            status: 'pending',
+          }))
+        );
+        if (insErr) console.warn('Error adding collaborators:', insErr);
+      }
+
+      if (toRemoveIds.length > 0) {
+        const { error: delErr } = await supabase.from('bucket_collaborators')
+          .delete()
+          .eq('bucket_id', id)
+          .in('user_id', toRemoveIds);
+        if (delErr) console.warn('Error removing collaborators:', delErr);
+      }
+
+      void refetchCollaborators();
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+    } catch (err) {
+      console.warn('Error updating collaborators:', err);
+      void refetchCollaborators();
+    }
+  };
 
   // Los hooks deben ejecutarse siempre, antes de cualquier return anticipado.
   useEffect(() => {
@@ -805,6 +885,72 @@ export default function BucketDetailScreen() {
           {/* Etiquetas */}
           <ItemTagsRow bucketId={id as string} isOwner={isOwner} />
 
+          {/* Colaboradores */}
+          {(() => {
+            const visibleCollaborators = collaborators.filter((c: any) => {
+              if (c.status === 'accepted') return true;
+              if (c.status === 'pending') return isOwner || c.id === user?.id;
+              return false;
+            });
+
+            if (visibleCollaborators.length === 0 && !isOwner) return null;
+
+            return (
+              <View style={styles.collaboratorsSection}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.collaboratorsRow}
+                >
+                  {visibleCollaborators.map((c: any) => {
+                    const isPending = c.status === 'pending';
+                    return (
+                      <Pressable
+                        key={c.id}
+                        onPress={() => isOwner && setShowCollaboratorPicker(true)}
+                        style={[
+                          styles.collaboratorCircle,
+                          isPending && styles.collaboratorCirclePending,
+                        ]}
+                      >
+                        {c.avatar_url ? (
+                          <Image
+                            source={{ uri: c.avatar_url }}
+                            style={[styles.collaboratorAvatarImg, isPending && { opacity: 0.35 }]}
+                          />
+                        ) : (
+                          <Text style={[styles.collaboratorInitials, isPending && { opacity: 0.35 }]}>
+                            {getInitials(c.display_name || c.username)}
+                          </Text>
+                        )}
+                        {isPending && (
+                          <View style={styles.pendingCenterOverlay}>
+                            <Text style={styles.pendingCenterText}>Pendiente</Text>
+                          </View>
+                        )}
+                      </Pressable>
+                    );
+                  })}
+
+                  {isOwner && (
+                    <Pressable
+                      style={styles.addCollaboratorCircle}
+                      onPress={() => setShowCollaboratorPicker(true)}
+                      hitSlop={8}
+                      accessibilityRole="button"
+                      accessibilityLabel="Añadir colaborador"
+                    >
+                      <View style={styles.addCollabIconRow}>
+                        <Text style={styles.addCollabEmoji}>👤</Text>
+                        <Text style={styles.addCollabPlus}>+</Text>
+                      </View>
+                    </Pressable>
+                  )}
+                </ScrollView>
+              </View>
+            );
+          })()}
+
           {/* Meta */}
           <View style={styles.meta}>
             {bucket.location_text && (
@@ -1377,6 +1523,13 @@ export default function BucketDetailScreen() {
           />
         )
       )}
+
+      <CollaboratorPickerSheet
+        visible={showCollaboratorPicker}
+        selected={collaborators}
+        onChange={(collabs) => void handleCollaboratorsChange(collabs)}
+        onClose={() => setShowCollaboratorPicker(false)}
+      />
     </View>
   );
 }

@@ -295,4 +295,81 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
   },
   actionBtnFilled: {},
+
+  // ── Collaborators ──────────────────────────────────────────────────────────
+  collaboratorsSection: {
+    marginVertical: 14,
+  },
+  collaboratorsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  collaboratorCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: '#D4B13A',
+    backgroundColor: '#181818',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  collaboratorCirclePending: {
+    borderColor: 'rgba(212, 177, 58, 0.45)',
+    borderStyle: 'dashed',
+    backgroundColor: '#141414',
+  },
+  pendingCenterOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.62)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+  },
+  pendingCenterText: {
+    fontSize: 6.5,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#D4B13A',
+    letterSpacing: 0.2,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+  },
+  collaboratorAvatarImg: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 25,
+  },
+  collaboratorInitials: {
+    color: '#D4B13A',
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  addCollaboratorCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 1.8,
+    borderColor: '#D4B13A',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(212, 177, 58, 0.04)',
+  },
+  addCollabIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addCollabEmoji: {
+    fontSize: 18,
+  },
+  addCollabPlus: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#D4B13A',
+    marginLeft: 1,
+  },
 });

@@ -14,6 +14,7 @@ export interface CollaboratorItem {
   username: string;
   display_name?: string | null;
   avatar_url?: string | null;
+  status?: 'pending' | 'accepted' | 'declined';
 }
 
 interface CollaboratorPickerSheetProps {
