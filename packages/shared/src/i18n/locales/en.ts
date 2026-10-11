@@ -36,6 +36,7 @@ const en = {
     no_account: "Don't have an account?",
     has_account: 'Already have an account?',
     forgot_password: 'Forgot password?',
+    email_available: 'Email available',
     terms: 'By continuing you accept our Terms and Privacy Policy.',
   },
 

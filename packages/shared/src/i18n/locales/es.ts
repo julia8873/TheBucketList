@@ -48,6 +48,7 @@ const es = {
     register_title: 'Crea tu cuenta',
     register_subtitle: 'Empieza tu lista en menos de un minuto.',
     email_label: 'Correo electrónico',
+    email_available: 'Correo disponible',
     password_min: 'Mínimo 8 caracteres',
     continue: 'Continuar',
     show: 'Mostrar',

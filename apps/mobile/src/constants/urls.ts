@@ -60,10 +60,9 @@ export function getSupabaseAnonKey(): string {
   if (APP_ENV === 'staging') {
     return process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY_STAGING'] ?? '';
   }
-  return (
-    process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY'] ??
-    process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY_LOCAL'] ??
-    // Default Supabase local anon key (safe to commit)
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRFA0NiK7kyqd3V4AGSJlZ5V2P8VWv7Tc3KzGgLn9KI'
-  );
+  const k = process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY'] ?? process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY_LOCAL'];
+  if (k && !k.includes('CRFA0NiK')) {
+    return k;
+  }
+  return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
 }
