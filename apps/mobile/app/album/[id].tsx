@@ -36,14 +36,18 @@ import {
   X,
   Star,
   Flag,
+  FolderPlus,
+  Copy,
 } from 'lucide-react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
+import { useToast } from '@bucketlist/ui';
 import { useAlbumDetail, useDeleteAlbumDetail, TaskItem } from '../../src/services/api/albumsService';
 import { supabase } from '../../src/services/supabase';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
 import { useUserFavorites, useToggleFavoriteAlbum } from '../../src/hooks/useFavorites';
+import { useCopyBucket, useCopiedBucketIds } from '../../src/hooks/useSocial';
 
 const GRADIENTS = {
   aurora: ['#0E4B43', '#1F8560'],
@@ -74,6 +78,11 @@ export default function AlbumDetailScreen() {
   const { isAlbumFavorite } = useUserFavorites(currentUserId);
   const toggleFavoriteAlbum = useToggleFavoriteAlbum();
   const isFav = isAlbumFavorite(id);
+
+  const toast = useToast();
+  const copyBucket = useCopyBucket();
+  const { data: copiedIds } = useCopiedBucketIds(currentUserId);
+  const [copyingAlbum, setCopyingAlbum] = useState(false);
 
   const isSelf = (targetId?: string | null) => {
     if (!targetId || !currentUserId) return false;
@@ -414,6 +423,7 @@ export default function AlbumDetailScreen() {
   // Toggle single task completed / pending
   const toggleTaskCompleted = async (task: TaskItem, e: any) => {
     e.stopPropagation();
+    if (!canEdit) return;
     const nextCompleted = !task.isCompleted;
     const nextStatus = nextCompleted ? 'completed' : 'pending';
     const nextCompletedAt = nextCompleted ? new Date().toISOString() : null;
@@ -447,7 +457,7 @@ export default function AlbumDetailScreen() {
 
   // Toggle all tasks completed / pending
   const handleToggleAllTasks = async () => {
-    if (!album || album.tasks.length === 0) return;
+    if (!canEdit || !album || album.tasks.length === 0) return;
     const areAllCompleted = album.tasks.every((t) => t.isCompleted);
     const nextCompleted = !areAllCompleted;
     const nextStatus = nextCompleted ? 'completed' : 'pending';
@@ -489,6 +499,158 @@ export default function AlbumDetailScreen() {
       });
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  // Copiar una tarea concreta del álbum a mi lista
+  const handleCopySingleTask = (task: TaskItem, e: any) => {
+    e.stopPropagation();
+    if (!currentUserId) {
+      Alert.alert('Inicia sesión', 'Debes iniciar sesión para añadir tareas a tu lista.');
+      return;
+    }
+    const alreadyCopied = !!copiedIds?.includes(task.id);
+    if (alreadyCopied) {
+      Alert.alert('Ya en tu lista', 'Ya tienes esta tarea en tu lista.');
+      return;
+    }
+    copyBucket.mutate(
+      { bucketId: task.id, userId: currentUserId },
+      {
+        onSuccess: () => {
+          toast.show({ message: 'Tarea añadida a tu lista 🎉' });
+        },
+        onError: (err: any) => {
+          Alert.alert('No se pudo añadir', err?.message || 'Inténtalo de nuevo.');
+        },
+      }
+    );
+  };
+
+  // Copiar el álbum completo con todas sus tareas
+  const handleCopyEntireAlbum = () => {
+    if (!currentUserId) {
+      Alert.alert('Inicia sesión', 'Debes iniciar sesión para copiar este álbum.');
+      return;
+    }
+    Alert.alert(
+      '¿Copiar álbum entero?',
+      `Se creará una copia de «${album?.title}» y sus ${album?.tasks?.length ?? 0} tareas en tu perfil.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Copiar álbum',
+          style: 'default',
+          onPress: () => void executeCopyEntireAlbum(),
+        },
+      ]
+    );
+  };
+
+  const executeCopyEntireAlbum = async () => {
+    if (!currentUserId || !album) return;
+    try {
+      setCopyingAlbum(true);
+
+      // 1. Crear el nuevo álbum en el perfil del usuario actual
+      const { data: newAlbum, error: albumErr } = await supabase
+        .from('albums')
+        .insert({
+          owner_id: currentUserId,
+          title: album.title,
+          description: album.description || null,
+          cover_path: album.coverPath || null,
+          priority: album.priority || 'medium',
+          visibility: 'private',
+          is_shared: false,
+        })
+        .select()
+        .single();
+
+      if (albumErr || !newAlbum) {
+        throw new Error(albumErr?.message || 'Error al crear el nuevo álbum');
+      }
+
+      // 2. Copiar cada una de las tareas del álbum
+      for (const t of album.tasks) {
+        const { data: origBucket } = await supabase
+          .from('buckets')
+          .select('*, item_subtasks(title, position)')
+          .eq('id', t.id)
+          .single();
+
+        if (!origBucket) continue;
+
+        const { data: newBucket, error: bucketErr } = await supabase
+          .from('buckets')
+          .insert({
+            user_id: currentUserId,
+            category_id: origBucket.category_id,
+            title: origBucket.title,
+            description: origBucket.description,
+            location_text: origBucket.location_text,
+            location_lat: origBucket.location_lat,
+            location_lng: origBucket.location_lng,
+            cover_image:
+              typeof origBucket.cover_image === 'string' && origBucket.cover_image.startsWith('preset:')
+                ? origBucket.cover_image
+                : null,
+            tags: origBucket.tags ?? null,
+            visibility: 'private',
+            status: 'pending',
+            copied_from_id: origBucket.id,
+            copied_from_user_id: origBucket.user_id,
+            priority: origBucket.priority || 'medium',
+          })
+          .select()
+          .single();
+
+        if (bucketErr || !newBucket) continue;
+
+        // Vincular la nueva tarea al nuevo álbum
+        await supabase.from('album_items').insert({
+          album_id: newAlbum.id,
+          bucket_id: newBucket.id,
+          position: 0,
+        });
+
+        // Copiar subtareas si tiene
+        const subtasks = (origBucket.item_subtasks ?? []) as Array<{ title: string; position: number | null }>;
+        if (subtasks.length > 0) {
+          await supabase.from('item_subtasks').insert(
+            subtasks.map((s, i) => ({
+              bucket_id: newBucket.id,
+              title: s.title,
+              done: false,
+              position: s.position ?? i,
+            }))
+          );
+        }
+      }
+
+      // 3. Invalidar cachés
+      void queryClient.invalidateQueries({ queryKey: ['albums'] });
+      void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+      void queryClient.invalidateQueries({ queryKey: ['copiedBuckets'] });
+
+      toast.show({ message: 'Álbum y tareas copiados a tu perfil 🎉' });
+
+      Alert.alert(
+        '¡Álbum copiado!',
+        'El álbum y todas sus tareas se han añadido a tu perfil.',
+        [
+          { text: 'Seguir aquí', style: 'cancel' },
+          {
+            text: 'Ver mi nuevo álbum',
+            onPress: () => router.push(`/album/${newAlbum.id}` as any),
+          },
+        ]
+      );
+    } catch (err: any) {
+      console.error('Error copying entire album:', err);
+      Alert.alert('No se pudo copiar el álbum', err?.message || 'Inténtalo de nuevo.');
+    } finally {
+      setCopyingAlbum(false);
     }
   };
 
@@ -653,17 +815,42 @@ export default function AlbumDetailScreen() {
             </View>
           )}
 
-          {/* Interactive Checkbox */}
-          <Pressable
-            hitSlop={8}
-            onPress={(e) => void toggleTaskCompleted(task, e)}
-            style={[
-              styles.checkCircleTouch,
-              isDone ? styles.checkCircleDone : styles.checkCircleEmpty,
-            ]}
-          >
-            {isDone && <Check size={16} color="#0D0D0D" strokeWidth={3} />}
-          </Pressable>
+          {/* Interactive Checkbox (solo si puede editar) o botón de añadir/guardada */}
+          {canEdit ? (
+            <Pressable
+              hitSlop={8}
+              onPress={(e) => void toggleTaskCompleted(task, e)}
+              style={[
+                styles.checkCircleTouch,
+                isDone ? styles.checkCircleDone : styles.checkCircleEmpty,
+              ]}
+            >
+              {isDone && <Check size={16} color="#0D0D0D" strokeWidth={3} />}
+            </Pressable>
+          ) : (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              {isDone && (
+                <View style={styles.readOnlyDoneBadge}>
+                  <Check size={14} color="#10B981" strokeWidth={2.5} />
+                </View>
+              )}
+              {copiedIds?.includes(task.id) ? (
+                <View style={styles.taskAddedBadge}>
+                  <Check size={12} color="#D4B13A" strokeWidth={2.5} />
+                  <Text style={styles.taskAddedText}>Guardada</Text>
+                </View>
+              ) : (
+                <Pressable
+                  hitSlop={8}
+                  onPress={(e) => void handleCopySingleTask(task, e)}
+                  style={styles.taskAddBtn}
+                >
+                  <Plus size={14} color="#0D0D0D" strokeWidth={2.5} />
+                  <Text style={styles.taskAddBtnText}>Añadir</Text>
+                </Pressable>
+              )}
+            </View>
+          )}
         </View>
       </Pressable>
     );
@@ -978,8 +1165,8 @@ export default function AlbumDetailScreen() {
           </View>
         </View>
 
-        {/* Botón rápido: Marcar todas completadas / Desmarcar todas */}
-        {id !== 'unassigned' && tasks.length > 0 && (
+        {/* Botón rápido: Marcar todas completadas / Desmarcar todas (solo si puede editar) */}
+        {canEdit && id !== 'unassigned' && tasks.length > 0 && (
           <Pressable
             style={[styles.toggleAllBtn, areAllCompleted && styles.toggleAllBtnActive]}
             onPress={() => void handleToggleAllTasks()}
@@ -1006,7 +1193,7 @@ export default function AlbumDetailScreen() {
                 <Text style={{ color: '#D4B13A' }}>PENDIENTES</Text>
                 <Text style={{ color: '#FFF' }}> · {pendientes.length}</Text>
               </Text>
-              {id !== 'unassigned' && (
+              {canEdit && id !== 'unassigned' && (
                 <Pressable
                   style={styles.addBtn}
                   onPress={() => router.push(`/add-task?albumId=${id}`)}
@@ -1037,20 +1224,37 @@ export default function AlbumDetailScreen() {
       {/* Bottom Bar */}
       {id !== 'unassigned' && (
         <View style={[styles.bottomBar, { paddingBottom: Math.max(30, insets.bottom) }]}>
-          {canEdit && (
+          {canEdit ? (
+            <>
+              <Pressable
+                style={styles.btnEdit}
+                onPress={() => router.push(`/(modals)/create-album?id=${id}`)}
+              >
+                <Text style={styles.btnEditText}>Editar</Text>
+              </Pressable>
+              <Pressable
+                style={styles.btnAdd}
+                onPress={() => router.push(`/add-task?albumId=${id}`)}
+              >
+                <Text style={styles.btnAddText}>Añadir tarea</Text>
+              </Pressable>
+            </>
+          ) : (
             <Pressable
-              style={styles.btnEdit}
-              onPress={() => router.push(`/(modals)/create-album?id=${id}`)}
+              style={[styles.btnCopyAlbum, copyingAlbum && { opacity: 0.7 }]}
+              onPress={handleCopyEntireAlbum}
+              disabled={copyingAlbum}
             >
-              <Text style={styles.btnEditText}>Editar</Text>
+              {copyingAlbum ? (
+                <ActivityIndicator size="small" color="#0D0D0D" />
+              ) : (
+                <>
+                  <FolderPlus size={18} color="#0D0D0D" strokeWidth={2.2} />
+                  <Text style={styles.btnCopyAlbumText}>Copiar álbum entero a mi perfil</Text>
+                </>
+              )}
             </Pressable>
           )}
-          <Pressable
-            style={styles.btnAdd}
-            onPress={() => router.push(`/add-task?albumId=${id}`)}
-          >
-            <Text style={styles.btnAddText}>Añadir tarea</Text>
-          </Pressable>
         </View>
       )}
 
@@ -1143,7 +1347,7 @@ export default function AlbumDetailScreen() {
                       </Pressable>
                     )}
 
-                    {tasks.length > 0 && (
+                    {canEdit && tasks.length > 0 && (
                       <Pressable
                         style={styles.sheetOption}
                         onPress={() => void handleToggleAllTasks()}
@@ -1165,6 +1369,44 @@ export default function AlbumDetailScreen() {
                             {areAllCompleted
                               ? 'Revertir estado de todas las tareas'
                               : 'Completa todas las tareas del álbum'}
+                          </Text>
+                        </View>
+                      </Pressable>
+                    )}
+
+                    {!canEdit && (
+                      <Pressable
+                        style={styles.sheetOption}
+                        onPress={() => {
+                          closeSheet(() => handleCopyEntireAlbum());
+                        }}
+                      >
+                        <View style={styles.sheetIconBox}>
+                          <FolderPlus color="#D4B13A" size={20} />
+                        </View>
+                        <View style={styles.sheetOptionTexts}>
+                          <Text style={styles.sheetOptionTitle}>Copiar álbum a mi perfil</Text>
+                          <Text style={styles.sheetOptionSubtitle}>
+                            Crea una copia de este álbum y sus tareas en tu lista
+                          </Text>
+                        </View>
+                      </Pressable>
+                    )}
+
+                    {!canEdit && (
+                      <Pressable
+                        style={styles.sheetOption}
+                        onPress={() => {
+                          closeSheet(() => void handleShare());
+                        }}
+                      >
+                        <View style={styles.sheetIconBox}>
+                          <ShareIcon color="#D4B13A" size={20} />
+                        </View>
+                        <View style={styles.sheetOptionTexts}>
+                          <Text style={styles.sheetOptionTitle}>Compartir álbum</Text>
+                          <Text style={styles.sheetOptionSubtitle}>
+                            Envía este álbum a tus amigos
                           </Text>
                         </View>
                       </Pressable>
@@ -1915,6 +2157,61 @@ const styles = StyleSheet.create({
   btnAddText: {
     fontFamily: 'Inter_700Bold',
     fontSize: 17,
+    color: '#0D0D0D',
+  },
+  btnCopyAlbum: {
+    height: 56,
+    borderRadius: 999,
+    backgroundColor: '#D4B13A',
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  btnCopyAlbumText: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 16,
+    color: '#0D0D0D',
+  },
+  readOnlyDoneBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    borderWidth: 1,
+    borderColor: '#10B981',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  taskAddedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: 'rgba(212, 177, 58, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 177, 58, 0.35)',
+  },
+  taskAddedText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 12,
+    color: '#D4B13A',
+  },
+  taskAddBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 16,
+    backgroundColor: '#D4B13A',
+  },
+  taskAddBtnText: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 12,
     color: '#0D0D0D',
   },
 
