@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTheme, spacing, fontFamily } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
 import { uploadAvatar } from '../../src/services/api/avatar';
@@ -14,6 +15,7 @@ import { AuthScreen, BigAvatar, PillButton, TextAction } from '../../src/compone
 
 export default function PhotoScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { theme } = useTheme();
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
@@ -46,6 +48,8 @@ export default function PhotoScreen() {
       const { error: err } = await supabase.from('profiles').update({ avatar_url: url }).eq('id', user.id);
       if (err) throw err;
       setAvatarUrl(url);
+      queryClient.setQueryData(['profile', user.id], (old: any) => ({ ...old, avatar_url: url }));
+      void queryClient.invalidateQueries({ queryKey: ['profile'] });
       next();
     } catch {
       setError(t('onboarding.err_photo'));

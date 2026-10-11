@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, View, Pressable, Animated, ActivityIndicator, Alert, StyleSheet, TextInput, ScrollView } from 'react-native';
 import { Typography } from '@bucketlist/ui';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
-import { X, Camera, FolderPlus, ListPlus, Trash2, Circle, MoreHorizontal, CheckCircle2, Check, Eye, Users, Lock, ArrowLeft, FolderOpen, Image as ImageIcon, Tag } from 'lucide-react-native';
+import { X, Camera, FolderPlus, ListPlus, Trash2, Circle, MoreHorizontal, CheckCircle2, Check, Eye, Users, Lock, ArrowLeft, FolderOpen, Image as ImageIcon, Tag, LogOut } from 'lucide-react-native';
 import { styles } from '../../app/bucket/BucketDetail.styles';
 
 type BucketBottomSheetProps = {
@@ -12,6 +12,9 @@ type BucketBottomSheetProps = {
   closeSheet: (after?: () => void) => void;
   theme: any;
   isOwner: boolean;
+  canEdit?: boolean;
+  isCollaborator?: boolean;
+  onLeaveCollaboration?: () => void;
   uploadPhotos: () => void;
   uploadCover: () => void;
   loadAlbums: () => void;
@@ -33,7 +36,7 @@ type BucketBottomSheetProps = {
 };
 
 export function BucketBottomSheet({
-  sheetVisible, sheetMode, sheetTranslateY, closeSheet, theme, isOwner, uploadPhotos, uploadCover, loadAlbums, user, copyBucket, id, handleDelete, bucket, handleChangeStatus, handleChangeVisibility, handleChangeCategory, setSheetMode, albumsLoading, toggleAlbum, removeAllAlbums, albums, bucketAlbums, categories
+  sheetVisible, sheetMode, sheetTranslateY, closeSheet, theme, isOwner, canEdit, isCollaborator, onLeaveCollaboration, uploadPhotos, uploadCover, loadAlbums, user, copyBucket, id, handleDelete, bucket, handleChangeStatus, handleChangeVisibility, handleChangeCategory, setSheetMode, albumsLoading, toggleAlbum, removeAllAlbums, albums, bucketAlbums, categories
 }: BucketBottomSheetProps) {
   const [albumSearchQuery, setAlbumSearchQuery] = useState('');
   const visibilityLabel = (v: string) => {
@@ -72,7 +75,7 @@ export function BucketBottomSheet({
               </View>
 
               <View style={styles.sheetOptions}>
-                {isOwner && (
+                {canEdit && (
                   <Pressable style={styles.sheetOption} onPress={() => void uploadPhotos()}>
                     <View style={styles.sheetIcon}><Camera color={gold[400]} size={21} /></View>
                     <View style={styles.sheetOptionText}>
@@ -82,7 +85,7 @@ export function BucketBottomSheet({
                   </Pressable>
                 )}
 
-                {isOwner && (
+                {canEdit && (
                   <Pressable style={styles.sheetOption} onPress={() => void uploadCover()}>
                     <View style={styles.sheetIcon}><ImageIcon color={gold[400]} size={21} /></View>
                     <View style={styles.sheetOptionText}>
@@ -92,7 +95,7 @@ export function BucketBottomSheet({
                   </Pressable>
                 )}
 
-                {isOwner && (
+                {canEdit && (
                   <Pressable style={styles.sheetOption} onPress={() => setSheetMode('category')}>
                     <View style={styles.sheetIcon}><Tag color={gold[400]} size={21} /></View>
                     <View style={styles.sheetOptionText}>
@@ -104,7 +107,7 @@ export function BucketBottomSheet({
                   </Pressable>
                 )}
 
-                {isOwner && (
+                {canEdit && (
                   <Pressable style={styles.sheetOption} onPress={() => void loadAlbums()}>
                     <View style={styles.sheetIcon}><FolderPlus color={gold[400]} size={21} /></View>
                     <View style={styles.sheetOptionText}>
@@ -114,7 +117,7 @@ export function BucketBottomSheet({
                   </Pressable>
                 )}
 
-                {!isOwner && user && (
+                {!canEdit && user && (
                   <Pressable
                     style={styles.sheetOption}
                     onPress={() => {
@@ -128,6 +131,16 @@ export function BucketBottomSheet({
                     <View style={styles.sheetOptionText}>
                       <Typography variant="bodySemibold">Yo también quiero hacerlo</Typography>
                       <Typography variant="caption" color={theme.colors.foregroundMuted}>Añádelo a tu lista</Typography>
+                    </View>
+                  </Pressable>
+                )}
+
+                {isCollaborator && (
+                  <Pressable style={[styles.sheetOption, styles.dangerOption]} onPress={onLeaveCollaboration}>
+                    <View style={styles.sheetIcon}><LogOut color={theme.colors.error} size={21} /></View>
+                    <View style={styles.sheetOptionText}>
+                      <Typography variant="bodySemibold" color={theme.colors.error}>Dejar de colaborar</Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>Sale de la colaboración en esta tarea</Typography>
                     </View>
                   </Pressable>
                 )}

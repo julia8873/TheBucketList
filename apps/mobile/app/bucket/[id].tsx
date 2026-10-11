@@ -185,14 +185,21 @@ export default function BucketDetailScreen() {
       const newIds = new Set(newCollabs.map(c => c.id));
 
       const toAdd = newCollabs.filter(c => !currentIds.has(c.id));
-      const toRemoveIds = collaborators.filter((c: any) => !newIds.has(c.id)).map((c: any) => c.id);
+      // Only the owner can remove collaborators
+      const toRemoveIds = isOwner
+        ? collaborators.filter((c: any) => !newIds.has(c.id)).map((c: any) => c.id)
+        : [];
 
       // Optimistic update: preserve existing status if already set
       const existingStatusMap = new Map<string, string>(collaborators.map((c: any) => [c.id, c.status]));
-      queryClient.setQueryData(['bucketCollaborators', id], newCollabs.map(c => ({
-        ...c,
-        status: existingStatusMap.get(c.id) || 'pending',
-      })));
+      // Merge: if not owner, keep existing collabs + add new ones
+      const mergedCollabs = isOwner
+        ? newCollabs.map(c => ({ ...c, status: existingStatusMap.get(c.id) || 'pending' }))
+        : [
+            ...collaborators,
+            ...toAdd.map(c => ({ ...c, status: 'pending' })),
+          ];
+      queryClient.setQueryData(['bucketCollaborators', id], mergedCollabs);
 
       if (toAdd.length > 0) {
         const { error: insErr } = await supabase.from('bucket_collaborators').insert(
@@ -306,6 +313,8 @@ export default function BucketDetailScreen() {
   }
 
   const isOwner = bucket.user_id === user?.id;
+  const isCollaborator = !isOwner && collaborators.some((c: any) => c.id === user?.id && c.status === 'accepted');
+  const canEdit = isOwner || isCollaborator;
   let photos: any[] = bucket.bucket_photos || [];
 
   if (photoSearchQuery.trim()) {
@@ -644,6 +653,35 @@ export default function BucketDetailScreen() {
     });
   };
 
+  const handleLeaveCollaboration = () => {
+    closeSheet(() => {
+      Alert.alert(
+        'Dejar de colaborar',
+        '¿Quieres salir de esta tarea colaborativa? Dejará de aparecer en tu lista.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          {
+            text: 'Salir',
+            style: 'destructive',
+            onPress: async () => {
+              const { error } = await supabase
+                .from('bucket_collaborators')
+                .delete()
+                .eq('bucket_id', id)
+                .eq('user_id', user!.id);
+              if (error) {
+                Alert.alert('Error', error.message);
+              } else {
+                void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+                router.back();
+              }
+            },
+          },
+        ]
+      );
+    });
+  };
+
   const updateCounter = async (patch: Record<string, any>) => {
     queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, ...patch } : oldData);
 
@@ -925,7 +963,7 @@ export default function BucketDetailScreen() {
             <Pressable
               style={[styles.badge, styles.badgeGold]}
               onPress={() => {
-                if (isOwner) {
+                if (canEdit) {
                   setSheetMode('status');
                   setSheetVisible(true);
                 }
@@ -940,7 +978,7 @@ export default function BucketDetailScreen() {
             <Pressable
               style={[styles.badge, styles.badgeMuted]}
               onPress={() => {
-                if (isOwner) {
+                if (canEdit) {
                   setSheetMode('category');
                   setSheetVisible(true);
                 }
@@ -956,7 +994,7 @@ export default function BucketDetailScreen() {
             <Pressable
               style={[styles.badge, styles.badgeMuted]}
               onPress={() => {
-                if (isOwner) {
+                if (canEdit) {
                   setSheetMode('visibility');
                   setSheetVisible(true);
                 }
@@ -971,7 +1009,7 @@ export default function BucketDetailScreen() {
             <Pressable
               style={[styles.badge, styles.badgeMuted]}
               onPress={() => {
-                if (isOwner) {
+                if (canEdit) {
                   setSheetVisible(true);
                   void loadAlbums();
                 }
@@ -989,7 +1027,7 @@ export default function BucketDetailScreen() {
           </View>
 
           {/* Title */}
-          {isOwner ? (
+          {canEdit ? (
             <TextInput
               style={[styles.title, { color: theme.colors.foreground, padding: 0 }]}
               defaultValue={bucket.title}
@@ -1003,17 +1041,37 @@ export default function BucketDetailScreen() {
           )}
 
           {/* Etiquetas */}
-          <ItemTagsRow bucketId={id as string} isOwner={isOwner} />
+          <ItemTagsRow bucketId={id as string} isOwner={canEdit} />
 
           {/* Colaboradores */}
           {(() => {
+            // Always show the bucket owner first, then accepted collaborators,
+            // then pending ones (owner or the pending user themselves can see them)
+            const ownerEntry = {
+              id: bucket.user_id,
+              username: bucket.user?.username || '',
+              display_name: bucket.user?.display_name || null,
+              avatar_url: bucket.user?.avatar_url || null,
+              status: 'accepted',
+              isOwner: true,
+            };
+
             const visibleCollaborators = collaborators.filter((c: any) => {
               if (c.status === 'accepted') return true;
-              if (c.status === 'pending') return isOwner || c.id === user?.id;
+              if (c.status === 'pending') return canEdit || c.id === user?.id;
               return false;
             });
 
-            if (visibleCollaborators.length === 0 && !isOwner) return null;
+            // Build full participant list: owner first, then collaborators
+            // Exclude the current user (you already know you're in the task)
+            // and avoid duplicating if owner is also in collaborators table
+            const ownerId = bucket.user_id;
+            const participants = [
+              ownerEntry,
+              ...visibleCollaborators.filter((c: any) => c.id !== ownerId),
+            ].filter((c: any) => c.id !== user?.id);
+
+            if (participants.length === 0 && !canEdit) return null;
 
             return (
               <View style={styles.collaboratorsSection}>
@@ -1022,15 +1080,16 @@ export default function BucketDetailScreen() {
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.collaboratorsRow}
                 >
-                  {visibleCollaborators.map((c: any) => {
+                  {participants.map((c: any) => {
                     const isPending = c.status === 'pending';
                     return (
                       <Pressable
                         key={c.id}
-                        onPress={() => isOwner && setShowCollaboratorPicker(true)}
+                        onPress={() => canEdit && setShowCollaboratorPicker(true)}
                         style={[
                           styles.collaboratorCircle,
                           isPending && styles.collaboratorCirclePending,
+                          c.isOwner && { borderColor: '#D4B13A', borderWidth: 2.5 },
                         ]}
                       >
                         {c.avatar_url ? (
@@ -1052,7 +1111,7 @@ export default function BucketDetailScreen() {
                     );
                   })}
 
-                  {isOwner && (
+                  {canEdit && (
                     <Pressable
                       style={styles.addCollaboratorCircle}
                       onPress={() => setShowCollaboratorPicker(true)}
@@ -1078,15 +1137,15 @@ export default function BucketDetailScreen() {
               <View style={styles.metaRowBetween}>
                 <Pressable
                   style={styles.metaRowClickable}
-                  onPress={() => isOwner && setLocationModalVisible(true)}
-                  disabled={!isOwner}
+                  onPress={() => canEdit && setLocationModalVisible(true)}
+                  disabled={!canEdit}
                 >
                   <MapPin color={gold[400]} size={16} strokeWidth={1.8} />
                   <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText} numberOfLines={1}>
                     {bucket.location_text}
                   </Typography>
                 </Pressable>
-                {isOwner && (
+                {canEdit && (
                   <Pressable
                     onPress={() => void handleRemoveLocation()}
                     hitSlop={8}
@@ -1096,7 +1155,7 @@ export default function BucketDetailScreen() {
                   </Pressable>
                 )}
               </View>
-            ) : isOwner ? (
+            ) : canEdit ? (
               <Pressable
                 style={styles.metaRowClickable}
                 onPress={() => setLocationModalVisible(true)}
@@ -1114,21 +1173,21 @@ export default function BucketDetailScreen() {
                 <Pressable
                   style={styles.metaRowClickable}
                   onPress={() =>
-                    isOwner &&
+                    canEdit &&
                     setDatePickerConfig({
                       visible: true,
                       type: 'completed_at',
                       date: new Date(bucket.completed_at || bucket.updated_at || new Date()),
                     })
                   }
-                  disabled={!isOwner}
+                  disabled={!canEdit}
                 >
                   <CheckCircle2 color={gold[400]} size={16} strokeWidth={1.8} />
                   <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText}>
                     Completada el {format(new Date(bucket.completed_at || bucket.updated_at || new Date()), "d 'de' MMMM 'de' yyyy", { locale: es })}
                   </Typography>
                 </Pressable>
-                {isOwner && (
+                {canEdit && (
                   <Pressable
                     onPress={() => void handleRemoveCompletedAt()}
                     hitSlop={8}
@@ -1138,7 +1197,7 @@ export default function BucketDetailScreen() {
                   </Pressable>
                 )}
               </View>
-            ) : isOwner ? (
+            ) : canEdit ? (
               <Pressable
                 style={styles.metaRowClickable}
                 onPress={() =>
@@ -1162,14 +1221,14 @@ export default function BucketDetailScreen() {
                 <Pressable
                   style={styles.metaRowClickable}
                   onPress={() =>
-                    isOwner &&
+                    canEdit &&
                     setDatePickerConfig({
                       visible: true,
                       type: 'deadline',
                       date: new Date(bucket.deadline!),
                     })
                   }
-                  disabled={!isOwner}
+                  disabled={!canEdit}
                 >
                   <Calendar color={gold[400]} size={16} strokeWidth={1.8} />
                   <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText}>
@@ -1179,7 +1238,7 @@ export default function BucketDetailScreen() {
                     }
                   </Typography>
                 </Pressable>
-                {isOwner && (
+                {canEdit && (
                   <Pressable
                     onPress={() => void handleRemoveDeadline()}
                     hitSlop={8}
@@ -1189,7 +1248,7 @@ export default function BucketDetailScreen() {
                   </Pressable>
                 )}
               </View>
-            ) : isOwner ? (
+            ) : canEdit ? (
               <Pressable
                 style={styles.metaRowClickable}
                 onPress={() =>
@@ -1209,7 +1268,7 @@ export default function BucketDetailScreen() {
           </View>
 
           {/* Description */}
-          {isOwner ? (
+          {canEdit ? (
             <TextInput
               style={[styles.description, { color: theme.colors.foregroundMuted, padding: 0 }]}
               defaultValue={bucket.description || ''}
@@ -1252,7 +1311,7 @@ export default function BucketDetailScreen() {
           <View style={[styles.divider, { backgroundColor: dark[400] }]} />
 
           {/* Contador */}
-          {(bucket.counter_enabled || isOwner) && (
+          {(bucket.counter_enabled || canEdit) && (
             <View style={{ marginBottom: 24 }}>
               <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
                 CONTADOR
@@ -1272,7 +1331,7 @@ export default function BucketDetailScreen() {
                     }}
                   >
                     <View style={{ flex: 1, paddingRight: 12 }}>
-                      {isOwner ? (
+                      {canEdit ? (
                         <TextInput
                           defaultValue={bucket.counter_label || ''}
                           onChangeText={handleCounterLabelChange}
@@ -1286,7 +1345,7 @@ export default function BucketDetailScreen() {
                         </Typography>
                       ) : null}
 
-                      {isOwner ? (
+                      {canEdit ? (
                         <TextInput
                           defaultValue={String(bucket.counter_count ?? 0)}
                           onChangeText={(text) => {
@@ -1311,7 +1370,7 @@ export default function BucketDetailScreen() {
                       )}
                     </View>
 
-                    {isOwner && (
+                    {canEdit && (
                       <View style={{ flexDirection: 'row', gap: 8 }}>
                         <Pressable
                           onPress={() => changeCounter(-1)}
@@ -1345,7 +1404,7 @@ export default function BucketDetailScreen() {
                   </View>
 
                   {/* Barra y objetivo (independiente de la barra de pasos) */}
-                  {(bucket.counter_target || isOwner) && (
+                  {(bucket.counter_target || canEdit) && (
                     <View style={{ marginTop: 16 }}>
                       {bucket.counter_target ? (
                         <ProgressBar
@@ -1359,7 +1418,7 @@ export default function BucketDetailScreen() {
                         <Typography variant="bodySemibold" color={theme.colors.foregroundMuted}>
                           {bucket.counter_target ? `${bucket.counter_count ?? 0} de ${bucket.counter_target}` : 'Sin objetivo'}
                         </Typography>
-                        {isOwner && (
+                        {canEdit && (
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                             <Typography variant="body" color={theme.colors.foreground}>Objetivo</Typography>
                             <TextInput
@@ -1387,7 +1446,7 @@ export default function BucketDetailScreen() {
                     </View>
                   )}
 
-                  {isOwner && (
+                  {canEdit && (
                     <Pressable onPress={removeCounter} style={{ alignSelf: 'flex-start', marginTop: 10 }}>
                       <Typography variant="caption" color={theme.colors.foregroundMuted}>
                         Quitar contador
@@ -1420,7 +1479,7 @@ export default function BucketDetailScreen() {
           )}
 
           {/* Subtasks */}
-          {(subtasks.length > 0 || isOwner) && (
+          {(subtasks.length > 0 || canEdit) && (
             <View style={styles.subtasksSection}>
               <View style={styles.subtasksHeader}>
                 <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
@@ -1434,7 +1493,7 @@ export default function BucketDetailScreen() {
               )}
               <SubtaskList
                 subtasks={subtasks}
-                isOwner={isOwner}
+                isOwner={canEdit}
                 theme={theme}
                 onToggle={(subtask) => void toggleSubtask(subtask)}
                 onChange={handleSubtaskChange}
@@ -1444,7 +1503,7 @@ export default function BucketDetailScreen() {
               />
 
               {/* Añadir paso */}
-              {isOwner && (
+              {canEdit && (
                 <View style={[styles.subtaskRow, { opacity: 0.7 }]}>
                   <Pressable onPress={handleAddSubtask}>
                     <Plus color={theme.colors.foregroundMuted} size={22} strokeWidth={1.8} />
@@ -1463,7 +1522,7 @@ export default function BucketDetailScreen() {
           )}
 
           {/* ── Fotos ──────────────────────────────────────────────────────── */}
-          {(bucket.bucket_photos?.length > 0 || isOwner) && (
+          {(bucket.bucket_photos?.length > 0 || canEdit) && (
             <>
               <View style={[styles.divider, { backgroundColor: dark[400], marginTop: 20 }]} />
               <View style={styles.photosSection}>
@@ -1540,7 +1599,7 @@ export default function BucketDetailScreen() {
                       </View>
                     </Pressable>
                   ))}
-                  {isOwner && (
+                  {canEdit && (
                     <Pressable
                       style={[
                         styles.photoAddThumb,
@@ -1568,7 +1627,7 @@ export default function BucketDetailScreen() {
         photos={photos}
         viewingPhotoIndex={viewingPhotoIndex}
         setViewingPhotoIndex={setViewingPhotoIndex}
-        isOwner={isOwner}
+        isOwner={canEdit}
         onUpdateTitle={(photoId, title) => {
           queryClient.setQueryData(['bucketDetail', id], (oldData: any) => {
             if (!oldData) return oldData;
@@ -1584,7 +1643,7 @@ export default function BucketDetailScreen() {
       />
 
       {/* ── Bottom action bar ─────────────────────────────────────────────── */}
-      {isOwner && (
+      {canEdit && (
         <View style={[styles.actionBar, { borderTopColor: dark[400], backgroundColor: theme.colors.background }]}>
           <Pressable
             style={[styles.actionBtn, styles.actionBtnFilled, { backgroundColor: bucket.status === 'completed' ? dark[300] : gold[400] }]}
@@ -1609,6 +1668,9 @@ export default function BucketDetailScreen() {
         closeSheet={closeSheet}
         theme={theme}
         isOwner={isOwner}
+        canEdit={canEdit}
+        isCollaborator={isCollaborator}
+        onLeaveCollaboration={handleLeaveCollaboration}
         uploadPhotos={uploadPhotos}
         uploadCover={uploadCover}
         loadAlbums={loadAlbums}
@@ -1836,9 +1898,29 @@ export default function BucketDetailScreen() {
 
       <CollaboratorPickerSheet
         visible={showCollaboratorPicker}
-        selected={collaborators}
+        selected={[
+          // Owner entry (always shown, unless the current user IS the owner)
+          ...(bucket.user_id !== user?.id ? [{
+            id: bucket.user_id,
+            username: bucket.user?.username || '',
+            display_name: bucket.user?.display_name || null,
+            avatar_url: bucket.user?.avatar_url || null,
+            status: 'accepted' as const,
+          }] : []),
+          // Other collaborators except the current user
+          ...collaborators.filter((c: any) => c.id !== user?.id && c.status === 'accepted'),
+        ]}
         onChange={(collabs) => void handleCollaboratorsChange(collabs)}
         onClose={() => setShowCollaboratorPicker(false)}
+        readOnlyIds={isOwner
+          ? []
+          : [
+              bucket.user_id,
+              ...collaborators
+                .filter((c: any) => c.status === 'accepted' && c.id !== user?.id)
+                .map((c: any) => c.id),
+            ]
+        }
       />
     </View>
   );

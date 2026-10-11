@@ -78,9 +78,14 @@ export default function RootLayout() {
     });
 
     // Subscribe to auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setInitialized(true);
+      if (event === 'SIGNED_OUT') {
+        queryClient.clear();
+      } else if (event === 'SIGNED_IN') {
+        void queryClient.invalidateQueries();
+      }
     });
 
     return () => subscription.unsubscribe();

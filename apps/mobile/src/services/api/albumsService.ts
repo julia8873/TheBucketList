@@ -23,6 +23,12 @@ export interface AlbumDetail {
   visibility?: 'public' | 'followers' | 'private' | string;
   isShared: boolean;
   ownerId?: string;
+  owner?: {
+    id: string;
+    username: string;
+    display_name?: string | null;
+    avatar_url?: string | null;
+  };
   tasks: TaskItem[];
 }
 
@@ -84,7 +90,7 @@ export const albumsService = {
     // Fetch album details
     const { data: album, error: albumError } = await supabase
       .from('albums')
-      .select('*')
+      .select('*, owner:profiles!albums_owner_id_fkey(id, username, display_name, avatar_url)')
       .eq('id', id)
       .single();
 
@@ -150,6 +156,16 @@ export const albumsService = {
       });
     }
 
+    let ownerProfile = Array.isArray(album.owner) ? album.owner[0] : album.owner;
+    if (!ownerProfile && album.owner_id) {
+      const { data: p } = await supabase
+        .from('profiles')
+        .select('id, username, display_name, avatar_url')
+        .eq('id', album.owner_id)
+        .single();
+      if (p) ownerProfile = p;
+    }
+
     return {
       id: album.id,
       title: album.title,
@@ -159,6 +175,12 @@ export const albumsService = {
       visibility: album.visibility || 'private',
       isShared: album.is_shared || false,
       ownerId: album.owner_id,
+      owner: ownerProfile ? {
+        id: ownerProfile.id,
+        username: ownerProfile.username,
+        display_name: ownerProfile.display_name,
+        avatar_url: ownerProfile.avatar_url,
+      } : undefined,
       tasks,
     };
   },

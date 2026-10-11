@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../src/services/supabase';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useOnboardingStore } from '../../src/stores/onboarding.store';
@@ -11,6 +12,7 @@ type Status = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 
 export default function UsernameScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const { username, setUsername } = useOnboardingStore();
@@ -53,6 +55,8 @@ export default function UsernameScreen() {
       else setError(t('auth.err_generic'));
       return;
     }
+    queryClient.setQueryData(['profile', user.id], (old: any) => ({ ...old, username }));
+    void queryClient.invalidateQueries({ queryKey: ['profile'] });
     router.push('/(onboarding)/photo');
   };
 

@@ -22,9 +22,11 @@ interface CollaboratorPickerSheetProps {
   selected: CollaboratorItem[];
   onChange: (collaborators: CollaboratorItem[]) => void;
   onClose: () => void;
+  /** IDs that are already collaborators and cannot be removed (for non-owner collaborators) */
+  readOnlyIds?: string[];
 }
 
-export function CollaboratorPickerSheet({ visible, selected, onChange, onClose }: CollaboratorPickerSheetProps) {
+export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, readOnlyIds = [] }: CollaboratorPickerSheetProps) {
   const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
   const [query, setQuery] = useState('');
@@ -86,9 +88,11 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose }
     };
   }, [visible, query, user?.id]);
 
+  const readOnlySet = new Set(readOnlyIds);
   const selectedIds = new Set(draft.map(c => c.id));
 
   const togglePerson = (person: CollaboratorItem) => {
+    if (readOnlySet.has(person.id)) return; // Cannot remove read-only collaborators
     if (selectedIds.has(person.id)) {
       setDraft(draft.filter(c => c.id !== person.id));
     } else {
@@ -168,7 +172,10 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose }
                     <Text style={styles.chipName} numberOfLines={1}>
                       {c.display_name || `@${c.username}`}
                     </Text>
-                    <X color="#D4B13A" size={14} />
+                    {readOnlySet.has(c.id)
+                      ? <Text style={{ fontSize: 12, color: '#666' }}>🔒</Text>
+                      : <X color="#D4B13A" size={14} />
+                    }
                   </Pressable>
                 ))}
               </ScrollView>
@@ -206,10 +213,11 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose }
             >
               {profiles.map(person => {
                 const isSelected = selectedIds.has(person.id);
+                const isReadOnly = readOnlySet.has(person.id);
                 return (
                   <Pressable
                     key={person.id}
-                    style={[styles.userRow, isSelected && styles.userRowSelected]}
+                    style={[styles.userRow, isSelected && styles.userRowSelected, isReadOnly && { opacity: 0.6 }]}
                     onPress={() => togglePerson(person)}
                   >
                     <Avatar
@@ -227,7 +235,9 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose }
                       </Text>
                     </View>
                     <View style={[styles.checkCircle, isSelected && styles.checkCircleSelected]}>
-                      {isSelected ? (
+                      {isReadOnly ? (
+                        <Text style={{ fontSize: 13 }}>🔒</Text>
+                      ) : isSelected ? (
                         <Check size={14} color="#111" strokeWidth={3} />
                       ) : null}
                     </View>

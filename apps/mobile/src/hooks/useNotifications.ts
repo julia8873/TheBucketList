@@ -47,8 +47,9 @@ export function useUnreadCount(userId?: string) {
   useEffect(() => {
     if (!userId) return;
 
-    // Realtime subscription
-    const channel = supabase.channel(`notifications:${userId}`)
+    // Realtime subscription with unique channel name to avoid reusing already-subscribed channel
+    const channelName = `notifications-${userId}-${Date.now()}`;
+    const channel = supabase.channel(channelName)
       .on(
         'postgres_changes',
         {

@@ -7,6 +7,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Folder, Search, Check } from 'lucide-react-native';
+import { useQueryClient } from '@tanstack/react-query';
 import { useUnassignedTasks, useAssignTasks, useCreateTasksFromDefaults, defaultTasks, UnassignedTask } from '../src/services/api/tasksService';
 
 const GRADIENTS = {
@@ -23,6 +24,7 @@ export default function AddTaskScreen() {
   const { albumId, albumName } = useLocalSearchParams<{ albumId: string, albumName: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
   
   const { data: userTasksData, isLoading, isError } = useUnassignedTasks();
   const assignMutation = useAssignTasks();
@@ -93,6 +95,14 @@ export default function AddTaskScreen() {
     setSelectedIds(newSet);
   };
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)/my-list');
+    }
+  };
+
   const handleAdd = async () => {
     if (selectedIds.size === 0) return;
 
@@ -105,13 +115,16 @@ export default function AddTaskScreen() {
         newIds = await createMutation.mutateAsync(defaultSelected);
       }
 
+      await queryClient.invalidateQueries({ queryKey: ['buckets'] });
+      await queryClient.invalidateQueries({ queryKey: ['unassigned_tasks'] });
+
       if (!albumId || albumId === 'new') {
-        router.back();
+        handleBack();
         return;
       }
 
       await assignMutation.mutateAsync({ albumId, taskIds: [...userSelected, ...newIds] });
-      router.back();
+      handleBack();
     } catch (err) {
       Alert.alert('Error', 'No se pudieron añadir las tareas');
     }
@@ -133,7 +146,7 @@ export default function AddTaskScreen() {
         <Pressable 
           accessibilityRole="button"
           style={styles.backBtn} 
-          onPress={() => router.back()}
+          onPress={handleBack}
         >
           <ChevronLeft size={22} color="#F3EEE3" strokeWidth={1.8} />
         </Pressable>

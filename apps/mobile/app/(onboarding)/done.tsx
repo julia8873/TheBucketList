@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTheme, spacing, radii, fontFamily } from '@bucketlist/ui';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useOnboardingStore } from '../../src/stores/onboarding.store';
@@ -11,6 +12,7 @@ import { BigAvatar, PillButton } from '../../src/components/auth/AuthParts';
 
 export default function DoneScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { theme } = useTheme();
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
@@ -19,8 +21,12 @@ export default function DoneScreen() {
 
   const start = () => {
     reset();
-    router.replace('/(tabs)/feed');
-    router.push('/add-task');
+    void queryClient.invalidateQueries({ queryKey: ['profile'] });
+    void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+    router.replace('/(tabs)/my-list');
+    setTimeout(() => {
+      router.push('/add-task');
+    }, 100);
   };
 
   return (

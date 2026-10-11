@@ -19,6 +19,7 @@ import { ChevronLeft, Users, Plus, Globe, Lock, Check, X, Image as ImageIcon, Pa
 import { useTheme } from '@bucketlist/ui';
 import { useCreateAlbum, useUpdateAlbum } from '../../src/hooks/useAlbums';
 import { supabase } from '../../src/services/supabase';
+import { useAuthStore } from '../../src/stores/auth.store';
 import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -53,12 +54,14 @@ export default function CreateAlbumScreen() {
 
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
+  const { user } = useAuthStore();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [selectedCover, setSelectedCover] = useState<Cover>(COVERS[1]!); // Atardecer
   const [visibility, setVisibility] = useState<'public' | 'followers' | 'private'>('private');
   const [isShared, setIsShared] = useState(false);
+  const [albumOwner, setAlbumOwner] = useState<{ id: string; username?: string; display_name?: string | null; avatar_url?: string | null } | null>(null);
   const [selectedCollaborators, setSelectedCollaborators] = useState<CollaboratorItem[]>([]);
   const [initialCollaboratorIds, setInitialCollaboratorIds] = useState<string[]>([]);
   const [showCollaboratorPicker, setShowCollaboratorPicker] = useState(false);
@@ -66,6 +69,26 @@ export default function CreateAlbumScreen() {
 
   const createAlbum = useCreateAlbum();
   const updateAlbum = useUpdateAlbum();
+
+  const { session } = useAuthStore();
+  const currentUserId = user?.id || session?.user?.id;
+  const isSelf = (targetId?: string | null) => {
+    if (!targetId || !currentUserId) return false;
+    return String(targetId).toLowerCase() === String(currentUserId).toLowerCase();
+  };
+
+  const isOwner = !isEditing || !albumOwner?.id || isSelf(albumOwner.id);
+  const readOnlyIds = React.useMemo(() => {
+    if (isOwner) return [];
+    const ids: string[] = [];
+    if (albumOwner?.id) ids.push(albumOwner.id);
+    selectedCollaborators.forEach((c) => {
+      if (initialCollaboratorIds.includes(c.id) && !isSelf(c.id)) {
+        ids.push(c.id);
+      }
+    });
+    return ids;
+  }, [isOwner, albumOwner, selectedCollaborators, initialCollaboratorIds, currentUserId]);
 
   // Load existing album data if in edit mode
   useEffect(() => {
@@ -76,7 +99,7 @@ export default function CreateAlbumScreen() {
       try {
         const { data: album, error } = await supabase
           .from('albums')
-          .select('*')
+          .select('*, owner:profiles!albums_owner_id_fkey(id, username, display_name, avatar_url)')
           .eq('id', id)
           .single();
 
@@ -90,6 +113,18 @@ export default function CreateAlbumScreen() {
         setDescription(album.description || '');
         setVisibility((album.visibility as any) || 'private');
         setIsShared(Boolean(album.is_shared));
+
+        const ownerProf = Array.isArray(album.owner) ? album.owner[0] : album.owner;
+        let ownerObj = ownerProf;
+        if (!ownerObj && album.owner_id) {
+          const { data: p } = await supabase
+            .from('profiles')
+            .select('id, username, display_name, avatar_url')
+            .eq('id', album.owner_id)
+            .single();
+          ownerObj = p || { id: album.owner_id };
+        }
+        setAlbumOwner(ownerObj);
 
         if (album.cover_path) {
           try {
@@ -118,9 +153,27 @@ export default function CreateAlbumScreen() {
               username: p?.username || '',
               display_name: p?.display_name || null,
               avatar_url: p?.avatar_url || null,
+              status: m.status,
             };
           });
-          setSelectedCollaborators(collabs);
+
+          const isUserOwner = !album.owner_id || isSelf(album.owner_id);
+          // Filter out current user and album owner from members list
+          const filteredCollabs = collabs.filter((c) => !isSelf(c.id) && c.id !== album.owner_id);
+          // Prepend owner entry if current user is an invited collaborator
+          const ownerEntry: CollaboratorItem | null = (!isUserOwner && ownerObj) ? {
+            id: ownerObj.id,
+            username: ownerObj.username || '',
+            display_name: ownerObj.display_name || null,
+            avatar_url: ownerObj.avatar_url || null,
+            status: 'accepted',
+          } : null;
+
+          const initialSelected = [
+            ...(ownerEntry ? [ownerEntry] : []),
+            ...filteredCollabs,
+          ];
+          setSelectedCollaborators(initialSelected);
           setInitialCollaboratorIds(collabs.map((c) => c.id));
         }
       } catch (err) {
@@ -175,8 +228,14 @@ export default function CreateAlbumScreen() {
           const currentSet = new Set(initialCollaboratorIds);
           const newSet = new Set(selectedCollaborators.map((c) => c.id));
 
-          const toAdd = selectedCollaborators.filter((c) => !currentSet.has(c.id));
-          const toRemove = initialCollaboratorIds.filter((uid) => !newSet.has(uid));
+          // Only add items that are not already in members, not the owner, and not self
+          const toAdd = selectedCollaborators.filter(
+            (c) => !currentSet.has(c.id) && c.id !== albumOwner?.id && c.id !== user?.id
+          );
+          // Only owner can remove existing members
+          const toRemove = isOwner
+            ? initialCollaboratorIds.filter((uid) => !newSet.has(uid))
+            : [];
 
           if (toAdd.length > 0) {
             await supabase.from('album_members').insert(
@@ -196,8 +255,8 @@ export default function CreateAlbumScreen() {
               .eq('album_id', id)
               .in('user_id', toRemove);
           }
-        } else {
-          // If toggled off shared, remove members
+        } else if (isOwner) {
+          // If toggled off shared, remove members (owner only)
           await supabase.from('album_members').delete().eq('album_id', id);
         }
 
@@ -484,8 +543,14 @@ export default function CreateAlbumScreen() {
                   <Text style={styles.cardSubtitle}>Comparte las tareas y completadlas juntos</Text>
                 </View>
                 <Pressable
-                  style={[styles.switchTrack, isShared && styles.switchTrackActive]}
-                  onPress={() => setIsShared(!isShared)}
+                  style={[
+                    styles.switchTrack,
+                    isShared && styles.switchTrackActive,
+                    !isOwner && { opacity: 0.6 },
+                  ]}
+                  onPress={() => {
+                    if (isOwner) setIsShared(!isShared);
+                  }}
                 >
                   <View style={[styles.switchKnob, isShared && styles.switchKnobActive]} />
                 </Pressable>
@@ -511,20 +576,29 @@ export default function CreateAlbumScreen() {
 
                   {selectedCollaborators.length > 0 && (
                     <View style={styles.collaboratorChips}>
-                      {selectedCollaborators.map((c) => (
-                        <Pressable
-                          key={c.id}
-                          style={styles.collaboratorChip}
-                          onPress={() =>
-                            setSelectedCollaborators((prev) => prev.filter((x) => x.id !== c.id))
-                          }
-                        >
-                          <Text style={styles.collaboratorChipText}>
-                            {c.display_name || `@${c.username}`}
-                          </Text>
-                          <X color="#D4B13A" size={14} />
-                        </Pressable>
-                      ))}
+                      {selectedCollaborators.map((c) => {
+                        const isReadOnly = readOnlyIds.includes(c.id);
+                        return (
+                          <Pressable
+                            key={c.id}
+                            style={styles.collaboratorChip}
+                            onPress={() => {
+                              if (!isReadOnly) {
+                                setSelectedCollaborators((prev) => prev.filter((x) => x.id !== c.id));
+                              }
+                            }}
+                          >
+                            <Text style={styles.collaboratorChipText}>
+                              {c.display_name || `@${c.username}`}
+                            </Text>
+                            {isReadOnly ? (
+                              <Lock color="#D4B13A" size={13} style={{ marginLeft: 4 }} />
+                            ) : (
+                              <X color="#D4B13A" size={14} />
+                            )}
+                          </Pressable>
+                        );
+                      })}
                     </View>
                   )}
                 </View>
@@ -539,6 +613,7 @@ export default function CreateAlbumScreen() {
         selected={selectedCollaborators}
         onChange={setSelectedCollaborators}
         onClose={() => setShowCollaboratorPicker(false)}
+        readOnlyIds={readOnlyIds}
       />
 
       {/* Barra inferior fija */}

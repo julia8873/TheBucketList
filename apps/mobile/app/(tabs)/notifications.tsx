@@ -40,6 +40,7 @@ export default function NotificationsScreen() {
         markAsRead.mutate(notification.id);
         void queryClient.invalidateQueries({ queryKey: ['albums'] });
         void queryClient.invalidateQueries({ queryKey: ['album', notification.album_id] });
+        void queryClient.invalidateQueries({ queryKey: ['albumCollaborators', notification.album_id] });
         void queryClient.invalidateQueries({ queryKey: ['buckets'] });
         if (accept && notification.album_id) {
           router.push(`/album/${notification.album_id}` as any);

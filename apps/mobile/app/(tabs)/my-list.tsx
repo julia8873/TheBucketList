@@ -255,13 +255,16 @@ export default function MyListScreen() {
     const categoryColor = item.category?.color || categoryColors.other;
     const subtasksTotal = item.item_subtasks?.length || 0;
     const subtasksDone = item.item_subtasks?.filter((s: any) => s.done).length || 0;
+    const isItemOwner = item.user_id === user?.id;
 
     const deadlineDate = item.deadline ? new Date(item.deadline) : null;
     const isItemExpired = deadlineDate ? (isPast(deadlineDate) && differenceInCalendarDays(deadlineDate, new Date()) < 0) : false;
     const daysAgo = deadlineDate ? Math.abs(differenceInCalendarDays(deadlineDate, new Date())) : 0;
 
     let meta = '';
-    if (isItemExpired && item.status !== 'completed') {
+    if (!isItemOwner) {
+      meta = 'Colaboración';
+    } else if (isItemExpired && item.status !== 'completed') {
       meta = `Caducó hace ${daysAgo} días`;
     } else if (subtasksTotal > 0) {
       meta = `${subtasksDone} de ${subtasksTotal} pasos`;
@@ -307,6 +310,7 @@ export default function MyListScreen() {
     }
 
     const renderRightActions = (progress: any, dragX: any) => {
+      if (!isItemOwner) return null;
       const opacity = progress.interpolate({
         inputRange: [0, 0.15, 1],
         outputRange: [0, 1, 1],
@@ -333,7 +337,7 @@ export default function MyListScreen() {
     };
 
     const renderLeftActions = (progress: any, dragX: any) => {
-      if (item.status === 'completed') return null;
+      if (!isItemOwner || item.status === 'completed') return null;
       const opacity = progress.interpolate({
         inputRange: [0, 0.15, 1],
         outputRange: [0, 1, 1],
@@ -372,11 +376,11 @@ export default function MyListScreen() {
         overshootRight={false}
         overshootLeft={false}
         onSwipeableOpen={(direction) => {
-          if (direction === 'left' && item.status !== 'completed') {
+          if (direction === 'left' && isItemOwner && item.status !== 'completed') {
             updateBucket.mutate({ id: item.id, data: { status: 'completed', completed_at: new Date() } as any });
             toast.show({ message: 'Tarea completada 🎉' });
             swipeableRefs.current.get(item.id)?.close();
-          } else if (direction === 'right') {
+          } else if (direction === 'right' && isItemOwner) {
             Alert.alert(
               'Eliminar tarea',
               '¿Estás seguro de que quieres eliminar esta tarea?',

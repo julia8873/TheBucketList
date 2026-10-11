@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTheme, spacing, radii, fontFamily } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
 import { useAuthStore } from '../../src/stores/auth.store';
@@ -12,6 +13,7 @@ const MAX = 120;
 
 export default function BioScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { theme } = useTheme();
   const { t } = useTranslation();
   const { user, setOnboardingCompleted } = useAuthStore();
@@ -34,6 +36,9 @@ export default function BioScreen() {
     if (err) { setError(t('auth.err_generic')); return; }
     if (!withBio) setBio('');
     setOnboardingCompleted(true);
+    queryClient.setQueryData(['profile', user.id], (old: any) => ({ ...old, ...patch }));
+    void queryClient.invalidateQueries({ queryKey: ['profile'] });
+    void queryClient.invalidateQueries({ queryKey: ['buckets'] });
     router.replace('/(onboarding)/done');
   };
 

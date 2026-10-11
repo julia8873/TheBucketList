@@ -1,5 +1,12 @@
 import React, { useCallback, useMemo } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -24,6 +31,7 @@ export default function FeedScreen() {
   const { theme } = useTheme();
   const router = useRouter();
   const { user } = useAuthStore();
+  const { height: windowHeight } = useWindowDimensions();
 
   const feed = useFeed(user?.id);
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, refetch, isRefetching } = feed;
@@ -73,14 +81,17 @@ export default function FeedScreen() {
         </View>
       </View>
 
-      <Pressable
-        onPress={() => openFriends()}
-        style={styles.searchBar}
-        accessibilityRole="search"
-        accessibilityLabel="Buscar personas"
-      >
-        <Search size={18} color="#9A9A9A" strokeWidth={1.8} />
-        <Text style={styles.searchPlaceholder}>Buscar personas</Text>
+      {/* Contenedor View: evita Pressable anidado dentro de Pressable */}
+      <View style={styles.searchBar}>
+        <Pressable
+          onPress={() => openFriends()}
+          style={styles.searchTouch}
+          accessibilityRole="search"
+          accessibilityLabel="Buscar personas"
+        >
+          <Search size={18} color="#9A9A9A" strokeWidth={1.8} />
+          <Text style={styles.searchPlaceholder}>Buscar personas</Text>
+        </Pressable>
         {requestCount > 0 ? (
           <Pressable onPress={() => openFriends('requests')} hitSlop={8} accessibilityRole="button">
             <Text style={styles.requests}>
@@ -88,8 +99,7 @@ export default function FeedScreen() {
             </Text>
           </Pressable>
         ) : null}
-      </Pressable>
-
+      </View>
     </View>
   );
 
@@ -136,13 +146,15 @@ export default function FeedScreen() {
         onEndReachedThreshold={0.5}
         ListFooterComponent={isFetchingNextPage ? <ActivityIndicator style={styles.footer} color={gold[400]} /> : null}
         ListEmptyComponent={
-          <EmptyState
-            title="Tu feed está tranquilo"
-            message="Sigue a tus amigos para ver aquí los momentos que completan."
-            icon={Users}
-            actionLabel="Buscar personas"
-            onAction={() => openFriends()}
-          />
+          <View style={[styles.emptyWrap, { minHeight: windowHeight * 0.55 }]}>
+            <EmptyState
+              title="Tu feed está tranquilo"
+              message="Sigue a tus amigos para ver aquí los momentos que completan."
+              icon={Users}
+              actionLabel="Buscar personas"
+              onAction={() => openFriends()}
+            />
+          </View>
         }
       />
     </SafeAreaView>
@@ -185,8 +197,20 @@ const styles = StyleSheet.create({
     borderColor: '#2A2A2A',
     backgroundColor: '#141414',
   },
+  searchTouch: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    height: '100%',
+  },
   searchPlaceholder: { flex: 1, fontFamily: fontFamily.regular, fontSize: 15, color: '#9A9A9A' },
   requests: { fontFamily: fontFamily.semibold, fontSize: 13, color: gold[400] },
   section: { paddingHorizontal: 16, marginTop: 22, marginBottom: 6 },
   footer: { padding: 16 },
+  emptyWrap: {
+    marginTop: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });

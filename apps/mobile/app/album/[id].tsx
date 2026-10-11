@@ -66,7 +66,12 @@ export default function AlbumDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-  const { user } = useAuthStore();
+  const { user, session } = useAuthStore();
+  const currentUserId = user?.id || session?.user?.id;
+  const isSelf = (targetId?: string | null) => {
+    if (!targetId || !currentUserId) return false;
+    return String(targetId).toLowerCase() === String(currentUserId).toLowerCase();
+  };
 
   const [showCollaboratorPicker, setShowCollaboratorPicker] = useState(false);
   const [sheetVisible, setSheetVisible] = useState(false);
@@ -78,6 +83,36 @@ export default function AlbumDetailScreen() {
 
   const { data: album, isLoading, isError, refetch, isRefetching } = useAlbumDetail(id || '1');
   const deleteMutation = useDeleteAlbumDetail();
+
+  const rawOwnerId = album?.ownerId || (album as any)?.owner_id;
+
+  const { data: ownerProfile } = useQuery({
+    queryKey: ['albumOwnerProfile', rawOwnerId],
+    queryFn: async () => {
+      if (!rawOwnerId) return null;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, display_name, avatar_url')
+        .eq('id', rawOwnerId)
+        .single();
+      if (error) {
+        console.warn('Error fetching album owner profile:', error);
+        return null;
+      }
+      return data;
+    },
+    enabled: !!rawOwnerId,
+  });
+
+  const resolvedOwner = ownerProfile || album?.owner;
+  const ownerEntry = {
+    id: rawOwnerId || '',
+    username: resolvedOwner?.username || '',
+    display_name: resolvedOwner?.display_name || null,
+    avatar_url: resolvedOwner?.avatar_url || null,
+    status: 'accepted' as const,
+    isOwner: true,
+  };
 
   // Bottom sheet animation
   useEffect(() => {
@@ -106,7 +141,7 @@ export default function AlbumDetailScreen() {
   };
 
   const { data: albumCollaborators = [], refetch: refetchCollaborators } = useQuery({
-    queryKey: ['albumCollaborators', id],
+    queryKey: ['albumCollaborators', id, currentUserId],
     queryFn: async () => {
       if (!id || id === 'unassigned') return [];
       const { data, error } = await supabase
@@ -131,7 +166,9 @@ export default function AlbumDetailScreen() {
     enabled: !!id && id !== 'unassigned',
   });
 
-  const isOwner = album?.ownerId === user?.id;
+  const isOwner = Boolean(rawOwnerId && isSelf(rawOwnerId));
+  const isCollaborator = !isOwner && albumCollaborators.some((c: any) => isSelf(c.id) && c.status === 'accepted');
+  const canEdit = isOwner || isCollaborator;
 
   // Collaborators change handler
   const handleCollaboratorsChange = async (newCollabs: CollaboratorItem[]) => {
@@ -139,22 +176,29 @@ export default function AlbumDetailScreen() {
       const currentIds = new Set(albumCollaborators.map((c: any) => c.id));
       const newIds = new Set(newCollabs.map((c) => c.id));
 
-      const toAdd = newCollabs.filter((c) => !currentIds.has(c.id));
-      const toRemoveIds = albumCollaborators
-        .filter((c: any) => !newIds.has(c.id))
-        .map((c: any) => c.id);
+      const toAdd = newCollabs.filter(
+        (c) => !currentIds.has(c.id) && c.id !== rawOwnerId && !isSelf(c.id)
+      );
+      // Only the owner can remove collaborators
+      const toRemoveIds = isOwner
+        ? albumCollaborators.filter((c: any) => !newIds.has(c.id)).map((c: any) => c.id)
+        : [];
 
-      // Optimistic update
+      // Optimistic update: preserve existing status if already set
       const existingStatusMap = new Map<string, string>(
         albumCollaborators.map((c: any) => [c.id, c.status])
       );
-      queryClient.setQueryData(
-        ['albumCollaborators', id],
-        newCollabs.map((c) => ({
-          ...c,
-          status: existingStatusMap.get(c.id) || 'pending',
-        }))
-      );
+      // Merge: if not owner, keep existing collabs + add new ones
+      const mergedCollabs = isOwner
+        ? newCollabs.map((c) => ({
+            ...c,
+            status: existingStatusMap.get(c.id) || 'pending',
+          }))
+        : [
+            ...albumCollaborators,
+            ...toAdd.map((c) => ({ ...c, status: 'pending' })),
+          ];
+      queryClient.setQueryData(['albumCollaborators', id], mergedCollabs);
 
       if (toAdd.length > 0) {
         const { error: insErr } = await supabase.from('album_members').insert(
@@ -190,6 +234,35 @@ export default function AlbumDetailScreen() {
       console.warn('Error updating album collaborators:', err);
       void refetchCollaborators();
     }
+  };
+
+  const confirmLeaveAlbum = () => {
+    closeSheet(() => {
+      Alert.alert(
+        'Dejar de colaborar',
+        '¿Quieres salir de este álbum compartido? Dejará de aparecer en tu lista.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          {
+            text: 'Salir',
+            style: 'destructive',
+            onPress: async () => {
+              const { error } = await supabase
+                .from('album_members')
+                .delete()
+                .eq('album_id', id)
+                .eq('user_id', user!.id);
+              if (error) {
+                Alert.alert('Error', error.message);
+              } else {
+                void queryClient.invalidateQueries({ queryKey: ['albums'] });
+                router.back();
+              }
+            },
+          },
+        ]
+      );
+    });
   };
 
   // Inline Title Change
@@ -582,7 +655,7 @@ export default function AlbumDetailScreen() {
 
           {id !== 'unassigned' && (
             <>
-              {isOwner && (
+              {canEdit && (
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Cambiar portada"
@@ -621,9 +694,9 @@ export default function AlbumDetailScreen() {
 
             {/* Visibilidad clickeable para cambiar al instante */}
             <Pressable
-              style={[styles.chip, isOwner && styles.chipPressable]}
+              style={[styles.chip, canEdit && styles.chipPressable]}
               onPress={() => {
-                if (isOwner) {
+                if (canEdit) {
                   setSheetMode('visibility');
                   setSheetVisible(true);
                 }
@@ -650,9 +723,9 @@ export default function AlbumDetailScreen() {
             {/* Compartido clickeable para gestionar colaboradores */}
             {isShared && (
               <Pressable
-                style={[styles.chip, styles.chipShared, isOwner && styles.chipPressable]}
+                style={[styles.chip, styles.chipShared, canEdit && styles.chipPressable]}
                 onPress={() => {
-                  if (isOwner) setShowCollaboratorPicker(true);
+                  if (canEdit) setShowCollaboratorPicker(true);
                 }}
               >
                 <Users size={15} color="#D4B13A" strokeWidth={1.8} />
@@ -663,7 +736,7 @@ export default function AlbumDetailScreen() {
         )}
 
         {/* Title (Inline editable con auto-save) */}
-        {isOwner && id !== 'unassigned' ? (
+        {canEdit && id !== 'unassigned' ? (
           <TextInput
             style={styles.titleInput}
             defaultValue={title}
@@ -677,7 +750,7 @@ export default function AlbumDetailScreen() {
         )}
 
         {/* Description (Inline editable con auto-save) */}
-        {isOwner && id !== 'unassigned' ? (
+        {canEdit && id !== 'unassigned' ? (
           <TextInput
             style={styles.albumDescriptionInput}
             defaultValue={album.description || ''}
@@ -694,11 +767,19 @@ export default function AlbumDetailScreen() {
         {id !== 'unassigned' && (() => {
           const visibleCollaborators = albumCollaborators.filter((c: any) => {
             if (c.status === 'accepted') return true;
-            if (c.status === 'pending') return isOwner || c.id === user?.id;
+            if (c.status === 'pending') return canEdit || isSelf(c.id);
             return false;
           });
 
-          if (visibleCollaborators.length === 0 && !isOwner) return null;
+          // Build full participant list: owner first (if not current user), then collaborators
+          // Exclude the current user (you already know you're in the album)
+          // and avoid duplicating if owner is also in album_members table
+          const participants = [
+            ...(rawOwnerId && !isSelf(rawOwnerId) ? [ownerEntry] : []),
+            ...visibleCollaborators.filter((c: any) => c.id !== rawOwnerId && !isSelf(c.id)),
+          ];
+
+          if (participants.length === 0 && !canEdit) return null;
 
           return (
             <View style={styles.collaboratorsSection}>
@@ -707,15 +788,16 @@ export default function AlbumDetailScreen() {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.collaboratorsRow}
               >
-                {visibleCollaborators.map((c: any) => {
+                {participants.map((c: any) => {
                   const isPending = c.status === 'pending';
                   return (
                     <Pressable
                       key={c.id}
-                      onPress={() => isOwner && setShowCollaboratorPicker(true)}
+                      onPress={() => canEdit && setShowCollaboratorPicker(true)}
                       style={[
                         styles.collaboratorCircle,
                         isPending && styles.collaboratorCirclePending,
+                        c.isOwner && { borderColor: '#D4B13A', borderWidth: 2.5 },
                       ]}
                     >
                       {c.avatar_url ? (
@@ -737,7 +819,7 @@ export default function AlbumDetailScreen() {
                   );
                 })}
 
-                {isOwner && (
+                {canEdit && (
                   <Pressable
                     style={styles.addCollaboratorCircle}
                     onPress={() => setShowCollaboratorPicker(true)}
@@ -831,12 +913,14 @@ export default function AlbumDetailScreen() {
       {/* Bottom Bar */}
       {id !== 'unassigned' && (
         <View style={[styles.bottomBar, { paddingBottom: Math.max(30, insets.bottom) }]}>
-          <Pressable
-            style={styles.btnEdit}
-            onPress={() => router.push(`/(modals)/create-album?id=${id}`)}
-          >
-            <Text style={styles.btnEditText}>Editar</Text>
-          </Pressable>
+          {canEdit && (
+            <Pressable
+              style={styles.btnEdit}
+              onPress={() => router.push(`/(modals)/create-album?id=${id}`)}
+            >
+              <Text style={styles.btnEditText}>Editar</Text>
+            </Pressable>
+          )}
           <Pressable
             style={styles.btnAdd}
             onPress={() => router.push(`/add-task?albumId=${id}`)}
@@ -849,14 +933,29 @@ export default function AlbumDetailScreen() {
       {/* Collaborator Picker Sheet */}
       <CollaboratorPickerSheet
         visible={showCollaboratorPicker}
-        selected={albumCollaborators.map((c: any) => ({
-          id: c.id,
-          username: c.username,
-          display_name: c.display_name,
-          avatar_url: c.avatar_url,
-        }))}
+        selected={[
+          // Owner entry (always shown, unless the current user IS the owner)
+          ...(rawOwnerId && !isSelf(rawOwnerId) ? [{
+            id: rawOwnerId,
+            username: resolvedOwner?.username || '',
+            display_name: resolvedOwner?.display_name || null,
+            avatar_url: resolvedOwner?.avatar_url || null,
+            status: 'accepted' as const,
+          }] : []),
+          // Other collaborators except the current user
+          ...albumCollaborators.filter((c: any) => !isSelf(c.id) && c.status === 'accepted'),
+        ]}
         onChange={handleCollaboratorsChange}
         onClose={() => setShowCollaboratorPicker(false)}
+        readOnlyIds={isOwner
+          ? []
+          : [
+              ...(rawOwnerId ? [rawOwnerId] : []),
+              ...albumCollaborators
+                .filter((c: any) => c.status === 'accepted' && !isSelf(c.id))
+                .map((c: any) => c.id),
+            ]
+        }
       />
 
       {/* Album Options & Visibility Bottom Sheet */}
@@ -913,7 +1012,7 @@ export default function AlbumDetailScreen() {
                     </Pressable>
                   )}
 
-                  {isOwner && (
+                  {canEdit && (
                     <Pressable
                       style={styles.sheetOption}
                       onPress={() => {
@@ -932,7 +1031,7 @@ export default function AlbumDetailScreen() {
                     </Pressable>
                   )}
 
-                  {isOwner && (
+                  {canEdit && (
                     <Pressable
                       style={styles.sheetOption}
                       onPress={() => setSheetMode('visibility')}
@@ -953,7 +1052,7 @@ export default function AlbumDetailScreen() {
                     </Pressable>
                   )}
 
-                  {isOwner && (
+                  {canEdit && (
                     <Pressable
                       style={styles.sheetOption}
                       onPress={() => {
@@ -972,7 +1071,7 @@ export default function AlbumDetailScreen() {
                     </Pressable>
                   )}
 
-                  {isOwner && (
+                  {canEdit && (
                     <Pressable
                       style={styles.sheetOption}
                       onPress={() => {
@@ -1005,6 +1104,25 @@ export default function AlbumDetailScreen() {
                         </Text>
                         <Text style={styles.sheetOptionSubtitle}>
                           Las tareas se moverán a Sin álbum
+                        </Text>
+                      </View>
+                    </Pressable>
+                  )}
+
+                  {isCollaborator && (
+                    <Pressable
+                      style={[styles.sheetOption, { borderBottomWidth: 0 }]}
+                      onPress={confirmLeaveAlbum}
+                    >
+                      <View style={[styles.sheetIconBox, { backgroundColor: 'rgba(239, 68, 68, 0.12)' }]}>
+                        <Trash2 color="#EF4444" size={20} />
+                      </View>
+                      <View style={styles.sheetOptionTexts}>
+                        <Text style={[styles.sheetOptionTitle, { color: '#EF4444' }]}>
+                          Dejar de colaborar
+                        </Text>
+                        <Text style={styles.sheetOptionSubtitle}>
+                          El álbum dejará de aparecer en tu lista
                         </Text>
                       </View>
                     </Pressable>

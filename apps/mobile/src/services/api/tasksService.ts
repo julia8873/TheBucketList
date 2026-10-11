@@ -79,12 +79,37 @@ export const tasksService = {
     const defaultItems = DEFAULT_TASKS.filter(dt => ids.includes(dt.id));
     if (!defaultItems.length) return [];
     
-    const inserts = defaultItems.map(dt => ({
-      user_id: userAuth.user.id,
-      title: dt.title,
-      location_text: dt.location || null,
-      status: 'pending' as const,
-    }));
+    // Map categories if available
+    const { data: categories } = await supabase.from('categories').select('id, slug, name_es');
+    const catMap = new Map<string, string>();
+    (categories ?? []).forEach((c: any) => {
+      if (c.slug) catMap.set(c.slug.toLowerCase(), c.id);
+      if (c.name_es) catMap.set(c.name_es.toLowerCase(), c.id);
+    });
+
+    const categorySlugMap: Record<string, string> = {
+      'viajes': 'travel',
+      'comida': 'food',
+      'deporte': 'sport',
+      'aventura': 'sport',
+      'creatividad': 'creative',
+      'social': 'social',
+    };
+
+    const inserts = defaultItems.map(dt => {
+      const catLower = dt.categoryName.toLowerCase();
+      const mappedSlug = categorySlugMap[catLower] || catLower;
+      const categoryId = catMap.get(catLower) || catMap.get(mappedSlug) || null;
+
+      return {
+        user_id: userAuth.user.id,
+        title: dt.title,
+        location_text: dt.location || null,
+        category_id: categoryId,
+        status: 'pending' as const,
+        visibility: 'public' as const,
+      };
+    });
 
     const { data, error } = await supabase
       .from('buckets')
@@ -121,5 +146,10 @@ export function useCreateTasksFromDefaults() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (ids: string[]) => tasksService.createTasksFromDefaults(ids),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['buckets'] });
+      queryClient.invalidateQueries({ queryKey: ['unassigned_tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
+    },
   });
 }
