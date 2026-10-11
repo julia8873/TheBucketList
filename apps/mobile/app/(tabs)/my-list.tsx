@@ -25,6 +25,7 @@ import { categoryColors } from '@bucketlist/ui/src/tokens/colors';
 import { isPast, differenceInCalendarDays } from 'date-fns';
 
 type FilterType = 'all' | 'active' | 'completed' | 'expired';
+type AlbumFilterType = 'all' | 'active' | 'completed' | 'closed';
 type PriorityFilter = 'all' | 'high' | 'medium' | 'low';
 type SortField = 'status' | 'priority' | 'alphabetical' | 'created_at';
 type SortDir = 'asc' | 'desc';
@@ -45,6 +46,14 @@ export default function MyListScreen() {
   React.useEffect(() => {
     if (params.filter === 'completed' || params.filter === 'active' || params.filter === 'expired') setFilter(params.filter);
   }, [params.filter]);
+
+  // ── Filtros y orden de álbumes ───────────────────────────────────────────
+  const [albumFilter, setAlbumFilter] = useState<AlbumFilterType>('all');
+  const [albumPriorityFilter, setAlbumPriorityFilter] = useState<PriorityFilter>('all');
+  const [albumSortField, setAlbumSortField] = useState<SortField>('status');
+  const [albumSortDir, setAlbumSortDir] = useState<SortDir>('desc');
+  const albumSortTriggerRef = useRef<View>(null);
+
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [tagSheetOpen, setTagSheetOpen] = useState(false);
@@ -58,7 +67,8 @@ export default function MyListScreen() {
   const sortTriggerRef = useRef<View>(null);
 
   const openSortMenu = () => {
-    sortTriggerRef.current?.measureInWindow((x, y, w, h) => {
+    const triggerRef = activeTab === 'albums' ? albumSortTriggerRef : sortTriggerRef;
+    triggerRef.current?.measureInWindow((x, y, w, h) => {
       setSortMenuPos({
         top: y + h + 6,
         right: Math.max(16, Dimensions.get('window').width - (x + w)),
@@ -68,12 +78,22 @@ export default function MyListScreen() {
   };
 
   const handleSortOption = (field: SortField) => {
-    if (sortField === field) {
-      setSortDir((prev) => (prev === 'desc' ? 'asc' : 'desc'));
+    if (activeTab === 'albums') {
+      if (albumSortField === field) {
+        setAlbumSortDir((prev) => (prev === 'desc' ? 'asc' : 'desc'));
+      } else {
+        setAlbumSortField(field);
+        setAlbumSortDir(field === 'alphabetical' ? 'asc' : 'desc');
+        setSortMenuOpen(false);
+      }
     } else {
-      setSortField(field);
-      setSortDir(field === 'alphabetical' ? 'asc' : 'desc');
-      setSortMenuOpen(false);
+      if (sortField === field) {
+        setSortDir((prev) => (prev === 'desc' ? 'asc' : 'desc'));
+      } else {
+        setSortField(field);
+        setSortDir(field === 'alphabetical' ? 'asc' : 'desc');
+        setSortMenuOpen(false);
+      }
     }
   };
 
@@ -274,20 +294,120 @@ export default function MyListScreen() {
     return sorted;
   }, [filteredBuckets, sortField, sortDir, isBucketFavorite, favBucketIds]);
 
+  const getAlbumStatus = (a: any): 'closed' | 'completed' | 'active' => {
+    if (a.is_closed) return 'closed';
+    const total = a.total_tasks ?? 0;
+    const completed = a.completed_tasks ?? 0;
+    if (total > 0 && completed === total) return 'completed';
+    return 'active';
+  };
+
   const filteredAlbums = useMemo(() => {
     if (!albums) return [];
-    let list = albums;
+    let result = albums.filter((a: any) => {
+      const status = getAlbumStatus(a);
+      if (albumFilter === 'all') return true;
+      if (albumFilter === 'active') return status === 'active';
+      if (albumFilter === 'completed') return status === 'completed';
+      if (albumFilter === 'closed') return status === 'closed';
+      return true;
+    });
+
+    if (albumPriorityFilter !== 'all') {
+      result = result.filter((a: any) => (a.priority || 'medium') === albumPriorityFilter);
+    }
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      list = list.filter((a: any) => a.title?.toLowerCase().includes(q) || a.description?.toLowerCase().includes(q));
+      result = result.filter(
+        (a: any) =>
+          a.title?.toLowerCase().includes(q) ||
+          a.description?.toLowerCase().includes(q) ||
+          (a.priority && ('prioridad ' + a.priority).includes(q))
+      );
     }
-    return [...list].sort((a: any, b: any) => {
-      const favA = isAlbumFavorite(a.id) ? 1 : 0;
-      const favB = isAlbumFavorite(b.id) ? 1 : 0;
-      if (favA !== favB) return favB - favA;
-      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
-    });
-  }, [albums, searchQuery, isAlbumFavorite]);
+
+    return result;
+  }, [albums, albumFilter, albumPriorityFilter, searchQuery]);
+
+  const albumSections = useMemo(() => {
+    if (!filteredAlbums || filteredAlbums.length === 0) return [];
+
+    const favorites = filteredAlbums
+      .filter((a: any) => isAlbumFavorite(a.id))
+      .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+
+    const nonFavorites = filteredAlbums.filter((a: any) => !isAlbumFavorite(a.id));
+
+    const inProgress = nonFavorites
+      .filter((a: any) => getAlbumStatus(a) === 'active')
+      .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+
+    const completed = nonFavorites
+      .filter((a: any) => getAlbumStatus(a) === 'completed')
+      .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+
+    const closed = nonFavorites
+      .filter((a: any) => getAlbumStatus(a) === 'closed')
+      .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+
+    let otherSections = [
+      { key: 'in_progress', title: 'EN PROGRESO', items: inProgress },
+      { key: 'completed', title: 'COMPLETADOS', items: completed },
+      { key: 'closed', title: 'CERRADOS', items: closed },
+    ];
+
+    if (albumSortDir === 'asc') {
+      otherSections.reverse();
+    }
+
+    return [
+      { key: 'favorites', title: 'FAVORITOS ⭐', items: favorites },
+      ...otherSections,
+    ];
+  }, [filteredAlbums, albumSortDir, isAlbumFavorite]);
+
+  const sortedAlbumsList = useMemo(() => {
+    if (!filteredAlbums || filteredAlbums.length === 0) return [];
+
+    if (albumSortField === 'priority') {
+      const priorityWeight = (p?: string) => {
+        switch (p) {
+          case 'urgent': return 4;
+          case 'high': return 3;
+          case 'medium': return 2;
+          case 'low': return 1;
+          default: return 2;
+        }
+      };
+
+      return [...filteredAlbums].sort((a: any, b: any) => {
+        const wa = priorityWeight(a.priority);
+        const wb = priorityWeight(b.priority);
+        if (wa !== wb) {
+          return albumSortDir === 'asc' ? wa - wb : wb - wa;
+        }
+        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+      });
+    }
+
+    if (albumSortField === 'alphabetical') {
+      return [...filteredAlbums].sort((a: any, b: any) => {
+        const cmp = (a.title || '').localeCompare(b.title || '', 'es', { sensitivity: 'base' });
+        return albumSortDir === 'asc' ? cmp : -cmp;
+      });
+    }
+
+    if (albumSortField === 'created_at') {
+      return [...filteredAlbums].sort((a: any, b: any) => {
+        const da = new Date(a.created_at || 0).getTime();
+        const db = new Date(b.created_at || 0).getTime();
+        return albumSortDir === 'asc' ? da - db : db - da;
+      });
+    }
+
+    return filteredAlbums;
+  }, [filteredAlbums, albumSortField, albumSortDir]);
 
   const handleCreate = () => {
     router.push('/(modals)/create-bucket');
@@ -702,35 +822,154 @@ export default function MyListScreen() {
 
         {activeTab === 'albums' && (
           <ScrollView contentContainerStyle={styles.albumsContent}>
-            {/* Label */}
-            <View style={styles.albumsLabelRow}>
-              <Typography variant="caption" color={gold[400]} style={styles.albumsLabelHighlight}>TUS </Typography>
-              <Typography variant="caption" color="#FFF" style={styles.albumsLabel}>ÁLBUMES</Typography>
+            {/* Filtros de estado de álbum */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filtersContainer}
+              style={{ flexGrow: 0, marginBottom: 8, marginHorizontal: -20 }}
+            >
+              <FilterChip label="Todos" active={albumFilter === 'all'} onPress={() => setAlbumFilter('all')} />
+              <FilterChip label="En curso" active={albumFilter === 'active'} onPress={() => setAlbumFilter('active')} />
+              <FilterChip label="Completados" active={albumFilter === 'completed'} onPress={() => setAlbumFilter('completed')} />
+              <FilterChip label="Cerrados" active={albumFilter === 'closed'} onPress={() => setAlbumFilter('closed')} />
+            </ScrollView>
+
+            {/* Filtro por prioridad de álbum */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filtersContainer}
+              style={{ flexGrow: 0, marginBottom: 14, marginHorizontal: -20 }}
+            >
+              <FilterChip label="Prioridad: Todas" active={albumPriorityFilter === 'all'} onPress={() => setAlbumPriorityFilter('all')} />
+              <FilterChip label="🔴 Alta" active={albumPriorityFilter === 'high'} onPress={() => setAlbumPriorityFilter(albumPriorityFilter === 'high' ? 'all' : 'high')} />
+              <FilterChip label="🟡 Media" active={albumPriorityFilter === 'medium'} onPress={() => setAlbumPriorityFilter(albumPriorityFilter === 'medium' ? 'all' : 'medium')} />
+              <FilterChip label="🟢 Baja" active={albumPriorityFilter === 'low'} onPress={() => setAlbumPriorityFilter(albumPriorityFilter === 'low' ? 'all' : 'low')} />
+            </ScrollView>
+
+            {/* Fila de Ordenar por álbumes */}
+            <View style={styles.sortRow}>
+              <Typography variant="caption" color={theme.colors.foregroundMuted} style={styles.tasksCountLabel}>
+                {filteredAlbums.length} {filteredAlbums.length === 1 ? 'ÁLBUM' : 'ÁLBUMES'}
+              </Typography>
+              <View style={styles.sortTriggerContainer}>
+                <Typography variant="caption" color={theme.colors.foregroundMuted}>
+                  Ordenar por:
+                </Typography>
+                <Pressable
+                  ref={albumSortTriggerRef}
+                  collapsable={false}
+                  onPress={openSortMenu}
+                  hitSlop={8}
+                  style={styles.sortTriggerBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel="Ordenar álbumes"
+                >
+                  <Typography variant="caption" color={gold[400]} style={{ fontWeight: '600' }}>
+                    {albumSortField === 'status' ? 'Estado' : albumSortField === 'priority' ? 'Prioridad' : albumSortField === 'alphabetical' ? 'Alfabético' : 'Fecha'}
+                  </Typography>
+                  {albumSortDir === 'desc' ? (
+                    <ArrowDown color={gold[400]} size={14} />
+                  ) : (
+                    <ArrowUp color={gold[400]} size={14} />
+                  )}
+                </Pressable>
+              </View>
             </View>
 
-            {/* Grid */}
-            <View style={styles.albumGrid}>
-              {(filteredAlbums || []).map((item: any, index: number) => (
-                <AlbumCard
-                  key={item.id}
-                  title={item.title}
-                  totalTasks={item.total_tasks ?? 0}
-                  completedTasks={item.completed_tasks ?? 0}
-                  coverUri={item.cover_path}
-                  isShared={item.is_shared}
-                  isFavorite={isAlbumFavorite(item.id)}
-                  colorIndex={index}
-                  onPress={() => router.push(`/album/${item.id}` as any)}
+            {/* Contenido de Álbumes */}
+            {filteredAlbums.length === 0 ? (
+              <View style={styles.empty}>
+                <Typography variant="body" color={theme.colors.foregroundMuted}>
+                  No hay álbumes que coincidan con estos filtros.
+                </Typography>
+                <View style={[styles.albumGrid, { marginTop: 24 }]}>
+                  <NewAlbumCard onPress={() => router.push('/(modals)/create-album')} />
+                </View>
+                <NoAlbumRow
+                  count={unassignedCount}
+                  onPress={() => router.push('/album/unassigned')}
                 />
-              ))}
-              <NewAlbumCard onPress={() => router.push('/(modals)/create-album')} />
-            </View>
-
-            {/* Sin álbum row */}
-            <NoAlbumRow
-              count={unassignedCount}
-              onPress={() => router.push('/album/unassigned')}
-            />
+              </View>
+            ) : albumSortField === 'status' ? (
+              (() => {
+                let renderedNewAlbum = false;
+                const hasInProgress = albumSections.some((s) => s.key === 'in_progress' && s.items.length > 0);
+                return (
+                  <>
+                    {albumSections.map((sec) => {
+                      if (sec.items.length === 0) return null;
+                      const isTargetForNewCard = !renderedNewAlbum && (sec.key === 'in_progress' || !hasInProgress);
+                      if (isTargetForNewCard) {
+                        renderedNewAlbum = true;
+                      }
+                      return (
+                        <View key={sec.key} style={{ marginBottom: 20 }}>
+                          <View style={{ marginBottom: 10 }}>
+                            <Text style={styles.sectionHeader}>{sec.title}</Text>
+                          </View>
+                          <View style={styles.albumGrid}>
+                            {sec.items.map((item: any, idx: number) => (
+                              <AlbumCard
+                                key={item.id}
+                                title={item.title}
+                                totalTasks={item.total_tasks ?? 0}
+                                completedTasks={item.completed_tasks ?? 0}
+                                coverUri={item.cover_path}
+                                isShared={item.is_shared}
+                                isFavorite={isAlbumFavorite(item.id)}
+                                priority={item.priority}
+                                isClosed={item.is_closed}
+                                colorIndex={idx}
+                                onPress={() => router.push(`/album/${item.id}` as any)}
+                              />
+                            ))}
+                            {isTargetForNewCard && (
+                              <NewAlbumCard onPress={() => router.push('/(modals)/create-album')} />
+                            )}
+                          </View>
+                        </View>
+                      );
+                    })}
+                    {!renderedNewAlbum && (
+                      <View style={[styles.albumGrid, { marginBottom: 12 }]}>
+                        <NewAlbumCard onPress={() => router.push('/(modals)/create-album')} />
+                      </View>
+                    )}
+                    <NoAlbumRow
+                      count={unassignedCount}
+                      onPress={() => router.push('/album/unassigned')}
+                    />
+                  </>
+                );
+              })()
+            ) : (
+              <>
+                <View style={styles.albumGrid}>
+                  {sortedAlbumsList.map((item: any, index: number) => (
+                    <AlbumCard
+                      key={item.id}
+                      title={item.title}
+                      totalTasks={item.total_tasks ?? 0}
+                      completedTasks={item.completed_tasks ?? 0}
+                      coverUri={item.cover_path}
+                      isShared={item.is_shared}
+                      isFavorite={isAlbumFavorite(item.id)}
+                      priority={item.priority}
+                      isClosed={item.is_closed}
+                      colorIndex={index}
+                      onPress={() => router.push(`/album/${item.id}` as any)}
+                    />
+                  ))}
+                  <NewAlbumCard onPress={() => router.push('/(modals)/create-album')} />
+                </View>
+                <NoAlbumRow
+                  count={unassignedCount}
+                  onPress={() => router.push('/album/unassigned')}
+                />
+              </>
+            )}
           </ScrollView>
         )}
 
@@ -788,7 +1027,9 @@ export default function MyListScreen() {
               { field: 'alphabetical' as const, label: 'Alfabético' },
               { field: 'created_at' as const, label: 'Fecha de creación' },
             ] as const).map((option, i) => {
-              const selected = sortField === option.field;
+              const currentField = activeTab === 'albums' ? albumSortField : sortField;
+              const currentDir = activeTab === 'albums' ? albumSortDir : sortDir;
+              const selected = currentField === option.field;
               return (
                 <Pressable
                   key={option.field}
@@ -811,7 +1052,7 @@ export default function MyListScreen() {
                     {option.label}
                   </Typography>
                   {selected &&
-                    (sortDir === 'desc' ? (
+                    (currentDir === 'desc' ? (
                       <ArrowDown color={gold[400]} size={16} />
                     ) : (
                       <ArrowUp color={gold[400]} size={16} />

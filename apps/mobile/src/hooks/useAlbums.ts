@@ -11,6 +11,10 @@ export interface AlbumWithProgress {
   cover_path: string | null;
   visibility: string;
   is_shared: boolean;
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  is_closed?: boolean;
+  closed_at?: string | null;
+  created_at?: string;
   total_tasks: number;
   completed_tasks: number;
 }
@@ -75,6 +79,10 @@ export function useAlbums(userId?: string) {
           cover_path: album.cover_path,
           visibility: album.visibility,
           is_shared: album.is_shared,
+          priority: (album.priority || 'medium') as 'low' | 'medium' | 'high' | 'urgent',
+          is_closed: Boolean(album.is_closed),
+          closed_at: album.closed_at || null,
+          created_at: album.created_at || undefined,
           total_tasks: prog?.total_tasks || 0,
           completed_tasks: prog?.completed_tasks || 0,
         };
@@ -89,7 +97,14 @@ export function useCreateAlbum() {
   const { user } = useAuthStore();
 
   return useMutation({
-    mutationFn: async (data: { title: string; description?: string; visibility: string; cover_path?: string; is_shared?: boolean }) => {
+    mutationFn: async (data: {
+      title: string;
+      description?: string;
+      visibility: string;
+      cover_path?: string;
+      is_shared?: boolean;
+      priority?: 'low' | 'medium' | 'high' | 'urgent';
+    }) => {
       const { data: newAlbum, error } = await supabase
         .from('albums')
         .insert({
@@ -99,6 +114,7 @@ export function useCreateAlbum() {
           owner_id: user?.id,
           cover_path: data.cover_path || null,
           is_shared: data.is_shared || false,
+          priority: data.priority || 'medium',
         })
         .select()
         .single();
@@ -116,8 +132,23 @@ export function useUpdateAlbum() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: { title?: string; description?: string; visibility?: string; cover_path?: string; is_shared?: boolean } }) => {
-      const { data: updatedAlbum, error } = await supabase
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: {
+        title?: string;
+        description?: string;
+        visibility?: string;
+        cover_path?: string;
+        is_shared?: boolean;
+        priority?: 'low' | 'medium' | 'high' | 'urgent';
+        is_closed?: boolean;
+        closed_at?: string | null;
+      };
+    }) => {
+      const { data: updatedAlbum, error } = await (supabase as any)
         .from('albums')
         .update(data)
         .eq('id', id)

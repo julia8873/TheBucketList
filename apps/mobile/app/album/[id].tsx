@@ -35,6 +35,7 @@ import {
   Trash2,
   X,
   Star,
+  Flag,
 } from 'lucide-react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
@@ -81,7 +82,7 @@ export default function AlbumDetailScreen() {
 
   const [showCollaboratorPicker, setShowCollaboratorPicker] = useState(false);
   const [sheetVisible, setSheetVisible] = useState(false);
-  const [sheetMode, setSheetMode] = useState<'menu' | 'visibility'>('menu');
+  const [sheetMode, setSheetMode] = useState<'menu' | 'visibility' | 'priority' | 'status'>('menu');
   const sheetTranslateY = useRef(new Animated.Value(420)).current;
 
   const titleTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -328,6 +329,47 @@ export default function AlbumDetailScreen() {
     void queryClient.invalidateQueries({ queryKey: ['albums'] });
   };
 
+  // Priority Change
+  const handleChangePriority = async (newPriority: 'low' | 'medium' | 'high') => {
+    queryClient.setQueryData(['album', id, user?.id], (old: any) =>
+      old ? { ...old, priority: newPriority } : old
+    );
+    closeSheet();
+
+    const { error } = await supabase
+      .from('albums')
+      .update({ priority: newPriority })
+      .eq('id', id);
+
+    if (error) {
+      Alert.alert('Error', 'No se pudo cambiar la prioridad');
+    }
+    void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+    void queryClient.invalidateQueries({ queryKey: ['albums'] });
+  };
+
+  // Close / Reopen Album
+  const handleToggleCloseAlbum = async (close: boolean) => {
+    queryClient.setQueryData(['album', id, user?.id], (old: any) =>
+      old ? { ...old, is_closed: close, closed_at: close ? new Date().toISOString() : null } : old
+    );
+    closeSheet();
+
+    const { error } = await supabase
+      .from('albums')
+      .update({
+        is_closed: close,
+        closed_at: close ? new Date().toISOString() : null,
+      })
+      .eq('id', id);
+
+    if (error) {
+      Alert.alert('Error', close ? 'No se pudo cerrar el álbum' : 'No se pudo reabrir el álbum');
+    }
+    void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+    void queryClient.invalidateQueries({ queryKey: ['albums'] });
+  };
+
   // Cover Change directly from album screen
   const pickAndUploadCover = async () => {
     try {
@@ -518,8 +560,14 @@ export default function AlbumDetailScreen() {
     string,
     ...string[]
   ];
-  const statusLabel =
-    total === 0 ? 'En curso' : completedCount === total ? 'Completado' : 'En curso';
+  const isAlbumClosed = Boolean(album.is_closed);
+  const statusLabel = isAlbumClosed
+    ? 'Cerrado'
+    : total === 0
+    ? 'En curso'
+    : completedCount === total
+    ? 'Completado'
+    : 'En curso';
 
   const getBadgeText = (dateStr?: string) => {
     if (!dateStr) return null;
@@ -709,9 +757,79 @@ export default function AlbumDetailScreen() {
         {/* Chips */}
         {id !== 'unassigned' && (
           <View style={styles.chipsRow}>
-            <View style={[styles.chip, styles.chipStatus]}>
-              <Text style={styles.chipStatusText}>{statusLabel}</Text>
-            </View>
+            {/* Estado clickeable */}
+            <Pressable
+              style={[
+                styles.chip,
+                styles.chipStatus,
+                isAlbumClosed && { borderColor: '#D4B13A', backgroundColor: '#2C2512' },
+                !isAlbumClosed && areAllCompleted && { borderColor: '#22C55E', backgroundColor: 'rgba(34,197,94,0.14)' },
+                canEdit && styles.chipPressable,
+              ]}
+              onPress={() => {
+                if (canEdit) {
+                  setSheetMode('status');
+                  setSheetVisible(true);
+                }
+              }}
+            >
+              {isAlbumClosed ? (
+                <>
+                  <Lock size={14} color="#D4B13A" strokeWidth={2} />
+                  <Text style={[styles.chipStatusText, { color: '#D4B13A' }]}>Cerrado</Text>
+                </>
+              ) : areAllCompleted ? (
+                <>
+                  <Check size={14} color="#22C55E" strokeWidth={2.5} />
+                  <Text style={[styles.chipStatusText, { color: '#22C55E' }]}>Completado</Text>
+                </>
+              ) : (
+                <Text style={styles.chipStatusText}>En curso</Text>
+              )}
+            </Pressable>
+
+            {/* Prioridad clickeable */}
+            <Pressable
+              style={[styles.chip, canEdit && styles.chipPressable]}
+              onPress={() => {
+                if (canEdit) {
+                  setSheetMode('priority');
+                  setSheetVisible(true);
+                }
+              }}
+            >
+              <Flag
+                size={14}
+                color={
+                  album.priority === 'high' || album.priority === 'urgent'
+                    ? '#EF4444'
+                    : album.priority === 'low'
+                    ? '#10B981'
+                    : '#D4B13A'
+                }
+                strokeWidth={2}
+              />
+              <Text
+                style={[
+                  styles.chipText,
+                  {
+                    color:
+                      album.priority === 'high' || album.priority === 'urgent'
+                        ? '#EF4444'
+                        : album.priority === 'low'
+                        ? '#10B981'
+                        : '#D4B13A',
+                    fontWeight: '600',
+                  },
+                ]}
+              >
+                {album.priority === 'high' || album.priority === 'urgent'
+                  ? 'Alta'
+                  : album.priority === 'low'
+                  ? 'Baja'
+                  : 'Media'}
+              </Text>
+            </Pressable>
 
             {/* Visibilidad clickeable para cambiar al instante */}
             <Pressable
@@ -1083,6 +1201,50 @@ export default function AlbumDetailScreen() {
                   {canEdit && (
                     <Pressable
                       style={styles.sheetOption}
+                      onPress={() => {
+                        handleToggleCloseAlbum(!isAlbumClosed);
+                      }}
+                    >
+                      <View style={styles.sheetIconBox}>
+                        <Lock color="#D4B13A" size={20} />
+                      </View>
+                      <View style={styles.sheetOptionTexts}>
+                        <Text style={styles.sheetOptionTitle}>
+                          {isAlbumClosed ? 'Reabrir álbum' : 'Cerrar álbum para siempre'}
+                        </Text>
+                        <Text style={styles.sheetOptionSubtitle}>
+                          {isAlbumClosed
+                            ? 'Permite volver a añadir tareas al álbum'
+                            : 'Marca el álbum como cerrado y completado definitivamente'}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  )}
+
+                  {canEdit && (
+                    <Pressable
+                      style={styles.sheetOption}
+                      onPress={() => setSheetMode('priority')}
+                    >
+                      <View style={styles.sheetIconBox}>
+                        <Flag color="#D4B13A" size={20} />
+                      </View>
+                      <View style={styles.sheetOptionTexts}>
+                        <Text style={styles.sheetOptionTitle}>Cambiar prioridad</Text>
+                        <Text style={styles.sheetOptionSubtitle}>
+                          {album.priority === 'high' || album.priority === 'urgent'
+                            ? 'Prioridad Alta'
+                            : album.priority === 'low'
+                            ? 'Prioridad Baja'
+                            : 'Prioridad Media'}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  )}
+
+                  {canEdit && (
+                    <Pressable
+                      style={styles.sheetOption}
                       onPress={() => setSheetMode('visibility')}
                     >
                       <View style={styles.sheetIconBox}>
@@ -1231,6 +1393,109 @@ export default function AlbumDetailScreen() {
                       </Pressable>
                     );
                   })}
+                </View>
+              </>
+            )}
+
+            {sheetMode === 'priority' && (
+              <>
+                <View style={styles.sheetHeader}>
+                  <Text style={styles.sheetHeaderText}>Prioridad del álbum</Text>
+                  <Pressable style={styles.sheetCloseBtn} onPress={() => closeSheet()}>
+                    <X color="#8F8F8F" size={20} />
+                  </Pressable>
+                </View>
+
+                <View style={styles.sheetOptions}>
+                  {([
+                    {
+                      value: 'high' as const,
+                      title: 'Alta',
+                      subtitle: 'Máxima prioridad para este álbum',
+                      color: '#EF4444',
+                    },
+                    {
+                      value: 'medium' as const,
+                      title: 'Media',
+                      subtitle: 'Prioridad normal',
+                      color: '#EAB308',
+                    },
+                    {
+                      value: 'low' as const,
+                      title: 'Baja',
+                      subtitle: 'Prioridad secundaria',
+                      color: '#10B981',
+                    },
+                  ]).map((item) => {
+                    const isSelected = (album.priority ?? 'medium') === item.value;
+                    return (
+                      <Pressable
+                        key={item.value}
+                        style={styles.sheetOption}
+                        onPress={() => void handleChangePriority(item.value)}
+                      >
+                        <View style={[styles.sheetIconBox, { backgroundColor: `${item.color}20` }]}>
+                          <Flag color={item.color} size={20} fill={isSelected ? item.color : 'none'} />
+                        </View>
+                        <View style={styles.sheetOptionTexts}>
+                          <Text style={[styles.sheetOptionTitle, isSelected && { color: item.color }]}>
+                            {item.title}
+                          </Text>
+                          <Text style={styles.sheetOptionSubtitle}>{item.subtitle}</Text>
+                        </View>
+                        {isSelected && <Check color="#D4B13A" size={20} strokeWidth={2.5} />}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </>
+            )}
+
+            {sheetMode === 'status' && (
+              <>
+                <View style={styles.sheetHeader}>
+                  <Text style={styles.sheetHeaderText}>Estado del álbum</Text>
+                  <Pressable style={styles.sheetCloseBtn} onPress={() => closeSheet()}>
+                    <X color="#8F8F8F" size={20} />
+                  </Pressable>
+                </View>
+
+                <View style={styles.sheetOptions}>
+                  <Pressable
+                    style={styles.sheetOption}
+                    onPress={() => void handleToggleCloseAlbum(false)}
+                  >
+                    <View style={[styles.sheetIconBox, !album.is_closed && { backgroundColor: 'rgba(212, 177, 58, 0.2)' }]}>
+                      <RotateCcw color={!album.is_closed ? '#D4B13A' : '#8F8F8F'} size={20} />
+                    </View>
+                    <View style={styles.sheetOptionTexts}>
+                      <Text style={[styles.sheetOptionTitle, !album.is_closed && { color: '#D4B13A' }]}>
+                        Abierto (En progreso / Completado)
+                      </Text>
+                      <Text style={styles.sheetOptionSubtitle}>
+                        El álbum permanece activo y se pueden seguir completando o añadiendo tareas
+                      </Text>
+                    </View>
+                    {!album.is_closed && <Check color="#D4B13A" size={20} strokeWidth={2.5} />}
+                  </Pressable>
+
+                  <Pressable
+                    style={styles.sheetOption}
+                    onPress={() => void handleToggleCloseAlbum(true)}
+                  >
+                    <View style={[styles.sheetIconBox, album.is_closed && { backgroundColor: 'rgba(239, 68, 68, 0.2)' }]}>
+                      <Lock color={album.is_closed ? '#EF4444' : '#8F8F8F'} size={20} />
+                    </View>
+                    <View style={styles.sheetOptionTexts}>
+                      <Text style={[styles.sheetOptionTitle, album.is_closed && { color: '#EF4444' }]}>
+                        Cerrar álbum (Completado para siempre)
+                      </Text>
+                      <Text style={styles.sheetOptionSubtitle}>
+                        El álbum se marca como cerrado definitivamente
+                      </Text>
+                    </View>
+                    {album.is_closed && <Check color="#EF4444" size={20} strokeWidth={2.5} />}
+                  </Pressable>
                 </View>
               </>
             )}

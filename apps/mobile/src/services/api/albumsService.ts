@@ -22,6 +22,9 @@ export interface AlbumDetail {
   coverPath?: string;
   visibility?: 'public' | 'followers' | 'private' | string;
   isShared: boolean;
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  is_closed?: boolean;
+  closed_at?: string | null;
   ownerId?: string;
   owner?: {
     id: string;
@@ -174,6 +177,9 @@ export const albumsService = {
       coverPath: album.cover_path || undefined,
       visibility: album.visibility || 'private',
       isShared: album.is_shared || false,
+      priority: (album.priority || 'medium') as 'low' | 'medium' | 'high' | 'urgent',
+      is_closed: Boolean(album.is_closed),
+      closed_at: album.closed_at || null,
       ownerId: album.owner_id,
       owner: ownerProfile ? {
         id: ownerProfile.id,

@@ -15,7 +15,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, Users, Plus, Globe, Lock, Check, X, Image as ImageIcon, Palette } from 'lucide-react-native';
+import { ChevronLeft, Users, Plus, Globe, Lock, Check, X, Image as ImageIcon, Palette, Flag } from 'lucide-react-native';
 import { useTheme } from '@bucketlist/ui';
 import { useCreateAlbum, useUpdateAlbum } from '../../src/hooks/useAlbums';
 import { supabase } from '../../src/services/supabase';
@@ -58,6 +58,7 @@ export default function CreateAlbumScreen() {
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [selectedCover, setSelectedCover] = useState<Cover>(COVERS[1]!); // Atardecer
   const [visibility, setVisibility] = useState<'public' | 'followers' | 'private'>('private');
   const [isShared, setIsShared] = useState(false);
@@ -111,6 +112,7 @@ export default function CreateAlbumScreen() {
         if (!isMounted) return;
         setName(album.title || '');
         setDescription(album.description || '');
+        setPriority((album.priority as any) || 'medium');
         setVisibility((album.visibility as any) || 'private');
         setIsShared(Boolean(album.is_shared));
 
@@ -217,6 +219,7 @@ export default function CreateAlbumScreen() {
           data: {
             title: name.trim(),
             description: description.trim(),
+            priority,
             visibility,
             cover_path: JSON.stringify(selectedCover),
             is_shared: isShared,
@@ -265,6 +268,7 @@ export default function CreateAlbumScreen() {
         const newAlbum = await createAlbum.mutateAsync({
           title: name.trim(),
           description: description.trim(),
+          priority,
           visibility,
           cover_path: JSON.stringify(selectedCover),
           is_shared: isShared,
@@ -403,6 +407,35 @@ export default function CreateAlbumScreen() {
               accessibilityLabel="Descripción del álbum"
               multiline
             />
+          </View>
+
+          {/* Sección Prioridad */}
+          <View style={styles.section}>
+            <SectionTitle highlight="PRIORIDAD" rest=" DEL ÁLBUM" />
+            <View style={styles.priorityRow}>
+              {[
+                { id: 'low' as const, label: 'Baja', color: '#10B981', bgActive: 'rgba(16, 185, 129, 0.14)', borderActive: '#10B981' },
+                { id: 'medium' as const, label: 'Media', color: '#D4B13A', bgActive: 'rgba(212, 177, 58, 0.14)', borderActive: '#D4B13A' },
+                { id: 'high' as const, label: 'Alta', color: '#EF4444', bgActive: 'rgba(239, 68, 68, 0.14)', borderActive: '#EF4444' },
+              ].map((p) => {
+                const active = priority === p.id;
+                return (
+                  <Pressable
+                    key={p.id}
+                    onPress={() => setPriority(p.id)}
+                    style={[
+                      styles.priorityPill,
+                      active && { backgroundColor: p.bgActive, borderColor: p.borderActive },
+                    ]}
+                  >
+                    <Flag size={15} color={active ? p.color : '#8A8A8A'} strokeWidth={active ? 2.2 : 1.8} />
+                    <Text style={[styles.priorityText, active && { color: p.color, fontWeight: '700' }]}>
+                      {p.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
           </View>
 
           {/* Sección Visibilidad */}
@@ -954,6 +987,28 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_700Bold',
     fontSize: 17,
     color: '#0D0D0D',
+  },
+  priorityRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 4,
+  },
+  priorityPill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    height: 48,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#262626',
+    backgroundColor: '#161616',
+  },
+  priorityText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 15,
+    color: '#E5E5E5',
   },
 });
 

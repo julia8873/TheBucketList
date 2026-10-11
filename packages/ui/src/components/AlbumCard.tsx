@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Plus, FolderOpen, ChevronRight, Star } from 'lucide-react-native';
+import { Plus, FolderOpen, ChevronRight, Star, Lock, Check } from 'lucide-react-native';
 
 import { useTheme } from '../theme/useTheme';
 import { fontFamily, fontSize } from '../tokens/typography';
@@ -39,6 +39,8 @@ interface AlbumCardProps {
   coverUri?: string | null;
   isShared?: boolean;
   isFavorite?: boolean;
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  isClosed?: boolean;
   colorIndex?: number;  // to pick a gradient when no cover
   onPress?: () => void;
   style?: ViewStyle;
@@ -51,6 +53,8 @@ export function AlbumCard({
   coverUri,
   isShared = false,
   isFavorite = false,
+  priority,
+  isClosed = false,
   colorIndex = 0,
   onPress,
   style,
@@ -93,6 +97,8 @@ export function AlbumCard({
     );
   }
 
+  const isCompleted = totalTasks > 0 && completedTasks === totalTasks;
+
   return (
     <Pressable
       onPress={onPress}
@@ -113,12 +119,25 @@ export function AlbumCard({
         style={[StyleSheet.absoluteFill, { top: '40%' }]}
       />
 
-      {/* Shared badge */}
-      {isShared && (
-        <View style={styles.sharedBadge}>
-          <Text style={styles.sharedText}>Compartido</Text>
-        </View>
-      )}
+      {/* Top left badges */}
+      <View style={styles.topLeftBadges}>
+        {isShared && (
+          <View style={styles.sharedBadge}>
+            <Text style={styles.sharedText}>Compartido</Text>
+          </View>
+        )}
+        {isClosed ? (
+          <View style={styles.closedBadge}>
+            <Lock size={10} color="#D4B13A" />
+            <Text style={styles.closedText}>Cerrado</Text>
+          </View>
+        ) : isCompleted ? (
+          <View style={styles.completedBadge}>
+            <Check size={10} color="#FFF" strokeWidth={2.5} />
+            <Text style={styles.completedText}>Hecho</Text>
+          </View>
+        ) : null}
+      </View>
 
       {/* Favorite badge */}
       {isFavorite && (
@@ -130,9 +149,43 @@ export function AlbumCard({
       {/* Bottom content */}
       <View style={styles.bottom}>
         <Text style={styles.title} numberOfLines={2}>{title}</Text>
-        <Text style={styles.meta}>
-          {totalTasks} {totalTasks === 1 ? 'tarea' : 'tareas'} · {completedTasks} {completedTasks === 1 ? 'hecha' : 'hechas'}
-        </Text>
+        <View style={styles.metaRow}>
+          <Text style={styles.meta}>
+            {totalTasks} {totalTasks === 1 ? 'tarea' : 'tareas'} · {completedTasks} {completedTasks === 1 ? 'hecha' : 'hechas'}
+          </Text>
+          {priority && (
+            <View style={styles.priorityIndicator}>
+              <View
+                style={[
+                  styles.priorityDot,
+                  {
+                    backgroundColor:
+                      priority === 'high' || priority === 'urgent'
+                        ? '#EF4444'
+                        : priority === 'low'
+                        ? '#10B981'
+                        : '#D4B13A',
+                  },
+                ]}
+              />
+              <Text
+                style={[
+                  styles.priorityText,
+                  {
+                    color:
+                      priority === 'high' || priority === 'urgent'
+                        ? '#EF4444'
+                        : priority === 'low'
+                        ? '#10B981'
+                        : '#D4B13A',
+                  },
+                ]}
+              >
+                {priority === 'high' || priority === 'urgent' ? 'Alta' : priority === 'low' ? 'Baja' : 'Media'}
+              </Text>
+            </View>
+          )}
+        </View>
         {/* Progress bar */}
         <View style={styles.progressTrack}>
           <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` as any }]} />
@@ -190,18 +243,54 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: dark[300],
   },
-  sharedBadge: {
+  topLeftBadges: {
     position: 'absolute',
     top: 10,
     left: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    zIndex: 2,
+  },
+  sharedBadge: {
     backgroundColor: 'rgba(34,197,94,0.85)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 20,
   },
   sharedText: {
     fontFamily: fontFamily.semibold,
-    fontSize: fontSize.xs,
+    fontSize: 10,
+    color: '#FFF',
+  },
+  closedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: 'rgba(212, 177, 58, 0.25)',
+    borderWidth: 1,
+    borderColor: '#D4B13A',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 20,
+  },
+  closedText: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 10,
+    color: '#D4B13A',
+  },
+  completedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: 'rgba(34,197,94,0.9)',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 20,
+  },
+  completedText: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 10,
     color: '#FFF',
   },
   favoriteBadge: {
@@ -227,11 +316,35 @@ const styles = StyleSheet.create({
     color: '#FFF',
     marginBottom: 2,
   },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
   meta: {
     fontFamily: fontFamily.regular,
     fontSize: fontSize.xs,
     color: 'rgba(255,255,255,0.65)',
-    marginBottom: 8,
+    flexShrink: 1,
+  },
+  priorityIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  priorityDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
+  priorityText: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 10,
   },
   progressTrack: {
     height: 3,

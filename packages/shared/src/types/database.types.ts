@@ -154,14 +154,14 @@ isOneToOne: false
                   ]
                 },"albums": {
                   Row: {
-                    "cover_path": string | null,"created_at": string | null,"description": string | null,"id": string,"is_shared": boolean | null,"owner_id": string,"title": string,"visibility": string | null
+                    "closed_at": string | null,"cover_path": string | null,"created_at": string | null,"description": string | null,"id": string,"is_closed": boolean | null,"is_shared": boolean | null,"owner_id": string,"priority": string | null,"title": string,"visibility": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "cover_path"?: string | null,"created_at"?: string | null,"description"?: string | null,"id"?: string,"is_shared"?: boolean | null,"owner_id": string,"title": string,"visibility"?: string | null
+                    "closed_at"?: string | null,"cover_path"?: string | null,"created_at"?: string | null,"description"?: string | null,"id"?: string,"is_closed"?: boolean | null,"is_shared"?: boolean | null,"owner_id": string,"priority"?: string | null,"title": string,"visibility"?: string | null
                   }
                   Update: {
-                    "cover_path"?: string | null,"created_at"?: string | null,"description"?: string | null,"id"?: string,"is_shared"?: boolean | null,"owner_id"?: string,"title"?: string,"visibility"?: string | null
+                    "closed_at"?: string | null,"cover_path"?: string | null,"created_at"?: string | null,"description"?: string | null,"id"?: string,"is_closed"?: boolean | null,"is_shared"?: boolean | null,"owner_id"?: string,"priority"?: string | null,"title"?: string,"visibility"?: string | null
                   }
                   Relationships: [
                     {
