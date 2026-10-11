@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Alert, Share, ActivityIndicator, ScrollView, Image, Pressable, FlatList, Dimensions, Platform, StatusBar, Modal, Animated, NativeSyntheticEvent, NativeScrollEvent, TextInput, PanResponder } from 'react-native';
+import { View, Text, StyleSheet, Alert, Share, ActivityIndicator, ScrollView, Image, Pressable, FlatList, Dimensions, Platform, StatusBar, Modal, Animated, NativeSyntheticEvent, NativeScrollEvent, TextInput, PanResponder, KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,7 +9,7 @@ import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Typography, useTheme } from '@bucketlist/ui';
-import { ArrowLeft, Share2, MoreHorizontal, MapPin, Calendar, Heart, MessageCircle, FolderOpen, CheckCircle2, Circle, Camera, Check, Eye, Lock, Users, FolderPlus, Pencil, Trash2, X, ListPlus, Plus, Minus, Download, ArrowUp, ArrowDown } from 'lucide-react-native';
+import { ArrowLeft, Share2, MoreHorizontal, MapPin, Calendar, Heart, MessageCircle, FolderOpen, CheckCircle2, Circle, Camera, Check, Eye, Lock, Users, FolderPlus, Pencil, Trash2, X, ListPlus, Plus, Minus, Download, ArrowUp, ArrowDown, Tag } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { supabase } from '../../src/services/supabase';
@@ -24,6 +24,7 @@ import { BucketCover } from '../../src/components/BucketCover';
 import { SubtaskList } from '../../src/components/SubtaskList';
 import { BucketPhotoViewer } from '../../src/components/BucketPhotoViewer';
 import { BucketBottomSheet } from '../../src/components/BucketBottomSheet';
+import { LocationAutocomplete } from '../../src/components/LocationAutocomplete';
 import { styles } from './BucketDetail.styles';
 import { ItemTagsRow } from '../../src/components/ItemTagsRow';
 import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
@@ -65,12 +66,13 @@ export default function BucketDetailScreen() {
 
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [sheetVisible, setSheetVisible] = useState(false);
-  const [sheetMode, setSheetMode] = useState<'menu' | 'visibility' | 'albums' | 'status'>('menu');
+  const [sheetMode, setSheetMode] = useState<'menu' | 'visibility' | 'albums' | 'status' | 'category'>('menu');
   const [viewingPhotoIndex, setViewingPhotoIndex] = useState<number | null>(null);
   const [newSubtaskText, setNewSubtaskText] = useState('');
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const [datePickerConfig, setDatePickerConfig] = useState<{ visible: boolean, type: 'deadline' | 'completed_at', date: Date } | null>(null);
   const [showCollaboratorPicker, setShowCollaboratorPicker] = useState(false);
+  const [locationModalVisible, setLocationModalVisible] = useState(false);
   const sheetTranslateY = useRef(new Animated.Value(420)).current;
   const subtaskTimeouts = useRef<Record<string, NodeJS.Timeout>>({});
   const titleTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -83,6 +85,15 @@ export default function BucketDetailScreen() {
   const toggleReaction = useToggleReaction();
   const deleteBucket = useDeleteBucket();
   const { data: albumsData, isLoading: albumsLoading } = useAlbums(user?.id);
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('categories').select('*').order('name_es');
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   const { data: bucket, isLoading } = useQuery({
     queryKey: ['bucketDetail', id],
@@ -389,6 +400,98 @@ export default function BucketDetailScreen() {
 
     invalidateBucket();
     closeSheet();
+  };
+
+  const handleChangeCategory = async (categoryId: string) => {
+    const selectedCat = categories.find((c: any) => c.id === categoryId);
+    queryClient.setQueryData(['bucketDetail', id], (oldData: any) =>
+      oldData ? { ...oldData, category_id: categoryId, category: selectedCat } : oldData
+    );
+    const { error } = await supabase
+      .from('buckets')
+      .update({ category_id: categoryId })
+      .eq('id', id);
+
+    if (error) {
+      Alert.alert('No se pudo cambiar la categoría', error.message);
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+      return;
+    }
+
+    void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+    void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+    closeSheet();
+  };
+
+  const handleSaveLocation = async (loc: { text: string; lat: number; lng: number } | null) => {
+    const newText = loc?.text || null;
+    const newLat = loc?.lat || null;
+    const newLng = loc?.lng || null;
+    queryClient.setQueryData(['bucketDetail', id], (old: any) =>
+      old ? { ...old, location_text: newText, location_lat: newLat, location_lng: newLng } : old
+    );
+    const { error } = await supabase
+      .from('buckets')
+      .update({ location_text: newText, location_lat: newLat, location_lng: newLng })
+      .eq('id', id);
+
+    if (error) {
+      Alert.alert('No se pudo actualizar la ubicación', error.message);
+    }
+    void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+    void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+  };
+
+  const handleRemoveLocation = async () => {
+    await handleSaveLocation(null);
+  };
+
+  const handleRemoveDeadline = async () => {
+    queryClient.setQueryData(['bucketDetail', id], (old: any) =>
+      old ? { ...old, deadline: null } : old
+    );
+    const { error } = await supabase.from('buckets').update({ deadline: null }).eq('id', id);
+    if (error) {
+      Alert.alert('No se pudo quitar la fecha límite', error.message);
+    }
+    void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+    void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+    void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
+  };
+
+  const handleRemoveCompletedAt = async () => {
+    Alert.alert(
+      'Fecha de completado',
+      '¿Deseas quitar la fecha o también marcar la tarea como pendiente?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Solo quitar fecha',
+          onPress: async () => {
+            queryClient.setQueryData(['bucketDetail', id], (old: any) =>
+              old ? { ...old, completed_at: null } : old
+            );
+            await supabase.from('buckets').update({ completed_at: null }).eq('id', id);
+            void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+            void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+            void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
+          },
+        },
+        {
+          text: 'Marcar como pendiente',
+          style: 'destructive',
+          onPress: async () => {
+            queryClient.setQueryData(['bucketDetail', id], (old: any) =>
+              old ? { ...old, completed_at: null, status: 'pending' } : old
+            );
+            await supabase.from('buckets').update({ completed_at: null, status: 'pending' }).eq('id', id);
+            void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+            void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+            void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
+          },
+        },
+      ]
+    );
   };
 
   const loadAlbums = () => {
@@ -832,6 +935,23 @@ export default function BucketDetailScreen() {
                 {statusLabel(bucket.status)}
               </Typography>
             </Pressable>
+
+            {/* Category */}
+            <Pressable
+              style={[styles.badge, styles.badgeMuted]}
+              onPress={() => {
+                if (isOwner) {
+                  setSheetMode('category');
+                  setSheetVisible(true);
+                }
+              }}
+            >
+              <Tag color={theme.colors.foregroundMuted} size={13} strokeWidth={1.8} style={{ marginRight: 4 }} />
+              <Typography variant="caption" color={theme.colors.foreground} style={{ fontWeight: '600' }}>
+                {bucket.category?.name_es || 'Sin categoría'}
+              </Typography>
+            </Pressable>
+
             {/* Visibility */}
             <Pressable
               style={[styles.badge, styles.badgeMuted]}
@@ -953,39 +1073,139 @@ export default function BucketDetailScreen() {
 
           {/* Meta */}
           <View style={styles.meta}>
-            {bucket.location_text && (
-              <View style={styles.metaRow}>
-                <MapPin color={gold[400]} size={16} strokeWidth={1.8} />
-                <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText}>
-                  {bucket.location_text}
-                </Typography>
+            {/* Ubicación */}
+            {bucket.location_text ? (
+              <View style={styles.metaRowBetween}>
+                <Pressable
+                  style={styles.metaRowClickable}
+                  onPress={() => isOwner && setLocationModalVisible(true)}
+                  disabled={!isOwner}
+                >
+                  <MapPin color={gold[400]} size={16} strokeWidth={1.8} />
+                  <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText} numberOfLines={1}>
+                    {bucket.location_text}
+                  </Typography>
+                </Pressable>
+                {isOwner && (
+                  <Pressable
+                    onPress={() => void handleRemoveLocation()}
+                    hitSlop={8}
+                    style={styles.metaRemoveBtn}
+                  >
+                    <X color={theme.colors.foregroundMuted} size={14} />
+                  </Pressable>
+                )}
               </View>
-            )}
-            {bucket.status === 'completed' && (
+            ) : isOwner ? (
               <Pressable
-                style={styles.metaRow}
-                onPress={() => isOwner && setDatePickerConfig({ visible: true, type: 'completed_at', date: new Date(bucket.completed_at || bucket.updated_at || new Date()) })}
+                style={styles.metaRowClickable}
+                onPress={() => setLocationModalVisible(true)}
+              >
+                <MapPin color={gold[400]} size={16} strokeWidth={1.8} />
+                <Typography variant="body" color={gold[400]} style={styles.metaText}>
+                  + Añadir ubicación
+                </Typography>
+              </Pressable>
+            ) : null}
+
+            {/* Fecha completada */}
+            {bucket.completed_at || bucket.status === 'completed' ? (
+              <View style={styles.metaRowBetween}>
+                <Pressable
+                  style={styles.metaRowClickable}
+                  onPress={() =>
+                    isOwner &&
+                    setDatePickerConfig({
+                      visible: true,
+                      type: 'completed_at',
+                      date: new Date(bucket.completed_at || bucket.updated_at || new Date()),
+                    })
+                  }
+                  disabled={!isOwner}
+                >
+                  <CheckCircle2 color={gold[400]} size={16} strokeWidth={1.8} />
+                  <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText}>
+                    Completada el {format(new Date(bucket.completed_at || bucket.updated_at || new Date()), "d 'de' MMMM 'de' yyyy", { locale: es })}
+                  </Typography>
+                </Pressable>
+                {isOwner && (
+                  <Pressable
+                    onPress={() => void handleRemoveCompletedAt()}
+                    hitSlop={8}
+                    style={styles.metaRemoveBtn}
+                  >
+                    <X color={theme.colors.foregroundMuted} size={14} />
+                  </Pressable>
+                )}
+              </View>
+            ) : isOwner ? (
+              <Pressable
+                style={styles.metaRowClickable}
+                onPress={() =>
+                  setDatePickerConfig({
+                    visible: true,
+                    type: 'completed_at',
+                    date: new Date(),
+                  })
+                }
               >
                 <CheckCircle2 color={gold[400]} size={16} strokeWidth={1.8} />
-                <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText}>
-                  Completada el {format(new Date(bucket.completed_at || bucket.updated_at || new Date()), 'd \'de\' MMMM \'de\' yyyy', { locale: es })}
+                <Typography variant="body" color={gold[400]} style={styles.metaText}>
+                  + Añadir fecha de completado
                 </Typography>
               </Pressable>
-            )}
-            {bucket.deadline && (
+            ) : null}
+
+            {/* Fecha límite */}
+            {bucket.deadline ? (
+              <View style={styles.metaRowBetween}>
+                <Pressable
+                  style={styles.metaRowClickable}
+                  onPress={() =>
+                    isOwner &&
+                    setDatePickerConfig({
+                      visible: true,
+                      type: 'deadline',
+                      date: new Date(bucket.deadline!),
+                    })
+                  }
+                  disabled={!isOwner}
+                >
+                  <Calendar color={gold[400]} size={16} strokeWidth={1.8} />
+                  <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText}>
+                    {bucket.status === 'completed'
+                      ? `Programada para el ${format(new Date(bucket.deadline), "d 'de' MMMM 'de' yyyy", { locale: es })}`
+                      : `Vence el ${format(new Date(bucket.deadline), "d 'de' MMMM 'de' yyyy", { locale: es })}`
+                    }
+                  </Typography>
+                </Pressable>
+                {isOwner && (
+                  <Pressable
+                    onPress={() => void handleRemoveDeadline()}
+                    hitSlop={8}
+                    style={styles.metaRemoveBtn}
+                  >
+                    <X color={theme.colors.foregroundMuted} size={14} />
+                  </Pressable>
+                )}
+              </View>
+            ) : isOwner ? (
               <Pressable
-                style={styles.metaRow}
-                onPress={() => isOwner && setDatePickerConfig({ visible: true, type: 'deadline', date: new Date(bucket.deadline!) })}
+                style={styles.metaRowClickable}
+                onPress={() =>
+                  setDatePickerConfig({
+                    visible: true,
+                    type: 'deadline',
+                    date: new Date(),
+                  })
+                }
               >
                 <Calendar color={gold[400]} size={16} strokeWidth={1.8} />
-                <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText}>
-                  {bucket.status === 'completed'
-                    ? `Programada para el ${format(new Date(bucket.deadline), 'd \'de\' MMMM \'de\' yyyy', { locale: es })}`
-                    : `Vence el ${format(new Date(bucket.deadline), 'd \'de\' MMMM \'de\' yyyy', { locale: es })}`
-                  }
+                <Typography variant="body" color={gold[400]} style={styles.metaText}>
+                  + Añadir fecha límite
                 </Typography>
               </Pressable>
-            )}
+            ) : null}
           </View>
 
           {/* Description */}
@@ -1405,6 +1625,8 @@ export default function BucketDetailScreen() {
         removeAllAlbums={removeAllAlbums}
         albums={albumsData ?? []}
         bucketAlbums={bucketAlbums ?? []}
+        categories={categories}
+        handleChangeCategory={handleChangeCategory}
       />
 
       {/* Sort Menu Modal */}
@@ -1474,6 +1696,86 @@ export default function BucketDetailScreen() {
         </Pressable>
       </Modal>
 
+      {/* Location Picker Modal */}
+      <Modal
+        visible={locationModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLocationModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={{ flex: 1 }}
+        >
+          <Pressable
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(0,0,0,0.7)',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: 20,
+            }}
+            onPress={() => setLocationModalVisible(false)}
+          >
+            <Pressable
+              style={{
+                width: '100%',
+                maxWidth: 420,
+                backgroundColor: '#161616',
+                borderRadius: 20,
+                borderWidth: 1,
+                borderColor: dark[400],
+                padding: 20,
+                minHeight: 320,
+              }}
+              onPress={(e) => e.stopPropagation()}
+            >
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <MapPin color={gold[400]} size={20} />
+                  <Typography variant="h3" color={theme.colors.foreground}>Ubicación</Typography>
+                </View>
+                <Pressable hitSlop={10} onPress={() => setLocationModalVisible(false)}>
+                  <X color={theme.colors.foregroundMuted} size={20} />
+                </Pressable>
+              </View>
+
+              <LocationAutocomplete
+                value={bucket.location_text || ''}
+                onChangeLocation={async (loc) => {
+                  await handleSaveLocation(loc);
+                  setLocationModalVisible(false);
+                }}
+              />
+
+              {bucket.location_text ? (
+                <Pressable
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    marginTop: 20,
+                    paddingVertical: 12,
+                    borderRadius: 12,
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  }}
+                  onPress={async () => {
+                    await handleRemoveLocation();
+                    setLocationModalVisible(false);
+                  }}
+                >
+                  <Trash2 color={theme.colors.error} size={16} />
+                  <Typography variant="bodySemibold" color={theme.colors.error}>
+                    Quitar ubicación
+                  </Typography>
+                </Pressable>
+              ) : null}
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
+      </Modal>
+
       {datePickerConfig && datePickerConfig.visible && (
         Platform.OS === 'ios' ? (
           <Modal transparent animationType="slide" visible={true}>
@@ -1493,8 +1795,12 @@ export default function BucketDetailScreen() {
                     if (date) {
                       setDatePickerConfig({ ...datePickerConfig, date });
                       const type = datePickerConfig.type;
-                      queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, [type]: date.toISOString() } : oldData);
-                      await supabase.from('buckets').update({ [type]: date.toISOString() }).eq('id', id);
+                      const patch: Record<string, any> = { [type]: date.toISOString() };
+                      if (type === 'completed_at' && bucket.status !== 'completed') {
+                        patch.status = 'completed';
+                      }
+                      queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, ...patch } : oldData);
+                      await supabase.from('buckets').update(patch).eq('id', id);
                       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
                       void queryClient.invalidateQueries({ queryKey: ['buckets'] });
                       void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
@@ -1513,8 +1819,12 @@ export default function BucketDetailScreen() {
               const type = datePickerConfig.type;
               setDatePickerConfig(null);
               if (event.type === 'set' && date) {
-                queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, [type]: date.toISOString() } : oldData);
-                await supabase.from('buckets').update({ [type]: date.toISOString() }).eq('id', id);
+                const patch: Record<string, any> = { [type]: date.toISOString() };
+                if (type === 'completed_at' && bucket.status !== 'completed') {
+                  patch.status = 'completed';
+                }
+                queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, ...patch } : oldData);
+                await supabase.from('buckets').update(patch).eq('id', id);
                 void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
                 void queryClient.invalidateQueries({ queryKey: ['buckets'] });
                 void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });

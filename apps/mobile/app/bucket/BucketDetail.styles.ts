@@ -104,6 +104,22 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  metaRowBetween: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  metaRowClickable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    paddingVertical: 4,
+  },
+  metaRemoveBtn: {
+    padding: 6,
+    marginLeft: 8,
+    borderRadius: 12,
+  },
   metaText: {
     marginLeft: 8,
   },
