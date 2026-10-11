@@ -307,43 +307,55 @@ export default function MyListScreen() {
     }
 
     const renderRightActions = (progress: any, dragX: any) => {
+      const opacity = progress.interpolate({
+        inputRange: [0, 0.15, 1],
+        outputRange: [0, 1, 1],
+        extrapolate: 'clamp',
+      });
       return (
-        <Pressable
-          style={{
-            width: 130,
-            backgroundColor: theme.colors.error,
-            borderTopRightRadius: 14,
-            borderBottomRightRadius: 14,
-            alignItems: 'flex-end',
-            justifyContent: 'center',
-            paddingRight: 25,
-          }}
-          onPress={() => deleteBucket.mutate(item.id)}
-        >
-          <View style={{ position: 'absolute', left: -100, top: 0, bottom: 0, width: 100, backgroundColor: theme.colors.error }} />
-          <Trash2 color={theme.colors.errorForeground} size={24} />
-        </Pressable>
+        <Animated.View style={{ opacity, width: 90, justifyContent: 'center', alignItems: 'flex-end' }}>
+          <Pressable
+            style={{
+              width: 90,
+              height: '100%',
+              backgroundColor: theme.colors.error,
+              borderTopRightRadius: 14,
+              borderBottomRightRadius: 14,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onPress={() => deleteBucket.mutate(item.id)}
+          >
+            <Trash2 color={theme.colors.errorForeground} size={24} />
+          </Pressable>
+        </Animated.View>
       );
     };
 
     const renderLeftActions = (progress: any, dragX: any) => {
       if (item.status === 'completed') return null;
+      const opacity = progress.interpolate({
+        inputRange: [0, 0.15, 1],
+        outputRange: [0, 1, 1],
+        extrapolate: 'clamp',
+      });
       return (
-        <Pressable
-          style={{
-            width: 130,
-            backgroundColor: '#34C759',
-            borderTopLeftRadius: 14,
-            borderBottomLeftRadius: 14,
-            alignItems: 'flex-start',
-            justifyContent: 'center',
-            paddingLeft: 25,
-          }}
-          onPress={() => updateBucket.mutate({ id: item.id, data: { status: 'completed', completed_at: new Date() } as any })}
-        >
-          <View style={{ position: 'absolute', right: -100, top: 0, bottom: 0, width: 100, backgroundColor: '#34C759' }} />
-          <CheckCircle2 color="#FFFFFF" size={24} />
-        </Pressable>
+        <Animated.View style={{ opacity, width: 90, justifyContent: 'center', alignItems: 'flex-start' }}>
+          <Pressable
+            style={{
+              width: 90,
+              height: '100%',
+              backgroundColor: '#34C759',
+              borderTopLeftRadius: 14,
+              borderBottomLeftRadius: 14,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onPress={() => updateBucket.mutate({ id: item.id, data: { status: 'completed', completed_at: new Date() } as any })}
+          >
+            <CheckCircle2 color="#FFFFFF" size={24} />
+          </Pressable>
+        </Animated.View>
       );
     };
 
@@ -353,6 +365,8 @@ export default function MyListScreen() {
           if (ref) swipeableRefs.current.set(item.id, ref);
           else swipeableRefs.current.delete(item.id);
         }}
+        containerStyle={{ backgroundColor: '#0E0E0E', borderRadius: 14 }}
+        childrenContainerStyle={{ backgroundColor: '#0E0E0E', borderRadius: 14 }}
         renderRightActions={renderRightActions}
         renderLeftActions={renderLeftActions}
         overshootRight={false}

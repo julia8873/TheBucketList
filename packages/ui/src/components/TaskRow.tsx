@@ -75,7 +75,7 @@ export function TaskRow({
       accessibilityLabel={title}
     >
       {/* Thumbnail */}
-      <View style={[styles.thumbnail, { backgroundColor: thumbnailColor }]}>
+      <View style={[styles.thumbnail, { backgroundColor: thumbnailColor }, completed && styles.thumbnailCompleted]}>
         {thumbnailElement ? (
           thumbnailElement
         ) : thumbnailUri ? (
@@ -85,13 +85,13 @@ export function TaskRow({
       </View>
 
       {/* Content */}
-      <View style={styles.content}>
-        <Text style={[styles.title, { color: completed ? '#6A6A6A' : '#FFFFFF' }]} numberOfLines={2}>
+      <View style={[styles.content, completed && styles.contentCompleted]}>
+        <Text style={[styles.title, { color: completed ? '#7A7A7A' : '#FFFFFF' }]} numberOfLines={2}>
           {title}
         </Text>
         {tagsElement ? <View style={styles.tags}>{tagsElement}</View> : null}
         {meta ? (
-          <Text style={[styles.meta, { color: '#9A9A9A' }]} numberOfLines={1}>
+          <Text style={[styles.meta, { color: completed ? '#5C5C5C' : '#9A9A9A' }]} numberOfLines={1}>
             {meta}
           </Text>
         ) : null}
@@ -134,9 +134,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#2A2A2A',
     gap: 12,
+    backgroundColor: '#161616',
   },
   rowCompleted: {
+    borderColor: '#202020',
+    backgroundColor: '#141414',
+  },
+  thumbnailCompleted: {
     opacity: 0.45,
+  },
+  contentCompleted: {
+    opacity: 0.65,
   },
   thumbnail: {
     width: 56,
