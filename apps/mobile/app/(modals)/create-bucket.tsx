@@ -14,7 +14,7 @@ import { TagsRow } from '../../src/components/TagsRow';
 import type { TagItem } from '../../src/components/TagPickerSheet';
 import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { ChevronLeft, Camera, MapPin, Calendar, Folder, Globe, Plus, X, Users } from 'lucide-react-native';
+import { ChevronLeft, Camera, MapPin, Calendar, Folder, Globe, Plus, X, Users, Flag } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
@@ -31,7 +31,6 @@ export default function CreateBucketModal() {
   const createBucket = useCreateBucket();
   const insets = useSafeAreaInsets();
 
-  const [categories, setCategories] = useState<any[]>([]);
   const [coverImage, setCoverImage] = useState<string>('preset:green');
   const [albumId, setAlbumId] = useState<string | null>(null);
   const [albums, setAlbums] = useState<any[]>([]);
@@ -50,6 +49,7 @@ export default function CreateBucketModal() {
     defaultValues: {
       title: '',
       description: '',
+      priority: 'medium',
       visibility: 'public',
       subtasks: [],
     }
@@ -67,16 +67,6 @@ export default function CreateBucketModal() {
   }, [setValue]);
 
   useEffect(() => {
-    supabase.from('categories').select('*').then(({ data }) => {
-      if (data) {
-        setCategories(data);
-        // La categoría es obligatoria: se preselecciona la primera
-        const first = data[0];
-        if (first && !getValues('category_id')) {
-          setValue('category_id', first.id, { shouldValidate: true });
-        }
-      }
-    });
     supabase.from('albums').select('*').then(({ data }) => {
       if (data) setAlbums(data);
     });
@@ -212,33 +202,38 @@ export default function CreateBucketModal() {
             </Pressable>
           </View>
 
-          {/* CATEGORÍA */}
+          {/* PRIORIDAD */}
           <Text style={styles.sectionLabel}>
-            <Text style={{ color: '#D4B13A' }}>CATEGORÍA</Text>
+            <Text style={{ color: '#D4B13A' }}>PRIORIDAD</Text>
           </Text>
           <Controller
             control={control}
-            name="category_id"
+            name="priority"
             render={({ field: { onChange, value } }) => (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.categoryScroll}
-                keyboardShouldPersistTaps="handled"
-              >
-                {categories.map((c) => {
-                  const active = value === c.id;
+              <View style={styles.priorityRow}>
+                {[
+                  { id: 'low' as const, label: 'Baja', color: '#10B981', bgActive: 'rgba(16, 185, 129, 0.14)', borderActive: '#10B981' },
+                  { id: 'medium' as const, label: 'Media', color: '#D4B13A', bgActive: 'rgba(212, 177, 58, 0.14)', borderActive: '#D4B13A' },
+                  { id: 'high' as const, label: 'Alta', color: '#EF4444', bgActive: 'rgba(239, 68, 68, 0.14)', borderActive: '#EF4444' },
+                ].map((p) => {
+                  const active = (value || 'medium') === p.id;
                   return (
                     <Pressable
-                      key={c.id}
-                      onPress={() => onChange(c.id)}
-                      style={[styles.catPill, active && styles.catPillActive]}
+                      key={p.id}
+                      onPress={() => onChange(p.id)}
+                      style={[
+                        styles.priorityPill,
+                        active && { backgroundColor: p.bgActive, borderColor: p.borderActive },
+                      ]}
                     >
-                      <Text style={[styles.catText, active && styles.catTextActive]}>{c.name_es}</Text>
+                      <Flag size={15} color={active ? p.color : '#8A8A8A'} strokeWidth={active ? 2.2 : 1.8} />
+                      <Text style={[styles.priorityText, active && { color: p.color, fontWeight: '700' }]}>
+                        {p.label}
+                      </Text>
                     </Pressable>
                   );
                 })}
-              </ScrollView>
+              </View>
             )}
           />
 
@@ -465,6 +460,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#161616', borderWidth: 1, borderColor: '#D4B13A', borderStyle: 'dashed',
     alignItems: 'center', justifyContent: 'center'
   },
+  priorityRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
+  priorityPill: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    paddingHorizontal: 12,
+    backgroundColor: '#1A1A1A',
+    borderWidth: 1,
+    borderColor: '#333',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  priorityText: { fontFamily: 'Inter_500Medium', fontSize: 16, color: '#E5E5E5' },
   categoryScroll: { gap: 12, paddingRight: 40, marginTop: 4 },
   catPill: {
     height: 48, borderRadius: 24, paddingHorizontal: 22,

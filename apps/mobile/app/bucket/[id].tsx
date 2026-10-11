@@ -9,7 +9,7 @@ import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Typography, useTheme } from '@bucketlist/ui';
-import { ArrowLeft, Share2, MoreHorizontal, MapPin, Calendar, Heart, MessageCircle, FolderOpen, CheckCircle2, Circle, Camera, Check, Eye, Lock, Users, FolderPlus, Pencil, Trash2, X, ListPlus, Plus, Minus, Download, ArrowUp, ArrowDown, Tag } from 'lucide-react-native';
+import { ArrowLeft, Share2, MoreHorizontal, MapPin, Calendar, Heart, MessageCircle, FolderOpen, CheckCircle2, Circle, Camera, Check, Eye, Lock, Users, FolderPlus, Pencil, Trash2, X, ListPlus, Plus, Minus, Download, ArrowUp, ArrowDown, Tag, Flag } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { supabase } from '../../src/services/supabase';
@@ -66,7 +66,7 @@ export default function BucketDetailScreen() {
 
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [sheetVisible, setSheetVisible] = useState(false);
-  const [sheetMode, setSheetMode] = useState<'menu' | 'visibility' | 'albums' | 'status' | 'category'>('menu');
+  const [sheetMode, setSheetMode] = useState<'menu' | 'visibility' | 'albums' | 'status' | 'category' | 'priority'>('menu');
   const [viewingPhotoIndex, setViewingPhotoIndex] = useState<number | null>(null);
   const [newSubtaskText, setNewSubtaskText] = useState('');
   const [scrollEnabled, setScrollEnabled] = useState(true);
@@ -429,6 +429,26 @@ export default function BucketDetailScreen() {
 
     if (error) {
       Alert.alert('No se pudo cambiar la categoría', error.message);
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+      return;
+    }
+
+    void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+    void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+    closeSheet();
+  };
+
+  const handleChangePriority = async (priority: 'low' | 'medium' | 'high') => {
+    queryClient.setQueryData(['bucketDetail', id], (oldData: any) =>
+      oldData ? { ...oldData, priority } : oldData
+    );
+    const { error } = await supabase
+      .from('buckets')
+      .update({ priority })
+      .eq('id', id);
+
+    if (error) {
+      Alert.alert('No se pudo cambiar la prioridad', error.message);
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
       return;
     }
@@ -911,6 +931,24 @@ export default function BucketDetailScreen() {
     }
   };
 
+  const priorityColor = (p?: string) => {
+    switch (p) {
+      case 'high': return '#EF4444';
+      case 'low': return '#10B981';
+      case 'medium':
+      default: return '#D4B13A';
+    }
+  };
+
+  const priorityLabel = (p?: string) => {
+    switch (p) {
+      case 'high': return 'Prioridad Alta';
+      case 'low': return 'Prioridad Baja';
+      case 'medium':
+      default: return 'Prioridad Media';
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StatusBar barStyle="light-content" />
@@ -980,19 +1018,19 @@ export default function BucketDetailScreen() {
               </Typography>
             </Pressable>
 
-            {/* Category */}
+            {/* Priority */}
             <Pressable
               style={[styles.badge, styles.badgeMuted]}
               onPress={() => {
                 if (canEdit) {
-                  setSheetMode('category');
+                  setSheetMode('priority');
                   setSheetVisible(true);
                 }
               }}
             >
-              <Tag color={theme.colors.foregroundMuted} size={13} strokeWidth={1.8} style={{ marginRight: 4 }} />
-              <Typography variant="caption" color={theme.colors.foreground} style={{ fontWeight: '600' }}>
-                {bucket.category?.name_es || 'Sin categoría'}
+              <Flag color={priorityColor(bucket.priority)} size={13} strokeWidth={2} style={{ marginRight: 4 }} />
+              <Typography variant="caption" color={priorityColor(bucket.priority)} style={{ fontWeight: '600' }}>
+                {priorityLabel(bucket.priority)}
               </Typography>
             </Pressable>
 
@@ -1695,6 +1733,7 @@ export default function BucketDetailScreen() {
         bucketAlbums={bucketAlbums ?? []}
         categories={categories}
         handleChangeCategory={handleChangeCategory}
+        handleChangePriority={handleChangePriority}
       />
 
       {/* Sort Menu Modal */}

@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { Modal, View, Pressable, Animated, ActivityIndicator, Alert, StyleSheet, TextInput, ScrollView } from 'react-native';
 import { Typography } from '@bucketlist/ui';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
-import { X, Camera, FolderPlus, ListPlus, Trash2, Circle, MoreHorizontal, CheckCircle2, Check, Eye, Users, Lock, ArrowLeft, FolderOpen, Image as ImageIcon, Tag, LogOut } from 'lucide-react-native';
+import { X, Camera, FolderPlus, ListPlus, Trash2, Circle, MoreHorizontal, CheckCircle2, Check, Eye, Users, Lock, ArrowLeft, FolderOpen, Image as ImageIcon, Tag, LogOut, Flag } from 'lucide-react-native';
 import { styles } from '../../app/bucket/BucketDetail.styles';
 
 type BucketBottomSheetProps = {
   sheetVisible: boolean;
-  sheetMode: 'menu' | 'status' | 'visibility' | 'albums' | 'category';
+  sheetMode: 'menu' | 'status' | 'visibility' | 'albums' | 'category' | 'priority';
   sheetTranslateY: Animated.Value;
   closeSheet: (after?: () => void) => void;
   theme: any;
@@ -26,7 +26,8 @@ type BucketBottomSheetProps = {
   handleChangeStatus: (status: string) => void;
   handleChangeVisibility: (visibility: 'public' | 'followers' | 'private') => void;
   handleChangeCategory?: (categoryId: string) => void;
-  setSheetMode: (mode: 'menu' | 'status' | 'visibility' | 'albums' | 'category') => void;
+  handleChangePriority?: (priority: 'low' | 'medium' | 'high') => void;
+  setSheetMode: (mode: 'menu' | 'status' | 'visibility' | 'albums' | 'category' | 'priority') => void;
   albumsLoading: boolean;
   toggleAlbum: (albumId: string) => void;
   removeAllAlbums: () => void;
@@ -36,7 +37,7 @@ type BucketBottomSheetProps = {
 };
 
 export function BucketBottomSheet({
-  sheetVisible, sheetMode, sheetTranslateY, closeSheet, theme, isOwner, canEdit, isCollaborator, onLeaveCollaboration, uploadPhotos, uploadCover, loadAlbums, user, copyBucket, id, handleDelete, bucket, handleChangeStatus, handleChangeVisibility, handleChangeCategory, setSheetMode, albumsLoading, toggleAlbum, removeAllAlbums, albums, bucketAlbums, categories
+  sheetVisible, sheetMode, sheetTranslateY, closeSheet, theme, isOwner, canEdit, isCollaborator, onLeaveCollaboration, uploadPhotos, uploadCover, loadAlbums, user, copyBucket, id, handleDelete, bucket, handleChangeStatus, handleChangeVisibility, handleChangeCategory, handleChangePriority, setSheetMode, albumsLoading, toggleAlbum, removeAllAlbums, albums, bucketAlbums, categories
 }: BucketBottomSheetProps) {
   const [albumSearchQuery, setAlbumSearchQuery] = useState('');
   const visibilityLabel = (v: string) => {
@@ -45,6 +46,15 @@ export function BucketBottomSheet({
       case 'private': return 'Privada';
       case 'followers': return 'Seguidores';
       default: return v;
+    }
+  };
+
+  const priorityLabel = (p: string) => {
+    switch (p) {
+      case 'high': return 'Alta';
+      case 'low': return 'Baja';
+      case 'medium':
+      default: return 'Media';
     }
   };
 
@@ -96,12 +106,12 @@ export function BucketBottomSheet({
                 )}
 
                 {canEdit && (
-                  <Pressable style={styles.sheetOption} onPress={() => setSheetMode('category')}>
-                    <View style={styles.sheetIcon}><Tag color={gold[400]} size={21} /></View>
+                  <Pressable style={styles.sheetOption} onPress={() => setSheetMode('priority')}>
+                    <View style={styles.sheetIcon}><Flag color={gold[400]} size={21} /></View>
                     <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold">Cambiar categoría</Typography>
+                      <Typography variant="bodySemibold">Cambiar prioridad</Typography>
                       <Typography variant="caption" color={theme.colors.foregroundMuted}>
-                        {bucket.category?.name_es || 'Sin categoría'}
+                        Prioridad {priorityLabel(bucket.priority)}
                       </Typography>
                     </View>
                   </Pressable>
@@ -213,41 +223,38 @@ export function BucketBottomSheet({
             </>
           )}
 
-          {sheetMode === 'category' && (
+          {sheetMode === 'priority' && (
             <>
               <View style={styles.sheetHeader}>
                 <Pressable style={styles.backSheetButton} onPress={() => setSheetMode('menu')}>
                   <ArrowLeft color={theme.colors.foreground} size={20} />
                 </Pressable>
-                <Typography variant="h3" color={theme.colors.foreground}>Categoría</Typography>
+                <Typography variant="h3" color={theme.colors.foreground}>Prioridad</Typography>
                 <View style={{ width: 36 }} />
               </View>
-              <ScrollView style={{ maxHeight: 380 }} showsVerticalScrollIndicator={false}>
-                <View style={styles.sheetOptions}>
-                  {(categories || []).map((cat) => {
-                    const isSelected = bucket.category_id === cat.id || bucket.category?.id === cat.id;
-                    return (
-                      <Pressable
-                        key={cat.id}
-                        style={styles.sheetOption}
-                        onPress={() => handleChangeCategory?.(cat.id)}
-                      >
-                        <View style={styles.sheetIcon}><Tag color={cat.color || gold[400]} size={21} /></View>
-                        <View style={styles.sheetOptionText}>
-                          <Typography variant="bodySemibold">{cat.name_es}</Typography>
-                          {cat.description ? (
-                            <Typography variant="caption" color={theme.colors.foregroundMuted}>{cat.description}</Typography>
-                          ) : null}
-                        </View>
-                        {isSelected && <Check color={gold[400]} size={21} />}
-                      </Pressable>
-                    );
-                  })}
-                  {(!categories || categories.length === 0) && (
-                    <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.emptySheetText}>No hay categorías disponibles.</Typography>
-                  )}
-                </View>
-              </ScrollView>
+              <View style={styles.sheetOptions}>
+                {([
+                  { value: 'high' as const, title: 'Alta', subtitle: 'Requiere atención prioritaria', color: '#EF4444' },
+                  { value: 'medium' as const, title: 'Media', subtitle: 'Importancia habitual', color: '#D4B13A' },
+                  { value: 'low' as const, title: 'Baja', subtitle: 'Puede esperar o hacerse con calma', color: '#10B981' },
+                ]).map((item) => {
+                  const isSelected = (bucket.priority || 'medium') === item.value;
+                  return (
+                    <Pressable
+                      key={item.value}
+                      style={styles.sheetOption}
+                      onPress={() => handleChangePriority?.(item.value)}
+                    >
+                      <View style={styles.sheetIcon}><Flag color={item.color} size={21} /></View>
+                      <View style={styles.sheetOptionText}>
+                        <Typography variant="bodySemibold">{item.title}</Typography>
+                        <Typography variant="caption" color={theme.colors.foregroundMuted}>{item.subtitle}</Typography>
+                      </View>
+                      {isSelected && <Check color={gold[400]} size={21} />}
+                    </Pressable>
+                  );
+                })}
+              </View>
             </>
           )}
 

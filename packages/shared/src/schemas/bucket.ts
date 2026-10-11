@@ -10,7 +10,8 @@ export const subtaskSchema = z.object({
 export const createBucketSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100),
   description: z.string().max(500).optional(),
-  category_id: z.string().uuid('Category is required'),
+  category_id: z.string().uuid().optional().nullable(),
+  priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
   visibility: z.enum(['public', 'followers', 'private']).default('public'),
   deadline: z.date().optional().nullable(),
   location_text: z.string().max(100).optional().nullable(),
@@ -22,6 +23,7 @@ export const createBucketSchema = z.object({
 export const updateBucketSchema = createBucketSchema.partial().extend({
   status: z.enum(['pending', 'in_progress', 'completed', 'expired', 'archived']).optional(),
   completed_at: z.date().optional().nullable(),
+  priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
 });
 
 export type SubtaskForm = z.infer<typeof subtaskSchema>;

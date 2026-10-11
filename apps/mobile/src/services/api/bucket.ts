@@ -118,7 +118,8 @@ export const bucketApi = {
       user_id: userData.user.id,
       title: payload.title,
       description: payload.description || null,
-      category_id: payload.category_id,
+      category_id: payload.category_id || null,
+      priority: payload.priority || 'medium',
       visibility: payload.visibility as 'public' | 'followers' | 'private',
       deadline: payload.deadline ? payload.deadline.toISOString() : null,
       location_text: payload.location_text || null,
@@ -126,7 +127,6 @@ export const bucketApi = {
       location_lng: payload.location_lng || null,
       status: 'pending',
       cover_image: payload.cover_image || null,
-
     };
 
     const { data: bucket, error: bucketError } = await supabase
@@ -198,6 +198,7 @@ export const bucketApi = {
       title: payload.title,
       description: payload.description,
       category_id: payload.category_id,
+      priority: payload.priority,
       visibility: payload.visibility as 'public' | 'followers' | 'private' | undefined,
       deadline: payload.deadline ? payload.deadline.toISOString() : null,
       location_text: payload.location_text,

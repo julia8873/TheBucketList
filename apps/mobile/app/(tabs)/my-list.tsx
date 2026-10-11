@@ -24,7 +24,8 @@ import { categoryColors } from '@bucketlist/ui/src/tokens/colors';
 import { isPast, differenceInCalendarDays } from 'date-fns';
 
 type FilterType = 'all' | 'active' | 'completed' | 'expired';
-type SortField = 'status' | 'alphabetical' | 'created_at';
+type PriorityFilter = 'all' | 'high' | 'medium' | 'low';
+type SortField = 'status' | 'priority' | 'alphabetical' | 'created_at';
 type SortDir = 'asc' | 'desc';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -39,6 +40,7 @@ export default function MyListScreen() {
   const [filter, setFilter] = useState<FilterType>(
     params.filter === 'completed' || params.filter === 'active' || params.filter === 'expired' ? params.filter : 'all',
   );
+  const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>('all');
   React.useEffect(() => {
     if (params.filter === 'completed' || params.filter === 'active' || params.filter === 'expired') setFilter(params.filter);
   }, [params.filter]);
@@ -127,8 +129,8 @@ export default function MyListScreen() {
   );
 
   const listExtra = useMemo(
-    () => ({ tagsById, byItem: tagUsage?.byItem, selectedTagIds, sortField, sortDir }),
-    [tagsById, tagUsage, selectedTagIds, sortField, sortDir],
+    () => ({ tagsById, byItem: tagUsage?.byItem, selectedTagIds, priorityFilter, sortField, sortDir }),
+    [tagsById, tagUsage, selectedTagIds, priorityFilter, sortField, sortDir],
   );
 
   const toggleSearch = () => {
@@ -153,6 +155,10 @@ export default function MyListScreen() {
       return true;
     });
 
+    if (priorityFilter !== 'all') {
+      result = result.filter((b: any) => (b.priority || 'medium') === priorityFilter);
+    }
+
     if (selectedTagIds.length > 0) {
       const wanted = new Set(selectedTagIds);
       result = result.filter((b: any) => (tagUsage?.byItem[b.id] ?? []).some((id) => wanted.has(id)));
@@ -164,12 +170,13 @@ export default function MyListScreen() {
         b.title?.toLowerCase().includes(q) ||
         b.location?.toLowerCase().includes(q) ||
         b.category?.name_es?.toLowerCase().includes(q) ||
-        b.category?.name_en?.toLowerCase().includes(q)
+        b.category?.name_en?.toLowerCase().includes(q) ||
+        (b.priority && ('prioridad ' + b.priority).includes(q))
       );
     }
 
     return result;
-  }, [buckets, filter, searchQuery, selectedTagIds, tagUsage]);
+  }, [buckets, filter, priorityFilter, searchQuery, selectedTagIds, tagUsage]);
 
   const listData = useMemo(() => {
     if (!filteredBuckets || filteredBuckets.length === 0) return [];
@@ -212,6 +219,28 @@ export default function MyListScreen() {
         }
       }
       return result;
+    }
+
+    if (sortField === 'priority') {
+      const priorityWeight = (p?: string) => {
+        switch (p) {
+          case 'urgent': return 4;
+          case 'high': return 3;
+          case 'medium': return 2;
+          case 'low': return 1;
+          default: return 2;
+        }
+      };
+
+      const sorted = [...filteredBuckets].sort((a: any, b: any) => {
+        const wa = priorityWeight(a.priority);
+        const wb = priorityWeight(b.priority);
+        if (wa !== wb) {
+          return sortDir === 'asc' ? wa - wb : wb - wa;
+        }
+        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+      });
+      return sorted;
     }
 
     if (sortField === 'alphabetical') {
@@ -280,17 +309,43 @@ export default function MyListScreen() {
         Number(selectedTagIds.includes(b.id)) - Number(selectedTagIds.includes(a.id)) ||
         a.name.localeCompare(b.name),
     );
-    const tagsElement =
-      itemTags.length > 0 ? (
-        <>
-          {itemTags.slice(0, 2).map((t) => (
-            <TagChip key={t.id} label={t.name} variant="colored" color={t.color} emoji={t.emoji} size="sm" />
-          ))}
-          {itemTags.length > 2 && (
-            <TagChip label={`+${itemTags.length - 2}`} variant="colored" color="#8A8A8A" size="sm" />
-          )}
-        </>
-      ) : undefined;
+    const itemPriority = item.priority || 'medium';
+    const itemPriorityColor = itemPriority === 'high' ? '#EF4444' : itemPriority === 'low' ? '#10B981' : '#D4B13A';
+    const itemPriorityLabel = itemPriority === 'high' ? 'Alta' : itemPriority === 'low' ? 'Baja' : 'Media';
+
+    const priorityBadge = (
+      <View
+        key="priority-badge"
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 4,
+          paddingHorizontal: 7,
+          paddingVertical: 2,
+          borderRadius: 8,
+          backgroundColor: itemPriority === 'high' ? 'rgba(239, 68, 68, 0.16)' : itemPriority === 'low' ? 'rgba(16, 185, 129, 0.16)' : 'rgba(212, 177, 58, 0.16)',
+          borderWidth: 1,
+          borderColor: itemPriorityColor,
+        }}
+      >
+        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: itemPriorityColor }} />
+        <Text style={{ fontSize: 11, fontWeight: '700', color: itemPriorityColor }}>
+          {itemPriorityLabel}
+        </Text>
+      </View>
+    );
+
+    const tagsElement = (
+      <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+        {priorityBadge}
+        {itemTags.slice(0, 2).map((t) => (
+          <TagChip key={t.id} label={t.name} variant="colored" color={t.color} emoji={t.emoji} size="sm" />
+        ))}
+        {itemTags.length > 2 && (
+          <TagChip label={`+${itemTags.length - 2}`} variant="colored" color="#8A8A8A" size="sm" />
+        )}
+      </View>
+    );
 
     const coverPath = item.cover_image || (item.bucket_photos?.[0]?.thumb_path || item.bucket_photos?.[0]?.storage_path);
     const isPreset = coverPath?.startsWith('preset:');
@@ -496,12 +551,25 @@ export default function MyListScreen() {
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.filtersContainer}
-                  style={{ flexGrow: 0, marginBottom: 10, marginHorizontal: -20 }}
+                  style={{ flexGrow: 0, marginBottom: 8, marginHorizontal: -20 }}
                 >
                   <FilterChip label="Todas" active={filter === 'all'} onPress={() => setFilter('all')} />
                   <FilterChip label="En curso" active={filter === 'active'} onPress={() => setFilter('active')} />
                   <FilterChip label="Completadas" active={filter === 'completed'} onPress={() => setFilter('completed')} />
                   <FilterChip label="Vencidas" active={filter === 'expired'} onPress={() => setFilter('expired')} />
+                </ScrollView>
+
+                {/* Filtro por prioridad */}
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.filtersContainer}
+                  style={{ flexGrow: 0, marginBottom: 10, marginHorizontal: -20 }}
+                >
+                  <FilterChip label="Prioridad: Todas" active={priorityFilter === 'all'} onPress={() => setPriorityFilter('all')} />
+                  <FilterChip label="🔴 Alta" active={priorityFilter === 'high'} onPress={() => setPriorityFilter(priorityFilter === 'high' ? 'all' : 'high')} />
+                  <FilterChip label="🟡 Media" active={priorityFilter === 'medium'} onPress={() => setPriorityFilter(priorityFilter === 'medium' ? 'all' : 'medium')} />
+                  <FilterChip label="🟢 Baja" active={priorityFilter === 'low'} onPress={() => setPriorityFilter(priorityFilter === 'low' ? 'all' : 'low')} />
                 </ScrollView>
 
                 {/* Filtro por etiquetas */}
@@ -564,7 +632,7 @@ export default function MyListScreen() {
                       accessibilityLabel="Ordenar tareas"
                     >
                       <Typography variant="caption" color={gold[400]} style={{ fontWeight: '600' }}>
-                        {sortField === 'status' ? 'Estado' : sortField === 'alphabetical' ? 'Alfabético' : 'Fecha'}
+                        {sortField === 'status' ? 'Estado' : sortField === 'priority' ? 'Prioridad' : sortField === 'alphabetical' ? 'Alfabético' : 'Fecha'}
                       </Typography>
                       {sortDir === 'desc' ? (
                         <ArrowDown color={gold[400]} size={14} />
@@ -669,6 +737,7 @@ export default function MyListScreen() {
           >
             {([
               { field: 'status' as const, label: 'Estado' },
+              { field: 'priority' as const, label: 'Prioridad' },
               { field: 'alphabetical' as const, label: 'Alfabético' },
               { field: 'created_at' as const, label: 'Fecha de creación' },
             ] as const).map((option, i) => {

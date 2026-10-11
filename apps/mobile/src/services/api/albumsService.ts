@@ -40,7 +40,7 @@ export const albumsService = {
       const { data: allUserBuckets, error: bucketsError } = await supabase
         .from('buckets')
         .select(`
-          id, title, deadline, cover_image, status, 
+          id, title, deadline, cover_image, status, priority,
           category_id, counter_count, counter_target,
           categories ( name_es, color, slug ),
           item_subtasks ( id, done ),
@@ -67,7 +67,7 @@ export const albumsService = {
         return {
           id: b.id,
           title: b.title,
-          categoryName: cat?.name_es || 'Sin categoría',
+          categoryName: b.priority ? (b.priority === 'high' ? 'Prioridad Alta' : b.priority === 'low' ? 'Prioridad Baja' : 'Prioridad Media') : (cat?.name_es || 'Sin categoría'),
           coverKey: 'aurora',
           isCompleted: b.status === 'completed',
           dueDate: b.deadline || undefined,
@@ -121,7 +121,7 @@ export const albumsService = {
       const { data: buckets, error: bucketsError } = await supabase
         .from('buckets')
         .select(`
-          id, title, deadline, cover_image, status, 
+          id, title, deadline, cover_image, status, priority,
           category_id, counter_count, counter_target,
           categories ( name_es, color, slug ),
           item_subtasks ( id, done )
@@ -146,7 +146,7 @@ export const albumsService = {
         return {
           id: b.id,
           title: b.title,
-          categoryName: cat?.name_es || 'Sin categoría',
+          categoryName: b.priority ? (b.priority === 'high' ? 'Prioridad Alta' : b.priority === 'low' ? 'Prioridad Baja' : 'Prioridad Media') : (cat?.name_es || 'Sin categoría'),
           coverKey: coverKey, // we just use album's cover for task gradient if no task cover, but let's use album's coverKey
           isCompleted: b.status === 'completed',
           dueDate: b.deadline || undefined,

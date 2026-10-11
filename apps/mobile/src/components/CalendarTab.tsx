@@ -169,7 +169,8 @@ export function CalendarTab() {
   };
 
   const getMeta = (task: any) => {
-    const catName = task.category?.name_es || 'Sin categoría';
+    const pLabel = task.priority === 'high' ? 'Prioridad Alta' : task.priority === 'low' ? 'Prioridad Baja' : 'Prioridad Media';
+    const catName = task.priority ? pLabel : (task.category?.name_es || 'Sin categoría');
     const subtasks = task.item_subtasks || [];
     const subtasksTotal = subtasks.length;
     const subtasksDone = subtasks.filter((s: any) => s.done).length;
