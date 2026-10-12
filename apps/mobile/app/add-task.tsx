@@ -26,7 +26,7 @@ export default function AddTaskScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   
-  const { data: userTasksData, isLoading, isError } = useUnassignedTasks();
+  const { data: userTasksData, isLoading, isError } = useUnassignedTasks(albumId && albumId !== 'new' ? albumId : undefined);
   const assignMutation = useAssignTasks();
   const createMutation = useCreateTasksFromDefaults();
 
@@ -37,21 +37,26 @@ export default function AddTaskScreen() {
   
   const scrollViewRef = useRef<ScrollView>(null);
 
-  // Filter defaultTasks to exclude those the user already has (by title matching)
+  // Las ideas por defecto se ocultan si el usuario ya tiene una tarea con ese título
+  // (esté o no en este álbum).
   const availableDefaultTasks = useMemo(() => {
     if (!userTasksData) return defaultTasks;
     const userTitles = new Set(userTasksData.map(t => t.title.toLowerCase().trim()));
     return defaultTasks.filter(dt => !userTitles.has(dt.title.toLowerCase().trim()));
   }, [userTasksData]);
 
-  const userTasks = userTasksData || [];
+  // Solo las tareas que todavía NO están en este álbum.
+  const userTasks = useMemo(
+    () => (userTasksData ?? []).filter(t => !t.inAlbum),
+    [userTasksData],
+  );
 
   // If user has no tasks, default to 'default' tab on initial load
   useEffect(() => {
-    if (userTasksData && userTasksData.length === 0) {
+    if (userTasksData && userTasks.length === 0) {
       setActiveTab('default');
     }
-  }, [userTasksData]);
+  }, [userTasksData, userTasks.length]);
 
   const handleTabChange = (tab: 'user' | 'default') => {
     if (activeTab === tab) return;
@@ -242,7 +247,7 @@ export default function AddTaskScreen() {
       <View style={styles.countRow}>
         <Text style={styles.countText}>
           {activeTab === 'user' 
-            ? `${currentTotal} tareas sin álbum`
+            ? `${currentTotal} tareas disponibles`
             : `${currentTotal} ideas por defecto`}
         </Text>
         <Pressable onPress={toggleSelectAll}>
@@ -269,7 +274,7 @@ export default function AddTaskScreen() {
             const isSelected = selectedIds.has(task.id);
             const thumbGradient = GRADIENTS[task.coverKey as keyof typeof GRADIENTS] || GRADIENTS.aurora;
             const isDiagonal = task.coverKey === 'dorado';
-            const subTitle = task.location ? `${task.categoryName} · ${task.location}` : task.categoryName;
+            const subTitle = [task.categoryName, task.location].filter(Boolean).join(' · ');
 
             return (
               <Pressable
@@ -289,7 +294,7 @@ export default function AddTaskScreen() {
                 </View>
                 <View style={styles.taskContent}>
                   <Text style={styles.taskTitle} numberOfLines={2}>{task.title}</Text>
-                  <Text style={styles.taskSub}>{subTitle}</Text>
+                  {subTitle ? <Text style={styles.taskSub}>{subTitle}</Text> : null}
                 </View>
                 <View style={[styles.circle, isSelected && styles.circleSelected]}>
                   {isSelected && <Check size={16} color="#0D0D0D" strokeWidth={3} />}

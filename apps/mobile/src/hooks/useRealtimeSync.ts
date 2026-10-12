@@ -69,6 +69,12 @@ export function useRealtimeSync(userId?: string) {
         if (bucketId) schedule(`collab:${bucketId}`, () => invalidate('bucketCollaborators', bucketId));
         refreshBucket(bucketId);
       })
+      // Añadir/quitar una tarea de un álbum: es lo que hace que le aparezca (o desaparezca)
+      // a los demás miembros. La fila de `buckets` no les llega al crearse porque aún no
+      // está en el álbum y RLS la oculta; este evento es el que lo dispara.
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'album_items' }, (p: any) =>
+        refreshBucket(p.new?.bucket_id ?? p.old?.bucket_id),
+      )
       .on('postgres_changes', { event: '*', schema: 'public', table: 'albums' }, refreshAlbums)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'album_members' }, refreshAlbums)
       .subscribe();

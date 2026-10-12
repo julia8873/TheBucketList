@@ -3,9 +3,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 export interface UnassignedTask {
   id: string;
   title: string;
+  /** Vacío si la tarea no tiene categoría (no se muestra nada en ese caso). */
   categoryName: string;
   coverKey: string;
   location?: string;
+  /** true si la tarea ya está dentro del álbum que se está editando. */
+  inAlbum?: boolean;
 }
 
 const MOCK_TASKS: UnassignedTask[] = [
@@ -37,24 +40,81 @@ export const defaultTasks = DEFAULT_TASKS;
 import { supabase } from '../supabase';
 
 export const tasksService = {
-  async getUnassignedTasks(): Promise<UnassignedTask[]> {
+  /**
+   * Todas las tareas que el usuario puede añadir a un álbum:
+   *  - las suyas,
+   *  - las de colaboraciones aceptadas,
+   *  - las de álbumes compartidos donde es dueño o miembro aceptado.
+   * Cada una lleva `inAlbum` para que la pantalla oculte las que ya están en el álbum destino
+   * (una tarea puede estar en varios álbumes, así que estar en OTRO álbum no la excluye).
+   */
+  async getUnassignedTasks(albumId?: string): Promise<UnassignedTask[]> {
     const { data: userAuth, error: userError } = await supabase.auth.getUser();
     if (userError || !userAuth.user) throw new Error('Not authenticated');
+    const userId = userAuth.user.id;
 
-    const { data, error } = await supabase
+    const select = 'id, title, location_text, created_at, categories(name_es), album_items(album_id)';
+
+    const { data: own, error } = await supabase
       .from('buckets')
-      .select('id, title, location_text, categories(name_es)')
-      .eq('user_id', userAuth.user.id);
-
+      .select(select)
+      .eq('user_id', userId);
     if (error) throw error;
 
-    return data.map(b => ({
-      id: b.id,
-      title: b.title,
-      categoryName: (b.categories as any)?.name_es || 'Sin categoría',
-      location: b.location_text || undefined,
-      coverKey: 'aurora',
-    }));
+    const extraIds = new Set<string>();
+
+    try {
+      const { data: collab } = await supabase
+        .from('bucket_collaborators')
+        .select('bucket_id')
+        .eq('user_id', userId)
+        .eq('status', 'accepted');
+      (collab ?? []).forEach((c: any) => extraIds.add(c.bucket_id));
+    } catch {
+      // sin colaboraciones
+    }
+
+    try {
+      const [{ data: memberRows }, { data: ownedAlbums }] = await Promise.all([
+        supabase.from('album_members').select('album_id').eq('user_id', userId).eq('status', 'accepted'),
+        supabase.from('albums').select('id').eq('owner_id', userId),
+      ]);
+      const albumIds = Array.from(
+        new Set([
+          ...(memberRows ?? []).map((m: any) => m.album_id),
+          ...(ownedAlbums ?? []).map((a: any) => a.id),
+        ]),
+      );
+      if (albumIds.length > 0) {
+        const { data: items } = await supabase
+          .from('album_items')
+          .select('bucket_id')
+          .in('album_id', albumIds);
+        (items ?? []).forEach((i: any) => extraIds.add(i.bucket_id));
+      }
+    } catch {
+      // sin álbumes compartidos
+    }
+
+    const ownIds = new Set((own ?? []).map((b: any) => b.id));
+    const missing = Array.from(extraIds).filter((id) => !ownIds.has(id));
+
+    let others: any[] = [];
+    if (missing.length > 0) {
+      const { data: otherData } = await supabase.from('buckets').select(select).in('id', missing);
+      others = otherData ?? [];
+    }
+
+    return [...(own ?? []), ...others]
+      .sort((a: any, b: any) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
+      .map((b: any) => ({
+        id: b.id,
+        title: b.title,
+        categoryName: (b.categories as any)?.name_es || '',
+        location: b.location_text || undefined,
+        coverKey: 'aurora',
+        inAlbum: !!albumId && (b.album_items ?? []).some((ai: any) => ai.album_id === albumId),
+      }));
   },
 
   async assignTasksToAlbum(albumId: string, taskIds: string[]): Promise<void> {
@@ -122,10 +182,10 @@ export const tasksService = {
   }
 };
 
-export function useUnassignedTasks() {
+export function useUnassignedTasks(albumId?: string) {
   return useQuery({
-    queryKey: ['unassigned_tasks'],
-    queryFn: () => tasksService.getUnassignedTasks(),
+    queryKey: ['unassigned_tasks', albumId ?? null],
+    queryFn: () => tasksService.getUnassignedTasks(albumId),
   });
 }
 

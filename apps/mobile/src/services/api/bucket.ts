@@ -63,7 +63,19 @@ export const bucketApi = {
         .eq('user_id', userId)
         .eq('status', 'accepted');
 
-      const memberAlbumIds = (memberAlbums ?? []).map((m: any) => m.album_id);
+      // También los álbumes de los que el usuario es DUEÑO: el dueño no figura
+      // en album_members, y las tareas que añaden los demás miembros deben salirle.
+      const { data: ownedAlbums } = await supabase
+        .from('albums')
+        .select('id')
+        .eq('owner_id', userId);
+
+      const memberAlbumIds = Array.from(
+        new Set([
+          ...(memberAlbums ?? []).map((m: any) => m.album_id),
+          ...(ownedAlbums ?? []).map((a: any) => a.id),
+        ]),
+      );
       if (memberAlbumIds.length > 0) {
         const { data: albumItemData } = await supabase
           .from('album_items')
