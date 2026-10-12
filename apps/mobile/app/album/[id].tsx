@@ -15,6 +15,7 @@ import {
   Animated,
   Platform,
   Dimensions,
+  Keyboard,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
@@ -109,6 +110,29 @@ export default function AlbumDetailScreen() {
   const [taskSearchOpen, setTaskSearchOpen] = useState(false);
   const [taskSearch, setTaskSearch] = useState('');
   const [dragging, setDragging] = useState(false);
+
+  // Al buscar, el teclado no debe tapar las tareas: se añade espacio al final del scroll
+  // y se sube la barra de búsqueda a la parte superior de la pantalla.
+  const scrollRef = useRef<ScrollView>(null);
+  const toolbarY = useRef(0);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  useEffect(() => {
+    const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const show = Keyboard.addListener(showEvt, (e) => setKeyboardHeight(e.endCoordinates?.height ?? 0));
+    const hide = Keyboard.addListener(hideEvt, () => setKeyboardHeight(0));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+  useEffect(() => {
+    if (!taskSearchOpen) return;
+    const t = setTimeout(() => {
+      scrollRef.current?.scrollTo({ y: Math.max(0, toolbarY.current - 12), animated: true });
+    }, 250);
+    return () => clearTimeout(t);
+  }, [taskSearchOpen, keyboardHeight]);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [sheetMode, setSheetMode] = useState<'menu' | 'visibility' | 'priority' | 'status'>('menu');
   const sheetTranslateY = useRef(new Animated.Value(420)).current;
@@ -1008,9 +1032,14 @@ export default function AlbumDetailScreen() {
   return (
     <View style={styles.container}>
       <ScrollView
+        ref={scrollRef}
         style={styles.scroll}
         scrollEnabled={!dragging}
-        contentContainerStyle={{ paddingBottom: insets.bottom + (id === 'unassigned' ? 40 : 120) }}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{
+          paddingBottom:
+            insets.bottom + (id === 'unassigned' ? 40 : 120) + (taskSearchOpen ? keyboardHeight : 0),
+        }}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#D4B13A" />
         }
@@ -1337,7 +1366,12 @@ export default function AlbumDetailScreen() {
 
         {/* Buscar y ordenar tareas */}
         {tasks.length > 0 && (
-          <View style={styles.tasksToolbarWrap}>
+          <View
+            style={styles.tasksToolbarWrap}
+            onLayout={(e) => {
+              toolbarY.current = e.nativeEvent.layout.y;
+            }}
+          >
             <View style={styles.tasksToolbar}>
               <Pressable
                 onPress={toggleTaskSearch}
