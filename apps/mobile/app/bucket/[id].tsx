@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Alert, Share, ActivityIndicator, ScrollView, Image, Pressable, FlatList, Dimensions, Platform, StatusBar, Modal, Animated, NativeSyntheticEvent, NativeScrollEvent, TextInput, PanResponder, KeyboardAvoidingView } from 'react-native';
+import { View, Text, StyleSheet, Alert, Share, ActivityIndicator, ScrollView, Image, Pressable, FlatList, Dimensions, Platform, StatusBar, Modal, Animated, NativeSyntheticEvent, NativeScrollEvent, TextInput, PanResponder, KeyboardAvoidingView, RefreshControl } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,6 +16,7 @@ import { supabase } from '../../src/services/supabase';
 import { storageApi } from '../../src/services/api/storage';
 import { processBucketImage } from '@bucketlist/shared';
 import { useAuthStore } from '../../src/stores/auth.store';
+import { usePullToRefresh } from '../../src/hooks/useAutoRefresh';
 import { useAddComment, useCopyBucket, useToggleReaction } from '../../src/hooks/useSocial';
 import { useDeleteBucket } from '../../src/hooks/useBuckets';
 import { useAlbums } from '../../src/hooks/useAlbums';
@@ -61,6 +62,7 @@ export default function BucketDetailScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const { refreshing, onRefresh } = usePullToRefresh();
 
   const insets = useSafeAreaInsets();
   const coverTotalHeight = COVER_HEIGHT + insets.top;
@@ -962,6 +964,7 @@ export default function BucketDetailScreen() {
         scrollEnabled={scrollEnabled}
         contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void onRefresh()} tintColor="#D4B13A" />}
       >
         {/* ── Cover ──────────────────────────────────────────────────────── */}
         <BucketCover

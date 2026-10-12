@@ -17,6 +17,7 @@ import {
 } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
 import { useAuthStore } from '../../src/stores/auth.store';
+import { usePullToRefresh } from '../../src/hooks/useAutoRefresh';
 import { useProfileStats } from '../../src/hooks/useFriends';
 import { useFollowUser, useUnfollowUser } from '../../src/hooks/useSocial';
 import { useUserFavorites, useToggleFavoriteAlbum } from '../../src/hooks/useFavorites';
@@ -42,6 +43,7 @@ export default function PublicProfileScreen() {
   const { theme } = useTheme();
   const router = useRouter();
   const { user } = useAuthStore();
+  const { refreshing, onRefresh } = usePullToRefresh();
   const [activeTab, setActiveTab] = useState<'list' | 'albums'>('list');
   const [filter, setFilter] = useState<Filter>('all');
   const [albumFilter, setAlbumFilter] = useState<AlbumFilter>('all');
@@ -383,6 +385,8 @@ export default function PublicProfileScreen() {
       </View>
 
       <FlatList
+        refreshing={refreshing}
+        onRefresh={() => void onRefresh()}
         data={isLocked || activeTab !== 'list' ? [] : filtered}
         keyExtractor={(item: any) => item.id}
         ListHeaderComponent={header}

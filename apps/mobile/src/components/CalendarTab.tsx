@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Text,
   Image,
+  RefreshControl,
 } from 'react-native';
 import { Typography, useTheme, TaskRow } from '@bucketlist/ui';
 import { ChevronLeft, ChevronRight, AlertCircle, Calendar } from 'lucide-react-native';
@@ -27,6 +28,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { useBuckets } from '../hooks/useBuckets';
 import { useAuthStore } from '../stores/auth.store';
+import { usePullToRefresh } from '../hooks/useAutoRefresh';
 import { storageApi } from '../services/api/storage';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { useRouter } from 'expo-router';
@@ -35,6 +37,7 @@ export function CalendarTab() {
   const { theme } = useTheme();
   const router = useRouter();
   const { user } = useAuthStore();
+  const { refreshing, onRefresh } = usePullToRefresh();
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -185,7 +188,11 @@ export function CalendarTab() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 120 }}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: 120 }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void onRefresh()} tintColor="#D4B13A" />}
+    >
       {/* Month Navigation */}
       <View style={styles.header}>
         <View>

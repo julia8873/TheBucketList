@@ -9,6 +9,7 @@ import { useSearchUsers } from '../../src/hooks/useSocial';
 import { useExploreFeed } from '../../src/hooks/useFeed';
 import { FeedCard } from '../../src/components/FeedCard';
 import { useAuthStore } from '../../src/stores/auth.store';
+import { usePullToRefresh } from '../../src/hooks/useAutoRefresh';
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -25,6 +26,7 @@ export default function ExploreScreen() {
   const { theme } = useTheme();
   const router = useRouter();
   const { user } = useAuthStore();
+  const { refreshing, onRefresh } = usePullToRefresh();
 
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 500);
@@ -100,6 +102,8 @@ export default function ExploreScreen() {
             />
           )}
           estimatedItemSize={250}
+          refreshing={refreshing}
+          onRefresh={() => void onRefresh()}
           onEndReached={() => {
             if (hasNextPage) {
               fetchNextPage();

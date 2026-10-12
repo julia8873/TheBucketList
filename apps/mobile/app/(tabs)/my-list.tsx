@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { View, StyleSheet, Pressable, ScrollView, Dimensions, Alert, Animated, Modal, Text, Image } from 'react-native';
+import { View, StyleSheet, Pressable, ScrollView, Dimensions, Alert, Animated, Modal, Text, Image, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, Typography, SegmentedControl, FilterChip, TaskRow, AlbumCard, NewAlbumCard, NoAlbumRow, FAB, spacing, useToast, Input, TagChip } from '@bucketlist/ui';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
@@ -13,6 +13,7 @@ import { useBuckets, useDeleteBucket, useUpdateBucket } from '../../src/hooks/us
 import { useAlbums } from '../../src/hooks/useAlbums';
 import { useUserFavorites, useToggleFavoriteAlbum } from '../../src/hooks/useFavorites';
 import { useAuthStore } from '../../src/stores/auth.store';
+import { usePullToRefresh } from '../../src/hooks/useAutoRefresh';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../src/services/supabase';
 import { storageApi } from '../../src/services/api/storage';
@@ -97,6 +98,7 @@ export default function MyListScreen() {
     }
   };
 
+  const { refreshing, onRefresh } = usePullToRefresh();
   const { data: buckets, isLoading } = useBuckets(user?.id);
   const { isBucketFavorite, isAlbumFavorite, bucketIds: favBucketIds } = useUserFavorites(user?.id);
   const toggleFavoriteAlbum = useToggleFavoriteAlbum();
@@ -740,6 +742,8 @@ export default function MyListScreen() {
             keyExtractor={(item: any) => item.id || item.title}
             contentContainerStyle={styles.listContent}
             estimatedItemSize={80}
+            refreshing={refreshing}
+            onRefresh={() => void onRefresh()}
             extraData={listExtra}
             getItemType={(item: any) => (item.isHeader ? 'header' : 'task')}
             ItemSeparatorComponent={() => <View style={{ height: spacing[3] }} />}
@@ -855,7 +859,10 @@ export default function MyListScreen() {
         )}
 
         {activeTab === 'albums' && (
-          <ScrollView contentContainerStyle={styles.albumsContent}>
+          <ScrollView
+            contentContainerStyle={styles.albumsContent}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void onRefresh()} tintColor={gold[400]} />}
+          >
             {/* Filtros de estado de álbum */}
             <ScrollView
               horizontal

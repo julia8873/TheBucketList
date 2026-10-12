@@ -5,6 +5,7 @@ import { Typography, useTheme, spacing, Avatar, Button, Icon } from '@bucketlist
 import { Check, Heart, MessageCircle, UserPlus, CheckCircle, Bell, Users, X, Folder } from 'lucide-react-native';
 import { useNotifications, useMarkAsRead, useMarkAllAsRead } from '../../src/hooks/useNotifications';
 import { useAuthStore } from '../../src/stores/auth.store';
+import { usePullToRefresh } from '../../src/hooks/useAutoRefresh';
 import { supabase } from '../../src/services/supabase';
 import { useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
@@ -13,6 +14,7 @@ export default function NotificationsScreen() {
   const { theme } = useTheme();
   const router = useRouter();
   const { user } = useAuthStore();
+  const { refreshing, onRefresh } = usePullToRefresh();
   const queryClient = useQueryClient();
   const [respondingId, setRespondingId] = useState<string | null>(null);
   
@@ -147,6 +149,8 @@ export default function NotificationsScreen() {
 
       <FlatList
         data={notifications || []}
+        refreshing={refreshing}
+        onRefresh={() => void onRefresh()}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <Pressable 

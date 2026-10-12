@@ -23,6 +23,7 @@ import { useThemeStore, hydrateThemeStore } from '../src/stores/theme.store';
 import { hydrateLanguageStore } from '../src/stores/language.store';
 import { useAuthStore } from '../src/stores/auth.store';
 import { supabase } from '../src/services/supabase';
+import { useAutoRefresh } from '../src/hooks/useAutoRefresh';
 import 'intl-pluralrules';
 import '../../../packages/shared/src/i18n'; // initialize i18n
 
@@ -32,7 +33,9 @@ void SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 2, // 2 minutes
+      staleTime: 1000 * 30, // 30 segundos: pasado este tiempo, los datos se recargan solos
+      refetchOnReconnect: true,
+      refetchOnWindowFocus: true,
       gcTime: 1000 * 60 * 10,   // 10 minutes
       retry: 2,
     },
@@ -121,6 +124,9 @@ function RootNavigator() {
   const segments = useSegments();
   const colorScheme = override === 'system' ? undefined : override;
   const userId = session?.user.id;
+
+  // Recarga automática (volver a la app, recuperar conexión, cada 60 s)
+  useAutoRefresh();
 
   // Enlaces del correo (confirmar cuenta / restablecer contraseña): …#access_token=…&refresh_token=…&type=…
   useEffect(() => {

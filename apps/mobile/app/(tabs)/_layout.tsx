@@ -6,6 +6,7 @@ import { useAuthStore } from '../../src/stores/auth.store';
 import { registerForPushNotificationsAsync } from '../../src/services/notifications';
 import { useTranslation } from 'react-i18next';
 import { Platform, View } from 'react-native';
+import { useQueryClient } from '@tanstack/react-query';
 import { gold, dark } from '@bucketlist/ui';
 
 function TabBarBackground() {
@@ -23,6 +24,7 @@ export default function TabsLayout() {
   const { theme } = useTheme();
   const { user } = useAuthStore();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (user) {
@@ -33,6 +35,12 @@ export default function TabsLayout() {
   return (
     <Tabs
       initialRouteName="my-list"
+      screenListeners={{
+        // Al cambiar de pestaña, recarga los datos que lleven más de 30 s sin actualizarse
+        focus: () => {
+          void queryClient.refetchQueries({ type: 'active', stale: true });
+        },
+      }}
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
