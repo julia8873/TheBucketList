@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, View, Pressable, FlatList, Image, Dimensions, Platform, Alert, StyleSheet, TextInput } from 'react-native';
-import { X, Download } from 'lucide-react-native';
+import { X, Download, Trash2 } from 'lucide-react-native';
 import { Typography } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { storageApi } from '../services/api/storage';
@@ -15,9 +15,11 @@ type BucketPhotoViewerProps = {
   setViewingPhotoIndex: (index: number | null) => void;
   isOwner?: boolean;
   onUpdateTitle?: (photoId: string, title: string) => void;
+  /** Si se pasa y el usuario puede editar, aparece el botón de borrar. Debe pedir confirmación y borrar. */
+  onDelete?: (photo: any) => void;
 };
 
-export function BucketPhotoViewer({ photos, viewingPhotoIndex, setViewingPhotoIndex, isOwner, onUpdateTitle }: BucketPhotoViewerProps) {
+export function BucketPhotoViewer({ photos, viewingPhotoIndex, setViewingPhotoIndex, isOwner, onUpdateTitle, onDelete }: BucketPhotoViewerProps) {
   return (
     <Modal
       visible={viewingPhotoIndex !== null}
@@ -99,7 +101,16 @@ export function BucketPhotoViewer({ photos, viewingPhotoIndex, setViewingPhotoIn
         )}
 
         {viewingPhotoIndex !== null && photos[viewingPhotoIndex] && (
-          <View style={[styles.actionBar, { borderTopColor: 'transparent', position: 'absolute', bottom: 40, width: '100%', paddingHorizontal: 20 }]}>
+          <View style={[styles.actionBar, { borderTopColor: 'transparent', position: 'absolute', bottom: 40, width: '100%', paddingHorizontal: 20, gap: 12 }]}>
+            {isOwner && onDelete && (
+              <Pressable
+                accessibilityLabel="Borrar foto"
+                style={[styles.deleteBtn]}
+                onPress={() => onDelete(photos[viewingPhotoIndex])}
+              >
+                <Trash2 color="#F87171" size={20} strokeWidth={2} />
+              </Pressable>
+            )}
             <Pressable
               style={[styles.actionBtn, styles.actionBtnFilled, { backgroundColor: gold[400] }]}
               onPress={async () => {
@@ -171,4 +182,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   actionBtnFilled: {},
+  deleteBtn: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(248,113,113,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(248,113,113,0.45)',
+  },
 });

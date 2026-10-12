@@ -7,9 +7,10 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Typography, useTheme } from '@bucketlist/ui';
-import { ArrowLeft, Share2, MoreHorizontal, MapPin, Calendar, Heart, MessageCircle, FolderOpen, CheckCircle2, Circle, Camera, Check, Eye, Lock, Users, FolderPlus, Pencil, Trash2, X, ListPlus, Plus, Minus, Download, ArrowUp, ArrowDown, Tag, Flag, Star } from 'lucide-react-native';
+import { ArrowLeft, Share2, MoreHorizontal, MapPin, Calendar, Heart, MessageCircle, FolderOpen, CheckCircle2, Circle, Camera, Check, Eye, Lock, Users, FolderPlus, Pencil, Trash2, X, ListPlus, Plus, Minus, Download, ArrowUp, ArrowDown, Tag, Flag, Star, GripVertical } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { supabase } from '../../src/services/supabase';
@@ -26,6 +27,8 @@ import { BucketCover } from '../../src/components/BucketCover';
 import { resolveTaskImage, type ThumbnailMode } from '../../src/utils/taskImage';
 import { SubtaskList } from '../../src/components/SubtaskList';
 import { BucketPhotoViewer } from '../../src/components/BucketPhotoViewer';
+import { PhotoCropModal } from '../../src/components/PhotoCropModal';
+import { DraggableTaskList } from '../../src/components/DraggableTaskList';
 import { BucketBottomSheet } from '../../src/components/BucketBottomSheet';
 import { LocationAutocomplete } from '../../src/components/LocationAutocomplete';
 import { styles } from './BucketDetail.styles';
@@ -134,6 +137,9 @@ export default function BucketDetailScreen() {
   const [viewingPhotoIndex, setViewingPhotoIndex] = useState<number | null>(null);
   const [newSubtaskText, setNewSubtaskText] = useState('');
   const [scrollEnabled, setScrollEnabled] = useState(true);
+  // Editor de recorte/giro al añadir fotos: se pide una foto cada vez y se espera el resultado.
+  const [cropRequest, setCropRequest] = useState<{ uri: string; width: number; height: number; index: number; total: number } | null>(null);
+  const cropResolver = useRef<((uri: string | null) => void) | null>(null);
   const [datePickerConfig, setDatePickerConfig] = useState<{ visible: boolean, type: 'deadline' | 'completed_at', date: Date } | null>(null);
   const [showCollaboratorPicker, setShowCollaboratorPicker] = useState(false);
   const [locationModalVisible, setLocationModalVisible] = useState(false);
@@ -366,7 +372,7 @@ export default function BucketDetailScreen() {
   };
 
   const [photoSearchQuery, setPhotoSearchQuery] = useState('');
-  const [photoSortField, setPhotoSortField] = useState<'date' | 'title'>('date');
+  const [photoSortField, setPhotoSortField] = useState<'date' | 'title' | 'manual'>('date');
   const [photoSortDir, setPhotoSortDir] = useState<'desc' | 'asc'>('desc');
   const [photoSortMenuOpen, setPhotoSortMenuOpen] = useState(false);
   const [sortMenuPos, setSortMenuPos] = useState({ top: 0, right: 20 });
@@ -382,7 +388,12 @@ export default function BucketDetailScreen() {
     });
   };
 
-  const handleSortOption = (field: 'date' | 'title') => {
+  const handleSortOption = (field: 'date' | 'title' | 'manual') => {
+    if (field === 'manual') {
+      setPhotoSortField('manual');
+      setPhotoSortMenuOpen(false);
+      return;
+    }
     if (photoSortField === field) {
       setPhotoSortDir(prev => (prev === 'desc' ? 'asc' : 'desc'));
     } else {
@@ -416,13 +427,18 @@ export default function BucketDetailScreen() {
     (albumsData ?? []).some((a: any) => a.id === bi.album_id),
   );
   const canEdit = isOwner || isCollaborator || isInSharedAlbum;
-  let photos: any[] = bucket.bucket_photos || [];
+  let photos: any[] = [...(bucket.bucket_photos || [])];
 
   if (photoSearchQuery.trim()) {
     const q = photoSearchQuery.toLowerCase();
     photos = photos.filter((p: any) => p.title?.toLowerCase().includes(q));
   }
   photos.sort((a, b) => {
+    if (photoSortField === 'manual') {
+      const dp = (a.position ?? 0) - (b.position ?? 0);
+      if (dp !== 0) return dp;
+      return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+    }
     if (photoSortField === 'title') {
       const cmp = (a.title || '').localeCompare(b.title || '');
       return photoSortDir === 'asc' ? cmp : -cmp;
@@ -680,7 +696,20 @@ export default function BucketDetailScreen() {
     closeSheet();
   };
 
-  // Selecciona fotos de la galería y las sube a esta tarea.
+  // Abre el editor (recortar / girar) y espera a que el usuario termine. null = cancelado.
+  const requestPhotoEdit = (base: { uri: string; width: number; height: number }, index: number, total: number) =>
+    new Promise<string | null>((resolve) => {
+      cropResolver.current = resolve;
+      setCropRequest({ ...base, index, total });
+    });
+
+  const finishPhotoEdit = (uri: string | null) => {
+    const resolve = cropResolver.current;
+    cropResolver.current = null;
+    resolve?.(uri);
+  };
+
+  // Selecciona fotos de la galería, deja recortarlas/girarlas y las sube a esta tarea.
   const pickAndUploadPhotos = async () => {
     if (!user) return;
 
@@ -700,8 +729,39 @@ export default function BucketDetailScreen() {
     if (result.canceled || !result.assets.length) return;
 
     try {
-      for (const asset of result.assets) {
-        const processed = await processBucketImage(asset.uri);
+      // En iOS el selector tarda un instante en cerrarse del todo antes de poder abrir otro modal.
+      if (Platform.OS === 'ios') await new Promise((r) => setTimeout(r, 350));
+
+      // 1. Editar cada foto (recorte + giro). Cancelar en cualquier momento aborta toda la subida.
+      const editedUris: string[] = [];
+      for (let i = 0; i < result.assets.length; i++) {
+        const asset = result.assets[i]!;
+        // Normaliza orientación (EXIF) y limita el tamaño para que el editor vaya fluido.
+        const base = await ImageManipulator.manipulateAsync(
+          asset.uri,
+          asset.width && asset.width > 1600 ? [{ resize: { width: 1600 } }] : [],
+          { compress: 1, format: ImageManipulator.SaveFormat.JPEG },
+        );
+        const edited = await requestPhotoEdit(base, i, result.assets.length);
+        if (edited === null) {
+          setCropRequest(null);
+          return;
+        }
+        editedUris.push(edited);
+        if (i + 1 < result.assets.length) {
+          // Deja que el editor se reinicie con la siguiente foto.
+          setCropRequest(null);
+          await new Promise((r) => setTimeout(r, 50));
+        }
+      }
+      setCropRequest(null);
+
+      // 2. Subir. Las nuevas van al final del orden manual.
+      const maxPosition = Math.max(-1, ...((bucket?.bucket_photos ?? []) as any[]).map((p: any) => p.position ?? 0));
+      let nextPosition = maxPosition + 1;
+
+      for (const uri of editedUris) {
+        const processed = await processBucketImage(uri);
         const paths = await storageApi.uploadPhoto(
           user.id,
           id,
@@ -718,6 +778,7 @@ export default function BucketDetailScreen() {
           height: processed.original.height,
           size_bytes: processed.original.sizeBytes,
           thumb_size_bytes: processed.thumbnail.sizeBytes,
+          position: nextPosition++,
         });
 
         if (error) throw error;
@@ -727,8 +788,76 @@ export default function BucketDetailScreen() {
       invalidateBucket();
       Alert.alert('Fotos subidas', 'Las fotos se han añadido al momento.');
     } catch (error: any) {
+      setCropRequest(null);
       Alert.alert('No se pudieron subir las fotos', error?.message || 'Inténtalo de nuevo.');
     }
+  };
+
+  // Guarda el nuevo orden manual de las fotos (arrastrar y soltar).
+  const persistPhotoOrder = async (orderedIds: string[]) => {
+    const current = new Map<string, number | null>(
+      ((bucket?.bucket_photos ?? []) as any[]).map((p: any) => [p.id, p.position ?? null]),
+    );
+    queryClient.setQueryData(['bucketDetail', id], (old: any) => {
+      if (!old) return old;
+      return {
+        ...old,
+        bucket_photos: (old.bucket_photos || []).map((p: any) => {
+          const idx = orderedIds.indexOf(p.id);
+          return idx >= 0 ? { ...p, position: idx } : p;
+        }),
+      };
+    });
+    const changed = orderedIds
+      .map((pid, idx) => ({ pid, idx }))
+      .filter(({ pid, idx }) => current.get(pid) !== idx);
+    const results = await Promise.all(
+      changed.map(({ pid, idx }) => supabase.from('bucket_photos').update({ position: idx }).eq('id', pid)),
+    );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) {
+      console.error('Error guardando el orden de las fotos:', failed.error);
+      Alert.alert('Error', 'No se pudo guardar el nuevo orden de las fotos');
+    }
+    void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+  };
+
+  // Borra una foto de la tarea (pide confirmación).
+  const confirmDeletePhoto = (photo: any) => {
+    Alert.alert('Borrar foto', 'Se eliminará de esta tarea. Esta acción no se puede deshacer.', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Borrar', style: 'destructive', onPress: () => void deletePhoto(photo) },
+    ]);
+  };
+
+  const deletePhoto = async (photo: any) => {
+    const previous = queryClient.getQueryData(['bucketDetail', id]);
+    const shownIndex = photos.findIndex((p: any) => p.id === photo.id);
+    const remaining = photos.length - 1;
+
+    // Actualiza la pantalla al momento.
+    queryClient.setQueryData(['bucketDetail', id], (old: any) =>
+      old ? { ...old, bucket_photos: (old.bucket_photos || []).filter((p: any) => p.id !== photo.id) } : old,
+    );
+    setViewingPhotoIndex(remaining <= 0 ? null : Math.min(Math.max(shownIndex, 0), remaining - 1));
+
+    const { data, error } = await supabase.from('bucket_photos').delete().eq('id', photo.id).select('id');
+    if (error || !data || data.length === 0) {
+      queryClient.setQueryData(['bucketDetail', id], previous);
+      Alert.alert('No se pudo borrar la foto', error?.message || 'No tienes permiso para borrar esta foto.');
+      return;
+    }
+
+    // Limpia los archivos (si no eres quien la subió, el almacenamiento puede rechazarlo: no es grave).
+    try {
+      const files = [photo.storage_path, photo.thumb_path].filter(Boolean) as string[];
+      if (files.length) await supabase.storage.from('photos').remove(files);
+    } catch (e) {
+      console.warn('No se pudieron borrar los archivos de la foto', e);
+    }
+
+    void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+    invalidateBucket();
   };
 
   // Desde el menú de opciones: cierra el menú y después abre la galería.
@@ -1520,9 +1649,34 @@ export default function BucketDetailScreen() {
           {/* Contador */}
           {(bucket.counter_enabled || canEdit) && (
             <View style={{ marginBottom: 24 }}>
-              <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
-                CONTADOR
-              </Typography>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 28 }}>
+                <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
+                  CONTADOR
+                </Typography>
+                {bucket.counter_enabled && canEdit && (
+                  <Pressable
+                    onPress={removeCounter}
+                    hitSlop={8}
+                    accessibilityLabel="Quitar contador"
+                    style={({ pressed }) => ({
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                      paddingHorizontal: 12,
+                      height: 28,
+                      borderRadius: 14,
+                      borderWidth: 1,
+                      borderColor: 'rgba(248,113,113,0.45)',
+                      backgroundColor: pressed ? 'rgba(248,113,113,0.22)' : 'rgba(248,113,113,0.10)',
+                    })}
+                  >
+                    <Trash2 color="#F87171" size={13} strokeWidth={2.2} />
+                    <Typography variant="caption" color="#F87171" style={{ fontWeight: '600' }}>
+                      Quitar
+                    </Typography>
+                  </Pressable>
+                )}
+              </View>
 
               {bucket.counter_enabled ? (
                 <>
@@ -1530,9 +1684,10 @@ export default function BucketDetailScreen() {
                     style={{
                       marginTop: 12,
                       padding: 16,
-                      borderRadius: 16,
+                      borderRadius: 18,
                       borderWidth: 1,
                       borderColor: dark[400],
+                      backgroundColor: dark[300],
                       flexDirection: 'row',
                       alignItems: 'center',
                     }}
@@ -1578,33 +1733,33 @@ export default function BucketDetailScreen() {
                     </View>
 
                     {canEdit && (
-                      <View style={{ flexDirection: 'row', gap: 8 }}>
+                      <View style={{ flexDirection: 'row', gap: 10 }}>
                         <Pressable
                           onPress={() => changeCounter(-1)}
                           style={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: 18,
+                            width: 44,
+                            height: 44,
+                            borderRadius: 22,
                             alignItems: 'center',
                             justifyContent: 'center',
                             borderWidth: 1,
                             borderColor: dark[400],
                           }}
                         >
-                          <Minus color={theme.colors.foregroundMuted} size={18} strokeWidth={2} />
+                          <Minus color={theme.colors.foregroundMuted} size={20} strokeWidth={2} />
                         </Pressable>
                         <Pressable
                           onPress={() => changeCounter(1)}
                           style={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: 18,
+                            width: 44,
+                            height: 44,
+                            borderRadius: 22,
                             alignItems: 'center',
                             justifyContent: 'center',
                             backgroundColor: gold[400],
                           }}
                         >
-                          <Plus color="#000" size={18} strokeWidth={2.4} />
+                          <Plus color="#000" size={20} strokeWidth={2.4} />
                         </Pressable>
                       </View>
                     )}
@@ -1653,34 +1808,45 @@ export default function BucketDetailScreen() {
                     </View>
                   )}
 
-                  {canEdit && (
-                    <Pressable onPress={removeCounter} style={{ alignSelf: 'flex-start', marginTop: 10 }}>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>
-                        Quitar contador
-                      </Typography>
-                    </Pressable>
-                  )}
                 </>
               ) : (
-                <Pressable
-                  onPress={() => void updateCounter({ counter_enabled: true, counter_count: 0 })}
-                  style={{
-                    marginTop: 12,
-                    height: 56,
-                    borderRadius: 16,
-                    borderWidth: 1,
-                    borderStyle: 'dashed',
-                    borderColor: dark[400],
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Plus color={gold[400]} size={20} strokeWidth={1.8} />
-                  <Typography variant="bodySemibold" color={gold[400]} style={{ marginLeft: 8 }}>
-                    Añadir contador
-                  </Typography>
-                </Pressable>
+                canEdit ? (
+                  <Pressable
+                    onPress={() => void updateCounter({ counter_enabled: true, counter_count: 0 })}
+                    style={({ pressed }) => ({
+                      marginTop: 12,
+                      padding: 14,
+                      borderRadius: 18,
+                      borderWidth: 1,
+                      borderColor: 'rgba(212,168,46,0.35)',
+                      backgroundColor: pressed ? 'rgba(212,168,46,0.14)' : 'rgba(212,168,46,0.06)',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 14,
+                    })}
+                  >
+                    <View
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 20,
+                        backgroundColor: gold[400],
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Plus color="#000" size={22} strokeWidth={2.4} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Typography variant="bodySemibold" color={gold[400]}>
+                        Añadir contador
+                      </Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>
+                        Cuenta repeticiones, kilómetros, libros…
+                      </Typography>
+                    </View>
+                  </Pressable>
+                ) : null
               )}
             </View>
           )}
@@ -1815,9 +1981,9 @@ export default function BucketDetailScreen() {
                         style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
                       >
                         <Typography variant="caption" color={gold[400]}>
-                          {photoSortField === 'date' ? 'Fecha' : 'Nombre'}
+                          {photoSortField === 'date' ? 'Fecha' : photoSortField === 'title' ? 'Nombre' : 'Manual'}
                         </Typography>
-                        {photoSortDir === 'desc' ? (
+                        {photoSortField === 'manual' ? null : photoSortDir === 'desc' ? (
                           <ArrowDown color={gold[400]} size={14} />
                         ) : (
                           <ArrowUp color={gold[400]} size={14} />
@@ -1846,6 +2012,69 @@ export default function BucketDetailScreen() {
                   />
                 )}
 
+                {photoSortField === 'manual' && canEdit && photos.length > 1 && !photoSearchQuery.trim() ? (
+                  <>
+                    <Typography variant="caption" color={theme.colors.foregroundMuted} style={{ marginBottom: 10 }}>
+                      Arrastra el asa ⠿ para cambiar el orden de las fotos.
+                    </Typography>
+                    <DraggableTaskList
+                      items={photos}
+                      onReorder={(ids) => void persistPhotoOrder(ids)}
+                      onDraggingChange={(dragging) => setScrollEnabled(!dragging)}
+                      renderItem={(photo, drag) => (
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            height: 72,
+                            padding: 8,
+                            borderRadius: 14,
+                            backgroundColor: dark[300],
+                            borderWidth: 1,
+                            borderColor: drag.isActive ? gold[400] : dark[400],
+                            gap: 12,
+                          }}
+                        >
+                          <Pressable
+                            onPress={() => setViewingPhotoIndex(photos.findIndex((p: any) => p.id === photo.id))}
+                            style={{ width: 56, height: 56, borderRadius: 10, overflow: 'hidden', backgroundColor: dark[400] }}
+                          >
+                            <Image
+                              source={{ uri: storageApi.getPublicUrl(photo.thumb_path || photo.storage_path) }}
+                              style={{ width: '100%', height: '100%' }}
+                              resizeMode="cover"
+                            />
+                          </Pressable>
+                          <View style={{ flex: 1 }}>
+                            <Typography variant="bodySemibold" color="#fff" numberOfLines={1}>
+                              {photo.title || 'Sin título'}
+                            </Typography>
+                            <Typography variant="caption" color={theme.colors.foregroundMuted}>
+                              {photo.created_at ? new Date(photo.created_at).toLocaleDateString() : ''}
+                            </Typography>
+                          </View>
+                          <View
+                            {...drag.panHandlers}
+                            hitSlop={10}
+                            style={{ width: 44, height: 56, alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            <GripVertical color={gold[400]} size={22} strokeWidth={2} />
+                          </View>
+                        </View>
+                      )}
+                    />
+                    <View style={{ height: 14 }} />
+                    <Pressable
+                      style={[styles.photoAddThumb, { width: '100%', height: 64, flexDirection: 'row' }]}
+                      onPress={() => void pickAndUploadPhotos()}
+                    >
+                      <Camera color={gold[400]} size={22} strokeWidth={1.8} />
+                      <Typography variant="bodySemibold" color={gold[400]} style={{ marginLeft: 10 }}>
+                        Añadir foto
+                      </Typography>
+                    </Pressable>
+                  </>
+                ) : (
                 <View style={styles.photosGrid}>
                   {photos.map((photo, index) => (
                     <Pressable
@@ -1888,11 +2117,24 @@ export default function BucketDetailScreen() {
                     </Pressable>
                   )}
                 </View>
+                )}
               </View>
             </>
           )}
         </View>
       </ScrollView>
+
+      {/* ── Editor de foto (recortar / girar) ───────────────────────────── */}
+      <PhotoCropModal
+        visible={!!cropRequest}
+        uri={cropRequest?.uri ?? null}
+        width={cropRequest?.width ?? 0}
+        height={cropRequest?.height ?? 0}
+        index={cropRequest?.index ?? 0}
+        total={cropRequest?.total ?? 1}
+        onCancel={() => finishPhotoEdit(null)}
+        onDone={(uri) => finishPhotoEdit(uri)}
+      />
 
       {/* ── Fullscreen photo viewer ─────────────────────────────────────── */}
       <BucketPhotoViewer
@@ -1900,6 +2142,7 @@ export default function BucketDetailScreen() {
         viewingPhotoIndex={viewingPhotoIndex}
         setViewingPhotoIndex={setViewingPhotoIndex}
         isOwner={canEdit}
+        onDelete={confirmDeletePhoto}
         onUpdateTitle={(photoId, title) => {
           queryClient.setQueryData(['bucketDetail', id], (oldData: any) => {
             if (!oldData) return oldData;
@@ -1999,6 +2242,7 @@ export default function BucketDetailScreen() {
             {([
               { field: 'date', label: 'Fecha' },
               { field: 'title', label: 'Nombre' },
+              ...(canEdit ? [{ field: 'manual', label: 'Manual' } as const] : []),
             ] as const).map((option, i) => {
               const selected = photoSortField === option.field;
               return (
@@ -2022,7 +2266,7 @@ export default function BucketDetailScreen() {
                   >
                     {option.label}
                   </Typography>
-                  {selected &&
+                  {selected && option.field !== 'manual' &&
                     (photoSortDir === 'desc' ? (
                       <ArrowDown color={gold[400]} size={16} />
                     ) : (

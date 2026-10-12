@@ -188,14 +188,14 @@ isOneToOne: false
                   ]
                 },"bucket_photos": {
                   Row: {
-                    "bucket_id": string,"created_at": string | null,"height": number | null,"id": string,"size_bytes": number,"storage_path": string,"thumb_path": string | null,"thumb_size_bytes": number | null,"title": string | null,"user_id": string,"width": number | null
+                    "bucket_id": string,"created_at": string | null,"height": number | null,"id": string,"position": number,"size_bytes": number,"storage_path": string,"thumb_path": string | null,"thumb_size_bytes": number | null,"title": string | null,"user_id": string,"width": number | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "bucket_id": string,"created_at"?: string | null,"height"?: number | null,"id"?: string,"size_bytes": number,"storage_path": string,"thumb_path"?: string | null,"thumb_size_bytes"?: number | null,"title"?: string | null,"user_id": string,"width"?: number | null
+                    "bucket_id": string,"created_at"?: string | null,"height"?: number | null,"id"?: string,"position"?: number,"size_bytes": number,"storage_path": string,"thumb_path"?: string | null,"thumb_size_bytes"?: number | null,"title"?: string | null,"user_id": string,"width"?: number | null
                   }
                   Update: {
-                    "bucket_id"?: string,"created_at"?: string | null,"height"?: number | null,"id"?: string,"size_bytes"?: number,"storage_path"?: string,"thumb_path"?: string | null,"thumb_size_bytes"?: number | null,"title"?: string | null,"user_id"?: string,"width"?: number | null
+                    "bucket_id"?: string,"created_at"?: string | null,"height"?: number | null,"id"?: string,"position"?: number,"size_bytes"?: number,"storage_path"?: string,"thumb_path"?: string | null,"thumb_size_bytes"?: number | null,"title"?: string | null,"user_id"?: string,"width"?: number | null
                   }
                   Relationships: [
                     {

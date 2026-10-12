@@ -24,7 +24,7 @@ import { hexToRgba } from '../../src/constants/tagPresets';
 import { categoryColors } from '@bucketlist/ui/src/tokens/colors';
 import { isPast, differenceInCalendarDays } from 'date-fns';
 
-type FilterType = 'all' | 'active' | 'completed' | 'expired';
+type FilterType = 'all' | 'active' | 'in_progress' | 'completed' | 'expired';
 type AlbumFilterType = 'all' | 'active' | 'completed' | 'closed';
 type PriorityFilter = 'all' | 'high' | 'medium' | 'low';
 type SortField = 'status' | 'priority' | 'alphabetical' | 'created_at';
@@ -40,11 +40,11 @@ export default function MyListScreen() {
   const [activeTab, setActiveTab] = useState('list');
   const params = useLocalSearchParams<{ filter?: string }>();
   const [filter, setFilter] = useState<FilterType>(
-    params.filter === 'completed' || params.filter === 'active' || params.filter === 'expired' ? params.filter : 'all',
+    params.filter === 'completed' || params.filter === 'active' || params.filter === 'in_progress' || params.filter === 'expired' ? params.filter : 'all',
   );
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>('all');
   React.useEffect(() => {
-    if (params.filter === 'completed' || params.filter === 'active' || params.filter === 'expired') setFilter(params.filter);
+    if (params.filter === 'completed' || params.filter === 'active' || params.filter === 'in_progress' || params.filter === 'expired') setFilter(params.filter);
   }, [params.filter]);
 
   // ── Filtros y orden de álbumes ───────────────────────────────────────────
@@ -175,6 +175,7 @@ export default function MyListScreen() {
 
       if (filter === 'expired') return expired && b.status !== 'completed';
       if (filter === 'active') return b.status !== 'completed' && !expired;
+      if (filter === 'in_progress') return b.status === 'in_progress' && !expired;
 
       return true;
     });
@@ -211,13 +212,18 @@ export default function MyListScreen() {
         return deadline ? (isPast(deadline) && differenceInCalendarDays(deadline, new Date()) < 0) && b.status !== 'completed' : false;
       };
       const isCompleted = (b: any) => b.status === 'completed';
-      const isPending = (b: any) => !isCompleted(b) && !isExpired(b);
+      const isInProgress = (b: any) => b.status === 'in_progress' && !isCompleted(b) && !isExpired(b);
+      const isPending = (b: any) => !isCompleted(b) && !isExpired(b) && !isInProgress(b);
 
       const favorites = filteredBuckets
         .filter((b: any) => isBucketFavorite(b.id))
         .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       const nonFavorites = filteredBuckets.filter((b: any) => !isBucketFavorite(b.id));
+
+      const inProgress = nonFavorites
+        .filter(isInProgress)
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       const pending = nonFavorites
         .filter(isPending)
@@ -232,6 +238,7 @@ export default function MyListScreen() {
         .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       let otherSections = [
+        { key: 'in_progress', title: 'EN PROGRESO', items: inProgress },
         { key: 'pending', title: 'PENDIENTES', items: pending },
         { key: 'completed', title: 'COMPLETADAS', items: completed },
         { key: 'expired', title: 'VENCIDAS', items: expired },
@@ -741,6 +748,7 @@ export default function MyListScreen() {
                 >
                   <FilterChip label="Todas" active={filter === 'all'} onPress={() => setFilter('all')} />
                   <FilterChip label="En curso" active={filter === 'active'} onPress={() => setFilter('active')} />
+                  <FilterChip label="En progreso" active={filter === 'in_progress'} onPress={() => setFilter('in_progress')} />
                   <FilterChip label="Completadas" active={filter === 'completed'} onPress={() => setFilter('completed')} />
                   <FilterChip label="Vencidas" active={filter === 'expired'} onPress={() => setFilter('expired')} />
                 </ScrollView>

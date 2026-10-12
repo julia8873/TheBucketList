@@ -123,22 +123,25 @@ export function AlbumCard({
 
       {/* Top left badges */}
       <View style={styles.topLeftBadges}>
+        {isCompleted && !isClosed && (
+          <View style={styles.completedBadge}>
+            <Check size={10} color="#FFF" strokeWidth={2.5} />
+            <Text style={styles.completedText}>Completado</Text>
+          </View>
+        )}
+
         {isShared && (
           <View style={styles.sharedBadge}>
             <Text style={styles.sharedText}>Compartido</Text>
           </View>
         )}
-        {isClosed ? (
+
+        {isClosed && (
           <View style={styles.closedBadge}>
             <Lock size={10} color="#D4B13A" />
             <Text style={styles.closedText}>Cerrado</Text>
           </View>
-        ) : isCompleted ? (
-          <View style={styles.completedBadge}>
-            <Check size={10} color="#FFF" strokeWidth={2.5} />
-            <Text style={styles.completedText}>Hecho</Text>
-          </View>
-        ) : null}
+        )}
       </View>
 
       {/* Favorite badge / button */}
@@ -182,8 +185,8 @@ export function AlbumCard({
                       priority === 'high' || priority === 'urgent'
                         ? '#EF4444'
                         : priority === 'low'
-                        ? '#10B981'
-                        : '#D4B13A',
+                          ? '#10B981'
+                          : '#D4B13A',
                   },
                 ]}
               />
@@ -195,8 +198,8 @@ export function AlbumCard({
                       priority === 'high' || priority === 'urgent'
                         ? '#EF4444'
                         : priority === 'low'
-                        ? '#10B981'
-                        : '#D4B13A',
+                          ? '#10B981'
+                          : '#D4B13A',
                   },
                 ]}
               >
@@ -266,13 +269,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     left: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
     gap: 5,
     zIndex: 2,
   },
   sharedBadge: {
-    backgroundColor: 'rgba(34,197,94,0.85)',
+    backgroundColor: 'rgba(59,130,246,0.9)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 20,
