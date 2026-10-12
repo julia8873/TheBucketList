@@ -11,10 +11,24 @@ WebBrowser.maybeCompleteAuthSession();
  */
 export function useGoogleAuth(onError: (message: string) => void) {
   const [loading, setLoading] = useState(false);
+
+  const rawWeb = process.env['EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID'];
+  const rawAndroid = process.env['EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID'];
+  const rawIos = process.env['EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'];
+
+  const isConfigured = Boolean(
+    rawWeb &&
+    !rawWeb.includes('your-web-client-id') &&
+    rawAndroid &&
+    !rawAndroid.includes('your-android-client-id')
+  );
+
+  // expo-auth-session lanza invariantClientId si androidClientId es undefined en Android.
+  // Proporcionamos un fallback no-undefined seguro para evitar pantallas blancas.
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    webClientId: rawWeb || 'disabled-web-client-id',
+    androidClientId: rawAndroid || 'disabled-android-client-id',
+    iosClientId: rawIos || 'disabled-ios-client-id',
   });
 
   useEffect(() => {
@@ -38,5 +52,13 @@ export function useGoogleAuth(onError: (message: string) => void) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [response]);
 
-  return { start: () => void promptAsync(), ready: !!request, loading };
+  const start = () => {
+    if (!isConfigured) {
+      onError('El inicio de sesión con Google no está configurado en este entorno.');
+      return;
+    }
+    void promptAsync();
+  };
+
+  return { start, ready: isConfigured && !!request, loading };
 }
