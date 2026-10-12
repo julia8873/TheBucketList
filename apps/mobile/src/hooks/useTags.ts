@@ -111,6 +111,8 @@ export const useTagUsage = () => {
 };
 
 export const useItemTags = (bucketId: string) => {
+  const { user } = useAuthStore();
+
   return useQuery({
     queryKey: ['item_tags', bucketId],
     queryFn: async () => {
@@ -121,7 +123,9 @@ export const useItemTags = (bucketId: string) => {
 
       if (error && error.code === '42P01') return [];
       if (error) throw error;
-      return data || [];
+      // En tareas compartidas cada participante tiene su propia copia de la etiqueta:
+      // aquí solo se muestran las del usuario actual.
+      return (data || []).filter((row: any) => !row.tag || !user || row.tag.user_id === user.id);
     },
     enabled: !!bucketId,
   });
@@ -201,19 +205,23 @@ export const useDeleteTag = () => {
 
 export const useSyncItemTags = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
 
   return useMutation({
     mutationFn: async ({ bucketId, selectedTagIds }: { bucketId: string, selectedTagIds: string[] }) => {
-      // 1. Get current tags
+      // 1. Etiquetas actuales DEL USUARIO. En una tarea compartida también hay copias de otros
+      // participantes; no se deben tocar desde aquí (la base de datos las sincroniza sola).
       const { data: current, error: fetchError } = await supabase
         .from('item_tags')
-        .select('tag_id')
+        .select('tag_id, tag:tags(user_id)')
         .eq('item_id', bucketId);
 
       if (fetchError && fetchError.code === '42P01') return; // Migration not applied
       if (fetchError) throw fetchError;
 
-      const currentIds = (current || []).map(r => r.tag_id);
+      const currentIds = (current || [])
+        .filter((r: any) => r.tag && (!user || r.tag.user_id === user.id))
+        .map((r: any) => r.tag_id as string);
 
       // 2. Diff
       const toAdd = selectedTagIds.filter(id => !currentIds.includes(id));

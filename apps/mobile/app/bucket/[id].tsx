@@ -246,15 +246,44 @@ export default function BucketDetailScreen() {
     enabled: !!id,
   });
 
-  const handleCollaboratorsChange = async (newCollabs: CollaboratorItem[]) => {
+  // Participantes de la tarea que vienen de álbumes compartidos (dueño del álbum y miembros
+  // aceptados) además del dueño de la tarea y sus colaboradores. Se refresca por Realtime.
+  const { data: participantsData = [] } = useQuery({
+    queryKey: ['bucketParticipants', id],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_bucket_participants', { p_bucket_id: id });
+      if (error) {
+        console.warn('Error fetching participants:', error);
+        return [];
+      }
+      return (data || []).map((r: any) => ({
+        id: r.id as string,
+        username: r.username || '',
+        display_name: r.display_name || null,
+        avatar_url: r.avatar_url || null,
+        status: 'accepted' as const,
+        isOwner: !!r.is_owner,
+      }));
+    },
+    enabled: !!id,
+  });
+
+  const handleCollaboratorsChange = async (rawCollabs: CollaboratorItem[]) => {
     try {
+      // Dueño de la tarea y miembros de álbum no son filas de bucket_collaborators:
+      // no se añaden ni se quitan desde aquí.
+      const lockedIds = new Set<string>([
+        ...(bucket?.user_id ? [bucket.user_id] : []),
+        ...participantsData.map((p: any) => p.id),
+      ]);
+      const newCollabs = rawCollabs.filter(c => !lockedIds.has(c.id));
       const currentIds = new Set(collaborators.map((c: any) => c.id));
       const newIds = new Set(newCollabs.map(c => c.id));
 
       const toAdd = newCollabs.filter(c => !currentIds.has(c.id));
       // Only the owner can remove collaborators
       const toRemoveIds = isOwner
-        ? collaborators.filter((c: any) => !newIds.has(c.id)).map((c: any) => c.id)
+        ? collaborators.filter((c: any) => !newIds.has(c.id) && !lockedIds.has(c.id)).map((c: any) => c.id)
         : [];
 
       // Optimistic update: preserve existing status if already set
@@ -1233,14 +1262,21 @@ export default function BucketDetailScreen() {
               return false;
             });
 
-            // Build full participant list: owner first, then collaborators
-            // Exclude the current user (you already know you're in the task)
-            // and avoid duplicating if owner is also in collaborators table
+            // Lista completa de participantes: dueño de la tarea, miembros de los álbumes
+            // compartidos que la contienen (aceptados) y colaboradores directos. Sin duplicados
+            // (el primero gana, así un miembro aceptado no se queda como «Pendiente»).
+            // Incluye al usuario actual, pero solo cuando la tarea es realmente compartida.
             const ownerId = bucket.user_id;
-            const participants = [
+            const byId = new Map<string, any>();
+            [
               ownerEntry,
+              ...participantsData.filter((p: any) => p.id !== ownerId),
               ...visibleCollaborators.filter((c: any) => c.id !== ownerId),
-            ].filter((c: any) => c.id !== user?.id);
+            ].forEach((c: any) => {
+              if (!byId.has(c.id)) byId.set(c.id, c);
+            });
+            const everyone = Array.from(byId.values());
+            const participants = everyone.some((c: any) => c.id !== user?.id) ? everyone : [];
 
             if (participants.length === 0 && !canEdit) return null;
 
@@ -2148,20 +2184,29 @@ export default function BucketDetailScreen() {
             avatar_url: bucket.user?.avatar_url || null,
             status: 'accepted' as const,
           }] : []),
-          // Other collaborators except the current user
-          ...collaborators.filter((c: any) => c.id !== user?.id && c.status === 'accepted'),
+          // Miembros de álbumes compartidos que contienen la tarea (no se pueden quitar desde aquí)
+          ...participantsData.filter((p: any) => p.id !== user?.id && p.id !== bucket.user_id),
+          // Otros colaboradores directos, salvo el usuario actual y los ya incluidos arriba
+          ...collaborators.filter(
+            (c: any) =>
+              c.id !== user?.id &&
+              c.status === 'accepted' &&
+              !participantsData.some((p: any) => p.id === c.id),
+          ),
         ]}
         onChange={(collabs) => void handleCollaboratorsChange(collabs)}
         onClose={() => setShowCollaboratorPicker(false)}
-        readOnlyIds={isOwner
-          ? []
-          : [
-              bucket.user_id,
-              ...collaborators
-                .filter((c: any) => c.status === 'accepted' && c.id !== user?.id)
-                .map((c: any) => c.id),
-            ]
-        }
+        readOnlyIds={[
+          ...(isOwner
+            ? []
+            : [
+                bucket.user_id,
+                ...collaborators
+                  .filter((c: any) => c.status === 'accepted' && c.id !== user?.id)
+                  .map((c: any) => c.id),
+              ]),
+          ...participantsData.filter((p: any) => p.id !== user?.id).map((p: any) => p.id),
+        ]}
       />
     </View>
   );

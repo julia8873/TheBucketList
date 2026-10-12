@@ -43,6 +43,8 @@ export function useRealtimeSync(userId?: string) {
         invalidate('albums');
         invalidate('album');
         invalidate('calendar_month');
+        invalidate('bucketParticipants');
+        invalidate('bucketAlbum');
       });
     };
     const refreshAlbums = () =>
@@ -51,6 +53,9 @@ export function useRealtimeSync(userId?: string) {
         invalidate('album');
         invalidate('albumCollaborators');
         invalidate('buckets');
+        invalidate('bucketParticipants');
+        invalidate('bucketAlbum');
+        invalidate('item_tags');
       });
 
     const channel = supabase
@@ -74,6 +79,24 @@ export function useRealtimeSync(userId?: string) {
       // está en el álbum y RLS la oculta; este evento es el que lo dispara.
       .on('postgres_changes', { event: '*', schema: 'public', table: 'album_items' }, (p: any) =>
         refreshBucket(p.new?.bucket_id ?? p.old?.bucket_id),
+      )
+      // Etiquetas de la tarea (las copias para cada participante las crea la base de datos).
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'item_tags' }, (p: any) => {
+        const itemId = p.new?.item_id ?? p.old?.item_id;
+        if (itemId) schedule(`item_tags:${itemId}`, () => invalidate('item_tags', itemId));
+        schedule('item_tags', () => {
+          invalidate('buckets', 'tag-usage');
+          invalidate('tags');
+        });
+      })
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tags', filter: `user_id=eq.${userId}` },
+        () =>
+          schedule('tags', () => {
+            invalidate('tags');
+            invalidate('item_tags');
+          }),
       )
       .on('postgres_changes', { event: '*', schema: 'public', table: 'albums' }, refreshAlbums)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'album_members' }, refreshAlbums)
