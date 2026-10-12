@@ -29,7 +29,9 @@ import { SubtaskList } from '../../src/components/SubtaskList';
 import { BucketPhotoViewer } from '../../src/components/BucketPhotoViewer';
 import { PhotoCropModal } from '../../src/components/PhotoCropModal';
 import { DraggableTaskList } from '../../src/components/DraggableTaskList';
-import { TaskMentionPickerSheet, MentionThumb, MENTION_TASK_COLUMNS, type MentionTask } from '../../src/components/TaskMentionPickerSheet';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { TaskMentionPickerSheet, MENTION_TASK_COLUMNS, type MentionTask } from '../../src/components/TaskMentionPickerSheet';
+import { TaskMentionList } from '../../src/components/TaskMentionList';
 import { BucketBottomSheet } from '../../src/components/BucketBottomSheet';
 import { LocationAutocomplete } from '../../src/components/LocationAutocomplete';
 import { styles } from './BucketDetail.styles';
@@ -220,12 +222,31 @@ export default function BucketDetailScreen() {
         `)
         .or(`bucket_a.eq.${id},bucket_b.eq.${id}`);
       if (error) throw error;
-      return ((data ?? []) as any[])
+      const mapped = ((data ?? []) as any[])
         .map((row) => {
           const other = row.bucket_a === id ? row.b : row.a;
           return other ? { mentionId: row.id as string, task: other as MentionTask } : null;
         })
         .filter(Boolean) as { mentionId: string; task: MentionTask }[];
+
+      try {
+        const stored = await AsyncStorage.getItem(`@bucket_mentions_order_${id}`);
+        if (stored) {
+          const savedIds: string[] = JSON.parse(stored);
+          mapped.sort((a, b) => {
+            const idxA = savedIds.indexOf(a.task.id);
+            const idxB = savedIds.indexOf(b.task.id);
+            if (idxA === -1 && idxB === -1) return 0;
+            if (idxA === -1) return 1;
+            if (idxB === -1) return -1;
+            return idxA - idxB;
+          });
+        }
+      } catch {
+        // Fallback al orden de la consulta
+      }
+
+      return mapped;
     },
     enabled: !!id,
   });
@@ -739,12 +760,21 @@ export default function BucketDetailScreen() {
       Alert.alert('No se pudo mencionar la tarea', error.message || 'Inténtalo de nuevo.');
       return;
     }
+    try {
+      const stored = await AsyncStorage.getItem(`@bucket_mentions_order_${id}`);
+      const savedIds: string[] = stored ? JSON.parse(stored) : [];
+      if (!savedIds.includes(task.id)) {
+        savedIds.push(task.id);
+        await AsyncStorage.setItem(`@bucket_mentions_order_${id}`, JSON.stringify(savedIds));
+      }
+    } catch {}
     // Refresca esta tarea y la mencionada (la otra pantalla puede estar abierta en la pila).
     void queryClient.invalidateQueries({ queryKey: ['bucketMentions'] });
   };
 
   const deleteMention = async (mentionId: string) => {
-    const previous = queryClient.getQueryData(['bucketMentions', id]);
+    const previous = queryClient.getQueryData<any[]>(['bucketMentions', id]);
+    const deleted = (previous ?? []).find((m) => m.mentionId === mentionId);
     queryClient.setQueryData(['bucketMentions', id], (old: any) =>
       (old ?? []).filter((m: any) => m.mentionId !== mentionId),
     );
@@ -754,7 +784,38 @@ export default function BucketDetailScreen() {
       Alert.alert('No se pudo quitar la mención', error?.message || 'No tienes permiso para quitarla.');
       return;
     }
+    if (deleted?.task?.id) {
+      try {
+        const stored = await AsyncStorage.getItem(`@bucket_mentions_order_${id}`);
+        if (stored) {
+          const savedIds: string[] = JSON.parse(stored);
+          const next = savedIds.filter((tid) => tid !== deleted.task.id);
+          await AsyncStorage.setItem(`@bucket_mentions_order_${id}`, JSON.stringify(next));
+        }
+      } catch {}
+    }
     void queryClient.invalidateQueries({ queryKey: ['bucketMentions'] });
+  };
+
+  // Reorganizar menciones (como los pasos en una tarea)
+  const handleMoveMention = async (fromIndex: number, toIndex: number) => {
+    if (!mentionsData) return;
+    const clampedToIndex = Math.max(0, Math.min(toIndex, mentionsData.length - 1));
+    if (fromIndex === clampedToIndex || clampedToIndex < 0 || clampedToIndex >= mentionsData.length) return;
+
+    const reordered = [...mentionsData];
+    const [moved] = reordered.splice(fromIndex, 1);
+    if (!moved) return;
+    reordered.splice(clampedToIndex, 0, moved);
+
+    queryClient.setQueryData(['bucketMentions', id], reordered);
+
+    try {
+      const orderedIds = reordered.map((m) => m.task.id);
+      await AsyncStorage.setItem(`@bucket_mentions_order_${id}`, JSON.stringify(orderedIds));
+    } catch (e) {
+      console.warn('Error guardando el orden de las menciones:', e);
+    }
   };
 
   // En el menú desplegable: tocar una tarea la menciona o le quita la mención.
@@ -1717,30 +1778,17 @@ export default function BucketDetailScreen() {
                       </Pressable>
                     )}
                   </View>
-                  {(mentionsData ?? []).map((m) => (
-                    <Pressable
-                      key={m.mentionId}
-                      onPress={() => router.push(`/bucket/${m.task.id}` as any)}
-                      onLongPress={canEdit ? () => removeMention(m.mentionId, m.task.title) : undefined}
-                      style={({ pressed }) => ({
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 12,
-                        paddingVertical: 8,
-                        opacity: pressed ? 0.6 : 1,
-                      })}
-                    >
-                      <MentionThumb task={m.task} size={44} />
-                      <Typography
-                        variant="bodySemibold"
-                        numberOfLines={2}
-                        color={m.task.status === 'completed' ? theme.colors.foregroundMuted : theme.colors.foreground}
-                        style={{ flex: 1 }}
-                      >
-                        {m.task.title}
-                      </Typography>
-                    </Pressable>
-                  ))}
+                  <View style={{ marginTop: 8 }}>
+                    <TaskMentionList
+                      mentions={mentionsData ?? []}
+                      isOwner={canEdit}
+                      theme={theme}
+                      onPress={(task) => router.push(`/bucket/${task.id}` as any)}
+                      onDelete={(mentionId, title) => removeMention(mentionId, title)}
+                      onMove={(from, to) => void handleMoveMention(from, to)}
+                      onDraggingChange={(dragging) => setScrollEnabled(!dragging)}
+                    />
+                  </View>
                 </>
               ) : (
                 <Pressable

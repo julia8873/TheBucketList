@@ -183,7 +183,7 @@ export function DraggableTaskList<T extends { id: string }>({
   const visualIds = [...ids];
   if (active) {
     const [moved] = visualIds.splice(active.from, 1);
-    visualIds.splice(active.over, 0, moved);
+    if (moved) visualIds.splice(active.over, 0, moved);
   }
   const visual = offsetsFor(visualIds);
 
@@ -204,7 +204,8 @@ export function DraggableTaskList<T extends { id: string }>({
     let acc = 0;
     let over = list.length - 1;
     for (let j = 0; j < list.length; j++) {
-      const hj = heightsRef.current[list[j]] ?? DEFAULT_HEIGHT;
+      const itemId = list[j];
+      const hj = (itemId ? heightsRef.current[itemId] : undefined) ?? DEFAULT_HEIGHT;
       if (center < acc + hj + GAP / 2) {
         over = j;
         break;
@@ -219,7 +220,7 @@ export function DraggableTaskList<T extends { id: string }>({
     if (current && current.from !== current.over) {
       const next = orderedRef.current.map((i) => i.id);
       const [moved] = next.splice(current.from, 1);
-      next.splice(current.over, 0, moved);
+      if (moved) next.splice(current.over, 0, moved);
       setLocalOrder(next);
       handlers.current.onReorder(next);
     }
@@ -235,10 +236,10 @@ export function DraggableTaskList<T extends { id: string }>({
           item={item}
           index={index}
           count={ordered.length}
-          top={base.offsets[index]}
+          top={base.offsets[index] ?? 0}
           maxTop={Math.max(0, base.total - h(item.id))}
           height={h(item.id)}
-          target={visual.offsets[visualIds.indexOf(item.id)]}
+          target={visual.offsets[visualIds.indexOf(item.id)] ?? 0}
           animate={interacted}
           isActive={active?.id === item.id}
           renderItem={renderItem as any}
