@@ -130,9 +130,19 @@ export const tasksService = {
   async assignTasksToAlbum(albumId: string, taskIds: string[]): Promise<void> {
     if (!taskIds.length) return;
     
-    const itemsToUpsert = taskIds.map(id => ({
+    // Las tareas nuevas van al final del orden manual del álbum.
+    const { data: last } = await supabase
+      .from('album_items')
+      .select('position')
+      .eq('album_id', albumId)
+      .order('position', { ascending: false })
+      .limit(1);
+    const start = ((last?.[0] as any)?.position ?? -1) + 1;
+
+    const itemsToUpsert = taskIds.map((id, i) => ({
       album_id: albumId,
       bucket_id: id,
+      position: start + i,
     }));
 
     const { error } = await supabase

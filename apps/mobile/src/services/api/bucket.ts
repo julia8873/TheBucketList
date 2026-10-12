@@ -190,11 +190,21 @@ export const bucketApi = {
     
     // 4. Insert album relation if any
     if (payload.album_id) {
+      // Va al final del orden manual del álbum.
+      const { data: last } = await supabase
+        .from('album_items')
+        .select('position')
+        .eq('album_id', payload.album_id)
+        .order('position', { ascending: false })
+        .limit(1);
+      const nextPosition = ((last?.[0] as any)?.position ?? -1) + 1;
+
       const { error: albumError } = await supabase
         .from('album_items')
         .insert({
           album_id: payload.album_id,
-          bucket_id: (bucket as Bucket).id
+          bucket_id: (bucket as Bucket).id,
+          position: nextPosition,
         });
         
       if (albumError) {

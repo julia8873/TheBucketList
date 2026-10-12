@@ -6,7 +6,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, Folder, Search, Check } from 'lucide-react-native';
+import { ChevronLeft, Folder, Search, Check, Plus } from 'lucide-react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { BucketCover } from '../src/components/BucketCover';
 import { useUnassignedTasks, useAssignTasks, useCreateTasksFromDefaults, defaultTasks, UnassignedTask } from '../src/services/api/tasksService';
@@ -109,6 +109,19 @@ export default function AddTaskScreen() {
     }
   };
 
+  // Crear una tarea nueva. Si venimos de un álbum, se sustituye esta pantalla por el formulario
+  // con el álbum ya elegido: al guardar se vuelve al álbum con la tarea dentro.
+  const handleCreateTask = () => {
+    const title = search.trim();
+    const params = new URLSearchParams();
+    if (albumId && albumId !== 'new') params.set('albumId', albumId);
+    if (title) params.set('title', title);
+    const qs = params.toString();
+    const href = `/(modals)/create-bucket${qs ? `?${qs}` : ''}` as any;
+    if (albumId && albumId !== 'new') router.replace(href);
+    else router.push(href);
+  };
+
   const handleAdd = async () => {
     if (selectedIds.size === 0) return;
 
@@ -180,6 +193,19 @@ export default function AddTaskScreen() {
           onChangeText={setSearch}
         />
       </View>
+
+      {/* Crear tarea nueva */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Crear una tarea nueva"
+        style={styles.createTaskBtn}
+        onPress={handleCreateTask}
+      >
+        <Plus size={18} color="#D4B13A" strokeWidth={2.2} />
+        <Text style={styles.createTaskBtnText}>
+          {search.trim() ? `Crear «${search.trim()}»` : 'Crear una tarea nueva'}
+        </Text>
+      </Pressable>
 
       {/* Segmented Control */}
       <View style={styles.segmentedControl}>
@@ -268,7 +294,7 @@ export default function AddTaskScreen() {
           <ActivityIndicator color="#D4B13A" style={{ marginTop: 40 }} />
         ) : currentVisibleTasks.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No hay más tareas disponibles (o todas se encuentran en el álbum). Crea más tareas.</Text>
+            <Text style={styles.emptyText}>No hay más tareas disponibles (o todas se encuentran en el álbum). Puedes crear una tarea nueva con el botón de arriba.</Text>
           </View>
         ) : (
           currentVisibleTasks.map(task => {
@@ -400,6 +426,27 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     fontSize: 16,
     color: '#F3EEE3',
+  },
+  createTaskBtn: {
+    marginTop: 14,
+    marginHorizontal: 20,
+    height: 48,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#D4B13A',
+    borderStyle: 'dashed',
+    backgroundColor: '#1A1708',
+    paddingHorizontal: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  createTaskBtnText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 15,
+    color: '#D4B13A',
+    flexShrink: 1,
   },
   segmentedControl: {
     marginTop: 16,

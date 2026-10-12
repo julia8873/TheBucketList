@@ -10,6 +10,10 @@ export interface TaskItem {
   coverKey: string;
   isCompleted: boolean;
   dueDate?: string;
+  /** Fecha en que se completó (para ordenar). */
+  completedAt?: string | null;
+  /** Posición manual dentro del álbum (album_items.position). */
+  position?: number | null;
   stepsTotal?: number;
   stepsCompleted?: number;
   location?: string;
@@ -47,7 +51,7 @@ export const albumsService = {
       const { data: allUserBuckets, error: bucketsError } = await supabase
         .from('buckets')
         .select(`
-          id, title, deadline, cover_image, thumbnail_mode, thumbnail_photo_id, status, priority,
+          id, title, deadline, completed_at, cover_image, thumbnail_mode, thumbnail_photo_id, status, priority,
           category_id, counter_count, counter_target,
           categories ( name_es, color, slug ),
           item_subtasks ( id, done ),
@@ -81,6 +85,8 @@ export const albumsService = {
           categorySlug: cat?.slug ?? null,
           isCompleted: b.status === 'completed',
           dueDate: b.deadline || undefined,
+          completedAt: (b as any).completed_at ?? null,
+          position: null,
           stepsTotal,
           stepsCompleted,
         };
@@ -119,10 +125,13 @@ export const albumsService = {
     // Fetch album items
     const { data: albumItems, error: itemsError } = await supabase
       .from('album_items')
-      .select('bucket_id')
+      .select('bucket_id, position')
       .eq('album_id', id);
 
     if (itemsError) throw itemsError;
+    const positionByBucket = new Map<string, number | null>(
+      (albumItems ?? []).map((ai: any) => [ai.bucket_id as string, (ai.position ?? null) as number | null]),
+    );
 
     let tasks: TaskItem[] = [];
 
@@ -131,7 +140,7 @@ export const albumsService = {
       const { data: buckets, error: bucketsError } = await supabase
         .from('buckets')
         .select(`
-          id, title, deadline, cover_image, thumbnail_mode, thumbnail_photo_id, status, priority,
+          id, title, deadline, completed_at, cover_image, thumbnail_mode, thumbnail_photo_id, status, priority,
           category_id, counter_count, counter_target,
           categories ( name_es, color, slug ),
           item_subtasks ( id, done ),
@@ -163,6 +172,8 @@ export const albumsService = {
           categorySlug: cat?.slug ?? null,
           isCompleted: b.status === 'completed',
           dueDate: b.deadline || undefined,
+          completedAt: (b as any).completed_at ?? null,
+          position: positionByBucket.get(b.id) ?? null,
           stepsTotal,
           stepsCompleted,
         };

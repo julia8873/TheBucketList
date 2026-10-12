@@ -30,6 +30,10 @@ export function useCreateBucket() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: BUCKETS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
+      // Si se creó dentro de un álbum, que el álbum y la lista de «Añadir tareas» lo reflejen.
+      void queryClient.invalidateQueries({ queryKey: ['album'] });
+      void queryClient.invalidateQueries({ queryKey: ['albums'] });
+      void queryClient.invalidateQueries({ queryKey: ['unassigned_tasks'] });
     },
   });
 }

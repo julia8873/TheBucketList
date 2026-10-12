@@ -3,7 +3,7 @@ import {
   View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform,
   Pressable, Text, TextInput, Switch, ActivityIndicator, Image, Alert
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createBucketSchema, type CreateBucketForm } from '@bucketlist/shared';
@@ -31,13 +31,17 @@ const GRADIENTS = [
 
 export default function CreateBucketModal() {
   const router = useRouter();
+  // Al venir de «Añadir tareas» de un álbum: álbum preseleccionado y título sugerido.
+  const params = useLocalSearchParams<{ albumId?: string; title?: string }>();
   const createBucket = useCreateBucket();
   const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
   const { data: albums = [] } = useAlbums(user?.id);
 
   const [coverImage, setCoverImage] = useState<string>('preset:green');
-  const [albumId, setAlbumId] = useState<string | null>(null);
+  const [albumId, setAlbumId] = useState<string | null>(
+    params.albumId && params.albumId !== 'new' ? String(params.albumId) : null,
+  );
   const [showAlbumPicker, setShowAlbumPicker] = useState(false);
 
   const [steps, setSteps] = useState<{ id: string; title: string }[]>([]);
@@ -52,7 +56,7 @@ export default function CreateBucketModal() {
   const { control, handleSubmit, setValue, getValues, watch, formState: { errors } } = useForm<CreateBucketForm>({
     resolver: zodResolver(createBucketSchema),
     defaultValues: {
-      title: '',
+      title: params.title ? String(params.title) : '',
       description: '',
       priority: 'medium',
       visibility: 'public',

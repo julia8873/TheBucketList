@@ -14,6 +14,7 @@ import {
   Modal,
   Animated,
   Platform,
+  Dimensions,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
@@ -38,6 +39,10 @@ import {
   Flag,
   FolderPlus,
   Copy,
+  Search,
+  ArrowUp,
+  ArrowDown,
+  GripVertical,
 } from 'lucide-react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
@@ -50,6 +55,7 @@ import { useUserFavorites, useToggleFavoriteAlbum } from '../../src/hooks/useFav
 import { useCopyBucket, useCopiedBucketIds } from '../../src/hooks/useSocial';
 import { uploadAlbumCover } from '../../src/services/api/albumCover';
 import { BucketCover } from '../../src/components/BucketCover';
+import { DraggableTaskList } from '../../src/components/DraggableTaskList';
 
 const GRADIENTS = {
   aurora: ['#0E4B43', '#1F8560'],
@@ -92,6 +98,17 @@ export default function AlbumDetailScreen() {
   };
 
   const [showCollaboratorPicker, setShowCollaboratorPicker] = useState(false);
+
+  // ── Buscar / ordenar tareas del álbum ────────────────────────────────────
+  type TaskSortField = 'manual' | 'alphabetical' | 'completed_at';
+  const [taskSortField, setTaskSortField] = useState<TaskSortField>('manual');
+  const [taskSortDir, setTaskSortDir] = useState<'asc' | 'desc'>('asc');
+  const [taskSortMenuOpen, setTaskSortMenuOpen] = useState(false);
+  const [taskSortMenuPos, setTaskSortMenuPos] = useState({ top: 0, right: 20 });
+  const taskSortTriggerRef = useRef<View>(null);
+  const [taskSearchOpen, setTaskSearchOpen] = useState(false);
+  const [taskSearch, setTaskSearch] = useState('');
+  const [dragging, setDragging] = useState(false);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [sheetMode, setSheetMode] = useState<'menu' | 'visibility' | 'priority' | 'status'>('menu');
   const sheetTranslateY = useRef(new Animated.Value(420)).current;
@@ -452,7 +469,7 @@ export default function AlbumDetailScreen() {
       return {
         ...old,
         tasks: old.tasks.map((t: TaskItem) =>
-          t.id === task.id ? { ...t, isCompleted: nextCompleted } : t
+          t.id === task.id ? { ...t, isCompleted: nextCompleted, completedAt: nextCompletedAt } : t
         ),
       };
     });
@@ -487,7 +504,7 @@ export default function AlbumDetailScreen() {
       if (!old) return old;
       return {
         ...old,
-        tasks: old.tasks.map((t: TaskItem) => ({ ...t, isCompleted: nextCompleted })),
+        tasks: old.tasks.map((t: TaskItem) => ({ ...t, isCompleted: nextCompleted, completedAt: nextCompletedAt })),
       };
     });
 
@@ -711,17 +728,121 @@ export default function AlbumDetailScreen() {
   }
 
   const { title, coverKey, coverPath, isShared, tasks } = album;
-  const pendientes = tasks
-    .filter((t) => !t.isCompleted)
-    .sort((a, b) => {
-      if (!a.dueDate) return 1;
-      if (!b.dueDate) return -1;
-      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+
+  // ── Búsqueda y orden de las tareas del álbum ─────────────────────────────
+  const normalizeText = (v: string) =>
+    v.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const searchQ = normalizeText(taskSearch.trim());
+  const isSearchingTasks = searchQ.length > 0;
+
+  const byDeadline = (a: TaskItem, b: TaskItem) => {
+    if (!a.dueDate && !b.dueDate) return 0;
+    if (!a.dueDate) return 1;
+    if (!b.dueDate) return -1;
+    return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+  };
+  // Orden manual (album_items.position); si aún no hay orden guardado, por fecha límite.
+  const byManual = (a: TaskItem, b: TaskItem) => {
+    const pa = a.position ?? 0;
+    const pb = b.position ?? 0;
+    return pa !== pb ? pa - pb : byDeadline(a, b);
+  };
+  const dirSign = taskSortDir === 'asc' ? 1 : -1;
+  const compareTasks = (a: TaskItem, b: TaskItem) => {
+    if (taskSortField === 'alphabetical') {
+      const cmp = a.title.localeCompare(b.title, 'es', { sensitivity: 'base' });
+      return cmp !== 0 ? cmp * dirSign : byManual(a, b);
+    }
+    if (taskSortField === 'completed_at') {
+      const ta = a.completedAt ? new Date(a.completedAt).getTime() : null;
+      const tb = b.completedAt ? new Date(b.completedAt).getTime() : null;
+      if (ta === null && tb === null) return byManual(a, b);
+      if (ta === null) return 1; // sin fecha siempre al final
+      if (tb === null) return -1;
+      return ta !== tb ? (ta - tb) * dirSign : byManual(a, b);
+    }
+    return byManual(a, b);
+  };
+  const visibleTasks = isSearchingTasks
+    ? tasks.filter((t) => normalizeText(t.title).includes(searchQ))
+    : tasks;
+  const pendientes = visibleTasks.filter((t) => !t.isCompleted).sort(compareTasks);
+  const hechas = visibleTasks.filter((t) => t.isCompleted).sort(compareTasks);
+  const allDone = tasks.filter((t) => t.isCompleted);
+
+  // Arrastrar para reordenar: solo en orden manual, sin búsqueda activa y con permiso de edición.
+  const manualDragEnabled =
+    canEdit && id !== 'unassigned' && taskSortField === 'manual' && !isSearchingTasks;
+
+  const persistTaskOrder = async (orderedIds: string[]) => {
+    const current = new Map(tasks.map((t) => [t.id, t.position ?? null]));
+    queryClient.setQueryData(['album', id, user?.id], (old: any) => {
+      if (!old) return old;
+      return {
+        ...old,
+        tasks: old.tasks.map((t: TaskItem) => {
+          const idx = orderedIds.indexOf(t.id);
+          return idx >= 0 ? { ...t, position: idx } : t;
+        }),
+      };
     });
-  const hechas = tasks.filter((t) => t.isCompleted);
+    const changed = orderedIds
+      .map((bid, idx) => ({ bid, idx }))
+      .filter(({ bid, idx }) => current.get(bid) !== idx);
+    const results = await Promise.all(
+      changed.map(({ bid, idx }) =>
+        supabase.from('album_items').update({ position: idx }).eq('album_id', id).eq('bucket_id', bid),
+      ),
+    );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) {
+      console.error('Error guardando el orden de las tareas:', failed.error);
+      Alert.alert('Error', 'No se pudo guardar el nuevo orden');
+    }
+    void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+  };
+
+  const handleReorderSection = (section: 'pendientes' | 'hechas', orderedIds: string[]) => {
+    const pendIds = pendientes.map((t) => t.id);
+    const doneIds = hechas.map((t) => t.id);
+    void persistTaskOrder(section === 'pendientes' ? [...orderedIds, ...doneIds] : [...pendIds, ...orderedIds]);
+  };
+
+  const openTaskSortMenu = () => {
+    taskSortTriggerRef.current?.measureInWindow((x, y, w, h) => {
+      setTaskSortMenuPos({
+        top: y + h + 6,
+        right: Dimensions.get('window').width - (x + w),
+      });
+      setTaskSortMenuOpen(true);
+    });
+  };
+
+  const handleTaskSortOption = (field: TaskSortField) => {
+    if (field === 'manual') {
+      setTaskSortField('manual');
+      setTaskSortMenuOpen(false);
+      return;
+    }
+    if (taskSortField === field) {
+      setTaskSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setTaskSortField(field);
+      setTaskSortDir(field === 'alphabetical' ? 'asc' : 'desc');
+      setTaskSortMenuOpen(false);
+    }
+  };
+
+  const toggleTaskSearch = () => {
+    if (taskSearchOpen) setTaskSearch('');
+    setTaskSearchOpen((v) => !v);
+  };
+
+  const taskSortLabel =
+    taskSortField === 'alphabetical' ? 'Nombre' : taskSortField === 'completed_at' ? 'Fecha de completado' : 'Manual';
 
   const total = tasks.length;
-  const completedCount = hechas.length;
+  const completedCount = allDone.length;
   const progressPercent = total === 0 ? 0 : Math.round((completedCount / total) * 100);
   const areAllCompleted = total > 0 && completedCount === total;
 
@@ -771,7 +892,7 @@ export default function AlbumDetailScreen() {
     return task.categoryName;
   };
 
-  const renderTask = (task: TaskItem) => {
+  const renderTask = (task: TaskItem, drag?: { panHandlers: any; isActive: boolean }) => {
     const isDone = task.isCompleted;
     const subTitle = getSubTitle(task);
     const badge = getBadgeText(task.dueDate);
@@ -832,6 +953,17 @@ export default function AlbumDetailScreen() {
             </View>
           )}
 
+          {/* Asa para reordenar (solo en orden manual) */}
+          {drag && (
+            <View
+              {...drag.panHandlers}
+              hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+              accessibilityLabel="Arrastrar para reordenar"
+            >
+              <GripVertical size={20} color="#8F8F8F" strokeWidth={1.8} />
+            </View>
+          )}
+
           {/* Interactive Checkbox (solo si puede editar) o botón de añadir/guardada */}
           {canEdit ? (
             <Pressable
@@ -877,6 +1009,7 @@ export default function AlbumDetailScreen() {
     <View style={styles.container}>
       <ScrollView
         style={styles.scroll}
+        scrollEnabled={!dragging}
         contentContainerStyle={{ paddingBottom: insets.bottom + (id === 'unassigned' ? 40 : 120) }}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#D4B13A" />
@@ -1202,6 +1335,69 @@ export default function AlbumDetailScreen() {
           </Pressable>
         )}
 
+        {/* Buscar y ordenar tareas */}
+        {tasks.length > 0 && (
+          <View style={styles.tasksToolbarWrap}>
+            <View style={styles.tasksToolbar}>
+              <Pressable
+                onPress={toggleTaskSearch}
+                hitSlop={8}
+                style={styles.toolbarIconBtn}
+                accessibilityRole="button"
+                accessibilityLabel={taskSearchOpen ? 'Cerrar búsqueda' : 'Buscar tareas'}
+              >
+                {taskSearchOpen ? (
+                  <X size={18} color="#D4B13A" strokeWidth={2} />
+                ) : (
+                  <Search size={18} color="#D4B13A" strokeWidth={2} />
+                )}
+              </Pressable>
+              <View style={{ flex: 1 }} />
+              <Text style={styles.toolbarLabel}>Ordenar por:</Text>
+              <Pressable
+                ref={taskSortTriggerRef}
+                collapsable={false}
+                onPress={openTaskSortMenu}
+                hitSlop={8}
+                style={styles.toolbarSortBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Ordenar tareas"
+              >
+                <Text style={styles.toolbarSortText}>{taskSortLabel}</Text>
+                {taskSortField !== 'manual' &&
+                  (taskSortDir === 'desc' ? (
+                    <ArrowDown color="#D4B13A" size={14} />
+                  ) : (
+                    <ArrowUp color="#D4B13A" size={14} />
+                  ))}
+              </Pressable>
+            </View>
+            {taskSearchOpen && (
+              <View style={styles.taskSearchBox}>
+                <Search size={18} color="#8F8F8F" strokeWidth={1.8} />
+                <TextInput
+                  style={styles.taskSearchInput}
+                  value={taskSearch}
+                  onChangeText={setTaskSearch}
+                  placeholder="Buscar en las tareas del álbum"
+                  placeholderTextColor="#6B6B6B"
+                  autoFocus
+                  returnKeyType="search"
+                />
+                {taskSearch.length > 0 && (
+                  <Pressable onPress={() => setTaskSearch('')} hitSlop={10}>
+                    <X size={18} color="#8F8F8F" strokeWidth={2} />
+                  </Pressable>
+                )}
+              </View>
+            )}
+          </View>
+        )}
+
+        {isSearchingTasks && pendientes.length === 0 && hechas.length === 0 && (
+          <Text style={styles.noResultsText}>No hay tareas que coincidan con la búsqueda.</Text>
+        )}
+
         {/* Pendientes */}
         {pendientes.length > 0 && (
           <View style={styles.sectionContainer}>
@@ -1210,17 +1406,19 @@ export default function AlbumDetailScreen() {
                 <Text style={{ color: '#D4B13A' }}>PENDIENTES</Text>
                 <Text style={{ color: '#FFF' }}> · {pendientes.length}</Text>
               </Text>
-              {canEdit && id !== 'unassigned' && (
-                <Pressable
-                  style={styles.addBtn}
-                  onPress={() => router.push(`/add-task?albumId=${id}`)}
-                >
-                  <Plus size={16} color="#D4B13A" strokeWidth={2} />
-                  <Text style={styles.addBtnText}>Añadir</Text>
-                </Pressable>
-              )}
             </View>
-            <View style={styles.taskList}>{pendientes.map(renderTask)}</View>
+            {manualDragEnabled ? (
+              <View style={styles.taskListDraggable}>
+                <DraggableTaskList
+                  items={pendientes}
+                  renderItem={(task, drag) => renderTask(task, drag)}
+                  onReorder={(ids) => handleReorderSection('pendientes', ids)}
+                  onDraggingChange={setDragging}
+                />
+              </View>
+            ) : (
+              <View style={styles.taskList}>{pendientes.map((t) => renderTask(t))}</View>
+            )}
           </View>
         )}
 
@@ -1233,7 +1431,18 @@ export default function AlbumDetailScreen() {
                 <Text style={{ color: '#FFF' }}> · {hechas.length}</Text>
               </Text>
             </View>
-            <View style={styles.taskList}>{hechas.map(renderTask)}</View>
+            {manualDragEnabled ? (
+              <View style={styles.taskListDraggable}>
+                <DraggableTaskList
+                  items={hechas}
+                  renderItem={(task, drag) => renderTask(task, drag)}
+                  onReorder={(ids) => handleReorderSection('hechas', ids)}
+                  onDraggingChange={setDragging}
+                />
+              </View>
+            ) : (
+              <View style={styles.taskList}>{hechas.map((t) => renderTask(t))}</View>
+            )}
           </View>
         )}
       </ScrollView>
@@ -1274,6 +1483,45 @@ export default function AlbumDetailScreen() {
           )}
         </View>
       )}
+
+      {/* Menú de orden de tareas */}
+      <Modal
+        visible={taskSortMenuOpen}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setTaskSortMenuOpen(false)}
+      >
+        <Pressable style={StyleSheet.absoluteFill} onPress={() => setTaskSortMenuOpen(false)}>
+          <View style={[styles.sortMenu, { top: taskSortMenuPos.top, right: taskSortMenuPos.right }]}>
+            {([
+              { field: 'manual' as const, label: 'Manual' },
+              { field: 'alphabetical' as const, label: 'Nombre' },
+              { field: 'completed_at' as const, label: 'Fecha de completado' },
+            ]).map((option, i) => {
+              const selected = taskSortField === option.field;
+              return (
+                <Pressable
+                  key={option.field}
+                  onPress={() => handleTaskSortOption(option.field)}
+                  style={[styles.sortMenuItem, i > 0 && styles.sortMenuItemBorder]}
+                >
+                  <Text style={[styles.sortMenuText, selected && { color: '#D4B13A', fontFamily: 'Inter_600SemiBold' }]}>
+                    {option.label}
+                  </Text>
+                  {selected && option.field !== 'manual' &&
+                    (taskSortDir === 'desc' ? (
+                      <ArrowDown color="#D4B13A" size={16} />
+                    ) : (
+                      <ArrowUp color="#D4B13A" size={16} />
+                    ))}
+                  {selected && option.field === 'manual' && <Check color="#D4B13A" size={16} strokeWidth={2.5} />}
+                </Pressable>
+              );
+            })}
+          </View>
+        </Pressable>
+      </Modal>
 
       {/* Collaborator Picker Sheet */}
       <CollaboratorPickerSheet
@@ -2057,6 +2305,101 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 10,
     gap: 10,
+  },
+  taskListDraggable: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+  },
+  tasksToolbarWrap: {
+    marginTop: 20,
+    paddingHorizontal: 20,
+  },
+  tasksToolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  toolbarIconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#151515',
+    borderWidth: 1,
+    borderColor: '#262626',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  toolbarLabel: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    color: '#8F8F8F',
+  },
+  toolbarSortBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  toolbarSortText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 13,
+    color: '#D4B13A',
+  },
+  taskSearchBox: {
+    marginTop: 12,
+    height: 44,
+    borderRadius: 999,
+    backgroundColor: '#151515',
+    borderWidth: 1,
+    borderColor: '#262626',
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  taskSearchInput: {
+    flex: 1,
+    fontFamily: 'Inter_400Regular',
+    fontSize: 15,
+    color: '#F3EEE3',
+    padding: 0,
+  },
+  noResultsText: {
+    marginTop: 28,
+    textAlign: 'center',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    color: '#8F8F8F',
+  },
+  sortMenu: {
+    position: 'absolute',
+    minWidth: 190,
+    backgroundColor: '#1C1C1C',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#2E2E2E',
+    overflow: 'hidden',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  sortMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  sortMenuItemBorder: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+  },
+  sortMenuText: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    color: '#F3EEE3',
   },
   taskCard: {
     minHeight: 76,
