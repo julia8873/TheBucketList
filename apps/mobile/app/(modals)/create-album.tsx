@@ -22,6 +22,7 @@ import { supabase } from '../../src/services/supabase';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
 import * as ImagePicker from 'expo-image-picker';
+import { uploadAlbumCover, isLocalUri } from '../../src/services/api/albumCover';
 
 type Cover = {
   id: string;
@@ -213,6 +214,22 @@ export default function CreateAlbumScreen() {
     if (!name.trim()) return;
 
     try {
+      // Si la portada es una foto del dispositivo, se sube a Storage y se guarda su URL pública
+      // (si se guardase la ruta local, solo la vería este dispositivo).
+      let coverToSave = selectedCover;
+      if (selectedCover.type === 'image' && isLocalUri(selectedCover.uri)) {
+        if (!user?.id) throw new Error('Debes iniciar sesión para subir la portada.');
+        let publicUrl: string;
+        try {
+          publicUrl = await uploadAlbumCover(user.id, selectedCover.uri!);
+        } catch {
+          throw new Error('No se pudo subir la portada. Vuelve a elegir la imagen e inténtalo de nuevo.');
+        }
+        coverToSave = { ...selectedCover, uri: publicUrl };
+        setSelectedCover(coverToSave);
+      }
+      const coverJson = JSON.stringify(coverToSave);
+
       if (isEditing && id) {
         await updateAlbum.mutateAsync({
           id,
@@ -221,7 +238,7 @@ export default function CreateAlbumScreen() {
             description: description.trim(),
             priority,
             visibility,
-            cover_path: JSON.stringify(selectedCover),
+            cover_path: coverJson,
             is_shared: isShared,
           },
         });
@@ -270,7 +287,7 @@ export default function CreateAlbumScreen() {
           description: description.trim(),
           priority,
           visibility,
-          cover_path: JSON.stringify(selectedCover),
+          cover_path: coverJson,
           is_shared: isShared,
         });
 

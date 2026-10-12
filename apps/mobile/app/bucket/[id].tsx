@@ -320,7 +320,12 @@ export default function BucketDetailScreen() {
 
   const isOwner = bucket.user_id === user?.id;
   const isCollaborator = !isOwner && collaborators.some((c: any) => c.id === user?.id && c.status === 'accepted');
-  const canEdit = isOwner || isCollaborator;
+  // Miembro (o dueño) de un álbum compartido que contiene esta tarea: puede editarla como cualquier otra.
+  // useAlbums() solo devuelve álbumes propios o donde el usuario ha aceptado la invitación.
+  const isInSharedAlbum = (bucketAlbums ?? []).some((bi: any) =>
+    (albumsData ?? []).some((a: any) => a.id === bi.album_id),
+  );
+  const canEdit = isOwner || isCollaborator || isInSharedAlbum;
   let photos: any[] = bucket.bucket_photos || [];
 
   if (photoSearchQuery.trim()) {

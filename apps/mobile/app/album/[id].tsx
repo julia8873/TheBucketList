@@ -48,6 +48,7 @@ import { useAuthStore } from '../../src/stores/auth.store';
 import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
 import { useUserFavorites, useToggleFavoriteAlbum } from '../../src/hooks/useFavorites';
 import { useCopyBucket, useCopiedBucketIds } from '../../src/hooks/useSocial';
+import { uploadAlbumCover } from '../../src/services/api/albumCover';
 
 const GRADIENTS = {
   aurora: ['#0E4B43', '#1F8560'],
@@ -390,12 +391,28 @@ export default function AlbumDetailScreen() {
       });
 
       if (!result.canceled && result.assets && result.assets[0]) {
-        const newCover = {
-          id: 'custom-img',
-          type: 'image',
-          uri: result.assets[0].uri,
-        };
-        const coverJson = JSON.stringify(newCover);
+        if (!currentUserId) {
+          Alert.alert('Inicia sesión', 'Debes iniciar sesión para cambiar la portada.');
+          return;
+        }
+        const localUri = result.assets[0].uri;
+
+        // Vista previa inmediata con la imagen local mientras se sube
+        const previewJson = JSON.stringify({ id: 'custom-img', type: 'image', uri: localUri });
+        queryClient.setQueryData(['album', id, user?.id], (old: any) =>
+          old ? { ...old, coverPath: previewJson, coverKey: 'custom-img' } : old
+        );
+
+        // Subir a Supabase Storage: lo que se guarda es una URL pública que ven todos los usuarios
+        let publicUrl: string;
+        try {
+          publicUrl = await uploadAlbumCover(currentUserId, localUri);
+        } catch (uploadErr: any) {
+          Alert.alert('No se pudo subir la portada', uploadErr?.message || 'Inténtalo de nuevo.');
+          void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+          return;
+        }
+        const coverJson = JSON.stringify({ id: 'custom-img', type: 'image', uri: publicUrl });
 
         queryClient.setQueryData(['album', id, user?.id], (old: any) =>
           old ? { ...old, coverPath: coverJson, coverKey: 'custom-img' } : old

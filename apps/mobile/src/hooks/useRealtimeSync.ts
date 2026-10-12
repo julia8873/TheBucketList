@@ -1,0 +1,82 @@
+import { useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '../services/supabase';
+
+/**
+ * Espera tras el último cambio antes de recargar. Evita una avalancha de recargas
+ * y que una recarga antigua pise cambios rápidos del propio usuario (p. ej. el contador).
+ */
+const DEBOUNCE_MS = 1500;
+
+/**
+ * Sincronización en tiempo real: cuando OTRA persona edita una tarea o un álbum
+ * compartido, los datos se recargan solos en tu dispositivo.
+ * Supabase solo envía los cambios de filas que tu usuario puede ver (RLS).
+ * Se monta UNA vez (en app/_layout.tsx).
+ */
+export function useRealtimeSync(userId?: string) {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const timers = new Map<string, ReturnType<typeof setTimeout>>();
+    const schedule = (key: string, fn: () => void) => {
+      const prev = timers.get(key);
+      if (prev) clearTimeout(prev);
+      timers.set(
+        key,
+        setTimeout(() => {
+          timers.delete(key);
+          fn();
+        }, DEBOUNCE_MS),
+      );
+    };
+    const invalidate = (...queryKey: unknown[]) => {
+      void queryClient.invalidateQueries({ queryKey });
+    };
+
+    const refreshBucket = (bucketId?: string) => {
+      if (bucketId) schedule(`bucket:${bucketId}`, () => invalidate('bucketDetail', bucketId));
+      schedule('buckets', () => {
+        invalidate('buckets');
+        invalidate('albums');
+        invalidate('album');
+        invalidate('calendar_month');
+      });
+    };
+    const refreshAlbums = () =>
+      schedule('albums', () => {
+        invalidate('albums');
+        invalidate('album');
+        invalidate('albumCollaborators');
+        invalidate('buckets');
+      });
+
+    const channel = supabase
+      .channel(`sync-${userId}-${Date.now()}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'buckets' }, (p: any) =>
+        refreshBucket(p.new?.id ?? p.old?.id),
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'item_subtasks' }, (p: any) =>
+        refreshBucket(p.new?.bucket_id ?? p.old?.bucket_id),
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bucket_photos' }, (p: any) =>
+        refreshBucket(p.new?.bucket_id ?? p.old?.bucket_id),
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bucket_collaborators' }, (p: any) => {
+        const bucketId = p.new?.bucket_id ?? p.old?.bucket_id;
+        if (bucketId) schedule(`collab:${bucketId}`, () => invalidate('bucketCollaborators', bucketId));
+        refreshBucket(bucketId);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'albums' }, refreshAlbums)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'album_members' }, refreshAlbums)
+      .subscribe();
+
+    return () => {
+      timers.forEach((t) => clearTimeout(t));
+      timers.clear();
+      void supabase.removeChannel(channel);
+    };
+  }, [userId, queryClient]);
+}

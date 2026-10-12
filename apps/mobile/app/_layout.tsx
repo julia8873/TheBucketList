@@ -24,6 +24,7 @@ import { hydrateLanguageStore } from '../src/stores/language.store';
 import { useAuthStore } from '../src/stores/auth.store';
 import { supabase } from '../src/services/supabase';
 import { useAutoRefresh } from '../src/hooks/useAutoRefresh';
+import { useRealtimeSync } from '../src/hooks/useRealtimeSync';
 import 'intl-pluralrules';
 import '../../../packages/shared/src/i18n'; // initialize i18n
 
@@ -127,6 +128,9 @@ function RootNavigator() {
 
   // Recarga automática (volver a la app, recuperar conexión, cada 60 s)
   useAutoRefresh();
+
+  // Cambios de otros colaboradores en tiempo real (tareas y álbumes compartidos)
+  useRealtimeSync(userId);
 
   // Enlaces del correo (confirmar cuenta / restablecer contraseña): …#access_token=…&refresh_token=…&type=…
   useEffect(() => {
