@@ -9,6 +9,11 @@ export interface UnassignedTask {
   location?: string;
   /** true si la tarea ya está dentro del álbum que se está editando. */
   inAlbum?: boolean;
+  /** Valor para `BucketCover` (foto elegida/última, portada o null = degradado automático). */
+  imageValue?: string | null;
+  categorySlug?: string | null;
+  /** Idea por defecto: aún no es una tarea real, no tiene fotos y conserva su degradado. */
+  isDefault?: boolean;
 }
 
 const MOCK_TASKS: UnassignedTask[] = [
@@ -35,9 +40,10 @@ const DEFAULT_TASKS: UnassignedTask[] = [
   { id: 'd5', title: 'Cenar en un faro', categoryName: 'Comida', location: 'Bretaña', coverKey: 'dorado' },
 ];
 
-export const defaultTasks = DEFAULT_TASKS;
+export const defaultTasks: UnassignedTask[] = DEFAULT_TASKS.map((t) => ({ ...t, isDefault: true }));
 
 import { supabase } from '../supabase';
+import { resolveTaskImage } from '../../utils/taskImage';
 
 export const tasksService = {
   /**
@@ -53,7 +59,9 @@ export const tasksService = {
     if (userError || !userAuth.user) throw new Error('Not authenticated');
     const userId = userAuth.user.id;
 
-    const select = 'id, title, location_text, created_at, categories(name_es), album_items(album_id)';
+    const select =
+      'id, title, location_text, created_at, cover_image, thumbnail_mode, thumbnail_photo_id, ' +
+      'categories(name_es, slug), album_items(album_id), bucket_photos(id, storage_path, thumb_path, created_at)';
 
     const { data: own, error } = await supabase
       .from('buckets')
@@ -113,6 +121,8 @@ export const tasksService = {
         categoryName: (b.categories as any)?.name_es || '',
         location: b.location_text || undefined,
         coverKey: 'aurora',
+        imageValue: resolveTaskImage(b, { preferThumb: true }),
+        categorySlug: (b.categories as any)?.slug ?? null,
         inAlbum: !!albumId && (b.album_items ?? []).some((ai: any) => ai.album_id === albumId),
       }));
   },

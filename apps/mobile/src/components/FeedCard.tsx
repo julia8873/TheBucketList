@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { Check, Heart, MessageCircle } from 'lucide-react-native';
 import { Avatar, fontFamily, gold } from '@bucketlist/ui';
 import { BucketCover } from './BucketCover';
+import { resolveTaskImage } from '../utils/taskImage';
 import { useAuthStore } from '../stores/auth.store';
 import { useCopiedBucketIds, useCopyBucket, useToggleLike } from '../hooks/useSocial';
 import { daysBetween, timeAgo } from '../utils/timeAgo';
@@ -35,8 +36,8 @@ export function FeedCard({ event, onPress, index }: FeedCardProps) {
   if (!actor || !bucket) return null;
 
   const isOwn = !!user && bucket.user_id === user.id;
-  const photo = bucket.bucket_photos?.[0];
-  const coverValue: string | null = photo?.storage_path ?? bucket.cover_image ?? null;
+  // Foto subida más reciente, portada o degradado, según lo que haya elegido el dueño de la tarea.
+  const coverValue: string | null = resolveTaskImage(bucket);
 
   const reactions: Array<{ emoji: string; user_id: string }> = bucket.reactions ?? [];
   const likeCount = reactions.length;

@@ -23,6 +23,7 @@ import { useAlbums } from '../../src/hooks/useAlbums';
 import { useUserFavorites, useToggleFavoriteBucket } from '../../src/hooks/useFavorites';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { BucketCover } from '../../src/components/BucketCover';
+import { resolveTaskImage, type ThumbnailMode } from '../../src/utils/taskImage';
 import { SubtaskList } from '../../src/components/SubtaskList';
 import { BucketPhotoViewer } from '../../src/components/BucketPhotoViewer';
 import { BucketBottomSheet } from '../../src/components/BucketBottomSheet';
@@ -42,6 +43,66 @@ function ProgressBar({ value, total, color, track }: { value: number; total: num
     <View style={{ height: 6, borderRadius: 3, backgroundColor: track, overflow: 'hidden' }}>
       <View style={{ width: `${pct * 100}%`, height: '100%', borderRadius: 3, backgroundColor: color }} />
     </View>
+  );
+}
+
+/** Miniatura seleccionable de la sección "Imagen de la tarea". */
+function ThumbOption({
+  label,
+  selected,
+  onPress,
+  children,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      accessibilityLabel={`Imagen de la tarea: ${label}`}
+      style={{ width: 72, alignItems: 'center', gap: 6 }}
+    >
+      <View
+        style={{
+          width: 64,
+          height: 64,
+          borderRadius: 12,
+          overflow: 'hidden',
+          borderWidth: 2,
+          borderColor: selected ? gold[400] : 'transparent',
+          backgroundColor: dark[300],
+        }}
+      >
+        {children}
+        {selected && (
+          <View
+            style={{
+              position: 'absolute',
+              top: 4,
+              right: 4,
+              width: 18,
+              height: 18,
+              borderRadius: 9,
+              backgroundColor: gold[400],
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Check size={12} color="#0D0D0D" strokeWidth={3} />
+          </View>
+        )}
+      </View>
+      <Text
+        numberOfLines={1}
+        style={{ fontSize: 11, color: selected ? gold[400] : '#9A9A9A' }}
+      >
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -341,6 +402,21 @@ export default function BucketDetailScreen() {
     const db = new Date(b.created_at || 0).getTime();
     return photoSortDir === 'asc' ? da - db : db - da;
   });
+  // Imagen de la tarea: opciones y selección vigente (una foto borrada vuelve a Automática).
+  const thumbPhotos: any[] = [...(bucket.bucket_photos || [])]
+    .filter((p: any) => !!p.storage_path)
+    .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+  const hasCover = !!bucket.cover_image;
+  const chosenPhotoId =
+    bucket.thumbnail_mode === 'photo' && thumbPhotos.some((p: any) => p.id === bucket.thumbnail_photo_id)
+      ? (bucket.thumbnail_photo_id as string)
+      : null;
+  const thumbSelection: ThumbnailMode = chosenPhotoId
+    ? 'photo'
+    : bucket.thumbnail_mode === 'cover' && hasCover
+      ? 'cover'
+      : 'auto';
+  const showThumbnailPicker = canEdit && (thumbPhotos.length > 0 || hasCover);
   const subtasks: any[] = [...(bucket.item_subtasks || [])].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
   const comments: any[] = commentsData || [];
   const subtasksDone = subtasks.filter((s) => s.done).length;
@@ -675,6 +751,30 @@ export default function BucketDetailScreen() {
 
   const uploadCover = () => {
     closeSheet(() => void pickAndUploadCover());
+  };
+
+  /** Elige qué imagen representa a la tarea en listas, feed y explorar. Se guarda al tocar. */
+  const chooseThumbnail = async (mode: ThumbnailMode, photoId: string | null = null) => {
+    const patch = {
+      thumbnail_mode: mode,
+      thumbnail_photo_id: mode === 'photo' ? photoId : null,
+    };
+    const previous = queryClient.getQueryData(['bucketDetail', id]);
+    queryClient.setQueryData(['bucketDetail', id], (oldData: any) =>
+      oldData ? { ...oldData, ...patch } : oldData,
+    );
+
+    const { error } = await supabase.from('buckets').update(patch).eq('id', id);
+    if (error) {
+      queryClient.setQueryData(['bucketDetail', id], previous);
+      Alert.alert('No se pudo cambiar la imagen', error.message || 'Inténtalo de nuevo.');
+      return;
+    }
+
+    invalidateBucket();
+    void queryClient.invalidateQueries({ queryKey: ['feed'] });
+    void queryClient.invalidateQueries({ queryKey: ['explore'] });
+    void queryClient.invalidateQueries({ queryKey: ['unassigned_tasks'] });
   };
 
   const handleDelete = () => {
@@ -1590,6 +1690,71 @@ export default function BucketDetailScreen() {
                 </View>
               )}
             </View>
+          )}
+
+          {/* ── Imagen de la tarea ─────────────────────────────────────────── */}
+          {showThumbnailPicker && (
+            <>
+              <View style={[styles.divider, { backgroundColor: dark[400], marginTop: 20 }]} />
+              <View style={styles.photosSection}>
+                <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
+                  IMAGEN DE LA TAREA
+                </Typography>
+                <Typography variant="caption" color={theme.colors.foregroundMuted} style={{ marginTop: 4, marginBottom: 12 }}>
+                  Es la que verán los demás en el feed y en explorar.
+                </Typography>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 10, paddingRight: 8 }}
+                >
+                  <ThumbOption
+                    label="Automática"
+                    selected={thumbSelection === 'auto'}
+                    onPress={() => void chooseThumbnail('auto')}
+                  >
+                    <BucketCover
+                      value={resolveTaskImage({ ...bucket, thumbnail_mode: 'auto' }, { preferThumb: true })}
+                      title={bucket.title}
+                      categorySlug={bucket.category?.slug}
+                      seed={bucket.id}
+                      iconSize={64}
+                      style={StyleSheet.absoluteFill}
+                    />
+                  </ThumbOption>
+                  {hasCover && (
+                    <ThumbOption
+                      label="Portada"
+                      selected={thumbSelection === 'cover'}
+                      onPress={() => void chooseThumbnail('cover')}
+                    >
+                      <BucketCover
+                        value={bucket.cover_image}
+                        title={bucket.title}
+                        categorySlug={bucket.category?.slug}
+                        seed={bucket.id}
+                        iconSize={64}
+                        style={StyleSheet.absoluteFill}
+                      />
+                    </ThumbOption>
+                  )}
+                  {thumbPhotos.map((photo: any, index: number) => (
+                    <ThumbOption
+                      key={photo.id}
+                      label={`Foto ${thumbPhotos.length - index}`}
+                      selected={thumbSelection === 'photo' && chosenPhotoId === photo.id}
+                      onPress={() => void chooseThumbnail('photo', photo.id)}
+                    >
+                      <Image
+                        source={{ uri: storageApi.getPublicUrl(photo.thumb_path || photo.storage_path) }}
+                        style={StyleSheet.absoluteFill}
+                        resizeMode="cover"
+                      />
+                    </ThumbOption>
+                  ))}
+                </ScrollView>
+              </View>
+            </>
           )}
 
           {/* ── Fotos ──────────────────────────────────────────────────────── */}

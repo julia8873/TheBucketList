@@ -81,7 +81,7 @@ export default function PublicProfileScreen() {
           *,
           category:categories(slug, name_es),
           item_subtasks(done),
-          bucket_photos(storage_path, thumb_path)
+          bucket_photos(id, storage_path, thumb_path, created_at)
         `
         )
         .eq('user_id', id)

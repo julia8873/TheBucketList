@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../supabase';
 import { useAuthStore } from '../../stores/auth.store';
+import { resolveTaskImage } from '../../utils/taskImage';
 
 export interface TaskItem {
   id: string;
@@ -12,6 +13,9 @@ export interface TaskItem {
   stepsTotal?: number;
   stepsCompleted?: number;
   location?: string;
+  /** Valor para `BucketCover` (foto elegida/última, portada o null = degradado automático). */
+  imageValue?: string | null;
+  categorySlug?: string | null;
 }
 
 export interface AlbumDetail {
@@ -43,10 +47,11 @@ export const albumsService = {
       const { data: allUserBuckets, error: bucketsError } = await supabase
         .from('buckets')
         .select(`
-          id, title, deadline, cover_image, status, priority,
+          id, title, deadline, cover_image, thumbnail_mode, thumbnail_photo_id, status, priority,
           category_id, counter_count, counter_target,
           categories ( name_es, color, slug ),
           item_subtasks ( id, done ),
+          bucket_photos ( id, storage_path, thumb_path, created_at ),
           album_items ( album_id )
         `)
         .eq('user_id', userId);
@@ -72,6 +77,8 @@ export const albumsService = {
           title: b.title,
           categoryName: b.priority ? (b.priority === 'high' ? 'Prioridad Alta' : b.priority === 'low' ? 'Prioridad Baja' : 'Prioridad Media') : (cat?.name_es || 'Sin categoría'),
           coverKey: 'aurora',
+          imageValue: resolveTaskImage(b as any, { preferThumb: true }),
+          categorySlug: cat?.slug ?? null,
           isCompleted: b.status === 'completed',
           dueDate: b.deadline || undefined,
           stepsTotal,
@@ -124,10 +131,11 @@ export const albumsService = {
       const { data: buckets, error: bucketsError } = await supabase
         .from('buckets')
         .select(`
-          id, title, deadline, cover_image, status, priority,
+          id, title, deadline, cover_image, thumbnail_mode, thumbnail_photo_id, status, priority,
           category_id, counter_count, counter_target,
           categories ( name_es, color, slug ),
-          item_subtasks ( id, done )
+          item_subtasks ( id, done ),
+          bucket_photos ( id, storage_path, thumb_path, created_at )
         `)
         .in('id', bucketIds);
 
@@ -150,7 +158,9 @@ export const albumsService = {
           id: b.id,
           title: b.title,
           categoryName: b.priority ? (b.priority === 'high' ? 'Prioridad Alta' : b.priority === 'low' ? 'Prioridad Baja' : 'Prioridad Media') : (cat?.name_es || 'Sin categoría'),
-          coverKey: coverKey, // we just use album's cover for task gradient if no task cover, but let's use album's coverKey
+          coverKey: coverKey,
+          imageValue: resolveTaskImage(b as any, { preferThumb: true }),
+          categorySlug: cat?.slug ?? null,
           isCompleted: b.status === 'completed',
           dueDate: b.deadline || undefined,
           stepsTotal,

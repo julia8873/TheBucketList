@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Folder, Search, Check } from 'lucide-react-native';
 import { useQueryClient } from '@tanstack/react-query';
+import { BucketCover } from '../src/components/BucketCover';
 import { useUnassignedTasks, useAssignTasks, useCreateTasksFromDefaults, defaultTasks, UnassignedTask } from '../src/services/api/tasksService';
 
 const GRADIENTS = {
@@ -285,12 +286,23 @@ export default function AddTaskScreen() {
                 onPress={() => toggleTask(task.id)}
               >
                 <View style={styles.taskThumbContainer}>
-                  <LinearGradient
-                    colors={thumbGradient}
-                    start={isDiagonal ? { x: 0, y: 0 } : { x: 0.5, y: 0 }}
-                    end={isDiagonal ? { x: 1, y: 1 } : { x: 0.5, y: 1 }}
-                    style={styles.taskThumb}
-                  />
+                  {task.isDefault ? (
+                    <LinearGradient
+                      colors={thumbGradient}
+                      start={isDiagonal ? { x: 0, y: 0 } : { x: 0.5, y: 0 }}
+                      end={isDiagonal ? { x: 1, y: 1 } : { x: 0.5, y: 1 }}
+                      style={styles.taskThumb}
+                    />
+                  ) : (
+                    <BucketCover
+                      value={task.imageValue ?? null}
+                      title={task.title}
+                      categorySlug={task.categorySlug}
+                      seed={task.id}
+                      iconSize={56}
+                      style={styles.taskThumb}
+                    />
+                  )}
                 </View>
                 <View style={styles.taskContent}>
                   <Text style={styles.taskTitle} numberOfLines={2}>{task.title}</Text>

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { View, StyleSheet, Pressable, ScrollView, Dimensions, Alert, Animated, Modal, Text, Image, RefreshControl } from 'react-native';
+import { View, StyleSheet, Pressable, ScrollView, Dimensions, Alert, Animated, Modal, Text, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, Typography, SegmentedControl, FilterChip, TaskRow, AlbumCard, NewAlbumCard, NoAlbumRow, FAB, spacing, useToast, Input, TagChip } from '@bucketlist/ui';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
@@ -7,7 +7,6 @@ import { FlashList } from '@shopify/flash-list';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Search, Trash2, CheckCircle2, X, Tag as TagIcon, ArrowDown, ArrowUp, Star } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 
 import { useBuckets, useDeleteBucket, useUpdateBucket } from '../../src/hooks/useBuckets';
 import { useAlbums } from '../../src/hooks/useAlbums';
@@ -16,9 +15,9 @@ import { useAuthStore } from '../../src/stores/auth.store';
 import { usePullToRefresh } from '../../src/hooks/useAutoRefresh';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../src/services/supabase';
-import { storageApi } from '../../src/services/api/storage';
 import { CalendarTab } from '../../src/components/CalendarTab';
 import { BucketCover } from '../../src/components/BucketCover';
+import { resolveTaskImage } from '../../src/utils/taskImage';
 import { TagFilterSheet } from '../../src/components/TagFilterSheet';
 import { useTags, useTagUsage, type Tag } from '../../src/hooks/useTags';
 import { hexToRgba } from '../../src/constants/tagPresets';
@@ -516,23 +515,6 @@ export default function MyListScreen() {
       </View>
     );
 
-    const coverPath = item.cover_image || (item.bucket_photos?.[0]?.thumb_path || item.bucket_photos?.[0]?.storage_path);
-    const isPreset = coverPath?.startsWith('preset:');
-    const hasActualImage = !!coverPath && !isPreset;
-    const imageUri = hasActualImage ? (coverPath.startsWith('http') ? coverPath : storageApi.getPublicUrl(coverPath)) : null;
-
-    let gradientColors: readonly [string, string, ...string[]] = ['#2A2A2A', '#3A3A3A'];
-    const catName = item.category?.name_es?.toLowerCase() || item.category?.slug?.toLowerCase() || '';
-    if (catName.includes('viaj') || catName === 'travel') {
-      gradientColors = ['#0F5C4A', '#1E8A5E'];
-    } else if (catName.includes('aventura') || catName === 'adventure') {
-      gradientColors = ['#2F6DB5', '#8EC5F2'];
-    } else if (catName.includes('deporte') || catName === 'sport') {
-      gradientColors = ['#F29A5C', '#D2562B'];
-    } else {
-      gradientColors = ['#5C4A0F', '#8A7A1E']; // coherent gold-ish fallback
-    }
-
     const renderRightActions = (progress: any, dragX: any) => {
       if (!isItemOwner) return null;
       const opacity = progress.interpolate({
@@ -657,13 +639,13 @@ export default function MyListScreen() {
           thumbnailElement={
             isItemExpired && item.status !== 'completed' ? (
               <View style={{ flex: 1, backgroundColor: '#202020', borderRadius: 12 }} />
-            ) : imageUri ? (
-              <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
             ) : (
-              <LinearGradient
-                colors={gradientColors}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
+              <BucketCover
+                value={resolveTaskImage(item, { preferThumb: true })}
+                title={item.title}
+                categorySlug={item.category?.slug}
+                seed={item.id}
+                iconSize={56}
                 style={StyleSheet.absoluteFill}
               />
             )

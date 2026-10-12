@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
@@ -10,8 +10,8 @@ import { supabase } from '../../src/services/supabase';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useAlbums } from '../../src/hooks/useAlbums';
 import { useIncomingRequestCount } from '../../src/hooks/useFriends';
-import { storageApi } from '../../src/services/api/storage';
 import { BucketCover } from '../../src/components/BucketCover';
+import { resolveTaskImage } from '../../src/utils/taskImage';
 import { initialsOf, displayNameOf } from '../../src/utils/initials';
 
 const RECENT_LIMIT = 4;
@@ -37,7 +37,7 @@ export default function CurrentUserProfileScreen() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('buckets')
-        .select('id, title, status, cover_image, location_text, completed_at, created_at, bucket_photos(storage_path, thumb_path, created_at)')
+        .select('id, title, status, cover_image, thumbnail_mode, thumbnail_photo_id, location_text, completed_at, created_at, bucket_photos(id, storage_path, thumb_path, created_at)')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -51,12 +51,6 @@ export default function CurrentUserProfileScreen() {
   const containerWidth = gridWidth > 0 ? gridWidth : winWidth - 40;
   const tileWidth = Math.floor((containerWidth - 10) / 2);
   const tileHeight = Math.round(tileWidth * 1.3);
-
-  /** Misma foto que se ve primero dentro de la tarea (la más reciente). */
-  const firstPhoto = (item: any) =>
-    [...(item.bucket_photos ?? [])].sort(
-      (a: any, b: any) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime(),
-    )[0];
 
   const [viewMode, setViewMode] = useState<'gallery' | 'list'>('gallery');
   const albums = useAlbums(user?.id);
@@ -210,7 +204,6 @@ export default function CurrentUserProfileScreen() {
         ) : viewMode === 'gallery' ? (
           <View style={styles.grid} onLayout={(e) => setGridWidth(e.nativeEvent.layout.width)}>
             {recent.map((item) => {
-              const photo = firstPhoto(item);
               return (
                 <Pressable
                   key={item.id}
@@ -219,20 +212,12 @@ export default function CurrentUserProfileScreen() {
                   accessibilityLabel={item.title}
                   style={[styles.tile, { width: tileWidth, height: tileHeight }]}
                 >
-                  {photo ? (
-                    <Image
-                      source={{ uri: storageApi.getPublicUrl(photo.storage_path) }}
-                      style={styles.tileImage}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <BucketCover
-                      value={item.cover_image}
-                      title={item.title}
-                      seed={item.id}
-                      style={{ width: tileWidth, height: tileHeight }}
-                    />
-                  )}
+                  <BucketCover
+                    value={resolveTaskImage(item)}
+                    title={item.title}
+                    seed={item.id}
+                    style={{ width: tileWidth, height: tileHeight }}
+                  />
                   <View style={styles.caption}>
                     <Text style={styles.captionTitle} numberOfLines={1}>{item.title}</Text>
                     <Text style={styles.captionSub} numberOfLines={1}>
@@ -246,7 +231,6 @@ export default function CurrentUserProfileScreen() {
         ) : (
           <View style={{ gap: 10 }}>
             {recent.map((item) => {
-              const photo = firstPhoto(item);
               return (
                 <Pressable
                   key={item.id}
@@ -255,15 +239,12 @@ export default function CurrentUserProfileScreen() {
                   style={[styles.listRow, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
                 >
                   <View style={styles.listThumb}>
-                    {photo ? (
-                      <Image
-                        source={{ uri: storageApi.getPublicUrl(photo.thumb_path || photo.storage_path) }}
-                        style={StyleSheet.absoluteFill}
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <BucketCover value={item.cover_image} title={item.title} seed={item.id} style={StyleSheet.absoluteFill} />
-                    )}
+                    <BucketCover
+                      value={resolveTaskImage(item, { preferThumb: true })}
+                      title={item.title}
+                      seed={item.id}
+                      style={StyleSheet.absoluteFill}
+                    />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.listTitle, { color: theme.colors.foreground }]} numberOfLines={2}>{item.title}</Text>

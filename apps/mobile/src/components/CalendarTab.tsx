@@ -6,7 +6,6 @@ import {
   ScrollView,
   ActivityIndicator,
   Text,
-  Image,
   RefreshControl,
 } from 'react-native';
 import { Typography, useTheme, TaskRow } from '@bucketlist/ui';
@@ -24,12 +23,12 @@ import {
   endOfMonth,
 } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { LinearGradient } from 'expo-linear-gradient';
 
 import { useBuckets } from '../hooks/useBuckets';
 import { useAuthStore } from '../stores/auth.store';
 import { usePullToRefresh } from '../hooks/useAutoRefresh';
-import { storageApi } from '../services/api/storage';
+import { BucketCover } from './BucketCover';
+import { resolveTaskImage } from '../utils/taskImage';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { useRouter } from 'expo-router';
 
@@ -132,44 +131,16 @@ export function CalendarTab() {
   const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
   const selectedTasks = tasksByDay.get(selectedDateStr) || [];
 
-  const renderThumbnail = (task: any) => {
-    const coverPath =
-      task.cover_image ||
-      task.bucket_photos?.[0]?.thumb_path ||
-      task.bucket_photos?.[0]?.storage_path;
-    const isPreset = coverPath?.startsWith('preset:');
-    const hasActualImage = !!coverPath && !isPreset;
-    const imageUri = hasActualImage
-      ? coverPath.startsWith('http')
-        ? coverPath
-        : storageApi.getPublicUrl(coverPath)
-      : null;
-
-    if (imageUri) {
-      return <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />;
-    }
-
-    let gradientColors: readonly [string, string, ...string[]] = ['#2A2A2A', '#3A3A3A'];
-    const catName = task.category?.name_es?.toLowerCase() || task.category?.slug?.toLowerCase() || '';
-    if (catName.includes('viaj') || catName === 'travel') {
-      gradientColors = ['#0F5C4A', '#1E8A5E'];
-    } else if (catName.includes('aventura') || catName === 'adventure') {
-      gradientColors = ['#2F6DB5', '#8EC5F2'];
-    } else if (catName.includes('deporte') || catName === 'sport') {
-      gradientColors = ['#F29A5C', '#D2562B'];
-    } else {
-      gradientColors = ['#5C4A0F', '#8A7A1E'];
-    }
-
-    return (
-      <LinearGradient
-        colors={gradientColors}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-    );
-  };
+  const renderThumbnail = (task: any) => (
+    <BucketCover
+      value={resolveTaskImage(task, { preferThumb: true })}
+      title={task.title}
+      categorySlug={task.category?.slug}
+      seed={task.id}
+      iconSize={56}
+      style={StyleSheet.absoluteFill}
+    />
+  );
 
   const getMeta = (task: any) => {
     const pLabel = task.priority === 'high' ? 'Prioridad Alta' : task.priority === 'low' ? 'Prioridad Baja' : 'Prioridad Media';

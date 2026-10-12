@@ -49,6 +49,7 @@ import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/compon
 import { useUserFavorites, useToggleFavoriteAlbum } from '../../src/hooks/useFavorites';
 import { useCopyBucket, useCopiedBucketIds } from '../../src/hooks/useSocial';
 import { uploadAlbumCover } from '../../src/services/api/albumCover';
+import { BucketCover } from '../../src/components/BucketCover';
 
 const GRADIENTS = {
   aurora: ['#0E4B43', '#1F8560'],
@@ -772,9 +773,6 @@ export default function AlbumDetailScreen() {
 
   const renderTask = (task: TaskItem) => {
     const isDone = task.isCompleted;
-    const thumbGradient = (GRADIENTS[task.coverKey as keyof typeof GRADIENTS] ||
-      GRADIENTS.aurora) as unknown as readonly [string, string, ...string[]];
-    const isDiagonal = task.coverKey === 'dorado';
     const subTitle = getSubTitle(task);
     const badge = getBadgeText(task.dueDate);
 
@@ -786,10 +784,12 @@ export default function AlbumDetailScreen() {
         accessibilityRole="button"
       >
         <View style={[styles.taskThumbContainer, isDone && { opacity: 0.5 }]}>
-          <LinearGradient
-            colors={thumbGradient}
-            start={isDiagonal ? { x: 0, y: 0 } : { x: 0.5, y: 0 }}
-            end={isDiagonal ? { x: 1, y: 1 } : { x: 0.5, y: 1 }}
+          <BucketCover
+            value={task.imageValue ?? null}
+            title={task.title}
+            categorySlug={task.categorySlug}
+            seed={task.id}
+            iconSize={56}
             style={styles.taskThumb}
           />
         </View>

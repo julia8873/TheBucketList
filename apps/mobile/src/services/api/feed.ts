@@ -36,7 +36,7 @@ export const feedApi = {
         bucket:buckets!inner(
           *,
           category:categories(slug),
-          bucket_photos(thumb_path, storage_path),
+          bucket_photos(id, thumb_path, storage_path, created_at),
           reactions(emoji, user_id),
           comments:comments(count)
         )
@@ -69,7 +69,7 @@ export const feedApi = {
         *,
         user:profiles!buckets_user_id_fkey(id, username, display_name, avatar_url),
         category:categories(slug),
-        bucket_photos(thumb_path, storage_path),
+        bucket_photos(id, thumb_path, storage_path, created_at),
         reactions(emoji, user_id),
         comments:comments(count)
       `

@@ -3,6 +3,7 @@ import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { differenceInCalendarDays } from 'date-fns';
 import { Pill, ProgressBar, UrgencyChip, fontFamily, gold } from '@bucketlist/ui';
 import { BucketCover } from './BucketCover';
+import { resolveTaskImage } from '../utils/taskImage';
 import { useAuthStore } from '../stores/auth.store';
 import { useCopiedBucketIds, useCopyBucket } from '../hooks/useSocial';
 
@@ -48,7 +49,6 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, onPress }: PublicT
   const completed = bucket.status === 'completed';
   const hasFutureDeadline = !!bucket.deadline && differenceInCalendarDays(new Date(bucket.deadline), new Date()) >= 0;
   const alreadyCopied = !!copiedIds?.includes(bucket.id);
-  const photo = bucket.bucket_photos?.[0];
   const progress = completed ? null : buildProgress(bucket);
 
   const handleCopy = () => {
@@ -82,7 +82,7 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, onPress }: PublicT
       accessibilityLabel={bucket.title}
     >
       <BucketCover
-        value={photo?.storage_path ?? bucket.cover_image ?? null}
+        value={resolveTaskImage(bucket, { preferThumb: true })}
         title={bucket.title}
         categorySlug={bucket.category?.slug}
         seed={bucket.id}
