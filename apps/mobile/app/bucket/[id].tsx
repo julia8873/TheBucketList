@@ -10,7 +10,7 @@ import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Typography, useTheme } from '@bucketlist/ui';
-import { ArrowLeft, Share2, MoreHorizontal, MapPin, Calendar, Heart, MessageCircle, FolderOpen, CheckCircle2, Circle, Camera, Check, Eye, Lock, Users, FolderPlus, Pencil, Trash2, X, ListPlus, Plus, Minus, Download, ArrowUp, ArrowDown, Tag, Flag, Star, GripVertical, Link2, ChevronRight } from 'lucide-react-native';
+import { ArrowLeft, Share2, MoreHorizontal, MapPin, Calendar, Heart, MessageCircle, FolderOpen, CheckCircle2, Circle, Camera, Check, Eye, Lock, Users, FolderPlus, Pencil, Trash2, X, ListPlus, Plus, Minus, Download, ArrowUp, ArrowDown, Tag, Flag, Star, GripVertical, Link2 } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { supabase } from '../../src/services/supabase';
@@ -29,7 +29,7 @@ import { SubtaskList } from '../../src/components/SubtaskList';
 import { BucketPhotoViewer } from '../../src/components/BucketPhotoViewer';
 import { PhotoCropModal } from '../../src/components/PhotoCropModal';
 import { DraggableTaskList } from '../../src/components/DraggableTaskList';
-import { TaskMentionPickerSheet } from '../../src/components/TaskMentionPickerSheet';
+import { TaskMentionPickerSheet, MentionThumb, MENTION_TASK_COLUMNS, type MentionTask } from '../../src/components/TaskMentionPickerSheet';
 import { BucketBottomSheet } from '../../src/components/BucketBottomSheet';
 import { LocationAutocomplete } from '../../src/components/LocationAutocomplete';
 import { styles } from './BucketDetail.styles';
@@ -208,7 +208,7 @@ export default function BucketDetailScreen() {
   const { data: mentionsData } = useQuery({
     queryKey: ['bucketMentions', id],
     queryFn: async () => {
-      const cols = 'id, title, status, user_id';
+      const cols = MENTION_TASK_COLUMNS;
       const { data, error } = await supabase
         .from('bucket_mentions')
         .select(`
@@ -223,9 +223,9 @@ export default function BucketDetailScreen() {
       return ((data ?? []) as any[])
         .map((row) => {
           const other = row.bucket_a === id ? row.b : row.a;
-          return other ? { mentionId: row.id as string, task: other as { id: string; title: string; status: string | null } } : null;
+          return other ? { mentionId: row.id as string, task: other as MentionTask } : null;
         })
-        .filter(Boolean) as { mentionId: string; task: { id: string; title: string; status: string | null } }[];
+        .filter(Boolean) as { mentionId: string; task: MentionTask }[];
     },
     enabled: !!id,
   });
@@ -725,10 +725,17 @@ export default function BucketDetailScreen() {
   };
 
   // ── Menciones entre tareas ─────────────────────────────────────────────
-  const addMention = async (otherId: string) => {
-    setShowMentionPicker(false);
-    const { error } = await supabase.from('bucket_mentions').insert({ bucket_a: id, bucket_b: otherId });
+  const addMention = async (task: MentionTask) => {
+    // Actualiza la pantalla al momento; después se sustituye por los datos reales.
+    queryClient.setQueryData(['bucketMentions', id], (old: any) => [
+      ...(old ?? []),
+      { mentionId: `tmp-${task.id}`, task },
+    ]);
+    const { error } = await supabase.from('bucket_mentions').insert({ bucket_a: id, bucket_b: task.id });
     if (error && error.code !== '23505') {
+      queryClient.setQueryData(['bucketMentions', id], (old: any) =>
+        (old ?? []).filter((m: any) => m.task.id !== task.id),
+      );
       Alert.alert('No se pudo mencionar la tarea', error.message || 'Inténtalo de nuevo.');
       return;
     }
@@ -736,26 +743,37 @@ export default function BucketDetailScreen() {
     void queryClient.invalidateQueries({ queryKey: ['bucketMentions'] });
   };
 
+  const deleteMention = async (mentionId: string) => {
+    const previous = queryClient.getQueryData(['bucketMentions', id]);
+    queryClient.setQueryData(['bucketMentions', id], (old: any) =>
+      (old ?? []).filter((m: any) => m.mentionId !== mentionId),
+    );
+    const { data, error } = await supabase.from('bucket_mentions').delete().eq('id', mentionId).select('id');
+    if (error || !data || data.length === 0) {
+      queryClient.setQueryData(['bucketMentions', id], previous);
+      Alert.alert('No se pudo quitar la mención', error?.message || 'No tienes permiso para quitarla.');
+      return;
+    }
+    void queryClient.invalidateQueries({ queryKey: ['bucketMentions'] });
+  };
+
+  // En el menú desplegable: tocar una tarea la menciona o le quita la mención.
+  const toggleMention = (task: MentionTask) => {
+    const existing = (mentionsData ?? []).find((m) => m.task.id === task.id);
+    if (existing) {
+      if (existing.mentionId.startsWith('tmp-')) return; // aún guardándose
+      void deleteMention(existing.mentionId);
+    } else {
+      void addMention(task);
+    }
+  };
+
+  // Mantener pulsada una mención para quitarla (también se puede desde el menú de menciones).
   const removeMention = (mentionId: string, title: string) => {
+    if (mentionId.startsWith('tmp-')) return;
     Alert.alert('Quitar mención', `Se quitará la relación con "${title}" en ambas tareas.`, [
       { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Quitar',
-        style: 'destructive',
-        onPress: async () => {
-          const previous = queryClient.getQueryData(['bucketMentions', id]);
-          queryClient.setQueryData(['bucketMentions', id], (old: any) =>
-            (old ?? []).filter((m: any) => m.mentionId !== mentionId),
-          );
-          const { data, error } = await supabase.from('bucket_mentions').delete().eq('id', mentionId).select('id');
-          if (error || !data || data.length === 0) {
-            queryClient.setQueryData(['bucketMentions', id], previous);
-            Alert.alert('No se pudo quitar la mención', error?.message || 'No tienes permiso para quitarla.');
-            return;
-          }
-          void queryClient.invalidateQueries({ queryKey: ['bucketMentions'] });
-        },
-      },
+      { text: 'Quitar', style: 'destructive', onPress: () => void deleteMention(mentionId) },
     ]);
   };
 
@@ -1682,6 +1700,63 @@ export default function BucketDetailScreen() {
             </Typography>
           ) : null}
 
+          {/* Menciones (debajo de la descripción) */}
+          {((mentionsData?.length ?? 0) > 0 || canEdit) && (
+            <View style={{ marginBottom: 20 }}>
+              {(mentionsData?.length ?? 0) > 0 ? (
+                <>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
+                      MENCIONES · {mentionsData?.length}
+                    </Typography>
+                    {canEdit && (
+                      <Pressable onPress={() => setShowMentionPicker(true)} hitSlop={10}>
+                        <Typography variant="caption" color={gold[400]} style={{ fontWeight: '600' }}>
+                          Editar
+                        </Typography>
+                      </Pressable>
+                    )}
+                  </View>
+                  {(mentionsData ?? []).map((m) => (
+                    <Pressable
+                      key={m.mentionId}
+                      onPress={() => router.push(`/bucket/${m.task.id}` as any)}
+                      onLongPress={canEdit ? () => removeMention(m.mentionId, m.task.title) : undefined}
+                      style={({ pressed }) => ({
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 12,
+                        paddingVertical: 8,
+                        opacity: pressed ? 0.6 : 1,
+                      })}
+                    >
+                      <MentionThumb task={m.task} size={44} />
+                      <Typography
+                        variant="bodySemibold"
+                        numberOfLines={2}
+                        color={m.task.status === 'completed' ? theme.colors.foregroundMuted : theme.colors.foreground}
+                        style={{ flex: 1 }}
+                      >
+                        {m.task.title}
+                      </Typography>
+                    </Pressable>
+                  ))}
+                </>
+              ) : (
+                <Pressable
+                  onPress={() => setShowMentionPicker(true)}
+                  hitSlop={8}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start' }}
+                >
+                  <Link2 color={gold[400]} size={16} strokeWidth={1.8} />
+                  <Typography variant="body" color={gold[400]}>
+                    + Mencionar tarea
+                  </Typography>
+                </Pressable>
+              )}
+            </View>
+          )}
+
           {/* Stats */}
           <View style={styles.statsRow}>
             <Pressable
@@ -2020,101 +2095,6 @@ export default function BucketDetailScreen() {
                 </ScrollView>
               </View>
             </>
-          )}
-
-          {/* ── Menciones ──────────────────────────────────────────────────── */}
-          {((mentionsData?.length ?? 0) > 0 || canEdit) && (
-            <View style={{ marginBottom: 24 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 28 }}>
-                <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
-                  MENCIONES{(mentionsData?.length ?? 0) > 0 ? ` · ${mentionsData?.length}` : ''}
-                </Typography>
-                {canEdit && (mentionsData?.length ?? 0) > 0 && (
-                  <Pressable
-                    onPress={() => setShowMentionPicker(true)}
-                    hitSlop={8}
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
-                  >
-                    <Plus color={gold[400]} size={14} strokeWidth={2.2} />
-                    <Typography variant="caption" color={gold[400]} style={{ fontWeight: '600' }}>
-                      Mencionar
-                    </Typography>
-                  </Pressable>
-                )}
-              </View>
-
-              {(mentionsData ?? []).map((m) => (
-                <Pressable
-                  key={m.mentionId}
-                  onPress={() => router.push(`/bucket/${m.task.id}` as any)}
-                  style={({ pressed }) => ({
-                    marginTop: 10,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: 14,
-                    borderRadius: 14,
-                    borderWidth: 1,
-                    borderColor: dark[400],
-                    backgroundColor: pressed ? dark[400] : dark[300],
-                  })}
-                >
-                  {m.task.status === 'completed' ? (
-                    <CheckCircle2 color={gold[400]} size={20} strokeWidth={1.8} />
-                  ) : (
-                    <Circle color={theme.colors.foregroundMuted} size={20} strokeWidth={1.8} />
-                  )}
-                  <Typography variant="bodySemibold" color={theme.colors.foreground} numberOfLines={2} style={{ flex: 1 }}>
-                    {m.task.title}
-                  </Typography>
-                  {canEdit ? (
-                    <Pressable onPress={() => removeMention(m.mentionId, m.task.title)} hitSlop={10}>
-                      <X color={theme.colors.foregroundMuted} size={18} strokeWidth={2} />
-                    </Pressable>
-                  ) : (
-                    <ChevronRight color={theme.colors.foregroundMuted} size={18} />
-                  )}
-                </Pressable>
-              ))}
-
-              {canEdit && (mentionsData?.length ?? 0) === 0 && (
-                <Pressable
-                  onPress={() => setShowMentionPicker(true)}
-                  style={({ pressed }) => ({
-                    marginTop: 12,
-                    padding: 14,
-                    borderRadius: 18,
-                    borderWidth: 1,
-                    borderColor: 'rgba(212,168,46,0.35)',
-                    backgroundColor: pressed ? 'rgba(212,168,46,0.14)' : 'rgba(212,168,46,0.06)',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 14,
-                  })}
-                >
-                  <View
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 20,
-                      backgroundColor: gold[400],
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Link2 color="#000" size={20} strokeWidth={2.2} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Typography variant="bodySemibold" color={gold[400]}>
-                      Mencionar una tarea
-                    </Typography>
-                    <Typography variant="caption" color={theme.colors.foregroundMuted}>
-                      Relaciónala con otra: aparecerá en las dos
-                    </Typography>
-                  </View>
-                </Pressable>
-              )}
-            </View>
           )}
 
           {/* ── Fotos ──────────────────────────────────────────────────────── */}
@@ -2578,8 +2558,8 @@ export default function BucketDetailScreen() {
       <TaskMentionPickerSheet
         visible={showMentionPicker}
         currentBucketId={id}
-        excludeIds={(mentionsData ?? []).map((m) => m.task.id)}
-        onSelect={(otherId) => void addMention(otherId)}
+        mentionedIds={(mentionsData ?? []).map((m) => m.task.id)}
+        onToggle={toggleMention}
         onClose={() => setShowMentionPicker(false)}
       />
 

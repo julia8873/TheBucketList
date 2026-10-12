@@ -1,49 +1,108 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  FlatList,
+  Animated,
   KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CheckCircle2, ChevronLeft, Circle, Link2, Search, X } from 'lucide-react-native';
+import { Check, Link2, X } from 'lucide-react-native';
+import { Typography, useTheme } from '@bucketlist/ui';
+import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../stores/auth.store';
+import { BucketCover } from './BucketCover';
+import { resolveTaskImage } from '../utils/taskImage';
+import { styles as sheetStyles } from '../../app/bucket/BucketDetail.styles';
 
 /**
- * Selector de tarea para mencionar desde otra tarea.
- * Lista las tareas del usuario (menos la actual y las ya mencionadas) con buscador.
+ * Menú desplegable desde abajo para elegir las tareas que se mencionan desde otra tarea
+ * (mismo patrón que "Seleccionar carpetas"): las tareas ya mencionadas llevan un check
+ * y al tocar una se menciona / se quita, sin cerrar el menú.
+ * Las tareas se muestran con su imagen y su título, igual que en Mi Lista.
  */
 
-type TaskOption = { id: string; title: string; status: string | null };
+/** Campos que necesita una tarea para pintarse con su imagen (los mismos que usa Mi Lista). */
+export const MENTION_TASK_COLUMNS =
+  'id, title, status, user_id, cover_image, thumbnail_mode, thumbnail_photo_id, category:categories(slug), bucket_photos(id, storage_path, thumb_path, created_at)';
+
+export type MentionTask = {
+  id: string;
+  title: string;
+  status: string | null;
+  user_id?: string;
+  cover_image?: string | null;
+  thumbnail_mode?: string | null;
+  thumbnail_photo_id?: string | null;
+  category?: { slug?: string | null } | null;
+  bucket_photos?: any[] | null;
+};
+
+/** Miniatura cuadrada de una tarea (foto elegida, última foto, portada o degradado automático). */
+export function MentionThumb({ task, size = 48 }: { task: MentionTask; size?: number }) {
+  return (
+    <View style={{ width: size, height: size, borderRadius: 12, overflow: 'hidden', backgroundColor: dark[400] }}>
+      <BucketCover
+        value={resolveTaskImage(task as any, { preferThumb: true })}
+        title={task.title}
+        categorySlug={task.category?.slug}
+        seed={task.id}
+        iconSize={size}
+        style={StyleSheet.absoluteFill}
+      />
+    </View>
+  );
+}
 
 type Props = {
   visible: boolean;
   /** Tarea desde la que se menciona (no aparece en la lista). */
   currentBucketId: string;
-  /** Tareas ya mencionadas (no aparecen en la lista). */
-  excludeIds: string[];
-  onSelect: (bucketId: string) => void;
+  /** Ids de las tareas ya mencionadas (llevan check). */
+  mentionedIds: string[];
+  /** Menciona o quita la mención de esa tarea. */
+  onToggle: (task: MentionTask) => void;
   onClose: () => void;
 };
 
-export function TaskMentionPickerSheet({ visible, currentBucketId, excludeIds, onSelect, onClose }: Props) {
-  const insets = useSafeAreaInsets();
+const HIDDEN_Y = 700;
+
+export function TaskMentionPickerSheet({ visible, currentBucketId, mentionedIds, onToggle, onClose }: Props) {
+  const { theme } = useTheme();
   const { user } = useAuthStore();
+  const [render, setRender] = useState(visible);
+  const translateY = useRef(new Animated.Value(HIDDEN_Y)).current;
   const [query, setQuery] = useState('');
-  const [tasks, setTasks] = useState<TaskOption[]>([]);
+  const [tasks, setTasks] = useState<MentionTask[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Entrada / salida animada.
   useEffect(() => {
-    if (visible) setQuery('');
+    if (visible) {
+      setRender(true);
+      setQuery('');
+      translateY.setValue(HIDDEN_Y);
+      Animated.spring(translateY, {
+        toValue: 0,
+        damping: 24,
+        stiffness: 220,
+        mass: 0.8,
+        useNativeDriver: true,
+      }).start();
+    } else if (render) {
+      Animated.timing(translateY, { toValue: HIDDEN_Y, duration: 180, useNativeDriver: true }).start(() =>
+        setRender(false),
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
+  // Carga de tareas (con buscador).
   useEffect(() => {
     if (!visible || !user?.id) return;
     let mounted = true;
@@ -54,7 +113,7 @@ export function TaskMentionPickerSheet({ visible, currentBucketId, excludeIds, o
         try {
           let q = supabase
             .from('buckets')
-            .select('id, title, status')
+            .select(MENTION_TASK_COLUMNS)
             .eq('user_id', user.id)
             .neq('id', currentBucketId)
             .order('created_at', { ascending: false })
@@ -64,7 +123,7 @@ export function TaskMentionPickerSheet({ visible, currentBucketId, excludeIds, o
           if (trimmed) q = q.ilike('title', `%${trimmed}%`);
 
           const { data, error } = await q;
-          if (!error && data && mounted) setTasks(data as TaskOption[]);
+          if (!error && data && mounted) setTasks(data as unknown as MentionTask[]);
         } catch (err) {
           console.warn('Error cargando tareas para mencionar:', err);
         } finally {
@@ -80,114 +139,92 @@ export function TaskMentionPickerSheet({ visible, currentBucketId, excludeIds, o
     };
   }, [visible, query, user?.id, currentBucketId]);
 
-  if (!visible) return null;
+  if (!render) return null;
 
-  const excluded = new Set(excludeIds);
-  const options = tasks.filter((t) => !excluded.has(t.id));
+  const mentioned = new Set(mentionedIds);
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
-      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, 16) }]}>
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <View style={styles.header}>
-            <Pressable onPress={onClose} hitSlop={10} style={styles.backButton}>
-              <ChevronLeft color="#FFF" size={26} />
-            </Pressable>
-            <Text style={styles.headerTitle}>Mencionar tarea</Text>
-            <View style={{ width: 40 }} />
-          </View>
+    <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={onClose}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <View style={sheetStyles.sheetBackdrop}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+          <Animated.View
+            style={[
+              sheetStyles.bottomSheet,
+              { backgroundColor: theme.colors.background, height: '78%', maxHeight: '78%', transform: [{ translateY }] },
+            ]}
+          >
+            <View style={sheetStyles.sheetHandle} />
 
-          <View style={styles.searchContainer}>
-            <View style={styles.searchBox}>
-              <Search color="#9A9A9A" size={18} />
+            <View style={sheetStyles.sheetHeader}>
+              <Typography variant="h3" color={theme.colors.foreground}>
+                Mencionar tareas
+              </Typography>
+              <Pressable style={sheetStyles.sheetClose} onPress={onClose}>
+                <X color={theme.colors.foregroundMuted} size={20} />
+              </Pressable>
+            </View>
+
+            <View style={{ paddingBottom: 10 }}>
               <TextInput
-                style={styles.searchInput}
+                style={{
+                  backgroundColor: dark[400],
+                  color: theme.colors.foreground,
+                  padding: 12,
+                  borderRadius: 12,
+                  fontSize: 16,
+                }}
                 placeholder="Buscar tarea..."
-                placeholderTextColor="#666"
+                placeholderTextColor={theme.colors.foregroundMuted}
                 value={query}
                 onChangeText={setQuery}
                 autoCorrect={false}
               />
-              {query.length > 0 && (
-                <Pressable onPress={() => setQuery('')} hitSlop={10}>
-                  <X color="#9A9A9A" size={18} />
-                </Pressable>
-              )}
             </View>
-          </View>
 
-          {loading && options.length === 0 ? (
-            <View style={styles.center}>
-              <ActivityIndicator color="#D4B13A" size="large" />
-            </View>
-          ) : options.length === 0 ? (
-            <View style={styles.center}>
-              <Link2 color="#555" size={48} />
-              <Text style={styles.emptyTitle}>
-                {query.trim() ? 'No se encontraron tareas' : 'No hay más tareas para mencionar'}
-              </Text>
-            </View>
-          ) : (
-            <FlatList
-              data={options}
-              keyExtractor={(t) => t.id}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
-              ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
-              renderItem={({ item }) => (
-                <Pressable
-                  onPress={() => onSelect(item.id)}
-                  style={({ pressed }) => [styles.row, pressed && { backgroundColor: '#202020' }]}
-                >
-                  {item.status === 'completed' ? (
-                    <CheckCircle2 color="#D4B13A" size={20} strokeWidth={1.8} />
-                  ) : (
-                    <Circle color="#777" size={20} strokeWidth={1.8} />
-                  )}
-                  <Text style={styles.rowTitle} numberOfLines={2}>
-                    {item.title}
-                  </Text>
-                </Pressable>
-              )}
-            />
-          )}
-        </KeyboardAvoidingView>
-      </View>
+            {loading && tasks.length === 0 ? (
+              <View style={sheetStyles.sheetLoading}>
+                <ActivityIndicator color={gold[400]} />
+              </View>
+            ) : tasks.length === 0 ? (
+              <View style={{ alignItems: 'center', paddingVertical: 40, gap: 12 }}>
+                <Link2 color={theme.colors.foregroundMuted} size={36} />
+                <Typography variant="body" color={theme.colors.foregroundMuted}>
+                  {query.trim() ? 'No se encontraron tareas' : 'No tienes más tareas para mencionar'}
+                </Typography>
+              </View>
+            ) : (
+              <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+                {tasks.map((task) => {
+                  const isSelected = mentioned.has(task.id);
+                  return (
+                    <Pressable
+                      key={task.id}
+                      style={[sheetStyles.sheetOption, { minHeight: 68 }]}
+                      onPress={() => onToggle(task)}
+                    >
+                      <View style={{ marginRight: 13 }}>
+                        <MentionThumb task={task} size={48} />
+                      </View>
+                      <View style={sheetStyles.sheetOptionText}>
+                        <Typography
+                          variant="bodySemibold"
+                          numberOfLines={2}
+                          color={task.status === 'completed' ? theme.colors.foregroundMuted : theme.colors.foreground}
+                        >
+                          {task.title}
+                        </Typography>
+                      </View>
+                      {isSelected && <Check color={gold[400]} size={21} />}
+                    </Pressable>
+                  );
+                })}
+                <View style={{ height: 24 }} />
+              </ScrollView>
+            )}
+          </Animated.View>
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0E0E0E' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  backButton: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { color: '#FFF', fontSize: 17, fontWeight: '700' },
-  searchContainer: { paddingHorizontal: 20, paddingBottom: 14 },
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    height: 46,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    backgroundColor: '#1A1A1A',
-  },
-  searchInput: { flex: 1, color: '#FFF', fontSize: 15, padding: 0 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
-  emptyTitle: { color: '#9A9A9A', fontSize: 15 },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 14,
-    borderRadius: 14,
-    backgroundColor: '#161616',
-  },
-  rowTitle: { flex: 1, color: '#FFF', fontSize: 15, fontWeight: '600' },
-});
