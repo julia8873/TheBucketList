@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { 
-  View, Text, StyleSheet, Pressable, TextInput, ScrollView, 
-  Alert, ActivityIndicator, KeyboardAvoidingView, Platform 
+import {
+  View, Text, StyleSheet, Pressable, TextInput, ScrollView,
+  Alert, ActivityIndicator, KeyboardAvoidingView, Platform
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,7 +25,7 @@ export default function AddTaskScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-  
+
   const { data: userTasksData, isLoading, isError } = useUnassignedTasks(albumId && albumId !== 'new' ? albumId : undefined);
   const assignMutation = useAssignTasks();
   const createMutation = useCreateTasksFromDefaults();
@@ -34,7 +34,7 @@ export default function AddTaskScreen() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('Todas');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  
+
   const scrollViewRef = useRef<ScrollView>(null);
 
   // Las ideas por defecto se ocultan si el usuario ya tiene una tarea con ese título
@@ -142,15 +142,15 @@ export default function AddTaskScreen() {
   const isPending = assignMutation.isPending || createMutation.isPending;
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
+    <KeyboardAvoidingView
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       {/* Header */}
       <View style={[styles.header, { paddingTop: Math.max(52, insets.top + 10) }]}>
-        <Pressable 
+        <Pressable
           accessibilityRole="button"
-          style={styles.backBtn} 
+          style={styles.backBtn}
           onPress={handleBack}
         >
           <ChevronLeft size={22} color="#F3EEE3" strokeWidth={1.8} />
@@ -221,8 +221,8 @@ export default function AddTaskScreen() {
 
       {/* Category Chips */}
       <View style={styles.chipsWrapper}>
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.chipsScroll}
         >
@@ -246,7 +246,7 @@ export default function AddTaskScreen() {
       {/* Count Row */}
       <View style={styles.countRow}>
         <Text style={styles.countText}>
-          {activeTab === 'user' 
+          {activeTab === 'user'
             ? `${currentTotal} tareas disponibles`
             : `${currentTotal} ideas por defecto`}
         </Text>
@@ -258,7 +258,7 @@ export default function AddTaskScreen() {
       </View>
 
       {/* Task List */}
-      <ScrollView 
+      <ScrollView
         ref={scrollViewRef}
         style={styles.list}
         contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 120 }]}
@@ -267,7 +267,7 @@ export default function AddTaskScreen() {
           <ActivityIndicator color="#D4B13A" style={{ marginTop: 40 }} />
         ) : currentVisibleTasks.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No hay tareas que coincidan</Text>
+            <Text style={styles.emptyText}>No hay más tareas disponibles (o todas se encuentran en el álbum). Crea más tareas.</Text>
           </View>
         ) : (
           currentVisibleTasks.map(task => {
@@ -287,8 +287,8 @@ export default function AddTaskScreen() {
                 <View style={styles.taskThumbContainer}>
                   <LinearGradient
                     colors={thumbGradient}
-                    start={isDiagonal ? {x: 0, y: 0} : {x: 0.5, y: 0}}
-                    end={isDiagonal ? {x: 1, y: 1} : {x: 0.5, y: 1}}
+                    start={isDiagonal ? { x: 0, y: 0 } : { x: 0.5, y: 0 }}
+                    end={isDiagonal ? { x: 1, y: 1 } : { x: 0.5, y: 1 }}
                     style={styles.taskThumb}
                   />
                 </View>
@@ -307,7 +307,7 @@ export default function AddTaskScreen() {
 
       {/* Bottom Bar */}
       <View style={[styles.bottomBar, { paddingBottom: Math.max(30, insets.bottom) }]}>
-        <Pressable 
+        <Pressable
           style={[styles.btnAdd, selectedIds.size === 0 && styles.btnAddDisabled]}
           disabled={selectedIds.size === 0 || isPending}
           onPress={handleAdd}
