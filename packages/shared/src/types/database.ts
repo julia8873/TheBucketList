@@ -186,6 +186,32 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"bucket_mentions": {
+                  Row: {
+                    "bucket_a": string,"bucket_b": string,"created_at": string | null,"created_by": string | null,"id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "bucket_a": string,"bucket_b": string,"created_at"?: string | null,"created_by"?: string | null,"id"?: string
+                  }
+                  Update: {
+                    "bucket_a"?: string,"bucket_b"?: string,"created_at"?: string | null,"created_by"?: string | null,"id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "bucket_mentions_bucket_a_fkey"
+      columns: ["bucket_a"]
+isOneToOne: false
+      referencedRelation: "buckets"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "bucket_mentions_bucket_b_fkey"
+      columns: ["bucket_b"]
+isOneToOne: false
+      referencedRelation: "buckets"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"bucket_photos": {
                   Row: {
                     "bucket_id": string,"created_at": string | null,"height": number | null,"id": string,"position": number,"size_bytes": number,"storage_path": string,"thumb_path": string | null,"thumb_size_bytes": number | null,"title": string | null,"user_id": string,"width": number | null
