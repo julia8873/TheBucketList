@@ -70,3 +70,34 @@ export function getSupabaseAnonKey(): string {
   }
   return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
 }
+
+/**
+ * Reescribe una URL pública de Supabase Storage al host del entorno actual.
+ * Las URLs guardadas en la BD pueden llevar el host de quien subió el archivo
+ * (IP local, 10.0.2.2, 127.0.0.1...), que otros usuarios no pueden alcanzar.
+ * La ruta `/storage/v1/object/public/<bucket>/<path>` es siempre la misma.
+ */
+export function normalizeStorageUrl<T extends string | null | undefined>(url: T): T {
+  if (!url || typeof url !== 'string') return url;
+  const marker = '/storage/v1/object/public/';
+  const i = url.indexOf(marker);
+  if (i === -1) return url;
+  const base = getSupabaseUrl();
+  if (!base) return url;
+  return `${base.replace(/\/$/, '')}${url.slice(i)}` as T;
+}
+
+/**
+ * URL a la que Supabase redirige tras verificar el correo / restablecer la contraseña.
+ * - Web: EXPO_PUBLIC_SITE_URL (producción) o el origen actual.
+ * - Nativo: deep link `bucketlist://<path>`.
+ * Debe estar en Authentication → URL Configuration → Redirect URLs de Supabase.
+ */
+export function getAuthRedirectUrl(path = ''): string {
+  const site = process.env['EXPO_PUBLIC_SITE_URL'];
+  if (Platform.OS === 'web') {
+    if (site) return site.replace(/\/$/, '');
+    if (typeof window !== 'undefined' && window.location?.origin) return window.location.origin;
+  }
+  return `bucketlist://${path}`;
+}

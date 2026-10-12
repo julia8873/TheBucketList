@@ -14,6 +14,7 @@ import { ArrowLeft, Share2, MoreHorizontal, MapPin, Calendar, Heart, MessageCirc
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { supabase } from '../../src/services/supabase';
+import { normalizeStorageUrl } from '../../src/constants/urls';
 import { storageApi } from '../../src/services/api/storage';
 import { processBucketImage } from '@bucketlist/shared';
 import { useAuthStore } from '../../src/stores/auth.store';
@@ -1572,7 +1573,7 @@ export default function BucketDetailScreen() {
                       >
                         {c.avatar_url ? (
                           <Image
-                            source={{ uri: c.avatar_url }}
+                            source={{ uri: normalizeStorageUrl(c.avatar_url) }}
                             style={[styles.collaboratorAvatarImg, isPending && { opacity: 0.35 }]}
                           />
                         ) : (

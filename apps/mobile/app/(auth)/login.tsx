@@ -90,9 +90,14 @@ export default function LoginScreen() {
       <AuthInput
         label={t('auth.identifier_label')}
         placeholder="tu@correo.com"
-        value={identifier}
+        // Sin `value` (no controlado): en Android un input controlado con
+        // mayúsculas/predictivo puede duplicar la letra tecleada.
+        defaultValue=""
         onChangeText={(v) => { setIdentifier(v); setError(null); }}
         keyboardType="email-address"
+        autoCapitalize="none"
+        autoCorrect={false}
+        spellCheck={false}
         textContentType="username"
         autoComplete="username"
         returnKeyType="next"
@@ -102,8 +107,11 @@ export default function LoginScreen() {
         ref={passwordRef}
         label={t('auth.password')}
         placeholder={t('auth.password_placeholder')}
-        value={password}
+        defaultValue=""
         onChangeText={(v) => { setPassword(v); setError(null); }}
+        autoCapitalize="none"
+        autoCorrect={false}
+        spellCheck={false}
         password
         textContentType="password"
         autoComplete="password"

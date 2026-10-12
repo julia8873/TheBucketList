@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
+import { normalizeStorageUrl } from '../../constants/urls';
 import { Typography, Button, Icon, useTheme, spacing, radii, fontFamily, gold } from '@bucketlist/ui';
 
 // ─── Layout de pantalla ─────────────────────────────────────────────────────
@@ -255,7 +256,7 @@ export function BigAvatar({
     <View style={{ width: size, height: size }}>
       <View style={[s.ring, { width: size, height: size, borderRadius: size / 2, borderColor: gold[400] }]}>
         {uri ? (
-          <Image source={{ uri }} style={{ width: inner, height: inner, borderRadius: inner / 2 }} contentFit="cover" />
+          <Image source={{ uri: normalizeStorageUrl(uri) }} style={{ width: inner, height: inner, borderRadius: inner / 2 }} contentFit="cover" />
         ) : (
           <View
             style={[

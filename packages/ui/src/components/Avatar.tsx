@@ -8,6 +8,16 @@ import { radii } from '../tokens/radii';
 import { spacing } from '../tokens/spacing';
 import { gold } from '../tokens/colors';
 
+/**
+ * Resolver global opcional para las URLs de avatar. La app lo registra para
+ * reescribir el host de Storage al del entorno actual (así la foto subida
+ * desde otro dispositivo/entorno sigue cargando).
+ */
+let avatarUriResolver: (uri: string) => string = (uri) => uri;
+export function setAvatarUriResolver(fn: (uri: string) => string): void {
+  avatarUriResolver = fn;
+}
+
 type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 const SIZES: Record<AvatarSize, number> = {
@@ -56,7 +66,8 @@ export function Avatar({
   const fontSize = FONT_SIZES[size];
 
   // Resolve uri from either new `source` or legacy `uri` prop
-  const resolvedUri = source?.uri ?? uri ?? null;
+  const rawUri = source?.uri ?? uri ?? null;
+  const resolvedUri = rawUri ? avatarUriResolver(rawUri) : null;
   // Resolve initials from either `fallback` or legacy `initials`
   const resolvedInitials = fallback ?? initials ?? '?';
 

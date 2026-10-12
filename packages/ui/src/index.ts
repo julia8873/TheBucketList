@@ -12,7 +12,7 @@ export { Typography } from './components/Typography';
 export { Button } from './components/Button';
 export { Card } from './components/Card';
 export { Input } from './components/Input';
-export { Avatar } from './components/Avatar';
+export { Avatar, setAvatarUriResolver } from './components/Avatar';
 export { Badge } from './components/Badge';
 export { Divider } from './components/Divider';
 export { Skeleton } from './components/Skeleton';

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import * as Linking from 'expo-linking';
+import { getAuthRedirectUrl } from '../../src/constants/urls';
 import { useTranslation } from 'react-i18next';
 import { useTheme, fontFamily } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
@@ -23,7 +23,7 @@ export default function ForgotPasswordScreen() {
     setLoading(true);
     setError(null);
     const { error: err } = await supabase.auth.resetPasswordForEmail(clean, {
-      redirectTo: Linking.createURL('reset-password'),
+      redirectTo: getAuthRedirectUrl('reset-password'),
     });
     setLoading(false);
     if (err) setError(mapAuthError(err.message, t));

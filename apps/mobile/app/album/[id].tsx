@@ -50,6 +50,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useToast } from '@bucketlist/ui';
 import { useAlbumDetail, useDeleteAlbumDetail, TaskItem } from '../../src/services/api/albumsService';
 import { supabase } from '../../src/services/supabase';
+import { normalizeStorageUrl } from '../../src/constants/urls';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
 import { useUserFavorites, useToggleFavoriteAlbum } from '../../src/hooks/useFavorites';
@@ -1292,7 +1293,7 @@ export default function AlbumDetailScreen() {
                     >
                       {c.avatar_url ? (
                         <Image
-                          source={{ uri: c.avatar_url }}
+                          source={{ uri: normalizeStorageUrl(c.avatar_url) }}
                           style={[styles.collaboratorAvatarImg, isPending && { opacity: 0.35 }]}
                         />
                       ) : (

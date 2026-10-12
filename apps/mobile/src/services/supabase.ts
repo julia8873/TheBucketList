@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getSupabaseUrl, getSupabaseAnonKey } from '../constants/urls';
+import { setAvatarUriResolver } from '@bucketlist/ui';
+import { getSupabaseUrl, getSupabaseAnonKey, normalizeStorageUrl } from '../constants/urls';
+
+setAvatarUriResolver((u) => normalizeStorageUrl(u));
 
 const isServer = typeof window === 'undefined';
 const dummyStorage = {
