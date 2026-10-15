@@ -36,10 +36,10 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
 
   useEffect(() => {
     if (visible) {
-      setDraft(selected);
+      setDraft(selected.filter(c => c.id !== user?.id));
       setQuery('');
     }
-  }, [visible, selected]);
+  }, [visible, selected, user?.id]);
 
   useEffect(() => {
     if (!visible) return;
@@ -66,12 +66,14 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
         const { data, error } = await q;
         if (!error && data && isMounted) {
           setProfiles(
-            data.map((p: any) => ({
-              id: p.id,
-              username: p.username,
-              display_name: p.display_name,
-              avatar_url: p.avatar_url,
-            }))
+            data
+              .filter((p: any) => p.id !== user?.id)
+              .map((p: any) => ({
+                id: p.id,
+                username: p.username,
+                display_name: p.display_name,
+                avatar_url: p.avatar_url,
+              }))
           );
         }
       } catch (err) {
@@ -92,6 +94,7 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
   const selectedIds = new Set(draft.map(c => c.id));
 
   const togglePerson = (person: CollaboratorItem) => {
+    if (person.id === user?.id) return; // Your own profile cannot be toggled
     if (readOnlySet.has(person.id)) return; // Cannot remove read-only collaborators
     if (selectedIds.has(person.id)) {
       setDraft(draft.filter(c => c.id !== person.id));

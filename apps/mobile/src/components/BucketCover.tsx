@@ -90,7 +90,7 @@ export function BucketCover({
 
   return (
     <View style={[styles.container, style]}>
-      <PresetArt preset={preset} iconSize={iconSize} />
+      {!isCustomImage && <PresetArt preset={preset} iconSize={iconSize} />}
       {imageUri && (
         <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
       )}

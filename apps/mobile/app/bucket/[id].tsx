@@ -44,85 +44,14 @@ const COVER_HEIGHT = 220;
 const BADGES_OVERLAP = 32;
 // Cuánto se meten las etiquetas sobre la portada.
 
-function ProgressBar({ value, total, color, track }: { value: number; total: number; color: string; track: string }) {
-  const pct = total > 0 ? Math.min(1, value / total) : 0;
-  return (
-    <View style={{ height: 6, borderRadius: 3, backgroundColor: track, overflow: 'hidden' }}>
-      <View style={{ width: `${pct * 100}%`, height: '100%', borderRadius: 3, backgroundColor: color }} />
-    </View>
-  );
-}
-
-/** Miniatura seleccionable de la sección "Imagen de la tarea". */
-function ThumbOption({
-  label,
-  selected,
-  onPress,
-  children,
-}: {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityState={{ selected }}
-      accessibilityLabel={`Imagen de la tarea: ${label}`}
-      style={{ width: 72, alignItems: 'center', gap: 6 }}
-    >
-      <View
-        style={{
-          width: 64,
-          height: 64,
-          borderRadius: 12,
-          overflow: 'hidden',
-          borderWidth: 2,
-          borderColor: selected ? gold[400] : 'transparent',
-          backgroundColor: dark[300],
-        }}
-      >
-        {children}
-        {selected && (
-          <View
-            style={{
-              position: 'absolute',
-              top: 4,
-              right: 4,
-              width: 18,
-              height: 18,
-              borderRadius: 9,
-              backgroundColor: gold[400],
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Check size={12} color="#0D0D0D" strokeWidth={3} />
-          </View>
-        )}
-      </View>
-      <Text
-        numberOfLines={1}
-        style={{ fontSize: 11, color: selected ? gold[400] : '#9A9A9A' }}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
-function getInitials(name?: string | null): string {
-  if (!name) return '?';
-  const parts = name.trim().split(/[\s._-]+/).filter(Boolean);
-  const first = parts[0];
-  const second = parts[1];
-  if (first && second && first[0] && second[0]) {
-    return `${first[0]}${second[0]}`.toUpperCase();
-  }
-  return name.slice(0, 2).toUpperCase();
-}
+import { ProgressBar, BucketCounterSection } from './BucketCounterSection';
+import { BucketCollaboratorsRow, getInitials } from './BucketCollaboratorsRow';
+import { BucketMetaSection } from './BucketMetaSection';
+import { BucketThumbnailSelector } from './BucketThumbnailSelector';
+import { BucketPhotosSection } from './BucketPhotosSection';
+import { PhotoSortModal, type PhotoSortField, type PhotoSortDir } from './PhotoSortModal';
+import { BucketLocationModal } from './BucketLocationModal';
+import { BucketDatePickerModal, type DatePickerConfig } from './BucketDatePickerModal';
 
 export default function BucketDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -337,20 +266,19 @@ export default function BucketDetailScreen() {
       const newIds = new Set(newCollabs.map(c => c.id));
 
       const toAdd = newCollabs.filter(c => !currentIds.has(c.id));
-      // Only the owner can remove collaborators
-      const toRemoveIds = isOwner
-        ? collaborators.filter((c: any) => !newIds.has(c.id) && !lockedIds.has(c.id)).map((c: any) => c.id)
-        : [];
+      // Anyone who can edit can remove collaborators except lockedIds (creator & album participants) and self
+      const toRemoveIds = collaborators
+        .filter((c: any) => !newIds.has(c.id) && !lockedIds.has(c.id) && c.id !== user?.id)
+        .map((c: any) => c.id);
 
       // Optimistic update: preserve existing status if already set
       const existingStatusMap = new Map<string, string>(collaborators.map((c: any) => [c.id, c.status]));
-      // Merge: if not owner, keep existing collabs + add new ones
-      const mergedCollabs = isOwner
-        ? newCollabs.map(c => ({ ...c, status: existingStatusMap.get(c.id) || 'pending' }))
-        : [
-            ...collaborators,
-            ...toAdd.map(c => ({ ...c, status: 'pending' })),
-          ];
+      const selfCollab = collaborators.find((c: any) => c.id === user?.id);
+      const remainingCollabs = newCollabs.filter(c => !lockedIds.has(c.id));
+      const mergedCollabs = [
+        ...(selfCollab ? [selfCollab] : []),
+        ...remainingCollabs.map(c => ({ ...c, status: existingStatusMap.get(c.id) || 'pending' })),
+      ];
       queryClient.setQueryData(['bucketCollaborators', id], mergedCollabs);
 
       if (toAdd.length > 0) {
@@ -502,6 +430,7 @@ export default function BucketDetailScreen() {
     .filter((p: any) => !!p.storage_path)
     .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
   const hasCover = !!bucket.cover_image;
+  const isCustomCover = !!bucket.cover_image && !bucket.cover_image.startsWith('preset:');
   const chosenPhotoId =
     bucket.thumbnail_mode === 'photo' && thumbPhotos.some((p: any) => p.id === bucket.thumbnail_photo_id)
       ? (bucket.thumbnail_photo_id as string)
@@ -1380,20 +1309,22 @@ export default function BucketDetailScreen() {
           seed={bucket.id}
           style={{ width: SCREEN_WIDTH, height: coverTotalHeight }}
         >
-          {/* Bottom gradient fade */}
-          <LinearGradient
-            colors={[
-              'rgba(0,0,0,0.15)',
-              'transparent',
-              'rgba(0,0,0,0.25)',
-              'rgba(0,0,0,0.80)',
-              theme.colors.background,
-            ]}
-            locations={[0, 0.35, 0.65, 0.88, 1]}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
+          {/* Bottom gradient fade (solo cuando no hay portada personalizada) */}
+          {!isCustomCover && (
+            <LinearGradient
+              colors={[
+                'rgba(0,0,0,0.15)',
+                'transparent',
+                'rgba(0,0,0,0.25)',
+                'rgba(0,0,0,0.80)',
+                theme.colors.background,
+              ]}
+              locations={[0, 0.35, 0.65, 0.88, 1]}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+          )}
 
           {/* Nav buttons */}
           <SafeAreaView style={styles.navOverlay} edges={['top']}>
@@ -1516,235 +1447,26 @@ export default function BucketDetailScreen() {
           <ItemTagsRow bucketId={id as string} isOwner={canEdit} />
 
           {/* Colaboradores */}
-          {(() => {
-            // Always show the bucket owner first, then accepted collaborators,
-            // then pending ones (owner or the pending user themselves can see them)
-            const ownerEntry = {
-              id: bucket.user_id,
-              username: bucket.user?.username || '',
-              display_name: bucket.user?.display_name || null,
-              avatar_url: bucket.user?.avatar_url || null,
-              status: 'accepted',
-              isOwner: true,
-            };
-
-            const visibleCollaborators = collaborators.filter((c: any) => {
-              if (c.status === 'accepted') return true;
-              if (c.status === 'pending') return canEdit || c.id === user?.id;
-              return false;
-            });
-
-            // Lista completa de participantes: dueño de la tarea, miembros de los álbumes
-            // compartidos que la contienen (aceptados) y colaboradores directos. Sin duplicados
-            // (el primero gana, así un miembro aceptado no se queda como «Pendiente»).
-            // Incluye al usuario actual, pero solo cuando la tarea es realmente compartida.
-            const ownerId = bucket.user_id;
-            const byId = new Map<string, any>();
-            [
-              ownerEntry,
-              ...participantsData.filter((p: any) => p.id !== ownerId),
-              ...visibleCollaborators.filter((c: any) => c.id !== ownerId),
-            ].forEach((c: any) => {
-              if (!byId.has(c.id)) byId.set(c.id, c);
-            });
-            const everyone = Array.from(byId.values());
-            const participants = everyone.some((c: any) => c.id !== user?.id) ? everyone : [];
-
-            if (participants.length === 0 && !canEdit) return null;
-
-            return (
-              <View style={styles.collaboratorsSection}>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.collaboratorsRow}
-                >
-                  {participants.map((c: any) => {
-                    const isPending = c.status === 'pending';
-                    return (
-                      <Pressable
-                        key={c.id}
-                        onPress={() => canEdit && setShowCollaboratorPicker(true)}
-                        style={[
-                          styles.collaboratorCircle,
-                          isPending && styles.collaboratorCirclePending,
-                          c.isOwner && { borderColor: '#D4B13A', borderWidth: 2.5 },
-                        ]}
-                      >
-                        {c.avatar_url ? (
-                          <Image
-                            source={{ uri: normalizeStorageUrl(c.avatar_url) }}
-                            style={[styles.collaboratorAvatarImg, isPending && { opacity: 0.35 }]}
-                          />
-                        ) : (
-                          <Text style={[styles.collaboratorInitials, isPending && { opacity: 0.35 }]}>
-                            {getInitials(c.display_name || c.username)}
-                          </Text>
-                        )}
-                        {isPending && (
-                          <View style={styles.pendingCenterOverlay}>
-                            <Text style={styles.pendingCenterText}>Pendiente</Text>
-                          </View>
-                        )}
-                      </Pressable>
-                    );
-                  })}
-
-                  {canEdit && (
-                    <Pressable
-                      style={styles.addCollaboratorCircle}
-                      onPress={() => setShowCollaboratorPicker(true)}
-                      hitSlop={8}
-                      accessibilityRole="button"
-                      accessibilityLabel="Añadir colaborador"
-                    >
-                      <View style={styles.addCollabIconRow}>
-                        <Text style={styles.addCollabEmoji}>👤</Text>
-                        <Text style={styles.addCollabPlus}>+</Text>
-                      </View>
-                    </Pressable>
-                  )}
-                </ScrollView>
-              </View>
-            );
-          })()}
+          <BucketCollaboratorsRow
+            bucket={bucket}
+            collaborators={collaborators}
+            participantsData={participantsData}
+            user={user}
+            canEdit={canEdit}
+            onOpenPicker={() => setShowCollaboratorPicker(true)}
+          />
 
           {/* Meta */}
-          <View style={styles.meta}>
-            {/* Ubicación */}
-            {bucket.location_text ? (
-              <View style={styles.metaRowBetween}>
-                <Pressable
-                  style={styles.metaRowClickable}
-                  onPress={() => canEdit && setLocationModalVisible(true)}
-                  disabled={!canEdit}
-                >
-                  <MapPin color={gold[400]} size={16} strokeWidth={1.8} />
-                  <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText} numberOfLines={1}>
-                    {bucket.location_text}
-                  </Typography>
-                </Pressable>
-                {canEdit && (
-                  <Pressable
-                    onPress={() => void handleRemoveLocation()}
-                    hitSlop={8}
-                    style={styles.metaRemoveBtn}
-                  >
-                    <X color={theme.colors.foregroundMuted} size={14} />
-                  </Pressable>
-                )}
-              </View>
-            ) : canEdit ? (
-              <Pressable
-                style={styles.metaRowClickable}
-                onPress={() => setLocationModalVisible(true)}
-              >
-                <MapPin color={gold[400]} size={16} strokeWidth={1.8} />
-                <Typography variant="body" color={gold[400]} style={styles.metaText}>
-                  + Añadir ubicación
-                </Typography>
-              </Pressable>
-            ) : null}
-
-            {/* Fecha completada */}
-            {bucket.completed_at || bucket.status === 'completed' ? (
-              <View style={styles.metaRowBetween}>
-                <Pressable
-                  style={styles.metaRowClickable}
-                  onPress={() =>
-                    canEdit &&
-                    setDatePickerConfig({
-                      visible: true,
-                      type: 'completed_at',
-                      date: new Date(bucket.completed_at || bucket.updated_at || new Date()),
-                    })
-                  }
-                  disabled={!canEdit}
-                >
-                  <CheckCircle2 color={gold[400]} size={16} strokeWidth={1.8} />
-                  <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText}>
-                    Completada el {format(new Date(bucket.completed_at || bucket.updated_at || new Date()), "d 'de' MMMM 'de' yyyy", { locale: es })}
-                  </Typography>
-                </Pressable>
-                {canEdit && (
-                  <Pressable
-                    onPress={() => void handleRemoveCompletedAt()}
-                    hitSlop={8}
-                    style={styles.metaRemoveBtn}
-                  >
-                    <X color={theme.colors.foregroundMuted} size={14} />
-                  </Pressable>
-                )}
-              </View>
-            ) : canEdit ? (
-              <Pressable
-                style={styles.metaRowClickable}
-                onPress={() =>
-                  setDatePickerConfig({
-                    visible: true,
-                    type: 'completed_at',
-                    date: new Date(),
-                  })
-                }
-              >
-                <CheckCircle2 color={gold[400]} size={16} strokeWidth={1.8} />
-                <Typography variant="body" color={gold[400]} style={styles.metaText}>
-                  + Añadir fecha de completado
-                </Typography>
-              </Pressable>
-            ) : null}
-
-            {/* Fecha límite */}
-            {bucket.deadline ? (
-              <View style={styles.metaRowBetween}>
-                <Pressable
-                  style={styles.metaRowClickable}
-                  onPress={() =>
-                    canEdit &&
-                    setDatePickerConfig({
-                      visible: true,
-                      type: 'deadline',
-                      date: new Date(bucket.deadline!),
-                    })
-                  }
-                  disabled={!canEdit}
-                >
-                  <Calendar color={gold[400]} size={16} strokeWidth={1.8} />
-                  <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText}>
-                    {bucket.status === 'completed'
-                      ? `Programada para el ${format(new Date(bucket.deadline), "d 'de' MMMM 'de' yyyy", { locale: es })}`
-                      : `Vence el ${format(new Date(bucket.deadline), "d 'de' MMMM 'de' yyyy", { locale: es })}`
-                    }
-                  </Typography>
-                </Pressable>
-                {canEdit && (
-                  <Pressable
-                    onPress={() => void handleRemoveDeadline()}
-                    hitSlop={8}
-                    style={styles.metaRemoveBtn}
-                  >
-                    <X color={theme.colors.foregroundMuted} size={14} />
-                  </Pressable>
-                )}
-              </View>
-            ) : canEdit ? (
-              <Pressable
-                style={styles.metaRowClickable}
-                onPress={() =>
-                  setDatePickerConfig({
-                    visible: true,
-                    type: 'deadline',
-                    date: new Date(),
-                  })
-                }
-              >
-                <Calendar color={gold[400]} size={16} strokeWidth={1.8} />
-                <Typography variant="body" color={gold[400]} style={styles.metaText}>
-                  + Añadir fecha límite
-                </Typography>
-              </Pressable>
-            ) : null}
-          </View>
+          <BucketMetaSection
+            bucket={bucket}
+            canEdit={canEdit}
+            theme={theme}
+            onOpenLocationModal={() => setLocationModalVisible(true)}
+            onRemoveLocation={() => void handleRemoveLocation()}
+            onOpenDatePicker={(config) => setDatePickerConfig(config)}
+            onRemoveCompletedAt={() => void handleRemoveCompletedAt()}
+            onRemoveDeadline={() => void handleRemoveDeadline()}
+          />
 
           {/* Description */}
           {canEdit ? (
@@ -1830,213 +1552,18 @@ export default function BucketDetailScreen() {
             </View>
           </View>
 
-          {/* Divider */}
-          <View style={[styles.divider, { backgroundColor: dark[400] }]} />
-
           {/* Contador */}
-          {(bucket.counter_enabled || canEdit) && (
-            <View style={{ marginBottom: 24 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 28 }}>
-                <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
-                  CONTADOR
-                </Typography>
-                {bucket.counter_enabled && canEdit && (
-                  <Pressable
-                    onPress={removeCounter}
-                    hitSlop={8}
-                    accessibilityLabel="Quitar contador"
-                    style={({ pressed }) => ({
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 6,
-                      paddingHorizontal: 12,
-                      height: 28,
-                      borderRadius: 14,
-                      borderWidth: 1,
-                      borderColor: 'rgba(248,113,113,0.45)',
-                      backgroundColor: pressed ? 'rgba(248,113,113,0.22)' : 'rgba(248,113,113,0.10)',
-                    })}
-                  >
-                    <Trash2 color="#F87171" size={13} strokeWidth={2.2} />
-                    <Typography variant="caption" color="#F87171" style={{ fontWeight: '600' }}>
-                      Quitar
-                    </Typography>
-                  </Pressable>
-                )}
-              </View>
-
-              {bucket.counter_enabled ? (
-                <>
-                  <View
-                    style={{
-                      marginTop: 12,
-                      padding: 16,
-                      borderRadius: 18,
-                      borderWidth: 1,
-                      borderColor: dark[400],
-                      backgroundColor: dark[300],
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <View style={{ flex: 1, paddingRight: 12 }}>
-                      {canEdit ? (
-                        <TextInput
-                          defaultValue={bucket.counter_label || ''}
-                          onChangeText={handleCounterLabelChange}
-                          placeholder="¿Qué cuentas?"
-                          placeholderTextColor={theme.colors.foregroundMuted}
-                          style={{ padding: 0, color: theme.colors.foregroundMuted, marginBottom: 4 }}
-                        />
-                      ) : bucket.counter_label ? (
-                        <Typography variant="body" color={theme.colors.foregroundMuted} style={{ marginBottom: 4 }}>
-                          {bucket.counter_label}
-                        </Typography>
-                      ) : null}
-
-                      {canEdit ? (
-                        <TextInput
-                          defaultValue={String(bucket.counter_count ?? 0)}
-                          onChangeText={(text) => {
-                            const n = parseInt(text.replace(/[^0-9]/g, ''), 10);
-                            if (!Number.isNaN(n)) {
-                              handleCounterCountChange(n);
-                            }
-                          }}
-                          keyboardType="number-pad"
-                          style={{
-                            padding: 0,
-                            color: theme.colors.foreground,
-                            fontFamily: 'PlayfairDisplay_700Bold', // H1 equivalent
-                            fontSize: 32,
-                            lineHeight: 38,
-                          }}
-                        />
-                      ) : (
-                        <Typography variant="h1" color={theme.colors.foreground}>
-                          {bucket.counter_count ?? 0}
-                        </Typography>
-                      )}
-                    </View>
-
-                    {canEdit && (
-                      <View style={{ flexDirection: 'row', gap: 10 }}>
-                        <Pressable
-                          onPress={() => changeCounter(-1)}
-                          style={{
-                            width: 44,
-                            height: 44,
-                            borderRadius: 22,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderWidth: 1,
-                            borderColor: dark[400],
-                          }}
-                        >
-                          <Minus color={theme.colors.foregroundMuted} size={20} strokeWidth={2} />
-                        </Pressable>
-                        <Pressable
-                          onPress={() => changeCounter(1)}
-                          style={{
-                            width: 44,
-                            height: 44,
-                            borderRadius: 22,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            backgroundColor: gold[400],
-                          }}
-                        >
-                          <Plus color="#000" size={20} strokeWidth={2.4} />
-                        </Pressable>
-                      </View>
-                    )}
-                  </View>
-
-                  {/* Barra y objetivo (independiente de la barra de pasos) */}
-                  {(bucket.counter_target || canEdit) && (
-                    <View style={{ marginTop: 16 }}>
-                      {bucket.counter_target ? (
-                        <ProgressBar
-                          value={bucket.counter_count ?? 0}
-                          total={bucket.counter_target}
-                          color={gold[400]}
-                          track={dark[400]}
-                        />
-                      ) : null}
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
-                        <Typography variant="bodySemibold" color={theme.colors.foregroundMuted}>
-                          {bucket.counter_target ? `${bucket.counter_count ?? 0} de ${bucket.counter_target}` : 'Sin objetivo'}
-                        </Typography>
-                        {canEdit && (
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                            <Typography variant="body" color={theme.colors.foreground}>Objetivo</Typography>
-                            <TextInput
-                              defaultValue={bucket.counter_target ? String(bucket.counter_target) : ''}
-                              onChangeText={handleCounterTargetChange}
-                              keyboardType="number-pad"
-                              placeholder="0"
-                              placeholderTextColor={theme.colors.foregroundMuted}
-                              style={{
-                                minWidth: 56,
-                                paddingVertical: 6,
-                                paddingHorizontal: 12,
-                                borderRadius: 10,
-                                borderWidth: 1,
-                                borderColor: gold[400],
-                                backgroundColor: dark[400],
-                                textAlign: 'center',
-                                color: gold[400],
-                                fontWeight: 'bold',
-                              }}
-                            />
-                          </View>
-                        )}
-                      </View>
-                    </View>
-                  )}
-
-                </>
-              ) : (
-                canEdit ? (
-                  <Pressable
-                    onPress={() => void updateCounter({ counter_enabled: true, counter_count: 0 })}
-                    style={({ pressed }) => ({
-                      marginTop: 12,
-                      padding: 14,
-                      borderRadius: 18,
-                      borderWidth: 1,
-                      borderColor: 'rgba(212,168,46,0.35)',
-                      backgroundColor: pressed ? 'rgba(212,168,46,0.14)' : 'rgba(212,168,46,0.06)',
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 14,
-                    })}
-                  >
-                    <View
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 20,
-                        backgroundColor: gold[400],
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Plus color="#000" size={22} strokeWidth={2.4} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Typography variant="bodySemibold" color={gold[400]}>
-                        Añadir contador
-                      </Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>
-                        Cuenta repeticiones, kilómetros, libros…
-                      </Typography>
-                    </View>
-                  </Pressable>
-                ) : null
-              )}
-            </View>
-          )}
+          <BucketCounterSection
+            bucket={bucket}
+            canEdit={canEdit}
+            theme={theme}
+            removeCounter={removeCounter}
+            handleCounterLabelChange={handleCounterLabelChange}
+            handleCounterCountChange={handleCounterCountChange}
+            changeCounter={changeCounter}
+            handleCounterTargetChange={handleCounterTargetChange}
+            updateCounter={updateCounter}
+          />
 
           {/* Subtasks */}
           {(subtasks.length > 0 || canEdit) && (
@@ -2083,231 +1610,34 @@ export default function BucketDetailScreen() {
 
           {/* ── Imagen de la tarea ─────────────────────────────────────────── */}
           {showThumbnailPicker && (
-            <>
-              <View style={[styles.divider, { backgroundColor: dark[400], marginTop: 20 }]} />
-              <View style={styles.photosSection}>
-                <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
-                  IMAGEN DE LA TAREA
-                </Typography>
-                <Typography variant="caption" color={theme.colors.foregroundMuted} style={{ marginTop: 4, marginBottom: 12 }}>
-                  Es la que verán los demás en el feed y en explorar.
-                </Typography>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ gap: 10, paddingRight: 8 }}
-                >
-                  <ThumbOption
-                    label="Automática"
-                    selected={thumbSelection === 'auto'}
-                    onPress={() => void chooseThumbnail('auto')}
-                  >
-                    <BucketCover
-                      value={resolveTaskImage({ ...bucket, thumbnail_mode: 'auto' }, { preferThumb: true })}
-                      title={bucket.title}
-                      categorySlug={bucket.category?.slug}
-                      seed={bucket.id}
-                      iconSize={64}
-                      style={StyleSheet.absoluteFill}
-                    />
-                  </ThumbOption>
-                  {hasCover && (
-                    <ThumbOption
-                      label="Portada"
-                      selected={thumbSelection === 'cover'}
-                      onPress={() => void chooseThumbnail('cover')}
-                    >
-                      <BucketCover
-                        value={bucket.cover_image}
-                        title={bucket.title}
-                        categorySlug={bucket.category?.slug}
-                        seed={bucket.id}
-                        iconSize={64}
-                        style={StyleSheet.absoluteFill}
-                      />
-                    </ThumbOption>
-                  )}
-                  {thumbPhotos.map((photo: any, index: number) => (
-                    <ThumbOption
-                      key={photo.id}
-                      label={`Foto ${thumbPhotos.length - index}`}
-                      selected={thumbSelection === 'photo' && chosenPhotoId === photo.id}
-                      onPress={() => void chooseThumbnail('photo', photo.id)}
-                    >
-                      <Image
-                        source={{ uri: storageApi.getPublicUrl(photo.thumb_path || photo.storage_path) }}
-                        style={StyleSheet.absoluteFill}
-                        resizeMode="cover"
-                      />
-                    </ThumbOption>
-                  ))}
-                </ScrollView>
-              </View>
-            </>
+            <BucketThumbnailSelector
+              bucket={bucket}
+              hasCover={hasCover}
+              thumbSelection={thumbSelection}
+              chosenPhotoId={chosenPhotoId}
+              thumbPhotos={thumbPhotos}
+              theme={theme}
+              onChooseThumbnail={(mode, photoId) => void chooseThumbnail(mode, photoId)}
+            />
           )}
 
           {/* ── Fotos ──────────────────────────────────────────────────────── */}
-          {(bucket.bucket_photos?.length > 0 || canEdit) && (
-            <>
-              <View style={[styles.divider, { backgroundColor: dark[400], marginTop: 20 }]} />
-              <View style={styles.photosSection}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
-                    FOTOS{bucket.bucket_photos?.length > 0 ? ` · ${bucket.bucket_photos?.length}` : ''}
-                  </Typography>
-                  {bucket.bucket_photos?.length > 0 && (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>
-                        Ordenar por:
-                      </Typography>
-                      <Pressable
-                        ref={sortTriggerRef}
-                        collapsable={false}
-                        onPress={openSortMenu}
-                        hitSlop={8}
-                        style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
-                      >
-                        <Typography variant="caption" color={gold[400]}>
-                          {photoSortField === 'date' ? 'Fecha' : photoSortField === 'title' ? 'Nombre' : 'Manual'}
-                        </Typography>
-                        {photoSortField === 'manual' ? null : photoSortDir === 'desc' ? (
-                          <ArrowDown color={gold[400]} size={14} />
-                        ) : (
-                          <ArrowUp color={gold[400]} size={14} />
-                        )}
-                      </Pressable>
-                    </View>
-                  )}
-                </View>
-
-
-
-                {bucket.bucket_photos?.length > 0 && (
-                  <TextInput
-                    placeholder="Buscar foto..."
-                    placeholderTextColor="rgba(255,255,255,0.5)"
-                    value={photoSearchQuery}
-                    onChangeText={setPhotoSearchQuery}
-                    style={{
-                      backgroundColor: dark[400],
-                      borderRadius: 12,
-                      paddingHorizontal: 16,
-                      paddingVertical: 10,
-                      color: '#FFF',
-                      marginBottom: 16,
-                    }}
-                  />
-                )}
-
-                {photoSortField === 'manual' && canEdit && photos.length > 1 && !photoSearchQuery.trim() ? (
-                  <>
-                    <Typography variant="caption" color={theme.colors.foregroundMuted} style={{ marginBottom: 10 }}>
-                      Arrastra el asa ⠿ para cambiar el orden de las fotos.
-                    </Typography>
-                    <DraggableTaskList
-                      items={photos}
-                      onReorder={(ids) => void persistPhotoOrder(ids)}
-                      onDraggingChange={(dragging) => setScrollEnabled(!dragging)}
-                      renderItem={(photo, drag) => (
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            height: 72,
-                            padding: 8,
-                            borderRadius: 14,
-                            backgroundColor: dark[300],
-                            borderWidth: 1,
-                            borderColor: drag.isActive ? gold[400] : dark[400],
-                            gap: 12,
-                          }}
-                        >
-                          <Pressable
-                            onPress={() => setViewingPhotoIndex(photos.findIndex((p: any) => p.id === photo.id))}
-                            style={{ width: 56, height: 56, borderRadius: 10, overflow: 'hidden', backgroundColor: dark[400] }}
-                          >
-                            <Image
-                              source={{ uri: storageApi.getPublicUrl(photo.thumb_path || photo.storage_path) }}
-                              style={{ width: '100%', height: '100%' }}
-                              resizeMode="cover"
-                            />
-                          </Pressable>
-                          <View style={{ flex: 1 }}>
-                            <Typography variant="bodySemibold" color="#fff" numberOfLines={1}>
-                              {photo.title || 'Sin título'}
-                            </Typography>
-                            <Typography variant="caption" color={theme.colors.foregroundMuted}>
-                              {photo.created_at ? new Date(photo.created_at).toLocaleDateString() : ''}
-                            </Typography>
-                          </View>
-                          <View
-                            {...drag.panHandlers}
-                            hitSlop={10}
-                            style={{ width: 44, height: 56, alignItems: 'center', justifyContent: 'center' }}
-                          >
-                            <GripVertical color={gold[400]} size={22} strokeWidth={2} />
-                          </View>
-                        </View>
-                      )}
-                    />
-                    <View style={{ height: 14 }} />
-                    <Pressable
-                      style={[styles.photoAddThumb, { width: '100%', height: 64, flexDirection: 'row' }]}
-                      onPress={() => void pickAndUploadPhotos()}
-                    >
-                      <Camera color={gold[400]} size={22} strokeWidth={1.8} />
-                      <Typography variant="bodySemibold" color={gold[400]} style={{ marginLeft: 10 }}>
-                        Añadir foto
-                      </Typography>
-                    </Pressable>
-                  </>
-                ) : (
-                <View style={styles.photosGrid}>
-                  {photos.map((photo, index) => (
-                    <Pressable
-                      key={photo.id}
-                      onPress={() => setViewingPhotoIndex(index)}
-                      style={[
-                        styles.photoThumb,
-                        photos.length === 1 && { width: '100%', height: (SCREEN_WIDTH - 40) * 1.25, marginBottom: 40 }
-                      ]}
-                    >
-                      <Image
-                        source={{ uri: storageApi.getPublicUrl(photo.storage_path) }}
-                        style={styles.photoThumbImage}
-                        resizeMode="cover"
-                      />
-                      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.5)', padding: 6 }}>
-                        <Typography variant="caption" color="#fff" numberOfLines={1}>
-                          {photo.title || 'Sin título'}
-                        </Typography>
-                        <Typography variant="caption" color="rgba(255,255,255,0.7)">
-                          {photo.created_at ? new Date(photo.created_at).toLocaleDateString() : ''}
-                        </Typography>
-                      </View>
-                    </Pressable>
-                  ))}
-                  {canEdit && (
-                    <Pressable
-                      style={[
-                        styles.photoAddThumb,
-                        photos.length === 0 && { width: '100%', height: 72, flexDirection: 'row' }
-                      ]}
-                      onPress={() => void pickAndUploadPhotos()}
-                    >
-                      <Camera color={gold[400]} size={24} strokeWidth={1.8} />
-                      {photos.length === 0 && (
-                        <Typography variant="bodySemibold" color={gold[400]} style={{ marginLeft: 10 }}>
-                          Añadir foto
-                        </Typography>
-                      )}
-                    </Pressable>
-                  )}
-                </View>
-                )}
-              </View>
-            </>
-          )}
+          <BucketPhotosSection
+            bucket={bucket}
+            photos={photos}
+            canEdit={canEdit}
+            theme={theme}
+            photoSortField={photoSortField}
+            photoSortDir={photoSortDir}
+            sortTriggerRef={sortTriggerRef}
+            openSortMenu={openSortMenu}
+            photoSearchQuery={photoSearchQuery}
+            setPhotoSearchQuery={setPhotoSearchQuery}
+            setScrollEnabled={setScrollEnabled}
+            persistPhotoOrder={(ids) => void persistPhotoOrder(ids)}
+            setViewingPhotoIndex={setViewingPhotoIndex}
+            pickAndUploadPhotos={() => void pickAndUploadPhotos()}
+          />
         </View>
       </ScrollView>
 
@@ -2399,210 +1729,44 @@ export default function BucketDetailScreen() {
       />
 
       {/* Sort Menu Modal */}
-      <Modal
+      <PhotoSortModal
         visible={photoSortMenuOpen}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-        onRequestClose={() => setPhotoSortMenuOpen(false)}
-      >
-        <Pressable
-          style={StyleSheet.absoluteFill}
-          onPress={() => setPhotoSortMenuOpen(false)}
-        >
-          <View
-            style={{
-              position: 'absolute',
-              top: sortMenuPos.top,
-              right: sortMenuPos.right,
-              minWidth: 130,
-              backgroundColor: dark[400],
-              borderRadius: 12,
-              overflow: 'hidden',
-              elevation: 8,
-              shadowColor: '#000',
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
-              shadowOffset: { width: 0, height: 4 },
-            }}
-          >
-            {([
-              { field: 'date', label: 'Fecha' },
-              { field: 'title', label: 'Nombre' },
-              ...(canEdit ? [{ field: 'manual', label: 'Manual' } as const] : []),
-            ] as const).map((option, i) => {
-              const selected = photoSortField === option.field;
-              return (
-                <Pressable
-                  key={option.field}
-                  onPress={() => handleSortOption(option.field)}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 12,
-                    paddingHorizontal: 14,
-                    paddingVertical: 11,
-                    borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth,
-                    borderTopColor: 'rgba(255,255,255,0.1)',
-                  }}
-                >
-                  <Typography
-                    variant={selected ? 'bodySemibold' : 'body'}
-                    color={selected ? gold[400] : theme.colors.foreground}
-                  >
-                    {option.label}
-                  </Typography>
-                  {selected && option.field !== 'manual' &&
-                    (photoSortDir === 'desc' ? (
-                      <ArrowDown color={gold[400]} size={16} />
-                    ) : (
-                      <ArrowUp color={gold[400]} size={16} />
-                    ))}
-                </Pressable>
-              );
-            })}
-          </View>
-        </Pressable>
-      </Modal>
+        canEdit={canEdit}
+        photoSortField={photoSortField}
+        photoSortDir={photoSortDir}
+        sortMenuPos={sortMenuPos}
+        theme={theme}
+        onClose={() => setPhotoSortMenuOpen(false)}
+        onSelectSort={handleSortOption}
+      />
 
       {/* Location Picker Modal */}
-      <Modal
+      <BucketLocationModal
         visible={locationModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setLocationModalVisible(false)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={{ flex: 1 }}
-        >
-          <Pressable
-            style={{
-              flex: 1,
-              backgroundColor: 'rgba(0,0,0,0.7)',
-              justifyContent: 'center',
-              alignItems: 'center',
-              padding: 20,
-            }}
-            onPress={() => setLocationModalVisible(false)}
-          >
-            <Pressable
-              style={{
-                width: '100%',
-                maxWidth: 420,
-                backgroundColor: '#161616',
-                borderRadius: 20,
-                borderWidth: 1,
-                borderColor: dark[400],
-                padding: 20,
-                minHeight: 320,
-              }}
-              onPress={(e) => e.stopPropagation()}
-            >
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <MapPin color={gold[400]} size={20} />
-                  <Typography variant="h3" color={theme.colors.foreground}>Ubicación</Typography>
-                </View>
-                <Pressable hitSlop={10} onPress={() => setLocationModalVisible(false)}>
-                  <X color={theme.colors.foregroundMuted} size={20} />
-                </Pressable>
-              </View>
+        locationText={bucket.location_text}
+        theme={theme}
+        onClose={() => setLocationModalVisible(false)}
+        onSaveLocation={handleSaveLocation}
+        onRemoveLocation={handleRemoveLocation}
+      />
 
-              <LocationAutocomplete
-                value={bucket.location_text || ''}
-                onChangeLocation={async (loc) => {
-                  await handleSaveLocation(loc);
-                  setLocationModalVisible(false);
-                }}
-              />
-
-              {bucket.location_text ? (
-                <Pressable
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 8,
-                    marginTop: 20,
-                    paddingVertical: 12,
-                    borderRadius: 12,
-                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                  }}
-                  onPress={async () => {
-                    await handleRemoveLocation();
-                    setLocationModalVisible(false);
-                  }}
-                >
-                  <Trash2 color={theme.colors.error} size={16} />
-                  <Typography variant="bodySemibold" color={theme.colors.error}>
-                    Quitar ubicación
-                  </Typography>
-                </Pressable>
-              ) : null}
-            </Pressable>
-          </Pressable>
-        </KeyboardAvoidingView>
-      </Modal>
-
-      {datePickerConfig && datePickerConfig.visible && (
-        Platform.OS === 'ios' ? (
-          <Modal transparent animationType="slide" visible={true}>
-            <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-              <View style={{ backgroundColor: '#1C1C1E', padding: 20, borderTopLeftRadius: 16, borderTopRightRadius: 16 }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10 }}>
-                  <Pressable onPress={() => setDatePickerConfig(null)}>
-                    <Typography variant="bodySemibold" color="#0A84FF">Hecho</Typography>
-                  </Pressable>
-                </View>
-                <DateTimePicker
-                  value={datePickerConfig.date}
-                  mode="date"
-                  display="spinner"
-                  themeVariant="dark"
-                  onChange={async (_event, date) => {
-                    if (date) {
-                      setDatePickerConfig({ ...datePickerConfig, date });
-                      const type = datePickerConfig.type;
-                      const patch: Record<string, any> = { [type]: date.toISOString() };
-                      if (type === 'completed_at' && bucket.status !== 'completed') {
-                        patch.status = 'completed';
-                      }
-                      queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, ...patch } : oldData);
-                      await supabase.from('buckets').update(patch).eq('id', id);
-                      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
-                      void queryClient.invalidateQueries({ queryKey: ['buckets'] });
-                      void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
-                    }
-                  }}
-                />
-              </View>
-            </View>
-          </Modal>
-        ) : (
-          <DateTimePicker
-            value={datePickerConfig.date}
-            mode="date"
-            display="default"
-            onChange={async (event, date) => {
-              const type = datePickerConfig.type;
-              setDatePickerConfig(null);
-              if (event.type === 'set' && date) {
-                const patch: Record<string, any> = { [type]: date.toISOString() };
-                if (type === 'completed_at' && bucket.status !== 'completed') {
-                  patch.status = 'completed';
-                }
-                queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, ...patch } : oldData);
-                await supabase.from('buckets').update(patch).eq('id', id);
-                void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
-                void queryClient.invalidateQueries({ queryKey: ['buckets'] });
-                void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
-              }
-            }}
-          />
-        )
-      )}
+      {/* Date Picker Modal */}
+      <BucketDatePickerModal
+        config={datePickerConfig}
+        onClose={() => setDatePickerConfig(null)}
+        onChangeDate={async (date, type) => {
+          setDatePickerConfig(null);
+          const patch: Record<string, any> = { [type]: date.toISOString() };
+          if (type === 'completed_at' && bucket.status !== 'completed') {
+            patch.status = 'completed';
+          }
+          queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, ...patch } : oldData);
+          await supabase.from('buckets').update(patch).eq('id', id);
+          void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+          void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+          void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
+        }}
+      />
 
       <TaskMentionPickerSheet
         visible={showMentionPicker}
@@ -2636,14 +1800,7 @@ export default function BucketDetailScreen() {
         onChange={(collabs) => void handleCollaboratorsChange(collabs)}
         onClose={() => setShowCollaboratorPicker(false)}
         readOnlyIds={[
-          ...(isOwner
-            ? []
-            : [
-                bucket.user_id,
-                ...collaborators
-                  .filter((c: any) => c.status === 'accepted' && c.id !== user?.id)
-                  .map((c: any) => c.id),
-              ]),
+          ...(bucket.user_id ? [bucket.user_id] : []),
           ...participantsData.filter((p: any) => p.id !== user?.id).map((p: any) => p.id),
         ]}
       />

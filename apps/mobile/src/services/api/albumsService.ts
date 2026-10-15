@@ -20,6 +20,7 @@ export interface TaskItem {
   /** Valor para `BucketCover` (foto elegida/última, portada o null = degradado automático). */
   imageValue?: string | null;
   categorySlug?: string | null;
+  priority?: string | null;
 }
 
 export interface AlbumDetail {
@@ -87,6 +88,7 @@ export const albumsService = {
           dueDate: b.deadline || undefined,
           completedAt: (b as any).completed_at ?? null,
           position: null,
+          priority: b.priority ?? null,
           stepsTotal,
           stepsCompleted,
         };
@@ -174,6 +176,7 @@ export const albumsService = {
           dueDate: b.deadline || undefined,
           completedAt: (b as any).completed_at ?? null,
           position: positionByBucket.get(b.id) ?? null,
+          priority: b.priority ?? null,
           stepsTotal,
           stepsCompleted,
         };

@@ -81,16 +81,9 @@ export default function CreateAlbumScreen() {
 
   const isOwner = !isEditing || !albumOwner?.id || isSelf(albumOwner.id);
   const readOnlyIds = React.useMemo(() => {
-    if (isOwner) return [];
-    const ids: string[] = [];
-    if (albumOwner?.id) ids.push(albumOwner.id);
-    selectedCollaborators.forEach((c) => {
-      if (initialCollaboratorIds.includes(c.id) && !isSelf(c.id)) {
-        ids.push(c.id);
-      }
-    });
-    return ids;
-  }, [isOwner, albumOwner, selectedCollaborators, initialCollaboratorIds, currentUserId]);
+    // Only the album creator cannot be removed
+    return albumOwner?.id && !isSelf(albumOwner.id) ? [albumOwner.id] : [];
+  }, [albumOwner?.id, currentUserId]);
 
   // Load existing album data if in edit mode
   useEffect(() => {
@@ -252,10 +245,10 @@ export default function CreateAlbumScreen() {
           const toAdd = selectedCollaborators.filter(
             (c) => !currentSet.has(c.id) && c.id !== albumOwner?.id && c.id !== user?.id
           );
-          // Only owner can remove existing members
-          const toRemove = isOwner
-            ? initialCollaboratorIds.filter((uid) => !newSet.has(uid))
-            : [];
+          // Collaborators can remove other members except the album creator and self
+          const toRemove = initialCollaboratorIds.filter(
+            (uid) => !newSet.has(uid) && uid !== albumOwner?.id && uid !== user?.id
+          );
 
           if (toAdd.length > 0) {
             await supabase.from('album_members').insert(
