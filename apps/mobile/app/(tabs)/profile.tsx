@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { LayoutGrid, List, Settings, Users } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Avatar, fontFamily, useTheme } from '@bucketlist/ui';
+import { Avatar, fontFamily, useTheme, PageTitle } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useAlbums } from '../../src/hooks/useAlbums';
@@ -102,7 +102,7 @@ export default function CurrentUserProfileScreen() {
       >
         {/* Cabecera */}
         <View style={styles.header}>
-          <Text style={[styles.title, { color: theme.colors.foreground }]}>{t('nav.profile')}</Text>
+          <PageTitle gold="Mi" rest="perfil" />
           <Pressable
             onPress={() => router.push('/(modals)/settings' as any)}
             accessibilityRole="button"

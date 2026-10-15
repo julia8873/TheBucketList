@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Switch, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Typography, useTheme, spacing, Button, Icon, radii } from '@bucketlist/ui';
+import { Typography, useTheme, spacing, Button, Icon, radii, PageTitle } from '@bucketlist/ui';
 import { ArrowLeft } from 'lucide-react-native';
 import { supabase } from '../../src/services/supabase';
 import { useAuthStore } from '../../src/stores/auth.store';
@@ -47,76 +47,90 @@ export default function NotificationPrefsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: theme.dark ? '#222222' : '#cccccc' }]}>
         <Button variant="ghost" size="sm" onPress={() => router.back()} style={{ padding: 0, width: 40 }}>
-          <Icon icon={ArrowLeft} size={24} color={theme.colors.foreground} />
+          <Icon icon={ArrowLeft} size={24} color={theme.dark ? '#FFFFFF' : theme.colors.foreground} />
         </Button>
-        <Typography variant="h3" style={{ flex: 1, textAlign: 'center', marginRight: 40 }}>Notifications</Typography>
+        <PageTitle style={{ flex: 1, textAlign: 'center', marginRight: 40 }}>Notificaciones</PageTitle>
       </View>
 
       <View style={styles.content}>
-        <Typography variant="caption" color="textSecondary" style={{ marginBottom: spacing[4], textTransform: 'uppercase' }}>
-          Push Notifications
+        <Typography 
+          variant="caption" 
+          color={theme.dark ? '#FFFFFF' : theme.colors.foregroundMuted} 
+          style={{ marginBottom: spacing[4], textTransform: 'uppercase', letterSpacing: 0.5 }}
+        >
+          Notificaciones Push
         </Typography>
 
-        <View style={styles.settingRow}>
-          <Typography variant="body">Reactions</Typography>
+        <View style={[styles.settingRow, { borderBottomColor: theme.dark ? '#222222' : '#eeeeee' }]}>
+          <Typography variant="body" color={theme.dark ? '#FFFFFF' : theme.colors.foreground}>Reacciones</Typography>
           <Switch 
             value={prefs?.reactions} 
             onValueChange={() => togglePref('reactions')} 
-            trackColor={{ true: theme.colors.primary }}
+            trackColor={{ true: theme.colors.primary, false: theme.dark ? '#333' : '#ccc' }}
           />
         </View>
 
-        <View style={styles.settingRow}>
-          <Typography variant="body">Comments</Typography>
+        <View style={[styles.settingRow, { borderBottomColor: theme.dark ? '#222222' : '#eeeeee' }]}>
+          <Typography variant="body" color={theme.dark ? '#FFFFFF' : theme.colors.foreground}>Comentarios</Typography>
           <Switch 
             value={prefs?.comments} 
             onValueChange={() => togglePref('comments')} 
-            trackColor={{ true: theme.colors.primary }}
+            trackColor={{ true: theme.colors.primary, false: theme.dark ? '#333' : '#ccc' }}
           />
         </View>
 
-        <View style={styles.settingRow}>
-          <Typography variant="body">New Followers</Typography>
+        <View style={[styles.settingRow, { borderBottomColor: theme.dark ? '#222222' : '#eeeeee' }]}>
+          <Typography variant="body" color={theme.dark ? '#FFFFFF' : theme.colors.foreground}>Nuevos seguidores</Typography>
           <Switch 
             value={prefs?.new_followers} 
             onValueChange={() => togglePref('new_followers')} 
-            trackColor={{ true: theme.colors.primary }}
+            trackColor={{ true: theme.colors.primary, false: theme.dark ? '#333' : '#ccc' }}
           />
         </View>
 
-        <View style={styles.settingRow}>
-          <Typography variant="body">Follow Requests</Typography>
+        <View style={[styles.settingRow, { borderBottomColor: theme.dark ? '#222222' : '#eeeeee' }]}>
+          <Typography variant="body" color={theme.dark ? '#FFFFFF' : theme.colors.foreground}>Solicitudes de seguimiento</Typography>
           <Switch 
             value={prefs?.follow_requests} 
             onValueChange={() => togglePref('follow_requests')} 
-            trackColor={{ true: theme.colors.primary }}
+            trackColor={{ true: theme.colors.primary, false: theme.dark ? '#333' : '#ccc' }}
           />
         </View>
         
-        <View style={styles.settingRow}>
-          <Typography variant="body">Goal Deadlines</Typography>
+        <View style={[styles.settingRow, { borderBottomColor: theme.dark ? '#222222' : '#eeeeee' }]}>
+          <Typography variant="body" color={theme.dark ? '#FFFFFF' : theme.colors.foreground}>Fechas límite de tareas</Typography>
           <Switch 
             value={prefs?.deadlines} 
             onValueChange={() => togglePref('deadlines')} 
-            trackColor={{ true: theme.colors.primary }}
+            trackColor={{ true: theme.colors.primary, false: theme.dark ? '#333' : '#ccc' }}
           />
         </View>
 
-        <Typography variant="caption" color="textSecondary" style={{ marginTop: spacing[8], marginBottom: spacing[4], textTransform: 'uppercase' }}>
-          Quiet Hours
+        <Typography 
+          variant="caption" 
+          color={theme.dark ? '#FFFFFF' : theme.colors.foregroundMuted} 
+          style={{ marginTop: spacing[8], marginBottom: spacing[4], textTransform: 'uppercase', letterSpacing: 0.5 }}
+        >
+          Horas de silencio
         </Typography>
 
-        <View style={styles.settingRow}>
+        <View style={[styles.settingRow, { borderBottomColor: theme.dark ? '#222222' : '#eeeeee' }]}>
           <View>
-            <Typography variant="body">Enable Quiet Hours</Typography>
-            <Typography variant="caption" color="textSecondary">Pause notifications during night</Typography>
+            <Typography variant="body" color={theme.dark ? '#FFFFFF' : theme.colors.foreground}>Activar horas de silencio</Typography>
+            <Typography 
+              variant="caption" 
+              color={theme.dark ? '#FFFFFF' : theme.colors.foregroundMuted}
+              style={{ opacity: theme.dark ? 0.75 : 1 }}
+            >
+              Pausar notificaciones durante la noche
+            </Typography>
           </View>
           <Switch 
             value={prefs?.quiet_hours_enabled} 
             onValueChange={() => togglePref('quiet_hours_enabled')} 
-            trackColor={{ true: theme.colors.primary }}
+            trackColor={{ true: theme.colors.primary, false: theme.dark ? '#333' : '#ccc' }}
           />
         </View>
       </View>

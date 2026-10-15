@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ActivityIndicator, FlatList, Pressable, Text, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Typography, useTheme, spacing, Avatar, Button, Icon } from '@bucketlist/ui';
+import { Typography, useTheme, spacing, Avatar, Button, Icon, PageTitle } from '@bucketlist/ui';
 import { Check, Heart, MessageCircle, UserPlus, CheckCircle, Bell, Users, X, Folder } from 'lucide-react-native';
 import { useNotifications, useMarkAsRead, useMarkAllAsRead } from '../../src/hooks/useNotifications';
 import { useAuthStore } from '../../src/stores/auth.store';
@@ -9,6 +9,7 @@ import { usePullToRefresh } from '../../src/hooks/useAutoRefresh';
 import { supabase } from '../../src/services/supabase';
 import { useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 export default function NotificationsScreen() {
   const { theme } = useTheme();
@@ -100,7 +101,7 @@ export default function NotificationsScreen() {
       case 'deadline': return <Bell size={16} color={theme.colors.error} />;
       case 'collaboration_invite': return <Users size={16} color="#D4B13A" />;
       case 'album_invite': return <Folder size={16} color="#D4B13A" />;
-      default: return <Bell size={16} color={theme.colors.foregroundMuted} />;
+      default: return <Bell size={16} color={theme.dark ? '#FFFFFF' : theme.colors.foregroundMuted} />;
     }
   };
 
@@ -133,8 +134,8 @@ export default function NotificationsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={styles.header}>
-        <Typography variant="h2">Notifications</Typography>
+      <View style={[styles.header, { borderBottomColor: theme.dark ? '#222222' : '#cccccc' }]}>
+        <PageTitle>Notificaciones</PageTitle>
         {unreadCount > 0 && (
           <Button 
             variant="ghost" 
@@ -142,7 +143,7 @@ export default function NotificationsScreen() {
             onPress={() => user && markAllAsRead.mutate(user.id)}
             disabled={markAllAsRead.isPending}
           >
-            Mark all read
+            Marcar como leídas
           </Button>
         )}
       </View>
@@ -156,7 +157,8 @@ export default function NotificationsScreen() {
           <Pressable 
             style={[
               styles.notificationRow, 
-              !item.is_read && { backgroundColor: theme.colors.surface }
+              { borderBottomColor: theme.dark ? '#222222' : '#eeeeee' },
+              !item.is_read && { backgroundColor: theme.dark ? '#1A1A1A' : theme.colors.surface }
             ]}
             onPress={() => handleNotificationPress(item)}
           >
@@ -168,21 +170,36 @@ export default function NotificationsScreen() {
                   size="sm" 
                 />
               ) : (
-                <View style={[styles.systemIcon, { backgroundColor: theme.colors.border }]}>
+                <View style={[styles.systemIcon, { backgroundColor: theme.dark ? '#262626' : theme.colors.border }]}>
                   {getIconForType(item.type)}
                 </View>
               )}
-              <View style={styles.badge}>
+              <View style={[
+                styles.badge, 
+                { 
+                  backgroundColor: theme.dark ? '#1E1E1E' : '#FFFFFF', 
+                  borderColor: theme.dark ? '#333333' : '#EEEEEE',
+                  borderWidth: StyleSheet.hairlineWidth 
+                }
+              ]}>
                 {getIconForType(item.type)}
               </View>
             </View>
             
             <View style={styles.content}>
-              <Typography variant="body" style={!item.is_read ? { fontWeight: 'bold' } : undefined}>
+              <Typography 
+                variant="body" 
+                color={theme.dark ? '#FFFFFF' : theme.colors.foreground}
+                style={!item.is_read ? { fontWeight: 'bold' } : undefined}
+              >
                 {getMessageForType(item)}
               </Typography>
-              <Typography variant="caption" color="textMuted">
-                {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+              <Typography 
+                variant="caption" 
+                color={theme.dark ? '#FFFFFF' : theme.colors.foregroundMuted}
+                style={{ opacity: theme.dark ? 0.75 : 1 }}
+              >
+                {formatDistanceToNow(new Date(item.created_at), { addSuffix: true, locale: es })}
               </Typography>
               {(item.type === 'collaboration_invite' || item.type === 'album_invite') && !item.is_read && (
                 <View style={styles.inviteActions}>
@@ -195,12 +212,16 @@ export default function NotificationsScreen() {
                     <Text style={styles.inviteBtnTextAccept}>Aceptar</Text>
                   </Pressable>
                   <Pressable
-                    style={[styles.inviteBtn, styles.inviteBtnDecline]}
+                    style={[
+                      styles.inviteBtn, 
+                      styles.inviteBtnDecline,
+                      theme.dark && { backgroundColor: '#262626', borderColor: '#404040' }
+                    ]}
                     disabled={respondingId === item.id}
                     onPress={() => handleCollaborationResponse(item, false)}
                   >
-                    <X size={14} color="#9A9A9A" />
-                    <Text style={styles.inviteBtnTextDecline}>Rechazar</Text>
+                    <X size={14} color={theme.dark ? '#FFFFFF' : '#9A9A9A'} />
+                    <Text style={[styles.inviteBtnTextDecline, theme.dark && { color: '#FFFFFF' }]}>Rechazar</Text>
                   </Pressable>
                 </View>
               )}
@@ -213,8 +234,12 @@ export default function NotificationsScreen() {
         )}
         ListEmptyComponent={
           <View style={styles.center}>
-            <Typography variant="body" color="textSecondary" style={{ marginTop: spacing[10] }}>
-              No notifications yet.
+            <Typography 
+              variant="body" 
+              color={theme.dark ? '#FFFFFF' : theme.colors.foregroundMuted} 
+              style={{ marginTop: spacing[10] }}
+            >
+              No tienes notificaciones aún.
             </Typography>
           </View>
         }

@@ -83,7 +83,7 @@ export function BucketCover({
   const preset = chosenPreset ?? autoCoverPreset({ title, categorySlug, seed });
 
   const imageUri = isCustomImage
-    ? value!.startsWith('http')
+    ? (value!.startsWith('http') || value!.startsWith('file:') || value!.startsWith('content:') || value!.startsWith('ph:') || value!.startsWith('blob:'))
       ? value!
       : storageApi.getPublicUrl(value!)
     : null;

@@ -18,13 +18,10 @@ import { useIncomingRequestCount } from '../../src/hooks/useFriends';
 import { useUnreadCount } from '../../src/hooks/useNotifications';
 import { useAuthStore } from '../../src/stores/auth.store';
 
+import { PageTitle } from '@bucketlist/ui';
+
 function Logo() {
-  return (
-    <Text style={styles.logo} accessibilityRole="header">
-      <Text style={{ color: gold[400] }}>Momentos</Text>
-      <Text style={{ color: '#FFFFFF' }}> de amigos</Text>
-    </Text>
-  );
+  return <PageTitle gold="Momentos" rest="de amigos" />;
 }
 
 export default function FeedScreen() {

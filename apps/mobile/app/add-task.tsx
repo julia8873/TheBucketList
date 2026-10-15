@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Folder, Search, Check, Plus } from 'lucide-react-native';
 import { useQueryClient } from '@tanstack/react-query';
+import { PageTitle } from '@bucketlist/ui';
 import { BucketCover } from '../src/components/BucketCover';
 import { useUnassignedTasks, useAssignTasks, useCreateTasksFromDefaults, defaultTasks, UnassignedTask } from '../src/services/api/tasksService';
 
@@ -169,7 +170,7 @@ export default function AddTaskScreen() {
         >
           <ChevronLeft size={22} color="#F3EEE3" strokeWidth={1.8} />
         </Pressable>
-        <Text style={styles.title}>Añadir tareas</Text>
+        <PageTitle gold="Añadir" rest="tareas" />
       </View>
 
       {/* Target Album Pill */}

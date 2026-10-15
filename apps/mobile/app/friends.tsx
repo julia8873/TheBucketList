@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Check, ChevronLeft, Lock, Search, X } from 'lucide-react-native';
-import { EmptyState, SectionLabel, SegmentedControl, fontFamily, gold, useTheme } from '@bucketlist/ui';
+import { EmptyState, SectionLabel, SegmentedControl, fontFamily, gold, useTheme, PageTitle } from '@bucketlist/ui';
 import { PersonRow } from '../src/components/PersonRow';
 import { FollowButton } from '../src/components/FollowButton';
 import { useAuthStore } from '../src/stores/auth.store';
@@ -356,7 +356,7 @@ export default function FriendsScreen() {
             ) : null}
           </View>
         ) : (
-          <Text style={styles.title}>Amigos</Text>
+          <PageTitle gold="Mis" rest="amigos" />
         )}
       </View>
 

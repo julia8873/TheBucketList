@@ -14,7 +14,7 @@ export const createBucketSchema = z.object({
   priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
   visibility: z.enum(['public', 'followers', 'private']).default('public'),
   deadline: z.date().optional().nullable(),
-  location_text: z.string().max(100).optional().nullable(),
+  location_text: z.string().optional().nullable(),
   location_lat: z.number().optional().nullable(),
   location_lng: z.number().optional().nullable(),
   subtasks: z.array(subtaskSchema).max(10).optional(),

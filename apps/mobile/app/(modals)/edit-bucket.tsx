@@ -15,7 +15,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { ChevronLeft, MapPin, Calendar, Eye, X, Users, Plus, Folder } from 'lucide-react-native';
-import { TagChip } from '@bucketlist/ui';
+import { TagChip, PageTitle } from '@bucketlist/ui';
 import type { UpdateBucketForm } from '@bucketlist/shared';
 import { supabase } from '../../src/services/supabase';
 import { useUpdateBucket } from '../../src/hooks/useBuckets';
@@ -220,7 +220,7 @@ export default function EditBucketModal() {
                         >
                             <ChevronLeft color="#FFF" size={28} />
                         </Pressable>
-                        <Text style={styles.headerTitle}>Editar tarea</Text>
+                        <PageTitle gold="Editar" rest="tarea" />
                     </View>
 
                     {/* QUÉ QUIERES LOGRAR */}

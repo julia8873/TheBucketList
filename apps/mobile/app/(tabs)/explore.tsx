@@ -3,7 +3,7 @@ import { View, StyleSheet, ActivityIndicator, TextInput, FlatList, Pressable } f
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
-import { Typography, useTheme, spacing, Avatar, radii, Icon } from '@bucketlist/ui';
+import { Typography, useTheme, spacing, Avatar, radii, Icon, PageTitle } from '@bucketlist/ui';
 import { Search } from 'lucide-react-native';
 import { useSearchUsers } from '../../src/hooks/useSocial';
 import { useExploreFeed } from '../../src/hooks/useFeed';
@@ -41,9 +41,7 @@ export default function ExploreScreen() {
   return (
     <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.header}>
-        <Typography variant="h1" color={theme.colors.foreground} style={styles.title}>
-          Explorar
-        </Typography>
+        <PageTitle style={{ marginBottom: spacing[3] }}>Explorar</PageTitle>
         <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
           <Icon icon={Search} size={20} color={theme.colors.foregroundMuted} />
           <TextInput

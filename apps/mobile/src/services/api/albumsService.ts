@@ -49,21 +49,44 @@ export const albumsService = {
     if (!userId) throw new Error('Not authenticated');
 
     if (id === 'unassigned') {
-      const { data: allUserBuckets, error: bucketsError } = await supabase
-        .from('buckets')
-        .select(`
+      const selectCols = `
           id, title, deadline, completed_at, cover_image, thumbnail_mode, thumbnail_photo_id, status, priority,
           category_id, counter_count, counter_target,
           categories ( name_es, color, slug ),
           item_subtasks ( id, done ),
           bucket_photos ( id, storage_path, thumb_path, created_at ),
           album_items ( album_id )
-        `)
+      `;
+      const { data: allUserBuckets, error: bucketsError } = await supabase
+        .from('buckets')
+        .select(selectCols)
         .eq('user_id', userId);
 
       if (bucketsError) throw bucketsError;
 
-      const unassignedBuckets = allUserBuckets?.filter(b => !b.album_items || b.album_items.length === 0) || [];
+      let collabBuckets: any[] = [];
+      try {
+        const { data: collabData } = await supabase
+          .from('bucket_collaborators')
+          .select('bucket_id')
+          .eq('user_id', userId)
+          .in('status', ['accepted', 'pending']);
+        const collabIds = (collabData ?? []).map((c: any) => c.bucket_id);
+        const ownIds = new Set((allUserBuckets ?? []).map((b: any) => b.id));
+        const missingCollabIds = collabIds.filter((cid: string) => !ownIds.has(cid));
+        if (missingCollabIds.length > 0) {
+          const { data: extraCollab } = await supabase
+            .from('buckets')
+            .select(selectCols)
+            .in('id', missingCollabIds);
+          collabBuckets = extraCollab ?? [];
+        }
+      } catch {
+        // sin colaboraciones
+      }
+
+      const mergedBuckets = [...(allUserBuckets ?? []), ...collabBuckets];
+      const unassignedBuckets = mergedBuckets.filter(b => !b.album_items || b.album_items.length === 0);
 
       const tasks = unassignedBuckets.map(b => {
         const cat = b.categories as any;

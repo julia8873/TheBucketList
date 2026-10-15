@@ -3,7 +3,7 @@ import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, T
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Pencil, Plus, Search, Tag as TagIcon, X } from 'lucide-react-native';
-import { FilterChip, fontFamily, useTheme } from '@bucketlist/ui';
+import { FilterChip, fontFamily, useTheme, PageTitle } from '@bucketlist/ui';
 import { TagBadge } from '../src/components/TagBadge';
 import { TagEditSheet } from '../src/components/TagEditSheet';
 import { sortTags, useTagUsage, useTags, type Tag } from '../src/hooks/useTags';
@@ -71,7 +71,7 @@ export default function TagsScreen() {
         >
           <ChevronLeft size={22} color={theme.colors.foreground} />
         </Pressable>
-        <Text style={[styles.title, { color: theme.colors.foreground }]}>Etiquetas</Text>
+        <PageTitle gold="Mis" rest="etiquetas" style={{ flex: 1 }} />
         <Pressable
           onPress={openCreate}
           accessibilityRole="button"

@@ -8,7 +8,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Camera, ChevronLeft, Lock } from 'lucide-react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Avatar, fontFamily, useTheme } from '@bucketlist/ui';
+import { Avatar, fontFamily, useTheme, PageTitle } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { OptionDialog } from '../../src/components/SettingsParts';
@@ -217,7 +217,7 @@ export default function EditProfileScreen() {
           >
             <ChevronLeft size={22} color={theme.colors.foreground} />
           </Pressable>
-          <Text style={[styles.title, { color: theme.colors.foreground }]}>{t('profile.edit')}</Text>
+          <PageTitle gold="Editar" rest="perfil" />
         </View>
 
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>

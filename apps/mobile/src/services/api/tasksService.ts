@@ -76,7 +76,7 @@ export const tasksService = {
         .from('bucket_collaborators')
         .select('bucket_id')
         .eq('user_id', userId)
-        .eq('status', 'accepted');
+        .in('status', ['accepted', 'pending']);
       (collab ?? []).forEach((c: any) => extraIds.add(c.bucket_id));
     } catch {
       // sin colaboraciones

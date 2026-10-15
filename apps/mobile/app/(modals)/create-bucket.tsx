@@ -6,9 +6,11 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createBucketSchema, type CreateBucketForm } from '@bucketlist/shared';
+import { createBucketSchema, type CreateBucketForm, processBucketImage } from '@bucketlist/shared';
 import { useCreateBucket } from '../../src/hooks/useBuckets';
 import { supabase } from '../../src/services/supabase';
+import { storageApi } from '../../src/services/api/storage';
+import { PageTitle } from '@bucketlist/ui';
 import { LocationPickerModal } from '../../src/components/LocationPickerModal';
 import { TagsRow } from '../../src/components/TagsRow';
 import type { TagItem } from '../../src/components/TagPickerSheet';
@@ -39,6 +41,7 @@ export default function CreateBucketModal() {
   const { data: albums = [] } = useAlbums(user?.id);
 
   const [coverImage, setCoverImage] = useState<string>('preset:green');
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [albumId, setAlbumId] = useState<string | null>(
     params.albumId && params.albumId !== 'new' ? String(params.albumId) : null,
   );
@@ -77,35 +80,56 @@ export default function CreateBucketModal() {
 
   const titleValue = watch('title');
 
-  const onSubmit = (data: CreateBucketForm) => {
-    data.subtasks = steps.filter(s => s.title.trim() !== '').map((s, i) => ({
-      title: s.title.trim(),
-      done: false,
-      position: i,
-    }));
+  const onSubmit = async (data: CreateBucketForm) => {
+    try {
+      data.subtasks = steps.filter(s => s.title.trim() !== '').map((s, i) => ({
+        title: s.title.trim(),
+        done: false,
+        position: i,
+      }));
 
-    // Get IDs to save in item_tags
-    const tag_ids = selectedTags.map(t => t.id);
-    const collaborator_ids = selectedCollaborators.map(c => c.id);
+      // Get IDs to save in item_tags
+      const tag_ids = selectedTags.map(t => t.id);
+      const collaborator_ids = selectedCollaborators.map(c => c.id);
 
-    // Reuse existing mutation fields, passing local states where appropriate
-    const payload = {
-      ...data,
-      cover_image: coverImage,
-      album_id: albumId,
-      tag_ids,
-      collaborator_ids,
-    } as any;
+      let finalCoverImage: string | null = coverImage;
 
-    createBucket.mutate(payload, {
-      onSuccess: () => {
-        router.back();
-      },
-      onError: (error) => {
-        console.error('Failed to create bucket:', error);
-        Alert.alert('No se pudo crear la tarea', (error as Error)?.message ?? 'Inténtalo de nuevo.');
+      // If user selected a custom photo (local file), upload it to Supabase Storage
+      if (coverImage && !coverImage.startsWith('preset:') && !coverImage.startsWith('http')) {
+        setIsUploadingCover(true);
+        try {
+          const processed = await processBucketImage(coverImage);
+          const path = `covers/${user?.id || 'anon'}_${Date.now()}.jpg`;
+          finalCoverImage = await storageApi.uploadSingle(path, processed.original.uri);
+        } catch (uploadErr) {
+          console.error('Failed to upload cover image, using local fallback:', uploadErr);
+        } finally {
+          setIsUploadingCover(false);
+        }
       }
-    });
+
+      // Reuse existing mutation fields, passing local states where appropriate
+      const payload = {
+        ...data,
+        cover_image: finalCoverImage,
+        album_id: albumId,
+        tag_ids,
+        collaborator_ids,
+      } as any;
+
+      createBucket.mutate(payload, {
+        onSuccess: () => {
+          router.back();
+        },
+        onError: (error) => {
+          console.error('Failed to create bucket:', error);
+          Alert.alert('No se pudo crear la tarea', (error as Error)?.message ?? 'Inténtalo de nuevo.');
+        }
+      });
+    } catch (err: any) {
+      setIsUploadingCover(false);
+      Alert.alert('Error al preparar la tarea', err?.message || 'Inténtalo de nuevo.');
+    }
   };
 
   const onInvalid = (errs: Record<string, any>) => {
@@ -115,14 +139,17 @@ export default function CreateBucketModal() {
   };
 
   const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
+      aspect: [16, 9],
+      quality: 0.9,
     });
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      setCoverImage(result.assets?.[0]?.uri || '');
+      const uri = result.assets[0]?.uri;
+      if (uri) {
+        setCoverImage(uri);
+      }
     }
   };
 
@@ -151,7 +178,7 @@ export default function CreateBucketModal() {
             <Pressable style={styles.backButton} onPress={() => router.back()}>
               <ChevronLeft color="#FFF" size={28} />
             </Pressable>
-            <Text style={styles.headerTitle}>Nueva tarea</Text>
+            <PageTitle gold="Nueva" rest="tarea" />
           </View>
 
           {/* QUÉ QUIERES LOGRAR */}
@@ -194,11 +221,21 @@ export default function CreateBucketModal() {
             })}
 
             <Pressable
-              onPress={pickImage}
-              style={[styles.coverTile, styles.coverImageTile, coverImage.startsWith('file') && styles.coverSelected]}
+              onPress={() => void pickImage()}
+              style={[
+                styles.coverTile,
+                styles.coverImageTile,
+                !coverImage.startsWith('preset:') && styles.coverSelected,
+              ]}
+              accessibilityLabel={!coverImage.startsWith('preset:') ? 'Cambiar foto de portada' : 'Elegir foto de portada'}
             >
-              {coverImage.startsWith('file') ? (
-                <Image source={{ uri: coverImage }} style={[StyleSheet.absoluteFill, { borderRadius: 12 }]} />
+              {!coverImage.startsWith('preset:') ? (
+                <>
+                  <Image source={{ uri: coverImage }} style={[StyleSheet.absoluteFill, { borderRadius: 12 }]} resizeMode="cover" />
+                  <View style={styles.coverImageBadge}>
+                    <Camera color="#FFF" size={12} />
+                  </View>
+                </>
               ) : (
                 <Camera color="#D4B13A" size={28} />
               )}
@@ -250,11 +287,26 @@ export default function CreateBucketModal() {
                 <Pressable style={styles.settingRow} onPress={() => setIsEditingLocation(true)}>
                   <MapPin color="#D4B13A" size={24} />
                   <Text style={styles.settingLabel}>Ubicación</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <Text style={[styles.settingValue, !value && { color: '#6B6B6B' }]} numberOfLines={1}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, justifyContent: 'flex-end' }}>
+                    <Text style={[styles.settingValue, !value && { color: '#6B6B6B' }, { flexShrink: 1 }]} numberOfLines={1}>
                       {value || 'Sin ubicación'}
                     </Text>
-                    <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }] }} />
+                    {value ? (
+                      <Pressable
+                        hitSlop={10}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          setValue('location_text', '');
+                          setValue('location_lat', null);
+                          setValue('location_lng', null);
+                        }}
+                        accessibilityLabel="Quitar ubicación"
+                      >
+                        <X color="#6B6B6B" size={18} />
+                      </Pressable>
+                    ) : (
+                      <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }] }} />
+                    )}
                   </View>
                 </Pressable>
               )}
@@ -269,9 +321,25 @@ export default function CreateBucketModal() {
                   <Pressable style={styles.settingRow} onPress={() => setShowDatePicker(true)}>
                     <Calendar color="#D4B13A" size={24} />
                     <Text style={styles.settingLabel}>Fecha límite</Text>
-                    <Text style={[styles.settingValue, !value && { color: '#6B6B6B' }]}>
-                      {value ? new Date(value).toLocaleDateString('es-ES') : 'Sin fecha'}
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={[styles.settingValue, !value && { color: '#6B6B6B' }]}>
+                        {value ? new Date(value).toLocaleDateString('es-ES') : 'Sin fecha'}
+                      </Text>
+                      {value ? (
+                        <Pressable
+                          hitSlop={10}
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            onChange(null);
+                          }}
+                          accessibilityLabel="Quitar fecha límite"
+                        >
+                          <X color="#6B6B6B" size={18} />
+                        </Pressable>
+                      ) : (
+                        <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }] }} />
+                      )}
+                    </View>
                   </Pressable>
                   {showDatePicker && (
                     <DateTimePicker
@@ -413,11 +481,11 @@ export default function CreateBucketModal() {
         {/* BOTTOM BAR */}
         <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
           <Pressable
-            style={[styles.submitButton, (!titleValue || createBucket.isPending) && { opacity: 0.5 }]}
+            style={[styles.submitButton, (!titleValue || createBucket.isPending || isUploadingCover) && { opacity: 0.5 }]}
             onPress={() => void handleSubmit(onSubmit, onInvalid)()}
-            disabled={!titleValue || createBucket.isPending}
+            disabled={!titleValue || createBucket.isPending || isUploadingCover}
           >
-            {createBucket.isPending ? (
+            {createBucket.isPending || isUploadingCover ? (
               <ActivityIndicator color="#111" />
             ) : (
               <Text style={styles.submitText}>Añadir a mi lista</Text>
@@ -456,6 +524,17 @@ const styles = StyleSheet.create({
   coverImageTile: {
     backgroundColor: '#161616', borderWidth: 1, borderColor: '#D4B13A', borderStyle: 'dashed',
     alignItems: 'center', justifyContent: 'center'
+  },
+  coverImageBadge: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    borderRadius: 8,
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   priorityRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
   priorityPill: {

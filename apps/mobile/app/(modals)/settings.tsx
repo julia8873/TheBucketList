@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import Constants from 'expo-constants';
 import { ChevronLeft } from 'lucide-react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { fontFamily, useTheme } from '@bucketlist/ui';
+import { fontFamily, useTheme, PageTitle } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useThemeStore } from '../../src/stores/theme.store';
@@ -131,7 +131,7 @@ export default function SettingsScreen() {
         >
           <ChevronLeft size={22} color={theme.colors.foreground} />
         </Pressable>
-        <Text style={[styles.title, { color: theme.colors.foreground }]}>{t('settings.title')}</Text>
+        <PageTitle>{t('settings.title')}</PageTitle>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>

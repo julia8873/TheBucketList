@@ -29,13 +29,14 @@ import { styles as sheetStyles } from '../../app/bucket/BucketDetail.styles';
 
 /** Campos que necesita una tarea para pintarse con su imagen (los mismos que usa Mi Lista). */
 export const MENTION_TASK_COLUMNS =
-  'id, title, status, user_id, cover_image, thumbnail_mode, thumbnail_photo_id, category:categories(slug), bucket_photos(id, storage_path, thumb_path, created_at)';
+  'id, title, status, user_id, created_at, cover_image, thumbnail_mode, thumbnail_photo_id, category:categories(slug), bucket_photos(id, storage_path, thumb_path, created_at)';
 
 export type MentionTask = {
   id: string;
   title: string;
   status: string | null;
   user_id?: string;
+  created_at?: string | null;
   cover_image?: string | null;
   thumbnail_mode?: string | null;
   thumbnail_photo_id?: string | null;
@@ -111,7 +112,10 @@ export function TaskMentionPickerSheet({ visible, currentBucketId, mentionedIds,
     const timer = setTimeout(
       async () => {
         try {
-          let q = supabase
+          const trimmed = query.trim().replace(/[%,()]/g, ' ');
+
+          // Query de tareas propias
+          let ownQuery = supabase
             .from('buckets')
             .select(MENTION_TASK_COLUMNS)
             .eq('user_id', user.id)
@@ -119,11 +123,108 @@ export function TaskMentionPickerSheet({ visible, currentBucketId, mentionedIds,
             .order('created_at', { ascending: false })
             .limit(60);
 
-          const trimmed = query.trim().replace(/[%,()]/g, ' ');
-          if (trimmed) q = q.ilike('title', `%${trimmed}%`);
+          if (trimmed) ownQuery = ownQuery.ilike('title', `%${trimmed}%`);
 
-          const { data, error } = await q;
-          if (!error && data && mounted) setTasks(data as unknown as MentionTask[]);
+          // En paralelo, obtener tareas propias, colaboraciones directas y álbumes compartidos
+          const [ownRes, collabRes, albumMembersRes, ownedAlbumsRes] = await Promise.all([
+            ownQuery,
+            supabase
+              .from('bucket_collaborators')
+              .select('bucket_id')
+              .eq('user_id', user.id)
+              .in('status', ['accepted', 'pending'])
+              .then(
+                (res) => res,
+                () => ({ data: [] as any[], error: null }),
+              ),
+            supabase
+              .from('album_members')
+              .select('album_id')
+              .eq('user_id', user.id)
+              .eq('status', 'accepted')
+              .then(
+                (res) => res,
+                () => ({ data: [] as any[], error: null }),
+              ),
+            supabase
+              .from('albums')
+              .select('id')
+              .eq('owner_id', user.id)
+              .then(
+                (res) => res,
+                () => ({ data: [] as any[], error: null }),
+              ),
+          ]);
+
+          const ownList = (ownRes.data ?? []) as unknown as MentionTask[];
+          const ownIdSet = new Set(ownList.map((t) => t.id));
+
+          // Recoger los IDs de colaboraciones y de álbumes que no estén ya en tareas propias
+          const extraIds = new Set<string>();
+          (collabRes.data ?? []).forEach((c: any) => {
+            if (c.bucket_id && c.bucket_id !== currentBucketId && !ownIdSet.has(c.bucket_id)) {
+              extraIds.add(c.bucket_id);
+            }
+          });
+
+          const sharedAlbumIds = Array.from(
+            new Set([
+              ...(albumMembersRes.data ?? []).map((m: any) => m.album_id),
+              ...(ownedAlbumsRes.data ?? []).map((a: any) => a.id),
+            ]),
+          );
+
+          if (sharedAlbumIds.length > 0) {
+            try {
+              const { data: albumItemData } = await supabase
+                .from('album_items')
+                .select('bucket_id')
+                .in('album_id', sharedAlbumIds);
+
+              (albumItemData ?? []).forEach((ai: any) => {
+                if (ai.bucket_id && ai.bucket_id !== currentBucketId && !ownIdSet.has(ai.bucket_id)) {
+                  extraIds.add(ai.bucket_id);
+                }
+              });
+            } catch (err) {
+              console.warn('Error fetching shared album items for mentions:', err);
+            }
+          }
+
+          const missingExtraIds = Array.from(extraIds);
+          let extraList: MentionTask[] = [];
+
+          if (missingExtraIds.length > 0) {
+            let extraQuery = supabase
+              .from('buckets')
+              .select(MENTION_TASK_COLUMNS)
+              .in('id', missingExtraIds)
+              .neq('id', currentBucketId)
+              .order('created_at', { ascending: false })
+              .limit(60);
+
+            if (trimmed) extraQuery = extraQuery.ilike('title', `%${trimmed}%`);
+
+            const { data: extraData, error: extraErr } = await extraQuery;
+            if (!extraErr && extraData) {
+              extraList = extraData as unknown as MentionTask[];
+            }
+          }
+
+          const combined = [...ownList, ...extraList];
+          const seen = new Set<string>();
+          const deduped: MentionTask[] = [];
+
+          for (const item of combined) {
+            if (item && item.id && !seen.has(item.id) && item.id !== currentBucketId) {
+              seen.add(item.id);
+              deduped.push(item);
+            }
+          }
+
+          deduped.sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
+
+          if (!ownRes.error && mounted) setTasks(deduped);
         } catch (err) {
           console.warn('Error cargando tareas para mencionar:', err);
         } finally {

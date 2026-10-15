@@ -28,11 +28,20 @@ export function Typography({
   const { theme } = useTheme();
   const tokenStyle = textStyles[variant];
 
+  let resolvedColor = color;
+  if (!resolvedColor) {
+    resolvedColor = theme.colors.foreground;
+  } else if (resolvedColor === 'textMuted' || resolvedColor === 'textSecondary') {
+    resolvedColor = theme.colors.foregroundMuted;
+  } else if (resolvedColor === 'textSubtle') {
+    resolvedColor = theme.colors.foregroundSubtle;
+  }
+
   return (
     <Text
       style={[
         tokenStyle,
-        { color: color ?? theme.colors.foreground },
+        { color: resolvedColor },
         align ? { textAlign: align } : undefined,
         style,
       ]}

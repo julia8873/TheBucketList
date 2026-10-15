@@ -33,5 +33,7 @@ export { FAB } from './components/FAB';
 export { ToastProvider, useToast } from './components/Toast';
 export type { ToastOptions } from './components/Toast';
 export { BottomSheet } from './components/BottomSheet';
+export { PageTitle } from './components/PageTitle';
+export type { PageTitleProps } from './components/PageTitle';
 
 export * from './components/TagChip';

@@ -16,7 +16,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Users, Plus, Globe, Lock, Check, X, Image as ImageIcon, Palette, Flag } from 'lucide-react-native';
-import { useTheme } from '@bucketlist/ui';
+import { useTheme, PageTitle } from '@bucketlist/ui';
 import { useCreateAlbum, useUpdateAlbum } from '../../src/hooks/useAlbums';
 import { supabase } from '../../src/services/supabase';
 import { useAuthStore } from '../../src/stores/auth.store';
@@ -332,7 +332,7 @@ export default function CreateAlbumScreen() {
             <Pressable style={styles.backBtn} onPress={() => router.back()}>
               <ChevronLeft color="#F3EEE3" size={22} strokeWidth={2} />
             </Pressable>
-            <Text style={styles.headerTitle}>{isEditing ? 'Editar álbum' : 'Nuevo álbum'}</Text>
+            <PageTitle gold={isEditing ? 'Editar' : 'Nuevo'} rest="álbum" />
           </View>
 
           {/* Vista previa en vivo */}

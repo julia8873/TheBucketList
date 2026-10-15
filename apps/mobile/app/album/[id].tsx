@@ -37,6 +37,7 @@ import {
   Search,
   ArrowUp,
   ArrowDown,
+  GripVertical,
 } from 'lucide-react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
@@ -106,6 +107,7 @@ export default function AlbumDetailScreen() {
   const [taskSearchOpen, setTaskSearchOpen] = useState(false);
   const [taskSearch, setTaskSearch] = useState('');
   const [dragging, setDragging] = useState(false);
+  const [isReorderingTasks, setIsReorderingTasks] = useState(false);
 
   // Al buscar, el teclado no debe tapar las tareas: se añade espacio al final del scroll
   // y se sube la barra de búsqueda a la parte superior de la pantalla.
@@ -806,9 +808,9 @@ export default function AlbumDetailScreen() {
   const hechas = visibleTasks.filter((t) => t.isCompleted).sort(compareTasks);
   const allDone = tasks.filter((t) => t.isCompleted);
 
-  // Arrastrar para reordenar: solo en orden manual, sin búsqueda activa y con permiso de edición.
+  // Arrastrar para reordenar: solo en orden manual, en modo reordenación, sin búsqueda activa y con permiso de edición.
   const manualDragEnabled =
-    canEdit && id !== 'unassigned' && taskSortField === 'manual' && !isSearchingTasks;
+    canEdit && id !== 'unassigned' && taskSortField === 'manual' && !isSearchingTasks && isReorderingTasks;
 
   const persistTaskOrder = async (orderedIds: string[]) => {
     const current = new Map(tasks.map((t) => [t.id, t.position ?? null]));
@@ -857,9 +859,11 @@ export default function AlbumDetailScreen() {
   const handleTaskSortOption = (field: TaskSortField) => {
     if (field === 'manual') {
       setTaskSortField('manual');
+      setIsReorderingTasks(true);
       setTaskSortMenuOpen(false);
       return;
     }
+    setIsReorderingTasks(false);
     if (taskSortField === field) {
       setTaskSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
@@ -936,7 +940,9 @@ export default function AlbumDetailScreen() {
             insets.bottom + (id === 'unassigned' ? 40 : 120) + (taskSearchOpen ? keyboardHeight : 0),
         }}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#D4B13A" />
+          manualDragEnabled || dragging ? undefined : (
+            <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#D4B13A" />
+          )
         }
       >
         {/* Hero */}
@@ -1303,6 +1309,22 @@ export default function AlbumDetailScreen() {
                     <ArrowUp color="#D4B13A" size={14} />
                   ))}
               </Pressable>
+
+              {taskSortField === 'manual' && canEdit && id !== 'unassigned' && !isSearchingTasks && isReorderingTasks && (
+                <Pressable
+                  onPress={() => setIsReorderingTasks(false)}
+                  style={{
+                    backgroundColor: '#D4B13A',
+                    paddingHorizontal: 12,
+                    paddingVertical: 4,
+                    borderRadius: 6,
+                    marginLeft: 8,
+                  }}
+                  hitSlop={8}
+                >
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: '#0D0D0D' }}>OK</Text>
+                </Pressable>
+              )}
             </View>
             {taskSearchOpen && (
               <View style={styles.taskSearchBox}>

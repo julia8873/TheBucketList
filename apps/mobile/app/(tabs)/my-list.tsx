@@ -1,12 +1,16 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { View, StyleSheet, Pressable, ScrollView, Dimensions, Alert, Animated, Modal, Text, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, Typography, SegmentedControl, FilterChip, TaskRow, AlbumCard, NewAlbumCard, NoAlbumRow, FAB, spacing, useToast, Input, TagChip } from '@bucketlist/ui';
+import { useTheme, Typography, SegmentedControl, FilterChip, TaskRow, AlbumCard, NewAlbumCard, NoAlbumRow, FAB, spacing, useToast, Input, TagChip, PageTitle } from '@bucketlist/ui';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Swipeable } from 'react-native-gesture-handler';
-import { Search, Trash2, CheckCircle2, X, Tag as TagIcon, ArrowDown, ArrowUp, Star } from 'lucide-react-native';
+import { Image as ExpoImage } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Search, Trash2, CheckCircle2, X, Tag as TagIcon, ArrowDown, ArrowUp, Star, LayoutList, LayoutGrid, AlignJustify, GripVertical, Check, Lock, Users, Plus } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DraggableTaskList, type DragHandle } from '../../src/components/DraggableTaskList';
 
 import { useBuckets, useDeleteBucket, useUpdateBucket } from '../../src/hooks/useBuckets';
 import { useAlbums } from '../../src/hooks/useAlbums';
@@ -27,8 +31,9 @@ import { isPast, differenceInCalendarDays } from 'date-fns';
 type FilterType = 'all' | 'active' | 'in_progress' | 'completed' | 'expired';
 type AlbumFilterType = 'all' | 'active' | 'completed' | 'closed';
 type PriorityFilter = 'all' | 'high' | 'medium' | 'low';
-type SortField = 'status' | 'priority' | 'alphabetical' | 'created_at';
+type SortField = 'manual' | 'status' | 'priority' | 'alphabetical' | 'created_at';
 type SortDir = 'asc' | 'desc';
+type TaskViewMode = 'list' | 'gallery' | 'compact';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -47,12 +52,67 @@ export default function MyListScreen() {
     if (params.filter === 'completed' || params.filter === 'active' || params.filter === 'in_progress' || params.filter === 'expired') setFilter(params.filter);
   }, [params.filter]);
 
+  // ── Vista de tareas (lista, galería, compacta) ───────────────────────────
+  const [taskViewMode, setTaskViewModeState] = useState<TaskViewMode>('list');
+
+  useEffect(() => {
+    AsyncStorage.getItem('@my_list_view_mode')
+      .then((saved) => {
+        if (saved === 'list' || saved === 'gallery' || saved === 'compact') {
+          setTaskViewModeState(saved as TaskViewMode);
+        }
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const setTaskViewMode = (mode: TaskViewMode) => {
+    setTaskViewModeState(mode);
+    AsyncStorage.setItem('@my_list_view_mode', mode).catch(() => undefined);
+  };
+
   // ── Filtros y orden de álbumes ───────────────────────────────────────────
+  type AlbumViewMode = 'gallery' | 'list' | 'compact';
+  const [albumViewMode, setAlbumViewModeState] = useState<AlbumViewMode>('gallery');
+
+  useEffect(() => {
+    AsyncStorage.getItem('@my_list_album_view_mode')
+      .then((saved) => {
+        if (saved === 'list' || saved === 'gallery' || saved === 'compact') {
+          setAlbumViewModeState(saved as AlbumViewMode);
+        }
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const setAlbumViewMode = (mode: AlbumViewMode) => {
+    setAlbumViewModeState(mode);
+    AsyncStorage.setItem('@my_list_album_view_mode', mode).catch(() => undefined);
+  };
+
   const [albumFilter, setAlbumFilter] = useState<AlbumFilterType>('all');
   const [albumPriorityFilter, setAlbumPriorityFilter] = useState<PriorityFilter>('all');
   const [albumSortField, setAlbumSortField] = useState<SortField>('status');
   const [albumSortDir, setAlbumSortDir] = useState<SortDir>('desc');
   const albumSortTriggerRef = useRef<View>(null);
+  const [albumManualOrder, setAlbumManualOrder] = useState<string[]>([]);
+  const [isAlbumReordering, setIsAlbumReordering] = useState(false);
+  const [albumDragging, setAlbumDragging] = useState(false);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    AsyncStorage.getItem(`@my_list_album_order_${user.id}`)
+      .then((stored) => {
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed)) setAlbumManualOrder(parsed);
+          } catch {
+            // ignore
+          }
+        }
+      })
+      .catch(() => undefined);
+  }, [user?.id]);
 
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -65,6 +125,39 @@ export default function MyListScreen() {
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const [sortMenuPos, setSortMenuPos] = useState({ top: 0, right: 20 });
   const sortTriggerRef = useRef<View>(null);
+  const [dragging, setDragging] = useState(false);
+  const [isReordering, setIsReordering] = useState(false);
+  const [manualOrder, setManualOrder] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    AsyncStorage.getItem(`@my_list_task_order_${user.id}`)
+      .then((stored) => {
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed)) setManualOrder(parsed);
+          } catch {
+            // ignore
+          }
+        }
+      })
+      .catch(() => undefined);
+  }, [user?.id]);
+
+  const persistTaskOrder = async (orderedIds: string[], keepSortField = false) => {
+    const currentSet = new Set(orderedIds);
+    const remaining = manualOrder.filter((id) => !currentSet.has(id));
+    const newOrder = [...orderedIds, ...remaining];
+    setManualOrder(newOrder);
+    if (!keepSortField && sortField !== 'manual' && sortField !== 'status') {
+      setSortField('manual');
+    }
+    if (user?.id) {
+      await AsyncStorage.setItem(`@my_list_task_order_${user.id}`, JSON.stringify(newOrder)).catch(() => undefined);
+    }
+  };
+
 
   const openSortMenu = () => {
     const triggerRef = activeTab === 'albums' ? albumSortTriggerRef : sortTriggerRef;
@@ -77,20 +170,56 @@ export default function MyListScreen() {
     });
   };
 
-  const handleSortOption = (field: SortField) => {
+  const handleSortOption = (field: SortField | 'reorder_status') => {
     if (activeTab === 'albums') {
+      if (field === 'reorder_status') {
+        setAlbumSortField('status');
+        setIsAlbumReordering(true);
+        setSortMenuOpen(false);
+        return;
+      }
+      if (field === 'manual') {
+        if (albumSortField === 'status') {
+          setIsAlbumReordering(true);
+          setSortMenuOpen(false);
+          return;
+        }
+        setAlbumSortField('manual');
+        setIsAlbumReordering(true);
+        setSortMenuOpen(false);
+        return;
+      }
+      setIsAlbumReordering(false);
       if (albumSortField === field) {
         setAlbumSortDir((prev) => (prev === 'desc' ? 'asc' : 'desc'));
       } else {
-        setAlbumSortField(field);
+        setAlbumSortField(field as SortField);
         setAlbumSortDir(field === 'alphabetical' ? 'asc' : 'desc');
         setSortMenuOpen(false);
       }
     } else {
+      if (field === 'reorder_status') {
+        setSortField('status');
+        setIsReordering(true);
+        setSortMenuOpen(false);
+        return;
+      }
+      if (field === 'manual') {
+        if (sortField === 'status') {
+          setIsReordering(true);
+          setSortMenuOpen(false);
+          return;
+        }
+        setSortField('manual');
+        setIsReordering(true);
+        setSortMenuOpen(false);
+        return;
+      }
+      setIsReordering(false);
       if (sortField === field) {
         setSortDir((prev) => (prev === 'desc' ? 'asc' : 'desc'));
       } else {
-        setSortField(field);
+        setSortField(field as SortField);
         setSortDir(field === 'alphabetical' ? 'asc' : 'desc');
         setSortMenuOpen(false);
       }
@@ -108,6 +237,75 @@ export default function MyListScreen() {
   const { data: albums, isLoading: isLoadingAlbums } = useAlbums(user?.id);
   const toast = useToast();
   const swipeableRefs = useRef(new Map<string, Swipeable>());
+
+  const handleReorderSection = (sectionKey: string, orderedIds: string[]) => {
+    const baseOrder = manualOrder.length > 0
+      ? manualOrder
+      : (buckets || []).map((b: any) => b.id);
+
+    const sectionSet = new Set(orderedIds);
+    let replaceIdx = 0;
+    const newOrder = baseOrder.map((id) => {
+      if (sectionSet.has(id) && replaceIdx < orderedIds.length) {
+        return orderedIds[replaceIdx++];
+      }
+      return id;
+    });
+
+    while (replaceIdx < orderedIds.length) {
+      newOrder.push(orderedIds[replaceIdx++]);
+    }
+
+    const newOrderSet = new Set(newOrder);
+    for (const id of orderedIds) {
+      if (!newOrderSet.has(id)) {
+        newOrder.push(id);
+      }
+    }
+
+    void persistTaskOrder(newOrder, true);
+  };
+
+  const persistAlbumOrder = async (orderedIds: string[], keepSortField = false) => {
+    const currentSet = new Set(orderedIds);
+    const remaining = albumManualOrder.filter((id) => !currentSet.has(id));
+    const newOrder = [...orderedIds, ...remaining];
+    setAlbumManualOrder(newOrder);
+    if (!keepSortField && albumSortField !== 'manual' && albumSortField !== 'status') {
+      setAlbumSortField('manual');
+    }
+    if (user?.id) {
+      await AsyncStorage.setItem(`@my_list_album_order_${user.id}`, JSON.stringify(newOrder)).catch(() => undefined);
+    }
+  };
+
+  const handleReorderAlbumSection = (sectionKey: string, orderedIds: string[]) => {
+    const baseOrder = albumManualOrder.length > 0
+      ? albumManualOrder
+      : (albums || []).map((a: any) => a.id);
+
+    const sectionSet = new Set(orderedIds);
+    let replaceIdx = 0;
+    const newOrder = baseOrder.map((id) => {
+      if (sectionSet.has(id) && replaceIdx < orderedIds.length) {
+        return orderedIds[replaceIdx++];
+      }
+      return id;
+    });
+
+    while (replaceIdx < orderedIds.length) {
+      newOrder.push(orderedIds[replaceIdx++]);
+    }
+
+    const newOrderSet = new Set(newOrder);
+    for (const id of orderedIds) {
+      if (!newOrderSet.has(id)) {
+        newOrder.push(id);
+      }
+    }
+
+    void persistAlbumOrder(newOrder, true);
+  };
 
   // Consulta de relación tareas ↔ álbumes para contar correctamente
   const { data: albumItems } = useQuery({
@@ -153,8 +351,8 @@ export default function MyListScreen() {
   );
 
   const listExtra = useMemo(
-    () => ({ tagsById, byItem: tagUsage?.byItem, selectedTagIds, priorityFilter, sortField, sortDir, favBucketIds }),
-    [tagsById, tagUsage, selectedTagIds, priorityFilter, sortField, sortDir, favBucketIds],
+    () => ({ tagsById, byItem: tagUsage?.byItem, selectedTagIds, priorityFilter, sortField, sortDir, favBucketIds, taskViewMode }),
+    [tagsById, tagUsage, selectedTagIds, priorityFilter, sortField, sortDir, favBucketIds, taskViewMode],
   );
 
   const toggleSearch = () => {
@@ -203,65 +401,71 @@ export default function MyListScreen() {
     return result;
   }, [buckets, filter, priorityFilter, searchQuery, selectedTagIds, tagUsage]);
 
-  const listData = useMemo(() => {
+  const byManual = (a: any, b: any) => {
+    const idxA = manualOrder.indexOf(a.id);
+    const idxB = manualOrder.indexOf(b.id);
+    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+    if (idxA !== -1) return -1;
+    if (idxB !== -1) return 1;
+    return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+  };
+
+  const taskSections = useMemo(() => {
+    if (!filteredBuckets || filteredBuckets.length === 0) return [];
+    if (sortField !== 'status') return [];
+
+    const isExpired = (b: any) => {
+      const deadline = b.deadline ? new Date(b.deadline) : null;
+      return deadline ? (isPast(deadline) && differenceInCalendarDays(deadline, new Date()) < 0) && b.status !== 'completed' : false;
+    };
+    const isCompleted = (b: any) => b.status === 'completed';
+    const isInProgress = (b: any) => b.status === 'in_progress' && !isCompleted(b) && !isExpired(b);
+    const isPending = (b: any) => !isCompleted(b) && !isExpired(b) && !isInProgress(b);
+
+    const favorites = filteredBuckets
+      .filter((b: any) => isBucketFavorite(b.id))
+      .sort(byManual);
+
+    const nonFavorites = filteredBuckets.filter((b: any) => !isBucketFavorite(b.id));
+
+    const inProgress = nonFavorites
+      .filter(isInProgress)
+      .sort(byManual);
+
+    const pending = nonFavorites
+      .filter(isPending)
+      .sort(byManual);
+
+    const completed = nonFavorites
+      .filter(isCompleted)
+      .sort(byManual);
+
+    const expired = nonFavorites
+      .filter(isExpired)
+      .sort(byManual);
+
+    let otherSections = [
+      { key: 'in_progress', title: 'EN PROGRESO', items: inProgress },
+      { key: 'pending', title: 'PENDIENTES', items: pending },
+      { key: 'completed', title: 'COMPLETADAS', items: completed },
+      { key: 'expired', title: 'VENCIDAS', items: expired },
+    ];
+
+    if (sortDir === 'asc') {
+      otherSections.reverse();
+    }
+
+    return [
+      { key: 'favorites', title: 'FAVORITAS ⭐', items: favorites },
+      ...otherSections,
+    ];
+  }, [filteredBuckets, sortField, sortDir, isBucketFavorite, manualOrder]);
+
+  const sortedFlatBuckets = useMemo(() => {
     if (!filteredBuckets || filteredBuckets.length === 0) return [];
 
-    if (sortField === 'status') {
-      const isExpired = (b: any) => {
-        const deadline = b.deadline ? new Date(b.deadline) : null;
-        return deadline ? (isPast(deadline) && differenceInCalendarDays(deadline, new Date()) < 0) && b.status !== 'completed' : false;
-      };
-      const isCompleted = (b: any) => b.status === 'completed';
-      const isInProgress = (b: any) => b.status === 'in_progress' && !isCompleted(b) && !isExpired(b);
-      const isPending = (b: any) => !isCompleted(b) && !isExpired(b) && !isInProgress(b);
-
-      const favorites = filteredBuckets
-        .filter((b: any) => isBucketFavorite(b.id))
-        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-      const nonFavorites = filteredBuckets.filter((b: any) => !isBucketFavorite(b.id));
-
-      const inProgress = nonFavorites
-        .filter(isInProgress)
-        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-      const pending = nonFavorites
-        .filter(isPending)
-        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-      const completed = nonFavorites
-        .filter(isCompleted)
-        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-      const expired = nonFavorites
-        .filter(isExpired)
-        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-      let otherSections = [
-        { key: 'in_progress', title: 'EN PROGRESO', items: inProgress },
-        { key: 'pending', title: 'PENDIENTES', items: pending },
-        { key: 'completed', title: 'COMPLETADAS', items: completed },
-        { key: 'expired', title: 'VENCIDAS', items: expired },
-      ];
-
-      if (sortDir === 'asc') {
-        otherSections.reverse();
-      }
-
-      // La sección de favoritas va al principio del todo
-      let sections = [
-        { key: 'favorites', title: 'FAVORITAS ⭐', items: favorites },
-        ...otherSections,
-      ];
-
-      const result: any[] = [];
-      for (const sec of sections) {
-        if (sec.items.length > 0) {
-          result.push({ isHeader: true, id: `header-${sec.key}`, title: sec.title });
-          result.push(...sec.items);
-        }
-      }
-      return result;
+    if (sortField === 'manual') {
+      return [...filteredBuckets].sort(byManual);
     }
 
     if (sortField === 'priority') {
@@ -275,33 +479,52 @@ export default function MyListScreen() {
         }
       };
 
-      const sorted = [...filteredBuckets].sort((a: any, b: any) => {
+      return [...filteredBuckets].sort((a: any, b: any) => {
         const wa = priorityWeight(a.priority);
         const wb = priorityWeight(b.priority);
         if (wa !== wb) {
           return sortDir === 'asc' ? wa - wb : wb - wa;
         }
-        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+        return byManual(a, b);
       });
-      return sorted;
     }
 
     if (sortField === 'alphabetical') {
-      const sorted = [...filteredBuckets].sort((a: any, b: any) => {
+      return [...filteredBuckets].sort((a: any, b: any) => {
         const cmp = (a.title || '').localeCompare(b.title || '', 'es', { sensitivity: 'base' });
         return sortDir === 'asc' ? cmp : -cmp;
       });
-      return sorted;
     }
 
-    // sortField === 'created_at'
-    const sorted = [...filteredBuckets].sort((a: any, b: any) => {
-      const da = new Date(a.created_at || 0).getTime();
-      const db = new Date(b.created_at || 0).getTime();
-      return sortDir === 'asc' ? da - db : db - da;
-    });
-    return sorted;
-  }, [filteredBuckets, sortField, sortDir, isBucketFavorite, favBucketIds]);
+    if (sortField === 'created_at') {
+      return [...filteredBuckets].sort((a: any, b: any) => {
+        const da = new Date(a.created_at || 0).getTime();
+        const db = new Date(b.created_at || 0).getTime();
+        return sortDir === 'asc' ? da - db : db - da;
+      });
+    }
+
+    return [...filteredBuckets].sort(byManual);
+  }, [filteredBuckets, sortField, sortDir, manualOrder]);
+
+  const manualDragEnabled = !isSearching && isReordering;
+
+  const listData = useMemo(() => {
+    if (!filteredBuckets || filteredBuckets.length === 0) return [];
+
+    if (sortField === 'status') {
+      const result: any[] = [];
+      for (const sec of taskSections) {
+        if (sec.items.length > 0) {
+          result.push({ isHeader: true, id: `header-${sec.key}`, title: sec.title });
+          result.push(...sec.items);
+        }
+      }
+      return result;
+    }
+
+    return sortedFlatBuckets;
+  }, [filteredBuckets, sortField, taskSections, sortedFlatBuckets]);
 
   const getAlbumStatus = (a: any): 'closed' | 'completed' | 'active' => {
     if (a.is_closed) return 'closed';
@@ -339,26 +562,35 @@ export default function MyListScreen() {
     return result;
   }, [albums, albumFilter, albumPriorityFilter, searchQuery]);
 
+  const byAlbumManual = (a: any, b: any) => {
+    const idxA = albumManualOrder.indexOf(a.id);
+    const idxB = albumManualOrder.indexOf(b.id);
+    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+    if (idxA !== -1) return -1;
+    if (idxB !== -1) return 1;
+    return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+  };
+
   const albumSections = useMemo(() => {
     if (!filteredAlbums || filteredAlbums.length === 0) return [];
 
     const favorites = filteredAlbums
       .filter((a: any) => isAlbumFavorite(a.id))
-      .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+      .sort(byAlbumManual);
 
     const nonFavorites = filteredAlbums.filter((a: any) => !isAlbumFavorite(a.id));
 
     const inProgress = nonFavorites
       .filter((a: any) => getAlbumStatus(a) === 'active')
-      .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+      .sort(byAlbumManual);
 
     const completed = nonFavorites
       .filter((a: any) => getAlbumStatus(a) === 'completed')
-      .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+      .sort(byAlbumManual);
 
     const closed = nonFavorites
       .filter((a: any) => getAlbumStatus(a) === 'closed')
-      .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+      .sort(byAlbumManual);
 
     let otherSections = [
       { key: 'in_progress', title: 'EN PROGRESO', items: inProgress },
@@ -374,10 +606,14 @@ export default function MyListScreen() {
       { key: 'favorites', title: 'FAVORITOS ⭐', items: favorites },
       ...otherSections,
     ];
-  }, [filteredAlbums, albumSortDir, isAlbumFavorite]);
+  }, [filteredAlbums, albumSortDir, isAlbumFavorite, albumManualOrder]);
 
   const sortedAlbumsList = useMemo(() => {
     if (!filteredAlbums || filteredAlbums.length === 0) return [];
+
+    if (albumSortField === 'manual') {
+      return [...filteredAlbums].sort(byAlbumManual);
+    }
 
     if (albumSortField === 'priority') {
       const priorityWeight = (p?: string) => {
@@ -396,7 +632,7 @@ export default function MyListScreen() {
         if (wa !== wb) {
           return albumSortDir === 'asc' ? wa - wb : wb - wa;
         }
-        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+        return byAlbumManual(a, b);
       });
     }
 
@@ -415,14 +651,14 @@ export default function MyListScreen() {
       });
     }
 
-    return filteredAlbums;
-  }, [filteredAlbums, albumSortField, albumSortDir]);
+    return [...filteredAlbums].sort(byAlbumManual);
+  }, [filteredAlbums, albumSortField, albumSortDir, albumManualOrder]);
 
   const handleCreate = () => {
     router.push('/(modals)/create-bucket');
   };
 
-  const renderTaskItem = ({ item }: { item: any }) => {
+  const renderTaskItem = ({ item, drag }: { item: any; drag?: DragHandle }) => {
     if (item.isHeader) {
       const isFirst = listData.length > 0 && listData[0].id === item.id;
       return (
@@ -607,12 +843,13 @@ export default function MyListScreen() {
       );
     };
 
-    return (
+    const swipeableContent = (
       <Swipeable
         ref={(ref) => {
           if (ref) swipeableRefs.current.set(item.id, ref);
           else swipeableRefs.current.delete(item.id);
         }}
+        enabled={!drag}
         containerStyle={{ backgroundColor: '#0E0E0E', borderRadius: 14 }}
         childrenContainerStyle={{ backgroundColor: '#0E0E0E', borderRadius: 14 }}
         renderRightActions={renderRightActions}
@@ -667,14 +904,556 @@ export default function MyListScreen() {
         />
       </Swipeable>
     );
+
+    if (drag) {
+      return (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <View
+            {...drag.panHandlers}
+            hitSlop={{ top: 14, bottom: 14, left: 10, right: 10 }}
+            style={{ width: 28, height: 56, alignItems: 'center', justifyContent: 'center' }}
+            accessibilityLabel="Arrastrar para reordenar"
+          >
+            <GripVertical size={20} color={drag.isActive ? gold[400] : '#8F8F8F'} strokeWidth={2} />
+          </View>
+          <View style={{ flex: 1 }}>{swipeableContent}</View>
+        </View>
+      );
+    }
+
+    return swipeableContent;
   };
+
+  const renderCompactItem = ({ item, drag }: { item: any; drag?: DragHandle }) => {
+    if (item.isHeader) {
+      const isFirst = listData.length > 0 && listData[0].id === item.id;
+      return (
+        <View style={{ marginTop: isFirst ? 6 : 18, marginBottom: 4 }}>
+          <Text style={styles.sectionHeader}>{item.title}</Text>
+        </View>
+      );
+    }
+
+    const isCompleted = item.status === 'completed';
+    const isFav = isBucketFavorite(item.id);
+
+    return (
+      <Pressable
+        onPress={() => router.push(`/bucket/${item.id}`)}
+        style={[
+          styles.compactRow,
+          isCompleted && styles.compactRowCompleted,
+          drag?.isActive && { borderColor: gold[400] },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={item.title}
+      >
+        {drag && (
+          <View
+            {...drag.panHandlers}
+            hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+            style={{ marginRight: 8, justifyContent: 'center', alignItems: 'center' }}
+            accessibilityLabel="Arrastrar para reordenar"
+          >
+            <GripVertical size={18} color={drag.isActive ? gold[400] : '#8F8F8F'} strokeWidth={2} />
+          </View>
+        )}
+        <Pressable
+          hitSlop={10}
+          onPress={() => {
+            const newStatus = isCompleted ? 'in_progress' : 'completed';
+            updateBucket.mutate(
+              {
+                id: item.id,
+                data: {
+                  status: newStatus,
+                  completed_at: newStatus === 'completed' ? new Date() : null,
+                } as any,
+              },
+              {
+                onSuccess: () => {
+                  toast.show({
+                    message: newStatus === 'completed' ? 'Tarea completada 🎉' : 'Tarea reactivada',
+                  });
+                },
+              }
+            );
+          }}
+          style={styles.compactCheckBtn}
+          accessibilityRole="button"
+          accessibilityLabel={isCompleted ? 'Desmarcar tarea' : 'Completar tarea'}
+        >
+          {isCompleted ? (
+            <CheckCircle2 size={19} color="#34C759" />
+          ) : (
+            <View style={styles.compactUncheckedCircle} />
+          )}
+        </Pressable>
+
+        <Text
+          numberOfLines={1}
+          style={[
+            styles.compactTitle,
+            isCompleted && styles.compactTitleCompleted,
+          ]}
+        >
+          {item.title}
+        </Text>
+
+        {isFav && (
+          <Star size={13} color={gold[400]} fill={gold[400]} style={{ marginLeft: 8 }} />
+        )}
+      </Pressable>
+    );
+  };
+
+  const renderGalleryCard = (item: any, isSingle: boolean) => {
+    const isCompleted = item.status === 'completed';
+    const isFav = isBucketFavorite(item.id);
+    const subtasksTotal = item.item_subtasks?.length || 0;
+    const subtasksDone = item.item_subtasks?.filter((s: any) => s.done).length || 0;
+    const itemPriority = item.priority || 'medium';
+
+    return (
+      <Pressable
+        key={item.id}
+        onPress={() => router.push(`/bucket/${item.id}`)}
+        style={[
+          styles.galleryCard,
+          isSingle && styles.galleryCardSingle,
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={item.title}
+      >
+        <BucketCover
+          value={resolveTaskImage(item, { preferThumb: !isSingle })}
+          title={item.title}
+          categorySlug={item.category?.slug}
+          seed={item.id}
+          iconSize={isSingle ? 64 : 44}
+          style={StyleSheet.absoluteFill}
+        />
+
+        {/* Badges superiores */}
+        <View style={styles.galleryTopBadges}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            {isFav && (
+              <View style={styles.galleryFavBadge}>
+                <Star size={11} color={gold[400]} fill={gold[400]} />
+              </View>
+            )}
+            {isCompleted && (
+              <View style={styles.galleryCompletedBadge}>
+                <CheckCircle2 size={12} color="#FFFFFF" />
+              </View>
+            )}
+          </View>
+          {itemPriority === 'high' && (
+            <View style={styles.galleryPriorityBadge}>
+              <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#EF4444' }} />
+              <Text style={styles.galleryPriorityText}>Alta</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Overlay inferior */}
+        <View style={styles.galleryBottomOverlay}>
+          <Text style={[styles.galleryCardTitle, isSingle && { fontSize: 16 }]} numberOfLines={2}>
+            {item.title}
+          </Text>
+          {(item.category?.name_es || item.category?.name || subtasksTotal > 0 || item.location) && (
+            <Text style={styles.galleryCardMeta} numberOfLines={1}>
+              {subtasksTotal > 0
+                ? `${subtasksDone} de ${subtasksTotal} pasos`
+                : (item.category?.name_es || item.category?.name || item.location)}
+            </Text>
+          )}
+        </View>
+      </Pressable>
+    );
+  };
+
+  const COVER_GRADIENTS: Array<[string, string]> = [
+    ['#1B4D3E', '#0A2E25'],
+    ['#C87A2B', '#7A3D00'],
+    ['#2B5BA8', '#0D2F6E'],
+    ['#6B2FA0', '#3A0070'],
+  ];
+
+  const renderAlbumCoverThumb = (coverUri: string | null | undefined, colorIndex: number, size = 40) => {
+    const [g1, g2] = COVER_GRADIENTS[colorIndex % COVER_GRADIENTS.length] || ['#1B4D3E', '#0A2E25'];
+    let parsedCover: any = null;
+    if (coverUri && coverUri.startsWith('{')) {
+      try {
+        parsedCover = JSON.parse(coverUri);
+      } catch {}
+    }
+    let inner;
+    if (parsedCover?.type === 'image' && parsedCover.uri) {
+      inner = <ExpoImage source={{ uri: parsedCover.uri }} style={StyleSheet.absoluteFill} contentFit="cover" />;
+    } else if ((parsedCover?.type === 'gradient' || parsedCover?.type === 'solid') && parsedCover.colors) {
+      inner = <LinearGradient colors={parsedCover.colors} style={StyleSheet.absoluteFill} />;
+    } else if (coverUri && !parsedCover) {
+      inner = <ExpoImage source={{ uri: coverUri }} style={StyleSheet.absoluteFill} contentFit="cover" />;
+    } else {
+      inner = <LinearGradient colors={[g1, g2]} style={StyleSheet.absoluteFill} />;
+    }
+    return (
+      <View style={{ width: size, height: size, borderRadius: size > 40 ? 10 : 8, overflow: 'hidden' }}>
+        {inner}
+      </View>
+    );
+  };
+
+  const renderCompactAlbumItem = ({ item, drag }: { item: any; drag?: DragHandle }) => {
+    const isFav = isAlbumFavorite(item.id);
+    const total = item.total_tasks ?? 0;
+    const completed = item.completed_tasks ?? 0;
+    const isCompleted = total > 0 && completed === total;
+
+    return (
+      <Pressable
+        key={item.id}
+        onPress={() => router.push(`/album/${item.id}` as any)}
+        style={[
+          styles.compactRow,
+          isCompleted && styles.compactRowCompleted,
+          drag?.isActive && { borderColor: gold[400] },
+          { marginBottom: drag ? 8 : 0 },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={item.title}
+      >
+        {drag && (
+          <View
+            {...drag.panHandlers}
+            hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+            style={{ marginRight: 8, justifyContent: 'center', alignItems: 'center' }}
+            accessibilityLabel="Arrastrar para reordenar"
+          >
+            <GripVertical size={18} color={drag.isActive ? gold[400] : '#8F8F8F'} strokeWidth={2} />
+          </View>
+        )}
+
+        <View style={{ marginRight: 10 }}>
+          {renderAlbumCoverThumb(item.cover_path, 0, 32)}
+        </View>
+
+        <Text
+          numberOfLines={1}
+          style={[styles.compactTitle, isCompleted && { color: '#888' }]}
+        >
+          {item.title}
+        </Text>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginLeft: 8 }}>
+          {item.is_closed ? (
+            <Lock size={12} color="#888" />
+          ) : null}
+          {item.is_shared ? (
+            <Users size={12} color={gold[400]} />
+          ) : null}
+          <View
+            style={{
+              paddingHorizontal: 7,
+              paddingVertical: 2,
+              borderRadius: 6,
+              backgroundColor: isCompleted ? 'rgba(52, 199, 89, 0.15)' : '#222',
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 11,
+                fontWeight: '600',
+                color: isCompleted ? '#34C759' : '#AAA',
+              }}
+            >
+              {completed}/{total}
+            </Text>
+          </View>
+          {isFav && (
+            <Star size={13} color={gold[400]} fill={gold[400]} />
+          )}
+        </View>
+      </Pressable>
+    );
+  };
+
+  const renderListAlbumItem = ({ item, drag, index = 0 }: { item: any; drag?: DragHandle; index?: number }) => {
+    const isFav = isAlbumFavorite(item.id);
+    const total = item.total_tasks ?? 0;
+    const completed = item.completed_tasks ?? 0;
+    const progress = total > 0 ? completed / total : 0;
+    const priority = item.priority;
+    const priorityColor =
+      priority === 'high' || priority === 'urgent'
+        ? '#EF4444'
+        : priority === 'low'
+        ? '#10B981'
+        : '#D4B13A';
+    const priorityLabel =
+      priority === 'high' || priority === 'urgent'
+        ? 'Alta'
+        : priority === 'low'
+        ? 'Baja'
+        : 'Media';
+
+    return (
+      <View
+        key={item.id}
+        style={[
+          drag ? { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 } : { marginBottom: 10 },
+        ]}
+      >
+        {drag && (
+          <View
+            {...drag.panHandlers}
+            hitSlop={{ top: 14, bottom: 14, left: 10, right: 10 }}
+            style={{ width: 28, height: 68, alignItems: 'center', justifyContent: 'center' }}
+            accessibilityLabel="Arrastrar para reordenar"
+          >
+            <GripVertical size={20} color={drag.isActive ? gold[400] : '#8F8F8F'} strokeWidth={2} />
+          </View>
+        )}
+        <Pressable
+          onPress={() => router.push(`/album/${item.id}` as any)}
+          style={[
+            styles.listAlbumCard,
+            drag && { flex: 1 },
+            drag?.isActive && { borderColor: gold[400] },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={item.title}
+        >
+          <View style={{ marginRight: 12 }}>
+            {renderAlbumCoverThumb(item.cover_path, index, 54)}
+          </View>
+
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={styles.listAlbumTitle} numberOfLines={1}>
+                {item.title}
+              </Text>
+              <Pressable
+                hitSlop={8}
+                onPress={() =>
+                  toggleFavoriteAlbum.mutate({
+                    albumId: item.id,
+                    currentlyFavorite: isFav,
+                  })
+                }
+              >
+                <Star
+                  size={16}
+                  color={isFav ? gold[400] : '#666'}
+                  fill={isFav ? gold[400] : 'transparent'}
+                />
+              </Pressable>
+            </View>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
+              <Text style={styles.listAlbumMeta}>
+                {total} {total === 1 ? 'tarea' : 'tareas'} · {completed} {completed === 1 ? 'hecha' : 'hechas'}
+              </Text>
+
+              {item.is_shared && (
+                <View style={styles.listAlbumBadge}>
+                  <Users size={10} color="#AAA" />
+                  <Text style={styles.listAlbumBadgeText}>Compartido</Text>
+                </View>
+              )}
+
+              {item.is_closed && (
+                <View style={styles.listAlbumBadge}>
+                  <Lock size={10} color="#EF4444" />
+                  <Text style={[styles.listAlbumBadgeText, { color: '#EF4444' }]}>Cerrado</Text>
+                </View>
+              )}
+
+              {priority && (
+                <View style={[styles.listAlbumBadge, { borderColor: priorityColor }]}>
+                  <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: priorityColor }} />
+                  <Text style={[styles.listAlbumBadgeText, { color: priorityColor }]}>{priorityLabel}</Text>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.listAlbumProgressTrack}>
+              <View style={[styles.listAlbumProgressFill, { width: `${Math.round(progress * 100)}%` as any }]} />
+            </View>
+          </View>
+        </Pressable>
+      </View>
+    );
+  };
+
+  const taskListHeader = (
+    <View>
+      {/* Filtros */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filtersContainer}
+        style={{ flexGrow: 0, marginBottom: 8, marginHorizontal: -20 }}
+      >
+        <FilterChip label="Todas" active={filter === 'all'} onPress={() => setFilter('all')} />
+        <FilterChip label="En curso" active={filter === 'active'} onPress={() => setFilter('active')} />
+        <FilterChip label="En progreso" active={filter === 'in_progress'} onPress={() => setFilter('in_progress')} />
+        <FilterChip label="Completadas" active={filter === 'completed'} onPress={() => setFilter('completed')} />
+        <FilterChip label="Vencidas" active={filter === 'expired'} onPress={() => setFilter('expired')} />
+      </ScrollView>
+
+      {/* Filtro por prioridad */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filtersContainer}
+        style={{ flexGrow: 0, marginBottom: 10, marginHorizontal: -20 }}
+      >
+        <FilterChip label="Prioridad: Todas" active={priorityFilter === 'all'} onPress={() => setPriorityFilter('all')} />
+        <FilterChip label="🔴 Alta" active={priorityFilter === 'high'} onPress={() => setPriorityFilter(priorityFilter === 'high' ? 'all' : 'high')} />
+        <FilterChip label="🟡 Media" active={priorityFilter === 'medium'} onPress={() => setPriorityFilter(priorityFilter === 'medium' ? 'all' : 'medium')} />
+        <FilterChip label="🟢 Baja" active={priorityFilter === 'low'} onPress={() => setPriorityFilter(priorityFilter === 'low' ? 'all' : 'low')} />
+      </ScrollView>
+
+      {/* Filtro por etiquetas + Toggle de modos (al mismo nivel que etiquetas) */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 8 }}
+          style={{ flex: 1, marginRight: 8 }}
+        >
+          <Pressable
+            onPress={() => setTagSheetOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Filtrar por etiquetas"
+            style={[styles.tagFilterBtn, selectedTags.length > 0 && styles.tagFilterBtnActive]}
+          >
+            <TagIcon size={16} color={selectedTags.length > 0 ? gold[400] : '#E5E5E5'} strokeWidth={1.9} />
+            <Text style={[styles.tagFilterText, selectedTags.length > 0 && { color: gold[400] }]}>
+              {selectedTags.length > 0 ? `Etiquetas · ${selectedTags.length}` : 'Etiquetas'}
+            </Text>
+          </Pressable>
+
+          {selectedTags.map((t) => (
+            <Pressable
+              key={t.id}
+              onPress={() => setSelectedTagIds((ids) => ids.filter((id) => id !== t.id))}
+              accessibilityRole="button"
+              accessibilityLabel={`Quitar etiqueta ${t.name}`}
+              style={styles.activeTagChip}
+            >
+              {t.emoji ? (
+                <View style={[styles.activeTagEmoji, { backgroundColor: hexToRgba(t.color, 0.3) }]}>
+                  <Text style={styles.activeTagEmojiText}>{t.emoji}</Text>
+                </View>
+              ) : (
+                <View style={[styles.activeTagDot, { backgroundColor: t.color }]} />
+              )}
+              <Text style={styles.activeTagText} numberOfLines={1}>{t.name}</Text>
+              <X size={15} color="#E5E5E5" strokeWidth={2} />
+            </Pressable>
+          ))}
+        </ScrollView>
+
+        {/* Toggle de vistas: Lista | Galería | Compacta */}
+        <View style={styles.viewModeToggle}>
+          <Pressable
+            onPress={() => setTaskViewMode('list')}
+            style={[styles.viewModeBtn, taskViewMode === 'list' && styles.viewModeBtnActive]}
+            hitSlop={4}
+            accessibilityRole="button"
+            accessibilityLabel="Vista detallada"
+          >
+            <LayoutList size={15} color={taskViewMode === 'list' ? '#0E0E0E' : '#A0A0A0'} />
+          </Pressable>
+          <Pressable
+            onPress={() => setTaskViewMode('gallery')}
+            style={[styles.viewModeBtn, taskViewMode === 'gallery' && styles.viewModeBtnActive]}
+            hitSlop={4}
+            accessibilityRole="button"
+            accessibilityLabel="Vista galería"
+          >
+            <LayoutGrid size={15} color={taskViewMode === 'gallery' ? '#0E0E0E' : '#A0A0A0'} />
+          </Pressable>
+          <Pressable
+            onPress={() => setTaskViewMode('compact')}
+            style={[styles.viewModeBtn, taskViewMode === 'compact' && styles.viewModeBtnActive]}
+            hitSlop={4}
+            accessibilityRole="button"
+            accessibilityLabel="Vista compacta"
+          >
+            <AlignJustify size={15} color={taskViewMode === 'compact' ? '#0E0E0E' : '#A0A0A0'} />
+          </Pressable>
+        </View>
+      </View>
+
+      {/* Fila de Ordenar por */}
+      <View style={styles.sortRow}>
+        <Typography variant="caption" color={theme.colors.foregroundMuted} style={styles.tasksCountLabel}>
+          {filteredBuckets.length} {filteredBuckets.length === 1 ? 'TAREA' : 'TAREAS'}
+        </Typography>
+
+        <View style={styles.sortTriggerContainer}>
+          <Typography variant="caption" color={theme.colors.foregroundMuted}>
+            Ordenar por:
+          </Typography>
+          <Pressable
+            ref={sortTriggerRef}
+            collapsable={false}
+            onPress={openSortMenu}
+            hitSlop={8}
+            style={styles.sortTriggerBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Ordenar tareas"
+          >
+            <Typography variant="caption" color={gold[400]} style={{ fontWeight: '600' }}>
+              {sortField === 'manual'
+                ? 'Manual'
+                : sortField === 'status'
+                ? (isReordering ? 'Estado (manual)' : 'Estado')
+                : sortField === 'priority'
+                ? 'Prioridad'
+                : sortField === 'alphabetical'
+                ? 'Alfabético'
+                : 'Fecha'}
+            </Typography>
+            {sortField !== 'manual' && !isReordering &&
+              (sortDir === 'desc' ? (
+                <ArrowDown color={gold[400]} size={14} />
+              ) : (
+                <ArrowUp color={gold[400]} size={14} />
+              ))}
+          </Pressable>
+
+          {!isSearching && isReordering && (
+            <Pressable
+              onPress={() => setIsReordering(false)}
+              style={{
+                backgroundColor: gold[400],
+                paddingHorizontal: 12,
+                paddingVertical: 4,
+                borderRadius: 6,
+                marginLeft: 8,
+              }}
+              hitSlop={8}
+            >
+              <Text style={{ fontSize: 11, fontWeight: '700', color: '#0E0E0E' }}>OK</Text>
+            </Pressable>
+          )}
+        </View>
+      </View>
+    </View>
+  );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: '#0E0E0E' }]} edges={['top']}>
 
       {/* ── Header: exact title hierarchy from the reference ── */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Mi Lista</Text>
+        <PageTitle gold="Mi" rest="Lista" />
         {(activeTab === 'list' || activeTab === 'albums') && (
           <Pressable
             onPress={toggleSearch}
@@ -697,7 +1476,11 @@ export default function MyListScreen() {
             { key: 'calendar', label: 'Calendario' },
           ]}
           selected={activeTab}
-          onChange={setActiveTab}
+          onChange={(tab) => {
+            setActiveTab(tab);
+            if (tab !== 'list') setIsReordering(false);
+            if (tab !== 'albums') setIsAlbumReordering(false);
+          }}
         />
       </View>
 
@@ -721,137 +1504,136 @@ export default function MyListScreen() {
         </View>
       )}
 
-
-
       {/* ── Content ────────────────────────────────────── */}
       <View style={styles.content}>
         {activeTab === 'list' && (
-          <FlashList
-            data={listData}
-            keyExtractor={(item: any) => item.id || item.title}
-            contentContainerStyle={styles.listContent}
-            estimatedItemSize={80}
-            refreshing={refreshing}
-            onRefresh={() => void onRefresh()}
-            extraData={listExtra}
-            getItemType={(item: any) => (item.isHeader ? 'header' : 'task')}
-            ItemSeparatorComponent={() => <View style={{ height: spacing[3] }} />}
-            renderItem={renderTaskItem}
-            ListHeaderComponent={
-              <View>
-                {/* Filtros */}
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.filtersContainer}
-                  style={{ flexGrow: 0, marginBottom: 8, marginHorizontal: -20 }}
-                >
-                  <FilterChip label="Todas" active={filter === 'all'} onPress={() => setFilter('all')} />
-                  <FilterChip label="En curso" active={filter === 'active'} onPress={() => setFilter('active')} />
-                  <FilterChip label="En progreso" active={filter === 'in_progress'} onPress={() => setFilter('in_progress')} />
-                  <FilterChip label="Completadas" active={filter === 'completed'} onPress={() => setFilter('completed')} />
-                  <FilterChip label="Vencidas" active={filter === 'expired'} onPress={() => setFilter('expired')} />
-                </ScrollView>
-
-                {/* Filtro por prioridad */}
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.filtersContainer}
-                  style={{ flexGrow: 0, marginBottom: 10, marginHorizontal: -20 }}
-                >
-                  <FilterChip label="Prioridad: Todas" active={priorityFilter === 'all'} onPress={() => setPriorityFilter('all')} />
-                  <FilterChip label="🔴 Alta" active={priorityFilter === 'high'} onPress={() => setPriorityFilter(priorityFilter === 'high' ? 'all' : 'high')} />
-                  <FilterChip label="🟡 Media" active={priorityFilter === 'medium'} onPress={() => setPriorityFilter(priorityFilter === 'medium' ? 'all' : 'medium')} />
-                  <FilterChip label="🟢 Baja" active={priorityFilter === 'low'} onPress={() => setPriorityFilter(priorityFilter === 'low' ? 'all' : 'low')} />
-                </ScrollView>
-
-                {/* Filtro por etiquetas */}
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  keyboardShouldPersistTaps="handled"
-                  contentContainerStyle={styles.filtersContainer}
-                  style={{ flexGrow: 0, marginBottom: 16, marginHorizontal: -20 }}
-                >
-                  <Pressable
-                    onPress={() => setTagSheetOpen(true)}
-                    accessibilityRole="button"
-                    accessibilityLabel="Filtrar por etiquetas"
-                    style={[styles.tagFilterBtn, selectedTags.length > 0 && styles.tagFilterBtnActive]}
-                  >
-                    <TagIcon size={16} color={selectedTags.length > 0 ? gold[400] : '#E5E5E5'} strokeWidth={1.9} />
-                    <Text style={[styles.tagFilterText, selectedTags.length > 0 && { color: gold[400] }]}>
-                      {selectedTags.length > 0 ? `Etiquetas · ${selectedTags.length}` : 'Etiquetas'}
-                    </Text>
-                  </Pressable>
-
-                  {selectedTags.map((t) => (
-                    <Pressable
-                      key={t.id}
-                      onPress={() => setSelectedTagIds((ids) => ids.filter((id) => id !== t.id))}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Quitar etiqueta ${t.name}`}
-                      style={styles.activeTagChip}
-                    >
-                      {t.emoji ? (
-                        <View style={[styles.activeTagEmoji, { backgroundColor: hexToRgba(t.color, 0.3) }]}>
-                          <Text style={styles.activeTagEmojiText}>{t.emoji}</Text>
-                        </View>
-                      ) : (
-                        <View style={[styles.activeTagDot, { backgroundColor: t.color }]} />
-                      )}
-                      <Text style={styles.activeTagText} numberOfLines={1}>{t.name}</Text>
-                      <X size={15} color="#E5E5E5" strokeWidth={2} />
-                    </Pressable>
-                  ))}
-                </ScrollView>
-
-                {/* Fila de Ordenar por */}
-                <View style={styles.sortRow}>
-                  <Typography variant="caption" color={theme.colors.foregroundMuted} style={styles.tasksCountLabel}>
-                    {filteredBuckets.length} {filteredBuckets.length === 1 ? 'TAREA' : 'TAREAS'}
+          manualDragEnabled ? (
+            <ScrollView
+              contentContainerStyle={styles.listContent}
+              scrollEnabled={!dragging}
+              keyboardShouldPersistTaps="handled"
+            >
+              {taskListHeader}
+              {filteredBuckets.length === 0 ? (
+                <View style={styles.empty}>
+                  <Typography variant="body" color={theme.colors.foregroundMuted}>
+                    {selectedTagIds.length > 0 ? 'No hay tareas con esas etiquetas.' : 'No hay tareas aquí.'}
                   </Typography>
-                  <View style={styles.sortTriggerContainer}>
-                    <Typography variant="caption" color={theme.colors.foregroundMuted}>
-                      Ordenar por:
-                    </Typography>
-                    <Pressable
-                      ref={sortTriggerRef}
-                      collapsable={false}
-                      onPress={openSortMenu}
-                      hitSlop={8}
-                      style={styles.sortTriggerBtn}
-                      accessibilityRole="button"
-                      accessibilityLabel="Ordenar tareas"
-                    >
-                      <Typography variant="caption" color={gold[400]} style={{ fontWeight: '600' }}>
-                        {sortField === 'status' ? 'Estado' : sortField === 'priority' ? 'Prioridad' : sortField === 'alphabetical' ? 'Alfabético' : 'Fecha'}
-                      </Typography>
-                      {sortDir === 'desc' ? (
-                        <ArrowDown color={gold[400]} size={14} />
-                      ) : (
-                        <ArrowUp color={gold[400]} size={14} />
-                      )}
-                    </Pressable>
-                  </View>
                 </View>
-              </View>
-            }
-            ListEmptyComponent={() => (
-              <View style={styles.empty}>
-                <Typography variant="body" color={theme.colors.foregroundMuted}>
-                  {selectedTagIds.length > 0 ? 'No hay tareas con esas etiquetas.' : 'No hay tareas aquí.'}
-                </Typography>
-              </View>
-            )}
-          />
+              ) : sortField === 'status' ? (
+                <View style={{ marginTop: 2 }}>
+                  {taskSections.map((sec) => {
+                    if (sec.items.length === 0) return null;
+                    return (
+                      <View key={sec.key} style={{ marginBottom: 20 }}>
+                        <View style={{ marginBottom: 10 }}>
+                          <Text style={styles.sectionHeader}>{sec.title}</Text>
+                        </View>
+                        <DraggableTaskList
+                          items={sec.items}
+                          renderItem={(item, drag) => (
+                            <View style={{ marginBottom: taskViewMode === 'compact' ? 8 : spacing[3] }}>
+                              {taskViewMode === 'compact'
+                                ? renderCompactItem({ item, drag })
+                                : renderTaskItem({ item, drag })}
+                            </View>
+                          )}
+                          onReorder={(ids) => handleReorderSection(sec.key, ids)}
+                          onDraggingChange={setDragging}
+                        />
+                      </View>
+                    );
+                  })}
+                </View>
+              ) : (
+                <View style={{ marginTop: 2 }}>
+                  <DraggableTaskList
+                    items={sortedFlatBuckets}
+                    renderItem={(item, drag) => (
+                      <View style={{ marginBottom: taskViewMode === 'compact' ? 8 : spacing[3] }}>
+                        {taskViewMode === 'compact'
+                          ? renderCompactItem({ item, drag })
+                          : renderTaskItem({ item, drag })}
+                      </View>
+                    )}
+                    onReorder={(ids) => void persistTaskOrder(ids)}
+                    onDraggingChange={setDragging}
+                  />
+                </View>
+              )}
+            </ScrollView>
+          ) : taskViewMode === 'gallery' ? (
+            <ScrollView
+              contentContainerStyle={styles.listContent}
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void onRefresh()} tintColor={gold[400]} />}
+            >
+              {taskListHeader}
+              {filteredBuckets.length === 0 ? (
+                <View style={styles.empty}>
+                  <Typography variant="body" color={theme.colors.foregroundMuted}>
+                    {selectedTagIds.length > 0 ? 'No hay tareas con esas etiquetas.' : 'No hay tareas aquí.'}
+                  </Typography>
+                </View>
+              ) : sortField === 'status' ? (
+                taskSections.map((sec) => {
+                  if (sec.items.length === 0) return null;
+                  const isSingle = sec.items.length === 1;
+                  return (
+                    <View key={sec.key} style={{ marginBottom: 20 }}>
+                      <View style={{ marginBottom: 10 }}>
+                        <Text style={styles.sectionHeader}>{sec.title}</Text>
+                      </View>
+                      <View style={styles.galleryGrid}>
+                        {sec.items.map((item: any) => renderGalleryCard(item, isSingle))}
+                      </View>
+                    </View>
+                  );
+                })
+              ) : (
+                (() => {
+                  const isSingle = sortedFlatBuckets.length === 1;
+                  return (
+                    <View style={styles.galleryGrid}>
+                      {sortedFlatBuckets.map((item: any) => renderGalleryCard(item, isSingle))}
+                    </View>
+                  );
+                })()
+              )}
+            </ScrollView>
+          ) : (
+            <FlashList
+              data={listData}
+              keyExtractor={(item: any) => item.id || item.title}
+              contentContainerStyle={styles.listContent}
+              estimatedItemSize={taskViewMode === 'compact' ? 52 : 80}
+              refreshing={refreshing}
+              onRefresh={() => void onRefresh()}
+              extraData={listExtra}
+              getItemType={(item: any) => (item.isHeader ? 'header' : 'task')}
+              ItemSeparatorComponent={() => <View style={{ height: taskViewMode === 'compact' ? 8 : spacing[3] }} />}
+              renderItem={taskViewMode === 'compact' ? renderCompactItem : renderTaskItem}
+              ListHeaderComponent={taskListHeader}
+              ListEmptyComponent={() => (
+                <View style={styles.empty}>
+                  <Typography variant="body" color={theme.colors.foregroundMuted}>
+                    {selectedTagIds.length > 0 ? 'No hay tareas con esas etiquetas.' : 'No hay tareas aquí.'}
+                  </Typography>
+                </View>
+              )}
+            />
+          )
         )}
 
         {activeTab === 'albums' && (
           <ScrollView
             contentContainerStyle={styles.albumsContent}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void onRefresh()} tintColor={gold[400]} />}
+            scrollEnabled={!albumDragging}
+            keyboardShouldPersistTaps="handled"
+            refreshControl={
+              !(!isSearching && isAlbumReordering) ? (
+                <RefreshControl refreshing={refreshing} onRefresh={() => void onRefresh()} tintColor={gold[400]} />
+              ) : undefined
+            }
           >
             {/* Filtros de estado de álbum */}
             <ScrollView
@@ -866,18 +1648,51 @@ export default function MyListScreen() {
               <FilterChip label="Cerrados" active={albumFilter === 'closed'} onPress={() => setAlbumFilter('closed')} />
             </ScrollView>
 
-            {/* Filtro por prioridad de álbum */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.filtersContainer}
-              style={{ flexGrow: 0, marginBottom: 14, marginHorizontal: -20 }}
-            >
-              <FilterChip label="Prioridad: Todas" active={albumPriorityFilter === 'all'} onPress={() => setAlbumPriorityFilter('all')} />
-              <FilterChip label="🔴 Alta" active={albumPriorityFilter === 'high'} onPress={() => setAlbumPriorityFilter(albumPriorityFilter === 'high' ? 'all' : 'high')} />
-              <FilterChip label="🟡 Media" active={albumPriorityFilter === 'medium'} onPress={() => setAlbumPriorityFilter(albumPriorityFilter === 'medium' ? 'all' : 'medium')} />
-              <FilterChip label="🟢 Baja" active={albumPriorityFilter === 'low'} onPress={() => setAlbumPriorityFilter(albumPriorityFilter === 'low' ? 'all' : 'low')} />
-            </ScrollView>
+            {/* Filtro por prioridad de álbum + Toggle de modos de vista */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 8 }}
+                style={{ flex: 1, marginRight: 8 }}
+              >
+                <FilterChip label="Prioridad: Todas" active={albumPriorityFilter === 'all'} onPress={() => setAlbumPriorityFilter('all')} />
+                <FilterChip label="🔴 Alta" active={albumPriorityFilter === 'high'} onPress={() => setAlbumPriorityFilter(albumPriorityFilter === 'high' ? 'all' : 'high')} />
+                <FilterChip label="🟡 Media" active={albumPriorityFilter === 'medium'} onPress={() => setAlbumPriorityFilter(albumPriorityFilter === 'medium' ? 'all' : 'medium')} />
+                <FilterChip label="🟢 Baja" active={albumPriorityFilter === 'low'} onPress={() => setAlbumPriorityFilter(albumPriorityFilter === 'low' ? 'all' : 'low')} />
+              </ScrollView>
+
+              {/* Toggle de vistas: Lista | Galería | Compacta */}
+              <View style={styles.viewModeToggle}>
+                <Pressable
+                  onPress={() => setAlbumViewMode('list')}
+                  style={[styles.viewModeBtn, albumViewMode === 'list' && styles.viewModeBtnActive]}
+                  hitSlop={4}
+                  accessibilityRole="button"
+                  accessibilityLabel="Vista detallada"
+                >
+                  <LayoutList size={15} color={albumViewMode === 'list' ? '#0E0E0E' : '#A0A0A0'} />
+                </Pressable>
+                <Pressable
+                  onPress={() => setAlbumViewMode('gallery')}
+                  style={[styles.viewModeBtn, albumViewMode === 'gallery' && styles.viewModeBtnActive]}
+                  hitSlop={4}
+                  accessibilityRole="button"
+                  accessibilityLabel="Vista galería"
+                >
+                  <LayoutGrid size={15} color={albumViewMode === 'gallery' ? '#0E0E0E' : '#A0A0A0'} />
+                </Pressable>
+                <Pressable
+                  onPress={() => setAlbumViewMode('compact')}
+                  style={[styles.viewModeBtn, albumViewMode === 'compact' && styles.viewModeBtnActive]}
+                  hitSlop={4}
+                  accessibilityRole="button"
+                  accessibilityLabel="Vista compacta"
+                >
+                  <AlignJustify size={15} color={albumViewMode === 'compact' ? '#0E0E0E' : '#A0A0A0'} />
+                </Pressable>
+              </View>
+            </View>
 
             {/* Fila de Ordenar por álbumes */}
             <View style={styles.sortRow}>
@@ -898,14 +1713,39 @@ export default function MyListScreen() {
                   accessibilityLabel="Ordenar álbumes"
                 >
                   <Typography variant="caption" color={gold[400]} style={{ fontWeight: '600' }}>
-                    {albumSortField === 'status' ? 'Estado' : albumSortField === 'priority' ? 'Prioridad' : albumSortField === 'alphabetical' ? 'Alfabético' : 'Fecha'}
+                    {albumSortField === 'manual'
+                      ? 'Manual'
+                      : albumSortField === 'status'
+                      ? (isAlbumReordering ? 'Estado (manual)' : 'Estado')
+                      : albumSortField === 'priority'
+                      ? 'Prioridad'
+                      : albumSortField === 'alphabetical'
+                      ? 'Alfabético'
+                      : 'Fecha'}
                   </Typography>
-                  {albumSortDir === 'desc' ? (
-                    <ArrowDown color={gold[400]} size={14} />
-                  ) : (
-                    <ArrowUp color={gold[400]} size={14} />
-                  )}
+                  {albumSortField !== 'manual' && !isAlbumReordering &&
+                    (albumSortDir === 'desc' ? (
+                      <ArrowDown color={gold[400]} size={14} />
+                    ) : (
+                      <ArrowUp color={gold[400]} size={14} />
+                    ))}
                 </Pressable>
+
+                {!isSearching && isAlbumReordering && (
+                  <Pressable
+                    onPress={() => setIsAlbumReordering(false)}
+                    style={{
+                      backgroundColor: gold[400],
+                      paddingHorizontal: 12,
+                      paddingVertical: 4,
+                      borderRadius: 6,
+                      marginLeft: 8,
+                    }}
+                    hitSlop={8}
+                  >
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: '#0E0E0E' }}>OK</Text>
+                  </Pressable>
+                )}
               </View>
             </View>
 
@@ -923,95 +1763,189 @@ export default function MyListScreen() {
                   onPress={() => router.push('/album/unassigned')}
                 />
               </View>
-            ) : albumSortField === 'status' ? (
-              (() => {
-                let renderedNewAlbum = false;
-                const hasInProgress = albumSections.some((s) => s.key === 'in_progress' && s.items.length > 0);
-                return (
-                  <>
-                    {albumSections.map((sec) => {
-                      if (sec.items.length === 0) return null;
-                      const isTargetForNewCard = !renderedNewAlbum && (sec.key === 'in_progress' || !hasInProgress);
-                      if (isTargetForNewCard) {
-                        renderedNewAlbum = true;
-                      }
-                      return (
-                        <View key={sec.key} style={{ marginBottom: 20 }}>
-                          <View style={{ marginBottom: 10 }}>
-                            <Text style={styles.sectionHeader}>{sec.title}</Text>
-                          </View>
-                          <View style={styles.albumGrid}>
-                            {sec.items.map((item: any, idx: number) => (
-                              <AlbumCard
-                                key={item.id}
-                                title={item.title}
-                                totalTasks={item.total_tasks ?? 0}
-                                completedTasks={item.completed_tasks ?? 0}
-                                coverUri={item.cover_path}
-                                isShared={item.is_shared}
-                                isFavorite={isAlbumFavorite(item.id)}
-                                onToggleFavorite={() =>
-                                  toggleFavoriteAlbum.mutate({
-                                    albumId: item.id,
-                                    currentlyFavorite: isAlbumFavorite(item.id),
-                                  })
-                                }
-                                priority={item.priority}
-                                isClosed={item.is_closed}
-                                colorIndex={idx}
-                                onPress={() => router.push(`/album/${item.id}` as any)}
-                              />
-                            ))}
-                            {isTargetForNewCard && (
-                              <NewAlbumCard onPress={() => router.push('/(modals)/create-album')} />
-                            )}
-                          </View>
+            ) : !isSearching && isAlbumReordering ? (
+              <View style={{ marginTop: 2 }}>
+                {albumSortField === 'status' ? (
+                  albumSections.map((sec) => {
+                    if (sec.items.length === 0) return null;
+                    return (
+                      <View key={sec.key} style={{ marginBottom: 20 }}>
+                        <View style={{ marginBottom: 10 }}>
+                          <Text style={styles.sectionHeader}>{sec.title}</Text>
                         </View>
-                      );
-                    })}
-                    {!renderedNewAlbum && (
-                      <View style={[styles.albumGrid, { marginBottom: 12 }]}>
-                        <NewAlbumCard onPress={() => router.push('/(modals)/create-album')} />
+                        <DraggableTaskList
+                          items={sec.items}
+                          renderItem={(item, drag) =>
+                            albumViewMode === 'compact'
+                              ? renderCompactAlbumItem({ item, drag })
+                              : renderListAlbumItem({ item, drag })
+                          }
+                          onReorder={(ids) => handleReorderAlbumSection(sec.key, ids)}
+                          onDraggingChange={setAlbumDragging}
+                        />
                       </View>
-                    )}
-                    <NoAlbumRow
-                      count={unassignedCount}
-                      onPress={() => router.push('/album/unassigned')}
-                    />
-                  </>
-                );
-              })()
-            ) : (
+                    );
+                  })
+                ) : (
+                  <DraggableTaskList
+                    items={sortedAlbumsList}
+                    renderItem={(item, drag) =>
+                      albumViewMode === 'compact'
+                        ? renderCompactAlbumItem({ item, drag })
+                        : renderListAlbumItem({ item, drag })
+                    }
+                    onReorder={(ids) => void persistAlbumOrder(ids)}
+                    onDraggingChange={setAlbumDragging}
+                  />
+                )}
+              </View>
+            ) : albumViewMode === 'compact' ? (
               <>
-                <View style={styles.albumGrid}>
-                  {sortedAlbumsList.map((item: any, index: number) => (
-                    <AlbumCard
-                      key={item.id}
-                      title={item.title}
-                      totalTasks={item.total_tasks ?? 0}
-                      completedTasks={item.completed_tasks ?? 0}
-                      coverUri={item.cover_path}
-                      isShared={item.is_shared}
-                      isFavorite={isAlbumFavorite(item.id)}
-                      onToggleFavorite={() =>
-                        toggleFavoriteAlbum.mutate({
-                          albumId: item.id,
-                          currentlyFavorite: isAlbumFavorite(item.id),
-                        })
-                      }
-                      priority={item.priority}
-                      isClosed={item.is_closed}
-                      colorIndex={index}
-                      onPress={() => router.push(`/album/${item.id}` as any)}
-                    />
-                  ))}
-                  <NewAlbumCard onPress={() => router.push('/(modals)/create-album')} />
-                </View>
-                <NoAlbumRow
-                  count={unassignedCount}
-                  onPress={() => router.push('/album/unassigned')}
-                />
+                {albumSortField === 'status' ? (
+                  albumSections.map((sec) => {
+                    if (sec.items.length === 0) return null;
+                    return (
+                      <View key={sec.key} style={{ marginBottom: 20 }}>
+                        <View style={{ marginBottom: 10 }}>
+                          <Text style={styles.sectionHeader}>{sec.title}</Text>
+                        </View>
+                        <View style={{ gap: 8 }}>
+                          {sec.items.map((item: any) => renderCompactAlbumItem({ item }))}
+                        </View>
+                      </View>
+                    );
+                  })
+                ) : (
+                  <View style={{ gap: 8, marginBottom: 16 }}>
+                    {sortedAlbumsList.map((item: any) => renderCompactAlbumItem({ item }))}
+                  </View>
+                )}
+                <Pressable
+                  onPress={() => router.push('/(modals)/create-album')}
+                  style={styles.compactNewAlbumBtn}
+                >
+                  <Plus size={18} color={gold[400]} strokeWidth={2.2} />
+                  <Text style={styles.compactNewAlbumText}>Nuevo álbum</Text>
+                </Pressable>
+                <NoAlbumRow count={unassignedCount} onPress={() => router.push('/album/unassigned')} />
               </>
+            ) : albumViewMode === 'list' ? (
+              <>
+                {albumSortField === 'status' ? (
+                  albumSections.map((sec) => {
+                    if (sec.items.length === 0) return null;
+                    return (
+                      <View key={sec.key} style={{ marginBottom: 20 }}>
+                        <View style={{ marginBottom: 10 }}>
+                          <Text style={styles.sectionHeader}>{sec.title}</Text>
+                        </View>
+                        {sec.items.map((item: any, idx: number) => renderListAlbumItem({ item, index: idx }))}
+                      </View>
+                    );
+                  })
+                ) : (
+                  sortedAlbumsList.map((item: any, idx: number) => renderListAlbumItem({ item, index: idx }))
+                )}
+                <Pressable
+                  onPress={() => router.push('/(modals)/create-album')}
+                  style={styles.compactNewAlbumBtn}
+                >
+                  <Plus size={18} color={gold[400]} strokeWidth={2.2} />
+                  <Text style={styles.compactNewAlbumText}>Nuevo álbum</Text>
+                </Pressable>
+                <NoAlbumRow count={unassignedCount} onPress={() => router.push('/album/unassigned')} />
+              </>
+            ) : (
+              albumSortField === 'status' ? (
+                (() => {
+                  let renderedNewAlbum = false;
+                  const hasInProgress = albumSections.some((s) => s.key === 'in_progress' && s.items.length > 0);
+                  return (
+                    <>
+                      {albumSections.map((sec) => {
+                        if (sec.items.length === 0) return null;
+                        const isTargetForNewCard = !renderedNewAlbum && (sec.key === 'in_progress' || !hasInProgress);
+                        if (isTargetForNewCard) {
+                          renderedNewAlbum = true;
+                        }
+                        return (
+                          <View key={sec.key} style={{ marginBottom: 20 }}>
+                            <View style={{ marginBottom: 10 }}>
+                              <Text style={styles.sectionHeader}>{sec.title}</Text>
+                            </View>
+                            <View style={styles.albumGrid}>
+                              {sec.items.map((item: any, idx: number) => (
+                                <AlbumCard
+                                  key={item.id}
+                                  title={item.title}
+                                  totalTasks={item.total_tasks ?? 0}
+                                  completedTasks={item.completed_tasks ?? 0}
+                                  coverUri={item.cover_path}
+                                  isShared={item.is_shared}
+                                  isFavorite={isAlbumFavorite(item.id)}
+                                  onToggleFavorite={() =>
+                                    toggleFavoriteAlbum.mutate({
+                                      albumId: item.id,
+                                      currentlyFavorite: isAlbumFavorite(item.id),
+                                    })
+                                  }
+                                  priority={item.priority}
+                                  isClosed={item.is_closed}
+                                  colorIndex={idx}
+                                  onPress={() => router.push(`/album/${item.id}` as any)}
+                                />
+                              ))}
+                              {isTargetForNewCard && (
+                                <NewAlbumCard onPress={() => router.push('/(modals)/create-album')} />
+                              )}
+                            </View>
+                          </View>
+                        );
+                      })}
+                      {!renderedNewAlbum && (
+                        <View style={[styles.albumGrid, { marginBottom: 12 }]}>
+                          <NewAlbumCard onPress={() => router.push('/(modals)/create-album')} />
+                        </View>
+                      )}
+                      <NoAlbumRow
+                        count={unassignedCount}
+                        onPress={() => router.push('/album/unassigned')}
+                      />
+                    </>
+                  );
+                })()
+              ) : (
+                <>
+                  <View style={styles.albumGrid}>
+                    {sortedAlbumsList.map((item: any, index: number) => (
+                      <AlbumCard
+                        key={item.id}
+                        title={item.title}
+                        totalTasks={item.total_tasks ?? 0}
+                        completedTasks={item.completed_tasks ?? 0}
+                        coverUri={item.cover_path}
+                        isShared={item.is_shared}
+                        isFavorite={isAlbumFavorite(item.id)}
+                        onToggleFavorite={() =>
+                          toggleFavoriteAlbum.mutate({
+                            albumId: item.id,
+                            currentlyFavorite: isAlbumFavorite(item.id),
+                          })
+                        }
+                        priority={item.priority}
+                        isClosed={item.is_closed}
+                        colorIndex={index}
+                        onPress={() => router.push(`/album/${item.id}` as any)}
+                      />
+                    ))}
+                    <NewAlbumCard onPress={() => router.push('/(modals)/create-album')} />
+                  </View>
+                  <NoAlbumRow
+                    count={unassignedCount}
+                    onPress={() => router.push('/album/unassigned')}
+                  />
+                </>
+              )
             )}
           </ScrollView>
         )}
@@ -1064,15 +1998,48 @@ export default function MyListScreen() {
               shadowOffset: { width: 0, height: 4 },
             }}
           >
-            {([
-              { field: 'status' as const, label: 'Estado' },
-              { field: 'priority' as const, label: 'Prioridad' },
-              { field: 'alphabetical' as const, label: 'Alfabético' },
-              { field: 'created_at' as const, label: 'Fecha de creación' },
-            ] as const).map((option, i) => {
+            {(
+              activeTab === 'albums'
+                ? albumSortField === 'status'
+                  ? [
+                      { field: 'reorder_status' as const, label: 'Reordenar manualmente' },
+                      { field: 'status' as const, label: 'Estado' },
+                      { field: 'manual' as const, label: 'Manual (sin categorías)' },
+                      { field: 'priority' as const, label: 'Prioridad' },
+                      { field: 'alphabetical' as const, label: 'Alfabético' },
+                      { field: 'created_at' as const, label: 'Fecha de creación' },
+                    ]
+                  : [
+                      { field: 'manual' as const, label: 'Manual' },
+                      { field: 'status' as const, label: 'Estado' },
+                      { field: 'priority' as const, label: 'Prioridad' },
+                      { field: 'alphabetical' as const, label: 'Alfabético' },
+                      { field: 'created_at' as const, label: 'Fecha de creación' },
+                    ]
+                : sortField === 'status'
+                ? [
+                    { field: 'reorder_status' as const, label: 'Reordenar manualmente' },
+                    { field: 'status' as const, label: 'Estado' },
+                    { field: 'manual' as const, label: 'Manual (sin categorías)' },
+                    { field: 'priority' as const, label: 'Prioridad' },
+                    { field: 'alphabetical' as const, label: 'Alfabético' },
+                    { field: 'created_at' as const, label: 'Fecha de creación' },
+                  ]
+                : [
+                    { field: 'manual' as const, label: 'Manual' },
+                    { field: 'status' as const, label: 'Estado' },
+                    { field: 'priority' as const, label: 'Prioridad' },
+                    { field: 'alphabetical' as const, label: 'Alfabético' },
+                    { field: 'created_at' as const, label: 'Fecha de creación' },
+                  ]
+            ).map((option, i) => {
               const currentField = activeTab === 'albums' ? albumSortField : sortField;
               const currentDir = activeTab === 'albums' ? albumSortDir : sortDir;
-              const selected = currentField === option.field;
+              const isCurrentlyReordering = activeTab === 'albums' ? isAlbumReordering : isReordering;
+              const selected =
+                option.field === 'reorder_status'
+                  ? isCurrentlyReordering
+                  : currentField === option.field;
               return (
                 <Pressable
                   key={option.field}
@@ -1094,12 +2061,21 @@ export default function MyListScreen() {
                   >
                     {option.label}
                   </Typography>
-                  {selected &&
+                  {selected && option.field !== 'manual' && option.field !== 'reorder_status' &&
                     (currentDir === 'desc' ? (
                       <ArrowDown color={gold[400]} size={16} />
                     ) : (
                       <ArrowUp color={gold[400]} size={16} />
                     ))}
+                  {option.field === 'reorder_status' &&
+                    (isCurrentlyReordering ? (
+                      <Check color={gold[400]} size={16} strokeWidth={2.5} />
+                    ) : (
+                      <GripVertical color={gold[400]} size={16} />
+                    ))}
+                  {selected && option.field === 'manual' && (
+                    <Check color={gold[400]} size={16} strokeWidth={2.5} />
+                  )}
                 </Pressable>
               );
             })}
@@ -1224,6 +2200,31 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
+  sortRightControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  viewModeToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#181818',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
+    padding: 2,
+    gap: 2,
+  },
+  viewModeBtn: {
+    width: 28,
+    height: 26,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewModeBtnActive: {
+    backgroundColor: gold[400],
+  },
   sortTriggerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1233,6 +2234,127 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  galleryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 12,
+  },
+  galleryCard: {
+    width: (SCREEN_WIDTH - 40 - 10) / 2,
+    height: ((SCREEN_WIDTH - 40 - 10) / 2) * 1.3,
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: '#1E1E1E',
+  },
+  galleryCardSingle: {
+    width: '100%',
+    height: (SCREEN_WIDTH - 40) * 0.85,
+    marginBottom: 10,
+  },
+  galleryTopBadges: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    right: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  galleryFavBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    borderWidth: 1,
+    borderColor: gold[400],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  galleryCompletedBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(52, 199, 89, 0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  galleryPriorityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    borderWidth: 1,
+    borderColor: '#EF4444',
+  },
+  galleryPriorityText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#EF4444',
+  },
+  galleryBottomOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.72)',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderBottomLeftRadius: 14,
+    borderBottomRightRadius: 14,
+  },
+  galleryCardTitle: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 13,
+    color: '#FFFFFF',
+    lineHeight: 18,
+  },
+  galleryCardMeta: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: 2,
+  },
+  compactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 48,
+    paddingHorizontal: 14,
+    backgroundColor: '#161616',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#242424',
+  },
+  compactRowCompleted: {
+    backgroundColor: '#121212',
+    borderColor: '#1C1C1C',
+    opacity: 0.8,
+  },
+  compactCheckBtn: {
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  compactUncheckedCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1.8,
+    borderColor: '#555',
+  },
+  compactTitle: {
+    flex: 1,
+    fontFamily: 'Inter_500Medium',
+    fontSize: 14,
+    color: '#F5F5F5',
+  },
+  compactTitleCompleted: {
+    color: '#707070',
+    textDecorationLine: 'line-through',
   },
   listContent: {
     paddingHorizontal: 20,
@@ -1262,6 +2384,73 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 12,
     marginBottom: 12,
+  },
+  compactNewAlbumBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: gold[400],
+    backgroundColor: 'rgba(212, 177, 58, 0.06)',
+    marginBottom: 12,
+  },
+  compactNewAlbumText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 13,
+    color: gold[400],
+  },
+  listAlbumCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#161616',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#242424',
+    padding: 10,
+  },
+  listAlbumTitle: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 16,
+    color: '#FFF',
+    flex: 1,
+    marginRight: 8,
+  },
+  listAlbumMeta: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 11,
+    color: '#9A9A9A',
+  },
+  listAlbumBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  listAlbumBadgeText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 10,
+    color: '#BBB',
+  },
+  listAlbumProgressTrack: {
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    marginTop: 8,
+    overflow: 'hidden',
+  },
+  listAlbumProgressFill: {
+    height: '100%',
+    backgroundColor: gold[400],
+    borderRadius: 1.5,
   },
   empty: {
     paddingTop: 60,

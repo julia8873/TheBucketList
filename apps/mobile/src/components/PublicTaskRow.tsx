@@ -15,11 +15,18 @@ interface PublicTaskRowProps {
 }
 
 function buildMeta(bucket: any): string {
+  const completed = bucket.status === 'completed';
   const subtasks: Array<{ done: boolean }> = bucket.item_subtasks ?? [];
   const done = subtasks.filter((s) => s.done).length;
 
   let detail: string;
-  if (subtasks.length > 0) {
+  if (completed) {
+    if (bucket.completed_at) {
+      detail = `Completada · ${new Date(bucket.completed_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`;
+    } else {
+      detail = 'Completada';
+    }
+  } else if (subtasks.length > 0) {
     detail = `${done} de ${subtasks.length} pasos`;
   } else if (bucket.location_text) {
     detail = bucket.location_text;
@@ -60,11 +67,7 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, onPress }: PublicT
   };
 
   let chip: React.ReactNode = null;
-  if (completed) {
-    chip = <Pill label="Completada" variant="outline-gold" />;
-  } else if (hasFutureDeadline) {
-    chip = <UrgencyChip deadline={bucket.deadline} />;
-  } else if (!isOwnProfile) {
+  if (!isOwnProfile) {
     chip = alreadyCopied ? (
       <Pill label="En tu lista" variant="muted" />
     ) : (
@@ -72,6 +75,10 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, onPress }: PublicT
         <Pill label="Yo también" variant="outline-gold" />
       </Pressable>
     );
+  } else if (completed) {
+    chip = <Pill label="Completada" variant="outline-gold" />;
+  } else if (hasFutureDeadline) {
+    chip = <UrgencyChip deadline={bucket.deadline} />;
   }
 
   return (
