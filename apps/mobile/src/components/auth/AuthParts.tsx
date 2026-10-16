@@ -264,7 +264,21 @@ export function BigAvatar({
               { width: inner, height: inner, borderRadius: inner / 2, backgroundColor: '#201B0E' },
             ]}
           >
-            <Text style={{ color: theme.colors.primary, fontFamily: fontFamily.medium, fontSize: size * 0.34 }}>
+            <Text
+              style={{
+                color: theme.colors.primary,
+                fontFamily: fontFamily.medium,
+                fontSize: Math.round(size * 0.32),
+                lineHeight: Math.round(size * 0.38),
+                textAlign: 'center',
+                textAlignVertical: 'center',
+                includeFontPadding: false,
+                letterSpacing: -0.5,
+              }}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
+            >
               {initials}
             </Text>
           </View>

@@ -6,11 +6,15 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, Folder, Search, Check, Plus } from 'lucide-react-native';
+import { ChevronLeft, Folder, Search, Check, Plus, Tag as TagIcon, X } from 'lucide-react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { PageTitle } from '@bucketlist/ui';
 import { BucketCover } from '../src/components/BucketCover';
 import { useUnassignedTasks, useAssignTasks, useCreateTasksFromDefaults, defaultTasks, UnassignedTask } from '../src/services/api/tasksService';
+import { useTags, useTagUsage, type Tag } from '../src/hooks/useTags';
+import { TagFilterSheet } from '../src/components/TagFilterSheet';
+import { hexToRgba } from '../src/constants/tagPresets';
+import { gold } from '@bucketlist/ui/src/tokens/colors';
 
 const GRADIENTS = {
   aurora: ['#0E4B43', '#1F8560'] as const,
@@ -19,8 +23,6 @@ const GRADIENTS = {
   violeta: ['#5B2F98', '#2E1A5E'] as const,
   dorado: ['#3A2F18', '#5E4E1F'] as const,
 };
-
-const CATEGORIES = ['Todas', 'Viajes', 'Aventura', 'Deporte', 'Comida'];
 
 export default function AddTaskScreen() {
   const { albumId, albumName } = useLocalSearchParams<{ albumId: string, albumName: string }>();
@@ -34,8 +36,31 @@ export default function AddTaskScreen() {
 
   const [activeTab, setActiveTab] = useState<'user' | 'default'>('user');
   const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState('Todas');
+  const [tagSheetOpen, setTagSheetOpen] = useState(false);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const { data: allTags = [] } = useTags();
+  const { data: tagUsage } = useTagUsage();
+
+  const tagsById = useMemo(() => {
+    const map = new Map<string, Tag>();
+    allTags.forEach((t) => map.set(t.id, t));
+    return map;
+  }, [allTags]);
+
+  useEffect(() => {
+    if (!allTags || allTags.length === 0) return;
+    setSelectedTagIds((prev) => {
+      const next = prev.filter((id) => tagsById.has(id));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [allTags, tagsById]);
+
+  const selectedTags = useMemo(
+    () => selectedTagIds.map((id) => tagsById.get(id)).filter(Boolean) as Tag[],
+    [selectedTagIds, tagsById]
+  );
 
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -67,15 +92,40 @@ export default function AddTaskScreen() {
   };
 
   const getVisibleTasks = (tasks: UnassignedTask[]) => {
-    return tasks.filter(t => {
-      const matchSearch = t.title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(search.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
-      const matchCat = activeCategory === 'Todas' || t.categoryName === activeCategory;
-      return matchSearch && matchCat;
+    return tasks.filter((t) => {
+      const matchSearch = t.title
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .includes(
+          search
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+        );
+      if (!matchSearch) return false;
+
+      if (selectedTagIds.length === 0) return true;
+
+      if (t.isDefault) {
+        return selectedTags.some(
+          (tag) => tag.name.toLowerCase() === t.categoryName?.toLowerCase()
+        );
+      }
+
+      const taskTagIds = tagUsage?.byItem[t.id] ?? [];
+      return selectedTagIds.some((id) => taskTagIds.includes(id));
     });
   };
 
-  const visibleUserTasks = useMemo(() => getVisibleTasks(userTasks), [userTasks, search, activeCategory]);
-  const visibleDefaultTasks = useMemo(() => getVisibleTasks(availableDefaultTasks), [availableDefaultTasks, search, activeCategory]);
+  const visibleUserTasks = useMemo(
+    () => getVisibleTasks(userTasks),
+    [userTasks, search, selectedTagIds, tagUsage, selectedTags]
+  );
+  const visibleDefaultTasks = useMemo(
+    () => getVisibleTasks(availableDefaultTasks),
+    [availableDefaultTasks, search, selectedTagIds, selectedTags]
+  );
 
   const currentVisibleTasks = activeTab === 'user' ? visibleUserTasks : visibleDefaultTasks;
   const currentTotal = activeTab === 'user' ? userTasks.length : availableDefaultTasks.length;
@@ -247,27 +297,61 @@ export default function AddTaskScreen() {
         </Pressable>
       </View>
 
-      {/* Category Chips */}
-      <View style={styles.chipsWrapper}>
+      {/* Tags Filter Row */}
+      <View style={styles.tagFilterRow}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipsScroll}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.tagFilterScroll}
         >
-          {CATEGORIES.map(cat => {
-            const isActive = activeCategory === cat;
-            return (
-              <Pressable
-                key={cat}
-                style={[styles.chip, isActive && styles.chipActive]}
-                onPress={() => setActiveCategory(cat)}
-              >
-                <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
-                  {cat}
-                </Text>
-              </Pressable>
-            );
-          })}
+          <Pressable
+            onPress={() => setTagSheetOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Filtrar por etiquetas"
+            style={[styles.tagFilterBtn, selectedTagIds.length > 0 && styles.tagFilterBtnActive]}
+          >
+            <TagIcon
+              size={15}
+              color={selectedTagIds.length > 0 ? gold[400] : '#E5E5E5'}
+              strokeWidth={1.9}
+            />
+            <Text
+              style={[
+                styles.tagFilterText,
+                selectedTagIds.length > 0 && { color: gold[400] },
+              ]}
+            >
+              {selectedTagIds.length > 0 ? `Etiquetas · ${selectedTagIds.length}` : 'Etiquetas'}
+            </Text>
+          </Pressable>
+
+          {selectedTags.map((t) => (
+            <Pressable
+              key={t.id}
+              onPress={() => setSelectedTagIds((ids) => ids.filter((id) => id !== t.id))}
+              accessibilityRole="button"
+              accessibilityLabel={`Quitar etiqueta ${t.name}`}
+              style={styles.activeTagChip}
+            >
+              {t.emoji ? (
+                <View
+                  style={[
+                    styles.activeTagEmoji,
+                    { backgroundColor: hexToRgba(t.color, 0.3) },
+                  ]}
+                >
+                  <Text style={styles.activeTagEmojiText}>{t.emoji}</Text>
+                </View>
+              ) : (
+                <View style={[styles.activeTagDot, { backgroundColor: t.color }]} />
+              )}
+              <Text style={styles.activeTagText} numberOfLines={1}>
+                {t.name}
+              </Text>
+              <X size={14} color="#E5E5E5" strokeWidth={2} />
+            </Pressable>
+          ))}
         </ScrollView>
       </View>
 
@@ -356,6 +440,19 @@ export default function AddTaskScreen() {
           )}
         </Pressable>
       </View>
+
+      <TagFilterSheet
+        visible={tagSheetOpen}
+        selectedIds={selectedTagIds}
+        onChange={setSelectedTagIds}
+        matchCount={currentVisibleTasks.length}
+        totalCount={currentTotal}
+        onClose={() => setTagSheetOpen(false)}
+        onManage={() => {
+          setTagSheetOpen(false);
+          router.push('/tags' as any);
+        }}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -504,35 +601,70 @@ const styles = StyleSheet.create({
   badgeTextInactive: {
     color: '#0D0D0D',
   },
-  chipsWrapper: {
+  tagFilterRow: {
     marginTop: 16,
   },
-  chipsScroll: {
+  tagFilterScroll: {
     paddingLeft: 20,
     paddingRight: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
   },
-  chip: {
+  tagFilterBtn: {
     height: 36,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     borderRadius: 999,
-    backgroundColor: '#151515',
     borderWidth: 1,
-    borderColor: '#262626',
-    justifyContent: 'center',
+    borderColor: '#333333',
+    backgroundColor: '#151515',
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
-  chipActive: {
-    backgroundColor: '#2C2512',
+  tagFilterBtnActive: {
     borderColor: '#D4B13A',
+    backgroundColor: '#2C2512',
   },
-  chipText: {
+  tagFilterText: {
     fontFamily: 'Inter_500Medium',
-    fontSize: 15,
-    color: '#F3EEE3',
+    fontSize: 14,
+    color: '#E5E5E5',
   },
-  chipTextActive: {
-    color: '#D4B13A',
+  activeTagChip: {
+    height: 36,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
+    backgroundColor: '#181818',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
+  activeTagDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  activeTagEmoji: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    marginLeft: -4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeTagEmojiText: {
+    fontSize: 11,
+    lineHeight: 14,
+    textAlign: 'center',
+  },
+  activeTagText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 13,
+    color: '#F5F5F5',
+    maxWidth: 140,
   },
   countRow: {
     marginTop: 16,

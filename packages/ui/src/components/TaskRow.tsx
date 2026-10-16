@@ -33,6 +33,7 @@ interface TaskRowProps {
   /** Etiquetas de la tarea (se pintan entre el título y la meta). */
   tagsElement?: React.ReactNode;
   onPress?: () => void;
+  onLongPress?: () => void;
   style?: ViewStyle;
   expiredAction?: boolean;
   /** Si la tarea está completada: atenúa la fila y muestra un tick dorado. */
@@ -52,6 +53,7 @@ export function TaskRow({
   thumbnailElement,
   tagsElement,
   onPress,
+  onLongPress,
   style,
   expiredAction,
   completed = false,
@@ -65,6 +67,7 @@ export function TaskRow({
   return (
     <Pressable
       onPress={onPress}
+      onLongPress={onLongPress}
       style={({ pressed }) => [
         styles.row,
         { backgroundColor: pressed ? '#202020' : '#161616' },

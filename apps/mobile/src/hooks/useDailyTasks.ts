@@ -1,9 +1,30 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { dailyTasksService, type DailyTask } from '../services/api/dailyTasksService';
+import {
+  dailyTasksService,
+  type DailyTask,
+  type DailyCompletion,
+  type DailyStats,
+  type DailyTaskPriority,
+  type DailyTaskRecurrenceUnit,
+  type DailySubtask,
+} from '../services/api/dailyTasksService';
+export type { DailyTaskPriority, DailyTaskRecurrenceUnit, DailySubtask };
 import { useAuthStore } from '../stores/auth.store';
 import { format } from 'date-fns';
 
 export const DAILY_TASKS_QUERY_KEY = ['daily_tasks'];
+export const DAILY_STATS_QUERY_KEY = ['daily_task_stats'];
+
+export function useDailyTaskStats() {
+  const { user } = useAuthStore();
+  const userId = user?.id;
+
+  return useQuery({
+    queryKey: [...DAILY_STATS_QUERY_KEY, userId],
+    queryFn: () => dailyTasksService.getDailyStats(userId),
+    enabled: !!userId,
+  });
+}
 
 export function useDailyTasks() {
   const { user } = useAuthStore();
@@ -22,7 +43,23 @@ export function useCreateDailyTask() {
   const userId = user?.id;
 
   return useMutation({
-    mutationFn: async (payload: string | { title: string; description?: string | null; due_date?: string | null; tag_ids?: string[] }) => {
+    mutationFn: async (
+      payload:
+        | string
+        | {
+            title: string;
+            description?: string | null;
+            due_date?: string | null;
+            tag_ids?: string[];
+            collaborator_ids?: string[];
+            priority?: DailyTaskPriority;
+            is_favorite?: boolean;
+            is_recurring?: boolean;
+            recurrence_interval?: number;
+            recurrence_unit?: DailyTaskRecurrenceUnit;
+            subtasks?: DailySubtask[];
+          }
+    ) => {
       if (!userId) throw new Error('Usuario no autenticado');
       return dailyTasksService.createTask(userId, payload);
     },
@@ -36,6 +73,13 @@ export function useCreateDailyTask() {
         ? format(new Date(), 'yyyy-MM-dd')
         : payload.due_date || format(new Date(), 'yyyy-MM-dd');
       const tag_ids = typeof payload === 'string' ? [] : payload.tag_ids || [];
+      const collaborator_ids = typeof payload === 'string' ? [] : payload.collaborator_ids || [];
+      const priority = typeof payload === 'string' ? 'medium' : payload.priority || 'medium';
+      const is_favorite = typeof payload === 'string' ? false : Boolean(payload.is_favorite);
+      const is_recurring = typeof payload === 'string' ? false : Boolean(payload.is_recurring);
+      const recurrence_interval = typeof payload === 'string' ? 1 : Math.max(1, payload.recurrence_interval || 1);
+      const recurrence_unit = typeof payload === 'string' ? 'days' : payload.recurrence_unit || 'days';
+      const subtasks = typeof payload === 'string' ? [] : payload.subtasks || [];
 
       const optimisticTask: DailyTask = {
         id: `temp-${Date.now()}`,
@@ -46,6 +90,13 @@ export function useCreateDailyTask() {
         position: (previous[0]?.position ?? 0) - 1,
         due_date,
         tag_ids,
+        collaborator_ids,
+        priority,
+        is_favorite,
+        is_recurring,
+        recurrence_interval,
+        recurrence_unit,
+        subtasks,
         created_at: new Date().toISOString(),
       };
 
@@ -55,6 +106,16 @@ export function useCreateDailyTask() {
       ]);
 
       return { previous };
+    },
+    onSuccess: (savedTask) => {
+      queryClient.setQueryData<DailyTask[]>([...DAILY_TASKS_QUERY_KEY, userId], (old: DailyTask[] | undefined) => {
+        const list = old || [];
+        const filtered = list.filter((t: DailyTask) => !t.id.startsWith('temp-'));
+        if (!filtered.some((t: DailyTask) => t.id === savedTask.id)) {
+          return [savedTask, ...filtered];
+        }
+        return filtered;
+      });
     },
     onError: (_err, _payload, context) => {
       if (context?.previous) {
@@ -129,6 +190,97 @@ export function useToggleDailyTask() {
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: [...DAILY_TASKS_QUERY_KEY, userId] });
+    },
+  });
+}
+
+export function useCompleteDailyTask() {
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  const userId = user?.id;
+
+  return useMutation({
+    mutationFn: async (task: DailyTask) => {
+      return dailyTasksService.completeTask(task);
+    },
+    onMutate: async (task) => {
+      await queryClient.cancelQueries({ queryKey: [...DAILY_TASKS_QUERY_KEY, userId] });
+
+      const previousTasks = queryClient.getQueryData<DailyTask[]>([...DAILY_TASKS_QUERY_KEY, userId]) || [];
+      const nowIso = new Date().toISOString();
+
+      // Optimistic update en daily_tasks (se marca como completada, NO se borra)
+      queryClient.setQueryData<DailyTask[]>(
+        [...DAILY_TASKS_QUERY_KEY, userId],
+        previousTasks.map((t) =>
+          t.id === task.id
+            ? { ...t, is_completed: true, completed_at: nowIso }
+            : t
+        )
+      );
+
+      return { previousTasks };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData([...DAILY_TASKS_QUERY_KEY, userId], context.previousTasks);
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: [...DAILY_TASKS_QUERY_KEY, userId] });
+      void queryClient.invalidateQueries({ queryKey: [...DAILY_STATS_QUERY_KEY, userId] });
+    },
+  });
+}
+
+export function useCompleteRecurringDailyTask() {
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  const userId = user?.id;
+
+  return useMutation({
+    mutationFn: async ({
+      task,
+      nextDueDate,
+      resetSubtasks,
+    }: {
+      task: DailyTask;
+      nextDueDate: string;
+      resetSubtasks?: DailySubtask[];
+    }) => {
+      return dailyTasksService.completeRecurringTask({ task, nextDueDate, resetSubtasks });
+    },
+    onMutate: async ({ task, nextDueDate, resetSubtasks = [] }) => {
+      await queryClient.cancelQueries({ queryKey: [...DAILY_TASKS_QUERY_KEY, userId] });
+
+      const previousTasks = queryClient.getQueryData<DailyTask[]>([...DAILY_TASKS_QUERY_KEY, userId]) || [];
+
+      // Optimistic update: advance task to nextDueDate and keep is_completed false
+      queryClient.setQueryData<DailyTask[]>(
+        [...DAILY_TASKS_QUERY_KEY, userId],
+        previousTasks.map((t) =>
+          t.id === task.id
+            ? {
+                ...t,
+                due_date: nextDueDate,
+                is_completed: false,
+                completed_at: null,
+                subtasks: resetSubtasks,
+              }
+            : t
+        )
+      );
+
+      return { previousTasks };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData([...DAILY_TASKS_QUERY_KEY, userId], context.previousTasks);
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: [...DAILY_TASKS_QUERY_KEY, userId] });
+      void queryClient.invalidateQueries({ queryKey: [...DAILY_STATS_QUERY_KEY, userId] });
     },
   });
 }
@@ -231,6 +383,24 @@ export function useClearCompletedDailyTasks() {
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: [...DAILY_TASKS_QUERY_KEY, userId] });
+    },
+  });
+}
+
+export function useConvertToBucket() {
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  const userId = user?.id;
+
+  return useMutation({
+    mutationFn: async ({ task, deleteDaily = true }: { task: DailyTask; deleteDaily?: boolean }) => {
+      return dailyTasksService.convertToBucket(task, deleteDaily);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [...DAILY_TASKS_QUERY_KEY, userId] });
+      void queryClient.invalidateQueries({ queryKey: DAILY_TASKS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+      void queryClient.invalidateQueries({ queryKey: ['unassigned_tasks'] });
     },
   });
 }

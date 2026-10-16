@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
 
 /**
  * Lista reordenable con el mismo gesto que los pasos de una tarea (SubtaskList):
@@ -25,6 +26,8 @@ type Props<T extends { id: string }> = {
   onDraggingChange?: (dragging: boolean) => void;
   /** Espacio entre filas en píxeles (por defecto 10). */
   gap?: number;
+  /** Altura estimada por defecto de cada elemento antes de layout (por defecto 96, o 52 si gap === 0). */
+  defaultItemHeight?: number;
 };
 
 type RowProps = {
@@ -55,6 +58,23 @@ function Row(props: RowProps) {
   const y = useRef(new Animated.Value(target)).current;
   const scale = useRef(new Animated.Value(1)).current;
 
+  const isLongPressing = useRef(false);
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const touchStartPos = useRef({ x: 0, y: 0 });
+
+  const clearTimer = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      clearTimer();
+    };
+  }, [clearTimer]);
+
   useEffect(() => {
     if (isActive) return;
     if (!animate) {
@@ -64,21 +84,22 @@ function Row(props: RowProps) {
     Animated.spring(y, {
       toValue: target,
       useNativeDriver: true,
-      damping: 20,
-      stiffness: 260,
-      mass: 0.7,
+      damping: 22,
+      stiffness: 280,
+      mass: 0.6,
     }).start();
   }, [target, isActive, animate, y]);
 
   useEffect(() => {
     Animated.spring(scale, {
-      toValue: isActive ? 1.02 : 1,
+      toValue: isActive ? 1.025 : 1,
       useNativeDriver: true,
-      damping: 20,
+      damping: 22,
       stiffness: 300,
     }).start();
   }, [isActive, scale]);
 
+  // Asa explícita (icono ⠿): inicia arrastre inmediatamente al tocarlo
   const pan = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -87,6 +108,13 @@ function Row(props: RowProps) {
       onMoveShouldSetPanResponderCapture: () => true,
       onPanResponderTerminationRequest: () => false,
       onPanResponderGrant: () => {
+        clearTimer();
+        isLongPressing.current = true;
+        try {
+          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        } catch {
+          // ignore
+        }
         const p = latest.current;
         y.setValue(p.top);
         p.onDragStart(p.item.id, p.index);
@@ -97,13 +125,103 @@ function Row(props: RowProps) {
         y.setValue(next);
         p.onDragMove(next + p.height / 2);
       },
-      onPanResponderRelease: () => latest.current.onDragEnd(),
-      onPanResponderTerminate: () => latest.current.onDragEnd(),
+      onPanResponderRelease: () => {
+        clearTimer();
+        isLongPressing.current = false;
+        latest.current.onDragEnd();
+      },
+      onPanResponderTerminate: () => {
+        clearTimer();
+        isLongPressing.current = false;
+        latest.current.onDragEnd();
+      },
+    }),
+  ).current;
+
+  // Fila completa: al mantener pulsado 240ms, vibra e inicia el arrastre para cambiar el orden
+  const rowPan = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onStartShouldSetPanResponderCapture: (evt) => {
+        clearTimer();
+        isLongPressing.current = false;
+        touchStartPos.current = {
+          x: evt.nativeEvent.pageX,
+          y: evt.nativeEvent.pageY,
+        };
+        longPressTimer.current = setTimeout(() => {
+          isLongPressing.current = true;
+          try {
+            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          } catch {
+            // ignore
+          }
+          const p = latest.current;
+          y.setValue(p.top);
+          p.onDragStart(p.item.id, p.index);
+        }, 240);
+        return false;
+      },
+      onMoveShouldSetPanResponder: () => isLongPressing.current,
+      onMoveShouldSetPanResponderCapture: (evt) => {
+        if (isLongPressing.current) {
+          return true;
+        }
+        const dx = Math.abs(evt.nativeEvent.pageX - touchStartPos.current.x);
+        const dy = Math.abs(evt.nativeEvent.pageY - touchStartPos.current.y);
+        // Si el usuario desliza para hacer scroll antes de que pasen los 240ms, cancelamos el timer
+        if (dx > 8 || dy > 8) {
+          clearTimer();
+          return false;
+        }
+        return false;
+      },
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderGrant: () => {
+        const p = latest.current;
+        y.setValue(p.top);
+      },
+      onPanResponderMove: (_, g) => {
+        if (!isLongPressing.current && !latest.current.isActive) return;
+        const p = latest.current;
+        const next = Math.max(0, Math.min(p.top + g.dy, p.maxTop));
+        y.setValue(next);
+        p.onDragMove(next + p.height / 2);
+      },
+      onPanResponderRelease: () => {
+        clearTimer();
+        if (isLongPressing.current || latest.current.isActive) {
+          isLongPressing.current = false;
+          latest.current.onDragEnd();
+        }
+      },
+      onPanResponderTerminate: () => {
+        clearTimer();
+        if (isLongPressing.current || latest.current.isActive) {
+          isLongPressing.current = false;
+          latest.current.onDragEnd();
+        }
+      },
     }),
   ).current;
 
   return (
     <Animated.View
+      {...rowPan.panHandlers}
+      onTouchEnd={() => {
+        clearTimer();
+        if (isLongPressing.current || latest.current.isActive) {
+          isLongPressing.current = false;
+          latest.current.onDragEnd();
+        }
+      }}
+      onTouchCancel={() => {
+        clearTimer();
+        if (isLongPressing.current || latest.current.isActive) {
+          isLongPressing.current = false;
+          latest.current.onDragEnd();
+        }
+      }}
       onLayout={(e) => props.onMeasure(item.id, e.nativeEvent.layout.height)}
       style={{
         position: 'absolute',
@@ -130,7 +248,9 @@ export function DraggableTaskList<T extends { id: string }>({
   onReorder,
   onDraggingChange,
   gap = GAP,
+  defaultItemHeight,
 }: Props<T>) {
+  const fallbackHeight = defaultItemHeight ?? (gap === 0 ? 52 : DEFAULT_HEIGHT);
   const [heights, setHeights] = useState<Record<string, number>>({});
   const [active, setActive] = useState<{ id: string; from: number; over: number } | null>(null);
   const [interacted, setInteracted] = useState(false);
@@ -169,7 +289,7 @@ export function DraggableTaskList<T extends { id: string }>({
     return () => clearTimeout(t);
   }, [propsKey, localOrder]);
 
-  const h = (id: string) => heights[id] ?? DEFAULT_HEIGHT;
+  const h = (id: string) => heights[id] ?? fallbackHeight;
 
   const offsetsFor = (ids: string[]) => {
     const out: number[] = [];
@@ -210,7 +330,7 @@ export function DraggableTaskList<T extends { id: string }>({
     let over = list.length - 1;
     for (let j = 0; j < list.length; j++) {
       const itemId = list[j];
-      const hj = (itemId ? heightsRef.current[itemId] : undefined) ?? DEFAULT_HEIGHT;
+      const hj = (itemId ? heightsRef.current[itemId] : undefined) ?? fallbackHeight;
       if (center < acc + hj + gap / 2) {
         over = j;
         break;
@@ -218,7 +338,7 @@ export function DraggableTaskList<T extends { id: string }>({
       acc += hj + gap;
     }
     if (over !== current.over) setActive({ ...current, over });
-  }, [gap]);
+  }, [gap, fallbackHeight]);
 
   const onDragEnd = useCallback(() => {
     const current = activeRef.current;

@@ -8,9 +8,10 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Search, Trash2, CheckCircle2, X, Tag as TagIcon, ArrowDown, ArrowUp, Star, LayoutList, LayoutGrid, AlignJustify, GripVertical, Check, Lock, Users, Plus } from 'lucide-react-native';
+import { Search, Trash2, CheckCircle2, X, Tag as TagIcon, ArrowDown, ArrowUp, Star, LayoutList, LayoutGrid, AlignJustify, GripVertical, Check, Lock, Users, Plus, CheckSquare } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DraggableTaskList, type DragHandle } from '../../src/components/DraggableTaskList';
+import { BulkTaskActionBar } from '../../src/components/BulkTaskActionBar';
 
 import { useBuckets, useDeleteBucket, useUpdateBucket } from '../../src/hooks/useBuckets';
 import { useAlbums } from '../../src/hooks/useAlbums';
@@ -23,6 +24,7 @@ import { CalendarTab } from '../../src/components/CalendarTab';
 import { BucketCover } from '../../src/components/BucketCover';
 import { resolveTaskImage } from '../../src/utils/taskImage';
 import { TagFilterSheet } from '../../src/components/TagFilterSheet';
+import { TaskRowSkeleton, TaskCompactSkeleton, TaskGallerySkeleton, AlbumCardSkeleton } from '../../src/components/TaskSkeletons';
 import { useTags, useTagUsage, type Tag } from '../../src/hooks/useTags';
 import { hexToRgba } from '../../src/constants/tagPresets';
 import { categoryColors } from '@bucketlist/ui/src/tokens/colors';
@@ -68,6 +70,21 @@ export default function MyListScreen() {
   const setTaskViewMode = (mode: TaskViewMode) => {
     setTaskViewModeState(mode);
     AsyncStorage.setItem('@my_list_view_mode', mode).catch(() => undefined);
+  };
+
+  // ── Selección múltiple de tareas ──────────────────────────────────────────
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
+
+  const toggleSelectTask = (id: string) => {
+    setSelectedTaskIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleExitSelection = () => {
+    setIsSelectionMode(false);
+    setSelectedTaskIds([]);
   };
 
   // ── Filtros y orden de álbumes ───────────────────────────────────────────
@@ -351,8 +368,8 @@ export default function MyListScreen() {
   );
 
   const listExtra = useMemo(
-    () => ({ tagsById, byItem: tagUsage?.byItem, selectedTagIds, priorityFilter, sortField, sortDir, favBucketIds, taskViewMode }),
-    [tagsById, tagUsage, selectedTagIds, priorityFilter, sortField, sortDir, favBucketIds, taskViewMode],
+    () => ({ tagsById, byItem: tagUsage?.byItem, selectedTagIds, priorityFilter, sortField, sortDir, favBucketIds, taskViewMode, isSelectionMode, selectedTaskIds }),
+    [tagsById, tagUsage, selectedTagIds, priorityFilter, sortField, sortDir, favBucketIds, taskViewMode, isSelectionMode, selectedTaskIds],
   );
 
   const toggleSearch = () => {
@@ -843,13 +860,15 @@ export default function MyListScreen() {
       );
     };
 
+    const isSelected = selectedTaskIds.includes(item.id);
+
     const swipeableContent = (
       <Swipeable
         ref={(ref) => {
           if (ref) swipeableRefs.current.set(item.id, ref);
           else swipeableRefs.current.delete(item.id);
         }}
-        enabled={!drag}
+        enabled={!drag && !isSelectionMode}
         containerStyle={{ backgroundColor: '#0E0E0E', borderRadius: 14 }}
         childrenContainerStyle={{ backgroundColor: '#0E0E0E', borderRadius: 14 }}
         renderRightActions={renderRightActions}
@@ -900,10 +919,41 @@ export default function MyListScreen() {
           counterCount={(item as any).counter_count}
           counterTarget={(item as any).counter_target}
           completed={item.status === 'completed'}
-          onPress={() => router.push(`/bucket/${item.id}`)}
+          onPress={() => {
+            if (isSelectionMode) {
+              toggleSelectTask(item.id);
+            } else {
+              router.push(`/bucket/${item.id}`);
+            }
+          }}
+          onLongPress={() => {
+            if (!isSelectionMode) {
+              setIsSelectionMode(true);
+            }
+            toggleSelectTask(item.id);
+          }}
         />
       </Swipeable>
     );
+
+    const contentWithSelection = isSelectionMode ? (
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Pressable
+          hitSlop={8}
+          onPress={() => toggleSelectTask(item.id)}
+          style={{ paddingLeft: 2, paddingRight: 2 }}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: isSelected }}
+        >
+          {isSelected ? (
+            <CheckCircle2 size={24} color={gold[400]} fill={gold[400]} />
+          ) : (
+            <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: '#555555' }} />
+          )}
+        </Pressable>
+        <View style={{ flex: 1 }}>{swipeableContent}</View>
+      </View>
+    ) : swipeableContent;
 
     if (drag) {
       return (
@@ -916,12 +966,12 @@ export default function MyListScreen() {
           >
             <GripVertical size={20} color={drag.isActive ? gold[400] : '#8F8F8F'} strokeWidth={2} />
           </View>
-          <View style={{ flex: 1 }}>{swipeableContent}</View>
+          <View style={{ flex: 1 }}>{contentWithSelection}</View>
         </View>
       );
     }
 
-    return swipeableContent;
+    return contentWithSelection;
   };
 
   const renderCompactItem = ({ item, drag }: { item: any; drag?: DragHandle }) => {
@@ -936,13 +986,27 @@ export default function MyListScreen() {
 
     const isCompleted = item.status === 'completed';
     const isFav = isBucketFavorite(item.id);
+    const isSelected = selectedTaskIds.includes(item.id);
 
     return (
       <Pressable
-        onPress={() => router.push(`/bucket/${item.id}`)}
+        onPress={() => {
+          if (isSelectionMode) {
+            toggleSelectTask(item.id);
+          } else {
+            router.push(`/bucket/${item.id}`);
+          }
+        }}
+        onLongPress={() => {
+          if (!isSelectionMode) {
+            setIsSelectionMode(true);
+          }
+          toggleSelectTask(item.id);
+        }}
         style={[
           styles.compactRow,
           isCompleted && styles.compactRowCompleted,
+          isSelected && { borderColor: gold[400], backgroundColor: 'rgba(212, 177, 58, 0.08)' },
           drag?.isActive && { borderColor: gold[400] },
         ]}
         accessibilityRole="button"
@@ -958,37 +1022,53 @@ export default function MyListScreen() {
             <GripVertical size={18} color={drag.isActive ? gold[400] : '#8F8F8F'} strokeWidth={2} />
           </View>
         )}
-        <Pressable
-          hitSlop={10}
-          onPress={() => {
-            const newStatus = isCompleted ? 'in_progress' : 'completed';
-            updateBucket.mutate(
-              {
-                id: item.id,
-                data: {
-                  status: newStatus,
-                  completed_at: newStatus === 'completed' ? new Date() : null,
-                } as any,
-              },
-              {
-                onSuccess: () => {
-                  toast.show({
-                    message: newStatus === 'completed' ? 'Tarea completada 🎉' : 'Tarea reactivada',
-                  });
+        {isSelectionMode ? (
+          <Pressable
+            hitSlop={8}
+            onPress={() => toggleSelectTask(item.id)}
+            style={styles.compactCheckBtn}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: isSelected }}
+          >
+            {isSelected ? (
+              <CheckCircle2 size={19} color={gold[400]} fill={gold[400]} />
+            ) : (
+              <View style={[styles.compactUncheckedCircle, { borderColor: '#555555' }]} />
+            )}
+          </Pressable>
+        ) : (
+          <Pressable
+            hitSlop={10}
+            onPress={() => {
+              const newStatus = isCompleted ? 'in_progress' : 'completed';
+              updateBucket.mutate(
+                {
+                  id: item.id,
+                  data: {
+                    status: newStatus,
+                    completed_at: newStatus === 'completed' ? new Date() : null,
+                  } as any,
                 },
-              }
-            );
-          }}
-          style={styles.compactCheckBtn}
-          accessibilityRole="button"
-          accessibilityLabel={isCompleted ? 'Desmarcar tarea' : 'Completar tarea'}
-        >
-          {isCompleted ? (
-            <CheckCircle2 size={19} color="#34C759" />
-          ) : (
-            <View style={styles.compactUncheckedCircle} />
-          )}
-        </Pressable>
+                {
+                  onSuccess: () => {
+                    toast.show({
+                      message: newStatus === 'completed' ? 'Tarea completada 🎉' : 'Tarea reactivada',
+                    });
+                  },
+                }
+              );
+            }}
+            style={styles.compactCheckBtn}
+            accessibilityRole="button"
+            accessibilityLabel={isCompleted ? 'Desmarcar tarea' : 'Completar tarea'}
+          >
+            {isCompleted ? (
+              <CheckCircle2 size={19} color="#34C759" />
+            ) : (
+              <View style={styles.compactUncheckedCircle} />
+            )}
+          </Pressable>
+        )}
 
         <Text
           numberOfLines={1}
@@ -1013,14 +1093,28 @@ export default function MyListScreen() {
     const subtasksTotal = item.item_subtasks?.length || 0;
     const subtasksDone = item.item_subtasks?.filter((s: any) => s.done).length || 0;
     const itemPriority = item.priority || 'medium';
+    const isSelected = selectedTaskIds.includes(item.id);
 
     return (
       <Pressable
         key={item.id}
-        onPress={() => router.push(`/bucket/${item.id}`)}
+        onPress={() => {
+          if (isSelectionMode) {
+            toggleSelectTask(item.id);
+          } else {
+            router.push(`/bucket/${item.id}`);
+          }
+        }}
+        onLongPress={() => {
+          if (!isSelectionMode) {
+            setIsSelectionMode(true);
+          }
+          toggleSelectTask(item.id);
+        }}
         style={[
           styles.galleryCard,
           isSingle && styles.galleryCardSingle,
+          isSelected && { borderColor: gold[400], borderWidth: 2 },
         ]}
         accessibilityRole="button"
         accessibilityLabel={item.title}
@@ -1037,15 +1131,34 @@ export default function MyListScreen() {
         {/* Badges superiores */}
         <View style={styles.galleryTopBadges}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            {isFav && (
-              <View style={styles.galleryFavBadge}>
-                <Star size={11} color={gold[400]} fill={gold[400]} />
+            {isSelectionMode ? (
+              <View
+                style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: 12,
+                  backgroundColor: isSelected ? gold[400] : 'rgba(0,0,0,0.6)',
+                  borderWidth: isSelected ? 0 : 1.5,
+                  borderColor: '#FFFFFF',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {isSelected && <Check size={14} color="#0E0E0E" strokeWidth={3} />}
               </View>
-            )}
-            {isCompleted && (
-              <View style={styles.galleryCompletedBadge}>
-                <CheckCircle2 size={12} color="#FFFFFF" />
-              </View>
+            ) : (
+              <>
+                {isFav && (
+                  <View style={styles.galleryFavBadge}>
+                    <Star size={11} color={gold[400]} fill={gold[400]} />
+                  </View>
+                )}
+                {isCompleted && (
+                  <View style={styles.galleryCompletedBadge}>
+                    <CheckCircle2 size={12} color="#FFFFFF" />
+                  </View>
+                )}
+              </>
             )}
           </View>
           {itemPriority === 'high' && (
@@ -1358,35 +1471,56 @@ export default function MyListScreen() {
           ))}
         </ScrollView>
 
-        {/* Toggle de vistas: Lista | Galería | Compacta */}
-        <View style={styles.viewModeToggle}>
+        {/* Toggle de selección múltiple + Toggle de vistas */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Pressable
-            onPress={() => setTaskViewMode('list')}
-            style={[styles.viewModeBtn, taskViewMode === 'list' && styles.viewModeBtnActive]}
+            onPress={() => {
+              if (isSelectionMode) {
+                handleExitSelection();
+              } else {
+                setIsSelectionMode(true);
+              }
+            }}
+            style={[styles.selectionBtn, isSelectionMode && styles.selectionBtnActive]}
             hitSlop={4}
             accessibilityRole="button"
-            accessibilityLabel="Vista detallada"
+            accessibilityLabel={isSelectionMode ? 'Cancelar selección' : 'Seleccionar tareas'}
           >
-            <LayoutList size={15} color={taskViewMode === 'list' ? '#0E0E0E' : '#A0A0A0'} />
+            <CheckSquare size={13} color={isSelectionMode ? '#0E0E0E' : gold[400]} />
+            <Text style={[styles.selectionBtnText, isSelectionMode && { color: '#0E0E0E' }]}>
+              {isSelectionMode ? 'Listo' : 'Elegir'}
+            </Text>
           </Pressable>
-          <Pressable
-            onPress={() => setTaskViewMode('gallery')}
-            style={[styles.viewModeBtn, taskViewMode === 'gallery' && styles.viewModeBtnActive]}
-            hitSlop={4}
-            accessibilityRole="button"
-            accessibilityLabel="Vista galería"
-          >
-            <LayoutGrid size={15} color={taskViewMode === 'gallery' ? '#0E0E0E' : '#A0A0A0'} />
-          </Pressable>
-          <Pressable
-            onPress={() => setTaskViewMode('compact')}
-            style={[styles.viewModeBtn, taskViewMode === 'compact' && styles.viewModeBtnActive]}
-            hitSlop={4}
-            accessibilityRole="button"
-            accessibilityLabel="Vista compacta"
-          >
-            <AlignJustify size={15} color={taskViewMode === 'compact' ? '#0E0E0E' : '#A0A0A0'} />
-          </Pressable>
+
+          <View style={styles.viewModeToggle}>
+            <Pressable
+              onPress={() => setTaskViewMode('list')}
+              style={[styles.viewModeBtn, taskViewMode === 'list' && styles.viewModeBtnActive]}
+              hitSlop={4}
+              accessibilityRole="button"
+              accessibilityLabel="Vista detallada"
+            >
+              <LayoutList size={15} color={taskViewMode === 'list' ? '#0E0E0E' : '#A0A0A0'} />
+            </Pressable>
+            <Pressable
+              onPress={() => setTaskViewMode('gallery')}
+              style={[styles.viewModeBtn, taskViewMode === 'gallery' && styles.viewModeBtnActive]}
+              hitSlop={4}
+              accessibilityRole="button"
+              accessibilityLabel="Vista galería"
+            >
+              <LayoutGrid size={15} color={taskViewMode === 'gallery' ? '#0E0E0E' : '#A0A0A0'} />
+            </Pressable>
+            <Pressable
+              onPress={() => setTaskViewMode('compact')}
+              style={[styles.viewModeBtn, taskViewMode === 'compact' && styles.viewModeBtnActive]}
+              hitSlop={4}
+              accessibilityRole="button"
+              accessibilityLabel="Vista compacta"
+            >
+              <AlignJustify size={15} color={taskViewMode === 'compact' ? '#0E0E0E' : '#A0A0A0'} />
+            </Pressable>
+          </View>
         </View>
       </View>
 
@@ -1478,7 +1612,10 @@ export default function MyListScreen() {
           selected={activeTab}
           onChange={(tab) => {
             setActiveTab(tab);
-            if (tab !== 'list') setIsReordering(false);
+            if (tab !== 'list') {
+              setIsReordering(false);
+              handleExitSelection();
+            }
             if (tab !== 'albums') setIsAlbumReordering(false);
           }}
         />
@@ -1507,7 +1644,39 @@ export default function MyListScreen() {
       {/* ── Content ────────────────────────────────────── */}
       <View style={styles.content}>
         {activeTab === 'list' && (
-          manualDragEnabled ? (
+          isLoading ? (
+            <ScrollView
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {taskListHeader}
+              {taskViewMode === 'gallery' ? (
+                <View style={styles.galleryGrid}>
+                  <TaskGallerySkeleton />
+                  <TaskGallerySkeleton />
+                  <TaskGallerySkeleton />
+                  <TaskGallerySkeleton />
+                </View>
+              ) : taskViewMode === 'compact' ? (
+                <View style={{ gap: 8 }}>
+                  <TaskCompactSkeleton />
+                  <TaskCompactSkeleton />
+                  <TaskCompactSkeleton />
+                  <TaskCompactSkeleton />
+                  <TaskCompactSkeleton />
+                  <TaskCompactSkeleton />
+                </View>
+              ) : (
+                <View style={{ gap: spacing[3] }}>
+                  <TaskRowSkeleton />
+                  <TaskRowSkeleton />
+                  <TaskRowSkeleton />
+                  <TaskRowSkeleton />
+                  <TaskRowSkeleton />
+                </View>
+              )}
+            </ScrollView>
+          ) : manualDragEnabled ? (
             <ScrollView
               contentContainerStyle={styles.listContent}
               scrollEnabled={!dragging}
@@ -1750,7 +1919,14 @@ export default function MyListScreen() {
             </View>
 
             {/* Contenido de Álbumes */}
-            {filteredAlbums.length === 0 ? (
+            {isLoadingAlbums ? (
+              <View style={[styles.albumGrid, { marginTop: 12 }]}>
+                <AlbumCardSkeleton />
+                <AlbumCardSkeleton />
+                <AlbumCardSkeleton />
+                <AlbumCardSkeleton />
+              </View>
+            ) : filteredAlbums.length === 0 ? (
               <View style={styles.empty}>
                 <Typography variant="body" color={theme.colors.foregroundMuted}>
                   No hay álbumes que coincidan con estos filtros.
@@ -2084,8 +2260,25 @@ export default function MyListScreen() {
       </Modal>
 
       {/* ── FAB ────────────────────────────────────────── */}
-      {activeTab === 'list' && (
+      {activeTab === 'list' && !isSelectionMode && (
         <FAB onPress={handleCreate} bottomOffset={24} />
+      )}
+
+      {/* ── Barra flotante de acciones en lote ──────────── */}
+      {isSelectionMode && activeTab === 'list' && (
+        <BulkTaskActionBar
+          selectedIds={selectedTaskIds}
+          totalTasksCount={filteredBuckets.length}
+          onClearSelection={handleExitSelection}
+          onSelectAll={() => {
+            if (selectedTaskIds.length === filteredBuckets.length) {
+              setSelectedTaskIds([]);
+            } else {
+              setSelectedTaskIds(filteredBuckets.map((b: any) => b.id));
+            }
+          }}
+          isAllSelected={selectedTaskIds.length > 0 && selectedTaskIds.length === filteredBuckets.length}
+        />
       )}
 
     </SafeAreaView>
@@ -2204,6 +2397,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  selectionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    height: 32,
+    paddingHorizontal: 9,
+    borderRadius: 8,
+    backgroundColor: '#181818',
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
+  },
+  selectionBtnActive: {
+    backgroundColor: gold[400],
+    borderColor: gold[400],
+  },
+  selectionBtnText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 12,
+    color: gold[400],
   },
   viewModeToggle: {
     flexDirection: 'row',

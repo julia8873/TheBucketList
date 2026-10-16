@@ -16,6 +16,7 @@ import { Check, ChevronLeft, Lock, Search, X } from 'lucide-react-native';
 import { EmptyState, SectionLabel, SegmentedControl, fontFamily, gold, useTheme, PageTitle } from '@bucketlist/ui';
 import { PersonRow } from '../src/components/PersonRow';
 import { FollowButton } from '../src/components/FollowButton';
+import { UserRowSkeleton } from '../src/components/TaskSkeletons';
 import { useAuthStore } from '../src/stores/auth.store';
 import {
   useAcceptRequest,
@@ -155,7 +156,12 @@ export default function FriendsScreen() {
           </View>
 
           {loading ? (
-            <ActivityIndicator style={styles.loader} color={gold[400]} />
+            <View style={{ marginTop: 8 }}>
+              <UserRowSkeleton />
+              <UserRowSkeleton />
+              <UserRowSkeleton />
+              <UserRowSkeleton />
+            </View>
           ) : list.length === 0 ? (
             <EmptyState
               icon={Search}
@@ -187,7 +193,13 @@ export default function FriendsScreen() {
       );
     }
     if (search.isLoading || (query.trim() !== debounced.trim() && !search.data)) {
-      return <ActivityIndicator style={styles.loader} color={gold[400]} />;
+      return (
+        <View style={{ marginTop: 8 }}>
+          <UserRowSkeleton />
+          <UserRowSkeleton />
+          <UserRowSkeleton />
+        </View>
+      );
     }
     if (search.isError) {
       return (
@@ -235,7 +247,12 @@ export default function FriendsScreen() {
   // ── Pestaña "Solicitudes" ───────────────────────────────────────────────────
   const renderRequests = () => {
     if ((incoming.isLoading || outgoing.isLoading) && !incoming.data && !outgoing.data) {
-      return <ActivityIndicator style={styles.loader} color={gold[400]} />;
+      return (
+        <View style={{ marginTop: 8 }}>
+          <UserRowSkeleton />
+          <UserRowSkeleton />
+        </View>
+      );
     }
     if (incomingList.length === 0 && outgoingList.length === 0) {
       return (

@@ -13,39 +13,60 @@ Notifications.setNotificationHandler({
 
 export async function registerForPushNotificationsAsync(userId: string) {
   if (Platform.OS === 'web') {
-    // Web push logic is handled differently, usually in service worker
-    // For MVP we just return
     return;
   }
 
-  let token;
+  let token: string | undefined;
 
-  if (Device.isDevice) {
+  try {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
-    
+
     if (existingStatus !== 'granted') {
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
     }
-    
+
     if (finalStatus !== 'granted') {
-      console.log('Failed to get push token for push notification!');
+      console.log('Push notification permissions not granted');
       return;
     }
 
-    // According to DECISIONS.md (D3), use getDevicePushTokenAsync() for direct FCM/APNs
-    const pushTokenData = await Notifications.getDevicePushTokenAsync();
-    token = pushTokenData.data;
+    // Try getting the Expo Push Token first
+    try {
+      const expoTokenObj = await Notifications.getExpoPushTokenAsync().catch(() => null);
+      if (expoTokenObj?.data) {
+        token = expoTokenObj.data;
+      }
+    } catch {}
+
+    // Fallback to device push token if needed
+    if (!token && Device.isDevice) {
+      try {
+        const pushTokenData = await Notifications.getDevicePushTokenAsync().catch(() => null);
+        token = pushTokenData?.data;
+      } catch {}
+    }
 
     if (token) {
-      // Upsert into push_tokens table
-      await supabase.from('push_tokens').upsert({
-        user_id: userId,
-        token: token,
-        platform: Platform.OS
-      }, { onConflict: 'token' });
+      // 1. Upsert into push_tokens table
+      try {
+        await supabase.from('push_tokens').upsert({
+          user_id: userId,
+          token: token,
+          platform: Platform.OS,
+        }, { onConflict: 'token' });
+      } catch {}
+
+      // 2. Also update profiles table with push_token for backend edge functions
+      try {
+        await supabase.from('profiles').update({
+          push_token: token,
+        }).eq('id', userId);
+      } catch {}
     }
+  } catch (err) {
+    console.warn('Error registering for push notifications:', err);
   }
 
   if (Platform.OS === 'android') {
@@ -55,6 +76,56 @@ export async function registerForPushNotificationsAsync(userId: string) {
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#FF231F7C',
     });
+  }
+}
+
+export async function sendPushNotification(
+  tokenOrUserId: string,
+  title: string,
+  body: string,
+  data: Record<string, any> = {}
+) {
+  let targetToken = tokenOrUserId;
+  if (!targetToken.startsWith('ExponentPushToken[') && targetToken.includes('-')) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('push_token')
+      .eq('id', targetToken)
+      .single();
+    if (profile?.push_token) {
+      targetToken = profile.push_token;
+    } else {
+      const { data: pt } = await supabase
+        .from('push_tokens')
+        .select('token')
+        .eq('user_id', targetToken)
+        .limit(1)
+        .maybeSingle();
+      if (pt?.token) targetToken = pt.token;
+      else return;
+    }
+  }
+
+  if (!targetToken) return;
+
+  try {
+    await fetch('https://exp.host/--/api/v2/push/send', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Accept-encoding': 'gzip, deflate',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        to: targetToken,
+        title,
+        body,
+        sound: 'default',
+        data,
+      }),
+    });
+  } catch (err) {
+    console.warn('Error sending expo push notification:', err);
   }
 }
 

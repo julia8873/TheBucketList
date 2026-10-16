@@ -5,12 +5,13 @@ import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { LayoutGrid, List, Settings, Users } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Avatar, fontFamily, useTheme, PageTitle } from '@bucketlist/ui';
+import { Avatar, fontFamily, useTheme, PageTitle, Skeleton } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useAlbums } from '../../src/hooks/useAlbums';
 import { useIncomingRequestCount } from '../../src/hooks/useFriends';
 import { BucketCover } from '../../src/components/BucketCover';
+import { ProfileSkeleton } from '../../src/components/TaskSkeletons';
 import { resolveTaskImage } from '../../src/utils/taskImage';
 import { initialsOf, displayNameOf } from '../../src/utils/initials';
 
@@ -81,9 +82,12 @@ export default function CurrentUserProfileScreen() {
 
   if (profileQuery.isLoading) {
     return (
-      <View style={[styles.container, styles.center, { backgroundColor: theme.colors.background }]}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
+      <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={styles.header}>
+          <PageTitle gold="Mi" rest="perfil" />
+        </View>
+        <ProfileSkeleton />
+      </SafeAreaView>
     );
   }
 
@@ -193,7 +197,10 @@ export default function CurrentUserProfileScreen() {
         </View>
 
         {bucketsQuery.isLoading ? (
-          <ActivityIndicator style={{ marginTop: 24 }} color={theme.colors.primary} />
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 }}>
+            <Skeleton width={tileWidth} height={tileHeight} borderRadius={16} />
+            <Skeleton width={tileWidth} height={tileHeight} borderRadius={16} />
+          </View>
         ) : recent.length === 0 ? (
           <View style={[styles.empty, { borderColor: theme.colors.border, backgroundColor: theme.colors.surface }]}>
             <Text style={[styles.emptyText, { color: theme.colors.foregroundMuted }]}>{t('profile.empty_completed')}</Text>

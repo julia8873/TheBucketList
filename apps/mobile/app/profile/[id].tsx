@@ -23,6 +23,7 @@ import { useFollowUser, useUnfollowUser } from '../../src/hooks/useSocial';
 import { useUserFavorites, useToggleFavoriteAlbum } from '../../src/hooks/useFavorites';
 import type { AlbumWithProgress } from '../../src/hooks/useAlbums';
 import { FollowButton } from '../../src/components/FollowButton';
+import { ProfileSkeleton, TaskRowSkeleton } from '../../src/components/TaskSkeletons';
 import { PublicTaskRow } from '../../src/components/PublicTaskRow';
 import { displayNameOf, initialsOf } from '../../src/utils/initials';
 
@@ -302,8 +303,13 @@ export default function PublicProfileScreen() {
 
   if (profileLoading || statsLoading) {
     return (
-      <SafeAreaView edges={['top']} style={[styles.container, styles.center, { backgroundColor: theme.colors.background }]}>
-        <ActivityIndicator size="large" color={gold[400]} />
+      <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={styles.topBar}>
+          <Pressable onPress={goBack} style={styles.circleButton} accessibilityRole="button" accessibilityLabel="Volver">
+            <ChevronLeft size={22} color="#F2EFE8" strokeWidth={2} />
+          </Pressable>
+        </View>
+        <ProfileSkeleton />
       </SafeAreaView>
     );
   }
@@ -483,7 +489,11 @@ export default function PublicProfileScreen() {
         )}
         ListEmptyComponent={
           isLocked || activeTab !== 'list' ? null : bucketsLoading ? (
-            <ActivityIndicator style={{ marginTop: 24 }} color={gold[400]} />
+            <View style={{ gap: 10, marginTop: 12 }}>
+              <TaskRowSkeleton />
+              <TaskRowSkeleton />
+              <TaskRowSkeleton />
+            </View>
           ) : (
             <Text style={styles.empty}>
               {filter === 'all' ? 'Todavía no hay tareas que mostrar.' : 'No hay tareas en este filtro.'}

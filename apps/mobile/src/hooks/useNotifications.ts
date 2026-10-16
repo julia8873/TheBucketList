@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import * as Notifications from 'expo-notifications';
 import { supabase } from '../services/supabase';
 
 export const NOTIFICATIONS_QUERY_KEY = ['notifications'];
@@ -58,9 +59,31 @@ export function useUnreadCount(userId?: string) {
           table: 'notifications',
           filter: `recipient_id=eq.${userId}`,
         },
-        () => {
+        async (payload: any) => {
           void queryClient.invalidateQueries({ queryKey: [...UNREAD_COUNT_KEY, userId] });
           void queryClient.invalidateQueries({ queryKey: [...NOTIFICATIONS_QUERY_KEY, userId] });
+
+          const record = payload.new;
+          if (record && record.content) {
+            try {
+              await Notifications.scheduleNotificationAsync({
+                content: {
+                  title: 'The Bucket List',
+                  body: record.content,
+                  data: {
+                    notificationId: record.id,
+                    bucketId: record.bucket_id,
+                    albumId: record.album_id,
+                    type: record.type,
+                  },
+                  sound: 'default',
+                },
+                trigger: null,
+              });
+            } catch (e) {
+              console.log('Error scheduling local push notification:', e);
+            }
+          }
         }
       )
       .on(

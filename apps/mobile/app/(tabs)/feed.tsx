@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   FlatList,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -15,6 +16,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { Bell, Search, Users, X } from 'lucide-react-native';
 import { EmptyState, fontFamily, gold, useTheme, PageTitle, Avatar, radii, spacing, Typography } from '@bucketlist/ui';
 import { FeedCard } from '../../src/components/FeedCard';
+import { FeedCardSkeleton } from '../../src/components/FeedCardSkeleton';
 import { useFeed, useExploreFeed } from '../../src/hooks/useFeed';
 import { useSearchUsers } from '../../src/hooks/useSocial';
 import { useIncomingRequestCount } from '../../src/hooks/useFriends';
@@ -221,10 +223,14 @@ export default function FeedScreen() {
       {homeTab === 'friends' ? (
         // ── PESTAÑA: MOMENTOS DE AMIGOS ──────────────────────────────────────
         isFriendsLoading ? (
-          <View style={[styles.container, styles.center]}>
+          <ScrollView
+            style={styles.container}
+            showsVerticalScrollIndicator={false}
+          >
             {renderHeader()}
-            <ActivityIndicator size="large" color={gold[400]} style={{ marginTop: 60 }} />
-          </View>
+            <FeedCardSkeleton />
+            <FeedCardSkeleton />
+          </ScrollView>
         ) : isFriendsError ? (
           <View style={styles.container}>
             {renderHeader()}
@@ -305,10 +311,14 @@ export default function FeedScreen() {
             )}
           </View>
         ) : isExploreLoading ? (
-          <View style={[styles.container, styles.center]}>
+          <ScrollView
+            style={styles.container}
+            showsVerticalScrollIndicator={false}
+          >
             {renderHeader()}
-            <ActivityIndicator size="large" color={gold[400]} style={{ marginTop: 60 }} />
-          </View>
+            <FeedCardSkeleton />
+            <FeedCardSkeleton />
+          </ScrollView>
         ) : (
           <FlashList
             data={exploreBuckets}

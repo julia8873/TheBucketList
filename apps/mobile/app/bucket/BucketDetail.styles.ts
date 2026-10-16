@@ -78,18 +78,27 @@ export const styles = StyleSheet.create({
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 13,
+    paddingVertical: 7,
     borderRadius: 20,
     borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 5,
+    elevation: 4,
   },
   badgeGold: {
-    borderColor: gold[400],
-    backgroundColor: 'transparent',
+    borderColor: 'rgba(212, 175, 55, 0.55)',
+    backgroundColor: '#1E1910', // 100% opaco, fondo sólido con calidez dorada
+  },
+  badgeCompleted: {
+    borderColor: 'rgba(52, 199, 89, 0.55)',
+    backgroundColor: '#121D15', // 100% opaco, fondo sólido esmeralda
   },
   badgeMuted: {
-    borderColor: dark[500],
-    backgroundColor: 'transparent',
+    borderColor: '#383838',
+    backgroundColor: '#181818', // 100% opaco, fondo sólido oscuro para máxima legibilidad
   },
   title: {
     fontSize: 23,

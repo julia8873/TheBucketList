@@ -38,22 +38,26 @@ import {
   ArrowUp,
   ArrowDown,
   GripVertical,
+  Bell,
 } from 'lucide-react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
-import { useToast } from '@bucketlist/ui';
+import { useToast, Skeleton } from '@bucketlist/ui';
+import { TaskRowSkeleton } from '../../src/components/TaskSkeletons';
 import { useAlbumDetail, useDeleteAlbumDetail, TaskItem } from '../../src/services/api/albumsService';
 import { supabase } from '../../src/services/supabase';
 import { normalizeStorageUrl } from '../../src/constants/urls';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
 import { useUserFavorites, useToggleFavoriteAlbum } from '../../src/hooks/useFavorites';
+import { useEntitySubscription } from '../../src/hooks/useEntityNotifications';
 import { useCopyBucket, useCopiedBucketIds } from '../../src/hooks/useSocial';
 import { uploadAlbumCover } from '../../src/services/api/albumCover';
 import { DraggableTaskList } from '../../src/components/DraggableTaskList';
 import { styles } from './AlbumDetail.styles';
 import { AlbumTaskCard } from './AlbumTaskCard';
 import { AlbumOptionsSheet } from './AlbumOptionsSheet';
+import { NotificationSubscribersModal } from '../../src/components/NotificationSubscribersModal';
 
 const GRADIENTS = {
   aurora: ['#0E4B43', '#1F8560'],
@@ -96,6 +100,9 @@ export default function AlbumDetailScreen() {
   };
 
   const [showCollaboratorPicker, setShowCollaboratorPicker] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const { data: entitySub } = useEntitySubscription('album', id, currentUserId);
+  const subStatus = entitySub?.status;
 
   // ── Buscar / ordenar tareas del álbum ────────────────────────────────────
   type TaskSortField = 'manual' | 'priority' | 'alphabetical' | 'completed_at';
@@ -744,8 +751,19 @@ export default function AlbumDetailScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.center, { backgroundColor: '#0D0D0D' }]}>
-        <ActivityIndicator color="#D4B13A" size="large" />
+      <View style={[styles.container, { backgroundColor: '#0D0D0D' }]}>
+        <Skeleton width="100%" height={270} borderRadius={0} />
+        <View style={{ padding: 20 }}>
+          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+            <Skeleton width={100} height={32} borderRadius={16} />
+            <Skeleton width={80} height={32} borderRadius={16} />
+          </View>
+          <Skeleton width="75%" height={32} borderRadius={8} style={{ marginBottom: 12 }} />
+          <Skeleton width="50%" height={16} borderRadius={6} style={{ marginBottom: 24 }} />
+          <TaskRowSkeleton />
+          <TaskRowSkeleton />
+          <TaskRowSkeleton />
+        </View>
       </View>
     );
   }
@@ -1000,6 +1018,21 @@ export default function AlbumDetailScreen() {
                       size={20}
                       color={isFav ? '#D4B13A' : '#F3EEE3'}
                       fill={isFav ? '#D4B13A' : 'transparent'}
+                      strokeWidth={1.8}
+                    />
+                  </Pressable>
+                )}
+                {currentUserId && (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Notificaciones"
+                    style={styles.heroBtn}
+                    onPress={() => setShowNotificationModal(true)}
+                  >
+                    <Bell
+                      size={20}
+                      color={subStatus === 'accepted' ? '#D4B13A' : '#F3EEE3'}
+                      fill={subStatus === 'accepted' ? '#D4B13A' : 'transparent'}
                       strokeWidth={1.8}
                     />
                   </Pressable>
@@ -1537,6 +1570,16 @@ export default function AlbumDetailScreen() {
         onOpenCollaborators={() => closeSheet(() => setShowCollaboratorPicker(true))}
         onConfirmDelete={confirmDeleteAlbum}
         onConfirmLeave={confirmLeaveAlbum}
+      />
+
+      <NotificationSubscribersModal
+        visible={showNotificationModal}
+        onClose={() => setShowNotificationModal(false)}
+        targetType="album"
+        targetId={id}
+        targetTitle={album?.title || ''}
+        ownerId={rawOwnerId || album?.owner?.id || currentUserId}
+        currentUserId={currentUserId}
       />
     </View>
   );

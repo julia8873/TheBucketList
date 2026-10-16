@@ -10,7 +10,7 @@ import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Typography, useTheme } from '@bucketlist/ui';
-import { ArrowLeft, Share2, MoreHorizontal, MapPin, Calendar, Heart, MessageCircle, FolderOpen, CheckCircle2, Circle, Camera, Check, Eye, Lock, Users, FolderPlus, Pencil, Trash2, X, ListPlus, Plus, Minus, Download, ArrowUp, ArrowDown, Tag, Flag, Star, GripVertical, Link2 } from 'lucide-react-native';
+import { ArrowLeft, Share2, MoreHorizontal, MapPin, Calendar, Heart, MessageCircle, FolderOpen, CheckCircle2, Circle, Camera, Check, Eye, Lock, Users, FolderPlus, Pencil, Trash2, X, ListPlus, Plus, Minus, Download, ArrowUp, ArrowDown, Tag, Flag, Star, GripVertical, Link2, Bell } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { supabase } from '../../src/services/supabase';
@@ -23,6 +23,7 @@ import { useAddComment, useCopyBucket, useToggleReaction } from '../../src/hooks
 import { useDeleteBucket } from '../../src/hooks/useBuckets';
 import { useAlbums } from '../../src/hooks/useAlbums';
 import { useUserFavorites, useToggleFavoriteBucket } from '../../src/hooks/useFavorites';
+import { useEntitySubscription } from '../../src/hooks/useEntityNotifications';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { BucketCover } from '../../src/components/BucketCover';
 import { resolveTaskImage, type ThumbnailMode } from '../../src/utils/taskImage';
@@ -38,6 +39,7 @@ import { LocationAutocomplete } from '../../src/components/LocationAutocomplete'
 import { styles } from './BucketDetail.styles';
 import { ItemTagsRow } from '../../src/components/ItemTagsRow';
 import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
+import { NotificationSubscribersModal } from '../../src/components/NotificationSubscribersModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const COVER_HEIGHT = 220;
@@ -76,6 +78,9 @@ export default function BucketDetailScreen() {
   const cropResolver = useRef<((uri: string | null) => void) | null>(null);
   const [datePickerConfig, setDatePickerConfig] = useState<{ visible: boolean, type: 'deadline' | 'completed_at', date: Date } | null>(null);
   const [showCollaboratorPicker, setShowCollaboratorPicker] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const { data: entitySub } = useEntitySubscription('bucket', id, user?.id);
+  const subStatus = entitySub?.status;
   const [locationModalVisible, setLocationModalVisible] = useState(false);
   const sheetTranslateY = useRef(new Animated.Value(420)).current;
   const subtaskTimeouts = useRef<Record<string, NodeJS.Timeout>>({});
@@ -1347,6 +1352,21 @@ export default function BucketDetailScreen() {
                   />
                 </Pressable>
               )}
+              {user && (
+                <Pressable
+                  style={styles.navButton}
+                  accessibilityRole="button"
+                  accessibilityLabel="Notificaciones"
+                  onPress={() => setShowNotificationModal(true)}
+                >
+                  <Bell
+                    color={subStatus === 'accepted' ? gold[400] : '#FFF'}
+                    fill={subStatus === 'accepted' ? gold[400] : 'transparent'}
+                    size={20}
+                    strokeWidth={2}
+                  />
+                </Pressable>
+              )}
               <Pressable style={styles.navButton} onPress={() => void shareMoment()}>
                 <Share2 color="#FFF" size={20} strokeWidth={2} />
               </Pressable>
@@ -1364,7 +1384,10 @@ export default function BucketDetailScreen() {
           <View style={styles.badges}>
             {/* Status */}
             <Pressable
-              style={[styles.badge, styles.badgeGold]}
+              style={[
+                styles.badge,
+                bucket.status === 'completed' ? styles.badgeCompleted : styles.badgeGold,
+              ]}
               onPress={() => {
                 if (canEdit) {
                   setSheetMode('status');
@@ -1372,14 +1395,27 @@ export default function BucketDetailScreen() {
                 }
               }}
             >
-              <Typography variant="caption" color={gold[400]} style={{ fontWeight: '700' }}>
+              {bucket.status === 'completed' ? (
+                <CheckCircle2 color="#34C759" size={13} strokeWidth={2.4} style={{ marginRight: 5 }} />
+              ) : (
+                <Circle color={gold[400]} size={11} strokeWidth={2.4} style={{ marginRight: 5 }} />
+              )}
+              <Typography
+                variant="caption"
+                color={bucket.status === 'completed' ? '#34C759' : gold[400]}
+                style={{ fontWeight: '700' }}
+              >
                 {statusLabel(bucket.status)}
               </Typography>
             </Pressable>
 
             {/* Priority */}
             <Pressable
-              style={[styles.badge, styles.badgeMuted]}
+              style={[
+                styles.badge,
+                styles.badgeMuted,
+                { borderColor: `${priorityColor(bucket.priority)}66` },
+              ]}
               onPress={() => {
                 if (canEdit) {
                   setSheetMode('priority');
@@ -1387,7 +1423,7 @@ export default function BucketDetailScreen() {
                 }
               }}
             >
-              <Flag color={priorityColor(bucket.priority)} size={13} strokeWidth={2} style={{ marginRight: 4 }} />
+              <Flag color={priorityColor(bucket.priority)} size={13} strokeWidth={2} style={{ marginRight: 5 }} />
               <Typography variant="caption" color={priorityColor(bucket.priority)} style={{ fontWeight: '600' }}>
                 {priorityLabel(bucket.priority)}
               </Typography>
@@ -1403,7 +1439,14 @@ export default function BucketDetailScreen() {
                 }
               }}
             >
-              <Typography variant="caption" color={theme.colors.foreground} style={{ fontWeight: '600' }}>
+              {bucket.visibility === 'public' ? (
+                <Eye color="#CFCABD" size={13} strokeWidth={2} style={{ marginRight: 5 }} />
+              ) : bucket.visibility === 'followers' ? (
+                <Users color="#CFCABD" size={13} strokeWidth={2} style={{ marginRight: 5 }} />
+              ) : (
+                <Lock color="#CFCABD" size={13} strokeWidth={2} style={{ marginRight: 5 }} />
+              )}
+              <Typography variant="caption" color="#F2EFE8" style={{ fontWeight: '600' }}>
                 {visibilityLabel(bucket.visibility)}
               </Typography>
             </Pressable>
@@ -1418,8 +1461,8 @@ export default function BucketDetailScreen() {
                 }
               }}
             >
-              <FolderOpen color={theme.colors.foregroundMuted} size={13} strokeWidth={1.8} style={{ marginRight: 4 }} />
-              <Typography variant="caption" color={theme.colors.foreground} style={{ fontWeight: '600' }}>
+              <FolderOpen color="#CFCABD" size={13} strokeWidth={1.8} style={{ marginRight: 5 }} />
+              <Typography variant="caption" color="#F2EFE8" style={{ fontWeight: '600' }}>
                 {bucketAlbums && bucketAlbums.length > 0
                   ? (bucketAlbums.length === 1
                     ? (albumsData?.find((a: any) => a.id === bucketAlbums[0]?.album_id)?.title || 'Sin álbum')
@@ -1831,6 +1874,16 @@ export default function BucketDetailScreen() {
           ...(bucket.user_id ? [bucket.user_id] : []),
           ...participantsData.filter((p: any) => p.id !== user?.id).map((p: any) => p.id),
         ]}
+      />
+
+      <NotificationSubscribersModal
+        visible={showNotificationModal}
+        onClose={() => setShowNotificationModal(false)}
+        targetType="bucket"
+        targetId={id}
+        targetTitle={bucket.title}
+        ownerId={bucket.user_id}
+        currentUserId={user?.id}
       />
     </View>
   );

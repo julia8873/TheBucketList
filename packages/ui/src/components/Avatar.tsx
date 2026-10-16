@@ -1,12 +1,12 @@
 import React from 'react';
-import { View, StyleSheet, type ViewStyle } from 'react-native';
+import { View, StyleSheet, Text, type ViewStyle } from 'react-native';
 import { Image } from 'expo-image';
 
 import { useTheme } from '../theme/useTheme';
-import { Typography } from './Typography';
 import { radii } from '../tokens/radii';
 import { spacing } from '../tokens/spacing';
 import { gold } from '../tokens/colors';
+import { fontFamily } from '../tokens/typography';
 
 /**
  * Resolver global opcional para las URLs de avatar. La app lo registra para
@@ -28,12 +28,12 @@ const SIZES: Record<AvatarSize, number> = {
   xl: 80,
 };
 
-const FONT_SIZES: Record<AvatarSize, number> = {
-  xs: 9,
-  sm: 12,
-  md: 15,
-  lg: 20,
-  xl: 30,
+const FONT_CONFIG: Record<AvatarSize, { fontSize: number; lineHeight: number }> = {
+  xs: { fontSize: 9, lineHeight: 12 },
+  sm: { fontSize: 12, lineHeight: 16 },
+  md: { fontSize: 15, lineHeight: 19 },
+  lg: { fontSize: 20, lineHeight: 26 },
+  xl: { fontSize: 26, lineHeight: 32 },
 };
 
 interface AvatarProps {
@@ -63,23 +63,29 @@ export function Avatar({
 }: AvatarProps) {
   const { theme } = useTheme();
   const dim = SIZES[size];
-  const fontSize = FONT_SIZES[size];
+  const { fontSize, lineHeight } = FONT_CONFIG[size];
 
   // Resolve uri from either new `source` or legacy `uri` prop
   const rawUri = source?.uri ?? uri ?? null;
   const resolvedUri = rawUri ? avatarUriResolver(rawUri) : null;
   // Resolve initials from either `fallback` or legacy `initials`
-  const resolvedInitials = fallback ?? initials ?? '?';
+  const resolvedInitials = (fallback ?? initials ?? '?').trim().toUpperCase().slice(0, 2);
+
+  const innerDim = goldRing ? dim - 7 : dim;
 
   return (
     <View
       style={[
-        { width: dim, height: dim },
+        {
+          width: dim,
+          height: dim,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
         goldRing && {
           borderRadius: dim / 2,
           borderWidth: 1.5,
           borderColor: gold[400],
-          padding: 2,
         },
         style,
       ]}
@@ -87,7 +93,7 @@ export function Avatar({
       {resolvedUri ? (
         <Image
           source={{ uri: resolvedUri }}
-          style={{ width: goldRing ? dim - 7 : dim, height: goldRing ? dim - 7 : dim, borderRadius: dim / 2 }}
+          style={{ width: innerDim, height: innerDim, borderRadius: innerDim / 2 }}
           contentFit="cover"
           cachePolicy="disk"
           accessibilityRole="image"
@@ -98,20 +104,28 @@ export function Avatar({
           style={[
             styles.placeholder,
             {
-              width: goldRing ? dim - 7 : dim,
-              height: goldRing ? dim - 7 : dim,
-              borderRadius: dim / 2,
+              width: innerDim,
+              height: innerDim,
+              borderRadius: innerDim / 2,
               backgroundColor: '#201B0E',
             },
           ]}
         >
-          <Typography
-            variant="bodySemibold"
-            color={gold[400]}
-            style={{ fontSize }}
+          <Text
+            style={[
+              styles.initialsText,
+              {
+                fontSize,
+                lineHeight,
+                color: gold[400],
+              },
+            ]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
           >
-            {resolvedInitials.toUpperCase().slice(0, 2)}
-          </Typography>
+            {resolvedInitials}
+          </Text>
         </View>
       )}
 
@@ -137,6 +151,13 @@ const styles = StyleSheet.create({
   placeholder: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  initialsText: {
+    fontFamily: fontFamily.semibold,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+    letterSpacing: -0.3,
   },
   badge: {
     position: 'absolute',

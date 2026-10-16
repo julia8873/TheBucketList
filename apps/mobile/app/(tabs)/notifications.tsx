@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ActivityIndicator, FlatList, Pressable, Text, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Typography, useTheme, spacing, Avatar, Button, Icon, PageTitle } from '@bucketlist/ui';
+import { Typography, useTheme, spacing, Avatar, Button, Icon, PageTitle, Skeleton } from '@bucketlist/ui';
 import { Check, Heart, MessageCircle, UserPlus, CheckCircle, Bell, Users, X, Folder } from 'lucide-react-native';
 import { useNotifications, useMarkAsRead, useMarkAllAsRead } from '../../src/hooks/useNotifications';
 import { useAuthStore } from '../../src/stores/auth.store';
@@ -26,7 +26,30 @@ export default function NotificationsScreen() {
   const handleCollaborationResponse = async (notification: any, accept: boolean) => {
     setRespondingId(notification.id);
     try {
-      if (notification.type === 'album_invite') {
+      if (notification.type === 'notification_request') {
+        let query = supabase.from('entity_notification_subscribers').update({
+          status: accept ? 'accepted' : 'declined',
+          updated_at: new Date().toISOString(),
+        });
+        if (notification.bucket_id) {
+          query = query.eq('bucket_id', notification.bucket_id);
+        } else if (notification.album_id) {
+          query = query.eq('album_id', notification.album_id);
+        }
+        query = query.eq('requester_id', notification.actor_id);
+        await query;
+
+        markAsRead.mutate(notification.id);
+        void queryClient.invalidateQueries({ queryKey: ['entity_subscription'] });
+        void queryClient.invalidateQueries({ queryKey: ['entity_subscribers'] });
+        if (accept) {
+          if (notification.bucket_id) {
+            router.push(`/bucket/${notification.bucket_id}` as any);
+          } else if (notification.album_id) {
+            router.push(`/album/${notification.album_id}` as any);
+          }
+        }
+      } else if (notification.type === 'album_invite') {
         if (accept) {
           await supabase
             .from('album_members')
@@ -79,13 +102,22 @@ export default function NotificationsScreen() {
       router.push(`/profile/${notification.actor_id}` as any);
     } else if (notification.type === 'follow_request') {
       router.push('/friends?tab=requests' as any);
-    } else if (notification.type === 'album_invite') {
+    } else if (notification.type === 'album_invite' || notification.type === 'album_update') {
       if (notification.album_id) {
         router.push(`/album/${notification.album_id}` as any);
       }
-    } else if (notification.type === 'reaction' || notification.type === 'comment' || notification.type === 'friend_completed' || notification.type === 'deadline') {
+    } else if (
+      notification.type === 'reaction' || 
+      notification.type === 'comment' || 
+      notification.type === 'friend_completed' || 
+      notification.type === 'deadline' ||
+      notification.type === 'bucket_update' ||
+      notification.type === 'notification_accepted'
+    ) {
       if (notification.bucket_id) {
         router.push(`/bucket/${notification.bucket_id}` as any);
+      } else if (notification.album_id) {
+        router.push(`/album/${notification.album_id}` as any);
       }
     }
   };
@@ -101,6 +133,10 @@ export default function NotificationsScreen() {
       case 'deadline': return <Bell size={16} color={theme.colors.error} />;
       case 'collaboration_invite': return <Users size={16} color="#D4B13A" />;
       case 'album_invite': return <Folder size={16} color="#D4B13A" />;
+      case 'notification_request':
+      case 'notification_accepted':
+      case 'bucket_update':
+      case 'album_update': return <Bell size={16} color="#D4B13A" />;
       default: return <Bell size={16} color={theme.dark ? '#FFFFFF' : theme.colors.foregroundMuted} />;
     }
   };
@@ -118,14 +154,32 @@ export default function NotificationsScreen() {
       case 'deadline': return `Una tarea tiene la fecha límite próxima.`;
       case 'collaboration_invite': return notification.content || `${actorName} te ha invitado a colaborar.`;
       case 'album_invite': return notification.content || `${actorName} te ha invitado a colaborar en un álbum.`;
-      default: return `Tienes una nueva notificación.`;
+      case 'notification_request': return notification.content || `${actorName} ha solicitado activar notificaciones.`;
+      case 'notification_accepted': return notification.content || `${actorName} aceptó la solicitud de notificaciones.`;
+      case 'bucket_update': return notification.content || `${actorName} ha actualizado una tarea que sigues.`;
+      case 'album_update': return notification.content || `${actorName} ha actualizado un álbum que sigues.`;
+      default: return notification.content || `Tienes una nueva notificación.`;
     }
   };
 
   if (isLoading) {
     return (
-      <View style={[styles.container, styles.center, { backgroundColor: theme.colors.background }]}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={[styles.header, { borderBottomColor: theme.dark ? '#222222' : '#cccccc' }]}>
+          <PageTitle>Notificaciones</PageTitle>
+        </View>
+        <View style={{ padding: 16, gap: 14 }}>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <View key={i} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8 }}>
+              <Skeleton width={44} height={44} borderRadius={22} style={{ marginRight: 12 }} />
+              <View style={{ flex: 1 }}>
+                <Skeleton width="80%" height={14} borderRadius={6} style={{ marginBottom: 6 }} />
+                <Skeleton width="40%" height={11} borderRadius={4} />
+              </View>
+              <Skeleton width={32} height={10} borderRadius={4} />
+            </View>
+          ))}
+        </View>
       </View>
     );
   }
@@ -201,7 +255,7 @@ export default function NotificationsScreen() {
               >
                 {formatDistanceToNow(new Date(item.created_at), { addSuffix: true, locale: es })}
               </Typography>
-              {(item.type === 'collaboration_invite' || item.type === 'album_invite') && !item.is_read && (
+              {(item.type === 'collaboration_invite' || item.type === 'album_invite' || item.type === 'notification_request') && !item.is_read && (
                 <View style={styles.inviteActions}>
                   <Pressable
                     style={[styles.inviteBtn, styles.inviteBtnAccept]}
