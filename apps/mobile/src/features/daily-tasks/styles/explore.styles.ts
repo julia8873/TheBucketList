@@ -1057,6 +1057,33 @@ export const styles = StyleSheet.create({
     fontSize: 11,
     color: '#8E8E93',
   },
+  overdueActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+    paddingHorizontal: 4,
+  },
+  overdueActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.25)',
+  },
+  overdueActionDeleteBtn: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderColor: 'rgba(239, 68, 68, 0.25)',
+  },
+  overdueActionText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 11.5,
+    color: '#F59E0B',
+  },
   overdueListCard: {
     backgroundColor: '#15110A',
     borderRadius: 14,

@@ -99,10 +99,16 @@ export default function FriendsScreen() {
   const outgoingList = outgoing.data ?? [];
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed' as any));
-  const openProfile = (id: string) => router.push(`/profile/${id}` as any);
+  const openProfile = (id: string) => {
+    if (user && id === user.id) {
+      router.push('/(tabs)/profile' as any);
+    } else {
+      router.push(`/profile/${id}` as any);
+    }
+  };
 
   const onFollowPress = (person: PersonResult) => {
-    if (!user) return;
+    if (!user || person.id === user.id) return;
     const vars = { followerId: user.id, followingId: person.id, targetIsPrivate: person.visibility === 'private' };
     const fail = (error: any) => Alert.alert('No se pudo completar', error?.message ?? 'Inténtalo de nuevo.');
 
@@ -213,6 +219,7 @@ export default function FriendsScreen() {
           </View>
         ) : tab === 'accounts' || isOtherUser ? (
           <FriendsAccountsTab
+            currentUserId={user?.id}
             term={term}
             kind={kind}
             onChangeKind={setKind}

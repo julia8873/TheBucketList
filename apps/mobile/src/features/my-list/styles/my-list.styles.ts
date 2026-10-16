@@ -101,11 +101,19 @@ export const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
+  sectionBlock: {
+    marginBottom: 32,
+  },
   sectionHeader: {
     fontFamily: 'PlayfairDisplay_700Bold',
     fontSize: 13,
     color: '#8A8A80',
     letterSpacing: 1.5,
+    marginTop: 8,
+    marginBottom: 14,
+  },
+  compactList: {
+    gap: 10,
   },
   expiredHeader: {
     fontFamily: 'PlayfairDisplay_700Bold',
@@ -183,12 +191,12 @@ export const styles = StyleSheet.create({
   galleryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: 12,
+    gap: 14,
+    marginBottom: 16,
   },
   galleryCard: {
-    width: (SCREEN_WIDTH - 40 - 10) / 2,
-    height: ((SCREEN_WIDTH - 40 - 10) / 2) * 1.3,
+    width: (SCREEN_WIDTH - 40 - 14) / 2,
+    height: ((SCREEN_WIDTH - 40 - 14) / 2) * 1.3,
     borderRadius: 14,
     overflow: 'hidden',
     backgroundColor: '#1E1E1E',
@@ -196,7 +204,7 @@ export const styles = StyleSheet.create({
   galleryCardSingle: {
     width: '100%',
     height: (SCREEN_WIDTH - 40) * 0.85,
-    marginBottom: 10,
+    marginBottom: 14,
   },
   galleryTopBadges: {
     position: 'absolute',

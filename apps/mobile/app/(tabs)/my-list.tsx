@@ -44,11 +44,12 @@ export default function MyListScreen() {
   const router = useRouter();
   const state = useMyListState();
 
-  const renderTaskItem = ({ item, drag }: { item: any; drag?: any }) => {
+  const renderTaskItem = ({ item, drag, index }: { item: any; drag?: any; index?: number }) => {
     if (item.isHeader) {
+      const isFirst = index === 0 || item.id === state.listData[0]?.id;
       return (
-        <View style={{ marginTop: 12, marginBottom: 4 }}>
-          <Text style={styles.sectionHeader}>{item.title}</Text>
+        <View key={item.id} style={{ marginTop: isFirst ? 0 : 20, marginBottom: 0 }}>
+          <Text style={[styles.sectionHeader, { marginTop: 8, marginBottom: 4 }]}>{item.title}</Text>
         </View>
       );
     }
@@ -60,6 +61,7 @@ export default function MyListScreen() {
 
     return (
       <TaskItemRow
+        key={item.id}
         item={item}
         drag={drag}
         isItemOwner={isOwner}
@@ -97,13 +99,14 @@ export default function MyListScreen() {
   const renderCompactTask = ({ item, drag }: { item: any; drag?: any }) => {
     if (item.isHeader) {
       return (
-        <View style={{ marginTop: 12, marginBottom: 4 }}>
+        <View key={item.id} style={{ marginTop: 24, marginBottom: 12 }}>
           <Text style={styles.sectionHeader}>{item.title}</Text>
         </View>
       );
     }
     return (
       <TaskCompactItemRow
+        key={item.id}
         item={item}
         drag={drag}
         isSelected={state.selectedTaskIds.includes(item.id)}
@@ -130,6 +133,7 @@ export default function MyListScreen() {
 
   const renderCompactAlbum = ({ item, drag }: { item: any; drag?: any }) => (
     <AlbumCompactItemRow
+      key={item.id}
       item={item}
       drag={drag}
       isFav={state.isAlbumFavorite(item.id)}
@@ -139,6 +143,7 @@ export default function MyListScreen() {
 
   const renderListAlbum = ({ item, drag, index = 0 }: { item: any; drag?: any; index?: number }) => (
     <AlbumListItemRow
+      key={item.id}
       item={item}
       drag={drag}
       index={index}
@@ -157,7 +162,7 @@ export default function MyListScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <PageTitle gold="Mis" rest="listas" />
+        <PageTitle gold="Mi" rest="lista" />
         <Pressable
           onPress={state.toggleSearch}
           hitSlop={12}
@@ -273,10 +278,11 @@ export default function MyListScreen() {
                 state.taskSections.map((sec) => {
                   if (sec.items.length === 0) return null;
                   return (
-                    <View key={sec.key} style={{ marginBottom: 20 }}>
+                    <View key={sec.key} style={styles.sectionBlock}>
                       <Text style={styles.sectionHeader}>{sec.title}</Text>
                       <DraggableTaskList
                         items={sec.items}
+                        gap={10}
                         renderItem={(item, drag) =>
                           state.taskViewMode === 'compact'
                             ? renderCompactTask({ item, drag })
@@ -291,6 +297,7 @@ export default function MyListScreen() {
               ) : (
                 <DraggableTaskList
                   items={state.sortedFlatBuckets}
+                  gap={10}
                   renderItem={(item, drag) =>
                     state.taskViewMode === 'compact'
                       ? renderCompactTask({ item, drag })
@@ -312,7 +319,7 @@ export default function MyListScreen() {
                 state.taskSections.map((sec) => {
                   if (sec.items.length === 0) return null;
                   return (
-                    <View key={sec.key} style={{ marginBottom: 20 }}>
+                    <View key={sec.key} style={styles.sectionBlock}>
                       <Text style={styles.sectionHeader}>{sec.title}</Text>
                       <View style={styles.galleryGrid}>
                         {sec.items.map((item: any) => (
@@ -375,16 +382,16 @@ export default function MyListScreen() {
                 state.taskSections.map((sec) => {
                   if (sec.items.length === 0) return null;
                   return (
-                    <View key={sec.key} style={{ marginBottom: 20 }}>
+                    <View key={sec.key} style={styles.sectionBlock}>
                       <Text style={styles.sectionHeader}>{sec.title}</Text>
-                      <View style={{ gap: 8 }}>
+                      <View style={styles.compactList}>
                         {sec.items.map((item: any) => renderCompactTask({ item }))}
                       </View>
                     </View>
                   );
                 })
               ) : (
-                <View style={{ gap: 8 }}>
+                <View style={styles.compactList}>
                   {state.sortedFlatBuckets.map((item: any) => renderCompactTask({ item }))}
                 </View>
               )}
@@ -392,8 +399,10 @@ export default function MyListScreen() {
           ) : (
             <FlashList
               data={state.listData}
-              renderItem={({ item }) => renderTaskItem({ item })}
+              renderItem={({ item, index }) => renderTaskItem({ item, index })}
               keyExtractor={(item) => (item.isHeader ? item.id : item.id)}
+              estimatedItemSize={89}
+              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
               contentContainerStyle={styles.listContent}
               refreshControl={
                 <RefreshControl refreshing={state.refreshing} onRefresh={state.onRefresh} tintColor={gold[400]} />
@@ -402,7 +411,7 @@ export default function MyListScreen() {
           )}
 
           {!state.isSelectionMode && (
-            <FAB onPress={() => router.push('/add-task')} bottomOffset={24} />
+            <FAB onPress={() => router.push('/(modals)/create-bucket')} bottomOffset={24} />
           )}
 
           {state.isSelectionMode && (
@@ -467,10 +476,11 @@ export default function MyListScreen() {
                 state.albumSections.map((sec) => {
                   if (sec.items.length === 0) return null;
                   return (
-                    <View key={sec.key} style={{ marginBottom: 20 }}>
+                    <View key={sec.key} style={styles.sectionBlock}>
                       <Text style={styles.sectionHeader}>{sec.title}</Text>
                       <DraggableTaskList
                         items={sec.items}
+                        gap={10}
                         renderItem={(item, drag) =>
                           state.albumViewMode === 'compact'
                             ? renderCompactAlbum({ item, drag })
@@ -485,6 +495,7 @@ export default function MyListScreen() {
               ) : (
                 <DraggableTaskList
                   items={state.sortedAlbumsList}
+                  gap={10}
                   renderItem={(item, drag) =>
                     state.albumViewMode === 'compact'
                       ? renderCompactAlbum({ item, drag })
@@ -501,16 +512,16 @@ export default function MyListScreen() {
                 state.albumSections.map((sec) => {
                   if (sec.items.length === 0) return null;
                   return (
-                    <View key={sec.key} style={{ marginBottom: 20 }}>
+                    <View key={sec.key} style={styles.sectionBlock}>
                       <Text style={styles.sectionHeader}>{sec.title}</Text>
-                      <View style={{ gap: 8 }}>
+                      <View style={styles.compactList}>
                         {sec.items.map((item: any) => renderCompactAlbum({ item }))}
                       </View>
                     </View>
                   );
                 })
               ) : (
-                <View style={{ gap: 8, marginBottom: 16 }}>
+                <View style={[styles.compactList, { marginBottom: 16 }]}>
                   {state.sortedAlbumsList.map((item: any) => renderCompactAlbum({ item }))}
                 </View>
               )}
@@ -532,7 +543,7 @@ export default function MyListScreen() {
                 state.albumSections.map((sec) => {
                   if (sec.items.length === 0) return null;
                   return (
-                    <View key={sec.key} style={{ marginBottom: 20 }}>
+                    <View key={sec.key} style={styles.sectionBlock}>
                       <Text style={styles.sectionHeader}>{sec.title}</Text>
                       {sec.items.map((item: any, idx: number) =>
                         renderListAlbum({ item, index: idx })

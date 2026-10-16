@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { Lock, Check, Globe, Users, Flag } from 'lucide-react-native';
+import { Lock, Flag, Eye, Users, CheckCircle2, Circle } from 'lucide-react-native';
+import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { styles } from '../styles/album-detail.styles';
 
 interface AlbumHeaderBadgesProps {
@@ -36,32 +37,53 @@ export function AlbumHeaderBadges({
       ? 'Baja'
       : 'Media';
 
+  const visibilityLabel = (v: string) => {
+    switch (v) {
+      case 'public': return 'Público';
+      case 'followers': return 'Seguidores';
+      case 'private': return 'Privado';
+      default: return v;
+    }
+  };
+
   return (
     <View style={styles.chipsContainer}>
+      {/* Primera fila: Estado y Prioridad */}
       <View style={styles.chipsRow}>
         {/* Estado */}
         <Pressable
           style={[
             styles.chip,
-            styles.chipStatus,
-            isAlbumClosed && { borderColor: '#D4B13A', backgroundColor: '#2C2512' },
-            !isAlbumClosed && areAllCompleted && { borderColor: '#22C55E', backgroundColor: 'rgba(34,197,94,0.14)' },
+            isAlbumClosed
+              ? styles.chipGold
+              : areAllCompleted
+              ? styles.chipCompleted
+              : styles.chipGold,
             canEdit && styles.chipPressable,
           ]}
           onPress={onOpenStatus}
         >
           {isAlbumClosed ? (
             <>
-              <Lock size={14} color="#D4B13A" strokeWidth={2} />
-              <Text style={[styles.chipStatusText, { color: '#D4B13A' }]}>Cerrado</Text>
+              <Lock size={13} color={gold[400]} strokeWidth={2} style={{ marginRight: 5 }} />
+              <Text style={[styles.chipStatusText, { color: gold[400], fontWeight: '700' }]}>
+                Cerrado
+              </Text>
             </>
           ) : areAllCompleted ? (
             <>
-              <Check size={14} color="#22C55E" strokeWidth={2.5} />
-              <Text style={[styles.chipStatusText, { color: '#22C55E' }]}>Completado</Text>
+              <CheckCircle2 size={13} color="#34C759" strokeWidth={2.4} style={{ marginRight: 5 }} />
+              <Text style={[styles.chipStatusText, { color: '#34C759', fontWeight: '700' }]}>
+                Completado
+              </Text>
             </>
           ) : (
-            <Text style={styles.chipStatusText}>En curso</Text>
+            <>
+              <Circle size={11} color={gold[400]} strokeWidth={2.4} style={{ marginRight: 5 }} />
+              <Text style={[styles.chipStatusText, { color: gold[400], fontWeight: '700' }]}>
+                En curso
+              </Text>
+            </>
           )}
         </Pressable>
 
@@ -69,38 +91,35 @@ export function AlbumHeaderBadges({
         <Pressable
           style={[
             styles.chip,
-            canEdit && styles.chipPressable,
+            styles.chipMuted,
             { borderColor: `${priorityColor}66` },
+            canEdit && styles.chipPressable,
           ]}
           onPress={onOpenPriority}
         >
-          <Flag size={14} color={priorityColor} strokeWidth={2} />
+          <Flag size={13} color={priorityColor} strokeWidth={2} style={{ marginRight: 5 }} />
           <Text style={[styles.chipText, { color: priorityColor, fontWeight: '600' }]}>
             {priorityLabel}
           </Text>
         </Pressable>
+      </View>
 
-        {/* Visibilidad */}
+      {/* Segunda fila: Visibilidad */}
+      <View style={styles.chipsRowSecond}>
         <Pressable
-          style={[styles.chip, canEdit && styles.chipPressable]}
+          style={[styles.chip, styles.chipMuted, canEdit && styles.chipPressable]}
           onPress={onOpenVisibility}
         >
           {album.visibility === 'public' ? (
-            <>
-              <Globe size={14} color="#F3EEE3" strokeWidth={1.8} />
-              <Text style={styles.chipText}>Público</Text>
-            </>
+            <Eye size={13} color="#CFCABD" strokeWidth={2} style={{ marginRight: 5 }} />
           ) : album.visibility === 'followers' ? (
-            <>
-              <Users size={14} color="#F3EEE3" strokeWidth={1.8} />
-              <Text style={styles.chipText}>Solo amigos</Text>
-            </>
+            <Users size={13} color="#CFCABD" strokeWidth={2} style={{ marginRight: 5 }} />
           ) : (
-            <>
-              <Lock size={14} color="#F3EEE3" strokeWidth={1.8} />
-              <Text style={styles.chipText}>Privado</Text>
-            </>
+            <Lock size={13} color="#CFCABD" strokeWidth={2} style={{ marginRight: 5 }} />
           )}
+          <Text style={[styles.chipText, { color: '#F2EFE8', fontWeight: '600' }]}>
+            {visibilityLabel(album.visibility)}
+          </Text>
         </Pressable>
       </View>
     </View>

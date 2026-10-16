@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../stores/auth.store';
+import { triggerTaskCompletedHaptic } from '../stores/haptics.store';
 
 export function useBulkTaskOperations() {
   const queryClient = useQueryClient();
@@ -105,6 +106,7 @@ export function useBulkTaskOperations() {
   const completeAllTasks = useMutation({
     mutationFn: async (taskIds: string[]) => {
       if (!taskIds.length) return;
+      triggerTaskCompletedHaptic();
       const { error } = await supabase
         .from('buckets')
         .update({

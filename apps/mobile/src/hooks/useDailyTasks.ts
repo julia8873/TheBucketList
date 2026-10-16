@@ -10,6 +10,7 @@ import {
 } from '../services/api/dailyTasksService';
 export type { DailyTaskPriority, DailyTaskRecurrenceUnit, DailySubtask };
 import { useAuthStore } from '../stores/auth.store';
+import { triggerTaskCompletedHaptic } from '../stores/haptics.store';
 import { format } from 'date-fns';
 
 export const DAILY_TASKS_QUERY_KEY = ['daily_tasks'];
@@ -169,6 +170,9 @@ export function useToggleDailyTask() {
       return dailyTasksService.toggleTask(id, isCompleted);
     },
     onMutate: async ({ id, isCompleted }) => {
+      if (isCompleted) {
+        triggerTaskCompletedHaptic();
+      }
       await queryClient.cancelQueries({ queryKey: [...DAILY_TASKS_QUERY_KEY, userId] });
       const previous = queryClient.getQueryData<DailyTask[]>([...DAILY_TASKS_QUERY_KEY, userId]) || [];
 
@@ -204,6 +208,7 @@ export function useCompleteDailyTask() {
       return dailyTasksService.completeTask(task);
     },
     onMutate: async (task) => {
+      triggerTaskCompletedHaptic();
       await queryClient.cancelQueries({ queryKey: [...DAILY_TASKS_QUERY_KEY, userId] });
 
       const previousTasks = queryClient.getQueryData<DailyTask[]>([...DAILY_TASKS_QUERY_KEY, userId]) || [];
@@ -251,6 +256,7 @@ export function useCompleteRecurringDailyTask() {
       return dailyTasksService.completeRecurringTask({ task, nextDueDate, resetSubtasks });
     },
     onMutate: async ({ task, nextDueDate, resetSubtasks = [] }) => {
+      triggerTaskCompletedHaptic();
       await queryClient.cancelQueries({ queryKey: [...DAILY_TASKS_QUERY_KEY, userId] });
 
       const previousTasks = queryClient.getQueryData<DailyTask[]>([...DAILY_TASKS_QUERY_KEY, userId]) || [];
@@ -401,6 +407,98 @@ export function useConvertToBucket() {
       void queryClient.invalidateQueries({ queryKey: DAILY_TASKS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ['buckets'] });
       void queryClient.invalidateQueries({ queryKey: ['unassigned_tasks'] });
+    },
+  });
+}
+
+export function useMoveTasksToDate() {
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  const userId = user?.id;
+
+  return useMutation({
+    mutationFn: async ({ ids, date }: { ids: string[]; date: string }) => {
+      return dailyTasksService.moveTasksToDate(ids, date);
+    },
+    onMutate: async ({ ids, date }) => {
+      await queryClient.cancelQueries({ queryKey: [...DAILY_TASKS_QUERY_KEY, userId] });
+      const previous = queryClient.getQueryData<DailyTask[]>([...DAILY_TASKS_QUERY_KEY, userId]) || [];
+      queryClient.setQueryData<DailyTask[]>(
+        [...DAILY_TASKS_QUERY_KEY, userId],
+        previous.map((t) => (ids.includes(t.id) ? { ...t, due_date: date } : t))
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData([...DAILY_TASKS_QUERY_KEY, userId], context.previous);
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: [...DAILY_TASKS_QUERY_KEY, userId] });
+    },
+  });
+}
+
+export function useCompleteMultipleDailyTasks() {
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  const userId = user?.id;
+
+  return useMutation({
+    mutationFn: async (tasks: DailyTask[]) => {
+      return dailyTasksService.completeTasks(tasks);
+    },
+    onMutate: async (tasks) => {
+      if (tasks.length > 0) {
+        triggerTaskCompletedHaptic();
+      }
+      await queryClient.cancelQueries({ queryKey: [...DAILY_TASKS_QUERY_KEY, userId] });
+      const previous = queryClient.getQueryData<DailyTask[]>([...DAILY_TASKS_QUERY_KEY, userId]) || [];
+      const ids = tasks.map((t) => t.id);
+      const nowIso = new Date().toISOString();
+      queryClient.setQueryData<DailyTask[]>(
+        [...DAILY_TASKS_QUERY_KEY, userId],
+        previous.map((t) => (ids.includes(t.id) ? { ...t, is_completed: true, completed_at: nowIso } : t))
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData([...DAILY_TASKS_QUERY_KEY, userId], context.previous);
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: [...DAILY_TASKS_QUERY_KEY, userId] });
+    },
+  });
+}
+
+export function useDeleteMultipleDailyTasks() {
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  const userId = user?.id;
+
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      return dailyTasksService.deleteTasks(ids);
+    },
+    onMutate: async (ids) => {
+      await queryClient.cancelQueries({ queryKey: [...DAILY_TASKS_QUERY_KEY, userId] });
+      const previous = queryClient.getQueryData<DailyTask[]>([...DAILY_TASKS_QUERY_KEY, userId]) || [];
+      queryClient.setQueryData<DailyTask[]>(
+        [...DAILY_TASKS_QUERY_KEY, userId],
+        previous.filter((t) => !ids.includes(t.id))
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData([...DAILY_TASKS_QUERY_KEY, userId], context.previous);
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: [...DAILY_TASKS_QUERY_KEY, userId] });
     },
   });
 }

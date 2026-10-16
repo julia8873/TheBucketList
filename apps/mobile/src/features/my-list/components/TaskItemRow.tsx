@@ -51,8 +51,8 @@ export function TaskItemRow({
 }: TaskItemRowProps) {
   if (item.isHeader) {
     return (
-      <View style={{ marginTop: isFirstHeader ? 6 : 22, marginBottom: 4 }}>
-        <Text style={styles.sectionHeader}>{item.title}</Text>
+      <View style={{ marginTop: isFirstHeader ? 0 : 20, marginBottom: 0 }}>
+        <Text style={[styles.sectionHeader, { marginTop: 8, marginBottom: 4 }]}>{item.title}</Text>
       </View>
     );
   }

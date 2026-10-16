@@ -6,6 +6,7 @@ import { PersonRow } from '../../../components/PersonRow';
 import { FollowButton } from '../../../components/FollowButton';
 import { UserRowSkeleton } from '../../../components/TaskSkeletons';
 import type { PersonResult } from '../../../services/api/friends';
+import { useAuthStore } from '../../../stores/auth.store';
 import { styles } from '../styles/friends.styles';
 
 export type ConnectionKind = 'following' | 'followers';
@@ -25,6 +26,7 @@ interface FriendsAccountsTabProps {
   onRetrySearch: () => void;
   onOpenProfile: (id: string) => void;
   onFollowPress: (person: PersonResult) => void;
+  currentUserId?: string;
 }
 
 function subtitleFor(person: PersonResult): string {
@@ -51,7 +53,11 @@ export function FriendsAccountsTab({
   onRetrySearch,
   onOpenProfile,
   onFollowPress,
+  currentUserId,
 }: FriendsAccountsTabProps) {
+  const authUser = useAuthStore((s) => s.user);
+  const activeUserId = currentUserId ?? authUser?.id;
+
   if (term.length < 2) {
     const list = kind === 'following' ? followingData : followersData;
     const loading = (kind === 'following' ? followingLoading : followersLoading) && list.length === 0;
@@ -96,21 +102,26 @@ export function FriendsAccountsTab({
             }
           />
         ) : (
-          list.map((person) => (
-            <PersonRow
-              key={person.id}
-              person={person}
-              subtitle={`@${person.username}`}
-              onPress={() => onOpenProfile(person.id)}
-              right={
-                <FollowButton
-                  status={person.follow_status}
-                  isPrivate={person.visibility === 'private'}
-                  onPress={() => onFollowPress(person)}
-                />
-              }
-            />
-          ))
+          list.map((person) => {
+            const isSelf = !!activeUserId && person.id === activeUserId;
+            return (
+              <PersonRow
+                key={person.id}
+                person={person}
+                subtitle={`@${person.username}`}
+                onPress={() => onOpenProfile(person.id)}
+                right={
+                  isSelf ? null : (
+                    <FollowButton
+                      status={person.follow_status}
+                      isPrivate={person.visibility === 'private'}
+                      onPress={() => onFollowPress(person)}
+                    />
+                  )
+                }
+              />
+            );
+          })
         )}
       </View>
     );
@@ -144,21 +155,26 @@ export function FriendsAccountsTab({
       {results.length === 0 ? (
         <Text style={styles.empty}>Nadie coincide con «{term}».</Text>
       ) : (
-        results.map((person) => (
-          <PersonRow
-            key={person.id}
-            person={person}
-            subtitle={subtitleFor(person)}
-            onPress={() => onOpenProfile(person.id)}
-            right={
-              <FollowButton
-                status={person.follow_status}
-                isPrivate={person.visibility === 'private'}
-                onPress={() => onFollowPress(person)}
-              />
-            }
-          />
-        ))
+        results.map((person) => {
+          const isSelf = !!activeUserId && person.id === activeUserId;
+          return (
+            <PersonRow
+              key={person.id}
+              person={person}
+              subtitle={subtitleFor(person)}
+              onPress={() => onOpenProfile(person.id)}
+              right={
+                isSelf ? null : (
+                  <FollowButton
+                    status={person.follow_status}
+                    isPrivate={person.visibility === 'private'}
+                    onPress={() => onFollowPress(person)}
+                  />
+                )
+              }
+            />
+          );
+        })
       )}
 
       <View style={styles.note}>

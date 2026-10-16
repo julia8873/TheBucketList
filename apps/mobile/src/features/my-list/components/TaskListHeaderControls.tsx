@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import {
   Tag as TagIcon,
   X,
@@ -9,6 +9,8 @@ import {
   AlignJustify,
   ArrowDown,
   ArrowUp,
+  ChevronDown,
+  Check,
 } from 'lucide-react-native';
 import { Typography, FilterChip } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
@@ -16,6 +18,8 @@ import { styles } from '../styles/my-list.styles';
 import { FilterType, PriorityFilter, SortField, SortDir, TaskViewMode } from '../types';
 import { Tag } from '@/hooks/useTags';
 import { hexToRgba } from '@/constants/tagPresets';
+import { TagSheetShell } from '@/components/TagSheetShell';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface TaskListHeaderControlsProps {
   filter: FilterType;
@@ -41,6 +45,36 @@ interface TaskListHeaderControlsProps {
   theme: any;
 }
 
+const STATUS_OPTIONS: Array<{ key: FilterType; label: string; desc: string }> = [
+  { key: 'all', label: 'Todas las tareas', desc: 'Muestra todas las tareas sin filtrar por estado' },
+  { key: 'active', label: 'En curso', desc: 'Tareas activas o pendientes de realizar' },
+  { key: 'in_progress', label: 'En progreso', desc: 'Tareas marcadas como actualmente en marcha' },
+  { key: 'completed', label: 'Completadas', desc: 'Tareas que ya has marcado como finalizadas' },
+  { key: 'expired', label: 'Vencidas', desc: 'Tareas cuya fecha límite ya ha expirado' },
+];
+
+const STATUS_SHORT_LABEL: Record<FilterType, string> = {
+  all: 'Filtrar por estado',
+  active: 'Estado: En curso',
+  in_progress: 'Estado: En progreso',
+  completed: 'Estado: Completadas',
+  expired: 'Estado: Vencidas',
+};
+
+const PRIORITY_OPTIONS: Array<{ key: PriorityFilter; label: string; desc: string }> = [
+  { key: 'all', label: 'Todas las prioridades', desc: 'Muestra tareas de cualquier prioridad' },
+  { key: 'high', label: '🔴 Alta', desc: 'Tareas urgentes o de máxima prioridad' },
+  { key: 'medium', label: '🟡 Media', desc: 'Tareas de prioridad estándar' },
+  { key: 'low', label: '🟢 Baja', desc: 'Tareas sin prisa o de prioridad baja' },
+];
+
+const PRIORITY_SHORT_LABEL: Record<PriorityFilter, string> = {
+  all: 'Filtrar por prioridad',
+  high: 'Prioridad: 🔴 Alta',
+  medium: 'Prioridad: 🟡 Media',
+  low: 'Prioridad: 🟢 Baja',
+};
+
 export function TaskListHeaderControls({
   filter,
   setFilter,
@@ -64,105 +98,162 @@ export function TaskListHeaderControls({
   openSortMenu,
   theme,
 }: TaskListHeaderControlsProps) {
+  const insets = useSafeAreaInsets();
+  const [statusSheetVisible, setStatusSheetVisible] = useState(false);
+  const [prioritySheetVisible, setPrioritySheetVisible] = useState(false);
+
   return (
     <View>
-      {/* Filtros */}
+      {/* Fila única de Filtros */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filtersContainer}
-        style={{ flexGrow: 0, marginBottom: 8, marginHorizontal: -20 }}
+        contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 20 }}
+        style={{ marginBottom: 12, marginHorizontal: -20, paddingHorizontal: 20 }}
       >
-        <FilterChip label="Todas" active={filter === 'all'} onPress={() => setFilter('all')} />
-        <FilterChip label="En curso" active={filter === 'active'} onPress={() => setFilter('active')} />
-        <FilterChip label="En progreso" active={filter === 'in_progress'} onPress={() => setFilter('in_progress')} />
-        <FilterChip label="Completadas" active={filter === 'completed'} onPress={() => setFilter('completed')} />
-        <FilterChip label="Vencidas" active={filter === 'expired'} onPress={() => setFilter('expired')} />
+        {/* Todas */}
+        <FilterChip
+          label="Todas"
+          active={filter === 'all' && priorityFilter === 'all'}
+          onPress={() => {
+            setFilter('all');
+            setPriorityFilter('all');
+          }}
+        />
+
+        {/* Filtrar por estado */}
+        <Pressable
+          onPress={() => setStatusSheetVisible(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Filtrar por estado"
+          style={[styles.tagFilterBtn, filter !== 'all' && styles.tagFilterBtnActive]}
+        >
+          <Text style={[styles.tagFilterText, filter !== 'all' && { color: gold[400] }]}>
+            {STATUS_SHORT_LABEL[filter]}
+          </Text>
+          <ChevronDown size={14} color={filter !== 'all' ? gold[400] : '#A0A0A0'} />
+        </Pressable>
+
+        {/* Etiquetas */}
+        <Pressable
+          onPress={onOpenTagFilterSheet}
+          accessibilityRole="button"
+          accessibilityLabel="Filtrar por etiquetas"
+          style={[styles.tagFilterBtn, selectedTagIds.length > 0 && styles.tagFilterBtnActive]}
+        >
+          <TagIcon size={14} color={selectedTagIds.length > 0 ? gold[400] : '#E5E5E5'} strokeWidth={2} />
+          <Text style={[styles.tagFilterText, selectedTagIds.length > 0 && { color: gold[400] }]}>
+            {selectedTagIds.length === 0
+              ? 'Etiquetas'
+              : selectedTagIds.length === 1
+              ? '1 etiqueta'
+              : `${selectedTagIds.length} etiquetas`}
+          </Text>
+        </Pressable>
+
+        {/* Filtrar por prioridad */}
+        <Pressable
+          onPress={() => setPrioritySheetVisible(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Filtrar por prioridad"
+          style={[styles.tagFilterBtn, priorityFilter !== 'all' && styles.tagFilterBtnActive]}
+        >
+          <Text style={[styles.tagFilterText, priorityFilter !== 'all' && { color: gold[400] }]}>
+            {PRIORITY_SHORT_LABEL[priorityFilter]}
+          </Text>
+          <ChevronDown size={14} color={priorityFilter !== 'all' ? gold[400] : '#A0A0A0'} />
+        </Pressable>
+
+        {/* Chips de etiquetas seleccionadas */}
+        {selectedTags.map((t) => (
+          <Pressable
+            key={t.id}
+            onPress={() => onRemoveTagFilter(t.id)}
+            accessibilityRole="button"
+            accessibilityLabel={`Quitar etiqueta ${t.name}`}
+            style={styles.activeTagChip}
+          >
+            {t.emoji ? (
+              <View style={[styles.activeTagEmoji, { backgroundColor: hexToRgba(t.color, 0.3) }]}>
+                <Text style={styles.activeTagEmojiText}>{t.emoji}</Text>
+              </View>
+            ) : (
+              <View style={[styles.activeTagDot, { backgroundColor: t.color }]} />
+            )}
+            <Text style={styles.activeTagText} numberOfLines={1}>
+              {t.name}
+            </Text>
+            <X size={15} color="#E5E5E5" strokeWidth={2} />
+          </Pressable>
+        ))}
       </ScrollView>
 
-      {/* Filtro por prioridad */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filtersContainer}
-        style={{ flexGrow: 0, marginBottom: 12, marginHorizontal: -20 }}
-      >
-        <FilterChip
-          label="Prioridad: Todas"
-          active={priorityFilter === 'all'}
-          onPress={() => setPriorityFilter('all')}
-        />
-        <FilterChip
-          label="🔴 Alta"
-          active={priorityFilter === 'high'}
-          onPress={() => setPriorityFilter(priorityFilter === 'high' ? 'all' : 'high')}
-        />
-        <FilterChip
-          label="🟡 Media"
-          active={priorityFilter === 'medium'}
-          onPress={() => setPriorityFilter(priorityFilter === 'medium' ? 'all' : 'medium')}
-        />
-        <FilterChip
-          label="🟢 Baja"
-          active={priorityFilter === 'low'}
-          onPress={() => setPriorityFilter(priorityFilter === 'low' ? 'all' : 'low')}
-        />
-      </ScrollView>
-
-      {/* Fila de etiquetas + Vistas */}
+      {/* Fila inferior: Ordenar por (izq) + Elegir y Modo de vista (der) */}
       <View
         style={{
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: 14,
+          marginBottom: 10,
         }}
       >
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 8 }}
-          style={{ flex: 1, marginRight: 8 }}
-        >
-          <Pressable
-            onPress={onOpenTagFilterSheet}
-            accessibilityRole="button"
-            accessibilityLabel="Filtrar por etiquetas"
-            style={[styles.tagFilterBtn, selectedTagIds.length > 0 && styles.tagFilterBtnActive]}
-          >
-            <TagIcon size={14} color={selectedTagIds.length > 0 ? gold[400] : '#E5E5E5'} strokeWidth={2} />
-            <Text style={[styles.tagFilterText, selectedTagIds.length > 0 && { color: gold[400] }]}>
-              {selectedTagIds.length === 0
-                ? 'Etiquetas'
-                : selectedTagIds.length === 1
-                ? '1 etiqueta'
-                : `${selectedTagIds.length} etiquetas`}
-            </Text>
-          </Pressable>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
+          <Typography variant="caption" color={theme.colors.foregroundMuted} style={styles.tasksCountLabel}>
+            {tasksCount} {tasksCount === 1 ? 'TAREA' : 'TAREAS'}
+          </Typography>
 
-          {selectedTags.map((t) => (
+          <View style={styles.sortTriggerContainer}>
             <Pressable
-              key={t.id}
-              onPress={() => onRemoveTagFilter(t.id)}
+              ref={sortTriggerRef}
+              collapsable={false}
+              onPress={openSortMenu}
+              hitSlop={8}
+              style={styles.sortTriggerBtn}
               accessibilityRole="button"
-              accessibilityLabel={`Quitar etiqueta ${t.name}`}
-              style={styles.activeTagChip}
+              accessibilityLabel="Ordenar tareas"
             >
-              {t.emoji ? (
-                <View style={[styles.activeTagEmoji, { backgroundColor: hexToRgba(t.color, 0.3) }]}>
-                  <Text style={styles.activeTagEmojiText}>{t.emoji}</Text>
-                </View>
-              ) : (
-                <View style={[styles.activeTagDot, { backgroundColor: t.color }]} />
-              )}
-              <Text style={styles.activeTagText} numberOfLines={1}>{t.name}</Text>
-              <X size={15} color="#E5E5E5" strokeWidth={2} />
+              <Typography variant="caption" color={gold[400]} style={{ fontWeight: '600' }}>
+                {sortField === 'manual'
+                  ? 'Manual'
+                  : sortField === 'status'
+                  ? isReordering
+                    ? 'Estado (manual)'
+                    : 'Estado'
+                  : sortField === 'priority'
+                  ? 'Prioridad'
+                  : sortField === 'alphabetical'
+                  ? 'Alfabético'
+                  : 'Fecha'}
+              </Typography>
+              {sortField !== 'manual' &&
+                !isReordering &&
+                (sortDir === 'desc' ? (
+                  <ArrowDown color={gold[400]} size={14} />
+                ) : (
+                  <ArrowUp color={gold[400]} size={14} />
+                ))}
             </Pressable>
-          ))}
-        </ScrollView>
+          </View>
 
-        {/* Toggle de selección múltiple + Toggle de vistas */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          {!isSearching && isReordering && (
+            <Pressable
+              onPress={() => setIsReordering(false)}
+              style={{
+                backgroundColor: gold[400],
+                paddingHorizontal: 10,
+                paddingVertical: 3,
+                borderRadius: 6,
+                marginLeft: 4,
+              }}
+              hitSlop={8}
+            >
+              <Text style={{ fontSize: 11, fontWeight: '700', color: '#0E0E0E' }}>OK</Text>
+            </Pressable>
+          )}
+        </View>
+
+        {/* Toggle de selección múltiple + Toggle de vistas (a la derecha) */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0 }}>
           <Pressable
             onPress={onToggleSelectionMode}
             style={[styles.selectionBtn, isSelectionMode && styles.selectionBtnActive]}
@@ -208,61 +299,170 @@ export function TaskListHeaderControls({
         </View>
       </View>
 
-      {/* Fila de Ordenar por */}
-      <View style={styles.sortRow}>
-        <Typography variant="caption" color={theme.colors.foregroundMuted} style={styles.tasksCountLabel}>
-          {tasksCount} {tasksCount === 1 ? 'TAREA' : 'TAREAS'}
-        </Typography>
-
-        <View style={styles.sortTriggerContainer}>
-          <Typography variant="caption" color={theme.colors.foregroundMuted}>
-            Ordenar por:
-          </Typography>
-          <Pressable
-            ref={sortTriggerRef}
-            collapsable={false}
-            onPress={openSortMenu}
-            hitSlop={8}
-            style={styles.sortTriggerBtn}
-            accessibilityRole="button"
-            accessibilityLabel="Ordenar tareas"
-          >
-            <Typography variant="caption" color={gold[400]} style={{ fontWeight: '600' }}>
-              {sortField === 'manual'
-                ? 'Manual'
-                : sortField === 'status'
-                ? (isReordering ? 'Estado (manual)' : 'Estado')
-                : sortField === 'priority'
-                ? 'Prioridad'
-                : sortField === 'alphabetical'
-                ? 'Alfabético'
-                : 'Fecha'}
-            </Typography>
-            {sortField !== 'manual' && !isReordering &&
-              (sortDir === 'desc' ? (
-                <ArrowDown color={gold[400]} size={14} />
-              ) : (
-                <ArrowUp color={gold[400]} size={14} />
-              ))}
-          </Pressable>
-
-          {!isSearching && isReordering && (
+      {/* Bottom Sheet: Filtrar por Estado */}
+      <TagSheetShell visible={statusSheetVisible} onClose={() => setStatusSheetVisible(false)}>
+        <View style={[localStyles.sheetContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+          <View style={localStyles.sheetHeader}>
+            <Text style={localStyles.sheetTitle}>Filtrar por estado</Text>
             <Pressable
-              onPress={() => setIsReordering(false)}
-              style={{
-                backgroundColor: gold[400],
-                paddingHorizontal: 12,
-                paddingVertical: 4,
-                borderRadius: 6,
-                marginLeft: 8,
-              }}
+              onPress={() => setStatusSheetVisible(false)}
               hitSlop={8}
+              style={localStyles.sheetCloseBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Cerrar filtro de estado"
             >
-              <Text style={{ fontSize: 11, fontWeight: '700', color: '#0E0E0E' }}>OK</Text>
+              <X size={16} color="#AAA" />
             </Pressable>
-          )}
+          </View>
+
+          <View style={localStyles.sheetOptionList}>
+            {STATUS_OPTIONS.map((opt) => {
+              const isSelected = filter === opt.key;
+              return (
+                <Pressable
+                  key={opt.key}
+                  onPress={() => {
+                    setFilter(opt.key);
+                    setStatusSheetVisible(false);
+                  }}
+                  style={({ pressed }) => [
+                    localStyles.sheetOptionRow,
+                    isSelected && localStyles.sheetOptionRowActive,
+                    pressed && { opacity: 0.8 },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Filtrar por ${opt.label}`}
+                >
+                  <View style={{ flex: 1, marginRight: 12 }}>
+                    <Text
+                      style={[
+                        localStyles.sheetOptionTitle,
+                        isSelected && localStyles.sheetOptionTitleActive,
+                      ]}
+                    >
+                      {opt.label}
+                    </Text>
+                    <Text style={localStyles.sheetOptionDesc}>{opt.desc}</Text>
+                  </View>
+                  {isSelected && <Check size={18} color={gold[400]} strokeWidth={2.5} />}
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
-      </View>
+      </TagSheetShell>
+
+      {/* Bottom Sheet: Filtrar por Prioridad */}
+      <TagSheetShell visible={prioritySheetVisible} onClose={() => setPrioritySheetVisible(false)}>
+        <View style={[localStyles.sheetContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+          <View style={localStyles.sheetHeader}>
+            <Text style={localStyles.sheetTitle}>Filtrar por prioridad</Text>
+            <Pressable
+              onPress={() => setPrioritySheetVisible(false)}
+              hitSlop={8}
+              style={localStyles.sheetCloseBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Cerrar filtro de prioridad"
+            >
+              <X size={16} color="#AAA" />
+            </Pressable>
+          </View>
+
+          <View style={localStyles.sheetOptionList}>
+            {PRIORITY_OPTIONS.map((opt) => {
+              const isSelected = priorityFilter === opt.key;
+              return (
+                <Pressable
+                  key={opt.key}
+                  onPress={() => {
+                    setPriorityFilter(opt.key);
+                    setPrioritySheetVisible(false);
+                  }}
+                  style={({ pressed }) => [
+                    localStyles.sheetOptionRow,
+                    isSelected && localStyles.sheetOptionRowActive,
+                    pressed && { opacity: 0.8 },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Filtrar por prioridad ${opt.label}`}
+                >
+                  <View style={{ flex: 1, marginRight: 12 }}>
+                    <Text
+                      style={[
+                        localStyles.sheetOptionTitle,
+                        isSelected && localStyles.sheetOptionTitleActive,
+                      ]}
+                    >
+                      {opt.label}
+                    </Text>
+                    <Text style={localStyles.sheetOptionDesc}>{opt.desc}</Text>
+                  </View>
+                  {isSelected && <Check size={18} color={gold[400]} strokeWidth={2.5} />}
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      </TagSheetShell>
     </View>
   );
 }
+
+const localStyles = StyleSheet.create({
+  sheetContent: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  sheetTitle: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 18,
+    color: '#FFF',
+  },
+  sheetCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#222',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sheetOptionList: {
+    gap: 10,
+  },
+  sheetOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: '#1C1C1C',
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
+  },
+  sheetOptionRowActive: {
+    backgroundColor: 'rgba(212, 177, 58, 0.08)',
+    borderColor: gold[400],
+  },
+  sheetOptionTitle: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 15,
+    color: '#F0F0F0',
+    marginBottom: 2,
+  },
+  sheetOptionTitleActive: {
+    color: gold[400],
+  },
+  sheetOptionDesc: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    color: '#8A8A80',
+  },
+});
+

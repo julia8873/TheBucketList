@@ -10,6 +10,7 @@ import { processBucketImage, type ImageProcessingResult } from '@bucketlist/shar
 import { supabase } from '../../src/services/supabase';
 import { storageApi } from '../../src/services/api/storage';
 import { useAuthStore } from '../../src/stores/auth.store';
+import { useHapticsStore } from '../../src/stores/haptics.store';
 import { useUpdateBucket } from '../../src/hooks/useBuckets';
 
 export default function CompleteBucketModal() {
@@ -120,7 +121,9 @@ export default function CompleteBucketModal() {
           onSuccess: () => {
             setProgress(1);
             setCompleted(true);
-            void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            if (useHapticsStore.getState().hapticsEnabled) {
+              void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            }
             setTimeout(() => {
               router.back();
             }, 2000);

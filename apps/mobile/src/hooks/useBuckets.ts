@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { bucketApi } from '../services/api/bucket';
 import { useOfflineStore } from '../stores/offline.store';
+import { triggerTaskCompletedHaptic } from '../stores/haptics.store';
 import type { CreateBucketForm, UpdateBucketForm } from '@bucketlist/shared';
 
 export const BUCKETS_QUERY_KEY = ['buckets'];
@@ -43,6 +44,9 @@ export function useUpdateBucket() {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateBucketForm }) => {
+      if (data.status === 'completed') {
+        triggerTaskCompletedHaptic();
+      }
       const isOnline = useOfflineStore.getState().isOnline;
       if (!isOnline) {
         useOfflineStore.getState().addMutation({

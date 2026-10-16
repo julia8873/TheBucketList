@@ -87,7 +87,12 @@ export function useFollowUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ followerId, followingId }: FollowVars) => socialApi.followUser(followerId, followingId),
+    mutationFn: ({ followerId, followingId }: FollowVars) => {
+      if (followerId === followingId) {
+        throw new Error('No puedes seguirte a ti mismo');
+      }
+      return socialApi.followUser(followerId, followingId);
+    },
     onMutate: async (vars) => {
       await queryClient.cancelQueries({ queryKey: FRIENDS_QUERY_KEY });
       const previous = queryClient.getQueriesData({ queryKey: FRIENDS_QUERY_KEY });

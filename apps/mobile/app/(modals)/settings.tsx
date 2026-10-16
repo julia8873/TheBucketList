@@ -11,6 +11,7 @@ import { supabase } from '../../src/services/supabase';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useThemeStore } from '../../src/stores/theme.store';
 import { useLanguageStore, type AppLanguage } from '../../src/stores/language.store';
+import { useHapticsStore } from '../../src/stores/haptics.store';
 import {
   Card, ConfirmDialog, OptionDialog, PillToggle, Row, SectionTitle, ToggleRow,
 } from '../../src/components/SettingsParts';
@@ -26,6 +27,7 @@ export default function SettingsScreen() {
   const { user, signOut } = useAuthStore();
   const { override, setOverride } = useThemeStore();
   const { language, setLanguage } = useLanguageStore();
+  const { hapticsEnabled, setHapticsEnabled } = useHapticsStore();
 
   const [langOpen, setLangOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
@@ -187,6 +189,17 @@ export default function SettingsScreen() {
           <Row
             title={t('settings.notifications_advanced')}
             onPress={() => router.push('/(modals)/notification-prefs' as any)}
+            last
+          />
+        </Card>
+
+        <SectionTitle gold={t('settings.preferences', { defaultValue: 'PREFERENCIAS' })} />
+        <Card>
+          <ToggleRow
+            title={t('settings.vibration', { defaultValue: 'Vibración al completar tareas' })}
+            subtitle={t('settings.vibration_desc', { defaultValue: 'Vibración ligera al completar tareas diarias y del bucket list' })}
+            value={hapticsEnabled}
+            onChange={setHapticsEnabled}
             last
           />
         </Card>

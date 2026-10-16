@@ -138,7 +138,15 @@ function Row(props: RowProps) {
     }),
   ).current;
 
-  // Fila completa: al mantener pulsado ~350ms, vibra e inicia el arrastre para cambiar el orden
+  const endDrag = useCallback(() => {
+    clearTimer();
+    if (isLongPressing.current || latest.current.isActive) {
+      isLongPressing.current = false;
+      latest.current.onDragEnd();
+    }
+  }, [clearTimer]);
+
+  // Fila completa: al mantener pulsado ~320ms, vibra e inicia el arrastre para cambiar el orden
   const rowPan = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
@@ -159,7 +167,7 @@ function Row(props: RowProps) {
           const p = latest.current;
           y.setValue(p.top);
           p.onDragStart(p.item.id, p.index);
-        }, 350);
+        }, 320);
         return false;
       },
       onMoveShouldSetPanResponder: () => isLongPressing.current,
@@ -169,14 +177,14 @@ function Row(props: RowProps) {
         }
         const dx = Math.abs(evt.nativeEvent.pageX - touchStartPos.current.x);
         const dy = Math.abs(evt.nativeEvent.pageY - touchStartPos.current.y);
-        // Si el usuario desliza para hacer scroll antes de que pasen los 350ms, cancelamos el timer
-        if (dx > 14 || dy > 14) {
+        // Si el usuario desliza para hacer scroll antes de que pasen los 320ms, cancelamos el timer
+        if (dx > 8 || dy > 8) {
           clearTimer();
           return false;
         }
         return false;
       },
-      onPanResponderTerminationRequest: () => false,
+      onPanResponderTerminationRequest: () => !isLongPressing.current,
       onPanResponderGrant: () => {
         const p = latest.current;
         y.setValue(p.top);
@@ -189,18 +197,10 @@ function Row(props: RowProps) {
         p.onDragMove(next + p.height / 2);
       },
       onPanResponderRelease: () => {
-        clearTimer();
-        if (isLongPressing.current || latest.current.isActive) {
-          isLongPressing.current = false;
-          latest.current.onDragEnd();
-        }
+        endDrag();
       },
       onPanResponderTerminate: () => {
-        clearTimer();
-        if (isLongPressing.current || latest.current.isActive) {
-          isLongPressing.current = false;
-          latest.current.onDragEnd();
-        }
+        endDrag();
       },
     }),
   ).current;
@@ -211,15 +211,13 @@ function Row(props: RowProps) {
       onTouchEnd={() => {
         clearTimer();
         if (isLongPressing.current || latest.current.isActive) {
-          isLongPressing.current = false;
-          latest.current.onDragEnd();
+          endDrag();
         }
       }}
       onTouchCancel={() => {
         clearTimer();
         if (isLongPressing.current || latest.current.isActive) {
-          isLongPressing.current = false;
-          latest.current.onDragEnd();
+          endDrag();
         }
       }}
       onLayout={(e) => props.onMeasure(item.id, e.nativeEvent.layout.height)}
@@ -339,6 +337,12 @@ export function DraggableTaskList<T extends { id: string }>({
     }
     if (over !== current.over) setActive({ ...current, over });
   }, [gap, fallbackHeight]);
+
+  useEffect(() => {
+    return () => {
+      handlers.current.onDraggingChange?.(false);
+    };
+  }, []);
 
   const onDragEnd = useCallback(() => {
     const current = activeRef.current;

@@ -22,6 +22,9 @@ import {
   useDeleteDailyTask,
   useReorderDailyTasks,
   useConvertToBucket,
+  useMoveTasksToDate,
+  useCompleteMultipleDailyTasks,
+  useDeleteMultipleDailyTasks,
 } from '@/hooks/useDailyTasks';
 import {
   useDailyTags,
@@ -49,6 +52,10 @@ import { sortDailyTasks, groupDailyTasksByTag } from '../utils/dailyTaskSorting'
 
 export function useDailyTasksState() {
   const [timeView, setTimeView] = useState<TimeView>('today');
+  const handleSetTimeView = useCallback((v: TimeView) => {
+    setTimeView(v);
+    setDragging(false);
+  }, []);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selectedTagFilters, setSelectedTagFilters] = useState<string[]>([]);
   const [showTagFilterSheet, setShowTagFilterSheet] = useState(false);
@@ -215,6 +222,9 @@ export function useDailyTasksState() {
   const deleteMutation = useDeleteDailyTask();
   const reorderMutation = useReorderDailyTasks();
   const convertToBucketMutation = useConvertToBucket();
+  const moveTasksToDateMutation = useMoveTasksToDate();
+  const completeMultipleMutation = useCompleteMultipleDailyTasks();
+  const deleteMultipleMutation = useDeleteMultipleDailyTasks();
 
   const todayStr = useMemo(() => toDateString(new Date()), []);
 
@@ -314,6 +324,7 @@ export function useDailyTasksState() {
   const completedList = useMemo(() => {
     return filteredByTagAndStatus.filter((t) => {
       if (!t.is_completed) return false;
+      if (t.is_favorite) return true;
       const taskDate = t.due_date || todayStr;
       const completedToday = t.completed_at ? t.completed_at.startsWith(todayStr) : false;
       return taskDate === todayStr || completedToday;
@@ -462,6 +473,31 @@ export function useDailyTasksState() {
   };
 
   const handleToggleFavorite = (task: DailyTask) => {
+    if (task.is_favorite) {
+      const compDate = task.completed_at ? format(new Date(task.completed_at), 'yyyy-MM-dd') : null;
+      const isExpired =
+        task.is_completed &&
+        ((compDate !== null && compDate < todayStr) || (Boolean(task.due_date) && task.due_date! < todayStr));
+
+      if (isExpired) {
+        Alert.alert(
+          '¿Quitar de favoritos?',
+          'Esta tarea ya está completada y caducó hace más de un día. Si la quitas de favoritos, se eliminará para siempre.',
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            {
+              text: 'Eliminar para siempre',
+              style: 'destructive',
+              onPress: () => {
+                deleteMutation.mutate(task.id);
+              },
+            },
+          ]
+        );
+        return;
+      }
+    }
+
     updateMutation.mutate({
       id: task.id,
       updates: { is_favorite: !task.is_favorite },
@@ -566,6 +602,35 @@ export function useDailyTasksState() {
   };
 
   const handleToggleEditFavorite = () => {
+    if (!editingTask) return;
+
+    if (editIsFavorite) {
+      const compDate = editingTask.completed_at ? format(new Date(editingTask.completed_at), 'yyyy-MM-dd') : null;
+      const isExpired =
+        (editingTask.is_completed || editIsCompleted) &&
+        ((compDate !== null && compDate < todayStr) ||
+          (Boolean(editingTask.due_date || editDueDate) && (editingTask.due_date || editDueDate) < todayStr));
+
+      if (isExpired) {
+        Alert.alert(
+          '¿Quitar de favoritos?',
+          'Esta tarea ya está completada y caducó hace más de un día. Si la quitas de favoritos, se eliminará para siempre.',
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            {
+              text: 'Eliminar para siempre',
+              style: 'destructive',
+              onPress: () => {
+                deleteMutation.mutate(editingTask.id);
+                handleCloseEditModal();
+              },
+            },
+          ]
+        );
+        return;
+      }
+    }
+
     const nextFav = !editIsFavorite;
     setEditIsFavorite(nextFav);
     autoSaveTask({ is_favorite: nextFav });
@@ -804,9 +869,40 @@ export function useDailyTasksState() {
     });
   };
 
+  const handleMoveAllOverdueToToday = () => {
+    if (overdueTasks.length === 0) return;
+    moveTasksToDateMutation.mutate({
+      ids: overdueTasks.map((t) => t.id),
+      date: todayStr,
+    });
+  };
+
+  const handleCompleteAllOverdue = () => {
+    if (overdueTasks.length === 0) return;
+    completeMultipleMutation.mutate(overdueTasks);
+  };
+
+  const handleDeleteAllOverdue = () => {
+    if (overdueTasks.length === 0) return;
+    Alert.alert(
+      'Borrar tareas atrasadas',
+      `¿Estás seguro de que quieres eliminar las ${overdueTasks.length} tareas atrasadas? Esta acción no se puede deshacer.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar todas',
+          style: 'destructive',
+          onPress: () => {
+            deleteMultipleMutation.mutate(overdueTasks.map((t) => t.id));
+          },
+        },
+      ]
+    );
+  };
+
   return {
     timeView,
-    setTimeView,
+    setTimeView: handleSetTimeView,
     statusFilter,
     setStatusFilter,
     selectedTagFilters,
@@ -952,5 +1048,8 @@ export function useDailyTasksState() {
     handleReorder,
     dragging,
     handleDraggingChange,
+    handleMoveAllOverdueToToday,
+    handleCompleteAllOverdue,
+    handleDeleteAllOverdue,
   };
 }

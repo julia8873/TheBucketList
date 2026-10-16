@@ -21,6 +21,7 @@ import {
 import { ThemeProvider, ToastProvider } from '@bucketlist/ui';
 import { useThemeStore, hydrateThemeStore } from '../src/stores/theme.store';
 import { hydrateLanguageStore } from '../src/stores/language.store';
+import { hydrateHapticsStore } from '../src/stores/haptics.store';
 import { useAuthStore } from '../src/stores/auth.store';
 import { supabase } from '../src/services/supabase';
 import { useAutoRefresh } from '../src/hooks/useAutoRefresh';
@@ -56,6 +57,7 @@ export default function RootLayout() {
       try {
         await hydrateThemeStore();
         await hydrateLanguageStore();
+        await hydrateHapticsStore();
         await Font.loadAsync({
           Inter_400Regular,
           Inter_500Medium,

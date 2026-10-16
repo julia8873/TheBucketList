@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, FlatList, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -38,6 +38,13 @@ export default function PublicProfileScreen() {
   const [albumFilter, setAlbumFilter] = useState<AlbumFilter>('all');
 
   const isOwnProfile = !!user && user.id === id;
+
+  useEffect(() => {
+    if (user && id && user.id === id) {
+      router.replace('/(tabs)/profile' as any);
+    }
+  }, [user, id, router]);
+
   const followUser = useFollowUser();
   const unfollowUser = useUnfollowUser();
 

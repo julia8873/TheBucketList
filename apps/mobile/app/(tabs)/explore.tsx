@@ -116,18 +116,15 @@ export default function DailyTasksScreen() {
         {/* Content Area */}
         <ScrollView
           style={styles.listScroll}
-          contentContainerStyle={styles.listContent}
-          scrollEnabled={!state.dragging}
+          contentContainerStyle={[styles.listContent, { flexGrow: 1 }]}
+          nestedScrollEnabled={true}
           refreshControl={
-            state.dragging ? undefined : (
-              <RefreshControl
-                refreshing={state.manualRefreshing}
-                onRefresh={state.handleRefresh}
-                tintColor={gold[400]}
-                colors={[gold[400]]}
-                enabled={!state.dragging}
-              />
-            )
+            <RefreshControl
+              refreshing={state.manualRefreshing}
+              onRefresh={state.handleRefresh}
+              tintColor={gold[400]}
+              colors={[gold[400]]}
+            />
           }
           keyboardShouldPersistTaps="handled"
         >
@@ -169,6 +166,9 @@ export default function DailyTasksScreen() {
                     renderOverdueTaskRow={renderOverdueTaskRow}
                     onReorder={state.handleReorder}
                     onDraggingChange={state.handleDraggingChange}
+                    onMoveAllToToday={state.handleMoveAllOverdueToToday}
+                    onCompleteAll={state.handleCompleteAllOverdue}
+                    onDeleteAll={state.handleDeleteAllOverdue}
                   />
 
                   {state.todayTasks.length === 0 ? (
@@ -215,7 +215,11 @@ export default function DailyTasksScreen() {
                       <View style={styles.completedSectionHeader}>
                         <CheckCircle2 size={14} color="#34C759" />
                         <Typography style={styles.completedSectionTitle}>
-                          Completadas hoy ({state.completedList.length})
+                          {state.completedList.some(
+                            (t) => t.completed_at && !t.completed_at.startsWith(state.todayStr)
+                          )
+                            ? `Completadas (${state.completedList.length})`
+                            : `Completadas hoy (${state.completedList.length})`}
                         </Typography>
                       </View>
                       <View style={styles.compactListCard}>
@@ -246,6 +250,9 @@ export default function DailyTasksScreen() {
                       renderOverdueTaskRow={renderOverdueTaskRow}
                       onReorder={state.handleReorder}
                       onDraggingChange={state.handleDraggingChange}
+                      onMoveAllToToday={state.handleMoveAllOverdueToToday}
+                      onCompleteAll={state.handleCompleteAllOverdue}
+                      onDeleteAll={state.handleDeleteAllOverdue}
                     />
                   )}
                   renderTaskRow={renderTaskRow}

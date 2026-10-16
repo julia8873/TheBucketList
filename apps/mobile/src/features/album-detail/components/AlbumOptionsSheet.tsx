@@ -254,8 +254,8 @@ export function AlbumOptionsSheet({
               </View>
               <View style={styles.sheetOptions}>
                 {[
-                  { key: 'public', label: 'Público', sub: 'Cualquier persona puede ver este álbum', icon: <Globe color="#D4B13A" size={20} /> },
-                  { key: 'followers', label: 'Solo amigos', sub: 'Solo tus amigos aceptados pueden verlo', icon: <Users color="#D4B13A" size={20} /> },
+                  { key: 'public', label: 'Público', sub: 'Cualquier persona puede ver este álbum', icon: <Eye color="#D4B13A" size={20} /> },
+                  { key: 'followers', label: 'Seguidores', sub: 'Solo tus seguidores pueden verlo', icon: <Users color="#D4B13A" size={20} /> },
                   { key: 'private', label: 'Privado', sub: 'Solo tú y los colaboradores podéis verlo', icon: <Lock color="#D4B13A" size={20} /> },
                 ].map((opt) => (
                   <Pressable

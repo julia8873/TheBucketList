@@ -90,9 +90,10 @@ export const dailyTasksService = {
         subtasks: Array.isArray(t.subtasks) ? t.subtasks : [],
         priority: (t.priority || 'medium') as DailyTaskPriority,
       }))
-      // Filtrar por si acaso alguna completada de hace más de un día aún no se borró
+      // Filtrar por si acaso alguna completada de hace más de un día aún no se borró (las favoritas nunca se borran)
       .filter((t) => {
         if (!t.is_completed) return true;
+        if (t.is_favorite) return true;
         if (!t.completed_at) return true;
         const compDate = format(new Date(t.completed_at), 'yyyy-MM-dd');
         return compDate >= todayStr;
@@ -119,6 +120,7 @@ export const dailyTasksService = {
       if (!completedTasks || completedTasks.length === 0) return;
 
       const oldCompleted = completedTasks.filter((t) => {
+        if (t.is_favorite) return false;
         if (!t.completed_at) return false;
         const compDate = format(new Date(t.completed_at), 'yyyy-MM-dd');
         return compDate < todayStr;
@@ -352,6 +354,15 @@ export const dailyTasksService = {
   },
 
   async deleteTask(id: string): Promise<void> {
+    try {
+      const cached = await AsyncStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        const list: DailyTask[] = JSON.parse(cached);
+        const filtered = list.filter((t) => t.id !== id);
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+      }
+    } catch {}
+
     const { error } = await supabase
       .from('daily_tasks')
       .delete()
@@ -388,12 +399,75 @@ export const dailyTasksService = {
     await Promise.all(updates);
   },
 
+  async moveTasksToDate(ids: string[], date: string): Promise<void> {
+    if (!ids.length) return;
+    try {
+      const cached = await AsyncStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        const list: DailyTask[] = JSON.parse(cached);
+        const updated = list.map((t) => (ids.includes(t.id) ? { ...t, due_date: date } : t));
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      }
+    } catch {}
+
+    const { error } = await supabase
+      .from('daily_tasks')
+      .update({ due_date: date })
+      .in('id', ids);
+
+    if (error) throw error;
+  },
+
+  async completeTasks(tasks: DailyTask[]): Promise<void> {
+    if (!tasks.length) return;
+    const nowIso = new Date().toISOString();
+    const ids = tasks.map((t) => t.id);
+
+    try {
+      const cached = await AsyncStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        const list: DailyTask[] = JSON.parse(cached);
+        const updated = list.map((t) =>
+          ids.includes(t.id) ? { ...t, is_completed: true, completed_at: nowIso } : t
+        );
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      }
+    } catch {}
+
+    const { error } = await supabase
+      .from('daily_tasks')
+      .update({ is_completed: true, completed_at: nowIso })
+      .in('id', ids);
+
+    if (error) throw error;
+  },
+
+  async deleteTasks(ids: string[]): Promise<void> {
+    if (!ids.length) return;
+    try {
+      const cached = await AsyncStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        const list: DailyTask[] = JSON.parse(cached);
+        const filtered = list.filter((t) => !ids.includes(t.id));
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+      }
+    } catch {}
+
+    const { error } = await supabase
+      .from('daily_tasks')
+      .delete()
+      .in('id', ids);
+
+    if (error) throw error;
+  },
+
   async clearCompleted(userId: string, due_date?: string): Promise<void> {
     let query = supabase
       .from('daily_tasks')
       .delete()
       .eq('user_id', userId)
-      .eq('is_completed', true);
+      .eq('is_completed', true)
+      .neq('is_favorite', true);
 
     if (due_date) {
       query = query.eq('due_date', due_date);

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { Flag, Globe, Users, Lock, Check } from 'lucide-react-native';
+import { Flag, Eye, Users, Lock, Check } from 'lucide-react-native';
 import { styles } from '../styles/album-form.styles';
 import { SectionTitle } from './SectionTitle';
 import type { AlbumPriority, AlbumVisibility } from '../types';
@@ -63,7 +63,7 @@ export function AlbumMetaSettingsSection({
             onPress={() => onChangeVisibility('public')}
           >
             <View style={[styles.visibilityIconBox, visibility === 'public' && styles.visibilityIconBoxActive]}>
-              <Globe color={visibility === 'public' ? '#D4B13A' : '#8F8F8F'} size={20} strokeWidth={2} />
+              <Eye color={visibility === 'public' ? '#D4B13A' : '#8F8F8F'} size={20} strokeWidth={2} />
             </View>
             <View style={styles.visibilityTexts}>
               <Text style={[styles.visibilityTitle, visibility === 'public' && styles.visibilityTitleActive]}>
@@ -86,7 +86,7 @@ export function AlbumMetaSettingsSection({
             </View>
             <View style={styles.visibilityTexts}>
               <Text style={[styles.visibilityTitle, visibility === 'followers' && styles.visibilityTitleActive]}>
-                Solo amigos
+                Seguidores
               </Text>
               <Text style={styles.visibilitySubtitle}>Visible solo para tus seguidores</Text>
             </View>
