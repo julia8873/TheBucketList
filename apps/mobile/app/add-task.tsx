@@ -302,7 +302,6 @@ export default function AddTaskScreen() {
             const isSelected = selectedIds.has(task.id);
             const thumbGradient = GRADIENTS[task.coverKey as keyof typeof GRADIENTS] || GRADIENTS.aurora;
             const isDiagonal = task.coverKey === 'dorado';
-            const subTitle = [task.categoryName, task.location].filter(Boolean).join(' · ');
 
             return (
               <Pressable
@@ -333,7 +332,6 @@ export default function AddTaskScreen() {
                 </View>
                 <View style={styles.taskContent}>
                   <Text style={styles.taskTitle} numberOfLines={2}>{task.title}</Text>
-                  {subTitle ? <Text style={styles.taskSub}>{subTitle}</Text> : null}
                 </View>
                 <View style={[styles.circle, isSelected && styles.circleSelected]}>
                   {isSelected && <Check size={16} color="#0D0D0D" strokeWidth={3} />}

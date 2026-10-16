@@ -33,11 +33,11 @@ const MOCK_TASKS: UnassignedTask[] = [
 ];
 
 const DEFAULT_TASKS: UnassignedTask[] = [
-  { id: 'd1', title: 'Ver una aurora boreal', categoryName: 'Viajes', location: 'Noruega', coverKey: 'aurora' },
-  { id: 'd2', title: 'Volar en globo al amanecer', categoryName: 'Viajes', location: 'Capadocia', coverKey: 'atardecer' },
-  { id: 'd3', title: 'Dormir en un iglú', categoryName: 'Aventura', location: 'Finlandia', coverKey: 'cielo' },
-  { id: 'd4', title: 'Nadar con delfines', categoryName: 'Aventura', location: 'Azores', coverKey: 'cielo' },
-  { id: 'd5', title: 'Cenar en un faro', categoryName: 'Comida', location: 'Bretaña', coverKey: 'dorado' },
+  { id: 'd1', title: 'Ver una aurora boreal', categoryName: 'Viajes', coverKey: 'aurora' },
+  { id: 'd2', title: 'Volar en globo al amanecer', categoryName: 'Viajes', coverKey: 'atardecer' },
+  { id: 'd3', title: 'Dormir en un iglú', categoryName: 'Aventura', coverKey: 'cielo' },
+  { id: 'd4', title: 'Nadar con delfines', categoryName: 'Aventura', coverKey: 'cielo' },
+  { id: 'd5', title: 'Cenar en un faro', categoryName: 'Comida', coverKey: 'dorado' },
 ];
 
 export const defaultTasks: UnassignedTask[] = DEFAULT_TASKS.map((t) => ({ ...t, isDefault: true }));
@@ -184,7 +184,7 @@ export const tasksService = {
       return {
         user_id: userAuth.user.id,
         title: dt.title,
-        location_text: dt.location || null,
+        location_text: null,
         category_id: categoryId,
         status: 'pending' as const,
         visibility: 'public' as const,

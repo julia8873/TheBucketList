@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { useTheme } from '@bucketlist/ui';
-import { Home, ShoppingBag, Compass, User } from 'lucide-react-native';
+import { Home, ShoppingBag, ListTodo, User } from 'lucide-react-native';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { registerForPushNotificationsAsync } from '../../src/services/notifications';
 import { useTranslation } from 'react-i18next';
@@ -62,7 +62,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="explore"
         options={{
-          title: t('nav.explore'),
+          title: 'Día a día',
           tabBarIcon: ({ color, focused }) => (
             <View style={{ alignItems: 'center' }}>
               {focused && (
@@ -73,14 +73,14 @@ export default function TabsLayout() {
                   top: Platform.OS === 'ios' ? -10 : -10,
                 }} />
               )}
-              <Compass
+              <ListTodo
                 color={color}
                 size={24}
                 strokeWidth={1.8}
               />
             </View>
           ),
-          tabBarAccessibilityLabel: t('nav.explore'),
+          tabBarAccessibilityLabel: 'Día a día',
         }}
       />
       <Tabs.Screen

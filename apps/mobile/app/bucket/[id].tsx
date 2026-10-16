@@ -493,7 +493,7 @@ export default function BucketDetailScreen() {
     if (status !== 'completed') {
       patch.completed_at = null;
     } else {
-      patch.completed_at = new Date().toISOString();
+      patch.completed_at = bucket?.completed_at || new Date().toISOString();
     }
     queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, ...patch } : oldData);
     const { error } = await supabase
@@ -1756,12 +1756,21 @@ export default function BucketDetailScreen() {
         onClose={() => setDatePickerConfig(null)}
         onChangeDate={async (date, type) => {
           setDatePickerConfig(null);
-          const patch: Record<string, any> = { [type]: date.toISOString() };
-          if (type === 'completed_at' && bucket.status !== 'completed') {
+          const safeDate = new Date(date);
+          safeDate.setHours(12, 0, 0, 0);
+          const isoString = safeDate.toISOString();
+
+          const patch: Record<string, any> = { [type]: isoString };
+          if (type === 'completed_at') {
             patch.status = 'completed';
           }
-          queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, ...patch } : oldData);
-          await supabase.from('buckets').update(patch).eq('id', id);
+          queryClient.setQueryData(['bucketDetail', id], (oldData: any) =>
+            oldData ? { ...oldData, ...patch } : oldData
+          );
+          const { error } = await supabase.from('buckets').update(patch).eq('id', id);
+          if (error) {
+            Alert.alert('No se pudo guardar la fecha', error.message);
+          }
           void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
           void queryClient.invalidateQueries({ queryKey: ['buckets'] });
           void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
