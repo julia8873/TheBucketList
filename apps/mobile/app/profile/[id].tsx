@@ -1,43 +1,31 @@
 import React, { useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, Lock, MoreHorizontal } from 'lucide-react-native';
+import { ChevronLeft, MoreHorizontal } from 'lucide-react-native';
 import {
-  Avatar,
   EmptyState,
   FilterChip,
   SectionLabel,
   SegmentedControl,
-  AlbumCard,
-  fontFamily,
-  gold,
   useTheme,
 } from '@bucketlist/ui';
-import { supabase } from '../../src/services/supabase';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { usePullToRefresh } from '../../src/hooks/useAutoRefresh';
 import { useProfileStats } from '../../src/hooks/useFriends';
 import { useFollowUser, useUnfollowUser } from '../../src/hooks/useSocial';
 import { useUserFavorites, useToggleFavoriteAlbum } from '../../src/hooks/useFavorites';
-import type { AlbumWithProgress } from '../../src/hooks/useAlbums';
-import { FollowButton } from '../../src/components/FollowButton';
 import { ProfileSkeleton, TaskRowSkeleton } from '../../src/components/TaskSkeletons';
 import { PublicTaskRow } from '../../src/components/PublicTaskRow';
-import { displayNameOf, initialsOf } from '../../src/utils/initials';
+import { displayNameOf } from '../../src/utils/initials';
+
+import { styles } from '../../src/features/public-profile/styles/profile.styles';
+import { usePublicProfileData } from '../../src/features/public-profile/hooks/usePublicProfileData';
+import { ProfileBioAndStats } from '../../src/features/public-profile/components/ProfileBioAndStats';
+import { ProfileLockedState } from '../../src/features/public-profile/components/ProfileLockedState';
+import { ProfileAlbumsTab, type AlbumFilter } from '../../src/features/public-profile/components/ProfileAlbumsTab';
 
 type Filter = 'all' | 'active' | 'completed';
-type AlbumFilter = 'all' | 'active' | 'completed' | 'closed';
-
-function Stat({ value, label, divider }: { value: number | string; label: string; divider?: boolean }) {
-  return (
-    <View style={[styles.stat, divider && styles.statDivider]}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
 
 export default function PublicProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -56,196 +44,25 @@ export default function PublicProfileScreen() {
   const { isAlbumFavorite } = useUserFavorites(user?.id);
   const toggleFavoriteAlbum = useToggleFavoriteAlbum();
 
-  const { data: profile, isLoading: profileLoading } = useQuery({
-    queryKey: ['profile', id],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('profiles').select('*').eq('id', id).single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id,
-  });
-
   const { data: stats, isLoading: statsLoading } = useProfileStats(id);
   const followStatus = stats?.follow_status ?? 'none';
   const isLocked = !isOwnProfile && !!stats?.is_locked;
+
+  const {
+    profile,
+    profileLoading,
+    buckets,
+    bucketsLoading,
+    publicAlbums,
+    albumsLoading,
+  } = usePublicProfileData({
+    id,
+    isOwnProfile,
+    isLocked,
+    followStatus,
+  });
+
   const isPrivate = profile?.visibility === 'private';
-
-  // RLS decide qué tareas se ven (públicas; "solo seguidores" si ya me sigue aceptado).
-  const { data: buckets, isLoading: bucketsLoading } = useQuery({
-    queryKey: ['buckets', 'public', id, followStatus],
-    queryFn: async () => {
-      const baseSelect = `
-        *,
-        category:categories(slug, name_es),
-        item_subtasks(done),
-        bucket_photos(id, storage_path, thumb_path, created_at)
-      `;
-
-      // 1. Tareas creadas por el usuario
-      let ownQuery = supabase
-        .from('buckets')
-        .select(baseSelect)
-        .eq('user_id', id)
-        .neq('status', 'archived')
-        .order('created_at', { ascending: false });
-
-      if (!isOwnProfile) {
-        ownQuery = ownQuery.neq('visibility', 'private');
-      }
-
-      // 1. Initial queries in parallel: own buckets, collaborative IDs, and shared album IDs
-      const [ownRes, collabRowsRes, memberAlbumsRes] = await Promise.all([
-        ownQuery,
-        supabase
-          .from('bucket_collaborators')
-          .select('bucket_id')
-          .eq('user_id', id)
-          .eq('status', 'accepted'),
-        supabase
-          .from('album_members')
-          .select('album_id')
-          .eq('user_id', id)
-          .eq('status', 'accepted'),
-      ]);
-
-      if (ownRes.error) throw ownRes.error;
-      const ownData = ownRes.data ?? [];
-
-      const collabIds = (collabRowsRes.data ?? []).map((c: any) => c.bucket_id);
-      const memberAlbumIds = (memberAlbumsRes.data ?? []).map((m: any) => m.album_id);
-
-      // 2. Fetch collaborative buckets and album item IDs in parallel
-      let sharedQuery = supabase
-        .from('buckets')
-        .select(baseSelect)
-        .in('id', collabIds.length > 0 ? collabIds : ['00000000-0000-0000-0000-000000000000'])
-        .neq('status', 'archived')
-        .order('created_at', { ascending: false });
-
-      if (!isOwnProfile) {
-        sharedQuery = sharedQuery.neq('visibility', 'private');
-      }
-
-      const [sharedRes, albumItemRes] = await Promise.all([
-        collabIds.length > 0 ? sharedQuery : Promise.resolve({ data: [] }),
-        memberAlbumIds.length > 0
-          ? supabase.from('album_items').select('bucket_id').in('album_id', memberAlbumIds)
-          : Promise.resolve({ data: [] }),
-      ]);
-
-      const collabBuckets = sharedRes.data ?? [];
-      const albumBucketIds = (albumItemRes.data ?? []).map((ai: any) => ai.bucket_id);
-
-      // 3. Fetch shared album buckets if any
-      let albumTasks: any[] = [];
-      if (albumBucketIds.length > 0) {
-        let albumQuery = supabase
-          .from('buckets')
-          .select(baseSelect)
-          .in('id', albumBucketIds)
-          .neq('status', 'archived')
-          .order('created_at', { ascending: false });
-
-        if (!isOwnProfile) {
-          albumQuery = albumQuery.neq('visibility', 'private');
-        }
-
-        const { data: sharedAlbumBuckets } = await albumQuery;
-        albumTasks = sharedAlbumBuckets ?? [];
-      }
-
-      const existingIds = new Set((ownData ?? []).map((b: any) => b.id));
-      const merged = [...(ownData ?? [])];
-      for (const b of collabBuckets) {
-        if (!existingIds.has(b.id)) {
-          existingIds.add(b.id);
-          merged.push(b);
-        }
-      }
-      for (const b of albumTasks) {
-        if (!existingIds.has(b.id)) {
-          existingIds.add(b.id);
-          merged.push(b);
-        }
-      }
-      return merged;
-    },
-    enabled: !!id && !!stats && !isLocked,
-  });
-
-  // Álbumes públicos del usuario
-  const { data: publicAlbums, isLoading: albumsLoading } = useQuery({
-    queryKey: ['albums', 'public', id, followStatus],
-    queryFn: async (): Promise<AlbumWithProgress[]> => {
-      if (!id) return [];
-
-      // 1. Álbumes donde el usuario es el dueño y no son privados
-      const { data: ownAlbums, error: ownErr } = await supabase
-        .from('albums')
-        .select('*')
-        .eq('owner_id', id)
-        .neq('visibility', 'private')
-        .order('created_at', { ascending: false });
-
-      if (ownErr) throw ownErr;
-
-      // 2. Álbumes compartidos donde el usuario es colaborador aceptado y no son privados
-      let sharedAlbums: any[] = [];
-      try {
-        const { data: memberRows } = await supabase
-          .from('album_members')
-          .select('album_id')
-          .eq('user_id', id)
-          .eq('status', 'accepted');
-
-        const sharedAlbumIds = (memberRows ?? []).map((m: any) => m.album_id);
-        if (sharedAlbumIds.length > 0) {
-          const { data: memberAlbums } = await supabase
-            .from('albums')
-            .select('*')
-            .in('id', sharedAlbumIds)
-            .neq('visibility', 'private')
-            .order('created_at', { ascending: false });
-          sharedAlbums = memberAlbums ?? [];
-        }
-      } catch {
-        // Ignored
-      }
-
-      const ownIds = new Set((ownAlbums ?? []).map((a: any) => a.id));
-      const allAlbums = [
-        ...(ownAlbums ?? []),
-        ...sharedAlbums.filter((a: any) => !ownIds.has(a.id)),
-      ];
-
-      if (allAlbums.length === 0) return [];
-
-      const { data: progressData } = await supabase
-        .from('album_progress')
-        .select('*')
-        .in('album_id', allAlbums.map((a: any) => a.id));
-
-      return allAlbums.map((album: any) => {
-        const prog = progressData?.find((p: any) => p.album_id === album.id);
-        return {
-          id: album.id,
-          title: album.title,
-          description: album.description,
-          cover_path: album.cover_path,
-          visibility: album.visibility,
-          is_shared: album.is_shared,
-          priority: (album.priority || 'medium') as 'low' | 'medium' | 'high' | 'urgent',
-          is_closed: Boolean(album.is_closed),
-          closed_at: album.closed_at || null,
-          created_at: album.created_at || undefined,
-          total_tasks: prog?.total_tasks || 0,
-          completed_tasks: prog?.completed_tasks || 0,
-        };
-      });
-    },
-    enabled: !!id && !!stats && !isLocked,
-  });
 
   const filtered = useMemo(() => {
     const list = buckets ?? [];
@@ -334,57 +151,22 @@ export default function PublicProfileScreen() {
 
   const header = (
     <View>
-      <View style={styles.identity}>
-        <Avatar uri={profile.avatar_url} initials={initialsOf(profile)} size="xl" goldRing />
-        <View style={styles.identityText}>
-          <Text style={styles.name} numberOfLines={2} ellipsizeMode="tail">
-            {displayNameOf(profile)}
-          </Text>
-          <View style={styles.handleRow}>
-            <Text style={styles.handle} numberOfLines={1} ellipsizeMode="tail">@{profile.username}</Text>
-            {isPrivate ? <Lock size={13} color="#9A9A9A" strokeWidth={1.8} /> : null}
-          </View>
-        </View>
-      </View>
-
-      {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
-
-      <View style={styles.followWrap}>
-        {isOwnProfile ? (
-          <Pressable
-            onPress={() => router.push('/(modals)/edit-profile' as any)}
-            style={styles.editButton}
-            accessibilityRole="button"
-          >
-            <Text style={styles.editText}>Editar perfil</Text>
-          </Pressable>
-        ) : (
-          <FollowButton
-            size="block"
-            status={followStatus}
-            isPrivate={isPrivate}
-            loading={followUser.isPending || unfollowUser.isPending}
-            onPress={doFollow}
-          />
-        )}
-      </View>
-
-      <View style={styles.stats}>
-        <Stat value={completedCount} label="Completadas" />
-        <Stat value={isLocked ? '—' : taskCount} label="Públicas" divider />
-        <Stat value={stats?.followers_count ?? 0} label="Seguidores" divider />
-      </View>
+      <ProfileBioAndStats
+        profile={profile}
+        isOwnProfile={isOwnProfile}
+        isPrivate={isPrivate}
+        followStatus={followStatus}
+        isFollowPending={followUser.isPending || unfollowUser.isPending}
+        onFollow={doFollow}
+        onEditProfile={() => router.push('/(modals)/edit-profile' as any)}
+        completedCount={completedCount}
+        taskCount={taskCount}
+        followersCount={stats?.followers_count ?? 0}
+        isLocked={isLocked}
+      />
 
       {isLocked ? (
-        <View style={styles.locked}>
-          <Lock size={28} color={gold[400]} strokeWidth={1.6} />
-          <Text style={styles.lockedTitle}>Esta cuenta es privada</Text>
-          <Text style={styles.lockedText}>
-            {followStatus === 'pending'
-              ? 'Tu solicitud está pendiente. Verás sus tareas cuando la acepte.'
-              : `Solicita seguir a ${displayNameOf(profile)} para ver sus tareas.`}
-          </Text>
-        </View>
+        <ProfileLockedState profile={profile} followStatus={followStatus} />
       ) : (
         <>
           <View style={styles.tabsContainer}>
@@ -408,49 +190,18 @@ export default function PublicProfileScreen() {
               </View>
             </>
           ) : (
-            <>
-              <SectionLabel highlight="Álbumes" rest={`públicos · ${publicAlbums?.length ?? 0}`} style={styles.sectionLabel} />
-              <View style={styles.filters}>
-                <FilterChip label="Todos" active={albumFilter === 'all'} onPress={() => setAlbumFilter('all')} />
-                <FilterChip label="En curso" active={albumFilter === 'active'} onPress={() => setAlbumFilter('active')} />
-                <FilterChip label="Completados" active={albumFilter === 'completed'} onPress={() => setAlbumFilter('completed')} />
-                <FilterChip label="Cerrados" active={albumFilter === 'closed'} onPress={() => setAlbumFilter('closed')} />
-              </View>
-              {albumsLoading ? (
-                <ActivityIndicator style={{ marginTop: 24 }} color={gold[400]} />
-              ) : filteredAlbums.length === 0 ? (
-                <Text style={styles.empty}>
-                  {albumFilter === 'all' ? 'Todavía no hay álbumes públicos que mostrar.' : 'No hay álbumes en este filtro.'}
-                </Text>
-              ) : (
-                <View style={styles.albumGrid}>
-                  {filteredAlbums.map((item, idx) => (
-                    <AlbumCard
-                      key={item.id}
-                      title={item.title}
-                      totalTasks={item.total_tasks ?? 0}
-                      completedTasks={item.completed_tasks ?? 0}
-                      coverUri={item.cover_path}
-                      isShared={item.is_shared}
-                      isFavorite={isAlbumFavorite(item.id)}
-                      onToggleFavorite={
-                        user
-                          ? () =>
-                              toggleFavoriteAlbum.mutate({
-                                albumId: item.id,
-                                currentlyFavorite: isAlbumFavorite(item.id),
-                              })
-                          : undefined
-                      }
-                      priority={item.priority}
-                      isClosed={item.is_closed}
-                      colorIndex={idx}
-                      onPress={() => router.push(`/album/${item.id}` as any)}
-                    />
-                  ))}
-                </View>
-              )}
-            </>
+            <ProfileAlbumsTab
+              totalCount={publicAlbums?.length ?? 0}
+              albumFilter={albumFilter}
+              onChangeFilter={setAlbumFilter}
+              albumsLoading={albumsLoading}
+              filteredAlbums={filteredAlbums}
+              isAlbumFavorite={isAlbumFavorite}
+              onToggleFavoriteAlbum={(albumId, isFav) => {
+                toggleFavoriteAlbum.mutate({ albumId, currentlyFavorite: isFav });
+              }}
+              hasUser={!!user}
+            />
           )}
         </>
       )}
@@ -504,79 +255,3 @@ export default function PublicProfileScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  center: { justifyContent: 'center', alignItems: 'center' },
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 6,
-  },
-  circleButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#141414',
-    borderWidth: 1,
-    borderColor: '#2A2A2A',
-  },
-  listContent: { paddingHorizontal: 20, paddingBottom: 48 },
-  tabsContainer: { marginTop: 22, marginBottom: 4 },
-  albumGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginTop: 6,
-    marginBottom: 20,
-  },
-  identity: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 14 },
-  identityText: { flex: 1, gap: 3 },
-  name: { fontFamily: fontFamily.serifBold, fontSize: 19, lineHeight: 24, color: '#FFFFFF', letterSpacing: -0.2 },
-  handleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  handle: { fontFamily: fontFamily.regular, fontSize: 13, color: '#9A9A9A' },
-  bio: { fontFamily: fontFamily.regular, fontSize: 14, lineHeight: 20, color: '#E5E5E5', marginTop: 14 },
-  followWrap: { marginTop: 18 },
-  editButton: {
-    height: 46,
-    borderRadius: 23,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#2A2A2A',
-    backgroundColor: '#161616',
-  },
-  editText: { fontFamily: fontFamily.semibold, fontSize: 14, color: '#E5E5E5' },
-  stats: {
-    flexDirection: 'row',
-    marginTop: 22,
-    paddingVertical: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: '#2A2A2A',
-  },
-  stat: { flex: 1, alignItems: 'center', gap: 2 },
-  statDivider: { borderLeftWidth: 1, borderLeftColor: '#2A2A2A' },
-  statValue: { fontFamily: fontFamily.serifBold, fontSize: 24, color: '#FFFFFF' },
-  statLabel: { fontFamily: fontFamily.regular, fontSize: 13, color: '#9A9A9A' },
-  sectionLabel: { marginTop: 24 },
-  filters: { flexDirection: 'row', gap: 10, marginTop: 14, marginBottom: 16, flexWrap: 'wrap' },
-  empty: { fontFamily: fontFamily.regular, fontSize: 14, color: '#9A9A9A', textAlign: 'center', marginTop: 24 },
-  locked: {
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 28,
-    padding: 24,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#2A2A2A',
-    backgroundColor: '#141414',
-  },
-  lockedTitle: { fontFamily: fontFamily.serif, fontSize: 20, color: '#FFFFFF' },
-  lockedText: { fontFamily: fontFamily.regular, fontSize: 14, lineHeight: 20, color: '#CFCFCF', textAlign: 'center' },
-});

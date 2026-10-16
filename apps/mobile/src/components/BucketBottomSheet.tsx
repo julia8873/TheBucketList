@@ -3,7 +3,7 @@ import { Modal, View, Pressable, Animated, ActivityIndicator, Alert, StyleSheet,
 import { Typography } from '@bucketlist/ui';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { X, Camera, FolderPlus, ListPlus, Trash2, Circle, MoreHorizontal, CheckCircle2, Check, Eye, Users, Lock, ArrowLeft, FolderOpen, Image as ImageIcon, Tag, LogOut, Flag, Star } from 'lucide-react-native';
-import { styles } from '../../app/bucket/BucketDetail.styles';
+import { styles } from '@/features/bucket-detail/styles/bucket-detail.styles';
 
 type BucketBottomSheetProps = {
   sheetVisible: boolean;

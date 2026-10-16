@@ -1,210 +1,60 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React from 'react';
 import {
-  View, Text, StyleSheet, Pressable, TextInput, ScrollView,
-  Alert, ActivityIndicator, KeyboardAvoidingView, Platform
+  View,
+  Text,
+  Pressable,
+  TextInput,
+  ScrollView,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, Folder, Search, Check, Plus, Tag as TagIcon, X } from 'lucide-react-native';
-import { useQueryClient } from '@tanstack/react-query';
+import { ChevronLeft, Folder, Search, Plus } from 'lucide-react-native';
 import { PageTitle } from '@bucketlist/ui';
-import { BucketCover } from '../src/components/BucketCover';
-import { useUnassignedTasks, useAssignTasks, useCreateTasksFromDefaults, defaultTasks, UnassignedTask } from '../src/services/api/tasksService';
-import { useTags, useTagUsage, type Tag } from '../src/hooks/useTags';
 import { TagFilterSheet } from '../src/components/TagFilterSheet';
-import { hexToRgba } from '../src/constants/tagPresets';
-import { gold } from '@bucketlist/ui/src/tokens/colors';
 
-const GRADIENTS = {
-  aurora: ['#0E4B43', '#1F8560'] as const,
-  atardecer: ['#F4A460', '#C8602F'] as const,
-  cielo: ['#3A78C4', '#8CC8F4'] as const,
-  violeta: ['#5B2F98', '#2E1A5E'] as const,
-  dorado: ['#3A2F18', '#5E4E1F'] as const,
-};
+import { styles } from '../src/features/add-task/styles/add-task.styles';
+import { AddTaskItemCard } from '../src/features/add-task/components/AddTaskItemCard';
+import { AddTaskTagFilterBar } from '../src/features/add-task/components/AddTaskTagFilterBar';
+import { AddTaskSegmentedControl } from '../src/features/add-task/components/AddTaskSegmentedControl';
+import { useAddTaskState } from '../src/features/add-task/hooks/useAddTaskState';
 
 export default function AddTaskScreen() {
-  const { albumId, albumName } = useLocalSearchParams<{ albumId: string, albumName: string }>();
+  const { albumId, albumName } = useLocalSearchParams<{ albumId: string; albumName: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const queryClient = useQueryClient();
 
-  const { data: userTasksData, isLoading, isError } = useUnassignedTasks(albumId && albumId !== 'new' ? albumId : undefined);
-  const assignMutation = useAssignTasks();
-  const createMutation = useCreateTasksFromDefaults();
-
-  const [activeTab, setActiveTab] = useState<'user' | 'default'>('user');
-  const [search, setSearch] = useState('');
-  const [tagSheetOpen, setTagSheetOpen] = useState(false);
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
-  const { data: allTags = [] } = useTags();
-  const { data: tagUsage } = useTagUsage();
-
-  const tagsById = useMemo(() => {
-    const map = new Map<string, Tag>();
-    allTags.forEach((t) => map.set(t.id, t));
-    return map;
-  }, [allTags]);
-
-  useEffect(() => {
-    if (!allTags || allTags.length === 0) return;
-    setSelectedTagIds((prev) => {
-      const next = prev.filter((id) => tagsById.has(id));
-      return next.length === prev.length ? prev : next;
-    });
-  }, [allTags, tagsById]);
-
-  const selectedTags = useMemo(
-    () => selectedTagIds.map((id) => tagsById.get(id)).filter(Boolean) as Tag[],
-    [selectedTagIds, tagsById]
-  );
-
-  const scrollViewRef = useRef<ScrollView>(null);
-
-  // Las ideas por defecto se ocultan si el usuario ya tiene una tarea con ese título
-  // (esté o no en este álbum).
-  const availableDefaultTasks = useMemo(() => {
-    if (!userTasksData) return defaultTasks;
-    const userTitles = new Set(userTasksData.map(t => t.title.toLowerCase().trim()));
-    return defaultTasks.filter(dt => !userTitles.has(dt.title.toLowerCase().trim()));
-  }, [userTasksData]);
-
-  // Solo las tareas que todavía NO están en este álbum.
-  const userTasks = useMemo(
-    () => (userTasksData ?? []).filter(t => !t.inAlbum),
-    [userTasksData],
-  );
-
-  // If user has no tasks, default to 'default' tab on initial load
-  useEffect(() => {
-    if (userTasksData && userTasks.length === 0) {
-      setActiveTab('default');
-    }
-  }, [userTasksData, userTasks.length]);
-
-  const handleTabChange = (tab: 'user' | 'default') => {
-    if (activeTab === tab) return;
-    setActiveTab(tab);
-    scrollViewRef.current?.scrollTo({ y: 0, animated: false });
-  };
-
-  const getVisibleTasks = (tasks: UnassignedTask[]) => {
-    return tasks.filter((t) => {
-      const matchSearch = t.title
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .includes(
-          search
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-        );
-      if (!matchSearch) return false;
-
-      if (selectedTagIds.length === 0) return true;
-
-      if (t.isDefault) {
-        return selectedTags.some(
-          (tag) => tag.name.toLowerCase() === t.categoryName?.toLowerCase()
-        );
-      }
-
-      const taskTagIds = tagUsage?.byItem[t.id] ?? [];
-      return selectedTagIds.some((id) => taskTagIds.includes(id));
-    });
-  };
-
-  const visibleUserTasks = useMemo(
-    () => getVisibleTasks(userTasks),
-    [userTasks, search, selectedTagIds, tagUsage, selectedTags]
-  );
-  const visibleDefaultTasks = useMemo(
-    () => getVisibleTasks(availableDefaultTasks),
-    [availableDefaultTasks, search, selectedTagIds, selectedTags]
-  );
-
-  const currentVisibleTasks = activeTab === 'user' ? visibleUserTasks : visibleDefaultTasks;
-  const currentTotal = activeTab === 'user' ? userTasks.length : availableDefaultTasks.length;
-
-  const userSelectedCount = userTasks.filter(t => selectedIds.has(t.id)).length;
-  const defaultSelectedCount = availableDefaultTasks.filter(t => selectedIds.has(t.id)).length;
-
-  const allVisibleSelected = currentVisibleTasks.length > 0 && currentVisibleTasks.every(t => selectedIds.has(t.id));
-
-  const toggleSelectAll = () => {
-    const newSet = new Set(selectedIds);
-    if (allVisibleSelected) {
-      currentVisibleTasks.forEach(t => newSet.delete(t.id));
-    } else {
-      currentVisibleTasks.forEach(t => newSet.add(t.id));
-    }
-    setSelectedIds(newSet);
-  };
-
-  const toggleTask = (id: string) => {
-    const newSet = new Set(selectedIds);
-    if (newSet.has(id)) newSet.delete(id);
-    else newSet.add(id);
-    setSelectedIds(newSet);
-  };
-
-  const handleBack = () => {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace('/(tabs)/my-list');
-    }
-  };
-
-  // Crear una tarea nueva. Si venimos de un álbum, se sustituye esta pantalla por el formulario
-  // con el álbum ya elegido: al guardar se vuelve al álbum con la tarea dentro.
-  const handleCreateTask = () => {
-    const title = search.trim();
-    const params = new URLSearchParams();
-    if (albumId && albumId !== 'new') params.set('albumId', albumId);
-    if (title) params.set('title', title);
-    const qs = params.toString();
-    const href = `/(modals)/create-bucket${qs ? `?${qs}` : ''}` as any;
-    if (albumId && albumId !== 'new') router.replace(href);
-    else router.push(href);
-  };
-
-  const handleAdd = async () => {
-    if (selectedIds.size === 0) return;
-
-    try {
-      const userSelected = userTasks.filter(t => selectedIds.has(t.id)).map(t => t.id);
-      const defaultSelected = availableDefaultTasks.filter(t => selectedIds.has(t.id)).map(t => t.id);
-
-      let newIds: string[] = [];
-      if (defaultSelected.length > 0) {
-        newIds = await createMutation.mutateAsync(defaultSelected);
-      }
-
-      await queryClient.invalidateQueries({ queryKey: ['buckets'] });
-      await queryClient.invalidateQueries({ queryKey: ['unassigned_tasks'] });
-
-      if (!albumId || albumId === 'new') {
-        handleBack();
-        return;
-      }
-
-      await assignMutation.mutateAsync({ albumId, taskIds: [...userSelected, ...newIds] });
-      handleBack();
-    } catch (err) {
-      Alert.alert('Error', 'No se pudieron añadir las tareas');
-    }
-  };
+  const {
+    activeTab,
+    handleTabChange,
+    search,
+    setSearch,
+    tagSheetOpen,
+    setTagSheetOpen,
+    selectedTagIds,
+    setSelectedTagIds,
+    selectedTags,
+    selectedIds,
+    isLoading,
+    currentVisibleTasks,
+    currentTotal,
+    userSelectedCount,
+    defaultSelectedCount,
+    allVisibleSelected,
+    toggleSelectAll,
+    toggleTask,
+    handleBack,
+    handleCreateTask,
+    handleAdd,
+    isPending,
+    scrollViewRef,
+  } = useAddTaskState(albumId);
 
   let btnText = 'Añadir tareas';
   if (selectedIds.size === 1) btnText = 'Añadir 1 tarea';
   else if (selectedIds.size > 1) btnText = `Añadir ${selectedIds.size} tareas`;
-
-  const isPending = assignMutation.isPending || createMutation.isPending;
 
   return (
     <KeyboardAvoidingView
@@ -238,7 +88,7 @@ export default function AddTaskScreen() {
         <Search size={22} color="#8F8F8F" strokeWidth={1.8} />
         <TextInput
           style={styles.searchInput}
-          placeholder={activeTab === 'user' ? "Buscar en tus tareas" : "Buscar ideas por defecto"}
+          placeholder={activeTab === 'user' ? 'Buscar en tus tareas' : 'Buscar ideas por defecto'}
           placeholderTextColor="#8F8F8F"
           value={search}
           onChangeText={setSearch}
@@ -259,101 +109,20 @@ export default function AddTaskScreen() {
       </Pressable>
 
       {/* Segmented Control */}
-      <View style={styles.segmentedControl}>
-        <Pressable
-          accessibilityRole="tab"
-          accessibilityState={{ selected: activeTab === 'user' }}
-          style={[styles.segmentBtn, activeTab === 'user' && styles.segmentBtnActive]}
-          onPress={() => handleTabChange('user')}
-        >
-          <Text style={[styles.segmentText, activeTab === 'user' && styles.segmentTextActive]}>
-            Tus tareas
-          </Text>
-          {userSelectedCount > 0 && (
-            <View style={[styles.badge, activeTab === 'user' ? styles.badgeActive : styles.badgeInactive]}>
-              <Text style={[styles.badgeText, activeTab === 'user' ? styles.badgeTextActive : styles.badgeTextInactive]}>
-                {userSelectedCount}
-              </Text>
-            </View>
-          )}
-        </Pressable>
-
-        <Pressable
-          accessibilityRole="tab"
-          accessibilityState={{ selected: activeTab === 'default' }}
-          style={[styles.segmentBtn, activeTab === 'default' && styles.segmentBtnActive]}
-          onPress={() => handleTabChange('default')}
-        >
-          <Text style={[styles.segmentText, activeTab === 'default' && styles.segmentTextActive]}>
-            Por defecto
-          </Text>
-          {defaultSelectedCount > 0 && (
-            <View style={[styles.badge, activeTab === 'default' ? styles.badgeActive : styles.badgeInactive]}>
-              <Text style={[styles.badgeText, activeTab === 'default' ? styles.badgeTextActive : styles.badgeTextInactive]}>
-                {defaultSelectedCount}
-              </Text>
-            </View>
-          )}
-        </Pressable>
-      </View>
+      <AddTaskSegmentedControl
+        activeTab={activeTab}
+        onChangeTab={handleTabChange}
+        userSelectedCount={userSelectedCount}
+        defaultSelectedCount={defaultSelectedCount}
+      />
 
       {/* Tags Filter Row */}
-      <View style={styles.tagFilterRow}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={styles.tagFilterScroll}
-        >
-          <Pressable
-            onPress={() => setTagSheetOpen(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Filtrar por etiquetas"
-            style={[styles.tagFilterBtn, selectedTagIds.length > 0 && styles.tagFilterBtnActive]}
-          >
-            <TagIcon
-              size={15}
-              color={selectedTagIds.length > 0 ? gold[400] : '#E5E5E5'}
-              strokeWidth={1.9}
-            />
-            <Text
-              style={[
-                styles.tagFilterText,
-                selectedTagIds.length > 0 && { color: gold[400] },
-              ]}
-            >
-              {selectedTagIds.length > 0 ? `Etiquetas · ${selectedTagIds.length}` : 'Etiquetas'}
-            </Text>
-          </Pressable>
-
-          {selectedTags.map((t) => (
-            <Pressable
-              key={t.id}
-              onPress={() => setSelectedTagIds((ids) => ids.filter((id) => id !== t.id))}
-              accessibilityRole="button"
-              accessibilityLabel={`Quitar etiqueta ${t.name}`}
-              style={styles.activeTagChip}
-            >
-              {t.emoji ? (
-                <View
-                  style={[
-                    styles.activeTagEmoji,
-                    { backgroundColor: hexToRgba(t.color, 0.3) },
-                  ]}
-                >
-                  <Text style={styles.activeTagEmojiText}>{t.emoji}</Text>
-                </View>
-              ) : (
-                <View style={[styles.activeTagDot, { backgroundColor: t.color }]} />
-              )}
-              <Text style={styles.activeTagText} numberOfLines={1}>
-                {t.name}
-              </Text>
-              <X size={14} color="#E5E5E5" strokeWidth={2} />
-            </Pressable>
-          ))}
-        </ScrollView>
-      </View>
+      <AddTaskTagFilterBar
+        selectedTagIds={selectedTagIds}
+        selectedTags={selectedTags}
+        onOpenSheet={() => setTagSheetOpen(true)}
+        onRemoveTag={(tagId) => setSelectedTagIds((ids) => ids.filter((id) => id !== tagId))}
+      />
 
       {/* Count Row */}
       <View style={styles.countRow}>
@@ -379,50 +148,19 @@ export default function AddTaskScreen() {
           <ActivityIndicator color="#D4B13A" style={{ marginTop: 40 }} />
         ) : currentVisibleTasks.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No hay más tareas disponibles (o todas se encuentran en el álbum). Puedes crear una tarea nueva con el botón de arriba.</Text>
+            <Text style={styles.emptyText}>
+              No hay más tareas disponibles (o todas se encuentran en el álbum). Puedes crear una tarea nueva con el botón de arriba.
+            </Text>
           </View>
         ) : (
-          currentVisibleTasks.map(task => {
-            const isSelected = selectedIds.has(task.id);
-            const thumbGradient = GRADIENTS[task.coverKey as keyof typeof GRADIENTS] || GRADIENTS.aurora;
-            const isDiagonal = task.coverKey === 'dorado';
-
-            return (
-              <Pressable
-                key={task.id}
-                accessibilityRole="checkbox"
-                accessibilityState={{ checked: isSelected }}
-                style={[styles.taskCard, isSelected && styles.taskCardSelected]}
-                onPress={() => toggleTask(task.id)}
-              >
-                <View style={styles.taskThumbContainer}>
-                  {task.isDefault ? (
-                    <LinearGradient
-                      colors={thumbGradient}
-                      start={isDiagonal ? { x: 0, y: 0 } : { x: 0.5, y: 0 }}
-                      end={isDiagonal ? { x: 1, y: 1 } : { x: 0.5, y: 1 }}
-                      style={styles.taskThumb}
-                    />
-                  ) : (
-                    <BucketCover
-                      value={task.imageValue ?? null}
-                      title={task.title}
-                      categorySlug={task.categorySlug}
-                      seed={task.id}
-                      iconSize={56}
-                      style={styles.taskThumb}
-                    />
-                  )}
-                </View>
-                <View style={styles.taskContent}>
-                  <Text style={styles.taskTitle} numberOfLines={2}>{task.title}</Text>
-                </View>
-                <View style={[styles.circle, isSelected && styles.circleSelected]}>
-                  {isSelected && <Check size={16} color="#0D0D0D" strokeWidth={3} />}
-                </View>
-              </Pressable>
-            );
-          })
+          currentVisibleTasks.map((task) => (
+            <AddTaskItemCard
+              key={task.id}
+              task={task}
+              isSelected={selectedIds.has(task.id)}
+              onToggle={toggleTask}
+            />
+          ))
         )}
       </ScrollView>
 
@@ -456,333 +194,3 @@ export default function AddTaskScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0D0D0D',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    gap: 14,
-  },
-  backBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#151515',
-    borderWidth: 1,
-    borderColor: '#262626',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  title: {
-    fontFamily: 'PlayfairDisplay_700Bold',
-    fontSize: 30,
-    color: '#F3EEE3',
-  },
-  albumPillContainer: {
-    marginTop: 12,
-    paddingHorizontal: 20,
-    alignItems: 'flex-start',
-  },
-  albumPill: {
-    height: 34,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    backgroundColor: '#2C2512',
-    borderWidth: 1,
-    borderColor: '#6B5A22',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  albumPillText: {
-    fontFamily: 'Inter_600SemiBold',
-    fontSize: 14,
-    color: '#D4B13A',
-  },
-  searchContainer: {
-    marginTop: 20,
-    marginHorizontal: 20,
-    height: 48,
-    borderRadius: 999,
-    backgroundColor: '#151515',
-    borderWidth: 1,
-    borderColor: '#262626',
-    paddingHorizontal: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  searchInput: {
-    flex: 1,
-    fontFamily: 'Inter_400Regular',
-    fontSize: 16,
-    color: '#F3EEE3',
-  },
-  createTaskBtn: {
-    marginTop: 14,
-    marginHorizontal: 20,
-    height: 48,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#D4B13A',
-    borderStyle: 'dashed',
-    backgroundColor: '#1A1708',
-    paddingHorizontal: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  createTaskBtnText: {
-    fontFamily: 'Inter_600SemiBold',
-    fontSize: 15,
-    color: '#D4B13A',
-    flexShrink: 1,
-  },
-  segmentedControl: {
-    marginTop: 16,
-    marginHorizontal: 20,
-    height: 46,
-    borderRadius: 999,
-    backgroundColor: '#151515',
-    borderWidth: 1,
-    borderColor: '#262626',
-    padding: 4,
-    flexDirection: 'row',
-  },
-  segmentBtn: {
-    flex: 1,
-    height: '100%',
-    borderRadius: 999,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'transparent',
-  },
-  segmentBtnActive: {
-    backgroundColor: '#D4B13A',
-  },
-  segmentText: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 15,
-    color: '#A0A0A0',
-  },
-  segmentTextActive: {
-    fontFamily: 'Inter_600SemiBold',
-    color: '#0D0D0D',
-  },
-  badge: {
-    height: 22,
-    minWidth: 22,
-    borderRadius: 11,
-    paddingHorizontal: 6,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  badgeActive: {
-    backgroundColor: '#0D0D0D',
-  },
-  badgeInactive: {
-    backgroundColor: '#D4B13A',
-  },
-  badgeText: {
-    fontFamily: 'Inter_700Bold',
-    fontSize: 13,
-  },
-  badgeTextActive: {
-    color: '#D4B13A',
-  },
-  badgeTextInactive: {
-    color: '#0D0D0D',
-  },
-  tagFilterRow: {
-    marginTop: 16,
-  },
-  tagFilterScroll: {
-    paddingLeft: 20,
-    paddingRight: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  tagFilterBtn: {
-    height: 36,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#333333',
-    backgroundColor: '#151515',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  tagFilterBtnActive: {
-    borderColor: '#D4B13A',
-    backgroundColor: '#2C2512',
-  },
-  tagFilterText: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 14,
-    color: '#E5E5E5',
-  },
-  activeTagChip: {
-    height: 36,
-    paddingHorizontal: 12,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#2A2A2A',
-    backgroundColor: '#181818',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-  },
-  activeTagDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  activeTagEmoji: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    marginLeft: -4,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  activeTagEmojiText: {
-    fontSize: 11,
-    lineHeight: 14,
-    textAlign: 'center',
-  },
-  activeTagText: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 13,
-    color: '#F5F5F5',
-    maxWidth: 140,
-  },
-  countRow: {
-    marginTop: 16,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  countText: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 14,
-    color: '#A0A0A0',
-  },
-  selectAllText: {
-    fontFamily: 'Inter_600SemiBold',
-    fontSize: 14,
-    color: '#D4B13A',
-  },
-  list: {
-    flex: 1,
-  },
-  listContent: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    gap: 10,
-  },
-  emptyContainer: {
-    paddingTop: 40,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 15,
-    color: '#A0A0A0',
-  },
-  taskCard: {
-    height: 76,
-    borderRadius: 16,
-    backgroundColor: '#151515',
-    borderWidth: 1,
-    borderColor: '#262626',
-    padding: 10,
-    paddingRight: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  taskCardSelected: {
-    backgroundColor: '#1A170D',
-    borderColor: '#D4B13A',
-  },
-  taskThumbContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  taskThumb: {
-    flex: 1,
-  },
-  taskContent: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  taskTitle: {
-    fontFamily: 'PlayfairDisplay_600SemiBold',
-    fontSize: 18,
-    lineHeight: 22,
-    color: '#F3EEE3',
-  },
-  taskSub: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 14,
-    color: '#A0A0A0',
-    marginTop: 3,
-  },
-  circle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: '#6A6A6A',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  circleSelected: {
-    borderWidth: 0,
-    backgroundColor: '#D4B13A',
-  },
-  bottomBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#0D0D0D',
-    borderTopWidth: 1,
-    borderTopColor: '#262626',
-    paddingTop: 14,
-    paddingHorizontal: 20,
-  },
-  btnAdd: {
-    height: 56,
-    borderRadius: 999,
-    backgroundColor: '#D4B13A',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: 'rgba(212,177,58,0.2)',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 24,
-    elevation: 10,
-  },
-  btnAddDisabled: {
-    opacity: 0.4,
-  },
-  btnAddText: {
-    fontFamily: 'Inter_700Bold',
-    fontSize: 17,
-    color: '#0D0D0D',
-  },
-});

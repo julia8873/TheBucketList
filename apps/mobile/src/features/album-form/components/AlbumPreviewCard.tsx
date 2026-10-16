@@ -1,0 +1,76 @@
+import React from 'react';
+import { View, Text, StyleSheet, Image } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { styles } from '../styles/album-form.styles';
+import type { Cover, AlbumVisibility } from '../types';
+import type { CollaboratorItem } from '../../../components/CollaboratorPickerSheet';
+
+interface AlbumPreviewCardProps {
+  selectedCover: Cover;
+  name: string;
+  isShared: boolean;
+  visibility: AlbumVisibility;
+  collaborators: CollaboratorItem[];
+}
+
+export function AlbumPreviewCard({
+  selectedCover,
+  name,
+  isShared,
+  visibility,
+  collaborators,
+}: AlbumPreviewCardProps) {
+  const gradientColors = (
+    selectedCover.colors && selectedCover.colors.length >= 2
+      ? selectedCover.colors
+      : ['#000000', '#000000']
+  ) as readonly [string, string, ...string[]];
+
+  return (
+    <View style={styles.previewContainer}>
+      {selectedCover.type === 'image' && selectedCover.uri ? (
+        <Image source={{ uri: selectedCover.uri }} style={StyleSheet.absoluteFill} />
+      ) : (
+        <LinearGradient
+          colors={gradientColors}
+          start={selectedCover.diagonal ? { x: 0, y: 0 } : { x: 0.5, y: 0 }}
+          end={selectedCover.diagonal ? { x: 1, y: 1 } : { x: 0.5, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
+      <LinearGradient
+        colors={['rgba(0,0,0,0.35)', 'rgba(0,0,0,0.78)']}
+        style={StyleSheet.absoluteFill}
+      />
+
+      <View style={styles.previewBadgesRow}>
+        {isShared && (
+          <View style={styles.previewSharedBadge}>
+            <Text style={styles.previewSharedText}>Compartido</Text>
+          </View>
+        )}
+        <View style={styles.previewVisibilityBadge}>
+          <Text style={styles.previewVisibilityText}>
+            {visibility === 'public'
+              ? 'Público'
+              : visibility === 'followers'
+              ? 'Solo amigos'
+              : 'Privado'}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.previewBottom}>
+        <Text style={styles.previewTitle} numberOfLines={1}>
+          {name.trim() ? name : 'Nuevo álbum'}
+        </Text>
+        <Text style={styles.previewSubtitle}>
+          {isShared && collaborators.length > 0
+            ? `${collaborators.length} colaborador${collaborators.length > 1 ? 'es' : ''}`
+            : '0 tareas · 0 hechas'}
+        </Text>
+        <View style={styles.progressBarTrack} />
+      </View>
+    </View>
+  );
+}

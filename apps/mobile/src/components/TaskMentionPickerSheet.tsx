@@ -18,7 +18,7 @@ import { supabase } from '../services/supabase';
 import { useAuthStore } from '../stores/auth.store';
 import { BucketCover } from './BucketCover';
 import { resolveTaskImage } from '../utils/taskImage';
-import { styles as sheetStyles } from '../../app/bucket/BucketDetail.styles';
+import { styles as sheetStyles } from '@/features/bucket-detail/styles/bucket-detail.styles';
 
 /**
  * Menú desplegable desde abajo para elegir las tareas que se mencionan desde otra tarea

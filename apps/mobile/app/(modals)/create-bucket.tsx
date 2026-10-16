@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform,
-  Pressable, Text, TextInput, Switch, ActivityIndicator, Image, Alert
+  View,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  Text,
+  TextInput,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
@@ -12,28 +19,23 @@ import { supabase } from '../../src/services/supabase';
 import { storageApi } from '../../src/services/api/storage';
 import { PageTitle } from '@bucketlist/ui';
 import { LocationPickerModal } from '../../src/components/LocationPickerModal';
-import { TagsRow } from '../../src/components/TagsRow';
 import type { TagItem } from '../../src/components/TagPickerSheet';
 import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
 import { AlbumPickerSheet } from '../../src/components/AlbumPickerSheet';
 import { useAlbums } from '../../src/hooks/useAlbums';
 import { useAuthStore } from '../../src/stores/auth.store';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { ChevronLeft, Camera, MapPin, Calendar, Folder, Globe, Plus, X, Users, Flag } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import * as ImagePicker from 'expo-image-picker';
+import { ChevronLeft } from 'lucide-react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 
-const GRADIENTS = [
-  { id: 'preset:green', colors: ['#0F5C4A', '#1E8A5E'] as const },
-  { id: 'preset:orange', colors: ['#F29A5C', '#D2562B'] as const },
-  { id: 'preset:blue', colors: ['#2F6DB5', '#8EC5F2'] as const },
-  { id: 'preset:purple', colors: ['#6B2FB0', '#2E1A66'] as const },
-];
+import { styles } from '../../src/features/task-form/styles/task-form.styles';
+import { TaskCoverPicker } from '../../src/features/task-form/components/TaskCoverPicker';
+import { TaskPriorityPicker } from '../../src/features/task-form/components/TaskPriorityPicker';
+import { TaskSettingsCard } from '../../src/features/task-form/components/TaskSettingsCard';
+import { TaskStepsSection, type TaskStepItem } from '../../src/features/task-form/components/TaskStepsSection';
+import { TaskCollaboratorsSection } from '../../src/features/task-form/components/TaskCollaboratorsSection';
 
 export default function CreateBucketModal() {
   const router = useRouter();
-  // Al venir de «Añadir tareas» de un álbum: álbum preseleccionado y título sugerido.
   const params = useLocalSearchParams<{ albumId?: string; title?: string }>();
   const createBucket = useCreateBucket();
   const insets = useSafeAreaInsets();
@@ -43,12 +45,11 @@ export default function CreateBucketModal() {
   const [coverImage, setCoverImage] = useState<string>('preset:green');
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [albumId, setAlbumId] = useState<string | null>(
-    params.albumId && params.albumId !== 'new' ? String(params.albumId) : null,
+    params.albumId && params.albumId !== 'new' ? String(params.albumId) : null
   );
   const [showAlbumPicker, setShowAlbumPicker] = useState(false);
 
-  const [steps, setSteps] = useState<{ id: string; title: string }[]>([]);
-
+  const [steps, setSteps] = useState<TaskStepItem[]>([]);
   const [isTitleFocused, setIsTitleFocused] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isEditingLocation, setIsEditingLocation] = useState(false);
@@ -56,7 +57,7 @@ export default function CreateBucketModal() {
   const [selectedCollaborators, setSelectedCollaborators] = useState<CollaboratorItem[]>([]);
   const [showCollaboratorPicker, setShowCollaboratorPicker] = useState(false);
 
-  const { control, handleSubmit, setValue, getValues, watch, formState: { errors } } = useForm<CreateBucketForm>({
+  const { control, handleSubmit, setValue, watch } = useForm<CreateBucketForm>({
     resolver: zodResolver(createBucketSchema),
     defaultValues: {
       title: params.title ? String(params.title) : '',
@@ -64,37 +65,42 @@ export default function CreateBucketModal() {
       priority: 'medium',
       visibility: 'public',
       subtasks: [],
-    }
+    },
   });
 
-  // Visibilidad por defecto elegida en Ajustes
   useEffect(() => {
     void supabase.auth.getUser().then(async ({ data }) => {
       const id = data.user?.id;
       if (!id) return;
-      const { data: p } = await supabase.from('profiles').select('default_task_visibility').eq('id', id).maybeSingle();
+      const { data: p } = await supabase
+        .from('profiles')
+        .select('default_task_visibility')
+        .eq('id', id)
+        .maybeSingle();
       const v = (p as any)?.default_task_visibility;
       if (v === 'public' || v === 'followers' || v === 'private') setValue('visibility', v);
     });
   }, [setValue]);
 
   const titleValue = watch('title');
+  const locationTextValue = watch('location_text') || '';
+  const deadlineValue = watch('deadline');
+  const visibilityValue = watch('visibility');
 
   const onSubmit = async (data: CreateBucketForm) => {
     try {
-      data.subtasks = steps.filter(s => s.title.trim() !== '').map((s, i) => ({
-        title: s.title.trim(),
-        done: false,
-        position: i,
-      }));
+      data.subtasks = steps
+        .filter((s) => s.title.trim() !== '')
+        .map((s, i) => ({
+          title: s.title.trim(),
+          done: false,
+          position: i,
+        }));
 
-      // Get IDs to save in item_tags
-      const tag_ids = selectedTags.map(t => t.id);
-      const collaborator_ids = selectedCollaborators.map(c => c.id);
-
+      const tag_ids = selectedTags.map((t) => t.id);
+      const collaborator_ids = selectedCollaborators.map((c) => c.id);
       let finalCoverImage: string | null = coverImage;
 
-      // If user selected a custom photo (local file), upload it to Supabase Storage
       if (coverImage && !coverImage.startsWith('preset:') && !coverImage.startsWith('http')) {
         setIsUploadingCover(true);
         try {
@@ -108,7 +114,6 @@ export default function CreateBucketModal() {
         }
       }
 
-      // Reuse existing mutation fields, passing local states where appropriate
       const payload = {
         ...data,
         cover_image: finalCoverImage,
@@ -124,7 +129,7 @@ export default function CreateBucketModal() {
         onError: (error) => {
           console.error('Failed to create bucket:', error);
           Alert.alert('No se pudo crear la tarea', (error as Error)?.message ?? 'Inténtalo de nuevo.');
-        }
+        },
       });
     } catch (err: any) {
       setIsUploadingCover(false);
@@ -138,32 +143,9 @@ export default function CreateBucketModal() {
     Alert.alert('Revisa la tarea', first?.message ?? 'Faltan datos por completar.');
   };
 
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [16, 9],
-      quality: 0.9,
-    });
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      const uri = result.assets[0]?.uri;
-      if (uri) {
-        setCoverImage(uri);
-      }
-    }
-  };
-
-  const addStep = () => {
-    setSteps([...steps, { id: Math.random().toString(), title: '' }]);
-  };
-
-  const updateStep = (id: string, text: string) => {
-    setSteps(steps.map(s => s.id === id ? { ...s, title: text } : s));
-  };
-
-  const removeStep = (id: string) => {
-    setSteps(steps.filter(s => s.id !== id));
-  };
+  const selectedAlbumTitle = albumId
+    ? albums.find((a) => a.id === albumId)?.title || 'Seleccionado'
+    : null;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0E0E0E' }} edges={['top']}>
@@ -172,7 +154,6 @@ export default function CreateBucketModal() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-
           {/* CABECERA */}
           <View style={styles.header}>
             <Pressable style={styles.backButton} onPress={() => router.back()}>
@@ -205,42 +186,7 @@ export default function CreateBucketModal() {
           <Text style={styles.sectionLabel}>
             <Text style={{ color: '#D4B13A' }}>TU</Text> PORTADA
           </Text>
-          <View style={styles.coverRow}>
-            {GRADIENTS.map((g) => {
-              const isSelected = coverImage === g.id;
-              return (
-                <Pressable key={g.id} onPress={() => setCoverImage(g.id)}>
-                  <LinearGradient
-                    colors={g.colors}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={[styles.coverTile, isSelected && styles.coverSelected]}
-                  />
-                </Pressable>
-              );
-            })}
-
-            <Pressable
-              onPress={() => void pickImage()}
-              style={[
-                styles.coverTile,
-                styles.coverImageTile,
-                !coverImage.startsWith('preset:') && styles.coverSelected,
-              ]}
-              accessibilityLabel={!coverImage.startsWith('preset:') ? 'Cambiar foto de portada' : 'Elegir foto de portada'}
-            >
-              {!coverImage.startsWith('preset:') ? (
-                <>
-                  <Image source={{ uri: coverImage }} style={[StyleSheet.absoluteFill, { borderRadius: 12 }]} resizeMode="cover" />
-                  <View style={styles.coverImageBadge}>
-                    <Camera color="#FFF" size={12} />
-                  </View>
-                </>
-              ) : (
-                <Camera color="#D4B13A" size={28} />
-              )}
-            </Pressable>
-          </View>
+          <TaskCoverPicker coverImage={coverImage} onChangeCover={setCoverImage} />
 
           {/* PRIORIDAD */}
           <Text style={styles.sectionLabel}>
@@ -250,207 +196,60 @@ export default function CreateBucketModal() {
             control={control}
             name="priority"
             render={({ field: { onChange, value } }) => (
-              <View style={styles.priorityRow}>
-                {[
-                  { id: 'low' as const, label: 'Baja', color: '#10B981', bgActive: 'rgba(16, 185, 129, 0.14)', borderActive: '#10B981' },
-                  { id: 'medium' as const, label: 'Media', color: '#D4B13A', bgActive: 'rgba(212, 177, 58, 0.14)', borderActive: '#D4B13A' },
-                  { id: 'high' as const, label: 'Alta', color: '#EF4444', bgActive: 'rgba(239, 68, 68, 0.14)', borderActive: '#EF4444' },
-                ].map((p) => {
-                  const active = (value || 'medium') === p.id;
-                  return (
-                    <Pressable
-                      key={p.id}
-                      onPress={() => onChange(p.id)}
-                      style={[
-                        styles.priorityPill,
-                        active && { backgroundColor: p.bgActive, borderColor: p.borderActive },
-                      ]}
-                    >
-                      <Flag size={15} color={active ? p.color : '#8A8A8A'} strokeWidth={active ? 2.2 : 1.8} />
-                      <Text style={[styles.priorityText, active && { color: p.color, fontWeight: '700' }]}>
-                        {p.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
+              <TaskPriorityPicker value={(value as any) || 'medium'} onChange={onChange} />
             )}
           />
 
           {/* AJUSTES */}
-          <View style={styles.settingsCard}>
-            {/* Ubicación */}
-            <Controller
-              control={control}
-              name="location_text"
-              render={({ field: { value } }) => (
-                <Pressable style={styles.settingRow} onPress={() => setIsEditingLocation(true)}>
-                  <MapPin color="#D4B13A" size={24} />
-                  <Text style={styles.settingLabel}>Ubicación</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, justifyContent: 'flex-end' }}>
-                    <Text style={[styles.settingValue, !value && { color: '#6B6B6B' }, { flexShrink: 1 }]} numberOfLines={1}>
-                      {value || 'Sin ubicación'}
-                    </Text>
-                    {value ? (
-                      <Pressable
-                        hitSlop={10}
-                        onPress={(e) => {
-                          e.stopPropagation();
-                          setValue('location_text', '');
-                          setValue('location_lat', null);
-                          setValue('location_lng', null);
-                        }}
-                        accessibilityLabel="Quitar ubicación"
-                      >
-                        <X color="#6B6B6B" size={18} />
-                      </Pressable>
-                    ) : (
-                      <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }] }} />
-                    )}
-                  </View>
-                </Pressable>
-              )}
-            />
-
-            {/* Fecha Límite */}
-            <Controller
-              control={control}
-              name="deadline"
-              render={({ field: { onChange, value } }) => (
-                <>
-                  <Pressable style={styles.settingRow} onPress={() => setShowDatePicker(true)}>
-                    <Calendar color="#D4B13A" size={24} />
-                    <Text style={styles.settingLabel}>Fecha límite</Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Text style={[styles.settingValue, !value && { color: '#6B6B6B' }]}>
-                        {value ? new Date(value).toLocaleDateString('es-ES') : 'Sin fecha'}
-                      </Text>
-                      {value ? (
-                        <Pressable
-                          hitSlop={10}
-                          onPress={(e) => {
-                            e.stopPropagation();
-                            onChange(null);
-                          }}
-                          accessibilityLabel="Quitar fecha límite"
-                        >
-                          <X color="#6B6B6B" size={18} />
-                        </Pressable>
-                      ) : (
-                        <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }] }} />
-                      )}
-                    </View>
-                  </Pressable>
-                  {showDatePicker && (
-                    <DateTimePicker
-                      value={value ? new Date(value) : new Date()}
-                      mode="date"
-                      display="default"
-                      onChange={(_event, date) => {
-                        setShowDatePicker(Platform.OS === 'ios');
-                        if (date) onChange(date);
-                      }}
-                    />
-                  )}
-                </>
-              )}
-            />
-
-            {/* Álbum */}
-            <Pressable style={styles.settingRow} onPress={() => setShowAlbumPicker(true)}>
-              <Folder color="#D4B13A" size={24} />
-              <Text style={styles.settingLabel}>Álbum</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Text style={[styles.settingValue, !albumId && { color: '#6B6B6B' }]}>
-                  {albumId ? albums.find(a => a.id === albumId)?.title || 'Seleccionado' : 'Sin álbum'}
-                </Text>
-                <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }] }} />
-              </View>
-            </Pressable>
-
-            {/* Etiquetas */}
-            <TagsRow selectedTags={selectedTags} onChange={setSelectedTags} />
-
-            {/* Pública */}
-            <Controller
-              control={control}
-              name="visibility"
-              render={({ field: { onChange, value } }) => {
-                const isPublic = value === 'public';
-                return (
-                  <View style={[styles.settingRow, { borderBottomWidth: 0 }]}>
-                    <Globe color="#D4B13A" size={24} />
-                    <Text style={styles.settingLabel}>Pública</Text>
-                    <Switch
-                      value={isPublic}
-                      onValueChange={(val) => onChange(val ? 'public' : 'private')}
-                      trackColor={{ false: '#333', true: '#D4B13A' }}
-                      thumbColor={isPublic ? '#111' : '#E5E5E5'}
-                    />
-                  </View>
-                );
-              }}
-            />
-          </View>
+          <TaskSettingsCard
+            locationText={locationTextValue}
+            onOpenLocationPicker={() => setIsEditingLocation(true)}
+            onClearLocation={() => {
+              setValue('location_text', '');
+              setValue('location_lat', null);
+              setValue('location_lng', null);
+            }}
+            deadline={deadlineValue ? new Date(deadlineValue) : null}
+            showDatePicker={showDatePicker}
+            onOpenDatePicker={() => setShowDatePicker(true)}
+            onDateChange={(date) => {
+              setShowDatePicker(Platform.OS === 'ios');
+              if (date) setValue('deadline', date);
+            }}
+            onClearDate={() => setValue('deadline', null)}
+            albumTitle={selectedAlbumTitle}
+            onOpenAlbumPicker={() => setShowAlbumPicker(true)}
+            selectedTags={selectedTags}
+            onChangeTags={setSelectedTags}
+            isPublic={visibilityValue === 'public'}
+            onTogglePublic={(pub) => setValue('visibility', pub ? 'public' : 'private')}
+          />
 
           {/* PASOS */}
           <Text style={styles.sectionLabel}>
             <Text style={{ color: '#D4B13A' }}>PASOS</Text> · {steps.length}
           </Text>
-          <View style={styles.stepsContainer}>
-            {steps.map((step, index) => (
-              <View key={step.id} style={styles.stepRow}>
-                <View style={styles.stepCircle} />
-                <TextInput
-                  style={styles.stepInput}
-                  value={step.title}
-                  onChangeText={(txt) => updateStep(step.id, txt)}
-                  placeholder="Escribe un paso..."
-                  placeholderTextColor="#6B6B6B"
-                  autoFocus={index === steps.length - 1}
-                />
-                <Pressable onPress={() => removeStep(step.id)} hitSlop={10}>
-                  <X color="#555" size={20} />
-                </Pressable>
-              </View>
-            ))}
-            <Pressable style={styles.addStepRow} onPress={addStep}>
-              <Plus color="#D4B13A" size={24} />
-              <Text style={styles.addStepText}>Añadir paso</Text>
-            </Pressable>
-          </View>
+          <TaskStepsSection
+            steps={steps}
+            onAddStep={() => setSteps([...steps, { id: Math.random().toString(), title: '' }])}
+            onUpdateStep={(id, text) =>
+              setSteps(steps.map((s) => (s.id === id ? { ...s, title: text } : s)))
+            }
+            onRemoveStep={(id) => setSteps(steps.filter((s) => s.id !== id))}
+          />
 
           {/* COLABORADORES */}
           <Text style={styles.sectionLabel}>
             <Text style={{ color: '#D4B13A' }}>COLABORADORES</Text>
             {selectedCollaborators.length > 0 ? ` · ${selectedCollaborators.length}` : ''}
           </Text>
-          <View style={styles.collaboratorsContainer}>
-            <Pressable style={styles.collaboratorRow} onPress={() => setShowCollaboratorPicker(true)}>
-              <Users color="#D4B13A" size={22} />
-              <Text style={styles.collaboratorPlaceholder} numberOfLines={1}>
-                {selectedCollaborators.length === 0
-                  ? 'Añadir colaboradores a esta tarea...'
-                  : `${selectedCollaborators.length} colaborador${selectedCollaborators.length > 1 ? 'es' : ''} añadido${selectedCollaborators.length > 1 ? 's' : ''}`}
-              </Text>
-              <Plus color="#D4B13A" size={20} />
-            </Pressable>
-
-            {selectedCollaborators.length > 0 && (
-              <View style={styles.collaboratorChips}>
-                {selectedCollaborators.map(c => (
-                  <Pressable
-                    key={c.id}
-                    style={styles.collaboratorChip}
-                    onPress={() => setSelectedCollaborators(prev => prev.filter(x => x.id !== c.id))}
-                  >
-                    <Text style={styles.collaboratorChipText}>{c.display_name || `@${c.username}`}</Text>
-                    <X color="#D4B13A" size={14} />
-                  </Pressable>
-                ))}
-              </View>
-            )}
-          </View>
+          <TaskCollaboratorsSection
+            selectedCollaborators={selectedCollaborators}
+            onOpenPicker={() => setShowCollaboratorPicker(true)}
+            onRemoveCollaborator={(collabId) =>
+              setSelectedCollaborators((prev) => prev.filter((x) => x.id !== collabId))
+            }
+          />
         </ScrollView>
 
         <CollaboratorPickerSheet
@@ -469,7 +268,7 @@ export default function CreateBucketModal() {
 
         <LocationPickerModal
           visible={isEditingLocation}
-          value={watch('location_text') || ''}
+          value={locationTextValue}
           onChangeLocation={(loc) => {
             setValue('location_text', loc?.text || '');
             setValue('location_lat', loc ? loc.lat : null);
@@ -481,7 +280,10 @@ export default function CreateBucketModal() {
         {/* BOTTOM BAR */}
         <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
           <Pressable
-            style={[styles.submitButton, (!titleValue || createBucket.isPending || isUploadingCover) && { opacity: 0.5 }]}
+            style={[
+              styles.submitButton,
+              (!titleValue || createBucket.isPending || isUploadingCover) && { opacity: 0.5 },
+            ]}
             onPress={() => void handleSubmit(onSubmit, onInvalid)()}
             disabled={!titleValue || createBucket.isPending || isUploadingCover}
           >
@@ -496,111 +298,3 @@ export default function CreateBucketModal() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0E0E0E' },
-  scrollContent: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 150 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 10 },
-  backButton: {
-    width: 50, height: 50, borderRadius: 25,
-    backgroundColor: '#161616', borderWidth: 1, borderColor: '#2A2A2A',
-    alignItems: 'center', justifyContent: 'center'
-  },
-  headerTitle: { fontFamily: 'PlayfairDisplay_700Bold', fontSize: 34, color: '#FFF' },
-  sectionLabel: {
-    fontFamily: 'PlayfairDisplay_700Bold',
-    fontSize: 16, letterSpacing: 1, color: '#FFF',
-    marginTop: 26, marginBottom: 12,
-  },
-  titleInput: {
-    height: 74, borderRadius: 16, backgroundColor: '#161616',
-    borderWidth: 1, borderColor: '#2A2A2A',
-    paddingHorizontal: 20,
-    fontFamily: 'PlayfairDisplay_400Regular', fontSize: 22, color: '#FFF',
-  },
-  coverRow: { flexDirection: 'row', gap: 15 },
-  coverTile: { width: 70, height: 70, borderRadius: 14, overflow: 'hidden' },
-  coverSelected: { borderWidth: 2, borderColor: '#D4B13A' },
-  coverImageTile: {
-    backgroundColor: '#161616', borderWidth: 1, borderColor: '#D4B13A', borderStyle: 'dashed',
-    alignItems: 'center', justifyContent: 'center'
-  },
-  coverImageBadge: {
-    position: 'absolute',
-    bottom: 4,
-    right: 4,
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    borderRadius: 8,
-    width: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  priorityRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
-  priorityPill: {
-    flex: 1,
-    height: 48,
-    borderRadius: 24,
-    paddingHorizontal: 12,
-    backgroundColor: '#1A1A1A',
-    borderWidth: 1,
-    borderColor: '#333',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  priorityText: { fontFamily: 'Inter_500Medium', fontSize: 16, color: '#E5E5E5' },
-  categoryScroll: { gap: 12, paddingRight: 40, marginTop: 4 },
-  catPill: {
-    height: 48, borderRadius: 24, paddingHorizontal: 22,
-    backgroundColor: '#1A1A1A', borderWidth: 1, borderColor: '#333',
-    justifyContent: 'center'
-  },
-  catPillActive: { backgroundColor: 'rgba(212, 177, 58, 0.12)', borderColor: '#D4B13A' },
-  catText: { fontFamily: 'Inter_500Medium', fontSize: 17, color: '#E5E5E5' },
-  catTextActive: { color: '#D4B13A' },
-  settingsCard: {
-    borderRadius: 16, backgroundColor: '#161616',
-    borderWidth: 1, borderColor: '#2A2A2A', overflow: 'hidden',
-    marginTop: 14,
-  },
-  settingRow: {
-    height: 72, flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#2A2A2A'
-  },
-  settingLabel: { fontFamily: 'Inter_500Medium', fontSize: 18, color: '#FFF', marginLeft: 16, flex: 1 },
-  settingValue: { fontFamily: 'Inter_400Regular', fontSize: 17, color: '#9A9A9A' },
-  stepsContainer: { paddingBottom: 20 },
-  stepRow: { height: 58, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#2A2A2A' },
-  stepCircle: { width: 30, height: 30, borderRadius: 15, borderWidth: 1.5, borderColor: '#555' },
-  stepInput: { flex: 1, marginLeft: 16, fontFamily: 'Inter_400Regular', fontSize: 18, color: '#FFF' },
-  addStepRow: { height: 58, flexDirection: 'row', alignItems: 'center', gap: 16 },
-  addStepText: { fontFamily: 'Inter_600SemiBold', fontSize: 18, color: '#D4B13A' },
-  bottomBar: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: '#0E0E0E', borderTopWidth: 1, borderTopColor: '#2A2A2A',
-    padding: 16
-  },
-  submitButton: {
-    height: 62, borderRadius: 31, backgroundColor: '#D4B13A',
-    justifyContent: 'center', alignItems: 'center',
-    shadowColor: '#D4B13A', shadowOpacity: 0.3, shadowRadius: 16, elevation: 8
-  },
-  submitText: { fontFamily: 'Inter_700Bold', fontSize: 20, color: '#111' },
-  collaboratorsContainer: { paddingBottom: 10 },
-  collaboratorRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    height: 62, borderRadius: 16,
-    backgroundColor: '#161616', borderWidth: 1, borderColor: '#2A2A2A',
-    paddingHorizontal: 18, marginTop: 4,
-  },
-  collaboratorPlaceholder: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 16, color: '#6B6B6B' },
-  collaboratorChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
-  collaboratorChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: 'rgba(212,177,58,0.12)', borderWidth: 1, borderColor: '#D4B13A',
-    borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6,
-  },
-  collaboratorChipText: { fontFamily: 'Inter_500Medium', fontSize: 13, color: '#D4B13A' },
-});
