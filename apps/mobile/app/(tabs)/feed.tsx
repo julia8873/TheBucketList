@@ -45,6 +45,27 @@ export default function FeedScreen() {
   const { data: requestCount = 0, refetch: refetchRequests } = useIncomingRequestCount(user?.id);
   const { data: unread = 0 } = useUnreadCount(user?.id);
 
+  const [manualRefreshingFriends, setManualRefreshingFriends] = useState(false);
+  const [manualRefreshingExplore, setManualRefreshingExplore] = useState(false);
+
+  const handleRefreshFriends = async () => {
+    setManualRefreshingFriends(true);
+    try {
+      await Promise.all([refetchFriends(), refetchRequests()]);
+    } finally {
+      setManualRefreshingFriends(false);
+    }
+  };
+
+  const handleRefreshExplore = async () => {
+    setManualRefreshingExplore(true);
+    try {
+      await refetchExplore();
+    } finally {
+      setManualRefreshingExplore(false);
+    }
+  };
+
   // Al volver a la pestaña, refresca el contador de solicitudes
   useFocusEffect(
     useCallback(() => {
@@ -223,11 +244,8 @@ export default function FeedScreen() {
             )}
             estimatedItemSize={430}
             ListHeaderComponent={renderHeader()}
-            refreshing={isRefetchingFriends && !isFetchingNextFriends}
-            onRefresh={() => {
-              void refetchFriends();
-              void refetchRequests();
-            }}
+            refreshing={manualRefreshingFriends}
+            onRefresh={handleRefreshFriends}
             onEndReached={() => {
               if (hasNextFriends && !isFetchingNextFriends) void fetchNextFriends();
             }}
@@ -311,8 +329,8 @@ export default function FeedScreen() {
                 </Typography>
               </View>
             }
-            refreshing={isRefetchingExplore && !isFetchingNextExplore}
-            onRefresh={() => void refetchExplore()}
+            refreshing={manualRefreshingExplore}
+            onRefresh={handleRefreshExplore}
             onEndReached={() => {
               if (hasNextExplore && !isFetchingNextExplore) void fetchNextExplore();
             }}

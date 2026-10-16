@@ -138,7 +138,16 @@ export default function AlbumDetailScreen() {
   const titleTimeout = useRef<NodeJS.Timeout | null>(null);
   const descTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  const { data: album, isLoading, isError, refetch, isRefetching } = useAlbumDetail(id || '1');
+  const { data: album, isLoading, isError, refetch } = useAlbumDetail(id || '1');
+  const [manualRefreshing, setManualRefreshing] = useState(false);
+  const handleRefresh = async () => {
+    setManualRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setManualRefreshing(false);
+    }
+  };
   const deleteMutation = useDeleteAlbumDetail();
 
   const rawOwnerId = album?.ownerId || (album as any)?.owner_id;
@@ -941,7 +950,7 @@ export default function AlbumDetailScreen() {
         }}
         refreshControl={
           manualDragEnabled || dragging ? undefined : (
-            <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#D4B13A" />
+            <RefreshControl refreshing={manualRefreshing} onRefresh={handleRefresh} tintColor="#D4B13A" />
           )
         }
       >

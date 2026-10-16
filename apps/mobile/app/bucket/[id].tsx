@@ -1672,6 +1672,25 @@ export default function BucketDetailScreen() {
             if (error) console.error('Failed to update photo title:', error);
           });
         }}
+        onUpdatePhotoDate={(photoId, field, date) => {
+          queryClient.setQueryData(['bucketDetail', id], (oldData: any) => {
+            if (!oldData) return oldData;
+            return {
+              ...oldData,
+              bucket_photos: (oldData.bucket_photos || []).map((p: any) =>
+                p.id === photoId ? { ...p, [field]: date } : p
+              ),
+            };
+          });
+          void supabase
+            .from('bucket_photos')
+            .update({ [field]: date })
+            .eq('id', photoId)
+            .then(({ error }) => {
+              if (error) console.error(`Failed to update photo ${field}:`, error);
+            });
+          void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+        }}
       />
 
       {/* ── Bottom action bar ─────────────────────────────────────────────── */}

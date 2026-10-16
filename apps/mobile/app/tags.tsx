@@ -51,10 +51,14 @@ export default function TagsScreen() {
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)/my-list' as any));
 
-  const refreshing = tagsQuery.isRefetching || usageQuery.isRefetching;
-  const onRefresh = () => {
-    void tagsQuery.refetch();
-    void usageQuery.refetch();
+  const [manualRefreshing, setManualRefreshing] = useState(false);
+  const onRefresh = async () => {
+    setManualRefreshing(true);
+    try {
+      await Promise.all([tagsQuery.refetch(), usageQuery.refetch()]);
+    } finally {
+      setManualRefreshing(false);
+    }
   };
 
   const countLabel = (n: number) => (n === 0 ? 'Sin tareas' : n === 1 ? '1 tarea' : `${n} tareas`);
@@ -119,7 +123,7 @@ export default function TagsScreen() {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={GOLD} />}
+        refreshControl={<RefreshControl refreshing={manualRefreshing} onRefresh={onRefresh} tintColor={GOLD} />}
       >
         <Text style={styles.sectionLabel}>
           <Text style={{ color: GOLD }}>TUS</Text> ETIQUETAS · {list.length}

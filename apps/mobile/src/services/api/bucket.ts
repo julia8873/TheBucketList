@@ -23,82 +23,74 @@ export const bucketApi = {
       }));
     }
 
-    // 1. Own buckets
-    const { data: ownData, error: ownError } = await supabase
-      .from('buckets')
-      .select(baseSelect)
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-    if (ownError) throw ownError;
-
-    // 2. Collaborative buckets (accepted or pending invitation)
-    let collabBuckets: any[] = [];
-    try {
-      const { data: collabData } = await supabase
+    // 1. Initial queries in parallel: own buckets, collaborative IDs, and shared album IDs
+    const [ownRes, collabRes, memberAlbumsRes, ownedAlbumsRes] = await Promise.all([
+      supabase
+        .from('buckets')
+        .select(baseSelect)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false }),
+      supabase
         .from('bucket_collaborators')
         .select('bucket_id')
         .eq('user_id', userId)
-        .in('status', ['accepted', 'pending']);
-
-      const collabIds = (collabData ?? []).map((c: any) => c.bucket_id);
-
-      if (collabIds.length > 0) {
-        const { data: sharedData } = await supabase
-          .from('buckets')
-          .select(baseSelect)
-          .in('id', collabIds)
-          .order('created_at', { ascending: false });
-        collabBuckets = sharedData ?? [];
-      }
-    } catch {
-      // Si falla la query de colaboradores, simplemente no los incluimos
-    }
-
-    // 3. Tasks from shared albums where user is an accepted member
-    let albumTasks: any[] = [];
-    try {
-      const { data: memberAlbums } = await supabase
+        .in('status', ['accepted', 'pending']),
+      supabase
         .from('album_members')
         .select('album_id')
         .eq('user_id', userId)
-        .eq('status', 'accepted');
-
-      // También los álbumes de los que el usuario es DUEÑO: el dueño no figura
-      // en album_members, y las tareas que añaden los demás miembros deben salirle.
-      const { data: ownedAlbums } = await supabase
+        .eq('status', 'accepted'),
+      supabase
         .from('albums')
         .select('id')
-        .eq('owner_id', userId);
+        .eq('owner_id', userId),
+    ]);
 
-      const memberAlbumIds = Array.from(
-        new Set([
-          ...(memberAlbums ?? []).map((m: any) => m.album_id),
-          ...(ownedAlbums ?? []).map((a: any) => a.id),
-        ]),
-      );
-      if (memberAlbumIds.length > 0) {
-        const { data: albumItemData } = await supabase
-          .from('album_items')
-          .select('bucket_id')
-          .in('album_id', memberAlbumIds);
+    if (ownRes.error) throw ownRes.error;
+    const ownData = ownRes.data ?? [];
 
-        const albumBucketIds = (albumItemData ?? []).map((ai: any) => ai.bucket_id);
-        if (albumBucketIds.length > 0) {
-          const { data: sharedAlbumBuckets } = await supabase
+    const collabIds = (collabRes.data ?? []).map((c: any) => c.bucket_id);
+    const memberAlbumIds = Array.from(
+      new Set([
+        ...(memberAlbumsRes.data ?? []).map((m: any) => m.album_id),
+        ...(ownedAlbumsRes.data ?? []).map((a: any) => a.id),
+      ])
+    );
+
+    // 2. Fetch collaborative buckets and album items in parallel
+    const [sharedRes, albumItemRes] = await Promise.all([
+      collabIds.length > 0
+        ? supabase
             .from('buckets')
             .select(baseSelect)
-            .in('id', albumBucketIds)
-            .order('created_at', { ascending: false });
-          albumTasks = sharedAlbumBuckets ?? [];
-        }
-      }
-    } catch {
-      // Ignored
+            .in('id', collabIds)
+            .order('created_at', { ascending: false })
+        : Promise.resolve({ data: [] }),
+      memberAlbumIds.length > 0
+        ? supabase
+            .from('album_items')
+            .select('bucket_id')
+            .in('album_id', memberAlbumIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const collabBuckets = sharedRes.data ?? [];
+    const albumBucketIds = (albumItemRes.data ?? []).map((ai: any) => ai.bucket_id);
+
+    // 3. Fetch shared album buckets if any
+    let albumTasks: any[] = [];
+    if (albumBucketIds.length > 0) {
+      const { data: sharedAlbumBuckets } = await supabase
+        .from('buckets')
+        .select(baseSelect)
+        .in('id', albumBucketIds)
+        .order('created_at', { ascending: false });
+      albumTasks = sharedAlbumBuckets ?? [];
     }
 
     // Merge, dedup by id (own takes precedence, then direct collab, then album collab)
-    const existingIds = new Set((ownData ?? []).map((b: any) => b.id));
-    const merged = [...(ownData ?? [])];
+    const existingIds = new Set(ownData.map((b: any) => b.id));
+    const merged = [...ownData];
 
     for (const b of collabBuckets) {
       if (!existingIds.has(b.id)) {

@@ -14,6 +14,8 @@ import { BucketCover } from '../../src/components/BucketCover';
 import { resolveTaskImage } from '../../src/utils/taskImage';
 import { initialsOf, displayNameOf } from '../../src/utils/initials';
 
+import { useBuckets } from '../../src/hooks/useBuckets';
+
 const RECENT_LIMIT = 4;
 
 export default function CurrentUserProfileScreen() {
@@ -32,19 +34,7 @@ export default function CurrentUserProfileScreen() {
     enabled: !!user?.id,
   });
 
-  const bucketsQuery = useQuery({
-    queryKey: ['buckets', 'profile', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('buckets')
-        .select('id, title, status, cover_image, thumbnail_mode, thumbnail_photo_id, location_text, completed_at, created_at, bucket_photos(id, storage_path, thumb_path, created_at)')
-        .eq('user_id', user!.id)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as any[];
-    },
-    enabled: !!user?.id,
-  });
+  const bucketsQuery = useBuckets(user?.id);
 
   const { width: winWidth } = useWindowDimensions();
   const [gridWidth, setGridWidth] = useState(0);
@@ -71,12 +61,19 @@ export default function CurrentUserProfileScreen() {
     [completed],
   );
 
-  const refreshing = profileQuery.isRefetching || bucketsQuery.isRefetching;
-  const onRefresh = () => {
-    void profileQuery.refetch();
-    void bucketsQuery.refetch();
-    void albums.refetch();
-    void requests.refetch();
+  const [manualRefreshing, setManualRefreshing] = useState(false);
+  const onRefresh = async () => {
+    setManualRefreshing(true);
+    try {
+      await Promise.all([
+        profileQuery.refetch(),
+        bucketsQuery.refetch(),
+        albums.refetch(),
+        requests.refetch(),
+      ]);
+    } finally {
+      setManualRefreshing(false);
+    }
   };
 
   const formatDate = (iso?: string | null) =>
@@ -98,7 +95,7 @@ export default function CurrentUserProfileScreen() {
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
+        refreshControl={<RefreshControl refreshing={manualRefreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
       >
         {/* Cabecera */}
         <View style={styles.header}>

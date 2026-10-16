@@ -112,7 +112,20 @@ export default function FriendsScreen() {
   };
 
   const requestsCount = incomingList.length;
-  const refreshing = incoming.isRefetching || outgoing.isRefetching;
+  const [manualRefreshing, setManualRefreshing] = useState(false);
+  const handleRefresh = async () => {
+    setManualRefreshing(true);
+    try {
+      await Promise.all([
+        incoming.refetch(),
+        outgoing.refetch(),
+        following.refetch(),
+        followers.refetch(),
+      ]);
+    } finally {
+      setManualRefreshing(false);
+    }
+  };
 
   // ── Pestaña "Cuentas" ───────────────────────────────────────────────────────
   const renderAccounts = () => {
@@ -377,14 +390,9 @@ export default function FriendsScreen() {
         keyboardDismissMode="on-drag"
         refreshControl={
           <RefreshControl
-            refreshing={tab === 'requests' ? refreshing : following.isRefetching || followers.isRefetching}
+            refreshing={manualRefreshing}
             tintColor={gold[400]}
-            onRefresh={() => {
-              void incoming.refetch();
-              void outgoing.refetch();
-              void following.refetch();
-              void followers.refetch();
-            }}
+            onRefresh={handleRefresh}
           />
         }
       >

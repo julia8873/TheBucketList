@@ -74,22 +74,101 @@ export default function PublicProfileScreen() {
   const { data: buckets, isLoading: bucketsLoading } = useQuery({
     queryKey: ['buckets', 'public', id, followStatus],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const baseSelect = `
+        *,
+        category:categories(slug, name_es),
+        item_subtasks(done),
+        bucket_photos(id, storage_path, thumb_path, created_at)
+      `;
+
+      // 1. Tareas creadas por el usuario
+      let ownQuery = supabase
         .from('buckets')
-        .select(
-          `
-          *,
-          category:categories(slug, name_es),
-          item_subtasks(done),
-          bucket_photos(id, storage_path, thumb_path, created_at)
-        `
-        )
+        .select(baseSelect)
         .eq('user_id', id)
-        .neq('visibility', 'private')
         .neq('status', 'archived')
         .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data ?? [];
+
+      if (!isOwnProfile) {
+        ownQuery = ownQuery.neq('visibility', 'private');
+      }
+
+      // 1. Initial queries in parallel: own buckets, collaborative IDs, and shared album IDs
+      const [ownRes, collabRowsRes, memberAlbumsRes] = await Promise.all([
+        ownQuery,
+        supabase
+          .from('bucket_collaborators')
+          .select('bucket_id')
+          .eq('user_id', id)
+          .eq('status', 'accepted'),
+        supabase
+          .from('album_members')
+          .select('album_id')
+          .eq('user_id', id)
+          .eq('status', 'accepted'),
+      ]);
+
+      if (ownRes.error) throw ownRes.error;
+      const ownData = ownRes.data ?? [];
+
+      const collabIds = (collabRowsRes.data ?? []).map((c: any) => c.bucket_id);
+      const memberAlbumIds = (memberAlbumsRes.data ?? []).map((m: any) => m.album_id);
+
+      // 2. Fetch collaborative buckets and album item IDs in parallel
+      let sharedQuery = supabase
+        .from('buckets')
+        .select(baseSelect)
+        .in('id', collabIds.length > 0 ? collabIds : ['00000000-0000-0000-0000-000000000000'])
+        .neq('status', 'archived')
+        .order('created_at', { ascending: false });
+
+      if (!isOwnProfile) {
+        sharedQuery = sharedQuery.neq('visibility', 'private');
+      }
+
+      const [sharedRes, albumItemRes] = await Promise.all([
+        collabIds.length > 0 ? sharedQuery : Promise.resolve({ data: [] }),
+        memberAlbumIds.length > 0
+          ? supabase.from('album_items').select('bucket_id').in('album_id', memberAlbumIds)
+          : Promise.resolve({ data: [] }),
+      ]);
+
+      const collabBuckets = sharedRes.data ?? [];
+      const albumBucketIds = (albumItemRes.data ?? []).map((ai: any) => ai.bucket_id);
+
+      // 3. Fetch shared album buckets if any
+      let albumTasks: any[] = [];
+      if (albumBucketIds.length > 0) {
+        let albumQuery = supabase
+          .from('buckets')
+          .select(baseSelect)
+          .in('id', albumBucketIds)
+          .neq('status', 'archived')
+          .order('created_at', { ascending: false });
+
+        if (!isOwnProfile) {
+          albumQuery = albumQuery.neq('visibility', 'private');
+        }
+
+        const { data: sharedAlbumBuckets } = await albumQuery;
+        albumTasks = sharedAlbumBuckets ?? [];
+      }
+
+      const existingIds = new Set((ownData ?? []).map((b: any) => b.id));
+      const merged = [...(ownData ?? [])];
+      for (const b of collabBuckets) {
+        if (!existingIds.has(b.id)) {
+          existingIds.add(b.id);
+          merged.push(b);
+        }
+      }
+      for (const b of albumTasks) {
+        if (!existingIds.has(b.id)) {
+          existingIds.add(b.id);
+          merged.push(b);
+        }
+      }
+      return merged;
     },
     enabled: !!id && !!stats && !isLocked,
   });
@@ -243,6 +322,9 @@ export default function PublicProfileScreen() {
   }
 
   const taskCount = buckets ? buckets.length : (stats?.public_count ?? 0);
+  const completedCount = buckets
+    ? buckets.filter((b: any) => b.status === 'completed').length
+    : (stats?.completed_count ?? 0);
 
   const header = (
     <View>
@@ -282,8 +364,8 @@ export default function PublicProfileScreen() {
       </View>
 
       <View style={styles.stats}>
-        <Stat value={stats?.completed_count ?? 0} label="Completadas" />
-        <Stat value={isLocked ? '—' : (stats?.public_count ?? 0)} label="Públicas" divider />
+        <Stat value={completedCount} label="Completadas" />
+        <Stat value={isLocked ? '—' : taskCount} label="Públicas" divider />
         <Stat value={stats?.followers_count ?? 0} label="Seguidores" divider />
       </View>
 

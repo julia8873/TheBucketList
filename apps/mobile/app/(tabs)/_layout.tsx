@@ -60,9 +60,9 @@ export default function TabsLayout() {
     >
       {/* ── Visible tabs ─────────────────────────────────────── */}
       <Tabs.Screen
-        name="explore"
+        name="feed"
         options={{
-          title: 'Día a día',
+          title: t('nav.feed'),
           tabBarIcon: ({ color, focused }) => (
             <View style={{ alignItems: 'center' }}>
               {focused && (
@@ -73,14 +73,14 @@ export default function TabsLayout() {
                   top: Platform.OS === 'ios' ? -10 : -10,
                 }} />
               )}
-              <ListTodo
+              <Home
                 color={color}
                 size={24}
                 strokeWidth={1.8}
               />
             </View>
           ),
-          tabBarAccessibilityLabel: 'Día a día',
+          tabBarAccessibilityLabel: t('nav.feed'),
         }}
       />
       <Tabs.Screen
@@ -108,9 +108,9 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="feed"
+        name="explore"
         options={{
-          title: t('nav.feed'),
+          title: 'Día a día',
           tabBarIcon: ({ color, focused }) => (
             <View style={{ alignItems: 'center' }}>
               {focused && (
@@ -121,14 +121,14 @@ export default function TabsLayout() {
                   top: Platform.OS === 'ios' ? -10 : -10,
                 }} />
               )}
-              <Home
+              <ListTodo
                 color={color}
                 size={24}
                 strokeWidth={1.8}
               />
             </View>
           ),
-          tabBarAccessibilityLabel: t('nav.feed'),
+          tabBarAccessibilityLabel: 'Día a día',
         }}
       />
       <Tabs.Screen

@@ -23,6 +23,8 @@ type Props<T extends { id: string }> = {
   onReorder: (orderedIds: string[]) => void;
   /** Para desactivar el scroll del padre mientras se arrastra. */
   onDraggingChange?: (dragging: boolean) => void;
+  /** Espacio entre filas en píxeles (por defecto 10). */
+  gap?: number;
 };
 
 type RowProps = {
@@ -80,7 +82,9 @@ function Row(props: RowProps) {
   const pan = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => true,
       onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
       onPanResponderTerminationRequest: () => false,
       onPanResponderGrant: () => {
         const p = latest.current;
@@ -125,6 +129,7 @@ export function DraggableTaskList<T extends { id: string }>({
   renderItem,
   onReorder,
   onDraggingChange,
+  gap = GAP,
 }: Props<T>) {
   const [heights, setHeights] = useState<Record<string, number>>({});
   const [active, setActive] = useState<{ id: string; from: number; over: number } | null>(null);
@@ -171,9 +176,9 @@ export function DraggableTaskList<T extends { id: string }>({
     let acc = 0;
     ids.forEach((id) => {
       out.push(acc);
-      acc += h(id) + GAP;
+      acc += h(id) + gap;
     });
-    return { offsets: out, total: Math.max(0, acc - GAP) };
+    return { offsets: out, total: Math.max(0, acc - gap) };
   };
 
   const ids = ordered.map((i) => i.id);
@@ -206,14 +211,14 @@ export function DraggableTaskList<T extends { id: string }>({
     for (let j = 0; j < list.length; j++) {
       const itemId = list[j];
       const hj = (itemId ? heightsRef.current[itemId] : undefined) ?? DEFAULT_HEIGHT;
-      if (center < acc + hj + GAP / 2) {
+      if (center < acc + hj + gap / 2) {
         over = j;
         break;
       }
-      acc += hj + GAP;
+      acc += hj + gap;
     }
     if (over !== current.over) setActive({ ...current, over });
-  }, []);
+  }, [gap]);
 
   const onDragEnd = useCallback(() => {
     const current = activeRef.current;

@@ -34,7 +34,7 @@ void SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 30, // 30 segundos: pasado este tiempo, los datos se recargan solos
+      staleTime: 1000 * 60 * 3, // 3 minutos: navegación entre pestañas instantánea sin re-peticiones innecesarias
       refetchOnReconnect: true,
       refetchOnWindowFocus: true,
       gcTime: 1000 * 60 * 10,   // 10 minutes

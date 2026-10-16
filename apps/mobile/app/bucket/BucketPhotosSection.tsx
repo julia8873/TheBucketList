@@ -133,7 +133,8 @@ export function BucketPhotosSection({
                       {photo.title || 'Sin título'}
                     </Typography>
                     <Typography variant="caption" color={theme.colors.foregroundMuted}>
-                      {photo.created_at ? new Date(photo.created_at).toLocaleDateString() : ''}
+                      Subida: {photo.created_at ? new Date(photo.created_at).toLocaleDateString() : ''}
+                      {photo.completed_at ? ` · Completada: ${new Date(photo.completed_at).toLocaleDateString()}` : ''}
                     </Typography>
                   </View>
                   <View
@@ -173,12 +174,14 @@ export function BucketPhotosSection({
                   style={styles.photoThumbImage}
                   resizeMode="cover"
                 />
-                <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.5)', padding: 6 }}>
+                <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)', padding: 6 }}>
                   <Typography variant="caption" color="#fff" numberOfLines={1}>
                     {photo.title || 'Sin título'}
                   </Typography>
                   <Typography variant="caption" color="rgba(255,255,255,0.7)">
-                    {photo.created_at ? new Date(photo.created_at).toLocaleDateString() : ''}
+                    {photo.completed_at
+                      ? `Completada: ${new Date(photo.completed_at).toLocaleDateString()}`
+                      : (photo.created_at ? `Subida: ${new Date(photo.created_at).toLocaleDateString()}` : '')}
                   </Typography>
                 </View>
               </Pressable>
