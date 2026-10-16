@@ -1,23 +1,19 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import {
-  GripVertical,
   CheckCircle2,
   Calendar,
   Flag,
   ListChecks,
   RotateCw,
   Star,
-  Sparkles,
-  Pencil,
   Trash2,
-  Users,
   AlertCircle,
 } from 'lucide-react-native';
 
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { styles } from '../styles/explore.styles';
-import { DailyTask, DailyTag, CollaboratorItem, DailySortField, TimeView } from '../types';
+import { DailyTask, DailyTag, DailySortField, TimeView } from '../types';
 import { PRIORITY_CONFIG } from '../constants';
 import { formatTaskDateBadge, getRecurrenceLabel } from '../utils/dailyTaskDateUtils';
 import { DragHandle } from '@/components/DraggableTaskList';
@@ -29,11 +25,9 @@ export interface DailyTaskCardProps {
   sortField: DailySortField;
   timeView: TimeView;
   tagMap: Map<string, DailyTag>;
-  collaboratorMap: Map<string, CollaboratorItem>;
   onToggle: (task: DailyTask) => void;
   onOpenEdit: (task: DailyTask) => void;
   onToggleFavorite: (task: DailyTask) => void;
-  onConvertToBucket: (task: DailyTask) => void;
   onDelete: (task: DailyTask) => void;
 }
 
@@ -44,11 +38,9 @@ export function DailyTaskCard({
   sortField,
   timeView,
   tagMap,
-  collaboratorMap,
   onToggle,
   onOpenEdit,
   onToggleFavorite,
-  onConvertToBucket,
   onDelete,
 }: DailyTaskCardProps) {
   const isCompleted = item.is_completed;
@@ -56,9 +48,6 @@ export function DailyTaskCard({
   const itemTags = (item.tag_ids || [])
     .map((id) => tagMap.get(id))
     .filter(Boolean) as DailyTag[];
-  const itemCollaborators = (item.collaborator_ids || [])
-    .map((id) => collaboratorMap.get(id))
-    .filter(Boolean) as CollaboratorItem[];
 
   return (
     <View
@@ -70,21 +59,6 @@ export function DailyTaskCard({
         isLast && { borderBottomWidth: 0 },
       ]}
     >
-      {/* Drag handle (shown in manual mode; dragging also works anywhere on the row by holding down) */}
-      {sortField === 'manual' && drag && (
-        <View
-          {...drag.panHandlers}
-          hitSlop={{ top: 16, bottom: 16, left: 14, right: 14 }}
-          style={styles.dragHandle}
-          accessibilityLabel="Arrastrar para mover tarea"
-        >
-          <GripVertical
-            size={18}
-            color={drag.isActive ? gold[400] : '#6E6E6E'}
-            strokeWidth={2}
-          />
-        </View>
-      )}
 
       {/* Checkbox */}
       <Pressable
@@ -155,16 +129,6 @@ export function DailyTaskCard({
                 </View>
               ))
             : null}
-
-          {/* Collaborator chip */}
-          {itemCollaborators.length > 0 && (
-            <View style={styles.collabBadgeChip}>
-              <Users size={10} color="#D4B13A" />
-              <Text style={styles.collabBadgeText} numberOfLines={1}>
-                {itemCollaborators.map((c) => c.display_name || `@${c.username}`).join(', ')}
-              </Text>
-            </View>
-          )}
 
           {/* Priority chip */}
           {item.priority && (
@@ -264,26 +228,6 @@ export function DailyTaskCard({
         />
       </Pressable>
 
-      {/* Convert to Bucket List quick button */}
-      <Pressable
-        hitSlop={8}
-        onPress={() => onConvertToBucket(item)}
-        style={styles.convertQuickBtn}
-        accessibilityLabel="Convertir en Bucket List"
-      >
-        <Sparkles size={13} color={gold[400]} strokeWidth={1.8} />
-      </Pressable>
-
-      {/* Edit icon button */}
-      <Pressable
-        hitSlop={8}
-        onPress={() => onOpenEdit(item)}
-        style={styles.actionBtn}
-        accessibilityLabel="Editar tarea"
-      >
-        <Pencil size={14} color="#666" strokeWidth={1.8} />
-      </Pressable>
-
       {/* Delete icon button */}
       <Pressable
         hitSlop={8}
@@ -303,12 +247,10 @@ export interface DailyOverdueTaskCardProps {
   isLast?: boolean;
   sortField: DailySortField;
   tagMap: Map<string, DailyTag>;
-  collaboratorMap: Map<string, CollaboratorItem>;
   upcomingWeekDays: { date: Date; dateStr: string; label: string; dayNum: string; isToday: boolean }[];
   onToggle: (task: DailyTask) => void;
   onOpenEdit: (task: DailyTask) => void;
   onToggleFavorite: (task: DailyTask) => void;
-  onConvertToBucket: (task: DailyTask) => void;
   onDelete: (task: DailyTask) => void;
   onReschedule: (task: DailyTask, targetDateStr: string) => void;
   onOpenRescheduleDatePicker: (task: DailyTask) => void;
@@ -320,12 +262,10 @@ export function DailyOverdueTaskCard({
   isLast,
   sortField,
   tagMap,
-  collaboratorMap,
   upcomingWeekDays,
   onToggle,
   onOpenEdit,
   onToggleFavorite,
-  onConvertToBucket,
   onDelete,
   onReschedule,
   onOpenRescheduleDatePicker,
@@ -335,9 +275,6 @@ export function DailyOverdueTaskCard({
   const itemTags = (item.tag_ids || [])
     .map((id) => tagMap.get(id))
     .filter(Boolean) as DailyTag[];
-  const itemCollaborators = (item.collaborator_ids || [])
-    .map((id) => collaboratorMap.get(id))
-    .filter(Boolean) as CollaboratorItem[];
 
   return (
     <View
@@ -352,20 +289,6 @@ export function DailyOverdueTaskCard({
     >
       {/* Top line: drag handle, checkbox, content, actions */}
       <View style={styles.overdueMainLine}>
-        {sortField === 'manual' && drag && (
-          <View
-            {...drag.panHandlers}
-            hitSlop={{ top: 16, bottom: 16, left: 14, right: 14 }}
-            style={styles.dragHandle}
-            accessibilityLabel="Arrastrar para reordenar tarea atrasada"
-          >
-            <GripVertical
-              size={18}
-              color={drag.isActive ? '#F59E0B' : '#777'}
-              strokeWidth={2}
-            />
-          </View>
-        )}
 
         {/* Checkbox */}
         <Pressable
@@ -448,16 +371,6 @@ export function DailyOverdueTaskCard({
                 </View>
               ))}
 
-            {/* Collaborators */}
-            {itemCollaborators.length > 0 && (
-              <View style={styles.collabBadgeChip}>
-                <Users size={10} color="#D4B13A" />
-                <Text style={styles.collabBadgeText} numberOfLines={1}>
-                  {itemCollaborators.map((c) => c.display_name || `@${c.username}`).join(', ')}
-                </Text>
-              </View>
-            )}
-
             {/* Priority badge */}
             {item.priority && (
               <View
@@ -522,25 +435,7 @@ export function DailyOverdueTaskCard({
           />
         </Pressable>
 
-        {/* Convert to Bucket quick button */}
-        <Pressable
-          hitSlop={8}
-          onPress={() => onConvertToBucket(item)}
-          style={styles.convertQuickBtn}
-          accessibilityLabel="Convertir en Bucket List"
-        >
-          <Sparkles size={13} color={gold[400]} strokeWidth={1.8} />
-        </Pressable>
-
-        {/* Edit & Delete actions */}
-        <Pressable
-          hitSlop={8}
-          onPress={() => onOpenEdit(item)}
-          style={styles.actionBtn}
-          accessibilityLabel="Editar tarea"
-        >
-          <Pencil size={14} color="#666" strokeWidth={1.8} />
-        </Pressable>
+        {/* Delete action */}
         <Pressable
           hitSlop={8}
           onPress={() => onDelete(item)}

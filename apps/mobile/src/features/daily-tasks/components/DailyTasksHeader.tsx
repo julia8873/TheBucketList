@@ -7,7 +7,6 @@ import {
   ListTodo,
   CheckCircle2,
   Star,
-  Users,
   ArrowUpDown,
 } from 'lucide-react-native';
 
@@ -32,8 +31,6 @@ interface DailyTasksHeaderProps {
   onlyFavorites: boolean;
   setOnlyFavorites: React.Dispatch<React.SetStateAction<boolean>>;
   favoritesCount: number;
-  onlyCollaborators: boolean;
-  setOnlyCollaborators: React.Dispatch<React.SetStateAction<boolean>>;
   priorityFilter: string;
   setPriorityFilter: React.Dispatch<React.SetStateAction<string>>;
   sortField: DailySortField;
@@ -58,8 +55,6 @@ export function DailyTasksHeader({
   onlyFavorites,
   setOnlyFavorites,
   favoritesCount,
-  onlyCollaborators,
-  setOnlyCollaborators,
   priorityFilter,
   setPriorityFilter,
   sortField,
@@ -286,35 +281,10 @@ export function DailyTasksHeader({
           </Text>
         </Pressable>
 
-        {/* Filtro rápido: Con colaboradores */}
-        <Pressable
-          style={[
-            styles.tagFilterPill,
-            onlyCollaborators && styles.filterPillActive,
-          ]}
-          onPress={() => setOnlyCollaborators((prev) => !prev)}
-          accessibilityLabel="Filtrar tareas compartidas con colaboradores"
-        >
-          <Users
-            size={12}
-            color={onlyCollaborators ? gold[400] : '#888'}
-            strokeWidth={2}
-          />
-          <Text
-            style={[
-              styles.tagFilterText,
-              onlyCollaborators && styles.filterPillTextActive,
-            ]}
-          >
-            Colaboradores
-          </Text>
-        </Pressable>
-
         {/* Botón rápido para limpiar filtros activos */}
         {(statusFilter !== 'all' ||
           onlyFavorites ||
           priorityFilter !== 'all' ||
-          onlyCollaborators ||
           selectedTagFilters.length > 0) && (
           <Pressable
             style={styles.clearFiltersPill}
@@ -322,7 +292,6 @@ export function DailyTasksHeader({
               setStatusFilter('all');
               setOnlyFavorites(false);
               setPriorityFilter('all');
-              setOnlyCollaborators(false);
               setSelectedTagFilters([]);
             }}
             accessibilityLabel="Restablecer filtros"

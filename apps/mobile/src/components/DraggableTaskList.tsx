@@ -138,7 +138,7 @@ function Row(props: RowProps) {
     }),
   ).current;
 
-  // Fila completa: al mantener pulsado 240ms, vibra e inicia el arrastre para cambiar el orden
+  // Fila completa: al mantener pulsado ~350ms, vibra e inicia el arrastre para cambiar el orden
   const rowPan = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
@@ -159,7 +159,7 @@ function Row(props: RowProps) {
           const p = latest.current;
           y.setValue(p.top);
           p.onDragStart(p.item.id, p.index);
-        }, 240);
+        }, 350);
         return false;
       },
       onMoveShouldSetPanResponder: () => isLongPressing.current,
@@ -169,8 +169,8 @@ function Row(props: RowProps) {
         }
         const dx = Math.abs(evt.nativeEvent.pageX - touchStartPos.current.x);
         const dy = Math.abs(evt.nativeEvent.pageY - touchStartPos.current.y);
-        // Si el usuario desliza para hacer scroll antes de que pasen los 240ms, cancelamos el timer
-        if (dx > 8 || dy > 8) {
+        // Si el usuario desliza para hacer scroll antes de que pasen los 350ms, cancelamos el timer
+        if (dx > 14 || dy > 14) {
           clearTimer();
           return false;
         }

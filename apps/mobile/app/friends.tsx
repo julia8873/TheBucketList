@@ -10,7 +10,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Search, X } from 'lucide-react-native';
-import { SegmentedControl, gold, useTheme, PageTitle } from '@bucketlist/ui';
+import { SegmentedControl, gold, useTheme, PageTitle, EmptyState } from '@bucketlist/ui';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '../src/services/supabase';
 import { useAuthStore } from '../src/stores/auth.store';
 import {
   useAcceptRequest,
@@ -19,6 +21,7 @@ import {
   useConnections,
   usePeopleSearch,
   useRejectRequest,
+  useProfileStats,
 } from '../src/hooks/useFriends';
 import { useFollowUser, useUnfollowUser } from '../src/hooks/useSocial';
 import { displayNameOf } from '../src/utils/initials';
@@ -43,19 +46,44 @@ export default function FriendsScreen() {
   const { theme } = useTheme();
   const router = useRouter();
   const { user } = useAuthStore();
-  const params = useLocalSearchParams<{ tab?: string }>();
+  const params = useLocalSearchParams<{ tab?: string; userId?: string; kind?: ConnectionKind }>();
 
-  const [tab, setTab] = useState<Tab>(params.tab === 'requests' ? 'requests' : 'accounts');
+  const targetUserId = params.userId || user?.id;
+  const isOtherUser = !!params.userId && params.userId !== user?.id;
+
+  const [tab, setTab] = useState<Tab>(params.tab === 'requests' && !isOtherUser ? 'requests' : 'accounts');
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [kind, setKind] = useState<ConnectionKind>('following');
+  const [kind, setKind] = useState<ConnectionKind>(params.kind === 'followers' ? 'followers' : 'following');
   const debounced = useDebounce(query, 350);
   const term = debounced.trim().replace(/^@/, '');
 
+  useEffect(() => {
+    if (params.kind === 'followers' || params.kind === 'following') {
+      setKind(params.kind);
+    }
+  }, [params.kind]);
+
+  const targetProfileQuery = useQuery({
+    queryKey: ['profile', targetUserId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', targetUserId!).single();
+      if (error) throw error;
+      return data as any;
+    },
+    enabled: isOtherUser && !!targetUserId,
+  });
+
+  const targetStatsQuery = useProfileStats(isOtherUser ? targetUserId : undefined);
+  const targetFollowStatus = targetStatsQuery.data?.follow_status ?? 'none';
+  const targetIsPrivate = targetProfileQuery.data?.visibility === 'private';
+  const targetIsLocked =
+    isOtherUser && (!!targetStatsQuery.data?.is_locked || (targetIsPrivate && targetFollowStatus !== 'accepted'));
+
   const search = usePeopleSearch(debounced);
-  const following = useConnections(user?.id, 'following');
-  const followers = useConnections(user?.id, 'followers');
+  const following = useConnections(targetUserId, 'following', user?.id);
+  const followers = useConnections(targetUserId, 'followers', user?.id);
   const incoming = useIncomingRequests(user?.id);
   const outgoing = useOutgoingRequests(user?.id);
   const accept = useAcceptRequest(user?.id);
@@ -64,8 +92,8 @@ export default function FriendsScreen() {
   const unfollow = useUnfollowUser();
 
   useEffect(() => {
-    if (params.tab === 'requests') setTab('requests');
-  }, [params.tab]);
+    if (params.tab === 'requests' && !isOtherUser) setTab('requests');
+  }, [params.tab, isOtherUser]);
 
   const incomingList = incoming.data ?? [];
   const outgoingList = outgoing.data ?? [];
@@ -118,7 +146,12 @@ export default function FriendsScreen() {
           <ChevronLeft size={22} color="#F2EFE8" strokeWidth={2} />
         </Pressable>
 
-        {tab === 'accounts' ? (
+        {isOtherUser ? (
+          <PageTitle
+            gold={kind === 'followers' ? 'Seguidores' : 'Siguiendo'}
+            rest={targetProfileQuery.data?.username ? `de @${targetProfileQuery.data.username}` : ''}
+          />
+        ) : tab === 'accounts' ? (
           <View style={[styles.searchField, (focused || query.length > 0) && { borderColor: gold[400] }]}>
             <Search size={18} color="#9A9A9A" strokeWidth={1.8} />
             <TextInput
@@ -146,16 +179,18 @@ export default function FriendsScreen() {
         )}
       </View>
 
-      <View style={styles.segment}>
-        <SegmentedControl
-          options={[
-            { key: 'accounts', label: 'Cuentas' },
-            { key: 'requests', label: requestsCount > 0 ? `Solicitudes · ${requestsCount}` : 'Solicitudes' },
-          ]}
-          selected={tab}
-          onChange={(key) => setTab(key as Tab)}
-        />
-      </View>
+      {!isOtherUser && (
+        <View style={styles.segment}>
+          <SegmentedControl
+            options={[
+              { key: 'accounts', label: 'Cuentas' },
+              { key: 'requests', label: requestsCount > 0 ? `Solicitudes · ${requestsCount}` : 'Solicitudes' },
+            ]}
+            selected={tab}
+            onChange={(key) => setTab(key as Tab)}
+          />
+        </View>
+      )}
 
       <ScrollView
         contentContainerStyle={styles.content}
@@ -169,7 +204,14 @@ export default function FriendsScreen() {
           />
         }
       >
-        {tab === 'accounts' ? (
+        {targetIsLocked ? (
+          <View style={{ paddingHorizontal: 20, paddingTop: 40, alignItems: 'center' }}>
+            <EmptyState
+              title="Esta cuenta es privada"
+              message="Sigue a este usuario para ver sus seguidores."
+            />
+          </View>
+        ) : tab === 'accounts' || isOtherUser ? (
           <FriendsAccountsTab
             term={term}
             kind={kind}

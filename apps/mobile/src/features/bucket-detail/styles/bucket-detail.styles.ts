@@ -3,7 +3,7 @@ import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const COVER_HEIGHT = 220;
-const BADGES_OVERLAP = 32;
+const BADGES_OVERLAP = 18;
 
 export { SCREEN_WIDTH, COVER_HEIGHT, BADGES_OVERLAP };
 
@@ -71,6 +71,20 @@ export const styles = StyleSheet.create({
     paddingTop: 0,
     marginTop: -BADGES_OVERLAP,
   },
+  badgesContainer: {
+    marginBottom: 16,
+  },
+  badgesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  badgesSecondRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 8,
+  },
   badges: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -80,7 +94,7 @@ export const styles = StyleSheet.create({
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 13,
+    paddingHorizontal: 11,
     paddingVertical: 7,
     borderRadius: 20,
     borderWidth: 1,

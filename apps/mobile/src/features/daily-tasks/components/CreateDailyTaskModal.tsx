@@ -18,7 +18,6 @@ import {
   Plus,
   ListChecks,
   CheckCircle2,
-  Users,
 } from 'lucide-react-native';
 import { format, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -32,7 +31,6 @@ import type {
   DailyTaskRecurrenceUnit,
   DailySubtask,
   DailyTag,
-  CollaboratorItem,
 } from '../types';
 
 interface CreateDailyTaskModalProps {
@@ -68,9 +66,6 @@ interface CreateDailyTaskModalProps {
   onAddSubtask: () => void;
   onToggleSubtask: (id: string) => void;
   onDeleteSubtask: (id: string) => void;
-  collaborators: CollaboratorItem[];
-  setCollaborators: React.Dispatch<React.SetStateAction<CollaboratorItem[]>>;
-  onOpenCollaboratorPicker: () => void;
   onSubmit: () => void;
   renderTagModal?: React.ReactNode;
 }
@@ -108,9 +103,6 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
   onAddSubtask,
   onToggleSubtask,
   onDeleteSubtask,
-  collaborators,
-  setCollaborators,
-  onOpenCollaboratorPicker,
   onSubmit,
   renderTagModal,
 }) => {
@@ -412,45 +404,6 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
               numberOfLines={3}
             />
 
-            {/* COLABORADORES */}
-            <View style={styles.collabSectionHeader}>
-              <Text style={styles.fieldLabel}>Colaboradores</Text>
-              {collaborators.length > 0 && (
-                <Text style={styles.collabCountText}>({collaborators.length})</Text>
-              )}
-            </View>
-
-            <Pressable
-              style={styles.collaboratorRow}
-              onPress={onOpenCollaboratorPicker}
-            >
-              <Users color="#D4B13A" size={18} />
-              <Text style={styles.collaboratorPlaceholder} numberOfLines={1}>
-                {collaborators.length === 0
-                  ? 'Mencionar a personas colaboradoras...'
-                  : `${collaborators.length} colaborador${collaborators.length > 1 ? 'es' : ''} añadido${collaborators.length > 1 ? 's' : ''}`}
-              </Text>
-              <Plus color="#D4B13A" size={18} />
-            </Pressable>
-
-            {collaborators.length > 0 && (
-              <View style={styles.collaboratorChips}>
-                {collaborators.map((c) => (
-                  <Pressable
-                    key={c.id}
-                    style={styles.collaboratorChip}
-                    onPress={() =>
-                      setCollaborators((prev) => prev.filter((x) => x.id !== c.id))
-                    }
-                  >
-                    <Text style={styles.collaboratorChipText}>
-                      {c.display_name || `@${c.username}`}
-                    </Text>
-                    <X color="#D4B13A" size={13} />
-                  </Pressable>
-                ))}
-              </View>
-            )}
           </ScrollView>
 
           {/* Footer Buttons */}

@@ -46,8 +46,6 @@ export default function PublicProfileScreen() {
 
   const { data: stats, isLoading: statsLoading } = useProfileStats(id);
   const followStatus = stats?.follow_status ?? 'none';
-  const isLocked = !isOwnProfile && !!stats?.is_locked;
-
   const {
     profile,
     profileLoading,
@@ -58,11 +56,12 @@ export default function PublicProfileScreen() {
   } = usePublicProfileData({
     id,
     isOwnProfile,
-    isLocked,
+    isLocked: !isOwnProfile && !!stats?.is_locked,
     followStatus,
   });
 
   const isPrivate = profile?.visibility === 'private';
+  const isLocked = !isOwnProfile && (!!stats?.is_locked || (isPrivate && followStatus !== 'accepted'));
 
   const filtered = useMemo(() => {
     const list = buckets ?? [];
@@ -163,6 +162,26 @@ export default function PublicProfileScreen() {
         taskCount={taskCount}
         followersCount={stats?.followers_count ?? 0}
         isLocked={isLocked}
+        onPressCompleted={() => {
+          if (!isLocked) {
+            setActiveTab('list');
+            setFilter('completed');
+          }
+        }}
+        onPressPublic={() => {
+          if (!isLocked) {
+            setActiveTab('list');
+            setFilter('all');
+          }
+        }}
+        onPressFollowers={() => {
+          if (!isLocked) {
+            router.push({
+              pathname: '/friends',
+              params: { userId: id, kind: 'followers' },
+            } as any);
+          }
+        }}
       />
 
       {isLocked ? (

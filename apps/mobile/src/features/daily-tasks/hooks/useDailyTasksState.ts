@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Alert, TextInput } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useQuery } from '@tanstack/react-query';
 import {
   format,
   addDays,
@@ -12,8 +11,6 @@ import {
   isToday,
 } from 'date-fns';
 import { es } from 'date-fns/locale';
-
-import { supabase } from '@/services/supabase';
 import {
   useDailyTasks,
   useDailyTaskStats,
@@ -36,7 +33,6 @@ import {
   DailyTask,
   DailyTag,
   DailySubtask,
-  CollaboratorItem,
   DailySortField,
   DailySortDirection,
   TimeView,
@@ -57,10 +53,9 @@ export function useDailyTasksState() {
   const [selectedTagFilters, setSelectedTagFilters] = useState<string[]>([]);
   const [showTagFilterSheet, setShowTagFilterSheet] = useState(false);
 
-  // Quick filters: Favoritas, Prioridad, Colaboradores
+  // Quick filters: Favoritas, Prioridad
   const [onlyFavorites, setOnlyFavorites] = useState(false);
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
-  const [onlyCollaborators, setOnlyCollaborators] = useState(false);
 
   // Sorting & Grouping state
   const [sortField, setSortField] = useState<DailySortField>('manual');
@@ -157,7 +152,6 @@ export function useDailyTasksState() {
   const [createRecurrenceUnit, setCreateRecurrenceUnit] = useState<DailyTaskRecurrenceUnit>('days');
   const [createShowCustomRecurrence, setCreateShowCustomRecurrence] = useState(false);
   const [createTagIds, setCreateTagIds] = useState<string[]>([]);
-  const [createCollaborators, setCreateCollaborators] = useState<CollaboratorItem[]>([]);
   const [createSubtasks, setCreateSubtasks] = useState<DailySubtask[]>([]);
   const [createSubtaskTitle, setCreateSubtaskTitle] = useState('');
 
@@ -174,13 +168,8 @@ export function useDailyTasksState() {
   const [editRecurrenceUnit, setEditRecurrenceUnit] = useState<DailyTaskRecurrenceUnit>('days');
   const [editShowCustomRecurrence, setEditShowCustomRecurrence] = useState(false);
   const [editTagIds, setEditTagIds] = useState<string[]>([]);
-  const [editCollaborators, setEditCollaborators] = useState<CollaboratorItem[]>([]);
   const [editSubtasks, setEditSubtasks] = useState<DailySubtask[]>([]);
   const [editSubtaskTitle, setEditSubtaskTitle] = useState('');
-
-  // Collaborator picker state
-  const [showCollaboratorPicker, setShowCollaboratorPicker] = useState(false);
-  const [collaboratorPickerTarget, setCollaboratorPickerTarget] = useState<'create' | 'edit'>('create');
 
   // Tag Form Modal state
   const [showTagModal, setShowTagModal] = useState(false);
@@ -235,45 +224,6 @@ export function useDailyTasksState() {
     return map;
   }, [userTags]);
 
-  const allCollaboratorIds = useMemo(() => {
-    const set = new Set<string>();
-    tasks.forEach((t) => (t.collaborator_ids || []).forEach((id) => set.add(id)));
-    if (editingTask?.collaborator_ids) {
-      editingTask.collaborator_ids.forEach((id) => set.add(id));
-    }
-    return Array.from(set);
-  }, [tasks, editingTask]);
-
-  const { data: collaboratorProfiles = [] } = useQuery({
-    queryKey: ['profiles_batch', allCollaboratorIds],
-    queryFn: async () => {
-      if (allCollaboratorIds.length === 0) return [];
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, username, display_name, avatar_url')
-        .in('id', allCollaboratorIds);
-      if (error) {
-        console.warn('Error fetching collaborator profiles:', error);
-        return [];
-      }
-      return data || [];
-    },
-    enabled: allCollaboratorIds.length > 0,
-  });
-
-  const collaboratorMap = useMemo(() => {
-    const map = new Map<string, CollaboratorItem>();
-    collaboratorProfiles.forEach((p: any) =>
-      map.set(p.id, {
-        id: p.id,
-        username: p.username,
-        display_name: p.display_name,
-        avatar_url: p.avatar_url,
-      })
-    );
-    return map;
-  }, [collaboratorProfiles]);
-
   const filteredByTagAndStatus = useMemo(() => {
     return tasks.filter((t) => {
       if (statusFilter === 'pending' && t.is_completed) return false;
@@ -283,10 +233,9 @@ export function useDailyTasksState() {
       }
       if (onlyFavorites && !t.is_favorite) return false;
       if (priorityFilter !== 'all' && t.priority !== priorityFilter) return false;
-      if (onlyCollaborators && (!t.collaborator_ids || t.collaborator_ids.length === 0)) return false;
       return true;
     });
-  }, [tasks, statusFilter, selectedTagFilters, onlyFavorites, priorityFilter, onlyCollaborators]);
+  }, [tasks, statusFilter, selectedTagFilters, onlyFavorites, priorityFilter]);
 
   const favoritesCount = useMemo(() => tasks.filter((t) => t.is_favorite).length, [tasks]);
 
@@ -437,7 +386,6 @@ export function useDailyTasksState() {
       due_date: todayStr,
       priority: 'medium',
       tag_ids: [],
-      collaborator_ids: [],
     });
 
     setNewTitle('');
@@ -454,7 +402,6 @@ export function useDailyTasksState() {
     setCreateRecurrenceUnit('days');
     setCreateShowCustomRecurrence(false);
     setCreateTagIds(selectedTagFilters.length > 0 ? [...selectedTagFilters] : []);
-    setCreateCollaborators([]);
     setCreateSubtasks([]);
     setCreateSubtaskTitle('');
     setShowCreateModal(true);
@@ -474,7 +421,6 @@ export function useDailyTasksState() {
       recurrence_interval: createRecurrenceInterval,
       recurrence_unit: createRecurrenceUnit,
       tag_ids: createTagIds,
-      collaborator_ids: createCollaborators.map((c) => c.id),
       subtasks: createSubtasks,
     });
 
@@ -488,7 +434,6 @@ export function useDailyTasksState() {
     setCreateRecurrenceUnit('days');
     setCreateShowCustomRecurrence(false);
     setCreateTagIds([]);
-    setCreateCollaborators([]);
     setCreateSubtasks([]);
     setCreateSubtaskTitle('');
     setShowCreateModal(false);
@@ -655,7 +600,6 @@ export function useDailyTasksState() {
             recurrence_unit: editRecurrenceUnit,
             due_date: editDueDate,
             tag_ids: editTagIds,
-            collaborator_ids: editCollaborators.map((c) => c.id),
             subtasks: editSubtasks,
           },
           nextDueDate,
@@ -673,7 +617,6 @@ export function useDailyTasksState() {
           recurrence_unit: editRecurrenceUnit,
           due_date: editDueDate,
           tag_ids: editTagIds,
-          collaborator_ids: editCollaborators.map((c) => c.id),
           subtasks: editSubtasks,
         });
       }
@@ -702,10 +645,6 @@ export function useDailyTasksState() {
     setEditTagIds(task.tag_ids || []);
     setEditSubtasks(task.subtasks || []);
     setEditSubtaskTitle('');
-    const existingCols = (task.collaborator_ids || [])
-      .map((id) => collaboratorMap.get(id))
-      .filter(Boolean) as CollaboratorItem[];
-    setEditCollaborators(existingCols);
   };
 
   const handleAddEditSubtask = () => {
@@ -878,8 +817,6 @@ export function useDailyTasksState() {
     setOnlyFavorites,
     priorityFilter,
     setPriorityFilter,
-    onlyCollaborators,
-    setOnlyCollaborators,
     sortField,
     sortDirection,
     groupByTag,
@@ -923,8 +860,6 @@ export function useDailyTasksState() {
     setCreateShowCustomRecurrence,
     createTagIds,
     setCreateTagIds,
-    createCollaborators,
-    setCreateCollaborators,
     createSubtasks,
     createSubtaskTitle,
     setCreateSubtaskTitle,
@@ -954,8 +889,6 @@ export function useDailyTasksState() {
     setEditShowCustomRecurrence,
     editTagIds,
     setEditTagIds,
-    editCollaborators,
-    setEditCollaborators,
     editSubtasks,
     editSubtaskTitle,
     setEditSubtaskTitle,
@@ -971,11 +904,6 @@ export function useDailyTasksState() {
     handleToggleEditSubtask,
     handleDeleteEditSubtask,
     autoSaveTask,
-    // Collaborator Picker
-    showCollaboratorPicker,
-    setShowCollaboratorPicker,
-    collaboratorPickerTarget,
-    setCollaboratorPickerTarget,
     // Tag Form Modal
     showTagModal,
     setShowTagModal,
@@ -1004,7 +932,6 @@ export function useDailyTasksState() {
     handleRefresh,
     userTags,
     tagMap,
-    collaboratorMap,
     todayStr,
     favoritesCount,
     upcomingWeekDays,

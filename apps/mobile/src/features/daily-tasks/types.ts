@@ -1,6 +1,5 @@
 import type { DailyTaskPriority, DailyTaskRecurrenceUnit, DailySubtask } from '../../hooks/useDailyTasks';
 import type { DailyTag } from '../../hooks/useDailyTags';
-import type { CollaboratorItem } from '../../components/CollaboratorPickerSheet';
 import type { DailyTask, DailyCompletion, DailyStats } from '../../services/api/dailyTasksService';
 
 export type TimeView = 'today' | 'week' | 'calendar' | 'all';
@@ -17,5 +16,4 @@ export type {
   DailyTaskRecurrenceUnit,
   DailySubtask,
   DailyTag,
-  CollaboratorItem,
 };

@@ -18,13 +18,51 @@ interface ProfileBioAndStatsProps {
   taskCount: number | string;
   followersCount: number;
   isLocked: boolean;
+  onPressCompleted?: () => void;
+  onPressPublic?: () => void;
+  onPressFollowers?: () => void;
 }
 
-function Stat({ value, label, divider }: { value: number | string; label: string; divider?: boolean }) {
-  return (
-    <View style={[styles.stat, divider && styles.statDivider]}>
+function Stat({
+  value,
+  label,
+  divider,
+  onPress,
+  disabled,
+}: {
+  value: number | string;
+  label: string;
+  divider?: boolean;
+  onPress?: () => void;
+  disabled?: boolean;
+}) {
+  const content = (
+    <>
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
+    </>
+  );
+
+  if (onPress && !disabled) {
+    return (
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`${label}: ${value}`}
+        style={({ pressed }) => [
+          styles.stat,
+          divider && styles.statDivider,
+          pressed && { opacity: 0.65 },
+        ]}
+      >
+        {content}
+      </Pressable>
+    );
+  }
+
+  return (
+    <View style={[styles.stat, divider && styles.statDivider]}>
+      {content}
     </View>
   );
 }
@@ -41,6 +79,9 @@ export function ProfileBioAndStats({
   taskCount,
   followersCount,
   isLocked,
+  onPressCompleted,
+  onPressPublic,
+  onPressFollowers,
 }: ProfileBioAndStatsProps) {
   return (
     <>
@@ -82,9 +123,26 @@ export function ProfileBioAndStats({
       </View>
 
       <View style={styles.stats}>
-        <Stat value={completedCount} label="Completadas" />
-        <Stat value={isLocked ? '—' : taskCount} label="Públicas" divider />
-        <Stat value={followersCount} label="Seguidores" divider />
+        <Stat
+          value={isLocked ? '—' : completedCount}
+          label="Completadas"
+          onPress={onPressCompleted}
+          disabled={isLocked}
+        />
+        <Stat
+          value={isLocked ? '—' : taskCount}
+          label="Públicas"
+          divider
+          onPress={onPressPublic}
+          disabled={isLocked}
+        />
+        <Stat
+          value={isLocked ? '—' : followersCount}
+          label="Seguidores"
+          divider
+          onPress={onPressFollowers}
+          disabled={isLocked}
+        />
       </View>
     </>
   );

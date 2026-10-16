@@ -54,6 +54,10 @@ export default function CurrentUserProfileScreen() {
     () => buckets.filter((b) => b.status === 'completed'),
     [buckets],
   );
+  const publicBuckets = useMemo(
+    () => buckets.filter((b) => b.visibility === 'public'),
+    [buckets],
+  );
   const recent = useMemo(
     () =>
       [...completed]
@@ -150,11 +154,23 @@ export default function CurrentUserProfileScreen() {
 
         {/* Estadísticas */}
         <View style={[styles.stats, { borderColor: theme.colors.border }]}>
-          <Stat value={completed.length} label={t('profile.completed_items')} />
+          <Stat
+            value={completed.length}
+            label={t('profile.completed_items')}
+            onPress={() => router.push('/(tabs)/my-list?tab=list&filter=completed' as any)}
+          />
           <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
-          <Stat value={buckets.length} label={t('profile.in_list')} />
+          <Stat
+            value={publicBuckets.length}
+            label="Públicas"
+            onPress={() => router.push('/(tabs)/my-list?tab=list&filter=all' as any)}
+          />
           <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
-          <Stat value={albums.data?.length ?? 0} label={t('profile.albums')} />
+          <Stat
+            value={albums.data?.length ?? 0}
+            label={t('profile.albums')}
+            onPress={() => router.push('/(tabs)/my-list?tab=albums' as any)}
+          />
         </View>
 
         {/* Últimas completadas */}
@@ -266,12 +282,31 @@ export default function CurrentUserProfileScreen() {
   );
 }
 
-function Stat({ value, label }: { value: number; label: string }) {
+function Stat({ value, label, onPress }: { value: number; label: string; onPress?: () => void }) {
   const { theme } = useTheme();
-  return (
-    <View style={styles.stat}>
+  const content = (
+    <>
       <Text style={[styles.statValue, { color: theme.colors.foreground }]}>{value}</Text>
       <Text style={[styles.statLabel, { color: theme.colors.foregroundMuted }]}>{label}</Text>
+    </>
+  );
+
+  if (onPress) {
+    return (
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`${label}: ${value}`}
+        style={({ pressed }) => [styles.stat, pressed && { opacity: 0.65 }]}
+      >
+        {content}
+      </Pressable>
+    );
+  }
+
+  return (
+    <View style={styles.stat}>
+      {content}
     </View>
   );
 }

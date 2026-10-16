@@ -134,22 +134,38 @@ export const friendsApi = {
   },
 
   /** Personas a las que sigo (solicitudes ya aceptadas). */
-  getFollowing: async (userId: string): Promise<ConnectionPerson[]> => {
-    const { data, error } = await supabase
-      .from('follows')
-      .select(`created_at, person:profiles!following_id(${PERSON_FIELDS}, visibility)`)
-      .eq('follower_id', userId)
-      .eq('status', 'accepted')
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    return (data ?? []).flatMap((row: any) => {
+  getFollowing: async (userId: string, currentUserId?: string): Promise<ConnectionPerson[]> => {
+    const viewerId = currentUserId ?? userId;
+    const [followingRes, mineRes] = await Promise.all([
+      supabase
+        .from('follows')
+        .select(`created_at, person:profiles!following_id(${PERSON_FIELDS}, visibility)`)
+        .eq('follower_id', userId)
+        .eq('status', 'accepted')
+        .order('created_at', { ascending: false }),
+      supabase.from('follows').select('following_id, status').eq('follower_id', viewerId),
+    ]);
+    if (followingRes.error) throw followingRes.error;
+    const mine = new Map<string, FollowStatus>(
+      (mineRes.data ?? []).map((r: any) => [r.following_id as string, r.status as FollowStatus]),
+    );
+    return (followingRes.data ?? []).flatMap((row: any) => {
       const person = one<any>(row.person);
-      return person ? [{ ...person, follow_status: 'accepted' as FollowStatus, public_count: 0 }] : [];
+      return person
+        ? [
+            {
+              ...person,
+              follow_status: (viewerId === userId ? 'accepted' : mine.get(person.id) ?? 'none') as FollowStatus,
+              public_count: 0,
+            },
+          ]
+        : [];
     });
   },
 
   /** Personas que me siguen, marcando si yo también las sigo. */
-  getFollowers: async (userId: string): Promise<ConnectionPerson[]> => {
+  getFollowers: async (userId: string, currentUserId?: string): Promise<ConnectionPerson[]> => {
+    const viewerId = currentUserId ?? userId;
     const [followersRes, mineRes] = await Promise.all([
       supabase
         .from('follows')
@@ -157,7 +173,7 @@ export const friendsApi = {
         .eq('following_id', userId)
         .eq('status', 'accepted')
         .order('created_at', { ascending: false }),
-      supabase.from('follows').select('following_id, status').eq('follower_id', userId),
+      supabase.from('follows').select('following_id, status').eq('follower_id', viewerId),
     ]);
     if (followersRes.error) throw followersRes.error;
     const mine = new Map<string, FollowStatus>(

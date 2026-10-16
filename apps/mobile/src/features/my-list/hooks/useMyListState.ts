@@ -28,9 +28,13 @@ import {
 export function useMyListState() {
   const { user } = useAuthStore();
   const toast = useToast();
-  const params = useLocalSearchParams<{ filter?: string }>();
+  const params = useLocalSearchParams<{ filter?: string; tab?: string }>();
 
-  const [activeTab, setActiveTab] = useState('list');
+  const [activeTab, setActiveTab] = useState(
+    params.tab === 'albums' || params.tab === 'calendar' || params.tab === 'list'
+      ? params.tab
+      : 'list'
+  );
   const [filter, setFilter] = useState<FilterType>(
     params.filter === 'completed' || params.filter === 'active' || params.filter === 'in_progress' || params.filter === 'expired'
       ? (params.filter as FilterType)
@@ -39,7 +43,19 @@ export function useMyListState() {
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>('all');
 
   useEffect(() => {
-    if (params.filter === 'completed' || params.filter === 'active' || params.filter === 'in_progress' || params.filter === 'expired') {
+    if (params.tab && (params.tab === 'list' || params.tab === 'albums' || params.tab === 'calendar')) {
+      setActiveTab(params.tab);
+    }
+  }, [params.tab]);
+
+  useEffect(() => {
+    if (
+      params.filter === 'completed' ||
+      params.filter === 'active' ||
+      params.filter === 'in_progress' ||
+      params.filter === 'expired' ||
+      params.filter === 'all'
+    ) {
       setFilter(params.filter as FilterType);
     }
   }, [params.filter]);

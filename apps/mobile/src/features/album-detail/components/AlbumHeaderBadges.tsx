@@ -65,6 +65,21 @@ export function AlbumHeaderBadges({
           )}
         </Pressable>
 
+        {/* Prioridad */}
+        <Pressable
+          style={[
+            styles.chip,
+            canEdit && styles.chipPressable,
+            { borderColor: `${priorityColor}66` },
+          ]}
+          onPress={onOpenPriority}
+        >
+          <Flag size={14} color={priorityColor} strokeWidth={2} />
+          <Text style={[styles.chipText, { color: priorityColor, fontWeight: '600' }]}>
+            {priorityLabel}
+          </Text>
+        </Pressable>
+
         {/* Visibilidad */}
         <Pressable
           style={[styles.chip, canEdit && styles.chipPressable]}
@@ -72,33 +87,20 @@ export function AlbumHeaderBadges({
         >
           {album.visibility === 'public' ? (
             <>
-              <Globe size={15} color="#F3EEE3" strokeWidth={1.8} />
+              <Globe size={14} color="#F3EEE3" strokeWidth={1.8} />
               <Text style={styles.chipText}>Público</Text>
             </>
           ) : album.visibility === 'followers' ? (
             <>
-              <Users size={15} color="#F3EEE3" strokeWidth={1.8} />
+              <Users size={14} color="#F3EEE3" strokeWidth={1.8} />
               <Text style={styles.chipText}>Solo amigos</Text>
             </>
           ) : (
             <>
-              <Lock size={15} color="#F3EEE3" strokeWidth={1.8} />
+              <Lock size={14} color="#F3EEE3" strokeWidth={1.8} />
               <Text style={styles.chipText}>Privado</Text>
             </>
           )}
-        </Pressable>
-      </View>
-
-      {/* Prioridad */}
-      <View style={styles.chipsRowSecond}>
-        <Pressable
-          style={[styles.chip, canEdit && styles.chipPressable]}
-          onPress={onOpenPriority}
-        >
-          <Flag size={14} color={priorityColor} strokeWidth={2} />
-          <Text style={[styles.chipText, { color: priorityColor, fontWeight: '600' }]}>
-            Prioridad: {priorityLabel}
-          </Text>
         </Pressable>
       </View>
     </View>

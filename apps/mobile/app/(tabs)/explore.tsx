@@ -13,7 +13,6 @@ import { useTheme, Typography } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { TaskCompactSkeleton } from '@/components/TaskSkeletons';
 import { DraggableTaskList } from '@/components/DraggableTaskList';
-import { CollaboratorPickerSheet } from '@/components/CollaboratorPickerSheet';
 
 import {
   DailySortField,
@@ -56,11 +55,9 @@ export default function DailyTasksScreen() {
       sortField={state.sortField}
       timeView={state.timeView}
       tagMap={state.tagMap}
-      collaboratorMap={state.collaboratorMap}
       onToggle={state.handleToggle}
       onOpenEdit={state.openEditTask}
       onToggleFavorite={state.handleToggleFavorite}
-      onConvertToBucket={state.handleConvertToBucket}
       onDelete={state.handleDelete}
     />
   );
@@ -76,12 +73,10 @@ export default function DailyTasksScreen() {
       isLast={isLast}
       sortField={state.sortField}
       tagMap={state.tagMap}
-      collaboratorMap={state.collaboratorMap}
       upcomingWeekDays={state.upcomingWeekDays}
       onToggle={state.handleToggle}
       onOpenEdit={state.openEditTask}
       onToggleFavorite={state.handleToggleFavorite}
-      onConvertToBucket={state.handleConvertToBucket}
       onDelete={state.handleDelete}
       onReschedule={state.handleRescheduleTask}
       onOpenRescheduleDatePicker={(task) => {
@@ -110,8 +105,6 @@ export default function DailyTasksScreen() {
           onlyFavorites={state.onlyFavorites}
           setOnlyFavorites={state.setOnlyFavorites}
           favoritesCount={state.favoritesCount}
-          onlyCollaborators={state.onlyCollaborators}
-          setOnlyCollaborators={state.setOnlyCollaborators}
           priorityFilter={state.priorityFilter}
           setPriorityFilter={state.setPriorityFilter}
           sortField={state.sortField}
@@ -126,12 +119,15 @@ export default function DailyTasksScreen() {
           contentContainerStyle={styles.listContent}
           scrollEnabled={!state.dragging}
           refreshControl={
-            <RefreshControl
-              refreshing={state.manualRefreshing}
-              onRefresh={state.handleRefresh}
-              tintColor={gold[400]}
-              colors={[gold[400]]}
-            />
+            state.dragging ? undefined : (
+              <RefreshControl
+                refreshing={state.manualRefreshing}
+                onRefresh={state.handleRefresh}
+                tintColor={gold[400]}
+                colors={[gold[400]]}
+                enabled={!state.dragging}
+              />
+            )
           }
           keyboardShouldPersistTaps="handled"
         >
@@ -355,12 +351,6 @@ export default function DailyTasksScreen() {
           onAddSubtask={state.handleAddCreateSubtask}
           onToggleSubtask={state.handleToggleCreateSubtask}
           onDeleteSubtask={state.handleDeleteCreateSubtask}
-          collaborators={state.createCollaborators}
-          setCollaborators={state.setCreateCollaborators}
-          onOpenCollaboratorPicker={() => {
-            state.setCollaboratorPickerTarget('create');
-            state.setShowCollaboratorPicker(true);
-          }}
           onSubmit={state.handleCreateFromModal}
         />
 
@@ -429,16 +419,6 @@ export default function DailyTasksScreen() {
           editDescription={state.editDescription}
           onEditDescriptionChange={state.handleEditDescriptionChange}
           onEditDescriptionBlur={state.handleEditDescriptionBlur}
-          editCollaborators={state.editCollaborators}
-          onOpenCollaboratorPicker={() => {
-            state.setCollaboratorPickerTarget('edit');
-            state.setShowCollaboratorPicker(true);
-          }}
-          onRemoveCollaborator={(id: string) => {
-            const nextCols = state.editCollaborators.filter((x) => x.id !== id);
-            state.setEditCollaborators(nextCols);
-            state.autoSaveTask({ collaborator_ids: nextCols.map((x) => x.id) });
-          }}
           onConvertToBucket={state.handleConvertToBucket}
         />
 
@@ -472,24 +452,6 @@ export default function DailyTasksScreen() {
           openEditTag={state.openEditTag}
         />
 
-        {/* MODAL 7: CollaboratorPickerSheet */}
-        <CollaboratorPickerSheet
-          visible={state.showCollaboratorPicker}
-          selected={
-            state.collaboratorPickerTarget === 'create'
-              ? state.createCollaborators
-              : state.editCollaborators
-          }
-          onChange={(cols) => {
-            if (state.collaboratorPickerTarget === 'create') {
-              state.setCreateCollaborators(cols);
-            } else {
-              state.setEditCollaborators(cols);
-              state.autoSaveTask({ collaborator_ids: cols.map((c) => c.id) });
-            }
-          }}
-          onClose={() => state.setShowCollaboratorPicker(false)}
-        />
 
         {/* MODAL 8: Sort & Classify Sheet */}
         <DailySortSheet

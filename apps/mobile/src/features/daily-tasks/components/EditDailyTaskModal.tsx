@@ -20,7 +20,6 @@ import {
   ListChecks,
   CheckCircle2,
   Circle,
-  Users,
   Sparkles,
   BookmarkPlus,
 } from 'lucide-react-native';
@@ -33,7 +32,6 @@ import {
   DailyTask,
   DailyTag,
   DailySubtask,
-  CollaboratorItem,
   DailyTaskPriority,
   DailyTaskRecurrenceUnit,
 } from '../types';
@@ -87,10 +85,6 @@ interface EditDailyTaskModalProps {
   editDescription: string;
   onEditDescriptionChange: (text: string) => void;
   onEditDescriptionBlur: () => void;
-  // Collaborators
-  editCollaborators: CollaboratorItem[];
-  onOpenCollaboratorPicker: () => void;
-  onRemoveCollaborator: (id: string) => void;
   // Convert
   onConvertToBucket: (task: DailyTask) => void;
   // Nested Tag Modal slot
@@ -135,9 +129,6 @@ export function EditDailyTaskModal({
   editDescription,
   onEditDescriptionChange,
   onEditDescriptionBlur,
-  editCollaborators,
-  onOpenCollaboratorPicker,
-  onRemoveCollaborator,
   onConvertToBucket,
   nestedTagModal,
 }: EditDailyTaskModalProps) {
@@ -471,43 +462,6 @@ export function EditDailyTaskModal({
                 numberOfLines={3}
               />
 
-              {/* COLABORADORES */}
-              <View style={styles.collabSectionHeader}>
-                <Text style={styles.fieldLabel}>Colaboradores</Text>
-                {editCollaborators.length > 0 && (
-                  <Text style={styles.collabCountText}>({editCollaborators.length})</Text>
-                )}
-              </View>
-
-              <Pressable
-                style={styles.collaboratorRow}
-                onPress={onOpenCollaboratorPicker}
-              >
-                <Users color="#D4B13A" size={18} />
-                <Text style={styles.collaboratorPlaceholder} numberOfLines={1}>
-                  {editCollaborators.length === 0
-                    ? 'Mencionar a personas colaboradoras...'
-                    : `${editCollaborators.length} colaborador${editCollaborators.length > 1 ? 'es' : ''} añadido${editCollaborators.length > 1 ? 's' : ''}`}
-                </Text>
-                <Plus color="#D4B13A" size={18} />
-              </Pressable>
-
-              {editCollaborators.length > 0 && (
-                <View style={styles.collaboratorChips}>
-                  {editCollaborators.map((c) => (
-                    <Pressable
-                      key={c.id}
-                      style={styles.collaboratorChip}
-                      onPress={() => onRemoveCollaborator(c.id)}
-                    >
-                      <Text style={styles.collaboratorChipText}>
-                        {c.display_name || `@${c.username}`}
-                      </Text>
-                      <X color="#D4B13A" size={13} />
-                    </Pressable>
-                  ))}
-                </View>
-              )}
 
               {/* Convertir en Bucket List Option */}
               <Pressable
