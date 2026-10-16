@@ -818,6 +818,173 @@ export default function DailyTasksScreen() {
     return `Cada ${safeInterval} días`;
   };
 
+  const saveTitleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveDescTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const editingTaskIdRef = useRef<string | null>(null);
+  const editTitleRef = useRef(editTitle);
+  const editDescriptionRef = useRef(editDescription);
+
+  useEffect(() => {
+    editingTaskIdRef.current = editingTask?.id || null;
+  }, [editingTask]);
+
+  useEffect(() => {
+    editTitleRef.current = editTitle;
+  }, [editTitle]);
+
+  useEffect(() => {
+    editDescriptionRef.current = editDescription;
+  }, [editDescription]);
+
+  const autoSaveTask = useCallback(
+    (updates: Partial<DailyTask>) => {
+      const currentId = editingTaskIdRef.current;
+      if (!currentId || currentId.startsWith('temp-')) return;
+      updateMutation.mutate({
+        id: currentId,
+        updates,
+      });
+      setEditingTask((prev) => (prev ? { ...prev, ...updates } : prev));
+    },
+    [updateMutation]
+  );
+
+  const handleCloseEditModal = useCallback(() => {
+    if (saveTitleTimeoutRef.current) {
+      clearTimeout(saveTitleTimeoutRef.current);
+      saveTitleTimeoutRef.current = null;
+    }
+    if (saveDescTimeoutRef.current) {
+      clearTimeout(saveDescTimeoutRef.current);
+      saveDescTimeoutRef.current = null;
+    }
+
+    const currentId = editingTaskIdRef.current;
+    if (currentId && !currentId.startsWith('temp-')) {
+      const finalTitle = editTitleRef.current.trim();
+      const finalDesc = editDescriptionRef.current.trim();
+      const updates: Partial<DailyTask> = {};
+      if (finalTitle) {
+        updates.title = finalTitle;
+      }
+      updates.description = finalDesc || null;
+      updateMutation.mutate({ id: currentId, updates });
+    }
+
+    setEditingTask(null);
+  }, [updateMutation]);
+
+  const handleEditTitleChange = (val: string) => {
+    setEditTitle(val);
+    editTitleRef.current = val;
+    if (saveTitleTimeoutRef.current) {
+      clearTimeout(saveTitleTimeoutRef.current);
+    }
+    const currentId = editingTaskIdRef.current;
+    if (!currentId || currentId.startsWith('temp-')) return;
+    const trimmed = val.trim();
+    if (!trimmed) return;
+
+    saveTitleTimeoutRef.current = setTimeout(() => {
+      autoSaveTask({ title: trimmed });
+    }, 400);
+  };
+
+  const handleEditTitleBlur = () => {
+    if (saveTitleTimeoutRef.current) {
+      clearTimeout(saveTitleTimeoutRef.current);
+      saveTitleTimeoutRef.current = null;
+    }
+    const trimmed = editTitleRef.current.trim();
+    if (trimmed) {
+      autoSaveTask({ title: trimmed });
+    }
+  };
+
+  const handleEditDescriptionChange = (val: string) => {
+    setEditDescription(val);
+    editDescriptionRef.current = val;
+    if (saveDescTimeoutRef.current) {
+      clearTimeout(saveDescTimeoutRef.current);
+    }
+    const currentId = editingTaskIdRef.current;
+    if (!currentId || currentId.startsWith('temp-')) return;
+
+    saveDescTimeoutRef.current = setTimeout(() => {
+      autoSaveTask({ description: val.trim() || null });
+    }, 400);
+  };
+
+  const handleEditDescriptionBlur = () => {
+    if (saveDescTimeoutRef.current) {
+      clearTimeout(saveDescTimeoutRef.current);
+      saveDescTimeoutRef.current = null;
+    }
+    autoSaveTask({ description: editDescriptionRef.current.trim() || null });
+  };
+
+  const handleToggleEditFavorite = () => {
+    const nextFav = !editIsFavorite;
+    setEditIsFavorite(nextFav);
+    autoSaveTask({ is_favorite: nextFav });
+  };
+
+  const handleToggleEditStatus = () => {
+    if (!editingTask) return;
+    const nextCompleted = !editIsCompleted;
+    setEditIsCompleted(nextCompleted);
+
+    if (nextCompleted) {
+      if (editIsRecurring) {
+        const nextDueDate = calculateNextRecurringDate(
+          editDueDate,
+          editRecurrenceInterval,
+          editRecurrenceUnit
+        );
+        const resetSubtasks = editSubtasks.map((s) => ({ ...s, is_completed: false }));
+        setEditDueDate(nextDueDate);
+        setEditSubtasks(resetSubtasks);
+        setEditIsCompleted(false);
+
+        completeRecurringMutation.mutate({
+          task: {
+            ...editingTask,
+            title: editTitle.trim() || editingTask.title,
+            description: editDescription.trim() || null,
+            priority: editPriority,
+            is_favorite: editIsFavorite,
+            is_recurring: editIsRecurring,
+            recurrence_interval: editRecurrenceInterval,
+            recurrence_unit: editRecurrenceUnit,
+            due_date: editDueDate,
+            tag_ids: editTagIds,
+            collaborator_ids: editCollaborators.map((c) => c.id),
+            subtasks: editSubtasks,
+          },
+          nextDueDate,
+          resetSubtasks,
+        });
+      } else {
+        completeMutation.mutate({
+          ...editingTask,
+          title: editTitle.trim() || editingTask.title,
+          description: editDescription.trim() || null,
+          priority: editPriority,
+          is_favorite: editIsFavorite,
+          is_recurring: editIsRecurring,
+          recurrence_interval: editRecurrenceInterval,
+          recurrence_unit: editRecurrenceUnit,
+          due_date: editDueDate,
+          tag_ids: editTagIds,
+          collaborator_ids: editCollaborators.map((c) => c.id),
+          subtasks: editSubtasks,
+        });
+      }
+    } else {
+      toggleMutation.mutate({ id: editingTask.id, isCompleted: false });
+    }
+  };
+
   const renderRecurrenceSelector = (isCreate: boolean) => {
     const isRecurring = isCreate ? createIsRecurring : editIsRecurring;
     const setIsRecurring = isCreate ? setCreateIsRecurring : setEditIsRecurring;
@@ -845,6 +1012,9 @@ export default function DailyTasksScreen() {
             onPress={() => {
               setIsRecurring(false);
               setShowCustom(false);
+              if (!isCreate) {
+                autoSaveTask({ is_recurring: false });
+              }
             }}
           >
             <Text
@@ -868,6 +1038,9 @@ export default function DailyTasksScreen() {
               setInterval(1);
               setUnit('days');
               setShowCustom(false);
+              if (!isCreate) {
+                autoSaveTask({ is_recurring: true, recurrence_interval: 1, recurrence_unit: 'days' });
+              }
             }}
           >
             <RotateCw
@@ -895,6 +1068,9 @@ export default function DailyTasksScreen() {
               setInterval(2);
               setUnit('days');
               setShowCustom(false);
+              if (!isCreate) {
+                autoSaveTask({ is_recurring: true, recurrence_interval: 2, recurrence_unit: 'days' });
+              }
             }}
           >
             <RotateCw
@@ -922,6 +1098,9 @@ export default function DailyTasksScreen() {
               setInterval(1);
               setUnit('weeks');
               setShowCustom(false);
+              if (!isCreate) {
+                autoSaveTask({ is_recurring: true, recurrence_interval: 1, recurrence_unit: 'weeks' });
+              }
             }}
           >
             <RotateCw
@@ -949,6 +1128,9 @@ export default function DailyTasksScreen() {
               setInterval(2);
               setUnit('weeks');
               setShowCustom(false);
+              if (!isCreate) {
+                autoSaveTask({ is_recurring: true, recurrence_interval: 2, recurrence_unit: 'weeks' });
+              }
             }}
           >
             <RotateCw
@@ -976,6 +1158,9 @@ export default function DailyTasksScreen() {
               setInterval(1);
               setUnit('months');
               setShowCustom(false);
+              if (!isCreate) {
+                autoSaveTask({ is_recurring: true, recurrence_interval: 1, recurrence_unit: 'months' });
+              }
             }}
           >
             <RotateCw
@@ -1001,6 +1186,9 @@ export default function DailyTasksScreen() {
             onPress={() => {
               setIsRecurring(true);
               setShowCustom(true);
+              if (!isCreate) {
+                autoSaveTask({ is_recurring: true, recurrence_interval: interval, recurrence_unit: unit });
+              }
             }}
           >
             <Text
@@ -1022,7 +1210,13 @@ export default function DailyTasksScreen() {
               <View style={styles.recurrenceStepperControls}>
                 <Pressable
                   style={styles.recurrenceStepBtn}
-                  onPress={() => setInterval((prev) => Math.max(1, prev - 1))}
+                  onPress={() => {
+                    const nextVal = Math.max(1, interval - 1);
+                    setInterval(nextVal);
+                    if (!isCreate) {
+                      autoSaveTask({ recurrence_interval: nextVal });
+                    }
+                  }}
                   hitSlop={6}
                 >
                   <Text style={styles.recurrenceStepBtnText}>-</Text>
@@ -1030,7 +1224,13 @@ export default function DailyTasksScreen() {
                 <Text style={styles.recurrenceStepValueText}>{interval}</Text>
                 <Pressable
                   style={styles.recurrenceStepBtn}
-                  onPress={() => setInterval((prev) => Math.min(99, prev + 1))}
+                  onPress={() => {
+                    const nextVal = Math.min(99, interval + 1);
+                    setInterval(nextVal);
+                    if (!isCreate) {
+                      autoSaveTask({ recurrence_interval: nextVal });
+                    }
+                  }}
                   hitSlop={6}
                 >
                   <Text style={styles.recurrenceStepBtnText}>+</Text>
@@ -1054,7 +1254,12 @@ export default function DailyTasksScreen() {
                       styles.recurrenceUnitPill,
                       isSelected && styles.recurrenceUnitPillActive,
                     ]}
-                    onPress={() => setUnit(u)}
+                    onPress={() => {
+                      setUnit(u);
+                      if (!isCreate) {
+                        autoSaveTask({ recurrence_unit: u });
+                      }
+                    }}
                   >
                     <Text
                       style={[
@@ -1081,6 +1286,11 @@ export default function DailyTasksScreen() {
   };
 
   const openEditTask = (task: DailyTask) => {
+    if (saveTitleTimeoutRef.current) clearTimeout(saveTitleTimeoutRef.current);
+    if (saveDescTimeoutRef.current) clearTimeout(saveDescTimeoutRef.current);
+    editingTaskIdRef.current = task.id;
+    editTitleRef.current = task.title;
+    editDescriptionRef.current = task.description || '';
     setEditingTask(task);
     setEditTitle(task.title);
     setEditDescription(task.description || '');
@@ -1115,12 +1325,7 @@ export default function DailyTasksScreen() {
     const nextSubtasks = [...editSubtasks, newSt];
     setEditSubtasks(nextSubtasks);
     setEditSubtaskTitle('');
-    if (editingTask && !editingTask.id.startsWith('temp-')) {
-      updateMutation.mutate({
-        id: editingTask.id,
-        updates: { subtasks: nextSubtasks },
-      });
-    }
+    autoSaveTask({ subtasks: nextSubtasks });
   };
 
   const handleToggleEditSubtask = (subtaskId: string) => {
@@ -1128,84 +1333,13 @@ export default function DailyTasksScreen() {
       st.id === subtaskId ? { ...st, is_completed: !st.is_completed } : st
     );
     setEditSubtasks(nextSubtasks);
-    if (editingTask && !editingTask.id.startsWith('temp-')) {
-      updateMutation.mutate({
-        id: editingTask.id,
-        updates: { subtasks: nextSubtasks },
-      });
-    }
+    autoSaveTask({ subtasks: nextSubtasks });
   };
 
   const handleDeleteEditSubtask = (subtaskId: string) => {
     const nextSubtasks = editSubtasks.filter((st) => st.id !== subtaskId);
     setEditSubtasks(nextSubtasks);
-    if (editingTask && !editingTask.id.startsWith('temp-')) {
-      updateMutation.mutate({
-        id: editingTask.id,
-        updates: { subtasks: nextSubtasks },
-      });
-    }
-  };
-
-  const handleSaveEditModal = () => {
-    if (!editingTask) return;
-    const trimmed = editTitle.trim();
-    if (!trimmed) return;
-
-    // Si se marca como completada desde el modal y es recurrente: avanzar a la siguiente fecha
-    if (!editingTask.is_completed && editIsCompleted && editIsRecurring) {
-      const nextDueDate = calculateNextRecurringDate(
-        editDueDate,
-        editRecurrenceInterval,
-        editRecurrenceUnit
-      );
-      const resetSubtasks = editSubtasks.map((s) => ({ ...s, is_completed: false }));
-
-      completeRecurringMutation.mutate({
-        task: {
-          ...editingTask,
-          title: trimmed,
-          description: editDescription.trim() || null,
-          priority: editPriority,
-          is_favorite: editIsFavorite,
-          is_recurring: editIsRecurring,
-          recurrence_interval: editRecurrenceInterval,
-          recurrence_unit: editRecurrenceUnit,
-          due_date: editDueDate,
-          tag_ids: editTagIds,
-          collaborator_ids: editCollaborators.map((c) => c.id),
-          subtasks: editSubtasks,
-        },
-        nextDueDate,
-        resetSubtasks,
-      });
-
-      setEditingTask(null);
-      return;
-    }
-
-    updateMutation.mutate({
-      id: editingTask.id,
-      updates: {
-        title: trimmed,
-        description: editDescription.trim() || null,
-        due_date: editDueDate,
-        priority: editPriority,
-        is_favorite: editIsFavorite,
-        is_completed: editIsCompleted,
-        is_recurring: editIsRecurring,
-        recurrence_interval: editRecurrenceInterval,
-        recurrence_unit: editRecurrenceUnit,
-        completed_at: editIsCompleted
-          ? (editingTask.completed_at || new Date().toISOString())
-          : null,
-        tag_ids: editTagIds,
-        collaborator_ids: editCollaborators.map((c) => c.id),
-        subtasks: editSubtasks,
-      },
-    });
-
-    setEditingTask(null);
+    autoSaveTask({ subtasks: nextSubtasks });
   };
 
   // Tag Form (Create & Edit)
@@ -1249,7 +1383,9 @@ export default function DailyTasksScreen() {
         if (tagCreatedTarget === 'create') {
           setCreateTagIds((prev) => [...prev, created.id]);
         } else if (tagCreatedTarget === 'edit') {
-          setEditTagIds((prev) => [...prev, created.id]);
+          const nextTagIds = [...editTagIds, created.id];
+          setEditTagIds(nextTagIds);
+          autoSaveTask({ tag_ids: nextTagIds });
         } else if (tagCreatedTarget === 'sheet') {
           setSelectedTagFilters((prev) => [...prev, created.id]);
         }
@@ -3264,19 +3400,19 @@ export default function DailyTasksScreen() {
             transparent
             animationType="fade"
             visible={!!editingTask}
-            onRequestClose={() => setEditingTask(null)}
+            onRequestClose={handleCloseEditModal}
           >
             <KeyboardAvoidingView
               behavior={Platform.OS === 'ios' ? 'padding' : undefined}
               style={styles.modalOverlay}
             >
-              <Pressable style={StyleSheet.absoluteFill} onPress={() => setEditingTask(null)} />
+              <Pressable style={StyleSheet.absoluteFill} onPress={handleCloseEditModal} />
               <View style={styles.fullModalCard}>
                 <View style={styles.modalHeader}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <Text style={styles.modalTitle}>Editar tarea</Text>
                     <Pressable
-                      onPress={() => setEditIsFavorite((prev) => !prev)}
+                      onPress={handleToggleEditFavorite}
                       hitSlop={8}
                       style={{ padding: 4 }}
                       accessibilityLabel="Marcar como favorita"
@@ -3288,7 +3424,7 @@ export default function DailyTasksScreen() {
                       />
                     </Pressable>
                     <Pressable
-                      onPress={() => setEditIsCompleted((prev) => !prev)}
+                      onPress={handleToggleEditStatus}
                       hitSlop={6}
                       style={[
                         styles.editStatusPill,
@@ -3309,12 +3445,12 @@ export default function DailyTasksScreen() {
                       )}
                     </Pressable>
                   </View>
-                  <Pressable onPress={() => setEditingTask(null)} hitSlop={10}>
+                  <Pressable onPress={handleCloseEditModal} hitSlop={10}>
                     <X size={20} color="#888" />
                   </Pressable>
                 </View>
 
-                <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 520 }}>
+                <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 520 }} contentContainerStyle={{ paddingBottom: 6 }}>
                   {/* Título */}
                   <Text style={styles.fieldLabel}>Título *</Text>
                   <TextInput
@@ -3322,7 +3458,8 @@ export default function DailyTasksScreen() {
                     placeholder="Título de la tarea"
                     placeholderTextColor="#666"
                     value={editTitle}
-                    onChangeText={setEditTitle}
+                    onChangeText={handleEditTitleChange}
+                    onBlur={handleEditTitleBlur}
                   />
 
                   {/* Fecha */}
@@ -3333,7 +3470,10 @@ export default function DailyTasksScreen() {
                         styles.modalPresetBtn,
                         editDueDate === todayStr && styles.modalPresetBtnActive,
                       ]}
-                      onPress={() => setEditDueDate(todayStr)}
+                      onPress={() => {
+                        setEditDueDate(todayStr);
+                        autoSaveTask({ due_date: todayStr });
+                      }}
                     >
                       <Text
                         style={[
@@ -3350,7 +3490,11 @@ export default function DailyTasksScreen() {
                         editDueDate === toDateString(addDays(new Date(), 1)) &&
                           styles.modalPresetBtnActive,
                       ]}
-                      onPress={() => setEditDueDate(toDateString(addDays(new Date(), 1)))}
+                      onPress={() => {
+                        const d = toDateString(addDays(new Date(), 1));
+                        setEditDueDate(d);
+                        autoSaveTask({ due_date: d });
+                      }}
                     >
                       <Text
                         style={[
@@ -3368,7 +3512,11 @@ export default function DailyTasksScreen() {
                         editDueDate === toDateString(addDays(new Date(), 7)) &&
                           styles.modalPresetBtnActive,
                       ]}
-                      onPress={() => setEditDueDate(toDateString(addDays(new Date(), 7)))}
+                      onPress={() => {
+                        const d = toDateString(addDays(new Date(), 7));
+                        setEditDueDate(d);
+                        autoSaveTask({ due_date: d });
+                      }}
                     >
                       <Text
                         style={[
@@ -3411,7 +3559,10 @@ export default function DailyTasksScreen() {
                               borderColor: cfg.borderColor,
                             },
                           ]}
-                          onPress={() => setEditPriority(p)}
+                          onPress={() => {
+                            setEditPriority(p);
+                            autoSaveTask({ priority: p });
+                          }}
                         >
                           <Flag
                             size={12}
@@ -3447,9 +3598,11 @@ export default function DailyTasksScreen() {
                             },
                           ]}
                           onPress={() => {
-                            setEditTagIds((prev) =>
-                              isSelected ? prev.filter((id) => id !== tag.id) : [...prev, tag.id]
-                            );
+                            const nextTagIds = isSelected
+                              ? editTagIds.filter((id) => id !== tag.id)
+                              : [...editTagIds, tag.id];
+                            setEditTagIds(nextTagIds);
+                            autoSaveTask({ tag_ids: nextTagIds });
                           }}
                         >
                           {tag.emoji && <Text style={{ fontSize: 11, marginRight: 4 }}>{tag.emoji}</Text>}
@@ -3560,7 +3713,8 @@ export default function DailyTasksScreen() {
                     placeholder="Detalles, notas, apuntes..."
                     placeholderTextColor="#666"
                     value={editDescription}
-                    onChangeText={setEditDescription}
+                    onChangeText={handleEditDescriptionChange}
+                    onBlur={handleEditDescriptionBlur}
                     multiline
                     numberOfLines={3}
                   />
@@ -3595,9 +3749,11 @@ export default function DailyTasksScreen() {
                         <Pressable
                           key={c.id}
                           style={styles.collaboratorChip}
-                          onPress={() =>
-                            setEditCollaborators((prev) => prev.filter((x) => x.id !== c.id))
-                          }
+                          onPress={() => {
+                            const nextCols = editCollaborators.filter((x) => x.id !== c.id);
+                            setEditCollaborators(nextCols);
+                            autoSaveTask({ collaborator_ids: nextCols.map((x) => x.id) });
+                          }}
                         >
                           <Text style={styles.collaboratorChipText}>
                             {c.display_name || `@${c.username}`}
@@ -3628,25 +3784,6 @@ export default function DailyTasksScreen() {
                   </Pressable>
                 </ScrollView>
 
-                {/* Footer Buttons */}
-                <View style={styles.modalFooterRow}>
-                  <Pressable
-                    style={styles.modalCancelBtn}
-                    onPress={() => setEditingTask(null)}
-                  >
-                    <Text style={styles.modalCancelBtnText}>Cancelar</Text>
-                  </Pressable>
-                  <Pressable
-                    style={[
-                      styles.modalSubmitBtn,
-                      !editTitle.trim() && styles.modalSubmitBtnDisabled,
-                    ]}
-                    disabled={!editTitle.trim()}
-                    onPress={handleSaveEditModal}
-                  >
-                    <Text style={styles.modalSubmitBtnText}>Guardar</Text>
-                  </Pressable>
-                </View>
               </View>
               {showTagModal && renderTagFormModal(true)}
             </KeyboardAvoidingView>
@@ -3662,7 +3799,9 @@ export default function DailyTasksScreen() {
             onChange={(event, selectedDate) => {
               setShowEditDatePicker(false);
               if (selectedDate) {
-                setEditDueDate(toDateString(selectedDate));
+                const d = toDateString(selectedDate);
+                setEditDueDate(d);
+                autoSaveTask({ due_date: d });
               }
             }}
           />
@@ -3862,6 +4001,7 @@ export default function DailyTasksScreen() {
               setCreateCollaborators(cols);
             } else {
               setEditCollaborators(cols);
+              autoSaveTask({ collaborator_ids: cols.map((c) => c.id) });
             }
           }}
           onClose={() => setShowCollaboratorPicker(false)}
