@@ -14,6 +14,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 8,
   },
   subtitle: {
     fontFamily: 'Inter_400Regular',
@@ -27,7 +28,7 @@ export const styles = StyleSheet.create({
     backgroundColor: '#151515',
     borderRadius: 10,
     padding: 3,
-    marginBottom: 10,
+    marginBottom: 4,
     borderWidth: 1,
     borderColor: '#222',
   },
@@ -1056,6 +1057,17 @@ export const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     fontSize: 11,
     color: '#8E8E93',
+  },
+  overdueActionsScrollContainer: {
+    marginHorizontal: -16,
+    marginBottom: 10,
+  },
+  overdueActionsScroll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingLeft: 16,
+    paddingRight: 32,
   },
   overdueActionsRow: {
     flexDirection: 'row',

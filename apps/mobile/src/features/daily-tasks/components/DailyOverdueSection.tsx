@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import { AlertCircle, Calendar, CheckCircle2, Trash2 } from 'lucide-react-native';
 
 import { styles } from '../styles/explore.styles';
@@ -41,8 +41,13 @@ export function DailyOverdueSection({
         <Text style={styles.overdueSectionHint}>Pasa a hoy o reprograma</Text>
       </View>
 
-      {/* Bulk action buttons */}
-      <View style={styles.overdueActionsRow}>
+      {/* Bulk action buttons - deslizable horizontalmente para que ninguna acción se corte */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.overdueActionsScroll}
+        style={styles.overdueActionsScrollContainer}
+      >
         {onMoveAllToToday && (
           <Pressable
             style={styles.overdueActionBtn}
@@ -78,7 +83,7 @@ export function DailyOverdueSection({
             <Text style={[styles.overdueActionText, { color: '#EF4444' }]}>Borrar todas</Text>
           </Pressable>
         )}
-      </View>
+      </ScrollView>
 
       <View style={styles.overdueListCard}>
         <DraggableTaskList

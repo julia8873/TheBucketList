@@ -21,6 +21,7 @@ interface ExploreFeedTabProps {
   isFetchingNextPage: boolean;
   fetchNextPage: () => void;
   windowHeight: number;
+  listRef?: React.RefObject<any>;
 }
 
 export function ExploreFeedTab({
@@ -36,6 +37,7 @@ export function ExploreFeedTab({
   isFetchingNextPage,
   fetchNextPage,
   windowHeight,
+  listRef,
 }: ExploreFeedTabProps) {
   const router = useRouter();
 
@@ -97,6 +99,7 @@ export function ExploreFeedTab({
 
   return (
     <FlashList
+      ref={listRef}
       data={exploreBuckets}
       keyExtractor={(item) => item.id}
       renderItem={({ item, index }) => (

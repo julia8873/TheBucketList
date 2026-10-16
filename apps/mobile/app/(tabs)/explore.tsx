@@ -25,7 +25,7 @@ import { styles } from '@/features/daily-tasks/styles/explore.styles';
 import { parseLocalDate, toDateString } from '@/features/daily-tasks/utils/dailyTaskDateUtils';
 import { useDailyTasksState } from '@/features/daily-tasks/hooks/useDailyTasksState';
 
-import { DailyTasksHeader } from '@/features/daily-tasks/components/DailyTasksHeader';
+import { DailyTasksTopBar, DailyTasksScrollControls } from '@/features/daily-tasks/components/DailyTasksHeader';
 import { DailyOverdueSection } from '@/features/daily-tasks/components/DailyOverdueSection';
 import { DailyGroupedTasksView } from '@/features/daily-tasks/components/DailyGroupedTasksView';
 import { DailyWeekView } from '@/features/daily-tasks/components/DailyWeekView';
@@ -89,28 +89,10 @@ export default function DailyTasksScreen() {
   return (
     <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={{ flex: 1 }}>
-        <DailyTasksHeader
+        {/* Top Bar fija con título y pestañas (sin subtítulo, compacta) */}
+        <DailyTasksTopBar
           timeView={state.timeView}
           setTimeView={state.setTimeView}
-          newTitle={state.newTitle}
-          setNewTitle={state.setNewTitle}
-          handleQuickAddTask={state.handleQuickAddTask}
-          inputRef={state.inputRef}
-          selectedTagFilters={state.selectedTagFilters}
-          setSelectedTagFilters={state.setSelectedTagFilters}
-          tagMap={state.tagMap}
-          onOpenTagFilterSheet={() => state.setShowTagFilterSheet(true)}
-          statusFilter={state.statusFilter}
-          setStatusFilter={state.setStatusFilter}
-          onlyFavorites={state.onlyFavorites}
-          setOnlyFavorites={state.setOnlyFavorites}
-          favoritesCount={state.favoritesCount}
-          priorityFilter={state.priorityFilter}
-          setPriorityFilter={state.setPriorityFilter}
-          sortField={state.sortField}
-          sortDirection={state.sortDirection}
-          groupByTag={state.groupByTag}
-          onOpenSortModal={() => state.setShowSortModal(true)}
         />
 
         {/* Content Area */}
@@ -120,14 +102,38 @@ export default function DailyTasksScreen() {
           nestedScrollEnabled={true}
           refreshControl={
             <RefreshControl
-              refreshing={state.manualRefreshing}
+              refreshing={state.dragging ? false : state.manualRefreshing}
               onRefresh={state.handleRefresh}
-              tintColor={gold[400]}
-              colors={[gold[400]]}
+              tintColor={state.dragging ? 'transparent' : gold[400]}
+              colors={state.dragging ? ['transparent'] : [gold[400]]}
+              enabled={!state.dragging}
             />
           }
           keyboardShouldPersistTaps="handled"
         >
+          {/* Controles scrolleables: añadir tarea rápida (oculto en calendario), filtros y etiquetas */}
+          <DailyTasksScrollControls
+            timeView={state.timeView}
+            newTitle={state.newTitle}
+            setNewTitle={state.setNewTitle}
+            handleQuickAddTask={state.handleQuickAddTask}
+            inputRef={state.inputRef}
+            selectedTagFilters={state.selectedTagFilters}
+            setSelectedTagFilters={state.setSelectedTagFilters}
+            tagMap={state.tagMap}
+            onOpenTagFilterSheet={() => state.setShowTagFilterSheet(true)}
+            statusFilter={state.statusFilter}
+            setStatusFilter={state.setStatusFilter}
+            onlyFavorites={state.onlyFavorites}
+            setOnlyFavorites={state.setOnlyFavorites}
+            favoritesCount={state.favoritesCount}
+            priorityFilter={state.priorityFilter}
+            setPriorityFilter={state.setPriorityFilter}
+            sortField={state.sortField}
+            sortDirection={state.sortDirection}
+            groupByTag={state.groupByTag}
+            onOpenSortModal={() => state.setShowSortModal(true)}
+          />
           {state.isLoading && !state.tasks.length ? (
             <View style={{ gap: 8, paddingVertical: 12 }}>
               <TaskCompactSkeleton />

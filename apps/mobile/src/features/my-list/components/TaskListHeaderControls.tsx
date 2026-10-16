@@ -3,7 +3,6 @@ import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import {
   Tag as TagIcon,
   X,
-  CheckSquare,
   LayoutList,
   LayoutGrid,
   AlignJustify,
@@ -188,7 +187,7 @@ export function TaskListHeaderControls({
         ))}
       </ScrollView>
 
-      {/* Fila inferior: Ordenar por (izq) + Elegir y Modo de vista (der) */}
+      {/* Fila: Contador de tareas (izq) + Modos de vista y Ordenar (der) */}
       <View
         style={{
           flexDirection: 'row',
@@ -197,76 +196,14 @@ export function TaskListHeaderControls({
           marginBottom: 10,
         }}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
-          <Typography variant="caption" color={theme.colors.foregroundMuted} style={styles.tasksCountLabel}>
-            {tasksCount} {tasksCount === 1 ? 'TAREA' : 'TAREAS'}
-          </Typography>
+        {/* Izquierda: Contador de tareas */}
+        <Typography variant="caption" color={theme.colors.foregroundMuted} style={styles.tasksCountLabel}>
+          {tasksCount} {tasksCount === 1 ? 'TAREA' : 'TAREAS'}
+        </Typography>
 
-          <View style={styles.sortTriggerContainer}>
-            <Pressable
-              ref={sortTriggerRef}
-              collapsable={false}
-              onPress={openSortMenu}
-              hitSlop={8}
-              style={styles.sortTriggerBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Ordenar tareas"
-            >
-              <Typography variant="caption" color={gold[400]} style={{ fontWeight: '600' }}>
-                {sortField === 'manual'
-                  ? 'Manual'
-                  : sortField === 'status'
-                  ? isReordering
-                    ? 'Estado (manual)'
-                    : 'Estado'
-                  : sortField === 'priority'
-                  ? 'Prioridad'
-                  : sortField === 'alphabetical'
-                  ? 'Alfabético'
-                  : 'Fecha'}
-              </Typography>
-              {sortField !== 'manual' &&
-                !isReordering &&
-                (sortDir === 'desc' ? (
-                  <ArrowDown color={gold[400]} size={14} />
-                ) : (
-                  <ArrowUp color={gold[400]} size={14} />
-                ))}
-            </Pressable>
-          </View>
-
-          {!isSearching && isReordering && (
-            <Pressable
-              onPress={() => setIsReordering(false)}
-              style={{
-                backgroundColor: gold[400],
-                paddingHorizontal: 10,
-                paddingVertical: 3,
-                borderRadius: 6,
-                marginLeft: 4,
-              }}
-              hitSlop={8}
-            >
-              <Text style={{ fontSize: 11, fontWeight: '700', color: '#0E0E0E' }}>OK</Text>
-            </Pressable>
-          )}
-        </View>
-
-        {/* Toggle de selección múltiple + Toggle de vistas (a la derecha) */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-          <Pressable
-            onPress={onToggleSelectionMode}
-            style={[styles.selectionBtn, isSelectionMode && styles.selectionBtnActive]}
-            hitSlop={4}
-            accessibilityRole="button"
-            accessibilityLabel={isSelectionMode ? 'Cancelar selección' : 'Seleccionar tareas'}
-          >
-            <CheckSquare size={13} color={isSelectionMode ? '#0E0E0E' : gold[400]} />
-            <Text style={[styles.selectionBtnText, isSelectionMode && { color: '#0E0E0E' }]}>
-              {isSelectionMode ? 'Listo' : 'Elegir'}
-            </Text>
-          </Pressable>
-
+        {/* Derecha: 1. Modo de vista (lista, galería, compacto), 2. Ordenar (Estado / etc.) */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          {/* Modos de vista a la izquierda de ordenar */}
           <View style={styles.viewModeToggle}>
             <Pressable
               onPress={() => setTaskViewMode('list')}
@@ -296,6 +233,66 @@ export function TaskListHeaderControls({
               <AlignJustify size={15} color={taskViewMode === 'compact' ? '#0E0E0E' : '#A0A0A0'} />
             </Pressable>
           </View>
+
+          {/* Ordenar (Estado / Manual / etc.) */}
+          <View style={styles.sortTriggerContainer}>
+            <Pressable
+              ref={sortTriggerRef}
+              collapsable={false}
+              onPress={openSortMenu}
+              hitSlop={8}
+              style={[
+                styles.sortTriggerBtn,
+                {
+                  height: 32,
+                  paddingHorizontal: 8,
+                  borderRadius: 8,
+                  backgroundColor: '#181818',
+                  borderWidth: 1,
+                  borderColor: '#2A2A2A',
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Ordenar tareas"
+            >
+              <Typography variant="caption" color={gold[400]} style={{ fontWeight: '600' }}>
+                {sortField === 'manual'
+                  ? 'Manual'
+                  : sortField === 'status'
+                  ? isReordering
+                    ? 'Estado (manual)'
+                    : 'Estado'
+                  : sortField === 'priority'
+                  ? 'Prioridad'
+                  : sortField === 'alphabetical'
+                  ? 'Alfabético'
+                  : 'Fecha'}
+              </Typography>
+              {sortField !== 'manual' &&
+                !isReordering &&
+                (sortDir === 'desc' ? (
+                  <ArrowDown color={gold[400]} size={13} />
+                ) : (
+                  <ArrowUp color={gold[400]} size={13} />
+                ))}
+            </Pressable>
+          </View>
+
+          {!isSearching && isReordering && (
+            <Pressable
+              onPress={() => setIsReordering(false)}
+              style={{
+                backgroundColor: gold[400],
+                paddingHorizontal: 10,
+                paddingVertical: 3,
+                borderRadius: 6,
+                marginLeft: 2,
+              }}
+              hitSlop={8}
+            >
+              <Text style={{ fontSize: 11, fontWeight: '700', color: '#0E0E0E' }}>OK</Text>
+            </Pressable>
+          )}
         </View>
       </View>
 

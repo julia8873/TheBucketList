@@ -1,7 +1,7 @@
-import React, { useCallback, useMemo, useState, useEffect } from 'react';
+import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import { useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useRouter, useNavigation } from 'expo-router';
 import { useTheme } from '@bucketlist/ui';
 import { useFeed, useExploreFeed } from '../../src/hooks/useFeed';
 import { useSearchUsers } from '../../src/hooks/useSocial';
@@ -17,10 +17,33 @@ import { ExploreFeedTab } from '../../src/features/feed/components/ExploreFeedTa
 export default function FeedScreen() {
   const { theme } = useTheme();
   const router = useRouter();
+  const navigation = useNavigation();
   const { user } = useAuthStore();
   const { height: windowHeight } = useWindowDimensions();
 
   const [homeTab, setHomeTab] = useState<'friends' | 'explore'>('friends');
+  const friendsListRef = useRef<any>(null);
+  const exploreListRef = useRef<any>(null);
+
+  // Al pulsar de nuevo la pestaña Home en la barra inferior, vuelve al principio de la lista
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('tabPress' as any, () => {
+      if (homeTab === 'friends') {
+        if (friendsListRef.current?.scrollToOffset) {
+          friendsListRef.current.scrollToOffset({ offset: 0, animated: true });
+        } else if (friendsListRef.current?.scrollToIndex) {
+          friendsListRef.current.scrollToIndex({ index: 0, animated: true });
+        }
+      } else {
+        if (exploreListRef.current?.scrollToOffset) {
+          exploreListRef.current.scrollToOffset({ offset: 0, animated: true });
+        } else if (exploreListRef.current?.scrollToIndex) {
+          exploreListRef.current.scrollToIndex({ index: 0, animated: true });
+        }
+      }
+    });
+    return unsubscribe;
+  }, [navigation, homeTab]);
 
   // Amigos Feed
   const feed = useFeed(user?.id);
@@ -140,6 +163,7 @@ export default function FeedScreen() {
           windowHeight={windowHeight}
           onOpenFriends={() => openFriends()}
           onRetry={() => void refetchFriends()}
+          listRef={friendsListRef}
         />
       ) : (
         <ExploreFeedTab
@@ -155,6 +179,7 @@ export default function FeedScreen() {
           isFetchingNextPage={isFetchingNextExplore}
           fetchNextPage={fetchNextExplore}
           windowHeight={windowHeight}
+          listRef={exploreListRef}
         />
       )}
     </SafeAreaView>

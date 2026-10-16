@@ -21,6 +21,7 @@ interface FriendsFeedTabProps {
   windowHeight: number;
   onOpenFriends: () => void;
   onRetry: () => void;
+  listRef?: React.RefObject<any>;
 }
 
 export function FriendsFeedTab({
@@ -36,6 +37,7 @@ export function FriendsFeedTab({
   windowHeight,
   onOpenFriends,
   onRetry,
+  listRef,
 }: FriendsFeedTabProps) {
   const router = useRouter();
 
@@ -65,6 +67,7 @@ export function FriendsFeedTab({
 
   return (
     <FlashList
+      ref={listRef}
       data={friendsItems}
       keyExtractor={(item) => item.id}
       renderItem={({ item, index }) => (

@@ -15,61 +15,21 @@ import { PageTitle } from '@bucketlist/ui';
 import { styles } from '../styles/explore.styles';
 import { DailyTag, DailySortField, DailySortDirection, TimeView, StatusFilter } from '../types';
 
-interface DailyTasksHeaderProps {
+export interface DailyTasksTopBarProps {
   timeView: TimeView;
   setTimeView: (v: TimeView) => void;
-  newTitle: string;
-  setNewTitle: (t: string) => void;
-  handleQuickAddTask: () => void;
-  inputRef: React.RefObject<TextInput>;
-  selectedTagFilters: string[];
-  setSelectedTagFilters: React.Dispatch<React.SetStateAction<string[]>>;
-  tagMap: Map<string, DailyTag>;
-  onOpenTagFilterSheet: () => void;
-  statusFilter: StatusFilter;
-  setStatusFilter: (f: StatusFilter | ((prev: StatusFilter) => StatusFilter)) => void;
-  onlyFavorites: boolean;
-  setOnlyFavorites: React.Dispatch<React.SetStateAction<boolean>>;
-  favoritesCount: number;
-  priorityFilter: string;
-  setPriorityFilter: React.Dispatch<React.SetStateAction<string>>;
-  sortField: DailySortField;
-  sortDirection: DailySortDirection;
-  groupByTag: boolean;
-  onOpenSortModal: () => void;
 }
 
-export function DailyTasksHeader({
-  timeView,
-  setTimeView,
-  newTitle,
-  setNewTitle,
-  handleQuickAddTask,
-  inputRef,
-  selectedTagFilters,
-  setSelectedTagFilters,
-  tagMap,
-  onOpenTagFilterSheet,
-  statusFilter,
-  setStatusFilter,
-  onlyFavorites,
-  setOnlyFavorites,
-  favoritesCount,
-  priorityFilter,
-  setPriorityFilter,
-  sortField,
-  sortDirection,
-  groupByTag,
-  onOpenSortModal,
-}: DailyTasksHeaderProps) {
+/**
+ * Barra superior fija con el título y las pestañas temporales (Hoy, Semana, Calendario, Todas).
+ * Se eliminó el subtítulo para que todo esté más arriba y compacto.
+ */
+export function DailyTasksTopBar({ timeView, setTimeView }: DailyTasksTopBarProps) {
   return (
     <View style={styles.header}>
       <View style={styles.titleRow}>
         <PageTitle gold="Día" rest="a día" />
       </View>
-      <Text style={styles.subtitle}>
-        Tus tareas personales. Organiza tu día a día con etiquetas, fechas y colaboradores.
-      </Text>
 
       {/* Time View Switcher: Hoy | Semana | Calendario | Todas */}
       <View style={styles.segmentedContainer}>
@@ -106,36 +66,95 @@ export function DailyTasksHeader({
           </Text>
         </Pressable>
       </View>
+    </View>
+  );
+}
 
-      {/* Quick Add Bar */}
-      <View style={styles.inputCard}>
-        <TextInput
-          ref={inputRef}
-          style={styles.input}
-          placeholder="Añadir tarea rápida para hoy..."
-          placeholderTextColor="#777"
-          value={newTitle}
-          onChangeText={setNewTitle}
-          onSubmitEditing={handleQuickAddTask}
-          returnKeyType="done"
-        />
+export interface DailyTasksScrollControlsProps {
+  timeView: TimeView;
+  newTitle: string;
+  setNewTitle: (t: string) => void;
+  handleQuickAddTask: () => void;
+  inputRef: React.RefObject<TextInput>;
+  selectedTagFilters: string[];
+  setSelectedTagFilters: React.Dispatch<React.SetStateAction<string[]>>;
+  tagMap: Map<string, DailyTag>;
+  onOpenTagFilterSheet: () => void;
+  statusFilter: StatusFilter;
+  setStatusFilter: (f: StatusFilter | ((prev: StatusFilter) => StatusFilter)) => void;
+  onlyFavorites: boolean;
+  setOnlyFavorites: React.Dispatch<React.SetStateAction<boolean>>;
+  favoritesCount: number;
+  priorityFilter: string;
+  setPriorityFilter: React.Dispatch<React.SetStateAction<string>>;
+  sortField: DailySortField;
+  sortDirection: DailySortDirection;
+  groupByTag: boolean;
+  onOpenSortModal: () => void;
+}
 
-        {/* Quick add button */}
-        <Pressable
-          style={[styles.addBtn, !newTitle.trim() && styles.addBtnDisabled]}
-          onPress={handleQuickAddTask}
-          disabled={!newTitle.trim()}
-          accessibilityLabel="Añadir tarea rápida"
-        >
-          <Plus size={18} color="#0E0E0E" strokeWidth={2.4} />
-        </Pressable>
-      </View>
+/**
+ * Controles de filtrado y añadir tarea rápida que se mueven dentro del ScrollView
+ * junto con el resto de la lista. En la vista de Calendario se omite la barra de tarea rápida.
+ */
+export function DailyTasksScrollControls({
+  timeView,
+  newTitle,
+  setNewTitle,
+  handleQuickAddTask,
+  inputRef,
+  selectedTagFilters,
+  setSelectedTagFilters,
+  tagMap,
+  onOpenTagFilterSheet,
+  statusFilter,
+  setStatusFilter,
+  onlyFavorites,
+  setOnlyFavorites,
+  favoritesCount,
+  priorityFilter,
+  setPriorityFilter,
+  sortField,
+  sortDirection,
+  groupByTag,
+  onOpenSortModal,
+}: DailyTasksScrollControlsProps) {
+  return (
+    <View style={{ marginBottom: 6 }}>
+      {/* Quick Add Bar: En Calendario NO se muestra según solicitado */}
+      {timeView !== 'calendar' && (
+        <View style={styles.inputCard}>
+          <TextInput
+            ref={inputRef}
+            style={styles.input}
+            placeholder="Añadir tarea rápida para hoy..."
+            placeholderTextColor="#777"
+            value={newTitle}
+            onChangeText={setNewTitle}
+            onSubmitEditing={handleQuickAddTask}
+            returnKeyType="done"
+          />
 
-      {/* Quick Filters Bar (Etiquetas, Pendientes, Completadas, Favoritas, Colaboradores) */}
+          <Pressable
+            style={[styles.addBtn, !newTitle.trim() && styles.addBtnDisabled]}
+            onPress={handleQuickAddTask}
+            disabled={!newTitle.trim()}
+            accessibilityLabel="Añadir tarea rápida"
+          >
+            <Plus size={18} color="#0E0E0E" strokeWidth={2.4} />
+          </Pressable>
+        </View>
+      )}
+
+      {/* Quick Filters Bar (Etiquetas, Pendientes, Completadas, Favoritas) */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tagsFilterScroll}
+        contentContainerStyle={[
+          styles.tagsFilterScroll,
+          { paddingLeft: 16, paddingRight: 32 },
+        ]}
+        style={{ marginHorizontal: -16 }}
       >
         {/* Botón principal "Etiquetas" que abre el panel inferior de filtrado múltiple y edición */}
         <Pressable
@@ -203,6 +222,25 @@ export function DailyTasksHeader({
             </Pressable>
           );
         })}
+
+        {/* Filtro rápido: Todas (entre etiquetas y pendientes) */}
+        <Pressable
+          style={[
+            styles.tagFilterPill,
+            statusFilter === 'all' && styles.filterPillActive,
+          ]}
+          onPress={() => setStatusFilter('all')}
+          accessibilityLabel="Ver todas las tareas"
+        >
+          <Text
+            style={[
+              styles.tagFilterText,
+              statusFilter === 'all' && styles.filterPillTextActive,
+            ]}
+          >
+            Todas
+          </Text>
+        </Pressable>
 
         {/* Filtro rápido: Pendientes */}
         <Pressable
@@ -302,27 +340,8 @@ export function DailyTasksHeader({
         )}
       </ScrollView>
 
-      {/* Sub-toolbar: 'Todas' a la izquierda y 'Prioridad' a la derecha */}
-      <View style={styles.toolbarRow}>
-        {/* Izquierda: Botón Todas */}
-        <Pressable
-          style={[
-            styles.statusChip,
-            statusFilter === 'all' && styles.statusChipActive,
-          ]}
-          onPress={() => setStatusFilter('all')}
-          accessibilityLabel="Ver todas las tareas"
-        >
-          <Text
-            style={[
-              styles.statusChipText,
-              statusFilter === 'all' && styles.statusChipTextActive,
-            ]}
-          >
-            Todas
-          </Text>
-        </Pressable>
-
+      {/* Sub-toolbar: 'Prioridad' a la derecha */}
+      <View style={[styles.toolbarRow, { justifyContent: 'flex-end' }]}>
         {/* Derecha: Botón Prioridad (abre opciones de ordenación y clasificación) */}
         <Pressable
           style={[
@@ -355,5 +374,16 @@ export function DailyTasksHeader({
         </Pressable>
       </View>
     </View>
+  );
+}
+
+export interface DailyTasksHeaderProps extends DailyTasksTopBarProps, DailyTasksScrollControlsProps {}
+
+export function DailyTasksHeader(props: DailyTasksHeaderProps) {
+  return (
+    <>
+      <DailyTasksTopBar timeView={props.timeView} setTimeView={props.setTimeView} />
+      <DailyTasksScrollControls {...props} />
+    </>
   );
 }

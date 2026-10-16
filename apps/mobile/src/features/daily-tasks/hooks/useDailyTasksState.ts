@@ -206,6 +206,7 @@ export function useDailyTasksState() {
 
   const [manualRefreshing, setManualRefreshing] = useState(false);
   const handleRefresh = async () => {
+    if (dragging) return;
     setManualRefreshing(true);
     try {
       await Promise.all([refetch(), refetchStats()]);

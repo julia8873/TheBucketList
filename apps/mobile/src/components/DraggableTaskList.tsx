@@ -184,7 +184,7 @@ function Row(props: RowProps) {
         }
         return false;
       },
-      onPanResponderTerminationRequest: () => !isLongPressing.current,
+      onPanResponderTerminationRequest: () => false,
       onPanResponderGrant: () => {
         const p = latest.current;
         y.setValue(p.top);
@@ -210,15 +210,9 @@ function Row(props: RowProps) {
       {...rowPan.panHandlers}
       onTouchEnd={() => {
         clearTimer();
-        if (isLongPressing.current || latest.current.isActive) {
-          endDrag();
-        }
       }}
       onTouchCancel={() => {
         clearTimer();
-        if (isLongPressing.current || latest.current.isActive) {
-          endDrag();
-        }
       }}
       onLayout={(e) => props.onMeasure(item.id, e.nativeEvent.layout.height)}
       style={{
