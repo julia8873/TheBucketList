@@ -74,7 +74,7 @@ export function TaskRow({
           backgroundColor: pressed
             ? theme.colors.surfaceSunken
             : completed
-            ? theme.colors.surfaceSunken
+            ? (theme.dark ? theme.colors.surfaceSunken : theme.colors.surface)
             : theme.colors.surface,
           borderColor: theme.colors.border,
         },

@@ -51,15 +51,25 @@ export function LocationPickerModal({
     setLoadingGeocode(true);
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(typedText.trim())}&limit=1`,
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(typedText.trim())}&limit=5&addressdetails=1`,
         { headers: { 'User-Agent': 'TheBucketListApp/1.0' } }
       );
-      const items = await res.json();
-      if (items && items[0]) {
+      const items: any[] = await res.json();
+      if (items && items.length > 0) {
+        // Priorizar el municipio o ciudad sobre el centroide provincial
+        const target =
+          items.find(
+            (it) =>
+              it.addresstype === 'city' ||
+              it.addresstype === 'town' ||
+              it.addresstype === 'municipality' ||
+              it.type === 'city'
+          ) || items[0];
+
         onChangeLocation({
           text: typedText.trim(),
-          lat: parseFloat(items[0].lat),
-          lng: parseFloat(items[0].lon),
+          lat: parseFloat(target.lat),
+          lng: parseFloat(target.lon),
         });
       } else {
         onChangeLocation({

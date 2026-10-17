@@ -65,16 +65,8 @@ export default function MapScreen() {
   const [mapType, setMapType] = useState<MapLayerMode>('streets');
   const [showLayerMenu, setShowLayerMenu] = useState(false);
 
-  // Cargar filtro y tipo de capa guardados previamente
+  // Cargar tipo de capa guardado previamente (la vista de tareas siempre inicia en 'Todas')
   React.useEffect(() => {
-    AsyncStorage.getItem('@map_active_filter')
-      .then((saved) => {
-        if (saved && ['all', 'mine', 'friends', 'completed', 'pending'].includes(saved)) {
-          setActiveFilterState(saved as MapFilterType);
-        }
-      })
-      .catch(() => undefined);
-
     AsyncStorage.getItem('@map_layer_type')
       .then((saved) => {
         if (saved && ['streets', 'satellite', 'terrain'].includes(saved)) {
@@ -102,12 +94,22 @@ export default function MapScreen() {
     if (group && group.length > 0) {
       setSelectedLocationTasks(group);
     } else {
-      const sameLocation = tasks.filter(
-        (t) =>
-          t.id === task.id ||
-          (Math.abs(t.location_lat - task.location_lat) < 0.0001 &&
-            Math.abs(t.location_lng - task.location_lng) < 0.0001)
-      );
+      const sameLocation = tasks.filter((t) => {
+        if (t.id === task.id) return true;
+        const dLat = (t.location_lat - task.location_lat) * 111139;
+        const dLng = (t.location_lng - task.location_lng) * 85000;
+        const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+        if (dist <= 3500) return true;
+        // Comprobar coincidencia de nombre de ciudad si dist < 7km
+        if (dist <= 7000 && t.location_text && task.location_text) {
+          const loc1 = t.location_text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          const loc2 = task.location_text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          const words1 = loc1.split(/[^a-z0-9]+/).filter((w) => w.length > 2);
+          const words2 = loc2.split(/[^a-z0-9]+/).filter((w) => w.length > 2);
+          if (words1.some((w) => words2.includes(w))) return true;
+        }
+        return false;
+      });
       setSelectedLocationTasks(sameLocation.length > 0 ? sameLocation : [task]);
     }
     // Centrar suavemente manteniendo el nivel de zoom actual del usuario (sin cambiar zoom)
@@ -141,14 +143,23 @@ export default function MapScreen() {
     // 2. Si no hay tareas en ese lugar, buscar y hacer zoom a la ciudad / país globalmente
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`,
         { headers: { 'User-Agent': 'TheBucketListApp/1.0' } }
       );
-      const data = await res.json();
-      if (data && data[0]) {
-        const lat = parseFloat(data[0].lat);
-        const lon = parseFloat(data[0].lon);
-        const isCountry = data[0].type === 'administrative' && data[0].addresstype === 'country';
+      const data: any[] = await res.json();
+      if (data && data.length > 0) {
+        const target =
+          data.find(
+            (it: any) =>
+              it.addresstype === 'city' ||
+              it.addresstype === 'town' ||
+              it.addresstype === 'municipality' ||
+              it.type === 'city'
+          ) || data[0];
+
+        const lat = parseFloat(target.lat);
+        const lon = parseFloat(target.lon);
+        const isCountry = target.type === 'administrative' && target.addresstype === 'country';
         const targetZoom = isCountry ? 6 : 13;
         mapRef.current?.flyToLocation(lat, lon, targetZoom);
       }
@@ -312,7 +323,7 @@ export default function MapScreen() {
         </View>
       ) : null}
 
-      {/* Si no hay resultados de búsqueda */}
+      {/* Si no hay resultados de búsqueda o tareas */}
       {tasks.length === 0 && !isLoading ? (
         <View
           style={[
@@ -325,7 +336,9 @@ export default function MapScreen() {
         >
           <Compass size={18} color={gold[400]} />
           <Text style={[styles.emptyToastText, { color: theme.colors.foreground }]}>
-            No se encontraron tareas en esta zona o búsqueda
+            {searchQuery.trim()
+              ? 'No se encontraron tareas con esa búsqueda'
+              : 'Aún no hay tareas con ubicación en esta vista'}
           </Text>
         </View>
       ) : null}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, Text, View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { X } from 'lucide-react-native';
+import { useTheme } from '../theme/ThemeProvider';
 
 interface TagChipProps {
   label: string;
@@ -24,15 +25,25 @@ function tint(hex: string | undefined, alpha: number): string {
 }
 
 export function TagChip({ label, variant = 'default', color, emoji, size = 'md', onPress, onRemove, style }: TagChipProps) {
+  const { theme } = useTheme();
   const isCreate = variant === 'create';
   const isSelected = variant === 'selected';
   const isColored = variant === 'colored';
   const sm = size === 'sm';
 
+  const defaultBg = theme.dark ? '#1A1A1A' : '#F3EFE6';
+  const defaultBorder = theme.dark ? '#333333' : '#E0DCD4';
+
   const coloredStyle =
     isColored && color
-      ? { backgroundColor: tint(color, 0.14), borderColor: tint(color, 0.4) }
-      : null;
+      ? {
+          backgroundColor: tint(color, theme.dark ? 0.16 : 0.14),
+          borderColor: tint(color, theme.dark ? 0.45 : 0.4),
+        }
+      : {
+          backgroundColor: defaultBg,
+          borderColor: defaultBorder,
+        };
 
   return (
     <Pressable
@@ -64,6 +75,7 @@ export function TagChip({ label, variant = 'default', color, emoji, size = 'md',
       <Text
         style={[
           styles.text,
+          { color: isColored && color ? color : (theme.dark ? '#E5E5E5' : '#2D2D2D') },
           sm && styles.textSm,
           isSelected && styles.textSelected,
           isCreate && styles.textCreate,

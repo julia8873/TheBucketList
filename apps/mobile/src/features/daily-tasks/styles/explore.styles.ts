@@ -218,8 +218,7 @@ export const styles = StyleSheet.create({
     borderBottomColor: '#1E1E1E',
   },
   compactRowCompleted: {
-    backgroundColor: '#101010',
-    opacity: 0.65,
+    opacity: 0.85,
   },
   compactRowDragging: {
     backgroundColor: '#1E1B10',

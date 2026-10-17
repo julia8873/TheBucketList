@@ -64,7 +64,8 @@ export function useMapTasks({
           category:categories(slug, name_es, name_en),
           bucket_photos(id, thumb_path, storage_path, created_at)
         `)
-        .or('location_lat.not.is.null,location_text.not.is.null');
+        .not('location_lat', 'is', null)
+        .not('location_lng', 'is', null);
 
       const { data, error } = await query;
       if (error) {
@@ -73,61 +74,56 @@ export function useMapTasks({
       }
 
       const accessible = (data || []).filter((item: any) => {
-        // Keep if public, or owned by me, or followers-only and owned by a friend
+        // Tareas propias siempre visibles
         if (item.user_id === currentUserId) return true;
+        // Tareas públicas de cualquier usuario
         if (item.visibility === 'public' || !item.visibility) return true;
+        // Tareas de amigos para visibilidad 'followers'
         if (item.visibility === 'followers' && friendIds.includes(item.user_id)) return true;
         return false;
       });
 
-      // Si alguna tarea tiene texto de ubicación pero le faltaban coordenadas, la geocodificamos al vuelo
-      const tasksWithCoords = await Promise.all(
-        accessible.map(async (item: any) => {
-          let lat = typeof item.location_lat === 'number' ? item.location_lat : null;
-          let lng = typeof item.location_lng === 'number' ? item.location_lng : null;
+      const tasksWithCoords: MapTaskItem[] = [];
+      for (const item of accessible) {
+        const lat =
+          item.location_lat != null && !isNaN(Number(item.location_lat))
+            ? Number(item.location_lat)
+            : null;
+        const lng =
+          item.location_lng != null && !isNaN(Number(item.location_lng))
+            ? Number(item.location_lng)
+            : null;
 
-          if ((lat === null || lng === null) && item.location_text?.trim()) {
-            try {
-              const res = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(item.location_text.trim())}&limit=1`,
-                { headers: { 'User-Agent': 'TheBucketListApp/1.0' } }
-              );
-              const geo = await res.json();
-              if (geo && geo[0]) {
-                lat = parseFloat(geo[0].lat);
-                lng = parseFloat(geo[0].lon);
-                // Guardar en BD para futuras consultas si es mía
-                if (item.user_id === currentUserId) {
-                  void supabase.from('buckets').update({ location_lat: lat, location_lng: lng }).eq('id', item.id);
-                }
-              }
-            } catch {
-              // Si falla la red, continuar
+        if (lat === null || lng === null) continue;
+
+        const catData = Array.isArray(item.category) ? item.category[0] : item.category;
+        const category = catData
+          ? {
+              slug: String(catData.slug || ''),
+              name: String((catData as any).name || catData.name_es || catData.name_en || ''),
             }
-          }
+          : null;
 
-          if (lat === null || lng === null) return null;
+        tasksWithCoords.push({
+          ...item,
+          category,
+          location_lat: lat,
+          location_lng: lng,
+          is_mine: item.user_id === currentUserId,
+          is_friend: friendIds.includes(item.user_id),
+        } as unknown as MapTaskItem);
+      }
 
-          return {
-            ...item,
-            location_lat: lat,
-            location_lng: lng,
-            is_mine: item.user_id === currentUserId,
-            is_friend: friendIds.includes(item.user_id),
-          } as MapTaskItem;
-        })
-      );
-
-      return tasksWithCoords.filter(Boolean) as MapTaskItem[];
+      return tasksWithCoords;
     },
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 1000 * 30, // 30 seconds
   });
 
   // Filter tasks in memory according to filter & search query
   const filteredTasks = rawTasks.filter((task) => {
     // Filter by type
     if (filter === 'mine' && !task.is_mine) return false;
-    if (filter === 'friends' && !task.is_friend && !task.is_mine) return false;
+    if (filter === 'friends' && (!task.is_friend || task.is_mine)) return false;
     if (filter === 'completed' && task.status !== 'completed') return false;
     if (filter === 'pending' && task.status === 'completed') return false;
 

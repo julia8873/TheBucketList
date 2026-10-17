@@ -48,7 +48,7 @@ export function TaskCompactItemRow({
         styles.compactRow,
         {
           backgroundColor: isCompleted
-            ? (theme.dark ? '#121212' : '#EDE8DE')
+            ? (theme.dark ? '#121212' : theme.colors.surface)
             : theme.colors.surface,
           borderColor: theme.colors.border,
         },

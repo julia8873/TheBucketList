@@ -152,8 +152,10 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
                         style={[
                           styles.sheetTagBadge,
                           {
-                            backgroundColor: tag.color ? `${tag.color}1F` : (theme.dark ? '#1E1E1E' : '#EAE5DB'),
-                            borderColor: tag.color ? `${tag.color}55` : theme.colors.border,
+                            backgroundColor: tag.color
+                              ? (theme.dark ? `${tag.color}22` : `${tag.color}15`)
+                              : (theme.dark ? '#1E1E1E' : '#F3EFE6'),
+                            borderColor: tag.color ? `${tag.color}66` : theme.colors.border,
                           },
                         ]}
                       >

@@ -345,8 +345,8 @@ export function DailyTasksScrollControls({
               style={[
                 styles.tagFilterPill,
                 {
-                  borderColor: tag.color ? `${tag.color}88` : '#D4B13A',
-                  backgroundColor: tag.color ? `${tag.color}22` : (theme.dark ? '#2C2512' : '#F5E6B8'),
+                  borderColor: tag.color ? `${tag.color}88` : (theme.dark ? '#4A3B12' : '#E8D298'),
+                  backgroundColor: tag.color ? (theme.dark ? `${tag.color}22` : `${tag.color}15`) : (theme.dark ? '#2C2512' : '#FDF4DC'),
                 },
               ]}
               onPress={() => {

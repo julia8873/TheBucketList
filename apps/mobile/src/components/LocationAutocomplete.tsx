@@ -60,7 +60,7 @@ export function LocationAutocomplete({
 
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(text)}&limit=5`,
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(text)}&limit=8&addressdetails=1`,
         {
           headers: {
             'User-Agent': 'TheBucketListApp/1.0 (contact@thebucketlist.com)',
@@ -68,9 +68,56 @@ export function LocationAutocomplete({
         }
       );
       
-      const data: LocationResult[] = await response.json();
-      searchCache[text] = data;
-      setResults(data);
+      const rawData: any[] = await response.json();
+      
+      // Filtrar provincias duplicadas que comparten nombre con su ciudad capital
+      // y limpiar los nombres para que sean legibles y únicos (ej: "Granada, Andalucía, España")
+      const processed: LocationResult[] = [];
+      const seenNames = new Set<string>();
+
+      for (const item of rawData) {
+        const addr = item.address || {};
+        const cityName = addr.city || addr.town || addr.village || addr.municipality || item.name;
+        const isProvinceOrCounty =
+          item.addresstype === 'state_district' ||
+          item.addresstype === 'county' ||
+          item.addresstype === 'state';
+
+        // Si es una provincia y existe la ciudad homónima, omitir el centroide provincial (que dista 50km)
+        if (isProvinceOrCounty) {
+          const norm = (item.name || '').toLowerCase().trim();
+          const hasCityHomonym = rawData.some((d) => {
+            const dAddr = d.address || {};
+            const dCity = (dAddr.city || dAddr.town || dAddr.village || dAddr.municipality || d.name || '').toLowerCase().trim();
+            const isCityType = d.addresstype === 'city' || d.addresstype === 'town' || d.addresstype === 'municipality' || d.type === 'city';
+            return isCityType && dCity === norm;
+          });
+          if (hasCityHomonym) continue;
+        }
+
+        // Construir nombre limpio: "Ciudad, Comunidad/Región, País"
+        const parts: string[] = [];
+        if (cityName) parts.push(cityName);
+        if (addr.state && addr.state !== cityName) parts.push(addr.state);
+        if (addr.country && addr.country !== addr.state) parts.push(addr.country);
+        const cleanName = parts.length > 0 ? parts.join(', ') : item.display_name;
+
+        const dedupeKey = cleanName.toLowerCase();
+        if (seenNames.has(dedupeKey)) continue;
+        seenNames.add(dedupeKey);
+
+        processed.push({
+          place_id: item.place_id,
+          display_name: cleanName,
+          lat: item.lat,
+          lon: item.lon,
+        });
+
+        if (processed.length >= 5) break;
+      }
+
+      searchCache[text] = processed;
+      setResults(processed);
     } catch (err) {
       console.error('Failed to fetch location', err);
     } finally {

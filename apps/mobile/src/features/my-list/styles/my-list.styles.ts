@@ -283,9 +283,7 @@ export const styles = StyleSheet.create({
     borderColor: '#242424',
   },
   compactRowCompleted: {
-    backgroundColor: '#121212',
-    borderColor: '#1C1C1C',
-    opacity: 0.8,
+    opacity: 0.85,
   },
   compactCheckBtn: {
     marginRight: 12,

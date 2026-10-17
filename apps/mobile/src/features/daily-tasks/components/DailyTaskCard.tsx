@@ -57,7 +57,7 @@ export function DailyTaskCard({
         styles.compactRow,
         {
           backgroundColor: isCompleted
-            ? (theme.dark ? '#101010' : '#EDE8DE')
+            ? (theme.dark ? '#101010' : theme.colors.surface)
             : theme.colors.surface,
           borderBottomColor: theme.colors.border,
         },
@@ -126,15 +126,17 @@ export function DailyTaskCard({
                   style={[
                     styles.tagChip,
                     {
-                      borderColor: tag.color ? `${tag.color}66` : '#333',
-                      backgroundColor: tag.color ? `${tag.color}1F` : '#1E1E1E',
+                      borderColor: tag.color ? `${tag.color}66` : theme.colors.border,
+                      backgroundColor: tag.color
+                        ? (theme.dark ? `${tag.color}22` : `${tag.color}15`)
+                        : (theme.dark ? '#1E1E1E' : '#F3EFE6'),
                     },
                   ]}
                 >
                   {tag.emoji && <Text style={styles.tagChipEmoji}>{tag.emoji}</Text>}
                   <Text
                     numberOfLines={1}
-                    style={[styles.tagChipText, { color: tag.color || '#DDD' }]}
+                    style={[styles.tagChipText, { color: tag.color || theme.colors.foreground }]}
                   >
                     {tag.name}
                   </Text>
@@ -297,7 +299,7 @@ export function DailyOverdueTaskCard({
         styles.overdueTaskRow,
         {
           backgroundColor: isCompleted
-            ? (theme.dark ? '#101010' : '#EDE8DE')
+            ? (theme.dark ? '#101010' : theme.colors.surface)
             : theme.colors.surface,
           borderBottomColor: theme.colors.border,
         },
@@ -378,7 +380,9 @@ export function DailyOverdueTaskCard({
                     styles.tagChip,
                     {
                       borderColor: tag.color ? `${tag.color}66` : theme.colors.border,
-                      backgroundColor: tag.color ? `${tag.color}1F` : theme.colors.surface,
+                      backgroundColor: tag.color
+                        ? (theme.dark ? `${tag.color}22` : `${tag.color}15`)
+                        : (theme.dark ? '#1E1E1E' : '#F3EFE6'),
                     },
                   ]}
                 >

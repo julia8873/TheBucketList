@@ -195,8 +195,8 @@ export function TaskItemRow({
     <Swipeable
       ref={swipeableRefSetter}
       enabled={!drag && !isSelectionMode}
-      containerStyle={{ backgroundColor: '#0E0E0E', borderRadius: 14 }}
-      childrenContainerStyle={{ backgroundColor: '#0E0E0E', borderRadius: 14 }}
+      containerStyle={{ backgroundColor: theme.colors.surface, borderRadius: 14 }}
+      childrenContainerStyle={{ backgroundColor: theme.colors.surface, borderRadius: 14 }}
       renderRightActions={renderRightActions}
       renderLeftActions={renderLeftActions}
       overshootRight={false}
