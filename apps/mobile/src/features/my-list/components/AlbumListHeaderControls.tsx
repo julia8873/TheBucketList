@@ -70,7 +70,7 @@ export function AlbumListHeaderControls({
         </ScrollView>
 
         {/* Toggle de vistas: Lista | Galería | Compacta */}
-        <View style={styles.viewModeToggle}>
+        <View style={[styles.viewModeToggle, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
           <Pressable
             onPress={() => setAlbumViewMode('list')}
             style={[styles.viewModeBtn, albumViewMode === 'list' && styles.viewModeBtnActive]}
@@ -78,7 +78,7 @@ export function AlbumListHeaderControls({
             accessibilityRole="button"
             accessibilityLabel="Vista detallada"
           >
-            <LayoutList size={15} color={albumViewMode === 'list' ? '#0E0E0E' : '#A0A0A0'} />
+            <LayoutList size={15} color={albumViewMode === 'list' ? '#0E0E0E' : theme.colors.foregroundMuted} />
           </Pressable>
           <Pressable
             onPress={() => setAlbumViewMode('gallery')}
@@ -87,7 +87,7 @@ export function AlbumListHeaderControls({
             accessibilityRole="button"
             accessibilityLabel="Vista galería"
           >
-            <LayoutGrid size={15} color={albumViewMode === 'gallery' ? '#0E0E0E' : '#A0A0A0'} />
+            <LayoutGrid size={15} color={albumViewMode === 'gallery' ? '#0E0E0E' : theme.colors.foregroundMuted} />
           </Pressable>
           <Pressable
             onPress={() => setAlbumViewMode('compact')}
@@ -96,7 +96,7 @@ export function AlbumListHeaderControls({
             accessibilityRole="button"
             accessibilityLabel="Vista compacta"
           >
-            <AlignJustify size={15} color={albumViewMode === 'compact' ? '#0E0E0E' : '#A0A0A0'} />
+            <AlignJustify size={15} color={albumViewMode === 'compact' ? '#0E0E0E' : theme.colors.foregroundMuted} />
           </Pressable>
         </View>
       </View>
@@ -115,7 +115,17 @@ export function AlbumListHeaderControls({
             collapsable={false}
             onPress={openSortMenu}
             hitSlop={8}
-            style={styles.sortTriggerBtn}
+            style={[
+              styles.sortTriggerBtn,
+              {
+                height: 32,
+                paddingHorizontal: 8,
+                borderRadius: 8,
+                backgroundColor: theme.colors.surface,
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+              },
+            ]}
             accessibilityRole="button"
             accessibilityLabel="Ordenar álbumes"
           >

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 
+import { useTheme } from '@bucketlist/ui';
 import { styles } from '../styles/explore.styles';
 import { DailyTask, DailyTag } from '../types';
 import { DraggableTaskList, DragHandle } from '@/components/DraggableTaskList';
@@ -18,6 +19,8 @@ export function DailyGroupedTasksView({
   onReorder,
   onDraggingChange,
 }: DailyGroupedTasksViewProps) {
+  const { theme } = useTheme();
+
   return (
     <View style={styles.tagGroupsContainer}>
       {groups.map((grp) => (
@@ -29,14 +32,14 @@ export function DailyGroupedTasksView({
                 { backgroundColor: grp.tag?.color || '#888' },
               ]}
             />
-            <Text style={styles.tagGroupTitle}>
+            <Text style={[styles.tagGroupTitle, { color: theme.colors.foreground }]}>
               {grp.tag ? `${grp.tag.emoji ? grp.tag.emoji + ' ' : ''}${grp.tag.name}` : 'Sin etiqueta'}
             </Text>
-            <View style={styles.tagGroupBadge}>
-              <Text style={styles.tagGroupBadgeText}>{grp.tasks.length}</Text>
+            <View style={[styles.tagGroupBadge, { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border }]}>
+              <Text style={[styles.tagGroupBadgeText, { color: theme.colors.foregroundMuted }]}>{grp.tasks.length}</Text>
             </View>
           </View>
-          <View style={styles.compactListCard}>
+          <View style={[styles.compactListCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
             <DraggableTaskList
               items={grp.tasks}
               gap={0}

@@ -67,6 +67,7 @@ export default function BucketDetailScreen() {
   const coverTotalHeight = COVER_HEIGHT + insets.top;
   const state = useBucketDetailState();
   const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [commentsAutoFocus, setCommentsAutoFocus] = useState(false);
 
   if (state.isLoading) {
     return (
@@ -107,13 +108,20 @@ export default function BucketDetailScreen() {
       >
         {/* Portada */}
         <BucketCover
-          value={bucket.cover_image}
+          value={state.resolvedCover}
           title={bucket.title}
           categorySlug={bucket.category?.slug}
           seed={bucket.id}
           style={{ width: SCREEN_WIDTH, height: coverTotalHeight }}
         >
-          {!state.isCustomCover && (
+          {state.isCustomCover ? (
+            <LinearGradient
+              colors={['rgba(0,0,0,0.3)', 'transparent', 'rgba(0,0,0,0.65)']}
+              locations={[0, 0.45, 1]}
+              style={StyleSheet.absoluteFill}
+              pointerEvents="none"
+            />
+          ) : (
             <LinearGradient
               colors={[
                 'rgba(0,0,0,0.15)',
@@ -435,7 +443,10 @@ export default function BucketDetailScreen() {
                 COMENTARIOS · {state.comments.length}
               </Typography>
               <Pressable
-                onPress={() => setShowCommentsModal(true)}
+                onPress={() => {
+                  setCommentsAutoFocus(state.comments.length === 0);
+                  setShowCommentsModal(true);
+                }}
                 hitSlop={8}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
               >
@@ -447,12 +458,15 @@ export default function BucketDetailScreen() {
 
             {state.comments.length === 0 ? (
               <Pressable
-                onPress={() => setShowCommentsModal(true)}
+                onPress={() => {
+                  setCommentsAutoFocus(true);
+                  setShowCommentsModal(true);
+                }}
                 style={{
-                  backgroundColor: 'rgba(255,255,255,0.04)',
+                  backgroundColor: theme.colors.surface,
                   borderRadius: 16,
                   borderWidth: 1,
-                  borderColor: 'rgba(255,255,255,0.08)',
+                  borderColor: theme.colors.border,
                   padding: 16,
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -460,7 +474,7 @@ export default function BucketDetailScreen() {
                   gap: 10,
                 }}
               >
-                <MessageCircle size={18} color="rgba(255,255,255,0.4)" />
+                <MessageCircle size={18} color={theme.colors.foregroundMuted} />
                 <Typography variant="body" color={theme.colors.foregroundMuted}>
                   Añade un comentario...
                 </Typography>
@@ -470,45 +484,53 @@ export default function BucketDetailScreen() {
                 {state.comments.slice(-2).map((c: any) => (
                   <Pressable
                     key={c.id}
-                    onPress={() => setShowCommentsModal(true)}
+                    onPress={() => {
+                      setCommentsAutoFocus(false);
+                      setShowCommentsModal(true);
+                    }}
                     style={{
-                      backgroundColor: 'rgba(255,255,255,0.04)',
+                      backgroundColor: theme.colors.surface,
                       borderRadius: 14,
                       borderWidth: 1,
-                      borderColor: 'rgba(255,255,255,0.06)',
+                      borderColor: theme.colors.border,
                       padding: 12,
                       gap: 4,
                     }}
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Text style={{ color: '#FFF', fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+                      <Text style={{ color: theme.colors.foreground, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
                         {c.user?.display_name || c.user?.username || 'Usuario'}
                       </Text>
-                      <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>
+                      <Text style={{ color: theme.colors.foregroundMuted, fontSize: 11 }}>
                         {timeAgo(c.created_at)}
                       </Text>
                     </View>
-                    <Text style={{ color: '#F2EFE8', fontSize: 13, lineHeight: 18 }} numberOfLines={2}>
+                    <Text style={{ color: theme.colors.foreground, fontSize: 13, lineHeight: 18 }} numberOfLines={2}>
                       {c.body}
                     </Text>
                   </Pressable>
                 ))}
 
                 <Pressable
-                  onPress={() => setShowCommentsModal(true)}
+                  onPress={() => {
+                    setCommentsAutoFocus(true);
+                    setShowCommentsModal(true);
+                  }}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
-                    backgroundColor: 'rgba(255,255,255,0.06)',
+                    backgroundColor: theme.colors.surface,
                     borderRadius: 20,
+                    borderWidth: 1,
+                    borderColor: theme.colors.border,
                     paddingHorizontal: 14,
                     paddingVertical: 10,
                     marginTop: 4,
                     gap: 10,
                   }}
                 >
-                  <MessageCircle size={16} color="rgba(255,255,255,0.4)" />
-                  <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, flex: 1 }}>
+                  <MessageCircle size={16} color={theme.colors.foregroundMuted} />
+                  <Text style={{ color: theme.colors.foregroundMuted, fontSize: 13, flex: 1 }}>
                     Añade un comentario...
                   </Text>
                 </Pressable>
@@ -539,6 +561,8 @@ export default function BucketDetailScreen() {
         onDelete={state.confirmDeletePhoto}
         onUpdateTitle={state.handleUpdatePhotoTitle}
         onUpdatePhotoDate={state.handleUpdatePhotoDate}
+        selectedThumbnailId={state.chosenPhotoId}
+        onSetAsThumbnail={(photoId) => void state.chooseThumbnail('photo', photoId)}
       />
 
       {/* Botón flotante inferior para cambiar estado */}
@@ -706,10 +730,14 @@ export default function BucketDetailScreen() {
 
       <TaskCommentsModal
         visible={showCommentsModal}
-        onClose={() => setShowCommentsModal(false)}
+        onClose={() => {
+          setShowCommentsModal(false);
+          setCommentsAutoFocus(false);
+        }}
         bucketId={Array.isArray(state.id) ? state.id[0] : (state.id as string)}
         bucketTitle={bucket.title}
         bucketOwnerId={bucket.user_id}
+        autoFocus={commentsAutoFocus}
       />
     </View>
   );

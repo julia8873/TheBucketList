@@ -42,6 +42,10 @@ export function SegmentedControl({
     <View
       style={[
         styles.container,
+        {
+          backgroundColor: theme.dark ? '#141414' : '#EDE8DE',
+          borderColor: theme.colors.border,
+        },
         style,
       ]}
       accessible
@@ -55,7 +59,7 @@ export function SegmentedControl({
             onPress={() => onChange(opt.key)}
             style={[
               styles.option,
-              isActive && styles.optionActive,
+              isActive && { backgroundColor: theme.colors.primary },
             ]}
             accessibilityRole="tab"
             accessibilityState={{ selected: isActive }}
@@ -65,7 +69,7 @@ export function SegmentedControl({
               style={[
                 styles.label,
                 {
-                  color: isActive ? '#111111' : '#CFCFCF',
+                  color: isActive ? theme.colors.primaryForeground : theme.colors.foregroundMuted,
                   fontFamily: fontFamily.semibold,
                 },
               ]}
@@ -83,10 +87,8 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     height: 40,
-    backgroundColor: '#141414',
-    borderWidth: 1,
-    borderColor: '#2A2A2A',
     borderRadius: 20,
+    borderWidth: 1,
     padding: 3,
   },
   option: {
@@ -95,9 +97,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 18,
     backgroundColor: 'transparent',
-  },
-  optionActive: {
-    backgroundColor: '#D4B13A',
   },
   label: {
     fontSize: 14,

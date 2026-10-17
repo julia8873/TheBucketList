@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '@bucketlist/ui';
 import { TagSheetShell } from './TagSheetShell';
 import { TagAppearanceFields, GoldLabel } from './TagAppearanceFields';
 import { ConfirmDialog } from './SettingsParts';
@@ -22,6 +23,7 @@ interface TagEditSheetProps {
 }
 
 export function TagEditSheet({ visible, tag, usageCount = 0, onClose, onSaved, onDeleted }: TagEditSheetProps) {
+  const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const isEdit = !!tag;
 
@@ -95,7 +97,7 @@ export function TagEditSheet({ visible, tag, usageCount = 0, onClose, onSaved, o
   return (
     <TagSheetShell visible={visible} onClose={onClose}>
       <View style={styles.content}>
-        <Text style={styles.title}>{isEdit ? 'Editar etiqueta' : 'Nueva etiqueta'}</Text>
+        <Text style={[styles.title, { color: theme.colors.foreground }]}>{isEdit ? 'Editar etiqueta' : 'Nueva etiqueta'}</Text>
 
         <ScrollView
           style={styles.scroll}
@@ -117,30 +119,36 @@ export function TagEditSheet({ visible, tag, usageCount = 0, onClose, onSaved, o
             ) : (
               <View style={[styles.previewDot, { backgroundColor: color }]} />
             )}
-            <Text style={styles.previewText} numberOfLines={1}>
+            <Text style={[styles.previewText, { color: theme.colors.foreground }]} numberOfLines={1}>
               {trimmed || 'Nueva etiqueta'}
             </Text>
           </View>
 
           {/* Nombre */}
           <GoldLabel style={{ marginTop: 24 }}>NOMBRE</GoldLabel>
-          <View style={[styles.inputBox, !!errorText && { borderColor: '#E5877D' }]}>
+          <View
+            style={[
+              styles.inputBox,
+              { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface },
+              !!errorText && { borderColor: '#E5877D' },
+            ]}
+          >
             <TextInput
-              style={styles.input}
+              style={[styles.input, { color: theme.colors.foreground }]}
               value={name}
               onChangeText={(t) => {
                 setName(t.slice(0, TAG_NAME_MAX));
                 setError(null);
               }}
               placeholder="Ej. Luna de miel"
-              placeholderTextColor="#6B6B6B"
+              placeholderTextColor={theme.colors.foregroundSubtle ?? '#6B6B6B'}
               maxLength={TAG_NAME_MAX}
               autoFocus={!isEdit}
               returnKeyType="done"
               onSubmitEditing={() => void save()}
               accessibilityLabel="Nombre de la etiqueta"
             />
-            <Text style={styles.counter}>
+            <Text style={[styles.counter, { color: theme.colors.foregroundMuted }]}>
               {name.length}/{TAG_NAME_MAX}
             </Text>
           </View>
@@ -159,11 +167,20 @@ export function TagEditSheet({ visible, tag, usageCount = 0, onClose, onSaved, o
             }}
           />
 
-          <Text style={styles.note}>{note}</Text>
+          <Text style={[styles.note, { color: theme.colors.foregroundMuted }]}>{note}</Text>
         </ScrollView>
 
         {/* Pie */}
-        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}>
+        <View
+          style={[
+            styles.footer,
+            {
+              backgroundColor: theme.colors.surface,
+              borderTopColor: theme.colors.border,
+              paddingBottom: Math.max(insets.bottom, 16) + 12,
+            },
+          ]}
+        >
           <Pressable
             style={[styles.cta, !canSave && { opacity: 0.5 }]}
             onPress={() => void save()}

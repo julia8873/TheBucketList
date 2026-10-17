@@ -1,6 +1,7 @@
 import type { DailyTaskPriority } from './types';
 
 export const SORT_PREF_STORAGE_KEY = '@bucketlist_daily_sort_pref';
+export const TIME_VIEW_STORAGE_KEY = '@bucketlist_daily_time_view';
 
 export const PRIORITY_WEIGHT: Record<DailyTaskPriority, number> = {
   urgent: 4,

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Check, Plus, Tag as TagIcon } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '@bucketlist/ui';
 import {
   TAG_COLORS,
   TAG_EMOJIS,
@@ -35,6 +36,7 @@ export function GoldLabel({ children, style }: { children: string; style?: objec
 
 /** Selector de emoji (con fondos de color por defecto o emoji propio) y de color (paleta o hex propio). */
 export function TagAppearanceFields({ name = '', emoji, color, autoColor = false, onChange }: Props) {
+  const { theme } = useTheme();
   const touchedColor = useRef(!autoColor);
   const touchedEmoji = useRef(!autoColor);
   const isPresetEmoji = !!emoji && TAG_EMOJIS.some((e) => e.emoji === emoji);
@@ -129,9 +131,16 @@ export function TagAppearanceFields({ name = '', emoji, color, autoColor = false
           accessibilityRole="button"
           accessibilityLabel="Sin emoji"
           accessibilityState={{ selected: !emoji }}
-          style={[styles.emojiCircle, styles.emojiNone]}
+          style={[
+            styles.emojiCircle,
+            styles.emojiNone,
+            {
+              backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+              borderColor: theme.colors.border,
+            },
+          ]}
         >
-          <TagIcon size={20} color="#9A9A9A" strokeWidth={1.8} />
+          <TagIcon size={20} color={theme.colors.foregroundMuted} strokeWidth={1.8} />
           {!emoji && <View style={styles.ring} pointerEvents="none" />}
         </Pressable>
 
@@ -159,17 +168,21 @@ export function TagAppearanceFields({ name = '', emoji, color, autoColor = false
       <View
         style={[
           styles.customRow,
+          {
+            backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+            borderColor: theme.colors.border,
+          },
           emojiError && { borderColor: '#E5877D' },
           !!customEmoji && !emojiError && { borderColor: GOLD },
         ]}
       >
-        <Text style={styles.customHint}>Tu emoji</Text>
+        <Text style={[styles.customHint, { color: theme.colors.foregroundMuted }]}>Tu emoji</Text>
         <TextInput
           value={customEmoji}
           onChangeText={onCustomEmojiText}
           placeholder="Escribe o pega uno 🙂"
-          placeholderTextColor="#6B6B6B"
-          style={styles.customInput}
+          placeholderTextColor={theme.colors.foregroundSubtle ?? '#6B6B6B'}
+          style={[styles.customInput, { color: theme.colors.foreground }]}
           autoCorrect={false}
           autoCapitalize="none"
           maxLength={16}
@@ -225,20 +238,31 @@ export function TagAppearanceFields({ name = '', emoji, color, autoColor = false
 
       {customOpen && (
         <View style={styles.hexWrap}>
-          <View style={[styles.customRow, { marginTop: 0 }, hexInvalid && { borderColor: '#E5877D' }, !hexInvalid && hex.length > 0 && { borderColor: GOLD }]}>
+          <View
+            style={[
+              styles.customRow,
+              {
+                marginTop: 0,
+                backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+                borderColor: theme.colors.border,
+              },
+              hexInvalid && { borderColor: '#E5877D' },
+              !hexInvalid && hex.length > 0 && { borderColor: GOLD },
+            ]}
+          >
             <View
               style={[
                 styles.hexPreview,
-                { backgroundColor: normalizeHex(hex) ?? (isPaletteColor ? '#2A2A2A' : color) },
+                { backgroundColor: normalizeHex(hex) ?? (isPaletteColor ? theme.colors.border : color) },
               ]}
             />
-            <Text style={styles.hexHash}>#</Text>
+            <Text style={[styles.hexHash, { color: theme.colors.foregroundMuted }]}>#</Text>
             <TextInput
               value={hex}
               onChangeText={onHexText}
               placeholder="D4B13B"
-              placeholderTextColor="#6B6B6B"
-              style={styles.customInput}
+              placeholderTextColor={theme.colors.foregroundSubtle ?? '#6B6B6B'}
+              style={[styles.customInput, { color: theme.colors.foreground }]}
               autoCapitalize="characters"
               autoCorrect={false}
               maxLength={6}

@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GripVertical, Lock, Star, Users } from 'lucide-react-native';
-import { gold } from '@bucketlist/ui/src/tokens/colors';
+import { useTheme } from '@bucketlist/ui';
 import { styles } from '../styles/my-list.styles';
 import { DragHandle } from '@/components/DraggableTaskList';
 
@@ -60,6 +60,7 @@ export function AlbumCompactItemRow({
   isFav: boolean;
   onPress: () => void;
 }) {
+  const { theme } = useTheme();
   const total = item.total_tasks ?? 0;
   const completed = item.completed_tasks ?? 0;
   const isCompleted = total > 0 && completed === total;
@@ -70,8 +71,13 @@ export function AlbumCompactItemRow({
       onPress={onPress}
       style={[
         styles.compactRow,
-        isCompleted && styles.compactRowCompleted,
-        drag?.isActive && { borderColor: gold[400] },
+        {
+          backgroundColor: isCompleted
+            ? (theme.dark ? '#121212' : '#EDE8DE')
+            : theme.colors.surface,
+          borderColor: theme.colors.border,
+        },
+        drag?.isActive && { borderColor: theme.colors.primary },
         { marginBottom: drag ? 8 : 0 },
       ]}
       accessibilityRole="button"
@@ -84,7 +90,7 @@ export function AlbumCompactItemRow({
           style={{ marginRight: 8, justifyContent: 'center', alignItems: 'center' }}
           accessibilityLabel="Arrastrar para reordenar"
         >
-          <GripVertical size={18} color={drag.isActive ? gold[400] : '#8F8F8F'} strokeWidth={2} />
+          <GripVertical size={18} color={drag.isActive ? theme.colors.primary : theme.colors.foregroundMuted} strokeWidth={2} />
         </View>
       )}
 
@@ -92,32 +98,34 @@ export function AlbumCompactItemRow({
         <AlbumCoverThumb coverUri={item.cover_path} colorIndex={0} size={32} />
       </View>
 
-      <Text numberOfLines={1} style={[styles.compactTitle, isCompleted && { color: '#888' }]}>
+      <Text numberOfLines={1} style={[styles.compactTitle, { color: isCompleted ? theme.colors.foregroundMuted : theme.colors.foreground }]}>
         {item.title}
       </Text>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginLeft: 8 }}>
-        {item.is_closed ? <Lock size={12} color="#888" /> : null}
-        {item.is_shared ? <Users size={12} color={gold[400]} /> : null}
+        {item.is_closed ? <Lock size={12} color={theme.colors.foregroundMuted} /> : null}
+        {item.is_shared ? <Users size={12} color={theme.colors.primary} /> : null}
         <View
           style={{
             paddingHorizontal: 7,
             paddingVertical: 2,
             borderRadius: 6,
-            backgroundColor: isCompleted ? 'rgba(52, 199, 89, 0.15)' : '#222',
+            backgroundColor: isCompleted
+              ? 'rgba(52, 199, 89, 0.15)'
+              : (theme.dark ? '#222' : '#E8E3D8'),
           }}
         >
           <Text
             style={{
               fontSize: 11,
               fontWeight: '600',
-              color: isCompleted ? '#34C759' : '#AAA',
+              color: isCompleted ? '#34C759' : theme.colors.foregroundMuted,
             }}
           >
             {completed}/{total}
           </Text>
         </View>
-        {isFav && <Star size={13} color={gold[400]} fill={gold[400]} />}
+        {isFav && <Star size={13} color={theme.colors.primary} fill={theme.colors.primary} />}
       </View>
     </Pressable>
   );
@@ -138,6 +146,7 @@ export function AlbumListItemRow({
   onPress: () => void;
   onToggleFavorite: () => void;
 }) {
+  const { theme } = useTheme();
   const total = item.total_tasks ?? 0;
   const completed = item.completed_tasks ?? 0;
   const progress = total > 0 ? completed / total : 0;
@@ -147,7 +156,7 @@ export function AlbumListItemRow({
       ? '#EF4444'
       : priority === 'low'
       ? '#10B981'
-      : '#D4B13A';
+      : theme.colors.primary;
   const priorityLabel =
     priority === 'high' || priority === 'urgent' ? 'Alta' : priority === 'low' ? 'Baja' : 'Media';
 
@@ -165,15 +174,19 @@ export function AlbumListItemRow({
           style={{ width: 28, height: 68, alignItems: 'center', justifyContent: 'center' }}
           accessibilityLabel="Arrastrar para reordenar"
         >
-          <GripVertical size={20} color={drag.isActive ? gold[400] : '#8F8F8F'} strokeWidth={2} />
+          <GripVertical size={20} color={drag.isActive ? theme.colors.primary : theme.colors.foregroundMuted} strokeWidth={2} />
         </View>
       )}
       <Pressable
         onPress={onPress}
         style={[
           styles.listAlbumCard,
+          {
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.border,
+          },
           drag && { flex: 1 },
-          drag?.isActive && { borderColor: gold[400] },
+          drag?.isActive && { borderColor: theme.colors.primary },
         ]}
         accessibilityRole="button"
         accessibilityLabel={item.title}
@@ -184,32 +197,32 @@ export function AlbumListItemRow({
 
         <View style={{ flex: 1, justifyContent: 'center' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={styles.listAlbumTitle} numberOfLines={1}>
+            <Text style={[styles.listAlbumTitle, { color: theme.colors.foreground }]} numberOfLines={1}>
               {item.title}
             </Text>
             <Pressable hitSlop={8} onPress={onToggleFavorite}>
               <Star
                 size={16}
-                color={isFav ? gold[400] : '#666'}
-                fill={isFav ? gold[400] : 'transparent'}
+                color={isFav ? theme.colors.primary : theme.colors.foregroundMuted}
+                fill={isFav ? theme.colors.primary : 'transparent'}
               />
             </Pressable>
           </View>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
-            <Text style={styles.listAlbumMeta}>
+            <Text style={[styles.listAlbumMeta, { color: theme.colors.foregroundMuted }]}>
               {total} {total === 1 ? 'tarea' : 'tareas'} · {completed} {completed === 1 ? 'hecha' : 'hechas'}
             </Text>
 
             {item.is_shared && (
-              <View style={styles.listAlbumBadge}>
-                <Users size={10} color="#AAA" />
-                <Text style={styles.listAlbumBadgeText}>Compartido</Text>
+              <View style={[styles.listAlbumBadge, { backgroundColor: theme.colors.surfaceSunken, borderColor: theme.colors.border }]}>
+                <Users size={10} color={theme.colors.foregroundMuted} />
+                <Text style={[styles.listAlbumBadgeText, { color: theme.colors.foregroundMuted }]}>Compartido</Text>
               </View>
             )}
 
             {item.is_closed && (
-              <View style={styles.listAlbumBadge}>
+              <View style={[styles.listAlbumBadge, { backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: '#EF4444' }]}>
                 <Lock size={10} color="#EF4444" />
                 <Text style={[styles.listAlbumBadgeText, { color: '#EF4444' }]}>Cerrado</Text>
               </View>
@@ -223,8 +236,8 @@ export function AlbumListItemRow({
             )}
           </View>
 
-          <View style={styles.listAlbumProgressTrack}>
-            <View style={[styles.listAlbumProgressFill, { width: `${Math.round(progress * 100)}%` as any }]} />
+          <View style={[styles.listAlbumProgressTrack, { backgroundColor: theme.colors.border }]}>
+            <View style={[styles.listAlbumProgressFill, { backgroundColor: theme.colors.primary, width: `${Math.round(progress * 100)}%` as any }]} />
           </View>
         </View>
       </Pressable>

@@ -147,7 +147,7 @@ export function useRealtimeSync(userId?: string) {
                   sound: 'default',
                   priority: Notifications.AndroidNotificationPriority.MAX,
                 },
-                trigger: (Platform.OS === 'android' ? { channelId: 'default' } : null) as any,
+                trigger: Platform.OS === 'android' ? { channelId: 'default' } : null,
               });
             } catch (err) {
               console.warn('Error scheduling local notification in useRealtimeSync:', err);

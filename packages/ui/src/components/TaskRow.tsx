@@ -70,7 +70,14 @@ export function TaskRow({
       onLongPress={onLongPress}
       style={({ pressed }) => [
         styles.row,
-        { backgroundColor: pressed ? '#202020' : '#161616' },
+        {
+          backgroundColor: pressed
+            ? theme.colors.surfaceSunken
+            : completed
+            ? theme.colors.surfaceSunken
+            : theme.colors.surface,
+          borderColor: theme.colors.border,
+        },
         completed && styles.rowCompleted,
         style,
       ]}
@@ -78,7 +85,7 @@ export function TaskRow({
       accessibilityLabel={title}
     >
       {/* Thumbnail */}
-      <View style={[styles.thumbnail, { backgroundColor: thumbnailColor }, completed && styles.thumbnailCompleted]}>
+      <View style={[styles.thumbnail, { backgroundColor: thumbnailColor || theme.colors.surfaceSunken }, completed && styles.thumbnailCompleted]}>
         {thumbnailElement ? (
           thumbnailElement
         ) : thumbnailUri ? (
@@ -89,12 +96,12 @@ export function TaskRow({
 
       {/* Content */}
       <View style={[styles.content, completed && styles.contentCompleted]}>
-        <Text style={[styles.title, { color: completed ? '#7A7A7A' : '#FFFFFF' }]} numberOfLines={2}>
+        <Text style={[styles.title, { color: completed ? theme.colors.foregroundSubtle : theme.colors.foreground }]} numberOfLines={2}>
           {title}
         </Text>
         {tagsElement ? <View style={styles.tags}>{tagsElement}</View> : null}
         {meta ? (
-          <Text style={[styles.meta, { color: completed ? '#5C5C5C' : '#9A9A9A' }]} numberOfLines={1}>
+          <Text style={[styles.meta, { color: completed ? theme.colors.foregroundSubtle : theme.colors.foregroundMuted }]} numberOfLines={1}>
             {meta}
           </Text>
         ) : null}
@@ -102,23 +109,23 @@ export function TaskRow({
           <ProgressBar
             value={Math.round(subtaskProgress * 100)}
             style={styles.progress}
-            colorOverride={gold[400]}
+            colorOverride={theme.colors.primary}
           />
         ) : null}
         {hasCounterProgress ? (
           <ProgressBar
             value={Math.round(counterProgress * 100)}
             style={styles.progress}
-            colorOverride={gold[400]}
+            colorOverride={theme.colors.primary}
           />
         ) : null}
       </View>
 
       {/* Urgency chip, completed tick, or Expired Action */}
       {completed ? (
-        <CheckCircle2 size={22} color={gold[400]} strokeWidth={1.8} />
+        <CheckCircle2 size={22} color={theme.colors.primary} strokeWidth={1.8} />
       ) : expiredAction ? (
-        <Text style={{ color: '#D4B13A', fontFamily: fontFamily.semibold, fontSize: 14 }}>
+        <Text style={{ color: theme.colors.primary, fontFamily: fontFamily.semibold, fontSize: 14 }}>
           Reprogramar
         </Text>
       ) : deadline ? (
@@ -135,13 +142,10 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#2A2A2A',
     gap: 12,
-    backgroundColor: '#161616',
   },
   rowCompleted: {
-    borderColor: '#202020',
-    backgroundColor: '#141414',
+    opacity: 0.8,
   },
   thumbnailCompleted: {
     opacity: 0.45,

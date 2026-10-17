@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Typography } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
-import { MapPin, CheckCircle2, Calendar, X } from 'lucide-react-native';
+import { MapPin, CheckCircle2, Calendar, X, Map } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { styles } from '../styles/bucket-detail.styles';
@@ -28,6 +29,8 @@ export function BucketMetaSection({
   onRemoveCompletedAt,
   onRemoveDeadline,
 }: BucketMetaSectionProps) {
+  const router = useRouter();
+
   return (
     <View style={styles.meta}>
       {/* Ubicación */}
@@ -35,23 +38,32 @@ export function BucketMetaSection({
         <View style={styles.metaRowBetween}>
           <Pressable
             style={styles.metaRowClickable}
-            onPress={() => canEdit && onOpenLocationModal()}
-            disabled={!canEdit}
+            onPress={() => (canEdit ? onOpenLocationModal() : router.push(`/map?initialTaskId=${bucket.id}` as any))}
           >
             <MapPin color={gold[400]} size={16} strokeWidth={1.8} />
             <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText} numberOfLines={1}>
               {bucket.location_text}
             </Typography>
           </Pressable>
-          {canEdit && (
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Pressable
-              onPress={onRemoveLocation}
+              onPress={() => router.push(`/map?initialTaskId=${bucket.id}` as any)}
               hitSlop={8}
-              style={styles.metaRemoveBtn}
+              style={{ padding: 4, marginRight: canEdit ? 6 : 0 }}
+              accessibilityLabel="Ver en el mapa"
             >
-              <X color={theme.colors.foregroundMuted} size={14} />
+              <Map color={gold[400]} size={16} strokeWidth={1.8} />
             </Pressable>
-          )}
+            {canEdit && (
+              <Pressable
+                onPress={onRemoveLocation}
+                hitSlop={8}
+                style={styles.metaRemoveBtn}
+              >
+                <X color={theme.colors.foregroundMuted} size={14} />
+              </Pressable>
+            )}
+          </View>
         </View>
       ) : canEdit ? (
         <Pressable

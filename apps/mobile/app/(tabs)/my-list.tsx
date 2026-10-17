@@ -7,6 +7,8 @@ import {
   AlbumCard,
   NewAlbumCard,
   NoAlbumRow,
+  NoAlbumCard,
+  NewAlbumRow,
   FAB,
   Input,
   PageTitle,
@@ -14,6 +16,7 @@ import {
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Search, X, Plus } from 'lucide-react-native';
 import { DraggableTaskList } from '@/components/DraggableTaskList';
 import { BulkTaskActionBar } from '@/components/BulkTaskActionBar';
@@ -42,7 +45,9 @@ import { MyListSortModal } from '@/features/my-list/components/MyListSortModal';
 export default function MyListScreen() {
   const { theme } = useTheme();
   const router = useRouter();
+  const { t } = useTranslation();
   const state = useMyListState();
+  const [goldTitle, ...restTitle] = t('nav.my_list', { defaultValue: 'Mi lista' }).split(' ');
 
   const renderTaskItem = ({ item, drag, index }: { item: any; drag?: any; index?: number }) => {
     if (item.isHeader) {
@@ -162,7 +167,7 @@ export default function MyListScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <PageTitle gold="Mi" rest="lista" />
+        <PageTitle gold={goldTitle} rest={restTitle.join(' ')} />
         <Pressable
           onPress={state.toggleSearch}
           hitSlop={12}
@@ -437,139 +442,142 @@ export default function MyListScreen() {
 
       {/* Tab: Álbumes */}
       {state.activeTab === 'albums' && (
-        <ScrollView
-          contentContainerStyle={styles.albumsContent}
-          refreshControl={
-            <RefreshControl refreshing={state.refreshing} onRefresh={state.onRefresh} tintColor={gold[400]} />
-          }
-        >
-          <AlbumListHeaderControls
-            albumPriorityFilter={state.albumPriorityFilter}
-            setAlbumPriorityFilter={state.setAlbumPriorityFilter}
-            albumViewMode={state.albumViewMode}
-            setAlbumViewMode={state.setAlbumViewMode}
-            albumsCount={state.filteredAlbums.length}
-            albumSortField={state.albumSortField}
-            albumSortDir={state.albumSortDir}
-            isAlbumReordering={state.isAlbumReordering}
-            setIsAlbumReordering={state.setIsAlbumReordering}
-            isSearching={state.isSearching}
-            albumSortTriggerRef={state.albumSortTriggerRef}
-            openSortMenu={state.openSortMenu}
-            theme={theme}
-          />
+        <View style={{ flex: 1 }}>
+          <ScrollView
+            contentContainerStyle={styles.albumsContent}
+            refreshControl={
+              <RefreshControl refreshing={state.refreshing} onRefresh={state.onRefresh} tintColor={gold[400]} />
+            }
+          >
+            <AlbumListHeaderControls
+              albumPriorityFilter={state.albumPriorityFilter}
+              setAlbumPriorityFilter={state.setAlbumPriorityFilter}
+              albumViewMode={state.albumViewMode}
+              setAlbumViewMode={state.setAlbumViewMode}
+              albumsCount={state.filteredAlbums.length}
+              albumSortField={state.albumSortField}
+              albumSortDir={state.albumSortDir}
+              isAlbumReordering={state.isAlbumReordering}
+              setIsAlbumReordering={state.setIsAlbumReordering}
+              isSearching={state.isSearching}
+              albumSortTriggerRef={state.albumSortTriggerRef}
+              openSortMenu={state.openSortMenu}
+              theme={theme}
+            />
 
-          {state.isLoadingAlbums ? (
-            <View style={styles.albumGrid}>
-              <AlbumCardSkeleton />
-              <AlbumCardSkeleton />
-            </View>
-          ) : state.filteredAlbums.length === 0 ? (
-            <View style={styles.empty}>
-              <Text style={{ color: theme.colors.foregroundMuted, fontSize: 14 }}>
-                {state.searchQuery ? 'No se encontraron álbumes' : 'No tienes álbumes'}
-              </Text>
-            </View>
-          ) : state.isAlbumReordering ? (
-            <View>
-              {state.albumSortField === 'status' ? (
-                state.albumSections.map((sec) => {
-                  if (sec.items.length === 0) return null;
-                  return (
-                    <View key={sec.key} style={styles.sectionBlock}>
-                      <Text style={styles.sectionHeader}>{sec.title}</Text>
-                      <DraggableTaskList
-                        items={sec.items}
-                        gap={10}
-                        renderItem={(item, drag) =>
-                          state.albumViewMode === 'compact'
-                            ? renderCompactAlbum({ item, drag })
-                            : renderListAlbum({ item, drag })
-                        }
-                        onReorder={(ids) => state.handleReorderAlbumSection(sec.key, ids)}
-                        onDraggingChange={state.setAlbumDragging}
-                      />
-                    </View>
-                  );
-                })
-              ) : (
-                <DraggableTaskList
-                  items={state.sortedAlbumsList}
-                  gap={10}
-                  renderItem={(item, drag) =>
-                    state.albumViewMode === 'compact'
-                      ? renderCompactAlbum({ item, drag })
-                      : renderListAlbum({ item, drag })
-                  }
-                  onReorder={(ids) => void state.persistAlbumOrder(ids)}
-                  onDraggingChange={state.setAlbumDragging}
-                />
-              )}
-            </View>
-          ) : state.albumViewMode === 'compact' ? (
-            <>
-              {state.albumSortField === 'status' ? (
-                state.albumSections.map((sec) => {
-                  if (sec.items.length === 0) return null;
-                  return (
-                    <View key={sec.key} style={styles.sectionBlock}>
-                      <Text style={styles.sectionHeader}>{sec.title}</Text>
-                      <View style={styles.compactList}>
-                        {sec.items.map((item: any) => renderCompactAlbum({ item }))}
-                      </View>
-                    </View>
-                  );
-                })
-              ) : (
-                <View style={[styles.compactList, { marginBottom: 16 }]}>
-                  {state.sortedAlbumsList.map((item: any) => renderCompactAlbum({ item }))}
+            {state.isLoadingAlbums ? (
+              <View style={styles.albumGrid}>
+                <AlbumCardSkeleton />
+                <AlbumCardSkeleton />
+              </View>
+            ) : state.filteredAlbums.length === 0 ? (
+              state.albumViewMode === 'gallery' ? (
+                <View style={styles.albumGrid}>
+                  <NoAlbumCard
+                    count={state.unassignedCount}
+                    onPress={() => router.push('/album/unassigned')}
+                  />
+                  <NewAlbumCard onPress={() => router.push('/(modals)/create-album')} />
                 </View>
-              )}
-              <Pressable
-                onPress={() => router.push('/(modals)/create-album')}
-                style={styles.compactNewAlbumBtn}
-              >
-                <Plus size={18} color={gold[400]} strokeWidth={2.2} />
-                <Text style={styles.compactNewAlbumText}>Nuevo álbum</Text>
-              </Pressable>
-              <NoAlbumRow
-                count={state.unassignedCount}
-                onPress={() => router.push('/album/unassigned')}
-              />
-            </>
-          ) : state.albumViewMode === 'list' ? (
-            <>
-              {state.albumSortField === 'status' ? (
-                state.albumSections.map((sec) => {
-                  if (sec.items.length === 0) return null;
-                  return (
-                    <View key={sec.key} style={styles.sectionBlock}>
-                      <Text style={styles.sectionHeader}>{sec.title}</Text>
-                      {sec.items.map((item: any, idx: number) =>
-                        renderListAlbum({ item, index: idx })
-                      )}
-                    </View>
-                  );
-                })
               ) : (
-                state.sortedAlbumsList.map((item: any, idx: number) =>
-                  renderListAlbum({ item, index: idx })
-                )
-              )}
-              <Pressable
-                onPress={() => router.push('/(modals)/create-album')}
-                style={styles.compactNewAlbumBtn}
-              >
-                <Plus size={18} color={gold[400]} strokeWidth={2.2} />
-                <Text style={styles.compactNewAlbumText}>Nuevo álbum</Text>
-              </Pressable>
-              <NoAlbumRow
-                count={state.unassignedCount}
-                onPress={() => router.push('/album/unassigned')}
-              />
-            </>
-          ) : (
-            <>
+                <View style={[styles.empty, { gap: 14 }]}>
+                  <Text style={{ color: theme.colors.foregroundMuted, fontSize: 14 }}>
+                    {state.searchQuery ? 'No se encontraron álbumes' : 'No tienes álbumes'}
+                  </Text>
+                  <NewAlbumRow onPress={() => router.push('/(modals)/create-album')} />
+                  <NoAlbumRow
+                    count={state.unassignedCount}
+                    onPress={() => router.push('/album/unassigned')}
+                  />
+                </View>
+              )
+            ) : state.isAlbumReordering ? (
+              <View>
+                {state.albumSortField === 'status' ? (
+                  state.albumSections.map((sec) => {
+                    if (sec.items.length === 0) return null;
+                    return (
+                      <View key={sec.key} style={styles.sectionBlock}>
+                        <Text style={styles.sectionHeader}>{sec.title}</Text>
+                        <DraggableTaskList
+                          items={sec.items}
+                          gap={10}
+                          renderItem={(item, drag) =>
+                            state.albumViewMode === 'compact'
+                              ? renderCompactAlbum({ item, drag })
+                              : renderListAlbum({ item, drag })
+                          }
+                          onReorder={(ids) => state.handleReorderAlbumSection(sec.key, ids)}
+                          onDraggingChange={state.setAlbumDragging}
+                        />
+                      </View>
+                    );
+                  })
+                ) : (
+                  <DraggableTaskList
+                    items={state.sortedAlbumsList}
+                    gap={10}
+                    renderItem={(item, drag) =>
+                      state.albumViewMode === 'compact'
+                        ? renderCompactAlbum({ item, drag })
+                        : renderListAlbum({ item, drag })
+                    }
+                    onReorder={(ids) => void state.persistAlbumOrder(ids)}
+                    onDraggingChange={state.setAlbumDragging}
+                  />
+                )}
+              </View>
+            ) : state.albumViewMode === 'compact' ? (
+              <>
+                {state.albumSortField === 'status' ? (
+                  state.albumSections.map((sec) => {
+                    if (sec.items.length === 0) return null;
+                    return (
+                      <View key={sec.key} style={styles.sectionBlock}>
+                        <Text style={styles.sectionHeader}>{sec.title}</Text>
+                        <View style={styles.compactList}>
+                          {sec.items.map((item: any) => renderCompactAlbum({ item }))}
+                        </View>
+                      </View>
+                    );
+                  })
+                ) : (
+                  <View style={[styles.compactList, { marginBottom: 16 }]}>
+                    {state.sortedAlbumsList.map((item: any) => renderCompactAlbum({ item }))}
+                  </View>
+                )}
+                <NewAlbumRow onPress={() => router.push('/(modals)/create-album')} />
+                <NoAlbumRow
+                  count={state.unassignedCount}
+                  onPress={() => router.push('/album/unassigned')}
+                />
+              </>
+            ) : state.albumViewMode === 'list' ? (
+              <>
+                {state.albumSortField === 'status' ? (
+                  state.albumSections.map((sec) => {
+                    if (sec.items.length === 0) return null;
+                    return (
+                      <View key={sec.key} style={styles.sectionBlock}>
+                        <Text style={styles.sectionHeader}>{sec.title}</Text>
+                        {sec.items.map((item: any, idx: number) =>
+                          renderListAlbum({ item, index: idx })
+                        )}
+                      </View>
+                    );
+                  })
+                ) : (
+                  state.sortedAlbumsList.map((item: any, idx: number) =>
+                    renderListAlbum({ item, index: idx })
+                  )
+                )}
+                <NewAlbumRow onPress={() => router.push('/(modals)/create-album')} />
+                <NoAlbumRow
+                  count={state.unassignedCount}
+                  onPress={() => router.push('/album/unassigned')}
+                />
+              </>
+            ) : (
               <View style={styles.albumGrid}>
                 {state.sortedAlbumsList.map((item: any, index: number) => (
                   <AlbumCard
@@ -592,15 +600,15 @@ export default function MyListScreen() {
                     onPress={() => router.push(`/album/${item.id}` as any)}
                   />
                 ))}
+                <NoAlbumCard
+                  count={state.unassignedCount}
+                  onPress={() => router.push('/album/unassigned')}
+                />
                 <NewAlbumCard onPress={() => router.push('/(modals)/create-album')} />
               </View>
-              <NoAlbumRow
-                count={state.unassignedCount}
-                onPress={() => router.push('/album/unassigned')}
-              />
-            </>
-          )}
-        </ScrollView>
+            )}
+          </ScrollView>
+        </View>
       )}
 
       {/* Tab: Calendario */}

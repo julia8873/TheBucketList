@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { ChevronLeft, ChevronRight, Plus, CheckCircle2 } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, ChevronDown, Plus, CheckCircle2 } from 'lucide-react-native';
 import {
   format,
   addMonths,
@@ -16,6 +16,7 @@ import {
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 
+import { useTheme, gold } from '@bucketlist/ui';
 import { styles } from '../styles/explore.styles';
 import { DailyTask } from '../types';
 import { toDateString } from '../utils/dailyTaskDateUtils';
@@ -50,6 +51,9 @@ export function DailyCalendarView({
   onDraggingChange,
   sortTasks,
 }: DailyCalendarViewProps) {
+  const { theme } = useTheme();
+  const [isCalendarCompletedCollapsed, setIsCalendarCompletedCollapsed] = useState(false);
+
   // Calendar Grid calculation
   const calendarGrid = useMemo(() => {
     const monthStart = startOfMonth(calendarMonth);
@@ -108,23 +112,29 @@ export function DailyCalendarView({
   return (
     <View style={styles.calendarContainer}>
       {/* Calendar Navigation Card */}
-      <View style={styles.calendarCard}>
+      <View style={[styles.calendarCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
         <View style={styles.calendarHeaderRow}>
           <Pressable
-            style={styles.calendarNavBtn}
+            style={[styles.calendarNavBtn, { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border }]}
             onPress={() => onSetCalendarMonth((prev) => subMonths(prev, 1))}
             hitSlop={8}
           >
-            <ChevronLeft size={20} color="#AAA" />
+            <ChevronLeft size={20} color={theme.colors.foreground} />
           </Pressable>
 
           <View style={{ alignItems: 'center' }}>
-            <Text style={styles.calendarMonthTitle}>
+            <Text style={[styles.calendarMonthTitle, { color: theme.colors.foreground }]}>
               {calendarGrid.monthLabel.toUpperCase()}
             </Text>
             {!isSameMonth(calendarMonth, new Date()) && (
               <Pressable
-                style={styles.calendarTodayBadge}
+                style={[
+                  styles.calendarTodayBadge,
+                  {
+                    backgroundColor: theme.dark ? '#262010' : '#FDF4DC',
+                    borderColor: theme.dark ? '#4A3B10' : '#E8C56A',
+                  },
+                ]}
                 onPress={() => {
                   const now = new Date();
                   onSetCalendarMonth(now);
@@ -137,18 +147,18 @@ export function DailyCalendarView({
           </View>
 
           <Pressable
-            style={styles.calendarNavBtn}
+            style={[styles.calendarNavBtn, { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border }]}
             onPress={() => onSetCalendarMonth((prev) => addMonths(prev, 1))}
             hitSlop={8}
           >
-            <ChevronRight size={20} color="#AAA" />
+            <ChevronRight size={20} color={theme.colors.foreground} />
           </Pressable>
         </View>
 
         {/* Day of Week Headers */}
-        <View style={styles.calendarDaysOfWeekRow}>
+        <View style={[styles.calendarDaysOfWeekRow, { borderBottomColor: theme.colors.border }]}>
           {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((d, idx) => (
-            <Text key={idx} style={styles.calendarDayOfWeekText}>
+            <Text key={idx} style={[styles.calendarDayOfWeekText, { color: theme.colors.foregroundMuted }]}>
               {d}
             </Text>
           ))}
@@ -162,7 +172,11 @@ export function DailyCalendarView({
                 key={cell.dateStr}
                 style={[
                   styles.calendarDayCell,
-                  cell.isSelected && styles.calendarDayCellSelected,
+                  cell.isSelected && {
+                    backgroundColor: theme.dark ? '#262010' : '#F7EBCB',
+                    borderWidth: 1.5,
+                    borderColor: gold[400],
+                  },
                   cell.isToday && styles.calendarDayCellToday,
                 ]}
                 onPress={() => {
@@ -175,7 +189,8 @@ export function DailyCalendarView({
                 <Text
                   style={[
                     styles.calendarDayNumber,
-                    !cell.isCurrentMonth && styles.calendarDayNumberOutside,
+                    { color: theme.colors.foreground },
+                    !cell.isCurrentMonth && { color: theme.colors.foregroundSubtle },
                     cell.isToday && styles.calendarDayNumberToday,
                     cell.isSelected && styles.calendarDayNumberSelected,
                   ]}
@@ -205,11 +220,11 @@ export function DailyCalendarView({
       <View style={styles.calendarDayDetailSection}>
         <View style={styles.calendarDayDetailHeader}>
           <View>
-            <Text style={styles.calendarDayDetailDate}>
+            <Text style={[styles.calendarDayDetailDate, { color: theme.colors.primary }]}>
               {isToday(selectedCalendarDate) ? 'HOY · ' : ''}
               {format(selectedCalendarDate, "EEEE, d 'de' MMMM", { locale: es }).toUpperCase()}
             </Text>
-            <Text style={styles.calendarDayDetailSub}>
+            <Text style={[styles.calendarDayDetailSub, { color: theme.colors.foregroundMuted }]}>
               {selectedDateTasks.length}{' '}
               {selectedDateTasks.length === 1 ? 'tarea programada' : 'tareas programadas'}
             </Text>
@@ -224,13 +239,13 @@ export function DailyCalendarView({
         </View>
 
         {sortedSelectedDateTasks.length === 0 ? (
-          <View style={styles.weekDayEmpty}>
-            <Text style={styles.weekDayEmptyText}>
+          <View style={[styles.weekDayEmpty, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+            <Text style={[styles.weekDayEmptyText, { color: theme.colors.foregroundMuted }]}>
               Sin tareas para este día. ¡Pulsa + Añadir para crear una!
             </Text>
           </View>
         ) : (
-          <View style={styles.compactListCard}>
+          <View style={[styles.compactListCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
             <DraggableTaskList
               items={sortedSelectedDateTasks}
               gap={0}
@@ -250,17 +265,30 @@ export function DailyCalendarView({
         {/* Completed tasks for selected date */}
         {selectedDateCompleted.length > 0 && (
           <View style={styles.completedSectionWrapper}>
-            <View style={styles.completedSectionHeader}>
+            <Pressable
+              style={styles.completedSectionHeader}
+              onPress={() => setIsCalendarCompletedCollapsed((prev) => !prev)}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={isCalendarCompletedCollapsed ? "Mostrar completadas" : "Replegar completadas"}
+            >
+              {isCalendarCompletedCollapsed ? (
+                <ChevronRight size={14} color={theme.colors.foregroundMuted} />
+              ) : (
+                <ChevronDown size={14} color={theme.colors.foregroundMuted} />
+              )}
               <CheckCircle2 size={14} color="#34C759" />
-              <Text style={styles.completedSectionTitle}>
+              <Text style={[styles.completedSectionTitle, { color: theme.colors.foreground }]}>
                 Completadas ({selectedDateCompleted.length})
               </Text>
-            </View>
-            <View style={styles.compactListCard}>
-              {selectedDateCompleted.map((item, idx) =>
-                renderCompletedRow(item, idx === selectedDateCompleted.length - 1)
-              )}
-            </View>
+            </Pressable>
+            {!isCalendarCompletedCollapsed && (
+              <View style={[styles.compactListCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+                {selectedDateCompleted.map((item, idx) =>
+                  renderCompletedRow(item, idx === selectedDateCompleted.length - 1)
+                )}
+              </View>
+            )}
           </View>
         )}
       </View>

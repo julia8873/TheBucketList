@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   FlatList,
   TextInput,
   KeyboardAvoidingView,
+  Keyboard,
+  ScrollView,
   Platform,
   Alert,
   ActivityIndicator,
@@ -41,6 +43,7 @@ interface TaskCommentsModalProps {
   bucketId: string;
   bucketTitle?: string;
   bucketOwnerId?: string;
+  autoFocus?: boolean;
 }
 
 interface ReplyingToState {
@@ -55,6 +58,7 @@ export function TaskCommentsModal({
   bucketId,
   bucketTitle,
   bucketOwnerId,
+  autoFocus = false,
 }: TaskCommentsModalProps) {
   const { user } = useAuthStore();
   const [text, setText] = useState('');
@@ -71,6 +75,47 @@ export function TaskCommentsModal({
 
   const flatListRef = useRef<FlatList>(null);
   const inputRef = useRef<TextInput>(null);
+
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        setIsKeyboardVisible(true);
+        setKeyboardHeight(e.endCoordinates.height);
+      }
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setIsKeyboardVisible(false);
+        setKeyboardHeight(0);
+      }
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!visible) {
+      setIsKeyboardVisible(false);
+      setKeyboardHeight(0);
+    }
+  }, [visible]);
+
+  useEffect(() => {
+    if (visible && autoFocus) {
+      // Defer focus slightly so modal slide animation completes cleanly without layout race
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 350);
+      return () => clearTimeout(timer);
+    }
+  }, [visible, autoFocus]);
 
   // Amigos (seguidos y seguidores)
   const { data: following = [] } = useConnections(user?.id, 'following');
@@ -342,13 +387,20 @@ export function TaskCommentsModal({
       transparent
       animationType="slide"
       onRequestClose={onClose}
+      statusBarTranslucent
     >
       <KeyboardAvoidingView
         style={styles.overlay}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <Pressable style={styles.backdrop} onPress={onClose} />
-        <View style={styles.sheetContent}>
+        <Pressable
+          style={styles.backdrop}
+          onPress={() => {
+            Keyboard.dismiss();
+            onClose();
+          }}
+        />
+        <View style={[styles.sheetContent, isKeyboardVisible && styles.sheetContentKeyboard]}>
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>
@@ -371,7 +423,15 @@ export function TaskCommentsModal({
                 ) : null}
               </View>
             </View>
-            <Pressable onPress={onClose} hitSlop={10} style={styles.closeBtn} accessibilityLabel="Cerrar comentarios">
+            <Pressable
+              onPress={() => {
+                Keyboard.dismiss();
+                onClose();
+              }}
+              hitSlop={10}
+              style={styles.closeBtn}
+              accessibilityLabel="Cerrar comentarios"
+            >
               <X size={20} color="#888" />
             </Pressable>
           </View>
@@ -382,15 +442,28 @@ export function TaskCommentsModal({
               <ActivityIndicator color={gold[400]} size="small" />
             </View>
           ) : comments.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <View style={styles.emptyIconCircle}>
-                <MessageCircle size={28} color="rgba(255,255,255,0.25)" />
-              </View>
+            <ScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={[
+                styles.emptyContainer,
+                isKeyboardVisible && styles.emptyContainerKeyboard,
+              ]}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+            >
+              {!isKeyboardVisible && (
+                <View style={styles.emptyIconCircle}>
+                  <MessageCircle size={28} color="rgba(255,255,255,0.25)" />
+                </View>
+              )}
               <Text style={styles.emptyTitle}>Aún no hay comentarios</Text>
-              <Text style={styles.emptySubtitle}>
-                Sé el primero en compartir qué opinas o dar ánimos sobre esta meta.
-              </Text>
-            </View>
+              {!isKeyboardVisible && (
+                <Text style={styles.emptySubtitle}>
+                  Sé el primero en compartir qué opinas o dar ánimos sobre esta meta.
+                </Text>
+              )}
+            </ScrollView>
           ) : (
             <FlatList
               ref={flatListRef}
@@ -689,7 +762,7 @@ export function TaskCommentsModal({
           )}
 
           {/* Barra inferior para escribir comentario */}
-          <View style={styles.inputBar}>
+          <View style={[styles.inputBar, isKeyboardVisible && { paddingBottom: 10 }]}>
             {user && (
               <Avatar
                 uri={currentUserProfile.avatar_url}
@@ -754,6 +827,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
     overflow: 'hidden',
+  },
+  sheetContentKeyboard: {
+    minHeight: 0,
+    maxHeight: '100%',
   },
   header: {
     flexDirection: 'row',
@@ -820,12 +897,14 @@ const styles = StyleSheet.create({
     minHeight: 180,
   },
   emptyContainer: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
-    paddingVertical: 40,
-    minHeight: 200,
+    paddingVertical: 36,
+  },
+  emptyContainerKeyboard: {
+    paddingVertical: 12,
   },
   emptyIconCircle: {
     width: 56,

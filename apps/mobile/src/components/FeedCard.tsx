@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Check, Heart, MessageCircle } from 'lucide-react-native';
-import { Avatar, fontFamily, gold } from '@bucketlist/ui';
+import { Avatar, fontFamily, gold, useTheme } from '@bucketlist/ui';
 import { BucketCover } from './BucketCover';
 import { TaskCommentsModal } from './TaskCommentsModal';
 import { resolveTaskImage } from '../utils/taskImage';
@@ -30,6 +30,7 @@ interface FeedCardProps {
  * Soporta modos: 'list' (por defecto), 'gallery' y 'compact'.
  */
 export function FeedCard({ event, onPress, index, mode = 'list' }: FeedCardProps) {
+  const { theme } = useTheme();
   const router = useRouter();
   const { user } = useAuthStore();
   const [showComments, setShowComments] = useState(false);
@@ -156,7 +157,10 @@ export function FeedCard({ event, onPress, index, mode = 'list' }: FeedCardProps
       <Animated.View entering={FadeInUp.delay(Math.min(index, 6) * 50).springify()} style={styles.compactCardWrapper}>
         <Pressable
           onPress={onPress}
-          style={({ pressed }) => [styles.compactCard, { opacity: pressed ? 0.85 : 1 }]}
+          style={({ pressed }) => [
+            styles.compactCard,
+            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, opacity: pressed ? 0.85 : 1 },
+          ]}
           accessibilityRole="button"
           accessibilityLabel={bucket.title}
         >
@@ -174,27 +178,27 @@ export function FeedCard({ event, onPress, index, mode = 'list' }: FeedCardProps
           <View style={styles.compactInfo}>
             <Pressable onPress={openProfile} style={styles.compactUserHeader} hitSlop={4}>
               <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="xs" />
-              <Text style={styles.compactUsername} numberOfLines={1}>
+              <Text style={[styles.compactUsername, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
                 @{actor.username}
               </Text>
-              <Text style={styles.compactDot}>·</Text>
-              <Text style={styles.compactTime}>
+              <Text style={[styles.compactDot, { color: theme.colors.foregroundSubtle }]}>·</Text>
+              <Text style={[styles.compactTime, { color: theme.colors.foregroundSubtle }]}>
                 {timeAgo(event.created_at ?? bucket.completed_at ?? bucket.created_at)}
               </Text>
             </Pressable>
-            <Text style={styles.compactTitle} numberOfLines={1}>
+            <Text style={[styles.compactTitle, { color: theme.colors.foreground }]} numberOfLines={1}>
               {bucket.title}
             </Text>
           </View>
 
           <View style={styles.compactActions}>
             <Pressable onPress={handleLike} hitSlop={6} style={styles.compactActionBtn}>
-              <Heart size={16} color={liked ? gold[400] : '#A0A0A0'} fill={liked ? gold[400] : 'transparent'} strokeWidth={1.8} />
-              <Text style={[styles.compactActionCount, liked && { color: gold[400] }]}>{likeCount}</Text>
+              <Heart size={16} color={liked ? theme.colors.primary : theme.colors.foregroundSubtle} fill={liked ? theme.colors.primary : 'transparent'} strokeWidth={1.8} />
+              <Text style={[styles.compactActionCount, { color: liked ? theme.colors.primary : theme.colors.foregroundSubtle }]}>{likeCount}</Text>
             </Pressable>
             <Pressable onPress={() => setShowComments(true)} hitSlop={6} style={styles.compactActionBtn}>
-              <MessageCircle size={16} color="#A0A0A0" strokeWidth={1.8} />
-              <Text style={styles.compactActionCount}>{commentCount}</Text>
+              <MessageCircle size={16} color={theme.colors.foregroundSubtle} strokeWidth={1.8} />
+              <Text style={[styles.compactActionCount, { color: theme.colors.foregroundSubtle }]}>{commentCount}</Text>
             </Pressable>
           </View>
         </Pressable>
@@ -216,14 +220,14 @@ export function FeedCard({ event, onPress, index, mode = 'list' }: FeedCardProps
       <Pressable onPress={openProfile} style={styles.header} accessibilityRole="button">
         <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="lg" goldRing />
         <View style={styles.headerText}>
-          <Text style={styles.name} numberOfLines={1}>
+          <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={1}>
             {displayNameOf(actor)}
           </Text>
-          <Text style={styles.handle} numberOfLines={1}>
+          <Text style={[styles.handle, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
             @{actor.username}
           </Text>
         </View>
-        <Text style={styles.time}>{timeAgo(event.created_at ?? bucket.completed_at ?? bucket.created_at)}</Text>
+        <Text style={[styles.time, { color: theme.colors.foregroundSubtle }]}>{timeAgo(event.created_at ?? bucket.completed_at ?? bucket.created_at)}</Text>
       </Pressable>
 
       {/* Portada */}
@@ -234,7 +238,7 @@ export function FeedCard({ event, onPress, index, mode = 'list' }: FeedCardProps
           categorySlug={bucket.category?.slug}
           seed={bucket.id}
           iconSize={170}
-          style={styles.cover}
+          style={[styles.cover, { borderColor: theme.colors.border }]}
         >
           <LinearGradient
             colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.78)']}
@@ -265,8 +269,8 @@ export function FeedCard({ event, onPress, index, mode = 'list' }: FeedCardProps
           accessibilityLabel={liked ? 'Quitar me gusta' : 'Me gusta'}
           accessibilityState={{ selected: liked }}
         >
-          <Heart size={24} color={liked ? gold[400] : '#F2EFE8'} fill={liked ? gold[400] : 'transparent'} strokeWidth={1.8} />
-          <Text style={styles.count}>{likeCount}</Text>
+          <Heart size={24} color={liked ? theme.colors.primary : theme.colors.foreground} fill={liked ? theme.colors.primary : 'transparent'} strokeWidth={1.8} />
+          <Text style={[styles.count, { color: theme.colors.foreground }]}>{likeCount}</Text>
         </Pressable>
 
         <Pressable
@@ -276,8 +280,8 @@ export function FeedCard({ event, onPress, index, mode = 'list' }: FeedCardProps
           accessibilityRole="button"
           accessibilityLabel="Comentarios"
         >
-          <MessageCircle size={24} color="#F2EFE8" strokeWidth={1.8} />
-          <Text style={styles.count}>{commentCount}</Text>
+          <MessageCircle size={24} color={theme.colors.foreground} strokeWidth={1.8} />
+          <Text style={[styles.count, { color: theme.colors.foreground }]}>{commentCount}</Text>
         </Pressable>
 
         <View style={styles.flex} />
@@ -286,19 +290,24 @@ export function FeedCard({ event, onPress, index, mode = 'list' }: FeedCardProps
           <Pressable
             onPress={handleCopy}
             disabled={alreadyCopied || copyBucket.isPending}
-            style={({ pressed }) => [styles.copyButton, alreadyCopied && styles.copyButtonDone, { opacity: pressed ? 0.75 : 1 }]}
+            style={({ pressed }) => [
+              styles.copyButton,
+              { borderColor: theme.colors.primary },
+              alreadyCopied && [styles.copyButtonDone, { borderColor: theme.colors.border, backgroundColor: theme.colors.surfaceSunken }],
+              { opacity: pressed ? 0.75 : 1 },
+            ]}
             accessibilityRole="button"
             accessibilityLabel={alreadyCopied ? 'Ya está en tu lista' : 'Yo también'}
           >
-            {alreadyCopied ? <Check size={16} color="#9A9A9A" style={styles.copyIcon} /> : null}
-            <Text style={[styles.copyText, alreadyCopied && { color: '#9A9A9A' }]}>
+            {alreadyCopied ? <Check size={16} color={theme.colors.foregroundSubtle} style={styles.copyIcon} /> : null}
+            <Text style={[styles.copyText, { color: alreadyCopied ? theme.colors.foregroundSubtle : theme.colors.primary }]}>
               {alreadyCopied ? 'En tu lista' : 'Yo también'}
             </Text>
           </Pressable>
         )}
       </View>
 
-      {caption ? <Text style={styles.caption}>{caption}</Text> : null}
+      {caption ? <Text style={[styles.caption, { color: theme.colors.foregroundMuted }]}>{caption}</Text> : null}
 
       <TaskCommentsModal
         visible={showComments}

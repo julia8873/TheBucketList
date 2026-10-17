@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -26,7 +26,7 @@ import {
 import { format, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-import { gold } from '@bucketlist/ui/src/tokens/colors';
+import { gold, useTheme } from '@bucketlist/ui';
 import { styles } from '../styles/explore.styles';
 import {
   DailyTask,
@@ -132,7 +132,25 @@ export function EditDailyTaskModal({
   onConvertToBucket,
   nestedTagModal,
 }: EditDailyTaskModalProps) {
+  const { theme } = useTheme();
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const isInitialScroll = useRef(true);
+
+  useEffect(() => {
+    if (visible) {
+      isInitialScroll.current = true;
+      scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+      const timer = setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [visible]);
+
+  const handleShow = () => {
+    scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+  };
 
   if (!visible || !editingTask) return null;
 
@@ -143,16 +161,17 @@ export function EditDailyTaskModal({
         animationType="fade"
         visible={visible}
         onRequestClose={onClose}
+        onShow={handleShow}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.modalOverlay}
         >
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-          <View style={styles.fullModalCard}>
+          <View style={[styles.fullModalCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
             <View style={styles.modalHeader}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Text style={styles.modalTitle}>Editar tarea</Text>
+                <Text style={[styles.modalTitle, { color: theme.colors.foreground }]}>Editar tarea</Text>
                 <Pressable
                   onPress={onToggleFavorite}
                   hitSlop={8}
@@ -161,7 +180,7 @@ export function EditDailyTaskModal({
                 >
                   <Star
                     size={18}
-                    color={editIsFavorite ? gold[400] : '#666'}
+                    color={editIsFavorite ? gold[400] : theme.colors.foregroundMuted}
                     fill={editIsFavorite ? gold[400] : 'transparent'}
                   />
                 </Pressable>
@@ -170,6 +189,7 @@ export function EditDailyTaskModal({
                   hitSlop={6}
                   style={[
                     styles.editStatusPill,
+                    { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
                     editIsCompleted && styles.editStatusPillCompleted,
                   ]}
                   accessibilityLabel="Cambiar estado completada o pendiente"
@@ -181,39 +201,55 @@ export function EditDailyTaskModal({
                     </>
                   ) : (
                     <>
-                      <Circle size={13} color="#888" />
-                      <Text style={styles.editStatusPillText}>Pendiente</Text>
+                      <Circle size={13} color={theme.colors.foregroundMuted} />
+                      <Text style={[styles.editStatusPillText, { color: theme.colors.foregroundMuted }]}>Pendiente</Text>
                     </>
                   )}
                 </Pressable>
               </View>
               <Pressable onPress={onClose} hitSlop={10}>
-                <X size={20} color="#888" />
+                <X size={20} color={theme.colors.foregroundMuted} />
               </Pressable>
             </View>
 
             <ScrollView
+              ref={scrollViewRef}
               showsVerticalScrollIndicator={false}
-              style={{ maxHeight: 520 }}
+              keyboardShouldPersistTaps="handled"
+              style={{ maxHeight: 360 }}
               contentContainerStyle={{ paddingBottom: 6 }}
+              onContentSizeChange={() => {
+                if (isInitialScroll.current) {
+                  scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+                  isInitialScroll.current = false;
+                }
+              }}
             >
               {/* Título */}
-              <Text style={styles.fieldLabel}>Título *</Text>
+              <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>Título *</Text>
               <TextInput
-                style={styles.modalInput}
+                style={[
+                  styles.modalInput,
+                  {
+                    backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+                    borderColor: theme.colors.border,
+                    color: theme.colors.foreground,
+                  },
+                ]}
                 placeholder="Título de la tarea"
-                placeholderTextColor="#666"
+                placeholderTextColor={theme.colors.foregroundMuted}
                 value={editTitle}
                 onChangeText={onEditTitleChange}
                 onBlur={onEditTitleBlur}
               />
 
               {/* Fecha */}
-              <Text style={styles.fieldLabel}>Fecha</Text>
+              <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>Fecha</Text>
               <View style={styles.modalPresetsRow}>
                 <Pressable
                   style={[
                     styles.modalPresetBtn,
+                    { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
                     editDueDate === todayStr && styles.modalPresetBtnActive,
                   ]}
                   onPress={() => onSelectDueDate(todayStr)}
@@ -221,6 +257,7 @@ export function EditDailyTaskModal({
                   <Text
                     style={[
                       styles.modalPresetText,
+                      { color: theme.colors.foregroundMuted },
                       editDueDate === todayStr && styles.modalPresetTextActive,
                     ]}
                   >
@@ -230,6 +267,7 @@ export function EditDailyTaskModal({
                 <Pressable
                   style={[
                     styles.modalPresetBtn,
+                    { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
                     editDueDate === toDateString(addDays(new Date(), 1)) &&
                       styles.modalPresetBtnActive,
                   ]}
@@ -241,6 +279,7 @@ export function EditDailyTaskModal({
                   <Text
                     style={[
                       styles.modalPresetText,
+                      { color: theme.colors.foregroundMuted },
                       editDueDate === toDateString(addDays(new Date(), 1)) &&
                         styles.modalPresetTextActive,
                     ]}
@@ -251,6 +290,7 @@ export function EditDailyTaskModal({
                 <Pressable
                   style={[
                     styles.modalPresetBtn,
+                    { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
                     editDueDate === toDateString(addDays(new Date(), 7)) &&
                       styles.modalPresetBtnActive,
                   ]}
@@ -262,6 +302,7 @@ export function EditDailyTaskModal({
                   <Text
                     style={[
                       styles.modalPresetText,
+                      { color: theme.colors.foregroundMuted },
                       editDueDate === toDateString(addDays(new Date(), 7)) &&
                         styles.modalPresetTextActive,
                     ]}
@@ -272,11 +313,14 @@ export function EditDailyTaskModal({
               </View>
 
               <Pressable
-                style={styles.datePickerTrigger}
+                style={[
+                  styles.datePickerTrigger,
+                  { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
+                ]}
                 onPress={() => setShowDatePicker(true)}
               >
                 <Calendar size={16} color={gold[400]} />
-                <Text style={styles.datePickerTriggerText}>
+                <Text style={[styles.datePickerTriggerText, { color: theme.colors.foreground }]}>
                   {format(parseLocalDate(editDueDate), "EEEE, d 'de' MMMM", { locale: es })}
                 </Text>
               </Pressable>
@@ -296,7 +340,7 @@ export function EditDailyTaskModal({
               />
 
               {/* Prioridad */}
-              <Text style={styles.fieldLabel}>Prioridad</Text>
+              <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>Prioridad</Text>
               <View style={styles.prioritySelectorRow}>
                 {PRIORITY_ORDER.map((p) => {
                   const cfg = PRIORITY_CONFIG[p];
@@ -315,7 +359,7 @@ export function EditDailyTaskModal({
                     >
                       <Flag
                         size={12}
-                        color={isSelected ? cfg.color : '#777'}
+                        color={isSelected ? cfg.color : theme.colors.foregroundMuted}
                         strokeWidth={isSelected ? 2.5 : 1.8}
                       />
                       <Text
@@ -332,7 +376,7 @@ export function EditDailyTaskModal({
               </View>
 
               {/* Etiquetas */}
-              <Text style={styles.fieldLabel}>Etiquetas</Text>
+              <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>Etiquetas</Text>
               <View style={styles.tagsToggleContainer}>
                 {userTags.map((tag) => {
                   const isSelected = editTagIds.includes(tag.id);
@@ -341,9 +385,10 @@ export function EditDailyTaskModal({
                       key={tag.id}
                       style={[
                         styles.tagTogglePill,
+                        { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
                         isSelected && {
                           borderColor: tag.color || gold[400],
-                          backgroundColor: tag.color ? `${tag.color}2A` : '#262012',
+                          backgroundColor: tag.color ? `${tag.color}2A` : (theme.dark ? '#262012' : '#FDF4DC'),
                         },
                       ]}
                       onPress={() => onToggleTag(tag.id)}
@@ -352,6 +397,7 @@ export function EditDailyTaskModal({
                       <Text
                         style={[
                           styles.tagToggleText,
+                          { color: theme.colors.foregroundMuted },
                           isSelected && { color: tag.color || gold[400], fontFamily: 'Inter_600SemiBold' },
                         ]}
                       >
@@ -362,7 +408,10 @@ export function EditDailyTaskModal({
                 })}
 
                 <Pressable
-                  style={styles.addTagPill}
+                  style={[
+                    styles.addTagPill,
+                    { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
+                  ]}
                   onPress={onOpenCreateTag}
                 >
                   <Plus size={12} color={gold[400]} />
@@ -374,7 +423,7 @@ export function EditDailyTaskModal({
               <View style={styles.subtasksHeaderRow}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <ListChecks size={15} color={gold[400]} />
-                  <Text style={styles.fieldLabelNoMargin}>Subtareas</Text>
+                  <Text style={[styles.fieldLabelNoMargin, { color: theme.colors.foregroundMuted }]}>Subtareas</Text>
                 </View>
                 {editSubtasks.length > 0 && (
                   <View style={styles.subtasksCounterBadge}>
@@ -389,7 +438,13 @@ export function EditDailyTaskModal({
               {editSubtasks.length > 0 && (
                 <View style={styles.subtasksContainer}>
                   {editSubtasks.map((st) => (
-                    <View key={st.id} style={styles.subtaskItemRow}>
+                    <View
+                      key={st.id}
+                      style={[
+                        styles.subtaskItemRow,
+                        { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
+                      ]}
+                    >
                       <Pressable
                         hitSlop={6}
                         onPress={() => onToggleSubtask(st.id)}
@@ -400,12 +455,13 @@ export function EditDailyTaskModal({
                         {st.is_completed ? (
                           <CheckCircle2 size={17} color="#34C759" />
                         ) : (
-                          <View style={styles.subtaskUncheckedCircle} />
+                          <View style={[styles.subtaskUncheckedCircle, { borderColor: theme.colors.border }]} />
                         )}
                       </Pressable>
                       <Text
                         style={[
                           styles.subtaskItemTitle,
+                          { color: theme.colors.foreground },
                           st.is_completed && styles.subtaskItemTitleCompleted,
                         ]}
                         numberOfLines={2}
@@ -418,7 +474,7 @@ export function EditDailyTaskModal({
                         style={styles.subtaskDeleteBtn}
                         accessibilityLabel="Eliminar subtarea"
                       >
-                        <X size={14} color="#666" />
+                        <X size={14} color={theme.colors.foregroundMuted} />
                       </Pressable>
                     </View>
                   ))}
@@ -426,11 +482,16 @@ export function EditDailyTaskModal({
               )}
 
               {/* Input para añadir subtarea */}
-              <View style={styles.addSubtaskInputWrapper}>
+              <View
+                style={[
+                  styles.addSubtaskInputWrapper,
+                  { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
+                ]}
+              >
                 <TextInput
-                  style={styles.addSubtaskInput}
+                  style={[styles.addSubtaskInput, { color: theme.colors.foreground }]}
                   placeholder="Añadir una subtarea..."
-                  placeholderTextColor="#666"
+                  placeholderTextColor={theme.colors.foregroundMuted}
                   value={editSubtaskTitle}
                   onChangeText={onChangeSubtaskTitle}
                   onSubmitEditing={onAddSubtask}
@@ -450,11 +511,19 @@ export function EditDailyTaskModal({
               </View>
 
               {/* Notas */}
-              <Text style={styles.fieldLabel}>Notas (opcional)</Text>
+              <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>Notas (opcional)</Text>
               <TextInput
-                style={[styles.modalInput, styles.modalTextArea]}
+                style={[
+                  styles.modalInput,
+                  styles.modalTextArea,
+                  {
+                    backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+                    borderColor: theme.colors.border,
+                    color: theme.colors.foreground,
+                  },
+                ]}
                 placeholder="Detalles, notas, apuntes..."
-                placeholderTextColor="#666"
+                placeholderTextColor={theme.colors.foregroundMuted}
                 value={editDescription}
                 onChangeText={onEditDescriptionChange}
                 onBlur={onEditDescriptionBlur}
@@ -465,7 +534,13 @@ export function EditDailyTaskModal({
 
               {/* Convertir en Bucket List Option */}
               <Pressable
-                style={styles.convertBucketCard}
+                style={[
+                  styles.convertBucketCard,
+                  {
+                    backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+                    borderColor: theme.colors.border,
+                  },
+                ]}
                 onPress={() => onConvertToBucket(editingTask)}
               >
                 <View style={styles.convertBucketLeft}>
@@ -473,8 +548,8 @@ export function EditDailyTaskModal({
                     <Sparkles size={16} color={gold[400]} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.convertBucketTitle}>Convertir en Bucket List</Text>
-                    <Text style={styles.convertBucketSubtitle}>
+                    <Text style={[styles.convertBucketTitle, { color: theme.colors.foreground }]}>Convertir en Bucket List</Text>
+                    <Text style={[styles.convertBucketSubtitle, { color: theme.colors.foregroundMuted }]}>
                       Pasa esta tarea rápida a tu lista de metas y objetivos
                     </Text>
                   </View>

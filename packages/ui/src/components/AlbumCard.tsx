@@ -61,6 +61,7 @@ export function AlbumCard({
   onPress,
   style,
 }: AlbumCardProps) {
+  const { theme } = useTheme();
   const progress = totalTasks > 0 ? completedTasks / totalTasks : 0;
   const [g1, g2] = COVER_GRADIENTS[colorIndex % COVER_GRADIENTS.length] || ['#1B4D3E', '#0A2E25'];
 
@@ -106,7 +107,10 @@ export function AlbumCard({
       onPress={onPress}
       style={({ pressed }) => [
         styles.card,
-        { opacity: pressed ? 0.85 : 1 },
+        {
+          backgroundColor: theme.colors.surface,
+          opacity: pressed ? 0.85 : 1,
+        },
         style,
       ]}
     >
@@ -220,13 +224,22 @@ export function AlbumCard({
 // ── NewAlbumCard ────────────────────────────────────────────────────────────
 
 export function NewAlbumCard({ onPress, style }: { onPress?: () => void; style?: ViewStyle }) {
+  const { theme } = useTheme();
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.card, styles.newCard, { opacity: pressed ? 0.7 : 1 }, style]}
+      style={({ pressed }) => [
+        styles.card,
+        styles.newCard,
+        {
+          borderColor: theme.colors.primary,
+          opacity: pressed ? 0.7 : 1,
+        },
+        style,
+      ]}
     >
-      <Plus size={28} color={gold[400]} strokeWidth={2} />
-      <Text style={styles.newLabel}>Nuevo álbum</Text>
+      <Plus size={28} color={theme.colors.primary} strokeWidth={2} />
+      <Text style={[styles.newLabel, { color: theme.colors.primary }]}>Nuevo álbum</Text>
     </Pressable>
   );
 }
@@ -239,17 +252,101 @@ interface NoAlbumRowProps {
 }
 
 export function NoAlbumRow({ count, onPress }: NoAlbumRowProps) {
+  const { theme } = useTheme();
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.noAlbumRow, { opacity: pressed ? 0.7 : 1 }]}
+      style={({ pressed }) => [
+        styles.noAlbumRow,
+        {
+          borderColor: theme.colors.border,
+          backgroundColor: pressed ? (theme.dark ? '#1A1A1A' : '#EDE8DE') : 'transparent',
+          opacity: pressed ? 0.8 : 1,
+        },
+      ]}
     >
-      <FolderOpen color={dark[600]} size={22} strokeWidth={1.8} style={{ marginRight: 14 }} />
+      <FolderOpen color={theme.colors.foregroundMuted} size={22} strokeWidth={1.8} style={{ marginRight: 14 }} />
       <View style={{ flex: 1 }}>
-        <Text style={styles.noAlbumTitle}>Sin álbum</Text>
-        <Text style={styles.noAlbumMeta}>{count} tareas sueltas</Text>
+        <Text style={[styles.noAlbumTitle, { color: theme.colors.foreground }]}>Sin álbum</Text>
+        <Text style={[styles.noAlbumMeta, { color: theme.colors.foregroundMuted }]}>{count} tareas sueltas</Text>
       </View>
-      <ChevronRight color={dark[600]} size={20} strokeWidth={1.8} />
+      <ChevronRight color={theme.colors.foregroundMuted} size={20} strokeWidth={1.8} />
+    </Pressable>
+  );
+}
+
+// ── NoAlbumCard ─────────────────────────────────────────────────────────────
+
+interface NoAlbumCardProps {
+  count: number;
+  onPress?: () => void;
+  style?: ViewStyle;
+}
+
+export function NoAlbumCard({ count, onPress, style }: NoAlbumCardProps) {
+  const { theme } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.card,
+        styles.noAlbumCard,
+        {
+          borderColor: theme.colors.border,
+          backgroundColor: pressed
+            ? (theme.dark ? '#1A1A1A' : '#E8E3D8')
+            : (theme.dark ? '#121212' : '#F5F0E6'),
+          opacity: pressed ? 0.75 : 1,
+        },
+        style,
+      ]}
+    >
+      <View
+        style={[
+          styles.noAlbumCardIconWrap,
+          { backgroundColor: theme.dark ? '#1E1E1E' : '#E5DFD3' },
+        ]}
+      >
+        <FolderOpen color={theme.colors.foregroundMuted} size={28} strokeWidth={1.8} />
+      </View>
+      <View style={styles.noAlbumCardTextWrap}>
+        <Text style={[styles.noAlbumCardTitle, { color: theme.colors.foreground }]}>Sin álbum</Text>
+        <Text style={[styles.noAlbumCardMeta, { color: theme.colors.foregroundMuted }]}>
+          {count} {count === 1 ? 'tarea suelta' : 'tareas sueltas'}
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
+
+// ── NewAlbumRow ─────────────────────────────────────────────────────────────
+
+export function NewAlbumRow({ onPress, style }: { onPress?: () => void; style?: ViewStyle }) {
+  const { theme } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.noAlbumRow,
+        styles.newAlbumRow,
+        {
+          borderColor: theme.colors.primary,
+          backgroundColor: pressed
+            ? (theme.dark ? 'rgba(212, 177, 58, 0.14)' : 'rgba(212, 177, 58, 0.18)')
+            : (theme.dark ? 'rgba(212, 177, 58, 0.05)' : 'rgba(212, 177, 58, 0.08)'),
+          opacity: pressed ? 0.8 : 1,
+        },
+        style,
+      ]}
+    >
+      <View style={styles.newAlbumRowIconWrap}>
+        <Plus color={theme.colors.primary} size={22} strokeWidth={2.2} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.noAlbumTitle, { color: theme.colors.primary }]}>Nuevo álbum</Text>
+        <Text style={[styles.noAlbumMeta, { color: theme.colors.foregroundMuted }]}>Crear un álbum para tus tareas</Text>
+      </View>
+      <ChevronRight color={theme.colors.primary} size={20} strokeWidth={2} />
     </Pressable>
   );
 }
@@ -419,5 +516,40 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: dark[600],
     marginTop: 2,
+  },
+  noAlbumCard: {
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    gap: 12,
+  },
+  noAlbumCardIconWrap: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noAlbumCardTextWrap: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  noAlbumCardTitle: {
+    fontFamily: fontFamily.semibold,
+    fontSize: fontSize.base,
+    textAlign: 'center',
+  },
+  noAlbumCardMeta: {
+    fontFamily: fontFamily.regular,
+    fontSize: fontSize.xs,
+    textAlign: 'center',
+  },
+  newAlbumRow: {
+    borderStyle: 'dashed',
+    marginBottom: 10,
+  },
+  newAlbumRowIconWrap: {
+    marginRight: 14,
   },
 });

@@ -11,6 +11,8 @@ import {
   View,
 } from 'react-native';
 
+import { useTheme } from '@bucketlist/ui';
+
 const SCREEN_H = Dimensions.get('window').height;
 /** Altura de las hojas de etiquetas (igual que el diseño: ~690 en 844). */
 export const TAG_SHEET_H = Math.min(690, SCREEN_H * 0.88);
@@ -29,6 +31,7 @@ interface TagSheetShellProps {
  * Se monta mientras `visible` o mientras dura la animación de salida.
  */
 export function TagSheetShell({ visible, onClose, fixedHeight, children }: TagSheetShellProps) {
+  const { theme } = useTheme();
   const [mounted, setMounted] = useState(visible);
   const sheetH = fixedHeight ?? MAX_H;
   const translateY = useRef(new Animated.Value(sheetH)).current;
@@ -82,12 +85,13 @@ export function TagSheetShell({ visible, onClose, fixedHeight, children }: TagSh
         <Animated.View
           style={[
             styles.sheet,
+            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
             fixedHeight ? { height: fixedHeight } : { maxHeight: MAX_H },
             { transform: [{ translateY }] },
           ]}
         >
           <View {...pan.panHandlers} style={styles.handleArea}>
-            <View style={styles.handle} />
+            <View style={[styles.handle, { backgroundColor: theme.colors.border }]} />
           </View>
           <View style={fixedHeight ? styles.fill : styles.shrink}>{children}</View>
         </Animated.View>

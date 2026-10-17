@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Lock } from 'lucide-react-native';
-import { Avatar } from '@bucketlist/ui';
+import { Avatar, useTheme } from '@bucketlist/ui';
 import { FollowButton } from '../../../components/FollowButton';
 import { displayNameOf, initialsOf } from '../../../utils/initials';
 import { styles } from '../styles/profile.styles';
@@ -36,10 +36,11 @@ function Stat({
   onPress?: () => void;
   disabled?: boolean;
 }) {
+  const { theme } = useTheme();
   const content = (
     <>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={[styles.statValue, { color: theme.colors.foreground }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: theme.colors.foregroundMuted }]}>{label}</Text>
     </>
   );
 
@@ -51,7 +52,7 @@ function Stat({
         accessibilityLabel={`${label}: ${value}`}
         style={({ pressed }) => [
           styles.stat,
-          divider && styles.statDivider,
+          divider && [styles.statDivider, { borderLeftColor: theme.colors.border }],
           pressed && { opacity: 0.65 },
         ]}
       >
@@ -61,7 +62,7 @@ function Stat({
   }
 
   return (
-    <View style={[styles.stat, divider && styles.statDivider]}>
+    <View style={[styles.stat, divider && [styles.statDivider, { borderLeftColor: theme.colors.border }]]}>
       {content}
     </View>
   );
@@ -83,33 +84,35 @@ export function ProfileBioAndStats({
   onPressPublic,
   onPressFollowers,
 }: ProfileBioAndStatsProps) {
+  const { theme } = useTheme();
+
   return (
     <>
       <View style={styles.identity}>
         <Avatar uri={profile.avatar_url} initials={initialsOf(profile)} size="xl" goldRing />
         <View style={styles.identityText}>
-          <Text style={styles.name} numberOfLines={2} ellipsizeMode="tail">
+          <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={2} ellipsizeMode="tail">
             {displayNameOf(profile)}
           </Text>
           <View style={styles.handleRow}>
-            <Text style={styles.handle} numberOfLines={1} ellipsizeMode="tail">
+            <Text style={[styles.handle, { color: theme.colors.foregroundMuted }]} numberOfLines={1} ellipsizeMode="tail">
               @{profile.username}
             </Text>
-            {isPrivate ? <Lock size={13} color="#9A9A9A" strokeWidth={1.8} /> : null}
+            {isPrivate ? <Lock size={13} color={theme.colors.foregroundMuted} strokeWidth={1.8} /> : null}
           </View>
         </View>
       </View>
 
-      {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
+      {profile.bio ? <Text style={[styles.bio, { color: theme.colors.foreground }]}>{profile.bio}</Text> : null}
 
       <View style={styles.followWrap}>
         {isOwnProfile ? (
           <Pressable
             onPress={onEditProfile}
-            style={styles.editButton}
+            style={[styles.editButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
             accessibilityRole="button"
           >
-            <Text style={styles.editText}>Editar perfil</Text>
+            <Text style={[styles.editText, { color: theme.colors.foreground }]}>Editar perfil</Text>
           </Pressable>
         ) : (
           <FollowButton
@@ -122,7 +125,7 @@ export function ProfileBioAndStats({
         )}
       </View>
 
-      <View style={styles.stats}>
+      <View style={[styles.stats, { borderColor: theme.colors.border }]}>
         <Stat
           value={isLocked ? '—' : completedCount}
           label="Completadas"

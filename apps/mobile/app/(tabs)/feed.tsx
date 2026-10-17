@@ -15,6 +15,7 @@ import { FriendsFeedTab } from '../../src/features/feed/components/FriendsFeedTa
 import { ExploreFeedTab } from '../../src/features/feed/components/ExploreFeedTab';
 
 import { TaskViewMode } from '../../src/components/ViewModeSelector';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function FeedScreen() {
   const { theme } = useTheme();
@@ -23,8 +24,26 @@ export default function FeedScreen() {
   const { user } = useAuthStore();
   const { height: windowHeight } = useWindowDimensions();
 
-  const [homeTab, setHomeTab] = useState<'friends' | 'explore'>('friends');
-  const [viewMode, setViewMode] = useState<TaskViewMode>('list');
+  const [homeTab, setHomeTabState] = useState<'friends' | 'explore'>('friends');
+  const setHomeTab = (tab: 'friends' | 'explore') => {
+    setHomeTabState(tab);
+    void AsyncStorage.setItem('@feed_home_tab', tab).catch(() => undefined);
+  };
+
+  const [viewMode, setViewModeState] = useState<TaskViewMode>('list');
+  const setViewMode = (mode: TaskViewMode) => {
+    setViewModeState(mode);
+    void AsyncStorage.setItem('@feed_view_mode', mode).catch(() => undefined);
+  };
+
+  useEffect(() => {
+    AsyncStorage.getItem('@feed_home_tab').then((saved) => {
+      if (saved === 'friends' || saved === 'explore') setHomeTabState(saved);
+    }).catch(() => undefined);
+    AsyncStorage.getItem('@feed_view_mode').then((saved) => {
+      if (saved === 'list' || saved === 'gallery' || saved === 'compact') setViewModeState(saved as TaskViewMode);
+    }).catch(() => undefined);
+  }, []);
   const friendsListRef = useRef<any>(null);
   const exploreListRef = useRef<any>(null);
 
@@ -145,6 +164,7 @@ export default function FeedScreen() {
       requestCount={requestCount}
       onOpenNotifications={() => router.push('/(tabs)/notifications' as any)}
       onOpenFriends={openFriends}
+      onOpenMap={() => router.push('/map' as any)}
       exploreSearch={exploreSearch}
       onChangeExploreSearch={setExploreSearch}
       viewMode={viewMode}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { CheckCircle2, GripVertical, Star } from 'lucide-react-native';
-import { gold } from '@bucketlist/ui/src/tokens/colors';
+import { useTheme } from '@bucketlist/ui';
 import { styles } from '../styles/my-list.styles';
 import { DragHandle } from '@/components/DraggableTaskList';
 
@@ -28,10 +28,12 @@ export function TaskCompactItemRow({
   onToggleSelect,
   onToggleComplete,
 }: TaskCompactItemRowProps) {
+  const { theme } = useTheme();
+
   if (item.isHeader) {
     return (
       <View style={{ marginTop: 12, marginBottom: 4 }}>
-        <Text style={styles.sectionHeader}>{item.title}</Text>
+        <Text style={[styles.sectionHeader, { color: theme.colors.foregroundMuted }]}>{item.title}</Text>
       </View>
     );
   }
@@ -44,9 +46,14 @@ export function TaskCompactItemRow({
       onLongPress={onLongPress}
       style={[
         styles.compactRow,
-        isCompleted && styles.compactRowCompleted,
-        isSelected && { borderColor: gold[400], backgroundColor: 'rgba(212, 177, 58, 0.08)' },
-        drag?.isActive && { borderColor: gold[400] },
+        {
+          backgroundColor: isCompleted
+            ? (theme.dark ? '#121212' : '#EDE8DE')
+            : theme.colors.surface,
+          borderColor: theme.colors.border,
+        },
+        isSelected && { borderColor: theme.colors.primary, backgroundColor: 'rgba(212, 177, 58, 0.08)' },
+        drag?.isActive && { borderColor: theme.colors.primary },
       ]}
       accessibilityRole="button"
       accessibilityLabel={item.title}
@@ -58,7 +65,7 @@ export function TaskCompactItemRow({
           style={{ marginRight: 8, justifyContent: 'center', alignItems: 'center' }}
           accessibilityLabel="Arrastrar para reordenar"
         >
-          <GripVertical size={18} color={drag.isActive ? gold[400] : '#8F8F8F'} strokeWidth={2} />
+          <GripVertical size={18} color={drag.isActive ? theme.colors.primary : theme.colors.foregroundMuted} strokeWidth={2} />
         </View>
       )}
 
@@ -71,9 +78,9 @@ export function TaskCompactItemRow({
           accessibilityState={{ checked: isSelected }}
         >
           {isSelected ? (
-            <CheckCircle2 size={19} color={gold[400]} fill={gold[400]} />
+            <CheckCircle2 size={19} color={theme.colors.primary} fill={theme.colors.primary} />
           ) : (
-            <View style={[styles.compactUncheckedCircle, { borderColor: '#555555' }]} />
+            <View style={[styles.compactUncheckedCircle, { borderColor: theme.colors.border }]} />
           )}
         </Pressable>
       ) : (
@@ -87,20 +94,24 @@ export function TaskCompactItemRow({
           {isCompleted ? (
             <CheckCircle2 size={19} color="#34C759" />
           ) : (
-            <View style={styles.compactUncheckedCircle} />
+            <View style={[styles.compactUncheckedCircle, { borderColor: theme.colors.border }]} />
           )}
         </Pressable>
       )}
 
       <Text
         numberOfLines={1}
-        style={[styles.compactTitle, isCompleted && styles.compactTitleCompleted]}
+        style={[
+          styles.compactTitle,
+          { color: isCompleted ? theme.colors.foregroundMuted : theme.colors.foreground },
+          isCompleted && styles.compactTitleCompleted,
+        ]}
       >
         {item.title}
       </Text>
 
       {isFav && (
-        <Star size={13} color={gold[400]} fill={gold[400]} style={{ marginLeft: 8 }} />
+        <Star size={13} color={theme.colors.primary} fill={theme.colors.primary} style={{ marginLeft: 8 }} />
       )}
     </Pressable>
   );

@@ -683,9 +683,11 @@ export const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.65)',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    padding: 16,
+    paddingTop: Platform.OS === 'ios' ? 60 : 36,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   fullModalCard: {
     width: '100%',
@@ -968,6 +970,36 @@ export const styles = StyleSheet.create({
     gap: 6,
     marginBottom: 8,
     paddingHorizontal: 4,
+    paddingVertical: 4,
+  },
+  completedToggleBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  completedToggleText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 11,
+  },
+  weekCompletedSection: {
+    marginTop: 8,
+  },
+  weekDayToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  weekDayToggleText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 11,
   },
   completedSectionTitle: {
     fontFamily: 'Inter_600SemiBold',

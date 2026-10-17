@@ -4,12 +4,13 @@ import {
   ScrollView,
   RefreshControl,
   Platform,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { ListTodo, CheckCircle2 } from 'lucide-react-native';
+import { ListTodo, CheckCircle2, ChevronDown, ChevronRight } from 'lucide-react-native';
 
-import { useTheme, Typography } from '@bucketlist/ui';
+import { useTheme, Typography, FAB } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { TaskCompactSkeleton } from '@/components/TaskSkeletons';
 import { DraggableTaskList } from '@/components/DraggableTaskList';
@@ -25,7 +26,7 @@ import { styles } from '@/features/daily-tasks/styles/explore.styles';
 import { parseLocalDate, toDateString } from '@/features/daily-tasks/utils/dailyTaskDateUtils';
 import { useDailyTasksState } from '@/features/daily-tasks/hooks/useDailyTasksState';
 
-import { DailyTasksTopBar, DailyTasksScrollControls } from '@/features/daily-tasks/components/DailyTasksHeader';
+import { DailyTasksTopBar, DailyTasksScrollControls, DailyQuickAddBar } from '@/features/daily-tasks/components/DailyTasksHeader';
 import { DailyOverdueSection } from '@/features/daily-tasks/components/DailyOverdueSection';
 import { DailyGroupedTasksView } from '@/features/daily-tasks/components/DailyGroupedTasksView';
 import { DailyWeekView } from '@/features/daily-tasks/components/DailyWeekView';
@@ -95,11 +96,23 @@ export default function DailyTasksScreen() {
           setTimeView={state.setTimeView}
         />
 
+        {/* Barra de tarea rápida fija: Solo en Hoy y Todas.
+            Al estar fuera del ScrollView, se queda exactamente en la misma altura al escribir con el teclado */}
+        {state.timeView !== 'calendar' && state.timeView !== 'week' && (
+          <DailyQuickAddBar
+            newTitle={state.newTitle}
+            setNewTitle={state.setNewTitle}
+            handleQuickAddTask={state.handleQuickAddTask}
+            inputRef={state.inputRef}
+          />
+        )}
+
         {/* Content Area */}
         <ScrollView
           style={styles.listScroll}
           contentContainerStyle={[styles.listContent, { flexGrow: 1 }]}
           nestedScrollEnabled={true}
+          automaticallyAdjustKeyboardInsets={false}
           refreshControl={
             <RefreshControl
               refreshing={state.dragging ? false : state.manualRefreshing}
@@ -111,13 +124,9 @@ export default function DailyTasksScreen() {
           }
           keyboardShouldPersistTaps="handled"
         >
-          {/* Controles scrolleables: añadir tarea rápida (oculto en calendario), filtros y etiquetas */}
+          {/* Controles scrolleables: selector de semana y filtros de etiquetas/estado */}
           <DailyTasksScrollControls
             timeView={state.timeView}
-            newTitle={state.newTitle}
-            setNewTitle={state.setNewTitle}
-            handleQuickAddTask={state.handleQuickAddTask}
-            inputRef={state.inputRef}
             selectedTagFilters={state.selectedTagFilters}
             setSelectedTagFilters={state.setSelectedTagFilters}
             tagMap={state.tagMap}
@@ -133,6 +142,11 @@ export default function DailyTasksScreen() {
             sortDirection={state.sortDirection}
             groupByTag={state.groupByTag}
             onOpenSortModal={() => state.setShowSortModal(true)}
+            displayedWeeks={state.displayedWeeks}
+            weeksToShow={state.weeksToShow}
+            setWeeksToShow={state.setWeeksToShow}
+            weekOffset={state.weekOffset}
+            setWeekOffset={state.setWeekOffset}
           />
           {state.isLoading && !state.tasks.length ? (
             <View style={{ gap: 8, paddingVertical: 12 }}>
@@ -147,7 +161,7 @@ export default function DailyTasksScreen() {
                   <View style={styles.emptyIconCircle}>
                     <CheckCircle2 size={32} color="#34C759" strokeWidth={1.8} />
                   </View>
-                  <Typography variant="bodySemibold" style={styles.emptyTitle}>
+                  <Typography variant="bodySemibold" style={[styles.emptyTitle, { color: theme.colors.foreground }]}>
                     No hay tareas completadas
                   </Typography>
                   <Typography variant="caption" color="textSecondary" style={styles.emptySubtitle}>
@@ -155,7 +169,7 @@ export default function DailyTasksScreen() {
                   </Typography>
                 </View>
               ) : (
-                <View style={styles.compactListCard}>
+                <View style={[styles.compactListCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
                   {state.completedList.map((item, idx) =>
                     renderCompletedRow(item, idx === state.completedList.length - 1)
                   )}
@@ -183,7 +197,7 @@ export default function DailyTasksScreen() {
                         <View style={styles.emptyIconCircle}>
                           <ListTodo size={32} color={gold[400]} strokeWidth={1.8} />
                         </View>
-                        <Typography variant="bodySemibold" style={styles.emptyTitle}>
+                        <Typography variant="bodySemibold" style={[styles.emptyTitle, { color: theme.colors.foreground }]}>
                           ¡Todo listo por hoy!
                         </Typography>
                         <Typography variant="caption" color="textSecondary" style={styles.emptySubtitle}>
@@ -199,7 +213,7 @@ export default function DailyTasksScreen() {
                       onDraggingChange={state.handleDraggingChange}
                     />
                   ) : (
-                    <View style={styles.compactListCard}>
+                    <View style={[styles.compactListCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
                       <DraggableTaskList
                         items={state.sortedTodayTasks}
                         gap={0}
@@ -218,21 +232,34 @@ export default function DailyTasksScreen() {
 
                   {state.statusFilter === 'all' && state.completedList.length > 0 && (
                     <View style={styles.completedSectionWrapper}>
-                      <View style={styles.completedSectionHeader}>
+                      <Pressable
+                        style={styles.completedSectionHeader}
+                        onPress={state.toggleTodayCompleted}
+                        hitSlop={8}
+                        accessibilityRole="button"
+                        accessibilityLabel={state.isTodayCompletedCollapsed ? "Mostrar completadas hoy" : "Replegar completadas hoy"}
+                      >
+                        {state.isTodayCompletedCollapsed ? (
+                          <ChevronRight size={14} color={theme.colors.foregroundMuted} />
+                        ) : (
+                          <ChevronDown size={14} color={theme.colors.foregroundMuted} />
+                        )}
                         <CheckCircle2 size={14} color="#34C759" />
-                        <Typography style={styles.completedSectionTitle}>
+                        <Typography style={[styles.completedSectionTitle, { color: theme.colors.foreground }]}>
                           {state.completedList.some(
                             (t) => t.completed_at && !t.completed_at.startsWith(state.todayStr)
                           )
                             ? `Completadas (${state.completedList.length})`
                             : `Completadas hoy (${state.completedList.length})`}
                         </Typography>
-                      </View>
-                      <View style={styles.compactListCard}>
-                        {state.completedList.map((item, idx) =>
-                          renderCompletedRow(item, idx === state.completedList.length - 1)
-                        )}
-                      </View>
+                      </Pressable>
+                      {!state.isTodayCompletedCollapsed && (
+                        <View style={[styles.compactListCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+                          {state.completedList.map((item, idx) =>
+                            renderCompletedRow(item, idx === state.completedList.length - 1)
+                          )}
+                        </View>
+                      )}
                     </View>
                   )}
                 </>
@@ -264,6 +291,10 @@ export default function DailyTasksScreen() {
                   renderTaskRow={renderTaskRow}
                   onReorder={state.handleReorder}
                   onDraggingChange={state.handleDraggingChange}
+                  isWeekCompletedCollapsed={state.isWeekCompletedCollapsed}
+                  onToggleAllWeekCompleted={state.toggleAllWeekCompleted}
+                  isWeekDayCollapsed={state.isWeekDayCollapsed}
+                  onToggleWeekDayCompleted={state.toggleWeekDayCompleted}
                 />
               )}
 
@@ -293,7 +324,7 @@ export default function DailyTasksScreen() {
                       <View style={styles.emptyIconCircle}>
                         <ListTodo size={32} color={gold[400]} strokeWidth={1.8} />
                       </View>
-                      <Typography variant="bodySemibold" style={styles.emptyTitle}>
+                      <Typography variant="bodySemibold" style={[styles.emptyTitle, { color: theme.colors.foreground }]}>
                         No hay tareas
                       </Typography>
                       <Typography variant="caption" color="textSecondary" style={styles.emptySubtitle}>
@@ -308,7 +339,7 @@ export default function DailyTasksScreen() {
                       onDraggingChange={state.handleDraggingChange}
                     />
                   ) : (
-                    <View style={styles.compactListCard}>
+                    <View style={[styles.compactListCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
                       <DraggableTaskList
                         items={state.sortedAllTasks}
                         gap={0}
@@ -329,6 +360,13 @@ export default function DailyTasksScreen() {
             </>
           )}
         </ScrollView>
+
+        {/* Botón flotante amarillo para añadir tarea diaria */}
+        <FAB
+          onPress={() => state.handleOpenCreateTask()}
+          bottomOffset={24}
+          accessibilityLabel="Crear tarea diaria"
+        />
 
         {/* MODAL 1: Create Task Modal */}
         <CreateDailyTaskModal

@@ -37,22 +37,31 @@ export function Pill({ label, variant = 'neutral', style }: PillProps) {
 
 function getPillColors(
   variant: PillVariant,
-  theme: { colors: { foregroundSubtle: string; border: string; foregroundMuted: string } }
+  theme: any,
 ) {
+  const isDark = theme.dark;
   switch (variant) {
     case 'gold':
-      return { bg: '#201B0E', border: '#5A4A1C', text: gold[400] };
+      return {
+        bg: isDark ? '#201B0E' : 'rgba(212, 175, 55, 0.12)',
+        border: isDark ? '#5A4A1C' : 'rgba(212, 175, 55, 0.4)',
+        text: theme.colors.primary,
+      };
     case 'outline-gold':
-      return { bg: 'transparent', border: '#D4B13A', text: '#D4B13A' };
+      return { bg: 'transparent', border: theme.colors.primary, text: theme.colors.primary };
     case 'warning':
-      return { bg: amber[900], border: amber[100], text: amber[500] };
+      return { bg: isDark ? amber[900] : 'rgba(245, 158, 11, 0.15)', border: isDark ? amber[500] : '#D97706', text: isDark ? amber[500] : '#B45309' };
     case 'warning-strong':
-      return { bg: '#3A1A00', border: '#8B4A00', text: '#FF9A3C' };
+      return { bg: isDark ? '#3A1A00' : 'rgba(239, 68, 68, 0.15)', border: isDark ? '#8B4A00' : '#EF4444', text: isDark ? '#FF9A3C' : '#DC2626' };
     case 'muted':
       return { bg: 'transparent', border: theme.colors.border, text: theme.colors.foregroundSubtle };
     case 'neutral':
     default:
-      return { bg: dark[300], border: dark[400], text: dark[800] };
+      return {
+        bg: isDark ? dark[300] : theme.colors.surfaceSunken,
+        border: theme.colors.border,
+        text: theme.colors.foregroundMuted,
+      };
   }
 }
 

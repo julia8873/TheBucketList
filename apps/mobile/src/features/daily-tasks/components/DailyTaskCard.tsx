@@ -11,7 +11,7 @@ import {
   AlertCircle,
 } from 'lucide-react-native';
 
-import { gold } from '@bucketlist/ui/src/tokens/colors';
+import { gold, useTheme } from '@bucketlist/ui';
 import { styles } from '../styles/explore.styles';
 import { DailyTask, DailyTag, DailySortField, TimeView } from '../types';
 import { PRIORITY_CONFIG } from '../constants';
@@ -43,6 +43,7 @@ export function DailyTaskCard({
   onToggleFavorite,
   onDelete,
 }: DailyTaskCardProps) {
+  const { theme } = useTheme();
   const isCompleted = item.is_completed;
   const dateBadge = formatTaskDateBadge(item.due_date);
   const itemTags = (item.tag_ids || [])
@@ -54,6 +55,12 @@ export function DailyTaskCard({
       key={item.id}
       style={[
         styles.compactRow,
+        {
+          backgroundColor: isCompleted
+            ? (theme.dark ? '#101010' : '#EDE8DE')
+            : theme.colors.surface,
+          borderBottomColor: theme.colors.border,
+        },
         isCompleted && styles.compactRowCompleted,
         drag?.isActive && styles.compactRowDragging,
         isLast && { borderBottomWidth: 0 },
@@ -71,7 +78,7 @@ export function DailyTaskCard({
         {isCompleted ? (
           <CheckCircle2 size={18} color="#34C759" />
         ) : (
-          <View style={styles.compactUncheckedCircle} />
+          <View style={[styles.compactUncheckedCircle, { borderColor: theme.colors.border }]} />
         )}
       </Pressable>
 
@@ -87,7 +94,11 @@ export function DailyTaskCard({
         <Text
           numberOfLines={1}
           ellipsizeMode="tail"
-          style={[styles.compactTitle, isCompleted && styles.compactTitleCompleted]}
+          style={[
+            styles.compactTitle,
+            { color: isCompleted ? theme.colors.foregroundMuted : theme.colors.foreground },
+            isCompleted && styles.compactTitleCompleted,
+          ]}
         >
           {item.title}
         </Text>
@@ -98,6 +109,7 @@ export function DailyTaskCard({
             ellipsizeMode="tail"
             style={[
               styles.compactDescription,
+              { color: theme.colors.foregroundMuted },
               isCompleted && styles.compactDescriptionCompleted,
             ]}
           >
@@ -222,7 +234,7 @@ export function DailyTaskCard({
       >
         <Star
           size={14}
-          color={item.is_favorite ? gold[400] : '#666'}
+          color={item.is_favorite ? gold[400] : theme.colors.foregroundMuted}
           fill={item.is_favorite ? gold[400] : 'transparent'}
           strokeWidth={1.8}
         />
@@ -235,7 +247,7 @@ export function DailyTaskCard({
         style={styles.deleteBtn}
         accessibilityLabel="Eliminar tarea"
       >
-        <Trash2 size={14} color="#555" strokeWidth={1.8} />
+        <Trash2 size={14} color={theme.colors.foregroundMuted} strokeWidth={1.8} />
       </Pressable>
     </View>
   );
@@ -270,6 +282,7 @@ export function DailyOverdueTaskCard({
   onReschedule,
   onOpenRescheduleDatePicker,
 }: DailyOverdueTaskCardProps) {
+  const { theme } = useTheme();
   const isCompleted = item.is_completed;
   const dateBadge = formatTaskDateBadge(item.due_date);
   const itemTags = (item.tag_ids || [])
@@ -282,6 +295,12 @@ export function DailyOverdueTaskCard({
       style={[
         styles.compactRow,
         styles.overdueTaskRow,
+        {
+          backgroundColor: isCompleted
+            ? (theme.dark ? '#101010' : '#EDE8DE')
+            : theme.colors.surface,
+          borderBottomColor: theme.colors.border,
+        },
         isCompleted && styles.compactRowCompleted,
         drag?.isActive && styles.compactRowDragging,
         isLast && { borderBottomWidth: 0 },
@@ -320,6 +339,7 @@ export function DailyOverdueTaskCard({
               ellipsizeMode="tail"
               style={[
                 styles.compactTitle,
+                { color: isCompleted ? theme.colors.foregroundMuted : theme.colors.foreground },
                 isCompleted && styles.compactTitleCompleted,
               ]}
             >
@@ -333,6 +353,7 @@ export function DailyOverdueTaskCard({
               ellipsizeMode="tail"
               style={[
                 styles.compactDescription,
+                { color: theme.colors.foregroundMuted },
                 isCompleted && styles.compactDescriptionCompleted,
               ]}
             >
@@ -356,15 +377,15 @@ export function DailyOverdueTaskCard({
                   style={[
                     styles.tagChip,
                     {
-                      borderColor: tag.color ? `${tag.color}66` : '#333',
-                      backgroundColor: tag.color ? `${tag.color}1F` : '#1E1E1E',
+                      borderColor: tag.color ? `${tag.color}66` : theme.colors.border,
+                      backgroundColor: tag.color ? `${tag.color}1F` : theme.colors.surface,
                     },
                   ]}
                 >
                   {tag.emoji && <Text style={styles.tagChipEmoji}>{tag.emoji}</Text>}
                   <Text
                     numberOfLines={1}
-                    style={[styles.tagChipText, { color: tag.color || '#DDD' }]}
+                    style={[styles.tagChipText, { color: tag.color || theme.colors.foreground }]}
                   >
                     {tag.name}
                   </Text>
@@ -429,7 +450,7 @@ export function DailyOverdueTaskCard({
         >
           <Star
             size={14}
-            color={item.is_favorite ? gold[400] : '#666'}
+            color={item.is_favorite ? gold[400] : theme.colors.foregroundMuted}
             fill={item.is_favorite ? gold[400] : 'transparent'}
             strokeWidth={1.8}
           />
@@ -442,13 +463,13 @@ export function DailyOverdueTaskCard({
           style={styles.deleteBtn}
           accessibilityLabel="Eliminar tarea"
         >
-          <Trash2 size={14} color="#555" strokeWidth={1.8} />
+          <Trash2 size={14} color={theme.colors.foregroundMuted} strokeWidth={1.8} />
         </Pressable>
       </View>
 
       {/* Reschedule row: "Mover a:" with horizontal weekday pills */}
       <View style={styles.overdueMoveRow}>
-        <Text style={styles.overdueMoveLabel}>Mover a:</Text>
+        <Text style={[styles.overdueMoveLabel, { color: theme.colors.foregroundMuted }]}>Mover a:</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -459,6 +480,7 @@ export function DailyOverdueTaskCard({
               key={d.dateStr}
               style={[
                 styles.overdueMovePill,
+                { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
                 d.isToday && styles.overdueMovePillToday,
               ]}
               onPress={() => onReschedule(item, d.dateStr)}
@@ -467,6 +489,7 @@ export function DailyOverdueTaskCard({
               <Text
                 style={[
                   styles.overdueMovePillText,
+                  { color: theme.colors.foregroundMuted },
                   d.isToday && styles.overdueMovePillTextToday,
                 ]}
               >
@@ -477,7 +500,7 @@ export function DailyOverdueTaskCard({
 
           {/* Custom calendar date picker button */}
           <Pressable
-            style={styles.overdueMovePillCal}
+            style={[styles.overdueMovePillCal, { backgroundColor: theme.dark ? 'rgba(212,177,58,0.1)' : 'rgba(212,177,58,0.15)', borderColor: theme.colors.border }]}
             onPress={() => onOpenRescheduleDatePicker(item)}
             hitSlop={4}
             accessibilityLabel="Elegir otra fecha"

@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { Alert, AppState, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Constants from 'expo-constants';
-import { ChevronLeft } from 'lucide-react-native';
+import { Check, ChevronLeft } from 'lucide-react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fontFamily, useTheme, PageTitle } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
@@ -12,6 +12,14 @@ import { useAuthStore } from '../../src/stores/auth.store';
 import { useThemeStore } from '../../src/stores/theme.store';
 import { useLanguageStore, type AppLanguage } from '../../src/stores/language.store';
 import { useHapticsStore } from '../../src/stores/haptics.store';
+import {
+  checkNotificationPermissionsAsync,
+  requestNotificationPermissionsAsync,
+  openAppNotificationSettings,
+  sendLocalTestNotification,
+  registerForPushNotificationsAsync,
+  type NotificationPermissionStatus,
+} from '../../src/services/notifications';
 import {
   Card, ConfirmDialog, OptionDialog, PillToggle, Row, SectionTitle, ToggleRow,
 } from '../../src/components/SettingsParts';
@@ -33,6 +41,83 @@ export default function SettingsScreen() {
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const [permStatus, setPermStatus] = useState<NotificationPermissionStatus | null>(null);
+  const [testingNotification, setTestingNotification] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchPerms = async () => {
+      const res = await checkNotificationPermissionsAsync();
+      if (isMounted) setPermStatus(res);
+    };
+    fetchPerms();
+
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        fetchPerms();
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      sub.remove();
+    };
+  }, []);
+
+  const handleEnablePermissions = async () => {
+    if (!permStatus?.granted && !permStatus?.canAskAgain) {
+      Alert.alert(
+        'Permisos desactivados',
+        'Las notificaciones están bloqueadas en los ajustes de tu teléfono. Pulsa "Abrir Ajustes" para activarlas.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Abrir Ajustes', onPress: openAppNotificationSettings },
+        ]
+      );
+      return;
+    }
+
+    const res = await requestNotificationPermissionsAsync();
+    setPermStatus(res);
+    if (res.granted && user?.id) {
+      await registerForPushNotificationsAsync(user.id);
+      Alert.alert('¡Notificaciones activadas!', 'Ahora recibirás avisos en tu móvil cuando haya novedades.');
+    } else if (!res.granted && !res.canAskAgain) {
+      Alert.alert(
+        'Permisos necesarios',
+        'Para recibir avisos, debes activar las notificaciones en los ajustes de tu dispositivo.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Abrir Ajustes', onPress: openAppNotificationSettings },
+        ]
+      );
+    }
+  };
+
+  const handleTestNotification = async () => {
+    if (!permStatus?.granted) {
+      Alert.alert(
+        'Permisos desactivados',
+        'Primero debes activar los permisos de notificación en tu dispositivo para poder recibir avisos.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Activar', onPress: handleEnablePermissions },
+        ]
+      );
+      return;
+    }
+
+    try {
+      setTestingNotification(true);
+      await sendLocalTestNotification();
+      Alert.alert('¡Notificación enviada!', 'Revisa la barra superior de tu teléfono.');
+    } catch (e: any) {
+      Alert.alert('Error', e?.message ?? 'No se pudo enviar la notificación');
+    } finally {
+      setTestingNotification(false);
+    }
+  };
 
   const isGoogle = user?.app_metadata?.provider === 'google';
 
@@ -143,16 +228,13 @@ export default function SettingsScreen() {
             title={t('settings.email')}
             subtitle={user?.email ?? ''}
             onPress={() => router.push('/(modals)/change-credential?type=email' as any)}
-            last={isGoogle}
           />
-          {!isGoogle ? (
-            <Row
-              title={t('settings.password')}
-              subtitle={t('settings.change_password')}
-              onPress={() => router.push('/(modals)/change-credential?type=password' as any)}
-              last
-            />
-          ) : null}
+          <Row
+            title={t('settings.password')}
+            subtitle={isGoogle ? t('settings.set_password') : t('settings.change_password')}
+            onPress={() => router.push('/(modals)/change-credential?type=password' as any)}
+            last
+          />
         </Card>
 
         <SectionTitle gold={t('settings.privacy')} />
@@ -174,6 +256,46 @@ export default function SettingsScreen() {
 
         <SectionTitle gold={t('settings.notifications')} />
         <Card>
+          <Row
+            title="Permisos en el dispositivo"
+            subtitle={
+              permStatus?.granted
+                ? 'Activadas · Tu móvil recibirá avisos y sonido'
+                : 'Desactivadas en los ajustes del sistema'
+            }
+            onPress={permStatus?.granted ? undefined : handleEnablePermissions}
+            right={
+              permStatus?.granted ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Check size={16} color={theme.colors.success} strokeWidth={2.5} />
+                  <Text style={{ fontFamily: fontFamily.semibold, fontSize: 13, color: theme.colors.success }}>
+                    Activadas
+                  </Text>
+                </View>
+              ) : (
+                <Pressable
+                  onPress={handleEnablePermissions}
+                  style={{
+                    backgroundColor: theme.colors.primary,
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 8,
+                  }}
+                  accessibilityRole="button"
+                >
+                  <Text style={{ fontFamily: fontFamily.semibold, fontSize: 12, color: theme.colors.primaryForeground }}>
+                    {permStatus?.canAskAgain ? 'Activar' : 'Abrir Ajustes'}
+                  </Text>
+                </Pressable>
+              )
+            }
+          />
+          <Row
+            title="Enviar notificación de prueba"
+            subtitle="Comprueba que tu teléfono muestra el aviso y emite sonido"
+            onPress={handleTestNotification}
+            loading={testingNotification}
+          />
           <ToggleRow
             title={t('settings.push')}
             subtitle={t('settings.push_desc')}
@@ -208,8 +330,17 @@ export default function SettingsScreen() {
         <Card>
           <Row
             title={t('settings.language')}
-            value={language === 'es' ? t('settings.language_es') : t('settings.language_en')}
-            onPress={() => setLangOpen(true)}
+            subtitle={language === 'es' ? 'Español' : 'English'}
+            right={
+              <PillToggle<AppLanguage>
+                options={[
+                  { key: 'es', label: '🇪🇸 ES' },
+                  { key: 'en', label: '🇬🇧 EN' },
+                ]}
+                selected={language}
+                onChange={(k) => setLanguage(k)}
+              />
+            }
           />
           <Row
             title={t('settings.theme')}

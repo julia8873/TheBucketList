@@ -1,4 +1,5 @@
 import { supabase } from '../supabase';
+import { sendPushNotification } from '../notifications';
 
 export const LIKE_EMOJI = '❤️';
 
@@ -13,6 +14,19 @@ export const socialApi = {
       .single();
 
     if (error) throw error;
+
+    // Notificar por push al usuario seguido
+    try {
+      const { data: follower } = await supabase.from('profiles').select('display_name, username').eq('id', followerId).maybeSingle();
+      const followerName = follower?.display_name || follower?.username || 'Alguien';
+      void sendPushNotification(
+        followingId,
+        'Nuevo seguidor 👋',
+        `${followerName} ha empezado a seguirte`,
+        { type: 'follow', followerId }
+      );
+    } catch {}
+
     return data;
   },
 
@@ -73,6 +87,22 @@ export const socialApi = {
       .from('reactions')
       .insert({ bucket_id: bucketId, user_id: userId, emoji: LIKE_EMOJI });
     if (error) throw error;
+
+    // Notificar al dueño de la tarea
+    try {
+      const { data: bucket } = await supabase.from('buckets').select('user_id, title').eq('id', bucketId).single();
+      if (bucket?.user_id && bucket.user_id !== userId) {
+        const { data: actor } = await supabase.from('profiles').select('display_name, username').eq('id', userId).single();
+        const actorName = actor?.display_name || actor?.username || 'Alguien';
+        void sendPushNotification(
+          bucket.user_id,
+          'Nueva reacción ❤️',
+          `${actorName} le ha dado me gusta a tu tarea "${bucket.title || 'tarea'}"`,
+          { bucketId, type: 'reaction' }
+        );
+      }
+    } catch {}
+
     return { liked: true };
   },
 
@@ -115,6 +145,53 @@ export const socialApi = {
       .single();
 
     if (error) throw error;
+
+    // Enviar push al dueño de la publicación y a usuarios mencionados
+    try {
+      const { data: bucketData } = await supabase
+        .from('buckets')
+        .select('user_id, title')
+        .eq('id', bucketId)
+        .single();
+
+      const authorName = data?.user?.display_name || data?.user?.username || 'Alguien';
+      const taskTitle = bucketData?.title || 'tu tarea';
+
+      // 1. Al dueño de la tarea
+      if (bucketData?.user_id && bucketData.user_id !== userId) {
+        void sendPushNotification(
+          bucketData.user_id,
+          'Nuevo comentario 💬',
+          `${authorName} comentó en tu publicación "${taskTitle}": "${body.slice(0, 50)}"`,
+          { bucketId, commentId: data.id, type: 'comment' }
+        );
+      }
+
+      // 2. A usuarios mencionados (@username)
+      const matches = body.match(/@([a-zA-Z0-9_.-]+)/g);
+      if (matches) {
+        const usernames = [...new Set(matches.map((m) => m.slice(1).toLowerCase()))];
+        for (const un of usernames) {
+          const { data: mentionedUser } = await supabase
+            .from('profiles')
+            .select('id')
+            .ilike('username', un)
+            .maybeSingle();
+
+          if (mentionedUser?.id && mentionedUser.id !== userId && mentionedUser.id !== bucketData?.user_id) {
+            void sendPushNotification(
+              mentionedUser.id,
+              'Nueva mención 🏷️',
+              `${authorName} te ha mencionado en un comentario en "${taskTitle}"`,
+              { bucketId, commentId: data.id, type: 'mention' }
+            );
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Error sending remote push for comment:', err);
+    }
+
     return data;
   },
 

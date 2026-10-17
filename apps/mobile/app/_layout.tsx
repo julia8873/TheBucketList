@@ -18,7 +18,7 @@ import {
   PlayfairDisplay_600SemiBold,
   PlayfairDisplay_700Bold,
 } from '@expo-google-fonts/playfair-display';
-import { ThemeProvider, ToastProvider } from '@bucketlist/ui';
+import { ThemeProvider, ToastProvider, useTheme } from '@bucketlist/ui';
 import { useThemeStore, hydrateThemeStore } from '../src/stores/theme.store';
 import { hydrateLanguageStore } from '../src/stores/language.store';
 import { hydrateHapticsStore } from '../src/stores/haptics.store';
@@ -121,11 +121,10 @@ export default function RootLayout() {
 }
 
 function RootNavigator() {
-  const { override } = useThemeStore();
+  const { theme } = useTheme();
   const { session, isInitialized, onboardingCompleted, isRecovering, setOnboardingCompleted, setRecovering } = useAuthStore();
   const router = useRouter();
   const segments = useSegments();
-  const colorScheme = override === 'system' ? undefined : override;
   const userId = session?.user.id;
 
   // Recarga automática (volver a la app, recuperar conexión, cada 60 s)
@@ -134,20 +133,36 @@ function RootNavigator() {
   // Cambios de otros colaboradores en tiempo real (tareas y álbumes compartidos)
   useRealtimeSync(userId);
 
-  // Enlaces del correo (confirmar cuenta / restablecer contraseña): …#access_token=…&refresh_token=…&type=…
+  // Enlaces del correo y OAuth (confirmar cuenta / restablecer / login con Google):
   useEffect(() => {
     const handleUrl = async (url: string | null) => {
       if (!url) return;
-      const fragment = url.split('#')[1];
-      if (!fragment) return;
-      const params = new URLSearchParams(fragment);
-      const access_token = params.get('access_token');
-      const refresh_token = params.get('refresh_token');
-      if (!access_token || !refresh_token) return;
-      const isRecovery = params.get('type') === 'recovery';
-      if (isRecovery) setRecovering(true);
-      const { error } = await supabase.auth.setSession({ access_token, refresh_token });
-      if (error) setRecovering(false);
+      try {
+        const fragment = url.split('#')[1];
+        if (fragment) {
+          const params = new URLSearchParams(fragment);
+          const access_token = params.get('access_token');
+          const refresh_token = params.get('refresh_token');
+          if (access_token && refresh_token) {
+            const isRecovery = params.get('type') === 'recovery';
+            if (isRecovery) setRecovering(true);
+            const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+            if (error) setRecovering(false);
+            return;
+          }
+        }
+
+        const query = url.split('?')[1]?.split('#')[0];
+        if (query) {
+          const params = new URLSearchParams(query);
+          const code = params.get('code');
+          if (code) {
+            await supabase.auth.exchangeCodeForSession(code);
+          }
+        }
+      } catch (err) {
+        console.warn('Error handling deep link URL:', err);
+      }
     };
     void Linking.getInitialURL().then(handleUrl);
     const sub = Linking.addEventListener('url', (e) => void handleUrl(e.url));
@@ -190,13 +205,14 @@ function RootNavigator() {
 
   return (
     <>
-      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerShown: false }}>
+      <StatusBar style={theme.dark ? 'light' : 'dark'} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background } }}>
         <Stack.Screen name="index" options={{ title: "TheBucketList" }} />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(onboarding)" />
         <Stack.Screen name="(modals)" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="map" options={{ animation: 'fade' }} />
         <Stack.Screen name="design-system" />
       </Stack>
     </>

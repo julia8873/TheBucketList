@@ -8,7 +8,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Tag as TagIcon, X, Plus, Check, Pencil } from 'lucide-react-native';
-import { gold } from '@bucketlist/ui/src/tokens/colors';
+import { gold, useTheme } from '@bucketlist/ui';
 import { styles } from '../styles/explore.styles';
 import type { DailyTag, DailyTask } from '../types';
 
@@ -35,6 +35,7 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
   openEditTag,
   renderTagModal,
 }) => {
+  const { theme } = useTheme();
   if (!visible) return null;
 
   return (
@@ -46,7 +47,7 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
     >
       <View style={styles.sheetOverlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={styles.sheetCard}>
+        <View style={[styles.sheetCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
           {/* Handle bar */}
           <View style={styles.sheetHandle} />
 
@@ -54,7 +55,7 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
           <View style={styles.sheetHeader}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <TagIcon size={18} color={gold[400]} />
-              <Text style={styles.sheetTitle}>Filtrar por etiquetas</Text>
+              <Text style={[styles.sheetTitle, { color: theme.colors.foreground }]}>Filtrar por etiquetas</Text>
               {selectedTagFilters.length > 0 && (
                 <View style={styles.sheetCountBadge}>
                   <Text style={styles.sheetCountBadgeText}>{selectedTagFilters.length}</Text>
@@ -62,7 +63,7 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
               )}
             </View>
             <Pressable onPress={onClose} hitSlop={10}>
-              <X size={20} color="#888" />
+              <X size={20} color={theme.colors.foregroundMuted} />
             </Pressable>
           </View>
 
@@ -71,13 +72,18 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
             <Pressable
               style={[
                 styles.sheetActionPill,
-                selectedTagFilters.length === 0 && styles.sheetActionPillActive,
+                { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
+                selectedTagFilters.length === 0 && {
+                  backgroundColor: theme.dark ? '#2A2210' : '#FDF4DC',
+                  borderColor: gold[400],
+                },
               ]}
               onPress={() => setSelectedTagFilters([])}
             >
               <Text
                 style={[
                   styles.sheetActionPillText,
+                  { color: theme.colors.foregroundMuted },
                   selectedTagFilters.length === 0 && styles.sheetActionPillTextActive,
                 ]}
               >
@@ -86,7 +92,13 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
             </Pressable>
 
             <Pressable
-              style={styles.sheetCreatePill}
+              style={[
+                styles.sheetCreatePill,
+                {
+                  backgroundColor: theme.dark ? '#231E10' : '#FDF6E2',
+                  borderColor: theme.dark ? '#423712' : '#F3DE9A',
+                },
+              ]}
               onPress={openCreateTag}
             >
               <Plus size={13} color={gold[400]} strokeWidth={2.4} />
@@ -98,7 +110,7 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
           <ScrollView style={styles.sheetTagsList} showsVerticalScrollIndicator={false}>
             {userTags.length === 0 ? (
               <View style={styles.sheetEmptyTags}>
-                <Text style={styles.sheetEmptyTagsText}>No tienes etiquetas creadas todavía.</Text>
+                <Text style={[styles.sheetEmptyTagsText, { color: theme.colors.foregroundMuted }]}>No tienes etiquetas creadas todavía.</Text>
                 <Pressable
                   style={styles.sheetCreateFirstBtn}
                   onPress={openCreateTag}
@@ -113,7 +125,7 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
                 const taskCount = tasks.filter((t) => t.tag_ids?.includes(tag.id)).length;
 
                 return (
-                  <View key={tag.id} style={styles.sheetTagRow}>
+                  <View key={tag.id} style={[styles.sheetTagRow, { borderBottomColor: theme.colors.border }]}>
                     {/* Checkable selection box */}
                     <Pressable
                       style={styles.sheetTagCheckArea}
@@ -126,6 +138,7 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
                       <View
                         style={[
                           styles.sheetCheckbox,
+                          { borderColor: theme.colors.border, backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface },
                           isSelected && {
                             backgroundColor: tag.color || gold[400],
                             borderColor: tag.color || gold[400],
@@ -139,8 +152,8 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
                         style={[
                           styles.sheetTagBadge,
                           {
-                            backgroundColor: tag.color ? `${tag.color}1F` : '#1E1E1E',
-                            borderColor: tag.color ? `${tag.color}55` : '#333',
+                            backgroundColor: tag.color ? `${tag.color}1F` : (theme.dark ? '#1E1E1E' : '#EAE5DB'),
+                            borderColor: tag.color ? `${tag.color}55` : theme.colors.border,
                           },
                         ]}
                       >
@@ -148,14 +161,14 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
                         <Text
                           style={[
                             styles.sheetTagBadgeText,
-                            { color: tag.color || '#DDD' },
+                            { color: tag.color || theme.colors.foreground },
                           ]}
                         >
                           {tag.name}
                         </Text>
                       </View>
 
-                      <Text style={styles.sheetTaskCountText}>
+                      <Text style={[styles.sheetTaskCountText, { color: theme.colors.foregroundMuted }]}>
                         {taskCount} {taskCount === 1 ? 'tarea' : 'tareas'}
                       </Text>
                     </Pressable>
@@ -167,7 +180,7 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
                       hitSlop={8}
                       accessibilityLabel={`Editar etiqueta ${tag.name}`}
                     >
-                      <Pencil size={15} color="#888" />
+                      <Pencil size={15} color={theme.colors.foregroundMuted} />
                     </Pressable>
                   </View>
                 );
@@ -176,7 +189,7 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
           </ScrollView>
 
           {/* Bottom Apply Button */}
-          <View style={styles.sheetFooter}>
+          <View style={[styles.sheetFooter, { borderTopColor: theme.colors.border }]}>
             <Pressable
               style={styles.sheetApplyBtn}
               onPress={onClose}

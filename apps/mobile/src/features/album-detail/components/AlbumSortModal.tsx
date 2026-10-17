@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, Modal, StyleSheet } from 'react-native';
 import { ArrowDown, ArrowUp, Check, GripVertical } from 'lucide-react-native';
+import { useTheme } from '@bucketlist/ui';
 import { styles } from '../styles/album-detail.styles';
 
 export type TaskSortField = 'manual' | 'priority' | 'alphabetical' | 'completed_at';
@@ -29,12 +30,23 @@ export function AlbumSortModal({
   onClose,
   onSelectOption,
 }: AlbumSortModalProps) {
+  const { theme } = useTheme();
   if (!visible) return null;
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
-        <View style={[styles.sortMenu, { top: sortMenuPos.top, right: sortMenuPos.right }]}>
+        <View
+          style={[
+            styles.sortMenu,
+            {
+              top: sortMenuPos.top,
+              right: sortMenuPos.right,
+              backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+              borderColor: theme.colors.border,
+            },
+          ]}
+        >
           {(
             [
               ...(canEdit && albumId !== 'unassigned'
@@ -51,12 +63,16 @@ export function AlbumSortModal({
               <Pressable
                 key={opt.field}
                 onPress={() => onSelectOption(opt.field)}
-                style={[styles.sortMenuItem, i > 0 && styles.sortMenuItemBorder]}
+                style={[
+                  styles.sortMenuItem,
+                  i > 0 && [styles.sortMenuItemBorder, { borderTopColor: theme.colors.border }],
+                ]}
               >
                 <Text
                   style={[
                     styles.sortMenuText,
-                    selected && { color: '#D4B13A', fontFamily: 'Inter_600SemiBold' },
+                    { color: selected ? '#D4B13A' : theme.colors.foreground },
+                    selected && { fontFamily: 'Inter_600SemiBold' },
                   ]}
                 >
                   {opt.label}

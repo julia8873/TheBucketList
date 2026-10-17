@@ -3,18 +3,19 @@ import { Tabs } from 'expo-router';
 import { useTheme } from '@bucketlist/ui';
 import { Home, ShoppingBag, ListTodo, User } from 'lucide-react-native';
 import { useAuthStore } from '../../src/stores/auth.store';
-import { registerForPushNotificationsAsync } from '../../src/services/notifications';
+import { checkNotificationPermissionsAsync, registerForPushNotificationsAsync } from '../../src/services/notifications';
 import { useTranslation } from 'react-i18next';
-import { Platform, View } from 'react-native';
+import { Alert, Platform, View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { gold, dark } from '@bucketlist/ui';
 
 function TabBarBackground() {
+  const { theme } = useTheme();
   return (
     <View
       style={{
         flex: 1,
-        backgroundColor: '#0E0E0E',
+        backgroundColor: theme.colors.background,
       }}
     />
   );
@@ -27,10 +28,30 @@ export default function TabsLayout() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (user) {
-      registerForPushNotificationsAsync(user.id).catch(console.error);
+    if (user?.id) {
+      checkNotificationPermissionsAsync()
+        .then((perm) => {
+          if (!perm.granted && perm.canAskAgain) {
+            Alert.alert(
+              '¿Activar notificaciones?',
+              'Recibe avisos al instante en tu móvil cuando tus amigos reaccionen, comenten tus publicaciones o te inviten a colaborar.',
+              [
+                { text: 'Ahora no', style: 'cancel' },
+                {
+                  text: 'Activar',
+                  onPress: () => {
+                    registerForPushNotificationsAsync(user.id).catch(console.error);
+                  },
+                },
+              ]
+            );
+          } else if (perm.granted) {
+            registerForPushNotificationsAsync(user.id).catch(console.error);
+          }
+        })
+        .catch(console.error);
     }
-  }, [user]);
+  }, [user?.id]);
 
   return (
     <Tabs
@@ -44,11 +65,12 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
-        tabBarActiveTintColor: gold[400],
-        tabBarInactiveTintColor: '#8A8A8A',
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.foregroundSubtle,
+        tabBarBackground: () => <TabBarBackground />,
         tabBarStyle: {
-          backgroundColor: '#0E0E0E',
-          borderTopColor: '#2A2A2A',
+          backgroundColor: theme.colors.background,
+          borderTopColor: theme.colors.border,
           borderTopWidth: 1,
           height: Platform.OS === 'ios' ? 84 : 60,
           paddingBottom: Platform.OS === 'ios' ? 28 : 8,
@@ -68,7 +90,7 @@ export default function TabsLayout() {
               {focused && (
                 <View style={{
                   width: 28, height: 3, borderRadius: 2,
-                  backgroundColor: gold[400],
+                  backgroundColor: theme.colors.primary,
                   position: 'absolute',
                   top: Platform.OS === 'ios' ? -10 : -10,
                 }} />
@@ -92,7 +114,7 @@ export default function TabsLayout() {
               {focused && (
                 <View style={{
                   width: 28, height: 3, borderRadius: 2,
-                  backgroundColor: gold[400],
+                  backgroundColor: theme.colors.primary,
                   position: 'absolute',
                   top: Platform.OS === 'ios' ? -10 : -10,
                 }} />
@@ -110,13 +132,13 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="explore"
         options={{
-          title: 'Día a día',
+          title: t('nav.daily', { defaultValue: 'Día a día' }),
           tabBarIcon: ({ color, focused }) => (
             <View style={{ alignItems: 'center' }}>
               {focused && (
                 <View style={{
                   width: 28, height: 3, borderRadius: 2,
-                  backgroundColor: gold[400],
+                  backgroundColor: theme.colors.primary,
                   position: 'absolute',
                   top: Platform.OS === 'ios' ? -10 : -10,
                 }} />
@@ -128,7 +150,7 @@ export default function TabsLayout() {
               />
             </View>
           ),
-          tabBarAccessibilityLabel: 'Día a día',
+          tabBarAccessibilityLabel: t('nav.daily', { defaultValue: 'Día a día' }),
         }}
       />
       <Tabs.Screen
@@ -140,7 +162,7 @@ export default function TabsLayout() {
               {focused && (
                 <View style={{
                   width: 28, height: 3, borderRadius: 2,
-                  backgroundColor: gold[400],
+                  backgroundColor: theme.colors.primary,
                   position: 'absolute',
                   top: Platform.OS === 'ios' ? -10 : -10,
                 }} />

@@ -354,8 +354,11 @@ export default function RegisterScreen() {
         label={t('auth.email_label')}
         placeholder="tu@correo.com"
         value={email}
-        onChangeText={(v) => { setEmail(v.replace(/\s/g, '').toLowerCase()); setError(null); }}
+        onChangeText={(v) => { setEmail(v.replace(/\s/g, '')); setError(null); }}
         keyboardType="email-address"
+        autoCapitalize="none"
+        autoCorrect={false}
+        spellCheck={false}
         textContentType="emailAddress"
         autoComplete="email"
         returnKeyType="next"

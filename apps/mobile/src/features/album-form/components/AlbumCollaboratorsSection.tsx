@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { Users, Plus, Lock, X } from 'lucide-react-native';
+import { Users, UserPlus, Plus, Lock, X } from 'lucide-react-native';
 import { styles } from '../styles/album-form.styles';
 import { SectionTitle } from './SectionTitle';
 import type { CollaboratorItem } from '../../../components/CollaboratorPickerSheet';
@@ -55,8 +55,7 @@ export function AlbumCollaboratorsSection({
               onPress={onOpenPicker}
             >
               <View style={styles.addCollabIconCircle}>
-                <Text style={{ fontSize: 16 }}>👤</Text>
-                <Text style={{ fontSize: 15, color: '#D4B13A', fontWeight: '800', marginLeft: 1 }}>+</Text>
+                <UserPlus size={18} color="#D4B13A" strokeWidth={1.8} />
               </View>
               <Text style={styles.addCollabText}>
                 {selectedCollaborators.length === 0

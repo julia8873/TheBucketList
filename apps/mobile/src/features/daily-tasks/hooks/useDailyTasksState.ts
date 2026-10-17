@@ -43,7 +43,7 @@ import {
   DailyTaskPriority,
   DailyTaskRecurrenceUnit,
 } from '../types';
-import { SORT_PREF_STORAGE_KEY } from '../constants';
+import { SORT_PREF_STORAGE_KEY, TIME_VIEW_STORAGE_KEY } from '../constants';
 import {
   toDateString,
   calculateNextRecurringDate,
@@ -55,14 +55,48 @@ export function useDailyTasksState() {
   const handleSetTimeView = useCallback((v: TimeView) => {
     setTimeView(v);
     setDragging(false);
+    void AsyncStorage.setItem(TIME_VIEW_STORAGE_KEY, v).catch((err) => {
+      console.warn('Error saving daily tasks time view preference:', err);
+    });
   }, []);
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [selectedTagFilters, setSelectedTagFilters] = useState<string[]>([]);
+  const [statusFilter, setStatusFilterState] = useState<StatusFilter>('all');
+  const setStatusFilter = useCallback((action: StatusFilter | ((prev: StatusFilter) => StatusFilter)) => {
+    setStatusFilterState((prev) => {
+      const next = typeof action === 'function' ? action(prev) : action;
+      void AsyncStorage.setItem('@daily_tasks_status_filter', next).catch(() => undefined);
+      return next;
+    });
+  }, []);
+
+  const [selectedTagFilters, setSelectedTagFiltersState] = useState<string[]>([]);
+  const setSelectedTagFilters = useCallback((tags: string[] | ((prev: string[]) => string[])) => {
+    setSelectedTagFiltersState((prev) => {
+      const next = typeof tags === 'function' ? tags(prev) : tags;
+      void AsyncStorage.setItem('@daily_tasks_tag_filters', JSON.stringify(next)).catch(() => undefined);
+      return next;
+    });
+  }, []);
+
   const [showTagFilterSheet, setShowTagFilterSheet] = useState(false);
 
   // Quick filters: Favoritas, Prioridad
-  const [onlyFavorites, setOnlyFavorites] = useState(false);
-  const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [onlyFavorites, setOnlyFavoritesState] = useState(false);
+  const setOnlyFavorites = useCallback((fav: boolean | ((prev: boolean) => boolean)) => {
+    setOnlyFavoritesState((prev) => {
+      const next = typeof fav === 'function' ? fav(prev) : fav;
+      void AsyncStorage.setItem('@daily_tasks_only_favorites', JSON.stringify(next)).catch(() => undefined);
+      return next;
+    });
+  }, []);
+
+  const [priorityFilter, setPriorityFilterState] = useState<string>('all');
+  const setPriorityFilter = useCallback((action: React.SetStateAction<string>) => {
+    setPriorityFilterState((prev) => {
+      const next = typeof action === 'function' ? action(prev) : action;
+      void AsyncStorage.setItem('@daily_tasks_priority_filter', next).catch(() => undefined);
+      return next;
+    });
+  }, []);
 
   // Sorting & Grouping state
   const [sortField, setSortField] = useState<DailySortField>('manual');
@@ -70,22 +104,110 @@ export function useDailyTasksState() {
   const [groupByTag, setGroupByTag] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
 
-  // Cargar preferencia de ordenación guardada al iniciar la app
+  // Collapsed sections for completed tasks (Hoy, Semana)
+  const [isTodayCompletedCollapsed, setIsTodayCompletedCollapsed] = useState(false);
+  const toggleTodayCompleted = useCallback(() => {
+    setIsTodayCompletedCollapsed((prev) => {
+      const next = !prev;
+      void AsyncStorage.setItem('@daily_tasks_today_completed_collapsed', JSON.stringify(next)).catch(() => undefined);
+      return next;
+    });
+  }, []);
+
+  const [isWeekCompletedCollapsed, setIsWeekCompletedCollapsed] = useState(false);
+  const [collapsedWeekDays, setCollapsedWeekDays] = useState<Record<string, boolean>>({});
+
+  const toggleAllWeekCompleted = useCallback(() => {
+    setIsWeekCompletedCollapsed((prev) => {
+      const next = !prev;
+      void AsyncStorage.setItem('@daily_tasks_week_completed_collapsed', JSON.stringify(next)).catch(() => undefined);
+      setCollapsedWeekDays({});
+      return next;
+    });
+  }, []);
+
+  const toggleWeekDayCompleted = useCallback((dateStr: string) => {
+    setCollapsedWeekDays((prev) => {
+      const current = typeof prev[dateStr] === 'boolean' ? prev[dateStr] : isWeekCompletedCollapsed;
+      return {
+        ...prev,
+        [dateStr]: !current,
+      };
+    });
+  }, [isWeekCompletedCollapsed]);
+
+  const isWeekDayCollapsed = useCallback(
+    (dateStr: string): boolean => {
+      const val = collapsedWeekDays[dateStr];
+      return typeof val === 'boolean' ? val : isWeekCompletedCollapsed;
+    },
+    [collapsedWeekDays, isWeekCompletedCollapsed]
+  );
+
+  // Cargar preferencia de ordenación, filtros y última pestaña guardada al iniciar la app
   useEffect(() => {
-    const loadSavedSortPreference = async () => {
+    const loadSavedPreferences = async () => {
       try {
-        const saved = await AsyncStorage.getItem(SORT_PREF_STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
+        const [
+          savedSort,
+          savedTimeView,
+          savedStatus,
+          savedTags,
+          savedFavs,
+          savedPriority,
+          savedTodayCollapsed,
+          savedWeekCollapsed,
+        ] = await Promise.all([
+          AsyncStorage.getItem(SORT_PREF_STORAGE_KEY),
+          AsyncStorage.getItem(TIME_VIEW_STORAGE_KEY),
+          AsyncStorage.getItem('@daily_tasks_status_filter'),
+          AsyncStorage.getItem('@daily_tasks_tag_filters'),
+          AsyncStorage.getItem('@daily_tasks_only_favorites'),
+          AsyncStorage.getItem('@daily_tasks_priority_filter'),
+          AsyncStorage.getItem('@daily_tasks_today_completed_collapsed'),
+          AsyncStorage.getItem('@daily_tasks_week_completed_collapsed'),
+        ]);
+        if (savedSort) {
+          const parsed = JSON.parse(savedSort);
           if (parsed.sortField) setSortField(parsed.sortField);
           if (parsed.sortDirection) setSortDirection(parsed.sortDirection);
           if (typeof parsed.groupByTag === 'boolean') setGroupByTag(parsed.groupByTag);
         }
+        if (savedTimeView && ['today', 'week', 'calendar', 'all'].includes(savedTimeView)) {
+          setTimeView(savedTimeView as TimeView);
+        }
+        if (savedStatus && ['all', 'pending', 'completed'].includes(savedStatus)) {
+          setStatusFilterState(savedStatus as StatusFilter);
+        }
+        if (savedTags) {
+          try {
+            const parsed = JSON.parse(savedTags);
+            if (Array.isArray(parsed)) setSelectedTagFiltersState(parsed);
+          } catch {}
+        }
+        if (savedFavs) {
+          try {
+            setOnlyFavoritesState(JSON.parse(savedFavs) === true);
+          } catch {}
+        }
+        if (savedPriority) {
+          setPriorityFilterState(savedPriority);
+        }
+        if (savedTodayCollapsed) {
+          try {
+            setIsTodayCompletedCollapsed(JSON.parse(savedTodayCollapsed) === true);
+          } catch {}
+        }
+        if (savedWeekCollapsed) {
+          try {
+            setIsWeekCompletedCollapsed(JSON.parse(savedWeekCollapsed) === true);
+          } catch {}
+        }
       } catch (err) {
-        console.warn('Error loading daily tasks sort preference:', err);
+        console.warn('Error loading daily tasks preferences:', err);
       }
     };
-    void loadSavedSortPreference();
+    void loadSavedPreferences();
   }, []);
 
   const saveSortPreference = useCallback(
@@ -1052,5 +1174,12 @@ export function useDailyTasksState() {
     handleMoveAllOverdueToToday,
     handleCompleteAllOverdue,
     handleDeleteAllOverdue,
+    // Collapsed completed tasks
+    isTodayCompletedCollapsed,
+    toggleTodayCompleted,
+    isWeekCompletedCollapsed,
+    toggleAllWeekCompleted,
+    toggleWeekDayCompleted,
+    isWeekDayCollapsed,
   };
 }

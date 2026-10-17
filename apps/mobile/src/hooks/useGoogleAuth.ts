@@ -1,64 +1,90 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
+import { makeRedirectUri } from 'expo-auth-session';
 import { supabase } from '../services/supabase';
 
 WebBrowser.maybeCompleteAuthSession();
 
 /**
- * Login/registro con Google. Si la cuenta es nueva, el trigger de la BD crea el
- * perfil con onboarding pendiente; el RootNavigator se encarga de redirigir.
+ * Hook para inicio de sesión y registro con Google mediante Supabase OAuth.
+ * Abre una ventana segura de navegador para que el usuario elija su cuenta de Google
+ * y redirige de vuelta a la app con la sesión establecida.
  */
 export function useGoogleAuth(onError: (message: string) => void) {
   const [loading, setLoading] = useState(false);
 
-  const rawWeb = process.env['EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID'];
-  const rawAndroid = process.env['EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID'];
-  const rawIos = process.env['EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'];
+  const start = async () => {
+    try {
+      setLoading(true);
 
-  const isConfigured = Boolean(
-    rawWeb &&
-    !rawWeb.includes('your-web-client-id') &&
-    rawAndroid &&
-    !rawAndroid.includes('your-android-client-id')
-  );
+      const redirectTo = makeRedirectUri({
+        scheme: 'bucketlist',
+        path: 'auth/callback',
+      });
+      console.log('[GoogleAuth] Redirect URI configurado:', redirectTo);
 
-  // expo-auth-session lanza invariantClientId si androidClientId es undefined en Android.
-  // Proporcionamos un fallback no-undefined seguro para evitar pantallas blancas.
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    webClientId: rawWeb || 'disabled-web-client-id',
-    androidClientId: rawAndroid || 'disabled-android-client-id',
-    iosClientId: rawIos || 'disabled-ios-client-id',
-  });
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+          skipBrowserRedirect: true,
+        },
+      });
 
-  useEffect(() => {
-    if (!response) return;
-    if (response.type === 'success') {
-      const idToken = response.params?.id_token;
-      if (!idToken) {
-        onError('Google no devolvió un token válido');
+      if (error) {
+        onError(error.message);
         return;
       }
-      setLoading(true);
-      supabase.auth
-        .signInWithIdToken({ provider: 'google', token: idToken })
-        .then(({ error }) => {
-          if (error) onError(error.message);
-        })
-        .finally(() => setLoading(false));
-    } else if (response.type === 'error') {
-      onError(response.error?.message ?? 'Google error');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [response]);
 
-  const start = () => {
-    if (!isConfigured) {
-      onError('El inicio de sesión con Google no está configurado en este entorno.');
-      return;
+      if (data?.url) {
+        const res = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+
+        if (res.type === 'success' && res.url) {
+          // 1. Extraer hash fragment (#access_token=...&refresh_token=...)
+          const hashIndex = res.url.indexOf('#');
+          if (hashIndex !== -1) {
+            const hash = res.url.substring(hashIndex + 1);
+            const params = new URLSearchParams(hash);
+            const accessToken = params.get('access_token');
+            const refreshToken = params.get('refresh_token');
+
+            if (accessToken && refreshToken) {
+              const { error: sessionErr } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+              });
+              if (sessionErr) onError(sessionErr.message);
+              return;
+            }
+          }
+
+          // 2. Extraer código PKCE (?code=...)
+          const queryIndex = res.url.indexOf('?');
+          if (queryIndex !== -1) {
+            const query = res.url.substring(queryIndex + 1).split('#')[0];
+            const params = new URLSearchParams(query);
+            const code = params.get('code');
+            const errorDesc = params.get('error_description') || params.get('error');
+
+            if (errorDesc) {
+              onError(errorDesc);
+              return;
+            }
+
+            if (code) {
+              const { error: exchangeErr } = await supabase.auth.exchangeCodeForSession(code);
+              if (exchangeErr) onError(exchangeErr.message);
+              return;
+            }
+          }
+        }
+      }
+    } catch (e: any) {
+      onError(e?.message ?? 'No se pudo iniciar sesión con Google');
+    } finally {
+      setLoading(false);
     }
-    void promptAsync();
   };
 
-  return { start, ready: isConfigured && !!request, loading };
-}
+  return { start, ready: true, loading };
+}

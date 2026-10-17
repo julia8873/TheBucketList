@@ -30,21 +30,67 @@ export function useMyListState() {
   const toast = useToast();
   const params = useLocalSearchParams<{ filter?: string; tab?: string }>();
 
-  const [activeTab, setActiveTab] = useState(
+  const [activeTab, setActiveTabState] = useState(
     params.tab === 'albums' || params.tab === 'calendar' || params.tab === 'list'
       ? params.tab
       : 'list'
   );
-  const [filter, setFilter] = useState<FilterType>(
+  const setActiveTab = (tab: any) => {
+    setActiveTabState(tab);
+    void AsyncStorage.setItem('@my_list_active_tab', tab).catch(() => undefined);
+  };
+
+  const [filter, setFilterState] = useState<FilterType>(
     params.filter === 'completed' || params.filter === 'active' || params.filter === 'in_progress' || params.filter === 'expired'
       ? (params.filter as FilterType)
       : 'all'
   );
-  const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>('all');
+  const setFilter = (f: FilterType) => {
+    setFilterState(f);
+    void AsyncStorage.setItem('@my_list_filter', f).catch(() => undefined);
+  };
+
+  const [priorityFilter, setPriorityFilterState] = useState<PriorityFilter>('all');
+  const setPriorityFilter = (action: React.SetStateAction<PriorityFilter>) => {
+    setPriorityFilterState((prev) => {
+      const next = typeof action === 'function' ? action(prev) : action;
+      void AsyncStorage.setItem('@my_list_priority_filter', next).catch(() => undefined);
+      return next;
+    });
+  };
+
+  // Cargar preferencias iniciales si no vienen por parámetros de navegación
+  useEffect(() => {
+    if (!params.tab) {
+      AsyncStorage.getItem('@my_list_active_tab')
+        .then((saved) => {
+          if (saved === 'list' || saved === 'albums' || saved === 'calendar') {
+            setActiveTabState(saved);
+          }
+        })
+        .catch(() => undefined);
+    }
+    if (!params.filter) {
+      AsyncStorage.getItem('@my_list_filter')
+        .then((saved) => {
+          if (saved && ['all', 'completed', 'active', 'in_progress', 'expired'].includes(saved)) {
+            setFilterState(saved as FilterType);
+          }
+        })
+        .catch(() => undefined);
+    }
+    AsyncStorage.getItem('@my_list_priority_filter')
+      .then((saved) => {
+        if (saved && ['all', 'high', 'medium', 'low'].includes(saved)) {
+          setPriorityFilterState(saved as PriorityFilter);
+        }
+      })
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     if (params.tab && (params.tab === 'list' || params.tab === 'albums' || params.tab === 'calendar')) {
-      setActiveTab(params.tab);
+      setActiveTabState(params.tab);
     }
   }, [params.tab]);
 
@@ -56,7 +102,7 @@ export function useMyListState() {
       params.filter === 'expired' ||
       params.filter === 'all'
     ) {
-      setFilter(params.filter as FilterType);
+      setFilterState(params.filter as FilterType);
     }
   }, [params.filter]);
 
@@ -109,8 +155,21 @@ export function useMyListState() {
     AsyncStorage.setItem('@my_list_album_view_mode', mode).catch(() => undefined);
   };
 
-  const [albumFilter, setAlbumFilter] = useState<AlbumFilterType>('all');
-  const [albumPriorityFilter, setAlbumPriorityFilter] = useState<PriorityFilter>('all');
+  const [albumFilter, setAlbumFilterState] = useState<AlbumFilterType>('all');
+  const setAlbumFilter = (af: AlbumFilterType) => {
+    setAlbumFilterState(af);
+    void AsyncStorage.setItem('@my_list_album_filter', af).catch(() => undefined);
+  };
+
+  const [albumPriorityFilter, setAlbumPriorityFilterState] = useState<PriorityFilter>('all');
+  const setAlbumPriorityFilter = (action: React.SetStateAction<PriorityFilter>) => {
+    setAlbumPriorityFilterState((prev) => {
+      const next = typeof action === 'function' ? action(prev) : action;
+      void AsyncStorage.setItem('@my_list_album_priority_filter', next).catch(() => undefined);
+      return next;
+    });
+  };
+
   const [albumSortField, setAlbumSortField] = useState<SortField>('status');
   const [albumSortDir, setAlbumSortDir] = useState<SortDir>('desc');
   const albumSortTriggerRef = useRef<View>(null);
@@ -135,7 +194,58 @@ export function useMyListState() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [tagSheetOpen, setTagSheetOpen] = useState(false);
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [selectedTagIds, setSelectedTagIdsState] = useState<string[]>([]);
+  const setSelectedTagIds = (action: React.SetStateAction<string[]>) => {
+    setSelectedTagIdsState((prev) => {
+      const next = typeof action === 'function' ? action(prev) : action;
+      void AsyncStorage.setItem('@my_list_selected_tags', JSON.stringify(next)).catch(() => undefined);
+      return next;
+    });
+  };
+
+  // Cargar filtros y ordenaciones guardadas de álbumes y tareas
+  useEffect(() => {
+    AsyncStorage.getItem('@my_list_album_filter')
+      .then((saved) => {
+        if (saved) setAlbumFilterState(saved as AlbumFilterType);
+      })
+      .catch(() => undefined);
+    AsyncStorage.getItem('@my_list_album_priority_filter')
+      .then((saved) => {
+        if (saved) setAlbumPriorityFilterState(saved as PriorityFilter);
+      })
+      .catch(() => undefined);
+    AsyncStorage.getItem('@my_list_selected_tags')
+      .then((saved) => {
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed)) setSelectedTagIdsState(parsed);
+          } catch {}
+        }
+      })
+      .catch(() => undefined);
+    AsyncStorage.getItem('@my_list_sort_field')
+      .then((saved) => {
+        if (saved) setSortField(saved as SortField);
+      })
+      .catch(() => undefined);
+    AsyncStorage.getItem('@my_list_sort_dir')
+      .then((saved) => {
+        if (saved) setSortDir(saved as SortDir);
+      })
+      .catch(() => undefined);
+    AsyncStorage.getItem('@my_list_album_sort_field')
+      .then((saved) => {
+        if (saved) setAlbumSortField(saved as SortField);
+      })
+      .catch(() => undefined);
+    AsyncStorage.getItem('@my_list_album_sort_dir')
+      .then((saved) => {
+        if (saved) setAlbumSortDir(saved as SortDir);
+      })
+      .catch(() => undefined);
+  }, []);
 
   // Task sort
   const [sortField, setSortField] = useState<SortField>('status');
@@ -206,15 +316,21 @@ export function useMyListState() {
       }
       setIsAlbumReordering(false);
       if (albumSortField === field) {
-        setAlbumSortDir((prev) => (prev === 'desc' ? 'asc' : 'desc'));
+        const nextDir = albumSortDir === 'desc' ? 'asc' : 'desc';
+        setAlbumSortDir(nextDir);
+        void AsyncStorage.setItem('@my_list_album_sort_dir', nextDir).catch(() => undefined);
       } else {
+        const nextDir = field === 'alphabetical' ? 'asc' : 'desc';
         setAlbumSortField(field as SortField);
-        setAlbumSortDir(field === 'alphabetical' ? 'asc' : 'desc');
+        setAlbumSortDir(nextDir);
+        void AsyncStorage.setItem('@my_list_album_sort_field', field).catch(() => undefined);
+        void AsyncStorage.setItem('@my_list_album_sort_dir', nextDir).catch(() => undefined);
         setSortMenuOpen(false);
       }
     } else {
       if (field === 'reorder_status') {
         setSortField('status');
+        void AsyncStorage.setItem('@my_list_sort_field', 'status').catch(() => undefined);
         setIsReordering(true);
         setSortMenuOpen(false);
         return;
@@ -226,16 +342,22 @@ export function useMyListState() {
           return;
         }
         setSortField('manual');
+        void AsyncStorage.setItem('@my_list_sort_field', 'manual').catch(() => undefined);
         setIsReordering(true);
         setSortMenuOpen(false);
         return;
       }
       setIsReordering(false);
       if (sortField === field) {
-        setSortDir((prev) => (prev === 'desc' ? 'asc' : 'desc'));
+        const nextDir = sortDir === 'desc' ? 'asc' : 'desc';
+        setSortDir(nextDir);
+        void AsyncStorage.setItem('@my_list_sort_dir', nextDir).catch(() => undefined);
       } else {
+        const nextDir = field === 'alphabetical' ? 'asc' : 'desc';
         setSortField(field as SortField);
-        setSortDir(field === 'alphabetical' ? 'asc' : 'desc');
+        setSortDir(nextDir);
+        void AsyncStorage.setItem('@my_list_sort_field', field).catch(() => undefined);
+        void AsyncStorage.setItem('@my_list_sort_dir', nextDir).catch(() => undefined);
         setSortMenuOpen(false);
       }
     }

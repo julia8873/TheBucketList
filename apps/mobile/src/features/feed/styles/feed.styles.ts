@@ -121,7 +121,7 @@ export const styles = StyleSheet.create({
   feedControlsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 2,
@@ -131,5 +131,18 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     color: '#8A8A8A',
     letterSpacing: 0.8,
+  },
+  mapTriggerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  mapTriggerBtnText: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 12,
   },
 });

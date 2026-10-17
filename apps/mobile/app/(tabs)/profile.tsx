@@ -1,13 +1,15 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { LayoutGrid, List, Settings, Users } from 'lucide-react-native';
+import { LayoutGrid, List, Moon, Settings, Sun, Users } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Avatar, fontFamily, useTheme, PageTitle, Skeleton } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
 import { useAuthStore } from '../../src/stores/auth.store';
+import { useThemeStore } from '../../src/stores/theme.store';
 import { useAlbums } from '../../src/hooks/useAlbums';
 import { useIncomingRequestCount } from '../../src/hooks/useFriends';
 import { BucketCover } from '../../src/components/BucketCover';
@@ -22,6 +24,7 @@ const RECENT_LIMIT = 4;
 
 export default function CurrentUserProfileScreen() {
   const { theme } = useTheme();
+  const { toggleTheme } = useThemeStore();
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const { user } = useAuthStore();
@@ -44,7 +47,21 @@ export default function CurrentUserProfileScreen() {
   const tileWidth = Math.floor((containerWidth - 10) / 2);
   const tileHeight = Math.round(tileWidth * 1.3);
 
-  const [viewMode, setViewMode] = useState<TaskViewMode>('gallery');
+  const [viewMode, setViewModeState] = useState<TaskViewMode>('gallery');
+  const setViewMode = (mode: TaskViewMode) => {
+    setViewModeState(mode);
+    void AsyncStorage.setItem('@profile_view_mode', mode).catch(() => undefined);
+  };
+
+  useEffect(() => {
+    AsyncStorage.getItem('@profile_view_mode')
+      .then((saved) => {
+        if (saved === 'gallery' || saved === 'list' || saved === 'compact') {
+          setViewModeState(saved as TaskViewMode);
+        }
+      })
+      .catch(() => undefined);
+  }, []);
   const albums = useAlbums(user?.id);
   const requests = useIncomingRequestCount(user?.id);
 
@@ -89,7 +106,7 @@ export default function CurrentUserProfileScreen() {
     return (
       <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={styles.header}>
-          <PageTitle gold="Mi" rest="perfil" />
+          <PageTitle gold={t('profile.title_gold', { defaultValue: 'Mi' })} rest={t('profile.title_rest', { defaultValue: 'perfil' })} />
         </View>
         <ProfileSkeleton />
       </SafeAreaView>
@@ -108,7 +125,7 @@ export default function CurrentUserProfileScreen() {
       >
         {/* Cabecera */}
         <View style={styles.header}>
-          <PageTitle gold="Mi" rest="perfil" />
+          <PageTitle gold={t('profile.title_gold', { defaultValue: 'Mi' })} rest={t('profile.title_rest', { defaultValue: 'perfil' })} />
           <Pressable
             onPress={() => router.push('/(modals)/settings' as any)}
             accessibilityRole="button"

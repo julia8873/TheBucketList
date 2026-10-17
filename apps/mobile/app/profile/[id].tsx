@@ -25,6 +25,7 @@ import { usePublicProfileData } from '../../src/features/public-profile/hooks/us
 import { ProfileBioAndStats } from '../../src/features/public-profile/components/ProfileBioAndStats';
 import { ProfileLockedState } from '../../src/features/public-profile/components/ProfileLockedState';
 import { ProfileAlbumsTab, type AlbumFilter } from '../../src/features/public-profile/components/ProfileAlbumsTab';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Filter = 'all' | 'active' | 'completed';
 
@@ -34,10 +35,58 @@ export default function PublicProfileScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { refreshing, onRefresh } = usePullToRefresh();
-  const [activeTab, setActiveTab] = useState<'list' | 'albums'>('list');
-  const [filter, setFilter] = useState<Filter>('all');
-  const [albumFilter, setAlbumFilter] = useState<AlbumFilter>('all');
-  const [taskViewMode, setTaskViewMode] = useState<TaskViewMode>('list');
+  const [activeTab, setActiveTabState] = useState<'list' | 'albums'>('list');
+  const setActiveTab = (tab: 'list' | 'albums') => {
+    setActiveTabState(tab);
+    void AsyncStorage.setItem('@public_profile_tab', tab).catch(() => undefined);
+  };
+
+  const [filter, setFilterState] = useState<Filter>('all');
+  const setFilter = (f: Filter) => {
+    setFilterState(f);
+    void AsyncStorage.setItem('@public_profile_filter', f).catch(() => undefined);
+  };
+
+  const [albumFilter, setAlbumFilterState] = useState<AlbumFilter>('all');
+  const setAlbumFilter = (af: AlbumFilter) => {
+    setAlbumFilterState(af);
+    void AsyncStorage.setItem('@public_profile_album_filter', af).catch(() => undefined);
+  };
+
+  const [taskViewMode, setTaskViewModeState] = useState<TaskViewMode>('list');
+  const setTaskViewMode = (mode: TaskViewMode) => {
+    setTaskViewModeState(mode);
+    void AsyncStorage.setItem('@public_profile_view_mode', mode).catch(() => undefined);
+  };
+
+  useEffect(() => {
+    AsyncStorage.getItem('@public_profile_tab')
+      .then((saved) => {
+        if (saved === 'list' || saved === 'albums') setActiveTabState(saved);
+      })
+      .catch(() => undefined);
+    AsyncStorage.getItem('@public_profile_view_mode')
+      .then((saved) => {
+        if (saved === 'list' || saved === 'gallery' || saved === 'compact') {
+          setTaskViewModeState(saved as TaskViewMode);
+        }
+      })
+      .catch(() => undefined);
+    AsyncStorage.getItem('@public_profile_filter')
+      .then((saved) => {
+        if (saved && ['all', 'active', 'completed'].includes(saved)) {
+          setFilterState(saved as Filter);
+        }
+      })
+      .catch(() => undefined);
+    AsyncStorage.getItem('@public_profile_album_filter')
+      .then((saved) => {
+        if (saved && ['all', 'active', 'completed', 'closed'].includes(saved)) {
+          setAlbumFilterState(saved as AlbumFilter);
+        }
+      })
+      .catch(() => undefined);
+  }, []);
 
   const isOwnProfile = !!user && user.id === id;
 
@@ -130,8 +179,13 @@ export default function PublicProfileScreen() {
     return (
       <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={styles.topBar}>
-          <Pressable onPress={goBack} style={styles.circleButton} accessibilityRole="button" accessibilityLabel="Volver">
-            <ChevronLeft size={22} color="#F2EFE8" strokeWidth={2} />
+          <Pressable
+            onPress={goBack}
+            style={[styles.circleButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+            accessibilityRole="button"
+            accessibilityLabel="Volver"
+          >
+            <ChevronLeft size={22} color={theme.colors.foreground} strokeWidth={2} />
           </Pressable>
         </View>
         <ProfileSkeleton />
@@ -143,8 +197,13 @@ export default function PublicProfileScreen() {
     return (
       <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={styles.topBar}>
-          <Pressable onPress={goBack} style={styles.circleButton} accessibilityRole="button" accessibilityLabel="Volver">
-            <ChevronLeft size={22} color="#F2EFE8" strokeWidth={2} />
+          <Pressable
+            onPress={goBack}
+            style={[styles.circleButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+            accessibilityRole="button"
+            accessibilityLabel="Volver"
+          >
+            <ChevronLeft size={22} color={theme.colors.foreground} strokeWidth={2} />
           </Pressable>
         </View>
         <EmptyState title="Usuario no encontrado" message="Puede que este perfil ya no exista." />
@@ -242,15 +301,27 @@ export default function PublicProfileScreen() {
   return (
     <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.topBar}>
-        <Pressable onPress={goBack} style={styles.circleButton} hitSlop={8} accessibilityRole="button" accessibilityLabel="Volver">
-          <ChevronLeft size={22} color="#F2EFE8" strokeWidth={2} />
+        <Pressable
+          onPress={goBack}
+          style={[styles.circleButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Volver"
+        >
+          <ChevronLeft size={22} color={theme.colors.foreground} strokeWidth={2} />
         </Pressable>
         {!isOwnProfile ? (
-          <Pressable onPress={openMenu} style={styles.circleButton} hitSlop={8} accessibilityRole="button" accessibilityLabel="Más opciones">
-            <MoreHorizontal size={22} color="#F2EFE8" strokeWidth={2} />
+          <Pressable
+            onPress={openMenu}
+            style={[styles.circleButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Más opciones"
+          >
+            <MoreHorizontal size={22} color={theme.colors.foreground} strokeWidth={2} />
           </Pressable>
         ) : (
-          <View style={styles.circleButton} />
+          <View style={[styles.circleButton, { backgroundColor: 'transparent', borderColor: 'transparent' }]} />
         )}
       </View>
 

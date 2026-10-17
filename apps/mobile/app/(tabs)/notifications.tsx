@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ActivityIndicator, FlatList, Pressable, Text, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ActivityIndicator, FlatList, Pressable, Text, Alert, AppState } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Typography, useTheme, spacing, Avatar, Button, Icon, PageTitle, Skeleton, gold } from '@bucketlist/ui';
 import { Check, CheckCheck, Heart, MessageCircle, UserPlus, CheckCircle, Bell, Users, X, Folder } from 'lucide-react-native';
@@ -11,6 +11,13 @@ import { supabase } from '../../src/services/supabase';
 import { useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import {
+  checkNotificationPermissionsAsync,
+  requestNotificationPermissionsAsync,
+  openAppNotificationSettings,
+  registerForPushNotificationsAsync,
+  type NotificationPermissionStatus,
+} from '../../src/services/notifications';
 
 export default function NotificationsScreen() {
   const { theme } = useTheme();
@@ -23,6 +30,49 @@ export default function NotificationsScreen() {
   const { data: notifications, isLoading } = useNotifications(user?.id);
   const markAsRead = useMarkAsRead();
   const markAllAsRead = useMarkAllAsRead();
+
+  const [permStatus, setPermStatus] = useState<NotificationPermissionStatus | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchPerms = async () => {
+      const res = await checkNotificationPermissionsAsync();
+      if (isMounted) setPermStatus(res);
+    };
+    fetchPerms();
+
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        fetchPerms();
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      sub.remove();
+    };
+  }, []);
+
+  const handleEnablePermissions = async () => {
+    if (!permStatus?.granted && !permStatus?.canAskAgain) {
+      Alert.alert(
+        'Permisos desactivados',
+        'Las notificaciones están bloqueadas en los ajustes de tu teléfono. Pulsa "Abrir Ajustes" para activarlas.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Abrir Ajustes', onPress: openAppNotificationSettings },
+        ]
+      );
+      return;
+    }
+
+    const res = await requestNotificationPermissionsAsync();
+    setPermStatus(res);
+    if (res.granted && user?.id) {
+      await registerForPushNotificationsAsync(user.id);
+      Alert.alert('¡Notificaciones activadas!', 'Ahora recibirás avisos en tu móvil cuando haya novedades.');
+    }
+  };
 
   const handleCollaborationResponse = async (notification: any, accept: boolean) => {
     setRespondingId(notification.id);
@@ -220,6 +270,37 @@ export default function NotificationsScreen() {
           </Pressable>
         ) : null}
       </View>
+
+      {permStatus && !permStatus.granted ? (
+        <View
+          style={[
+            styles.permBanner,
+            {
+              backgroundColor: theme.dark ? '#261805' : '#FFFBEB',
+              borderColor: '#F59E0B',
+            },
+          ]}
+        >
+          <Bell size={20} color="#F59E0B" style={{ marginTop: 2 }} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={[styles.permBannerTitle, { color: theme.dark ? '#FCD34D' : '#92400E' }]}>
+              Notificaciones desactivadas
+            </Text>
+            <Text style={[styles.permBannerText, { color: theme.dark ? '#FDE68A' : '#B45309' }]}>
+              Activa los permisos para recibir avisos y sonido en tu móvil cuando interactúen contigo.
+            </Text>
+          </View>
+          <Pressable
+            onPress={handleEnablePermissions}
+            style={styles.permBannerBtn}
+            accessibilityRole="button"
+          >
+            <Text style={styles.permBannerBtnText}>
+              {permStatus.canAskAgain ? 'Activar' : 'Ajustes'}
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
 
       <FlatList
         data={notifications || []}
@@ -424,4 +505,35 @@ const styles = StyleSheet.create({
   inviteBtnDecline: { backgroundColor: '#1E1E1E', borderWidth: 1, borderColor: '#3A3A3A' },
   inviteBtnTextAccept: { fontFamily: 'Inter_600SemiBold', fontSize: 13, color: '#111' },
   inviteBtnTextDecline: { fontFamily: 'Inter_400Regular', fontSize: 13, color: '#9A9A9A' },
+  permBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 6,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  permBannerTitle: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 13,
+  },
+  permBannerText: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  permBannerBtn: {
+    backgroundColor: '#F59E0B',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  permBannerBtnText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 12,
+    color: '#000000',
+  },
 });

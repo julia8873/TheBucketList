@@ -19,7 +19,7 @@ import Animated, {
   withSpring,
   runOnJS,
 } from 'react-native-reanimated';
-import { X, Download, Trash2, Calendar, CheckCircle2, Pencil } from 'lucide-react-native';
+import { X, Download, Trash2, Calendar, CheckCircle2, Pencil, Image as ImageIcon, Check } from 'lucide-react-native';
 import { Typography } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { storageApi } from '../services/api/storage';
@@ -245,6 +245,8 @@ type BucketPhotoViewerProps = {
   onUpdatePhotoDate?: (photoId: string, field: 'created_at' | 'completed_at', date: string | null) => void;
   /** Si se pasa y el usuario puede editar, aparece el botón de borrar. Debe pedir confirmación y borrar. */
   onDelete?: (photo: any) => void;
+  selectedThumbnailId?: string | null;
+  onSetAsThumbnail?: (photoId: string) => void;
 };
 
 export function BucketPhotoViewer({
@@ -255,6 +257,8 @@ export function BucketPhotoViewer({
   onUpdateTitle,
   onUpdatePhotoDate,
   onDelete,
+  selectedThumbnailId,
+  onSetAsThumbnail,
 }: BucketPhotoViewerProps) {
   const [isAnyPhotoZoomed, setIsAnyPhotoZoomed] = useState(false);
   const [datePickerState, setDatePickerState] = useState<{
@@ -501,6 +505,35 @@ export function BucketPhotoViewer({
                 onPress={() => onDelete(currentPhoto)}
               >
                 <Trash2 color="#F87171" size={20} strokeWidth={2} />
+              </Pressable>
+            )}
+            {isOwner && onSetAsThumbnail && (
+              <Pressable
+                accessibilityLabel="Fijar como portada"
+                style={[
+                  styles.actionBtn,
+                  currentPhoto.id === selectedThumbnailId
+                    ? { backgroundColor: gold[400], borderColor: gold[400] }
+                    : { backgroundColor: 'rgba(255,255,255,0.16)', borderColor: 'rgba(255,255,255,0.22)' },
+                  { borderWidth: 1 }
+                ]}
+                onPress={() => {
+                  onSetAsThumbnail(currentPhoto.id);
+                  Alert.alert('Portada de la tarea', 'Esta foto se ha establecido como imagen principal de la tarea.');
+                }}
+              >
+                {currentPhoto.id === selectedThumbnailId ? (
+                  <Check color="#000" size={17} strokeWidth={2.5} />
+                ) : (
+                  <ImageIcon color="#FFF" size={17} strokeWidth={2} />
+                )}
+                <Typography
+                  variant="bodySemibold"
+                  color={currentPhoto.id === selectedThumbnailId ? '#000' : '#FFF'}
+                  style={{ marginLeft: 6, fontSize: 13 }}
+                >
+                  {currentPhoto.id === selectedThumbnailId ? 'Portada actual' : 'Usar de portada'}
+                </Typography>
               </Pressable>
             )}
             <Pressable

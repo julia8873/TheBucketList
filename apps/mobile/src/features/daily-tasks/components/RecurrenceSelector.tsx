@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { RotateCw } from 'lucide-react-native';
-import { gold } from '@bucketlist/ui/src/tokens/colors';
+import { gold, useTheme } from '@bucketlist/ui';
 import { styles } from '../styles/explore.styles';
 import { getRecurrenceLabel } from '../utils/dailyTaskDateUtils';
 import type { DailyTaskRecurrenceUnit } from '../types';
@@ -35,9 +35,11 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
   setShowCustom,
   onAutoSave,
 }) => {
+  const { theme } = useTheme();
+
   return (
     <View style={{ marginBottom: 12 }}>
-      <Text style={styles.fieldLabel}>Repetir / Recurrencia</Text>
+      <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>Repetir / Recurrencia</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -47,6 +49,7 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
         <Pressable
           style={[
             styles.recurrencePresetPill,
+            { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
             !isRecurring && styles.recurrencePresetPillActive,
           ]}
           onPress={() => {
@@ -60,6 +63,7 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
           <Text
             style={[
               styles.recurrencePresetText,
+              { color: theme.colors.foregroundMuted },
               !isRecurring && styles.recurrencePresetTextActive,
             ]}
           >
@@ -71,6 +75,7 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
         <Pressable
           style={[
             styles.recurrencePresetPill,
+            { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
             isRecurring && interval === 1 && unit === 'days' && !showCustom && styles.recurrencePresetPillActive,
           ]}
           onPress={() => {
@@ -85,11 +90,12 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
         >
           <RotateCw
             size={12}
-            color={isRecurring && interval === 1 && unit === 'days' && !showCustom ? gold[400] : '#888'}
+            color={isRecurring && interval === 1 && unit === 'days' && !showCustom ? gold[400] : theme.colors.foregroundMuted}
           />
           <Text
             style={[
               styles.recurrencePresetText,
+              { color: theme.colors.foregroundMuted },
               isRecurring && interval === 1 && unit === 'days' && !showCustom && styles.recurrencePresetTextActive,
             ]}
           >
@@ -101,6 +107,7 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
         <Pressable
           style={[
             styles.recurrencePresetPill,
+            { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
             isRecurring && interval === 2 && unit === 'days' && !showCustom && styles.recurrencePresetPillActive,
           ]}
           onPress={() => {
@@ -115,11 +122,12 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
         >
           <RotateCw
             size={12}
-            color={isRecurring && interval === 2 && unit === 'days' && !showCustom ? gold[400] : '#888'}
+            color={isRecurring && interval === 2 && unit === 'days' && !showCustom ? gold[400] : theme.colors.foregroundMuted}
           />
           <Text
             style={[
               styles.recurrencePresetText,
+              { color: theme.colors.foregroundMuted },
               isRecurring && interval === 2 && unit === 'days' && !showCustom && styles.recurrencePresetTextActive,
             ]}
           >
@@ -131,6 +139,7 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
         <Pressable
           style={[
             styles.recurrencePresetPill,
+            { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
             isRecurring && interval === 1 && unit === 'weeks' && !showCustom && styles.recurrencePresetPillActive,
           ]}
           onPress={() => {
@@ -145,11 +154,12 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
         >
           <RotateCw
             size={12}
-            color={isRecurring && interval === 1 && unit === 'weeks' && !showCustom ? gold[400] : '#888'}
+            color={isRecurring && interval === 1 && unit === 'weeks' && !showCustom ? gold[400] : theme.colors.foregroundMuted}
           />
           <Text
             style={[
               styles.recurrencePresetText,
+              { color: theme.colors.foregroundMuted },
               isRecurring && interval === 1 && unit === 'weeks' && !showCustom && styles.recurrencePresetTextActive,
             ]}
           >
@@ -161,6 +171,7 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
         <Pressable
           style={[
             styles.recurrencePresetPill,
+            { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
             isRecurring && interval === 2 && unit === 'weeks' && !showCustom && styles.recurrencePresetPillActive,
           ]}
           onPress={() => {
@@ -175,11 +186,12 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
         >
           <RotateCw
             size={12}
-            color={isRecurring && interval === 2 && unit === 'weeks' && !showCustom ? gold[400] : '#888'}
+            color={isRecurring && interval === 2 && unit === 'weeks' && !showCustom ? gold[400] : theme.colors.foregroundMuted}
           />
           <Text
             style={[
               styles.recurrencePresetText,
+              { color: theme.colors.foregroundMuted },
               isRecurring && interval === 2 && unit === 'weeks' && !showCustom && styles.recurrencePresetTextActive,
             ]}
           >
@@ -191,6 +203,7 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
         <Pressable
           style={[
             styles.recurrencePresetPill,
+            { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
             isRecurring && interval === 1 && unit === 'months' && !showCustom && styles.recurrencePresetPillActive,
           ]}
           onPress={() => {
@@ -205,11 +218,12 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
         >
           <RotateCw
             size={12}
-            color={isRecurring && interval === 1 && unit === 'months' && !showCustom ? gold[400] : '#888'}
+            color={isRecurring && interval === 1 && unit === 'months' && !showCustom ? gold[400] : theme.colors.foregroundMuted}
           />
           <Text
             style={[
               styles.recurrencePresetText,
+              { color: theme.colors.foregroundMuted },
               isRecurring && interval === 1 && unit === 'months' && !showCustom && styles.recurrencePresetTextActive,
             ]}
           >
@@ -221,6 +235,7 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
         <Pressable
           style={[
             styles.recurrencePresetPill,
+            { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
             isRecurring && showCustom && styles.recurrencePresetPillActive,
           ]}
           onPress={() => {
@@ -234,6 +249,7 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
           <Text
             style={[
               styles.recurrencePresetText,
+              { color: theme.colors.foregroundMuted },
               isRecurring && showCustom && styles.recurrencePresetTextActive,
             ]}
           >
@@ -244,12 +260,12 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
 
       {/* Stepper y selector de unidades para personalizado */}
       {isRecurring && showCustom && (
-        <View style={styles.recurrenceCustomBox}>
+        <View style={[styles.recurrenceCustomBox, { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border }]}>
           <View style={styles.recurrenceStepperRow}>
-            <Text style={styles.recurrenceStepperLabel}>Repetir cada:</Text>
+            <Text style={[styles.recurrenceStepperLabel, { color: theme.colors.foreground }]}>Repetir cada:</Text>
             <View style={styles.recurrenceStepperControls}>
               <Pressable
-                style={styles.recurrenceStepBtn}
+                style={[styles.recurrenceStepBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
                 onPress={() => {
                   const nextVal = Math.max(1, interval - 1);
                   setInterval(nextVal);
@@ -259,11 +275,11 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
                 }}
                 hitSlop={6}
               >
-                <Text style={styles.recurrenceStepBtnText}>-</Text>
+                <Text style={[styles.recurrenceStepBtnText, { color: theme.colors.foreground }]}>-</Text>
               </Pressable>
-              <Text style={styles.recurrenceStepValueText}>{interval}</Text>
+              <Text style={[styles.recurrenceStepValueText, { color: theme.colors.foreground }]}>{interval}</Text>
               <Pressable
-                style={styles.recurrenceStepBtn}
+                style={[styles.recurrenceStepBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
                 onPress={() => {
                   const nextVal = Math.min(99, interval + 1);
                   setInterval(nextVal);
@@ -273,7 +289,7 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
                 }}
                 hitSlop={6}
               >
-                <Text style={styles.recurrenceStepBtnText}>+</Text>
+                <Text style={[styles.recurrenceStepBtnText, { color: theme.colors.foreground }]}>+</Text>
               </Pressable>
             </View>
           </View>
@@ -292,6 +308,7 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
                   key={u}
                   style={[
                     styles.recurrenceUnitPill,
+                    { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
                     isSelected && styles.recurrenceUnitPillActive,
                   ]}
                   onPress={() => {
@@ -304,6 +321,7 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
                   <Text
                     style={[
                       styles.recurrenceUnitText,
+                      { color: theme.colors.foregroundMuted },
                       isSelected && styles.recurrenceUnitTextActive,
                     ]}
                   >

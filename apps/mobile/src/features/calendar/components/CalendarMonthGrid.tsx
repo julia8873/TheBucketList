@@ -51,10 +51,22 @@ export function CalendarMonthGrid({
           </Typography>
         </View>
         <View style={{ flexDirection: 'row', gap: 12 }}>
-          <Pressable onPress={onPrevMonth} style={styles.navButton} hitSlop={8}>
+          <Pressable
+            onPress={onPrevMonth}
+            style={[styles.navButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Mes anterior"
+          >
             <ChevronLeft color={theme.colors.foreground} size={22} />
           </Pressable>
-          <Pressable onPress={onNextMonth} style={styles.navButton} hitSlop={8}>
+          <Pressable
+            onPress={onNextMonth}
+            style={[styles.navButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Mes siguiente"
+          >
             <ChevronRight color={theme.colors.foreground} size={22} />
           </Pressable>
         </View>
@@ -64,7 +76,7 @@ export function CalendarMonthGrid({
       <View style={styles.weekdaysRow}>
         {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((day, i) => (
           <View key={i} style={styles.weekdayCell}>
-            <Text style={styles.weekdayText}>{day}</Text>
+            <Text style={[styles.weekdayText, { color: theme.colors.foregroundMuted }]}>{day}</Text>
           </View>
         ))}
       </View>
@@ -113,15 +125,16 @@ export function CalendarMonthGrid({
                   style={[
                     styles.dayCircle,
                     isSelected && styles.dayCircleSelected,
-                    isToday && !isSelected && styles.dayCircleToday,
+                    isToday && !isSelected && [styles.dayCircleToday, { borderColor: theme.colors.border }],
                   ]}
                 >
                   <Text
                     style={[
                       styles.dayText,
+                      { color: theme.colors.foreground },
                       isSelected && styles.dayTextSelected,
-                      !isCurrentMonth && styles.dayTextOutside,
-                      isToday && !isSelected && styles.dayTextToday,
+                      !isCurrentMonth && { color: theme.colors.foregroundSubtle },
+                      isToday && !isSelected && { color: theme.colors.foreground, fontFamily: 'Inter_600SemiBold' },
                     ]}
                   >
                     {format(day, 'd')}
@@ -144,15 +157,15 @@ export function CalendarMonthGrid({
       <View style={styles.legendRow}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: '#D4B13A' }]} />
-          <Text style={styles.legendText}>Completada</Text>
+          <Text style={[styles.legendText, { color: theme.colors.foregroundMuted }]}>Completada</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: '#3A78C4' }]} />
-          <Text style={styles.legendText}>Pendiente</Text>
+          <Text style={[styles.legendText, { color: theme.colors.foregroundMuted }]}>Pendiente</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: '#EF4444' }]} />
-          <Text style={styles.legendText}>Vencida</Text>
+          <Text style={[styles.legendText, { color: theme.colors.foregroundMuted }]}>Vencida</Text>
         </View>
       </View>
     </>

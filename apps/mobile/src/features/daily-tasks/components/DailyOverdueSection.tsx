@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { AlertCircle, Calendar, CheckCircle2, Trash2 } from 'lucide-react-native';
 
+import { useTheme } from '@bucketlist/ui';
 import { styles } from '../styles/explore.styles';
 import { DailyTask } from '../types';
 import { DraggableTaskList, DragHandle } from '@/components/DraggableTaskList';
@@ -25,20 +26,30 @@ export function DailyOverdueSection({
   onCompleteAll,
   onDeleteAll,
 }: DailyOverdueSectionProps) {
+  const { theme } = useTheme();
+
   if (tasks.length === 0) return null;
 
   return (
     <View style={styles.overdueSectionWrapper}>
       <View style={styles.overdueSectionHeader}>
         <View style={styles.overdueSectionHeaderLeft}>
-          <View style={styles.overdueIconCircle}>
+          <View
+            style={[
+              styles.overdueIconCircle,
+              {
+                backgroundColor: theme.dark ? '#342105' : '#FDF3E1',
+                borderColor: theme.dark ? '#603B08' : '#F7D694',
+              },
+            ]}
+          >
             <AlertCircle size={15} color="#F59E0B" strokeWidth={2.4} />
           </View>
-          <Text style={styles.overdueSectionTitle}>
+          <Text style={[styles.overdueSectionTitle, { color: theme.dark ? '#F59E0B' : '#B45309' }]}>
             Atrasadas ({tasks.length})
           </Text>
         </View>
-        <Text style={styles.overdueSectionHint}>Pasa a hoy o reprograma</Text>
+        <Text style={[styles.overdueSectionHint, { color: theme.colors.foregroundMuted }]}>Pasa a hoy o reprograma</Text>
       </View>
 
       {/* Bulk action buttons - deslizable horizontalmente para que ninguna acción se corte */}
@@ -85,7 +96,15 @@ export function DailyOverdueSection({
         )}
       </ScrollView>
 
-      <View style={styles.overdueListCard}>
+      <View
+        style={[
+          styles.overdueListCard,
+          {
+            backgroundColor: theme.dark ? '#15110A' : '#FFF9F0',
+            borderColor: theme.dark ? '#38250A' : '#F2D39A',
+          },
+        ]}
+      >
         <DraggableTaskList
           items={tasks}
           gap={0}

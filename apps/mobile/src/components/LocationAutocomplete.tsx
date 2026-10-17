@@ -13,6 +13,7 @@ interface LocationResult {
 interface LocationAutocompleteProps {
   value: string;
   onChangeLocation: (location: { text: string; lat: number; lng: number } | null) => void;
+  onTextChange?: (text: string) => void;
   error?: string;
   label?: string;
   placeholder?: string;
@@ -24,6 +25,7 @@ const searchCache: Record<string, LocationResult[]> = {};
 export function LocationAutocomplete({
   value,
   onChangeLocation,
+  onTextChange,
   error,
   label = 'Ubicación',
   placeholder = 'Buscar ciudad o lugar...',
@@ -78,6 +80,7 @@ export function LocationAutocomplete({
 
   const handleChangeText = (text: string) => {
     setQuery(text);
+    onTextChange?.(text);
     if (!text) {
       onChangeLocation(null);
     }
@@ -105,6 +108,11 @@ export function LocationAutocomplete({
         placeholder={placeholder}
         value={query}
         onChangeText={handleChangeText}
+        onSubmitEditing={() => {
+          if (results[0]) {
+            handleSelect(results[0]);
+          }
+        }}
         error={error}
         leftIcon={<Icon icon={MapPin} color={theme.colors.foregroundMuted} size={18} />}
         rightIcon={loading ? <ActivityIndicator size="small" color={theme.colors.primary} /> : undefined}

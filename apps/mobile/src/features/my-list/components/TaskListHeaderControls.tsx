@@ -125,12 +125,20 @@ export function TaskListHeaderControls({
           onPress={() => setStatusSheetVisible(true)}
           accessibilityRole="button"
           accessibilityLabel="Filtrar por estado"
-          style={[styles.tagFilterBtn, filter !== 'all' && styles.tagFilterBtnActive]}
+          style={[
+            styles.tagFilterBtn,
+            {
+              backgroundColor: filter !== 'all'
+                ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
+                : theme.colors.surface,
+              borderColor: filter !== 'all' ? gold[400] : theme.colors.border,
+            },
+          ]}
         >
-          <Text style={[styles.tagFilterText, filter !== 'all' && { color: gold[400] }]}>
+          <Text style={[styles.tagFilterText, { color: filter !== 'all' ? gold[400] : theme.colors.foregroundMuted }]}>
             {STATUS_SHORT_LABEL[filter]}
           </Text>
-          <ChevronDown size={14} color={filter !== 'all' ? gold[400] : '#A0A0A0'} />
+          <ChevronDown size={14} color={filter !== 'all' ? gold[400] : theme.colors.foregroundMuted} />
         </Pressable>
 
         {/* Etiquetas */}
@@ -138,10 +146,18 @@ export function TaskListHeaderControls({
           onPress={onOpenTagFilterSheet}
           accessibilityRole="button"
           accessibilityLabel="Filtrar por etiquetas"
-          style={[styles.tagFilterBtn, selectedTagIds.length > 0 && styles.tagFilterBtnActive]}
+          style={[
+            styles.tagFilterBtn,
+            {
+              backgroundColor: selectedTagIds.length > 0
+                ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
+                : theme.colors.surface,
+              borderColor: selectedTagIds.length > 0 ? gold[400] : theme.colors.border,
+            },
+          ]}
         >
-          <TagIcon size={14} color={selectedTagIds.length > 0 ? gold[400] : '#E5E5E5'} strokeWidth={2} />
-          <Text style={[styles.tagFilterText, selectedTagIds.length > 0 && { color: gold[400] }]}>
+          <TagIcon size={14} color={selectedTagIds.length > 0 ? gold[400] : theme.colors.foregroundMuted} strokeWidth={2} />
+          <Text style={[styles.tagFilterText, { color: selectedTagIds.length > 0 ? gold[400] : theme.colors.foregroundMuted }]}>
             {selectedTagIds.length === 0
               ? 'Etiquetas'
               : selectedTagIds.length === 1
@@ -155,12 +171,20 @@ export function TaskListHeaderControls({
           onPress={() => setPrioritySheetVisible(true)}
           accessibilityRole="button"
           accessibilityLabel="Filtrar por prioridad"
-          style={[styles.tagFilterBtn, priorityFilter !== 'all' && styles.tagFilterBtnActive]}
+          style={[
+            styles.tagFilterBtn,
+            {
+              backgroundColor: priorityFilter !== 'all'
+                ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
+                : theme.colors.surface,
+              borderColor: priorityFilter !== 'all' ? gold[400] : theme.colors.border,
+            },
+          ]}
         >
-          <Text style={[styles.tagFilterText, priorityFilter !== 'all' && { color: gold[400] }]}>
+          <Text style={[styles.tagFilterText, { color: priorityFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted }]}>
             {PRIORITY_SHORT_LABEL[priorityFilter]}
           </Text>
-          <ChevronDown size={14} color={priorityFilter !== 'all' ? gold[400] : '#A0A0A0'} />
+          <ChevronDown size={14} color={priorityFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted} />
         </Pressable>
 
         {/* Chips de etiquetas seleccionadas */}
@@ -170,7 +194,7 @@ export function TaskListHeaderControls({
             onPress={() => onRemoveTagFilter(t.id)}
             accessibilityRole="button"
             accessibilityLabel={`Quitar etiqueta ${t.name}`}
-            style={styles.activeTagChip}
+            style={[styles.activeTagChip, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
           >
             {t.emoji ? (
               <View style={[styles.activeTagEmoji, { backgroundColor: hexToRgba(t.color, 0.3) }]}>
@@ -179,10 +203,10 @@ export function TaskListHeaderControls({
             ) : (
               <View style={[styles.activeTagDot, { backgroundColor: t.color }]} />
             )}
-            <Text style={styles.activeTagText} numberOfLines={1}>
+            <Text style={[styles.activeTagText, { color: theme.colors.foreground }]} numberOfLines={1}>
               {t.name}
             </Text>
-            <X size={15} color="#E5E5E5" strokeWidth={2} />
+            <X size={15} color={theme.colors.foregroundMuted} strokeWidth={2} />
           </Pressable>
         ))}
       </ScrollView>
@@ -204,7 +228,7 @@ export function TaskListHeaderControls({
         {/* Derecha: 1. Modo de vista (lista, galería, compacto), 2. Ordenar (Estado / etc.) */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           {/* Modos de vista a la izquierda de ordenar */}
-          <View style={styles.viewModeToggle}>
+          <View style={[styles.viewModeToggle, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
             <Pressable
               onPress={() => setTaskViewMode('list')}
               style={[styles.viewModeBtn, taskViewMode === 'list' && styles.viewModeBtnActive]}
@@ -212,7 +236,7 @@ export function TaskListHeaderControls({
               accessibilityRole="button"
               accessibilityLabel="Vista detallada"
             >
-              <LayoutList size={15} color={taskViewMode === 'list' ? '#0E0E0E' : '#A0A0A0'} />
+              <LayoutList size={15} color={taskViewMode === 'list' ? '#0E0E0E' : theme.colors.foregroundMuted} />
             </Pressable>
             <Pressable
               onPress={() => setTaskViewMode('gallery')}
@@ -221,7 +245,7 @@ export function TaskListHeaderControls({
               accessibilityRole="button"
               accessibilityLabel="Vista galería"
             >
-              <LayoutGrid size={15} color={taskViewMode === 'gallery' ? '#0E0E0E' : '#A0A0A0'} />
+              <LayoutGrid size={15} color={taskViewMode === 'gallery' ? '#0E0E0E' : theme.colors.foregroundMuted} />
             </Pressable>
             <Pressable
               onPress={() => setTaskViewMode('compact')}
@@ -230,7 +254,7 @@ export function TaskListHeaderControls({
               accessibilityRole="button"
               accessibilityLabel="Vista compacta"
             >
-              <AlignJustify size={15} color={taskViewMode === 'compact' ? '#0E0E0E' : '#A0A0A0'} />
+              <AlignJustify size={15} color={taskViewMode === 'compact' ? '#0E0E0E' : theme.colors.foregroundMuted} />
             </Pressable>
           </View>
 
@@ -247,9 +271,9 @@ export function TaskListHeaderControls({
                   height: 32,
                   paddingHorizontal: 8,
                   borderRadius: 8,
-                  backgroundColor: '#181818',
+                  backgroundColor: theme.colors.surface,
                   borderWidth: 1,
-                  borderColor: '#2A2A2A',
+                  borderColor: theme.colors.border,
                 },
               ]}
               accessibilityRole="button"
@@ -300,15 +324,15 @@ export function TaskListHeaderControls({
       <TagSheetShell visible={statusSheetVisible} onClose={() => setStatusSheetVisible(false)}>
         <View style={[localStyles.sheetContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
           <View style={localStyles.sheetHeader}>
-            <Text style={localStyles.sheetTitle}>Filtrar por estado</Text>
+            <Text style={[localStyles.sheetTitle, { color: theme.colors.foreground }]}>Filtrar por estado</Text>
             <Pressable
               onPress={() => setStatusSheetVisible(false)}
               hitSlop={8}
-              style={localStyles.sheetCloseBtn}
+              style={[localStyles.sheetCloseBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
               accessibilityRole="button"
               accessibilityLabel="Cerrar filtro de estado"
             >
-              <X size={16} color="#AAA" />
+              <X size={16} color={theme.colors.foregroundMuted} />
             </Pressable>
           </View>
 
@@ -324,7 +348,12 @@ export function TaskListHeaderControls({
                   }}
                   style={({ pressed }) => [
                     localStyles.sheetOptionRow,
-                    isSelected && localStyles.sheetOptionRowActive,
+                    {
+                      backgroundColor: isSelected
+                        ? (theme.dark ? 'rgba(212, 177, 58, 0.08)' : 'rgba(212, 177, 58, 0.12)')
+                        : theme.colors.surface,
+                      borderColor: isSelected ? gold[400] : theme.colors.border,
+                    },
                     pressed && { opacity: 0.8 },
                   ]}
                   accessibilityRole="button"
@@ -334,12 +363,12 @@ export function TaskListHeaderControls({
                     <Text
                       style={[
                         localStyles.sheetOptionTitle,
-                        isSelected && localStyles.sheetOptionTitleActive,
+                        { color: isSelected ? gold[400] : theme.colors.foreground },
                       ]}
                     >
                       {opt.label}
                     </Text>
-                    <Text style={localStyles.sheetOptionDesc}>{opt.desc}</Text>
+                    <Text style={[localStyles.sheetOptionDesc, { color: theme.colors.foregroundMuted }]}>{opt.desc}</Text>
                   </View>
                   {isSelected && <Check size={18} color={gold[400]} strokeWidth={2.5} />}
                 </Pressable>
@@ -353,15 +382,15 @@ export function TaskListHeaderControls({
       <TagSheetShell visible={prioritySheetVisible} onClose={() => setPrioritySheetVisible(false)}>
         <View style={[localStyles.sheetContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
           <View style={localStyles.sheetHeader}>
-            <Text style={localStyles.sheetTitle}>Filtrar por prioridad</Text>
+            <Text style={[localStyles.sheetTitle, { color: theme.colors.foreground }]}>Filtrar por prioridad</Text>
             <Pressable
               onPress={() => setPrioritySheetVisible(false)}
               hitSlop={8}
-              style={localStyles.sheetCloseBtn}
+              style={[localStyles.sheetCloseBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
               accessibilityRole="button"
               accessibilityLabel="Cerrar filtro de prioridad"
             >
-              <X size={16} color="#AAA" />
+              <X size={16} color={theme.colors.foregroundMuted} />
             </Pressable>
           </View>
 
@@ -377,7 +406,12 @@ export function TaskListHeaderControls({
                   }}
                   style={({ pressed }) => [
                     localStyles.sheetOptionRow,
-                    isSelected && localStyles.sheetOptionRowActive,
+                    {
+                      backgroundColor: isSelected
+                        ? (theme.dark ? 'rgba(212, 177, 58, 0.08)' : 'rgba(212, 177, 58, 0.12)')
+                        : theme.colors.surface,
+                      borderColor: isSelected ? gold[400] : theme.colors.border,
+                    },
                     pressed && { opacity: 0.8 },
                   ]}
                   accessibilityRole="button"
@@ -387,12 +421,12 @@ export function TaskListHeaderControls({
                     <Text
                       style={[
                         localStyles.sheetOptionTitle,
-                        isSelected && localStyles.sheetOptionTitleActive,
+                        { color: isSelected ? gold[400] : theme.colors.foreground },
                       ]}
                     >
                       {opt.label}
                     </Text>
-                    <Text style={localStyles.sheetOptionDesc}>{opt.desc}</Text>
+                    <Text style={[localStyles.sheetOptionDesc, { color: theme.colors.foregroundMuted }]}>{opt.desc}</Text>
                   </View>
                   {isSelected && <Check size={18} color={gold[400]} strokeWidth={2.5} />}
                 </Pressable>

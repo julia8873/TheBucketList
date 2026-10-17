@@ -23,6 +23,7 @@ import { useEntitySubscription } from '@/hooks/useEntityNotifications';
 import { useCopyBucket, useCopiedBucketIds } from '@/hooks/useSocial';
 import { uploadAlbumCover } from '@/services/api/albumCover';
 import { TaskSortField, TaskSortDir } from '../components/AlbumSortModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export function useAlbumDetailState() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -49,8 +50,33 @@ export function useAlbumDetailState() {
   const { data: entitySub } = useEntitySubscription('album', id, currentUserId);
   const subStatus = entitySub?.status;
 
-  const [taskSortField, setTaskSortField] = useState<TaskSortField>('manual');
-  const [taskSortDir, setTaskSortDir] = useState<TaskSortDir>('asc');
+  const [taskSortField, setTaskSortFieldState] = useState<TaskSortField>('manual');
+  const setTaskSortField = (field: TaskSortField) => {
+    setTaskSortFieldState(field);
+    void AsyncStorage.setItem('@album_task_sort_field', field).catch(() => undefined);
+  };
+
+  const [taskSortDir, setTaskSortDirState] = useState<TaskSortDir>('asc');
+  const setTaskSortDir = (dir: TaskSortDir | ((prev: TaskSortDir) => TaskSortDir)) => {
+    setTaskSortDirState((prev) => {
+      const next = typeof dir === 'function' ? dir(prev) : dir;
+      void AsyncStorage.setItem('@album_task_sort_dir', next).catch(() => undefined);
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    AsyncStorage.getItem('@album_task_sort_field')
+      .then((saved) => {
+        if (saved) setTaskSortFieldState(saved as TaskSortField);
+      })
+      .catch(() => undefined);
+    AsyncStorage.getItem('@album_task_sort_dir')
+      .then((saved) => {
+        if (saved) setTaskSortDirState(saved as TaskSortDir);
+      })
+      .catch(() => undefined);
+  }, []);
   const [taskSortMenuOpen, setTaskSortMenuOpen] = useState(false);
   const [taskSortMenuPos, setTaskSortMenuPos] = useState({ top: 0, right: 20 });
   const taskSortTriggerRef = useRef<View>(null);

@@ -15,7 +15,7 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import { Search, X, ChevronLeft } from 'lucide-react-native';
-import { TagChip } from '@bucketlist/ui';
+import { TagChip, useTheme } from '@bucketlist/ui';
 import { useTags, useCreateTag } from '../hooks/useTags';
 import { TagAppearanceFields } from './TagAppearanceFields';
 import { TAG_COLORS, TAG_NAME_MAX, defaultColorForEmoji, defaultEmojiFor, hexToRgba } from '../constants/tagPresets';
@@ -53,6 +53,7 @@ function SectionLabel({ gold, rest }: { gold: string; rest?: string }) {
 }
 
 export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: TagPickerSheetProps) {
+    const { theme } = useTheme();
     const [mounted, setMounted] = useState(visible);
     const translateY = useRef(new Animated.Value(SHEET_H)).current;
     const backdrop = useRef(new Animated.Value(0)).current;
@@ -194,9 +195,19 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
     const renderList = (
         <View style={{ flex: 1 }}>
             <View style={styles.headerRow}>
-                <Text style={styles.title}>Etiquetas</Text>
-                <Pressable style={styles.closeBtn} onPress={close} accessibilityLabel="Cerrar">
-                    <X color="#F5F5F5" size={18} />
+                <Text style={[styles.title, { color: theme.colors.foreground }]}>Etiquetas</Text>
+                <Pressable
+                    style={[
+                        styles.closeBtn,
+                        {
+                            backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+                            borderColor: theme.colors.border,
+                        },
+                    ]}
+                    onPress={close}
+                    accessibilityLabel="Cerrar"
+                >
+                    <X color={theme.colors.foreground} size={18} />
                 </Pressable>
             </View>
 
@@ -206,12 +217,20 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
             >
-                <View style={styles.searchBox}>
-                    <Search color="#9A9A9A" size={20} />
+                <View
+                    style={[
+                        styles.searchBox,
+                        {
+                            backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+                            borderColor: theme.colors.border,
+                        },
+                    ]}
+                >
+                    <Search color={theme.colors.foregroundMuted} size={20} />
                     <TextInput
-                        style={styles.searchInput}
+                        style={[styles.searchInput, { color: theme.colors.foreground }]}
                         placeholder="Buscar etiquetas"
-                        placeholderTextColor="#6B6B6B"
+                        placeholderTextColor={theme.colors.foregroundSubtle ?? '#6B6B6B'}
                         value={query}
                         onChangeText={setQuery}
                         autoCorrect={false}
@@ -238,7 +257,16 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
                 {isLoading ? (
                     <View style={styles.wrap}>
                         {[84, 110, 96, 72].map((w, i) => (
-                            <View key={i} style={[styles.skeleton, { width: w }]} />
+                            <View
+                                key={i}
+                                style={[
+                                    styles.skeleton,
+                                    {
+                                        width: w,
+                                        backgroundColor: theme.colors.surfaceElevated ?? theme.colors.border,
+                                    },
+                                ]}
+                            />
                         ))}
                     </View>
                 ) : isError ? (
@@ -281,7 +309,15 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
                 {!!submitError && mode === 'list' && <Text style={[styles.errorText, { marginTop: 12 }]}>{submitError}</Text>}
             </ScrollView>
 
-            <View style={styles.footer}>
+            <View
+                style={[
+                    styles.footer,
+                    {
+                        backgroundColor: theme.colors.surface,
+                        borderTopColor: theme.colors.border,
+                    },
+                ]}
+            >
                 <Pressable style={styles.cta} onPress={close}>
                     <Text style={styles.ctaText}>Guardar etiquetas</Text>
                 </Pressable>
@@ -294,10 +330,20 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
     const renderCreate = (
         <View style={{ flexShrink: 1 }}>
             <View style={styles.headerRow}>
-                <Pressable style={styles.closeBtn} onPress={() => switchMode('list')} accessibilityLabel="Volver">
-                    <ChevronLeft color="#F5F5F5" size={22} />
+                <Pressable
+                    style={[
+                        styles.closeBtn,
+                        {
+                            backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+                            borderColor: theme.colors.border,
+                        },
+                    ]}
+                    onPress={() => switchMode('list')}
+                    accessibilityLabel="Volver"
+                >
+                    <ChevronLeft color={theme.colors.foreground} size={22} />
                 </Pressable>
-                <Text style={[styles.title, { flex: 1, marginLeft: 14 }]}>Nueva etiqueta</Text>
+                <Text style={[styles.title, { flex: 1, marginLeft: 14, color: theme.colors.foreground }]}>Nueva etiqueta</Text>
             </View>
 
             <ScrollView
@@ -308,14 +354,21 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
             >
                 <SectionLabel gold="NOMBRE" rest="DE LA ETIQUETA" />
                 <TextInput
-                    style={[styles.nameInput, !!errorText && { borderColor: '#C0453A' }]}
+                    style={[
+                        styles.nameInput,
+                        {
+                            backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+                            color: theme.colors.foreground,
+                        },
+                        !!errorText && { borderColor: '#C0453A' },
+                    ]}
                     value={name}
                     onChangeText={(t) => {
                         setName(t.slice(0, TAG_NAME_MAX));
                         setSubmitError(null);
                     }}
                     placeholder="Ej. Luna de miel"
-                    placeholderTextColor="#6B6B6B"
+                    placeholderTextColor={theme.colors.foregroundSubtle ?? '#6B6B6B'}
                     autoFocus
                     maxLength={TAG_NAME_MAX}
                     returnKeyType="done"
@@ -351,7 +404,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
                     ) : (
                         <View style={[styles.previewDot, { backgroundColor: color }]} />
                     )}
-                    <Text style={[styles.previewText, { color: '#F5F5F5' }]}>{name.trim() || 'Nueva etiqueta'}</Text>
+                    <Text style={[styles.previewText, { color: theme.colors.foreground }]}>{name.trim() || 'Nueva etiqueta'}</Text>
                 </View>
 
                 <View style={styles.btnRow}>
@@ -384,12 +437,16 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
                 <Animated.View
                     style={[
                         styles.sheet,
+                        {
+                            backgroundColor: theme.colors.surface,
+                            borderColor: theme.colors.border,
+                        },
                         mode === 'list' ? { height: SHEET_H } : { maxHeight: SHEET_H },
                         { transform: [{ translateY }] },
                     ]}
                 >
                     <View {...pan.panHandlers} style={styles.handleArea}>
-                        <View style={styles.handle} />
+                        <View style={[styles.handle, { backgroundColor: theme.colors.border }]} />
                     </View>
                     <Animated.View style={[{ opacity: fade }, mode === 'list' ? { flex: 1 } : { flexShrink: 1 }]}>
                         {mode === 'list' ? renderList : renderCreate}

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Check, CheckCircle2, Star } from 'lucide-react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
+import { useTheme } from '@bucketlist/ui';
 import { BucketCover } from '@/components/BucketCover';
 import { resolveTaskImage } from '@/utils/taskImage';
 import { styles } from '../styles/my-list.styles';
@@ -25,6 +26,7 @@ export function TaskGalleryItemCard({
   onPress,
   onLongPress,
 }: TaskGalleryItemCardProps) {
+  const { theme } = useTheme();
   const isCompleted = item.status === 'completed';
   const subtasksTotal = item.item_subtasks?.length || 0;
   const subtasksDone = item.item_subtasks?.filter((s: any) => s.done).length || 0;
@@ -37,6 +39,10 @@ export function TaskGalleryItemCard({
       onLongPress={onLongPress}
       style={[
         styles.galleryCard,
+        {
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.border,
+        },
         isSingle && styles.galleryCardSingle,
         isSelected && { borderColor: gold[400], borderWidth: 2 },
       ]}

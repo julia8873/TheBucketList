@@ -18,7 +18,7 @@ import { useUserFavorites, useToggleFavoriteBucket } from '@/hooks/useFavorites'
 import { useEntitySubscription } from '@/hooks/useEntityNotifications';
 import { MENTION_TASK_COLUMNS, MentionTask } from '@/components/TaskMentionPickerSheet';
 import { CollaboratorItem } from '@/components/CollaboratorPickerSheet';
-import { ThumbnailMode } from '@/utils/taskImage';
+import { ThumbnailMode, resolveTaskImage } from '@/utils/taskImage';
 import { PhotoSortField, PhotoSortDir } from '../components/PhotoSortModal';
 import { DatePickerConfig } from '../components/BucketDatePickerModal';
 
@@ -295,7 +295,8 @@ export function useBucketDetailState() {
     .filter((p: any) => !!p.storage_path)
     .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
   const hasCover = !!bucket?.cover_image;
-  const isCustomCover = !!bucket?.cover_image && !bucket.cover_image.startsWith('preset:');
+  const resolvedCover = resolveTaskImage(bucket);
+  const isCustomCover = !!resolvedCover && !resolvedCover.startsWith('preset:');
   const chosenPhotoId =
     bucket?.thumbnail_mode === 'photo' && thumbPhotos.some((p: any) => p.id === bucket?.thumbnail_photo_id)
       ? (bucket.thumbnail_photo_id as string)
@@ -445,6 +446,7 @@ export function useBucketDetailState() {
     }
     void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
     void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+    void queryClient.invalidateQueries({ queryKey: ['map-tasks'] });
   };
 
   const handleRemoveLocation = async () => {
@@ -882,26 +884,31 @@ export function useBucketDetailState() {
   };
 
   const chooseThumbnail = async (mode: ThumbnailMode, photoId: string | null = null) => {
+    const targetId = Array.isArray(id) ? id[0] : id;
     const patch = {
       thumbnail_mode: mode,
       thumbnail_photo_id: mode === 'photo' ? photoId : null,
     };
-    const previous = queryClient.getQueryData(['bucketDetail', id]);
-    queryClient.setQueryData(['bucketDetail', id], (oldData: any) =>
+    const previous = queryClient.getQueryData(['bucketDetail', targetId]);
+    queryClient.setQueryData(['bucketDetail', targetId], (oldData: any) =>
       oldData ? { ...oldData, ...patch } : oldData,
     );
 
-    const { error } = await supabase.from('buckets').update(patch).eq('id', id);
+    const { error } = await supabase.from('buckets').update(patch).eq('id', targetId);
     if (error) {
-      queryClient.setQueryData(['bucketDetail', id], previous);
+      queryClient.setQueryData(['bucketDetail', targetId], previous);
       Alert.alert('No se pudo cambiar la imagen', error.message || 'Inténtalo de nuevo.');
       return;
     }
 
     invalidateBucket();
+    void queryClient.invalidateQueries({ queryKey: ['bucketDetail', targetId] });
     void queryClient.invalidateQueries({ queryKey: ['feed'] });
     void queryClient.invalidateQueries({ queryKey: ['explore'] });
     void queryClient.invalidateQueries({ queryKey: ['unassigned_tasks'] });
+    void queryClient.invalidateQueries({ queryKey: ['map-tasks'] });
+    void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+    void queryClient.invalidateQueries({ queryKey: ['album'] });
   };
 
   const handleDelete = () => {
@@ -1245,6 +1252,7 @@ export function useBucketDetailState() {
     photos,
     thumbPhotos,
     hasCover,
+    resolvedCover,
     isCustomCover,
     chosenPhotoId,
     thumbSelection,

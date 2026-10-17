@@ -1,5 +1,6 @@
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
+import * as Linking from 'expo-linking';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { supabase } from './supabase';
@@ -12,57 +13,115 @@ Notifications.setNotificationHandler({
   }),
 });
 
-// Configure default notification channel immediately on Android
+export const EAS_PROJECT_ID =
+  Constants.expoConfig?.extra?.eas?.projectId ?? 'bcb60c8e-f88c-486d-84fa-20af0d452f8a';
+
+export async function setupNotificationChannelAsync() {
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'Notificaciones',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#D4AF37',
+      enableLights: true,
+      enableVibrate: true,
+      showBadge: true,
+      sound: 'default',
+    });
+  }
+}
+
+// Configure immediately on module import
 if (Platform.OS === 'android') {
-  void Notifications.setNotificationChannelAsync('default', {
-    name: 'default',
-    importance: Notifications.AndroidImportance.MAX,
-    vibrationPattern: [0, 250, 250, 250],
-    lightColor: '#FF231F7C',
-    enableLights: true,
-    enableVibrate: true,
-    showBadge: true,
+  void setupNotificationChannelAsync();
+}
+
+export interface NotificationPermissionStatus {
+  status: Notifications.PermissionStatus;
+  granted: boolean;
+  canAskAgain: boolean;
+}
+
+/** Comprueba el estado actual de los permisos del sistema en el dispositivo */
+export async function checkNotificationPermissionsAsync(): Promise<NotificationPermissionStatus> {
+  if (Platform.OS === 'web') {
+    return { status: Notifications.PermissionStatus.GRANTED, granted: true, canAskAgain: true };
+  }
+  const settings = await Notifications.getPermissionsAsync();
+  return {
+    status: settings.status,
+    granted: settings.granted || settings.status === 'granted',
+    canAskAgain: settings.canAskAgain,
+  };
+}
+
+/** Solicita permisos al usuario mostrando el diálogo del sistema operativo */
+export async function requestNotificationPermissionsAsync(): Promise<NotificationPermissionStatus> {
+  if (Platform.OS === 'web') {
+    return { status: Notifications.PermissionStatus.GRANTED, granted: true, canAskAgain: true };
+  }
+  await setupNotificationChannelAsync();
+  const settings = await Notifications.requestPermissionsAsync({
+    ios: {
+      allowAlert: true,
+      allowBadge: true,
+      allowSound: true,
+    },
+  });
+  return {
+    status: settings.status,
+    granted: settings.granted || settings.status === 'granted',
+    canAskAgain: settings.canAskAgain,
+  };
+}
+
+/** Abre la pantalla de ajustes de la aplicación en el sistema (Android / iOS) si los permisos están bloqueados */
+export function openAppNotificationSettings() {
+  if (Platform.OS !== 'web') {
+    Linking.openSettings().catch((err) => console.warn('Could not open system settings:', err));
+  }
+}
+
+/** Envía una notificación local de prueba para verificar sonido, banner y canal */
+export async function sendLocalTestNotification() {
+  await setupNotificationChannelAsync();
+  return await Notifications.scheduleNotificationAsync({
+    content: {
+      title: 'The Bucket List 🎯',
+      body: '¡Las notificaciones están funcionando correctamente en tu teléfono!',
+      data: { type: 'test' },
+      sound: 'default',
+      priority: Notifications.AndroidNotificationPriority.MAX,
+    },
+    trigger: Platform.OS === 'android' ? { channelId: 'default' } : null,
   });
 }
 
-const EAS_PROJECT_ID =
-  Constants.expoConfig?.extra?.eas?.projectId ?? 'bcb60c8e-f88c-486d-84fa-20af0d452f8a';
-
-export async function registerForPushNotificationsAsync(userId: string) {
+/** Registra el token push para el usuario actual en la base de datos */
+export async function registerForPushNotificationsAsync(userId: string): Promise<{ granted: boolean; token?: string }> {
   if (Platform.OS === 'web') {
-    return;
+    return { granted: false };
   }
 
-  let token: string | undefined;
-
   try {
-    // Ensure Android channel exists
-    if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('default', {
-        name: 'default',
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#FF231F7C',
-        enableLights: true,
-        enableVibrate: true,
-        showBadge: true,
-      });
+    await setupNotificationChannelAsync();
+
+    const perm = await checkNotificationPermissionsAsync();
+    let granted = perm.granted;
+
+    if (!granted && perm.canAskAgain) {
+      const requested = await requestNotificationPermissionsAsync();
+      granted = requested.granted;
     }
 
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
+    if (!granted) {
+      console.log('[notifications] Push notification permissions not granted');
+      return { granted: false };
     }
 
-    if (finalStatus !== 'granted') {
-      console.log('Push notification permissions not granted');
-      return;
-    }
+    let token: string | undefined;
 
-    // 1. Try getting the Expo Push Token with projectId
+    // 1. Obtener Expo Push Token
     try {
       const expoTokenObj = await Notifications.getExpoPushTokenAsync({
         projectId: EAS_PROJECT_ID,
@@ -78,7 +137,7 @@ export async function registerForPushNotificationsAsync(userId: string) {
       console.warn('Error fetching expo push token:', e);
     }
 
-    // 2. Fallback to device push token if needed on physical device
+    // 2. Fallback a device push token si estamos en dispositivo físico
     if (!token && Device.isDevice) {
       try {
         const pushTokenData = await Notifications.getDevicePushTokenAsync().catch(() => null);
@@ -89,9 +148,9 @@ export async function registerForPushNotificationsAsync(userId: string) {
     }
 
     if (token) {
-      console.log('Push token acquired successfully:', token);
+      console.log('[notifications] Push token acquired successfully:', token);
 
-      // 1. Upsert into push_tokens table
+      // Guardar en tabla push_tokens
       try {
         await supabase.from('push_tokens').upsert(
           {
@@ -105,7 +164,7 @@ export async function registerForPushNotificationsAsync(userId: string) {
         console.warn('Error saving to push_tokens table:', err);
       }
 
-      // 2. Also update profiles table with push_token for backend edge functions
+      // Guardar en tabla profiles
       try {
         await supabase
           .from('profiles')
@@ -116,40 +175,54 @@ export async function registerForPushNotificationsAsync(userId: string) {
       } catch (err) {
         console.warn('Error updating profile push_token:', err);
       }
+
+      return { granted: true, token };
     }
+
+    return { granted: true };
   } catch (err) {
     console.warn('Error registering for push notifications:', err);
+    return { granted: false };
   }
 }
 
+/** Envía una notificación push remota mediante la API de Expo a un usuario o token */
 export async function sendPushNotification(
   tokenOrUserId: string,
   title: string,
   body: string,
   data: Record<string, any> = {}
 ) {
-  let targetToken = tokenOrUserId;
-  if (!targetToken.startsWith('ExponentPushToken[') && targetToken.includes('-')) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('push_token')
-      .eq('id', targetToken)
-      .single();
-    if (profile?.push_token) {
-      targetToken = profile.push_token;
-    } else {
-      const { data: pt } = await supabase
-        .from('push_tokens')
-        .select('token')
-        .eq('user_id', targetToken)
-        .limit(1)
-        .maybeSingle();
-      if (pt?.token) targetToken = pt.token;
-      else return;
-    }
+  let targetTokens: string[] = [];
+
+  if (tokenOrUserId.startsWith('ExponentPushToken[')) {
+    targetTokens.push(tokenOrUserId);
+  } else if (tokenOrUserId.includes('-')) {
+    // Es un user_id: buscar en push_tokens y profiles
+    const [ptRes, profRes] = await Promise.all([
+      supabase.from('push_tokens').select('token').eq('user_id', tokenOrUserId),
+      supabase.from('profiles').select('push_token').eq('id', tokenOrUserId).maybeSingle(),
+    ]);
+
+    const set = new Set<string>();
+    if (profRes.data?.push_token) set.add(profRes.data.push_token);
+    ptRes.data?.forEach((r) => {
+      if (r.token) set.add(r.token);
+    });
+    targetTokens = Array.from(set);
   }
 
-  if (!targetToken) return;
+  if (targetTokens.length === 0) return;
+
+  const messages = targetTokens.map((to) => ({
+    to,
+    title,
+    body,
+    sound: 'default',
+    channelId: 'default',
+    priority: 'high',
+    data,
+  }));
 
   try {
     await fetch('https://exp.host/--/api/v2/push/send', {
@@ -159,13 +232,7 @@ export async function sendPushNotification(
         'Accept-encoding': 'gzip, deflate',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        to: targetToken,
-        title,
-        body,
-        sound: 'default',
-        data,
-      }),
+      body: JSON.stringify(messages),
     });
   } catch (err) {
     console.warn('Error sending expo push notification:', err);
@@ -182,11 +249,12 @@ export async function scheduleDeadlineReminder(bucketId: string, title: string, 
   if (threeDaysBefore > new Date()) {
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: "Goal Deadline Approaching! 🎯",
-        body: `You have 3 days left to complete: ${title}`,
+        title: "¡Fecha límite acercándose! 🎯",
+        body: `Te quedan 3 días para completar: ${title}`,
         data: { bucketId },
+        sound: 'default',
       },
-      trigger: { type: 'date', date: threeDaysBefore } as any,
+      trigger: { type: 'date', date: threeDaysBefore, channelId: Platform.OS === 'android' ? 'default' : undefined } as any,
     });
   }
 
@@ -194,11 +262,12 @@ export async function scheduleDeadlineReminder(bucketId: string, title: string, 
   if (deadlineDate > new Date()) {
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: "Today is the day! ⚡",
-        body: `Your deadline for "${title}" is today!`,
+        title: "¡Hoy es el gran día! ⚡",
+        body: `¡Tu fecha límite para "${title}" es hoy!`,
         data: { bucketId },
+        sound: 'default',
       },
-      trigger: { type: 'date', date: deadlineDate } as any,
+      trigger: { type: 'date', date: deadlineDate, channelId: Platform.OS === 'android' ? 'default' : undefined } as any,
     });
   }
 }

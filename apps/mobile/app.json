@@ -26,7 +26,6 @@
         "backgroundColor": "#FAF8F5"
       },
       "package": "com.bucketlist.app",
-      "versionCode": 3,
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
@@ -93,9 +92,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "bcb60c8e-f88c-486d-84fa-20af0d452f8a"
+        "projectId": "a16667bf-f08f-425b-9205-fb88f66c0bfe"
       }
     },
-    "owner": "julia8873"
+    "owner": "julia88738"
   }
 }

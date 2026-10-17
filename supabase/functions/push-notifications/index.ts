@@ -17,9 +17,24 @@ export default {
           .from('profiles')
           .select('push_token, display_name, username')
           .eq('id', record.recipient_id)
-          .single();
+          .maybeSingle();
 
-        if (!profile || !profile.push_token) {
+        let pushToken = profile?.push_token;
+
+        if (!pushToken) {
+          const { data: pt } = await ctx.supabaseAdmin
+            .from('push_tokens')
+            .select('token')
+            .eq('user_id', record.recipient_id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (pt?.token) {
+            pushToken = pt.token;
+          }
+        }
+
+        if (!pushToken) {
           console.log('No push token found for user:', record.recipient_id);
           return Response.json({ message: 'No push token' });
         }
@@ -65,7 +80,7 @@ export default {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            to: profile.push_token,
+            to: pushToken,
             sound: 'default',
             channelId: 'default',
             title,

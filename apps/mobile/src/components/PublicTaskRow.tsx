@@ -2,7 +2,7 @@ import React from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { differenceInCalendarDays } from 'date-fns';
-import { Pill, ProgressBar, UrgencyChip, fontFamily, gold } from '@bucketlist/ui';
+import { Pill, ProgressBar, UrgencyChip, fontFamily, gold, useTheme } from '@bucketlist/ui';
 import { BucketCover } from './BucketCover';
 import { resolveTaskImage } from '../utils/taskImage';
 import { useAuthStore } from '../stores/auth.store';
@@ -52,6 +52,7 @@ function buildProgress(bucket: any): number | null {
 
 /** Fila/tarjeta de tarea de un perfil público (soporta list, gallery y compact). */
 export function PublicTaskRow({ bucket, isOwnProfile = false, onPress, mode = 'list' }: PublicTaskRowProps) {
+  const { theme } = useTheme();
   const { user } = useAuthStore();
   const copyBucket = useCopyBucket();
   const { data: copiedIds } = useCopiedBucketIds(user?.id);
@@ -84,11 +85,20 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, onPress, mode = 'l
     chip = <UrgencyChip deadline={bucket.deadline} />;
   }
 
+  const pressedBg = theme.dark ? '#222222' : '#EDE8DE';
+
   if (mode === 'gallery') {
     return (
       <Pressable
         onPress={onPress}
-        style={({ pressed }) => [styles.galleryCard, { opacity: pressed ? 0.88 : 1 }]}
+        style={({ pressed }) => [
+          styles.galleryCard,
+          {
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.border,
+            opacity: pressed ? 0.88 : 1,
+          },
+        ]}
         accessibilityRole="button"
         accessibilityLabel={bucket.title}
       >
@@ -126,7 +136,13 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, onPress, mode = 'l
     return (
       <Pressable
         onPress={onPress}
-        style={({ pressed }) => [styles.compactRow, { backgroundColor: pressed ? '#202020' : '#161616' }]}
+        style={({ pressed }) => [
+          styles.compactRow,
+          {
+            backgroundColor: pressed ? pressedBg : theme.colors.surface,
+            borderColor: theme.colors.border,
+          },
+        ]}
         accessibilityRole="button"
         accessibilityLabel={bucket.title}
       >
@@ -140,10 +156,10 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, onPress, mode = 'l
         />
 
         <View style={styles.compactContent}>
-          <Text style={styles.compactTitle} numberOfLines={1}>
+          <Text style={[styles.compactTitle, { color: theme.colors.foreground }]} numberOfLines={1}>
             {bucket.title}
           </Text>
-          <Text style={styles.compactMeta} numberOfLines={1}>
+          <Text style={[styles.compactMeta, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
             {buildMeta(bucket)}
           </Text>
         </View>
@@ -156,7 +172,13 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, onPress, mode = 'l
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.row, { backgroundColor: pressed ? '#202020' : '#161616' }]}
+      style={({ pressed }) => [
+        styles.row,
+        {
+          backgroundColor: pressed ? pressedBg : theme.colors.surface,
+          borderColor: theme.colors.border,
+        },
+      ]}
       accessibilityRole="button"
       accessibilityLabel={bucket.title}
     >
@@ -170,13 +192,13 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, onPress, mode = 'l
       />
 
       <View style={styles.content}>
-        <Text style={styles.title} numberOfLines={2}>
+        <Text style={[styles.title, { color: theme.colors.foreground }]} numberOfLines={2}>
           {bucket.title}
         </Text>
-        <Text style={styles.meta} numberOfLines={1}>
+        <Text style={[styles.meta, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
           {buildMeta(bucket)}
         </Text>
-        {progress !== null ? <ProgressBar value={progress} colorOverride={gold[400]} style={styles.progress} /> : null}
+        {progress !== null ? <ProgressBar value={progress} colorOverride={theme.colors.primary} style={styles.progress} /> : null}
       </View>
 
       {chip ? <View style={styles.chip}>{chip}</View> : null}

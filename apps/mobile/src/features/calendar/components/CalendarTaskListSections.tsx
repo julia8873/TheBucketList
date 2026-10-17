@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { TaskRow } from '@bucketlist/ui';
+import { TaskRow, useTheme } from '@bucketlist/ui';
 import { ChevronRight, Calendar } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -27,6 +27,7 @@ export function CalendarTaskListSections({
   onToggleUnscheduled,
 }: CalendarTaskListSectionsProps) {
   const router = useRouter();
+  const { theme } = useTheme();
 
   const renderThumbnail = (task: any) => (
     <BucketCover
@@ -64,7 +65,7 @@ export function CalendarTaskListSections({
     <>
       {/* ── SECCIÓN: Tareas del Día Seleccionado ── */}
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>
+        <Text style={[styles.sectionTitle, { color: theme.colors.foreground }]}>
           <Text style={{ color: '#D4B13A' }}>
             {format(selectedDate, "d 'DE' MMMM", { locale: es }).toUpperCase()}
           </Text>
@@ -74,9 +75,9 @@ export function CalendarTaskListSections({
 
       <View style={styles.tasksContainer}>
         {selectedTasks.length === 0 ? (
-          <View style={styles.emptyDayContainer}>
-            <Calendar color="#3A3A3A" size={28} style={{ marginBottom: 6 }} />
-            <Text style={styles.emptyDayText}>
+          <View style={[styles.emptyDayContainer, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+            <Calendar color={theme.colors.foregroundMuted} size={28} style={{ marginBottom: 6 }} />
+            <Text style={[styles.emptyDayText, { color: theme.colors.foregroundMuted }]}>
               No hay tareas programadas ni completadas este día
             </Text>
           </View>
@@ -106,15 +107,15 @@ export function CalendarTaskListSections({
 
       {/* ── SECCIÓN: TAREAS VENCIDAS ── */}
       {expiredTasks.length > 0 && (
-        <View style={styles.expiredSection}>
+        <View style={[styles.expiredSection, { borderTopColor: theme.colors.border }]}>
           <View style={styles.sectionHeaderRow}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <View style={styles.expiredDot} />
-              <Text style={styles.sectionTitle}>
+              <Text style={[styles.sectionTitle, { color: theme.colors.foreground }]}>
                 <Text style={{ color: '#EF4444' }}>VENCIDAS</Text> · {expiredTasks.length}
               </Text>
             </View>
-            <Text style={styles.expiredSectionSubtitle}>
+            <Text style={[styles.expiredSectionSubtitle, { color: theme.colors.foregroundMuted }]}>
               {expiredTasks.length === 1
                 ? '1 pendiente de fecha'
                 : `${expiredTasks.length} pendientes de fecha`}
@@ -141,16 +142,16 @@ export function CalendarTaskListSections({
 
       {/* ── SECCIÓN: Tareas sin fecha asignada ── */}
       {unscheduledTasks.length > 0 && (
-        <View style={styles.unscheduledSection}>
+        <View style={[styles.unscheduledSection, { borderTopColor: theme.colors.border }]}>
           <Pressable
             style={styles.unscheduledHeader}
             onPress={onToggleUnscheduled}
           >
-            <Text style={styles.unscheduledTitle}>
+            <Text style={[styles.unscheduledTitle, { color: theme.colors.foregroundMuted }]}>
               SIN FECHA PROGRAMADA · {unscheduledTasks.length}
             </Text>
             <ChevronRight
-              color="#8F8F8F"
+              color={theme.colors.foregroundMuted}
               size={18}
               style={{ transform: [{ rotate: showUnscheduled ? '90deg' : '0deg' }] }}
             />

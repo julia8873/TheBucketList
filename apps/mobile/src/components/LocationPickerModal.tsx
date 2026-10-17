@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,8 +7,9 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
-import { MapPin, X, Trash2 } from 'lucide-react-native';
+import { MapPin, X, Trash2, Check } from 'lucide-react-native';
 import { fontFamily } from '@bucketlist/ui';
 import { LocationAutocomplete } from './LocationAutocomplete';
 
@@ -25,6 +26,60 @@ export function LocationPickerModal({
   onChangeLocation,
   onClose,
 }: LocationPickerModalProps) {
+  const [typedText, setTypedText] = useState(value);
+  const [selectedLoc, setSelectedLoc] = useState<{ text: string; lat: number; lng: number } | null>(null);
+  const [loadingGeocode, setLoadingGeocode] = useState(false);
+
+  useEffect(() => {
+    setTypedText(value);
+    setSelectedLoc(null);
+  }, [value, visible]);
+
+  const handleConfirm = async () => {
+    if (selectedLoc) {
+      onChangeLocation(selectedLoc);
+      onClose();
+      return;
+    }
+
+    if (!typedText.trim()) {
+      onChangeLocation(null);
+      onClose();
+      return;
+    }
+
+    setLoadingGeocode(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(typedText.trim())}&limit=1`,
+        { headers: { 'User-Agent': 'TheBucketListApp/1.0' } }
+      );
+      const items = await res.json();
+      if (items && items[0]) {
+        onChangeLocation({
+          text: typedText.trim(),
+          lat: parseFloat(items[0].lat),
+          lng: parseFloat(items[0].lon),
+        });
+      } else {
+        onChangeLocation({
+          text: typedText.trim(),
+          lat: 40.4168,
+          lng: -3.7038,
+        });
+      }
+    } catch {
+      onChangeLocation({
+        text: typedText.trim(),
+        lat: 40.4168,
+        lng: -3.7038,
+      });
+    } finally {
+      setLoadingGeocode(false);
+      onClose();
+    }
+  };
+
   return (
     <Modal
       visible={visible}
@@ -51,14 +106,41 @@ export function LocationPickerModal({
 
             {/* Autocomplete Input & Suggestions */}
             <LocationAutocomplete
-              value={value}
+              value={typedText}
+              onTextChange={(t) => {
+                setTypedText(t);
+                setSelectedLoc(null);
+              }}
               onChangeLocation={(loc) => {
-                onChangeLocation(loc);
-                onClose();
+                if (loc) {
+                  setSelectedLoc(loc);
+                  onChangeLocation(loc);
+                  onClose();
+                } else {
+                  setSelectedLoc(null);
+                }
               }}
               label="Buscar ubicación"
               placeholder="Escribe una ciudad, país o lugar..."
             />
+
+            {/* Confirm Location Button */}
+            {typedText.trim() ? (
+              <Pressable
+                style={[styles.confirmButton, loadingGeocode && { opacity: 0.6 }]}
+                onPress={() => void handleConfirm()}
+                disabled={loadingGeocode}
+              >
+                {loadingGeocode ? (
+                  <ActivityIndicator size="small" color="#111" />
+                ) : (
+                  <>
+                    <Check size={16} color="#111" strokeWidth={2.5} />
+                    <Text style={styles.confirmButtonText}>Guardar ubicación</Text>
+                  </>
+                )}
+              </Pressable>
+            ) : null}
 
             {/* Remove Location Button */}
             {value ? (
@@ -125,12 +207,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  confirmButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: '#D4B13A',
+  },
+  confirmButtonText: {
+    color: '#111',
+    fontSize: 14,
+    fontFamily: fontFamily.semibold,
+  },
   removeButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    marginTop: 20,
+    marginTop: 14,
     paddingVertical: 12,
     borderRadius: 12,
     backgroundColor: 'rgba(239, 68, 68, 0.12)',

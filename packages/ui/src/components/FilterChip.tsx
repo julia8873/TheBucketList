@@ -19,14 +19,21 @@ interface FilterChipProps {
 export function FilterChip({ label, active = false, onPress, style, accessibilityLabel }: FilterChipProps) {
   const { theme } = useTheme();
 
+  const isLightActive = !theme.dark && active;
+  const chipBg = active 
+    ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)') 
+    : theme.colors.surface;
+  const chipBorder = active ? theme.colors.primary : theme.colors.border;
+  const chipText = active ? theme.colors.primary : theme.colors.foregroundMuted;
+
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.chip,
         {
-          backgroundColor: active ? 'transparent' : '#1A1A1A',
-          borderColor: active ? gold[400] : '#333333',
+          backgroundColor: chipBg,
+          borderColor: chipBorder,
           opacity: pressed ? 0.75 : 1,
         },
         style,
@@ -39,7 +46,7 @@ export function FilterChip({ label, active = false, onPress, style, accessibilit
         style={[
           styles.label,
           {
-            color: active ? gold[400] : '#E5E5E5',
+            color: chipText,
             fontFamily: fontFamily.medium,
           },
         ]}

@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react-native';
+import { Plus, CheckCircle2, ChevronDown, ChevronRight } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-import { gold } from '@bucketlist/ui/src/tokens/colors';
+import { useTheme, gold } from '@bucketlist/ui';
 import { styles } from '../styles/explore.styles';
 import { DailyTask } from '../types';
 import { DraggableTaskList, DragHandle } from '@/components/DraggableTaskList';
@@ -39,6 +39,10 @@ interface DailyWeekViewProps {
   renderTaskRow: (item: DailyTask, drag?: DragHandle, isLast?: boolean) => React.ReactNode;
   onReorder: (orderedIds: string[]) => void;
   onDraggingChange: (isDragging: boolean) => void;
+  isWeekCompletedCollapsed?: boolean;
+  onToggleAllWeekCompleted?: () => void;
+  isWeekDayCollapsed?: (dateStr: string) => boolean;
+  onToggleWeekDayCompleted?: (dateStr: string) => void;
 }
 
 export function DailyWeekView({
@@ -55,81 +59,31 @@ export function DailyWeekView({
   renderTaskRow,
   onReorder,
   onDraggingChange,
+  isWeekCompletedCollapsed = false,
+  onToggleAllWeekCompleted,
+  isWeekDayCollapsed,
+  onToggleWeekDayCompleted,
 }: DailyWeekViewProps) {
+  const { theme } = useTheme();
+  const [collapsedDays, setCollapsedDays] = useState<Record<string, boolean>>({});
+
+  const toggleDay = (dateStr: string) => {
+    setCollapsedDays((prev) => ({
+      ...prev,
+      [dateStr]: !prev[dateStr],
+    }));
+  };
+
   return (
     <View style={styles.weekContainer}>
       {/* Overdue tasks section at top of week view */}
       {renderOverdueSection()}
 
-      {/* Week Navigation Controls */}
-      <View style={styles.weekNavigationCard}>
-        <View style={styles.weekNavRow}>
-          <Pressable
-            style={[styles.weekNavBtn, weekOffset <= 0 && { opacity: 0.25 }]}
-            onPress={() => setWeekOffset((prev) => Math.max(0, prev - 1))}
-            disabled={weekOffset <= 0}
-            hitSlop={8}
-            accessibilityLabel="Semana anterior"
-          >
-            <ChevronLeft size={18} color={weekOffset <= 0 ? '#555' : '#AAA'} />
-          </Pressable>
-
-          <View style={styles.weekNavCenter}>
-            <Text style={styles.weekNavTitle}>
-              {weeksToShow === 1
-                ? displayedWeeks[0]?.weekLabel
-                : `${weeksToShow} semanas (${format(displayedWeeks[0]?.monday || new Date(), 'd MMM', { locale: es })} – ${format(displayedWeeks[displayedWeeks.length - 1]?.sunday || new Date(), 'd MMM', { locale: es })})`}
-            </Text>
-            {weekOffset > 0 && (
-              <Pressable
-                style={styles.weekNavTodayBadge}
-                onPress={() => setWeekOffset(0)}
-              >
-                <Text style={styles.weekNavTodayText}>Volver a hoy</Text>
-              </Pressable>
-            )}
-          </View>
-
-          <Pressable
-            style={styles.weekNavBtn}
-            onPress={() => setWeekOffset((prev) => prev + 1)}
-            hitSlop={8}
-            accessibilityLabel="Semana siguiente"
-          >
-            <ChevronRight size={18} color="#AAA" />
-          </Pressable>
-        </View>
-
-        {/* Week Count Selector (1 sem | 2 sem | 3 sem | 4 sem) */}
-        <View style={styles.weekSpanSelector}>
-          <Text style={styles.weekSpanLabel}>Mostrar:</Text>
-          {[1, 2, 3, 4].map((n) => (
-            <Pressable
-              key={n}
-              style={[
-                styles.weekSpanPill,
-                weeksToShow === n && styles.weekSpanPillActive,
-              ]}
-              onPress={() => setWeeksToShow(n)}
-            >
-              <Text
-                style={[
-                  styles.weekSpanPillText,
-                  weeksToShow === n && styles.weekSpanPillTextActive,
-                ]}
-              >
-                {n} {n === 1 ? 'sem' : 'sems'}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-
       {/* Render Weeks and their days */}
       {displayedWeeks.map((wk) => (
         <View key={`week-${wk.weekIndex}-${wk.days[0]?.dateStr || wk.weekIndex}`} style={styles.weekBlock}>
           {weeksToShow > 1 && (
-            <View style={styles.multiWeekDivider}>
+            <View style={[styles.multiWeekDivider, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
               <Text style={styles.multiWeekTitle}>{wk.weekLabel.toUpperCase()}</Text>
             </View>
           )}
@@ -140,11 +94,26 @@ export function DailyWeekView({
               return taskDate === day.dateStr;
             });
             const dayTasks = sortTasks(rawDayTasks);
+            const pendingTasks = dayTasks.filter((t) => !t.is_completed);
+            const completedTasks = dayTasks.filter((t) => t.is_completed);
+            const isDayCollapsed = !!collapsedDays[day.dateStr];
+            const isCompletedCollapsed = isWeekDayCollapsed ? isWeekDayCollapsed(day.dateStr) : false;
 
             return (
               <View key={day.dateStr} style={styles.weekDaySection}>
                 <View style={styles.weekDayHeader}>
-                  <View style={styles.weekDayHeaderLeft}>
+                  <Pressable
+                    style={styles.weekDayHeaderLeft}
+                    onPress={() => toggleDay(day.dateStr)}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel={isDayCollapsed ? `Mostrar tareas de ${day.dayName}` : `Ocultar tareas de ${day.dayName}`}
+                  >
+                    {isDayCollapsed ? (
+                      <ChevronRight size={15} color={theme.colors.foregroundMuted} />
+                    ) : (
+                      <ChevronDown size={15} color={theme.colors.foregroundMuted} />
+                    )}
                     <Text
                       style={[
                         styles.weekDayName,
@@ -154,8 +123,9 @@ export function DailyWeekView({
                       {day.isCurrentDay ? 'HOY · ' : ''}
                       {day.dayName.toUpperCase()}
                     </Text>
-                    <Text style={styles.weekDayDate}>{day.formatted}</Text>
-                  </View>
+                    <Text style={[styles.weekDayDate, { color: theme.colors.foregroundMuted }]}>{day.formatted}</Text>
+                  </Pressable>
+
                   <Pressable
                     hitSlop={6}
                     onPress={() => onOpenCreateTask(day.dateStr)}
@@ -166,22 +136,60 @@ export function DailyWeekView({
                   </Pressable>
                 </View>
 
-                {dayTasks.length === 0 ? (
-                  <View style={styles.weekDayEmpty}>
-                    <Text style={styles.weekDayEmptyText}>Sin tareas programadas</Text>
-                  </View>
-                ) : (
-                  <View style={styles.compactListCard}>
-                    <DraggableTaskList
-                      items={dayTasks}
-                      gap={0}
-                      renderItem={(item, drag) =>
-                        renderTaskRow(item, drag, dayTasks.indexOf(item) === dayTasks.length - 1)
-                      }
-                      onReorder={onReorder}
-                      onDraggingChange={onDraggingChange}
-                    />
-                  </View>
+                {!isDayCollapsed && (
+                  <>
+                    {pendingTasks.length === 0 && completedTasks.length === 0 ? (
+                      <View style={[styles.weekDayEmpty, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+                        <Text style={[styles.weekDayEmptyText, { color: theme.colors.foregroundMuted }]}>Sin tareas programadas</Text>
+                      </View>
+                    ) : (
+                      <>
+                        {pendingTasks.length > 0 && (
+                          <View style={[styles.compactListCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+                            <DraggableTaskList
+                              items={pendingTasks}
+                              gap={0}
+                              renderItem={(item, drag) =>
+                                renderTaskRow(item, drag, pendingTasks.indexOf(item) === pendingTasks.length - 1)
+                              }
+                              onReorder={onReorder}
+                              onDraggingChange={onDraggingChange}
+                            />
+                          </View>
+                        )}
+
+                        {completedTasks.length > 0 && (
+                          <View style={styles.weekCompletedSection}>
+                            <Pressable
+                              style={styles.completedSectionHeader}
+                              onPress={() => onToggleWeekDayCompleted?.(day.dateStr)}
+                              hitSlop={8}
+                              accessibilityRole="button"
+                              accessibilityLabel={isCompletedCollapsed ? "Mostrar completadas" : "Ocultar completadas"}
+                            >
+                              {isCompletedCollapsed ? (
+                                <ChevronRight size={14} color={theme.colors.foregroundMuted} />
+                              ) : (
+                                <ChevronDown size={14} color={theme.colors.foregroundMuted} />
+                              )}
+                              <CheckCircle2 size={13} color="#34C759" />
+                              <Text style={[styles.completedSectionTitle, { color: theme.colors.foregroundMuted }]}>
+                                Completadas ({completedTasks.length})
+                              </Text>
+                            </Pressable>
+
+                            {!isCompletedCollapsed && (
+                              <View style={[styles.compactListCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, marginTop: 4 }]}>
+                                {completedTasks.map((item, idx) =>
+                                  renderTaskRow(item, undefined, idx === completedTasks.length - 1)
+                                )}
+                              </View>
+                            )}
+                          </View>
+                        )}
+                      </>
+                    )}
+                  </>
                 )}
               </View>
             );

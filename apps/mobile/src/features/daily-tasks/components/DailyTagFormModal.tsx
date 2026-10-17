@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { X, Check, Trash2 } from 'lucide-react-native';
+import { useTheme, gold } from '@bucketlist/ui';
 import { styles } from '../styles/explore.styles';
 import type { DailyTag } from '../types';
 
@@ -62,6 +63,8 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
   onDelete,
   onClose,
 }) => {
+  const { theme } = useTheme();
+
   if (!visible) return null;
 
   const content = (
@@ -70,29 +73,36 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
       style={styles.modalOverlay}
     >
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-      <View style={styles.modalContent}>
+      <View style={[styles.modalContent, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
         <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>
+          <Text style={[styles.modalTitle, { color: theme.colors.foreground }]}>
             {editingDailyTag ? 'Editar etiqueta' : 'Nueva etiqueta'}
           </Text>
           <Pressable onPress={onClose} hitSlop={10}>
-            <X size={18} color="#888" />
+            <X size={18} color={theme.colors.foregroundMuted} />
           </Pressable>
         </View>
 
         {/* Input Name */}
-        <Text style={styles.fieldLabel}>Nombre</Text>
+        <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>Nombre</Text>
         <TextInput
-          style={styles.modalInput}
+          style={[
+            styles.modalInput,
+            {
+              backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+              borderColor: theme.colors.border,
+              color: theme.colors.foreground,
+            },
+          ]}
           placeholder="Ej. Prioritario, Gimnasio..."
-          placeholderTextColor="#666"
+          placeholderTextColor={theme.colors.foregroundSubtle ?? '#888'}
           value={tagFormName}
           onChangeText={setTagFormName}
           autoFocus
         />
 
         {/* Color Selector */}
-        <Text style={styles.fieldLabel}>Color</Text>
+        <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>Color</Text>
         <View style={styles.paletteRow}>
           {TAG_COLOR_PALETTE.map((c) => (
             <Pressable
@@ -110,27 +120,27 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
         </View>
 
         {/* Custom Emoji Input & Presets */}
-        <Text style={styles.fieldLabel}>Icono / Emoji</Text>
+        <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>Icono / Emoji</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
           <TextInput
             style={{
               width: 48,
               height: 48,
-              backgroundColor: '#1E1E1E',
+              backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
               borderRadius: 12,
               borderWidth: 1.5,
-              borderColor: tagFormColor || '#D4B13A',
+              borderColor: tagFormColor || theme.colors.border,
               textAlign: 'center',
               fontSize: 22,
-              color: '#FFF',
+              color: theme.colors.foreground,
             }}
             value={tagFormEmoji}
             onChangeText={(text) => setTagFormEmoji(text.trim())}
             placeholder="📌"
-            placeholderTextColor="#666"
+            placeholderTextColor={theme.colors.foregroundSubtle ?? '#888'}
             maxLength={6}
           />
-          <Text style={{ fontSize: 12, color: '#888', flex: 1, lineHeight: 16 }}>
+          <Text style={{ fontSize: 12, color: theme.colors.foregroundMuted, flex: 1, lineHeight: 16 }}>
             Escribe cualquier emoji desde tu teclado, o toca una sugerencia rápida:
           </Text>
         </View>
@@ -145,7 +155,17 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
               key={em}
               style={[
                 styles.emojiCircle,
-                tagFormEmoji === em && styles.emojiCircleSelected,
+                {
+                  backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+                tagFormEmoji === em && [
+                  styles.emojiCircleSelected,
+                  {
+                    borderColor: gold[400],
+                    backgroundColor: theme.dark ? '#262112' : '#FDF6E2',
+                  },
+                ],
               ]}
               onPress={() => setTagFormEmoji(em)}
             >
@@ -167,8 +187,18 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
 
         {/* Buttons */}
         <View style={styles.modalFooterRow}>
-          <Pressable style={styles.modalCancelBtn} onPress={onClose}>
-            <Text style={styles.modalCancelBtnText}>Cancelar</Text>
+          <Pressable
+            style={[
+              styles.modalCancelBtn,
+              {
+                backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+                borderColor: theme.colors.border,
+                borderWidth: 1,
+              },
+            ]}
+            onPress={onClose}
+          >
+            <Text style={[styles.modalCancelBtnText, { color: theme.colors.foreground }]}>Cancelar</Text>
           </Pressable>
           <Pressable
             style={[

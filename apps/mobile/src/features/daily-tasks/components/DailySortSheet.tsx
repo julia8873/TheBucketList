@@ -12,7 +12,7 @@ import {
   ArrowDown,
   ArrowUp,
 } from 'lucide-react-native';
-import { gold } from '@bucketlist/ui/src/tokens/colors';
+import { gold, useTheme } from '@bucketlist/ui';
 import { styles } from '../styles/explore.styles';
 import type { DailySortField, DailySortDirection } from '../types';
 
@@ -37,6 +37,7 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
   onToggleGroupByTag,
   onResetSort,
 }) => {
+  const { theme } = useTheme();
   if (!visible) return null;
 
   return (
@@ -48,40 +49,50 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
     >
       <View style={styles.sheetOverlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={styles.sortSheetCard}>
+        <View style={[styles.sortSheetCard, { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.border }]}>
           <View style={styles.sheetHandle} />
 
           {/* Header */}
           <View style={styles.sheetHeader}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <SlidersHorizontal size={18} color={gold[400]} />
-              <Text style={styles.sheetTitle}>Ordenar y clasificar</Text>
+              <Text style={[styles.sheetTitle, { color: theme.colors.foreground }]}>Ordenar y clasificar</Text>
             </View>
             <Pressable onPress={onClose} hitSlop={10}>
-              <X size={20} color="#888" />
+              <X size={20} color={theme.colors.foregroundMuted} />
             </Pressable>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 480 }}>
             {/* Section 1: Agrupar por etiquetas */}
             <View style={styles.sortSection}>
-              <Text style={styles.sortSectionTitle}>CLASIFICAR</Text>
+              <Text style={[styles.sortSectionTitle, { color: theme.colors.foregroundMuted }]}>CLASIFICAR</Text>
               <Pressable
                 style={[
                   styles.sortOptionCard,
-                  groupByTag && styles.sortOptionCardActive,
+                  { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
+                  groupByTag && {
+                    backgroundColor: theme.dark ? '#262010' : '#FDF4DC',
+                    borderColor: gold[400],
+                  },
                 ]}
                 onPress={onToggleGroupByTag}
               >
                 <View style={styles.sortOptionLeft}>
-                  <View style={[styles.sortOptionIconBox, groupByTag && styles.sortOptionIconBoxActive]}>
+                  <View
+                    style={[
+                      styles.sortOptionIconBox,
+                      { backgroundColor: theme.dark ? '#262626' : '#E8E3D8' },
+                      groupByTag && styles.sortOptionIconBoxActive,
+                    ]}
+                  >
                     <Layers size={18} color={groupByTag ? '#0E0E0E' : gold[400]} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.sortOptionTitle, groupByTag && styles.sortOptionTitleActive]}>
+                    <Text style={[styles.sortOptionTitle, { color: theme.colors.foreground }, groupByTag && styles.sortOptionTitleActive]}>
                       Clasificar por etiquetas
                     </Text>
-                    <Text style={styles.sortOptionSubtitle}>
+                    <Text style={[styles.sortOptionSubtitle, { color: theme.colors.foregroundMuted }]}>
                       Agrupa las tareas en bloques por cada etiqueta
                     </Text>
                   </View>
@@ -89,12 +100,14 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
                 <View
                   style={[
                     styles.sortTogglePill,
+                    { backgroundColor: theme.dark ? '#262626' : '#E8E3D8' },
                     groupByTag && styles.sortTogglePillActive,
                   ]}
                 >
                   <Text
                     style={[
                       styles.sortTogglePillText,
+                      { color: theme.colors.foregroundMuted },
                       groupByTag && styles.sortTogglePillTextActive,
                     ]}
                   >
@@ -106,25 +119,35 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
 
             {/* Section 2: Criterio de ordenación */}
             <View style={styles.sortSection}>
-              <Text style={styles.sortSectionTitle}>ORDENAR POR</Text>
+              <Text style={[styles.sortSectionTitle, { color: theme.colors.foregroundMuted }]}>ORDENAR POR</Text>
 
               {/* Manual / Arrastrar */}
               <Pressable
                 style={[
                   styles.sortOptionCard,
-                  sortField === 'manual' && styles.sortOptionCardActive,
+                  { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
+                  sortField === 'manual' && {
+                    backgroundColor: theme.dark ? '#262010' : '#FDF4DC',
+                    borderColor: gold[400],
+                  },
                 ]}
                 onPress={() => onSelectSort('manual')}
               >
                 <View style={styles.sortOptionLeft}>
-                  <View style={[styles.sortOptionIconBox, sortField === 'manual' && styles.sortOptionIconBoxActive]}>
-                    <GripVertical size={18} color={sortField === 'manual' ? '#0E0E0E' : '#AAA'} />
+                  <View
+                    style={[
+                      styles.sortOptionIconBox,
+                      { backgroundColor: theme.dark ? '#262626' : '#E8E3D8' },
+                      sortField === 'manual' && styles.sortOptionIconBoxActive,
+                    ]}
+                  >
+                    <GripVertical size={18} color={sortField === 'manual' ? '#0E0E0E' : theme.colors.foregroundMuted} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.sortOptionTitle, sortField === 'manual' && styles.sortOptionTitleActive]}>
+                    <Text style={[styles.sortOptionTitle, { color: theme.colors.foreground }, sortField === 'manual' && styles.sortOptionTitleActive]}>
                       Manual (Por defecto)
                     </Text>
-                    <Text style={styles.sortOptionSubtitle}>
+                    <Text style={[styles.sortOptionSubtitle, { color: theme.colors.foregroundMuted }]}>
                       Arrastra y reordena las tareas en el orden que prefieras
                     </Text>
                   </View>
@@ -140,19 +163,29 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
               <Pressable
                 style={[
                   styles.sortOptionCard,
-                  sortField === 'priority' && styles.sortOptionCardActive,
+                  { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
+                  sortField === 'priority' && {
+                    backgroundColor: theme.dark ? '#262010' : '#FDF4DC',
+                    borderColor: gold[400],
+                  },
                 ]}
                 onPress={() => onSelectSort('priority')}
               >
                 <View style={styles.sortOptionLeft}>
-                  <View style={[styles.sortOptionIconBox, sortField === 'priority' && styles.sortOptionIconBoxActive]}>
+                  <View
+                    style={[
+                      styles.sortOptionIconBox,
+                      { backgroundColor: theme.dark ? '#262626' : '#E8E3D8' },
+                      sortField === 'priority' && styles.sortOptionIconBoxActive,
+                    ]}
+                  >
                     <Flag size={18} color={sortField === 'priority' ? '#0E0E0E' : '#FF453A'} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.sortOptionTitle, sortField === 'priority' && styles.sortOptionTitleActive]}>
+                    <Text style={[styles.sortOptionTitle, { color: theme.colors.foreground }, sortField === 'priority' && styles.sortOptionTitleActive]}>
                       Prioridad
                     </Text>
-                    <Text style={styles.sortOptionSubtitle}>
+                    <Text style={[styles.sortOptionSubtitle, { color: theme.colors.foregroundMuted }]}>
                       {sortField === 'priority'
                         ? sortDirection === 'desc'
                           ? 'Urgente 🔴 → Baja 🟢 (Toca para invertir)'
@@ -176,19 +209,29 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
               <Pressable
                 style={[
                   styles.sortOptionCard,
-                  sortField === 'name' && styles.sortOptionCardActive,
+                  { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
+                  sortField === 'name' && {
+                    backgroundColor: theme.dark ? '#262010' : '#FDF4DC',
+                    borderColor: gold[400],
+                  },
                 ]}
                 onPress={() => onSelectSort('name')}
               >
                 <View style={styles.sortOptionLeft}>
-                  <View style={[styles.sortOptionIconBox, sortField === 'name' && styles.sortOptionIconBoxActive]}>
+                  <View
+                    style={[
+                      styles.sortOptionIconBox,
+                      { backgroundColor: theme.dark ? '#262626' : '#E8E3D8' },
+                      sortField === 'name' && styles.sortOptionIconBoxActive,
+                    ]}
+                  >
                     <ArrowDownAZ size={18} color={sortField === 'name' ? '#0E0E0E' : '#3B82F6'} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.sortOptionTitle, sortField === 'name' && styles.sortOptionTitleActive]}>
+                    <Text style={[styles.sortOptionTitle, { color: theme.colors.foreground }, sortField === 'name' && styles.sortOptionTitleActive]}>
                       Nombre / Título
                     </Text>
-                    <Text style={styles.sortOptionSubtitle}>
+                    <Text style={[styles.sortOptionSubtitle, { color: theme.colors.foregroundMuted }]}>
                       {sortField === 'name'
                         ? sortDirection === 'asc'
                           ? 'A → Z (Toca para invertir)'
@@ -212,19 +255,29 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
               <Pressable
                 style={[
                   styles.sortOptionCard,
-                  sortField === 'date' && styles.sortOptionCardActive,
+                  { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
+                  sortField === 'date' && {
+                    backgroundColor: theme.dark ? '#262010' : '#FDF4DC',
+                    borderColor: gold[400],
+                  },
                 ]}
                 onPress={() => onSelectSort('date')}
               >
                 <View style={styles.sortOptionLeft}>
-                  <View style={[styles.sortOptionIconBox, sortField === 'date' && styles.sortOptionIconBoxActive]}>
+                  <View
+                    style={[
+                      styles.sortOptionIconBox,
+                      { backgroundColor: theme.dark ? '#262626' : '#E8E3D8' },
+                      sortField === 'date' && styles.sortOptionIconBoxActive,
+                    ]}
+                  >
                     <Calendar size={18} color={sortField === 'date' ? '#0E0E0E' : gold[400]} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.sortOptionTitle, sortField === 'date' && styles.sortOptionTitleActive]}>
+                    <Text style={[styles.sortOptionTitle, { color: theme.colors.foreground }, sortField === 'date' && styles.sortOptionTitleActive]}>
                       Fecha de vencimiento
                     </Text>
-                    <Text style={styles.sortOptionSubtitle}>
+                    <Text style={[styles.sortOptionSubtitle, { color: theme.colors.foregroundMuted }]}>
                       {sortField === 'date'
                         ? sortDirection === 'asc'
                           ? 'Más próximas primero (Toca para invertir)'
@@ -247,12 +300,15 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
           </ScrollView>
 
           {/* Footer: Restablecer + Aplicar */}
-          <View style={styles.sortSheetFooter}>
+          <View style={[styles.sortSheetFooter, { borderTopColor: theme.colors.border }]}>
             <Pressable
-              style={styles.sortResetBtn}
+              style={[
+                styles.sortResetBtn,
+                { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border, borderWidth: 1 },
+              ]}
               onPress={onResetSort}
             >
-              <Text style={styles.sortResetBtnText}>Restablecer</Text>
+              <Text style={[styles.sortResetBtnText, { color: theme.colors.foreground }]}>Restablecer</Text>
             </Pressable>
             <Pressable
               style={styles.sortApplyBtn}
@@ -266,3 +322,4 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
     </Modal>
   );
 };
+

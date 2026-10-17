@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, Pressable, Image } from 'react-native';
+import { UserPlus } from 'lucide-react-native';
 import { normalizeStorageUrl } from '@/constants/urls';
 import { styles } from '../styles/bucket-detail.styles';
 
@@ -108,10 +109,7 @@ export function BucketCollaboratorsRow({
             accessibilityRole="button"
             accessibilityLabel="Añadir colaborador"
           >
-            <View style={styles.addCollabIconRow}>
-              <Text style={styles.addCollabEmoji}>👥</Text>
-              <Text style={styles.addCollabPlus}>+</Text>
-            </View>
+            <UserPlus size={22} color="#D4B13A" strokeWidth={1.8} />
           </Pressable>
         )}
       </ScrollView>

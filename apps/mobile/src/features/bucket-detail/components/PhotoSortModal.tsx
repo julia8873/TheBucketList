@@ -43,12 +43,14 @@ export function PhotoSortModal({
             top: sortMenuPos.top,
             right: sortMenuPos.right,
             minWidth: 130,
-            backgroundColor: dark[400],
+            backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
             borderRadius: 12,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
             overflow: 'hidden',
             elevation: 8,
             shadowColor: '#000',
-            shadowOpacity: 0.3,
+            shadowOpacity: theme.dark ? 0.3 : 0.12,
             shadowRadius: 8,
             shadowOffset: { width: 0, height: 4 },
           }}
@@ -71,7 +73,7 @@ export function PhotoSortModal({
                   paddingHorizontal: 14,
                   paddingVertical: 11,
                   borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth,
-                  borderTopColor: 'rgba(255,255,255,0.1)',
+                  borderTopColor: theme.colors.borderSubtle ?? theme.colors.border,
                 }}
               >
                 <Typography

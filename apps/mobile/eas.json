@@ -20,7 +20,9 @@
         "EXPO_PUBLIC_APP_ENV": "prod",
         "APP_ENV": "prod",
         "EXPO_PUBLIC_SUPABASE_URL_PROD": "https://fazxqjznuehrwkungmjm.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY_PROD": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhenhxanpudWVocndrdW5nbWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzE5NDEsImV4cCI6MjEwNzMwNzk0MX0.1i4vocM3OAet2tzm3hLJYy-RcV03XuIPbZDdlKNTtlM"
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY_PROD": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhenhxanpudWVocndrdW5nbWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzE5NDEsImV4cCI6MjEwNzMwNzk0MX0.1i4vocM3OAet2tzm3hLJYy-RcV03XuIPbZDdlKNTtlM",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "346867646660-evpfnsh4kq76t24m092p698jb2qc5lt0.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "346867646660-qcg9bpk1nbmv4qqs6rhireqp0255v4sm.apps.googleusercontent.com"
       },
       "android": {
         "buildType": "apk"
@@ -32,7 +34,9 @@
         "EXPO_PUBLIC_APP_ENV": "prod",
         "APP_ENV": "prod",
         "EXPO_PUBLIC_SUPABASE_URL_PROD": "https://fazxqjznuehrwkungmjm.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY_PROD": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhenhxanpudWVocndrdW5nbWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzE5NDEsImV4cCI6MjEwNzMwNzk0MX0.1i4vocM3OAet2tzm3hLJYy-RcV03XuIPbZDdlKNTtlM"
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY_PROD": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhenhxanpudWVocndrdW5nbWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzE5NDEsImV4cCI6MjEwNzMwNzk0MX0.1i4vocM3OAet2tzm3hLJYy-RcV03XuIPbZDdlKNTtlM",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "346867646660-evpfnsh4kq76t24m092p698jb2qc5lt0.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "346867646660-qcg9bpk1nbmv4qqs6rhireqp0255v4sm.apps.googleusercontent.com"
       }
     }
   },

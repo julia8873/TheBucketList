@@ -90,14 +90,14 @@ export function MyListSortModal({
             top: position.top,
             right: position.right,
             minWidth: 160,
-            backgroundColor: dark[300],
+            backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
             borderRadius: 12,
             borderWidth: 1,
-            borderColor: dark[400],
+            borderColor: theme.colors.border,
             overflow: 'hidden',
             elevation: 8,
             shadowColor: '#000',
-            shadowOpacity: 0.35,
+            shadowOpacity: theme.dark ? 0.35 : 0.15,
             shadowRadius: 10,
             shadowOffset: { width: 0, height: 4 },
           }}
@@ -119,7 +119,7 @@ export function MyListSortModal({
                   paddingHorizontal: 14,
                   paddingVertical: 12,
                   borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth,
-                  borderTopColor: 'rgba(255,255,255,0.1)',
+                  borderTopColor: theme.colors.borderSubtle ?? theme.colors.border,
                 }}
               >
                 <Typography
