@@ -1,17 +1,20 @@
 import React from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { differenceInCalendarDays } from 'date-fns';
 import { Pill, ProgressBar, UrgencyChip, fontFamily, gold } from '@bucketlist/ui';
 import { BucketCover } from './BucketCover';
 import { resolveTaskImage } from '../utils/taskImage';
 import { useAuthStore } from '../stores/auth.store';
 import { useCopiedBucketIds, useCopyBucket } from '../hooks/useSocial';
+import { TaskViewMode } from './ViewModeSelector';
 
 interface PublicTaskRowProps {
   bucket: any;
   /** true si el perfil que se está viendo es el mío. */
   isOwnProfile?: boolean;
   onPress: () => void;
+  mode?: TaskViewMode;
 }
 
 function buildMeta(bucket: any): string {
@@ -47,8 +50,8 @@ function buildProgress(bucket: any): number | null {
   return null;
 }
 
-/** Fila de tarea de un perfil público (miniatura, título, meta, progreso y chip de estado). */
-export function PublicTaskRow({ bucket, isOwnProfile = false, onPress }: PublicTaskRowProps) {
+/** Fila/tarjeta de tarea de un perfil público (soporta list, gallery y compact). */
+export function PublicTaskRow({ bucket, isOwnProfile = false, onPress, mode = 'list' }: PublicTaskRowProps) {
   const { user } = useAuthStore();
   const copyBucket = useCopyBucket();
   const { data: copiedIds } = useCopiedBucketIds(user?.id);
@@ -79,6 +82,75 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, onPress }: PublicT
     chip = <Pill label="Completada" variant="outline-gold" />;
   } else if (hasFutureDeadline) {
     chip = <UrgencyChip deadline={bucket.deadline} />;
+  }
+
+  if (mode === 'gallery') {
+    return (
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [styles.galleryCard, { opacity: pressed ? 0.88 : 1 }]}
+        accessibilityRole="button"
+        accessibilityLabel={bucket.title}
+      >
+        <BucketCover
+          value={resolveTaskImage(bucket)}
+          title={bucket.title}
+          categorySlug={bucket.category?.slug}
+          seed={bucket.id}
+          iconSize={90}
+          style={styles.galleryCover}
+        >
+          <LinearGradient
+            colors={['rgba(0,0,0,0.4)', 'transparent', 'rgba(0,0,0,0.85)']}
+            locations={[0, 0.45, 1]}
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+          />
+
+          {chip ? <View style={styles.galleryTopChip}>{chip}</View> : null}
+
+          <View style={styles.galleryBottom} pointerEvents="none">
+            <Text style={styles.galleryTitle} numberOfLines={2}>
+              {bucket.title}
+            </Text>
+            <Text style={styles.galleryMeta} numberOfLines={1}>
+              {buildMeta(bucket)}
+            </Text>
+          </View>
+        </BucketCover>
+      </Pressable>
+    );
+  }
+
+  if (mode === 'compact') {
+    return (
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [styles.compactRow, { backgroundColor: pressed ? '#202020' : '#161616' }]}
+        accessibilityRole="button"
+        accessibilityLabel={bucket.title}
+      >
+        <BucketCover
+          value={resolveTaskImage(bucket, { preferThumb: true })}
+          title={bucket.title}
+          categorySlug={bucket.category?.slug}
+          seed={bucket.id}
+          iconSize={40}
+          style={styles.compactThumb}
+        />
+
+        <View style={styles.compactContent}>
+          <Text style={styles.compactTitle} numberOfLines={1}>
+            {bucket.title}
+          </Text>
+          <Text style={styles.compactMeta} numberOfLines={1}>
+            {buildMeta(bucket)}
+          </Text>
+        </View>
+
+        {chip ? <View style={styles.chip}>{chip}</View> : null}
+      </Pressable>
+    );
   }
 
   return (
@@ -113,6 +185,7 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, onPress }: PublicT
 }
 
 const styles = StyleSheet.create({
+  // Lista detallada (default)
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -128,4 +201,62 @@ const styles = StyleSheet.create({
   meta: { fontFamily: fontFamily.regular, fontSize: 13, color: '#9A9A9A' },
   progress: { marginTop: 4 },
   chip: { flexShrink: 0 },
+
+  // Galería
+  galleryCard: {
+    flex: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: '#1E1E1E',
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
+  },
+  galleryCover: {
+    width: '100%',
+    aspectRatio: 0.85,
+  },
+  galleryTopChip: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    zIndex: 2,
+  },
+  galleryBottom: {
+    position: 'absolute',
+    left: 10,
+    right: 10,
+    bottom: 10,
+  },
+  galleryTitle: {
+    fontFamily: fontFamily.serifBold,
+    fontSize: 14,
+    lineHeight: 18,
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.85)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  galleryMeta: {
+    fontFamily: fontFamily.regular,
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.75)',
+    marginTop: 2,
+  },
+
+  // Compacto
+  compactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
+    gap: 12,
+  },
+  compactThumb: { width: 40, height: 40, borderRadius: 8, overflow: 'hidden' },
+  compactContent: { flex: 1, gap: 2 },
+  compactTitle: { fontFamily: fontFamily.semibold, fontSize: 14, color: '#FFFFFF' },
+  compactMeta: { fontFamily: fontFamily.regular, fontSize: 12, color: '#9A9A9A' },
 });
+

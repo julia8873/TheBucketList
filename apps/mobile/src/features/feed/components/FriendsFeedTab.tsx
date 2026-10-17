@@ -6,6 +6,7 @@ import { Users } from 'lucide-react-native';
 import { EmptyState, gold } from '@bucketlist/ui';
 import { FeedCard } from '../../../components/FeedCard';
 import { FeedCardSkeleton } from '../../../components/FeedCardSkeleton';
+import { TaskViewMode } from '../../../components/ViewModeSelector';
 import { styles } from '../styles/feed.styles';
 
 interface FriendsFeedTabProps {
@@ -22,6 +23,7 @@ interface FriendsFeedTabProps {
   onOpenFriends: () => void;
   onRetry: () => void;
   listRef?: React.RefObject<any>;
+  viewMode?: TaskViewMode;
 }
 
 export function FriendsFeedTab({
@@ -38,6 +40,7 @@ export function FriendsFeedTab({
   onOpenFriends,
   onRetry,
   listRef,
+  viewMode = 'list',
 }: FriendsFeedTabProps) {
   const router = useRouter();
 
@@ -68,16 +71,20 @@ export function FriendsFeedTab({
   return (
     <FlashList
       ref={listRef}
+      key={viewMode}
       data={friendsItems}
       keyExtractor={(item) => item.id}
+      numColumns={viewMode === 'gallery' ? 2 : 1}
+      contentContainerStyle={viewMode === 'gallery' ? { paddingHorizontal: 10 } : undefined}
       renderItem={({ item, index }) => (
         <FeedCard
           event={item}
           index={index}
+          mode={viewMode}
           onPress={() => router.push(`/bucket/${item.bucket_id}` as any)}
         />
       )}
-      estimatedItemSize={430}
+      estimatedItemSize={viewMode === 'gallery' ? 240 : viewMode === 'compact' ? 70 : 430}
       ListHeaderComponent={headerElement}
       refreshing={manualRefreshing}
       onRefresh={onRefresh}

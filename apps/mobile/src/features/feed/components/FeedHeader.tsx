@@ -3,6 +3,7 @@ import { View, Text, Pressable, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Bell, Search, Users, X } from 'lucide-react-native';
 import { PageTitle } from '@bucketlist/ui';
+import { ViewModeSelector, TaskViewMode } from '../../../components/ViewModeSelector';
 import { styles } from '../styles/feed.styles';
 
 interface FeedHeaderProps {
@@ -14,6 +15,8 @@ interface FeedHeaderProps {
   onOpenFriends: (tab?: 'requests') => void;
   exploreSearch: string;
   onChangeExploreSearch: (text: string) => void;
+  viewMode: TaskViewMode;
+  onChangeViewMode: (mode: TaskViewMode) => void;
 }
 
 export function FeedHeader({
@@ -25,6 +28,8 @@ export function FeedHeader({
   onOpenFriends,
   exploreSearch,
   onChangeExploreSearch,
+  viewMode,
+  onChangeViewMode,
 }: FeedHeaderProps) {
   return (
     <View style={styles.headerWrapper}>
@@ -115,6 +120,15 @@ export function FeedHeader({
               <X size={18} color="#8F8F8F" strokeWidth={2} />
             </Pressable>
           )}
+        </View>
+      )}
+
+      {!(homeTab === 'explore' && exploreSearch.length >= 2) && (
+        <View style={styles.feedControlsRow}>
+          <Text style={styles.feedSectionLabel}>
+            {homeTab === 'friends' ? 'MOMENTOS DE AMIGOS' : 'EXPLORAR TAREAS'}
+          </Text>
+          <ViewModeSelector mode={viewMode} onChange={onChangeViewMode} />
         </View>
       )}
     </View>

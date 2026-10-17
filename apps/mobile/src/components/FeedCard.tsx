@@ -13,19 +13,23 @@ import { useCopiedBucketIds, useCopyBucket, useToggleLike } from '../hooks/useSo
 import { daysBetween, timeAgo } from '../utils/timeAgo';
 import { displayNameOf, initialsOf } from '../utils/initials';
 
+import { TaskViewMode } from './ViewModeSelector';
+
 interface FeedCardProps {
   /** { actor, bucket, type, created_at } — en explorar se construye al vuelo. */
   event: any;
   onPress: () => void;
   index: number;
+  mode?: TaskViewMode;
 }
 
 /**
  * Momento de un amigo: cabecera (avatar, nombre, @usuario, hace X h),
  * portada con título y lugar, acciones (me gusta, comentarios, "Yo también")
  * y pie con los días que tardó en completarla.
+ * Soporta modos: 'list' (por defecto), 'gallery' y 'compact'.
  */
-export function FeedCard({ event, onPress, index }: FeedCardProps) {
+export function FeedCard({ event, onPress, index, mode = 'list' }: FeedCardProps) {
   const router = useRouter();
   const { user } = useAuthStore();
   const [showComments, setShowComments] = useState(false);
@@ -78,6 +82,133 @@ export function FeedCard({ event, onPress, index }: FeedCardProps) {
       { onError: (error: any) => Alert.alert('No se pudo añadir', error?.message ?? 'Inténtalo de nuevo.') }
     );
   };
+
+  if (mode === 'gallery') {
+    return (
+      <Animated.View entering={FadeInUp.delay(Math.min(index, 6) * 50).springify()} style={styles.galleryCardWrapper}>
+        <Pressable
+          onPress={onPress}
+          style={({ pressed }) => [styles.galleryCard, { opacity: pressed ? 0.9 : 1 }]}
+          accessibilityRole="button"
+          accessibilityLabel={bucket.title}
+        >
+          <BucketCover
+            value={coverValue}
+            title={bucket.title}
+            categorySlug={bucket.category?.slug}
+            seed={bucket.id}
+            iconSize={90}
+            style={styles.galleryCover}
+          >
+            <LinearGradient
+              colors={['rgba(0,0,0,0.65)', 'transparent', 'rgba(0,0,0,0.88)']}
+              locations={[0, 0.45, 1]}
+              style={StyleSheet.absoluteFill}
+              pointerEvents="none"
+            />
+
+            {/* Header flotante: autor */}
+            <Pressable onPress={openProfile} style={styles.galleryHeader} hitSlop={6} accessibilityRole="button">
+              <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="xs" goldRing />
+              <Text style={styles.galleryUsername} numberOfLines={1}>
+                @{actor.username}
+              </Text>
+            </Pressable>
+
+            {/* Pie: título y métricas */}
+            <View style={styles.galleryBottom} pointerEvents="box-none">
+              <Text style={styles.galleryTitle} numberOfLines={2}>
+                {bucket.title}
+              </Text>
+              {bucket.location_text ? (
+                <Text style={styles.galleryLocation} numberOfLines={1}>
+                  {bucket.location_text}
+                </Text>
+              ) : null}
+
+              <View style={styles.galleryActions}>
+                <Pressable onPress={handleLike} hitSlop={6} style={styles.galleryActionItem}>
+                  <Heart size={14} color={liked ? gold[400] : '#F2EFE8'} fill={liked ? gold[400] : 'transparent'} strokeWidth={1.8} />
+                  <Text style={styles.galleryActionText}>{likeCount}</Text>
+                </Pressable>
+                <Pressable onPress={() => setShowComments(true)} hitSlop={6} style={styles.galleryActionItem}>
+                  <MessageCircle size={14} color="#F2EFE8" strokeWidth={1.8} />
+                  <Text style={styles.galleryActionText}>{commentCount}</Text>
+                </Pressable>
+              </View>
+            </View>
+          </BucketCover>
+        </Pressable>
+
+        <TaskCommentsModal
+          visible={showComments}
+          onClose={() => setShowComments(false)}
+          bucketId={bucket.id}
+          bucketTitle={bucket.title}
+          bucketOwnerId={bucket.user_id}
+        />
+      </Animated.View>
+    );
+  }
+
+  if (mode === 'compact') {
+    return (
+      <Animated.View entering={FadeInUp.delay(Math.min(index, 6) * 50).springify()} style={styles.compactCardWrapper}>
+        <Pressable
+          onPress={onPress}
+          style={({ pressed }) => [styles.compactCard, { opacity: pressed ? 0.85 : 1 }]}
+          accessibilityRole="button"
+          accessibilityLabel={bucket.title}
+        >
+          <View style={styles.compactThumbWrapper}>
+            <BucketCover
+              value={resolveTaskImage(bucket, { preferThumb: true })}
+              title={bucket.title}
+              categorySlug={bucket.category?.slug}
+              seed={bucket.id}
+              iconSize={40}
+              style={StyleSheet.absoluteFill}
+            />
+          </View>
+
+          <View style={styles.compactInfo}>
+            <Pressable onPress={openProfile} style={styles.compactUserHeader} hitSlop={4}>
+              <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="xs" />
+              <Text style={styles.compactUsername} numberOfLines={1}>
+                @{actor.username}
+              </Text>
+              <Text style={styles.compactDot}>·</Text>
+              <Text style={styles.compactTime}>
+                {timeAgo(event.created_at ?? bucket.completed_at ?? bucket.created_at)}
+              </Text>
+            </Pressable>
+            <Text style={styles.compactTitle} numberOfLines={1}>
+              {bucket.title}
+            </Text>
+          </View>
+
+          <View style={styles.compactActions}>
+            <Pressable onPress={handleLike} hitSlop={6} style={styles.compactActionBtn}>
+              <Heart size={16} color={liked ? gold[400] : '#A0A0A0'} fill={liked ? gold[400] : 'transparent'} strokeWidth={1.8} />
+              <Text style={[styles.compactActionCount, liked && { color: gold[400] }]}>{likeCount}</Text>
+            </Pressable>
+            <Pressable onPress={() => setShowComments(true)} hitSlop={6} style={styles.compactActionBtn}>
+              <MessageCircle size={16} color="#A0A0A0" strokeWidth={1.8} />
+              <Text style={styles.compactActionCount}>{commentCount}</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+
+        <TaskCommentsModal
+          visible={showComments}
+          onClose={() => setShowComments(false)}
+          bucketId={bucket.id}
+          bucketTitle={bucket.title}
+          bucketOwnerId={bucket.user_id}
+        />
+      </Animated.View>
+    );
+  }
 
   return (
     <Animated.View entering={FadeInUp.delay(Math.min(index, 4) * 80).springify()} style={styles.container}>
@@ -248,5 +379,137 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: '#CFCFCF',
     marginTop: 12,
+  },
+  // Galería
+  galleryCardWrapper: {
+    flex: 1,
+    padding: 6,
+  },
+  galleryCard: {
+    borderRadius: 18,
+    overflow: 'hidden',
+    backgroundColor: '#1E1E1E',
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
+  },
+  galleryCover: {
+    width: '100%',
+    aspectRatio: 0.85,
+  },
+  galleryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    padding: 10,
+  },
+  galleryUsername: {
+    fontFamily: fontFamily.medium,
+    fontSize: 12,
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.85)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  galleryBottom: {
+    position: 'absolute',
+    left: 10,
+    right: 10,
+    bottom: 10,
+  },
+  galleryTitle: {
+    fontFamily: fontFamily.serifBold,
+    fontSize: 15,
+    lineHeight: 19,
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.9)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  galleryLocation: {
+    fontFamily: fontFamily.regular,
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.75)',
+    marginTop: 2,
+  },
+  galleryActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 8,
+  },
+  galleryActionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  galleryActionText: {
+    fontFamily: fontFamily.medium,
+    fontSize: 12,
+    color: '#F2EFE8',
+  },
+  // Compacto
+  compactCardWrapper: {
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+  },
+  compactCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#161616',
+    borderWidth: 1,
+    borderColor: '#262626',
+    borderRadius: 14,
+    padding: 10,
+    gap: 12,
+  },
+  compactThumbWrapper: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: '#2A2A2A',
+  },
+  compactInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  compactUserHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  compactUsername: {
+    fontFamily: fontFamily.medium,
+    fontSize: 12,
+    color: '#A0A0A0',
+  },
+  compactDot: {
+    color: '#666',
+    fontSize: 12,
+  },
+  compactTime: {
+    fontFamily: fontFamily.regular,
+    fontSize: 11,
+    color: '#777',
+  },
+  compactTitle: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 14,
+    color: '#FFFFFF',
+  },
+  compactActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  compactActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  compactActionCount: {
+    fontFamily: fontFamily.medium,
+    fontSize: 12,
+    color: '#A0A0A0',
   },
 });

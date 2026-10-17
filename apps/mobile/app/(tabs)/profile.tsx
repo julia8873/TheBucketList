@@ -12,6 +12,7 @@ import { useAlbums } from '../../src/hooks/useAlbums';
 import { useIncomingRequestCount } from '../../src/hooks/useFriends';
 import { BucketCover } from '../../src/components/BucketCover';
 import { ProfileSkeleton } from '../../src/components/TaskSkeletons';
+import { ViewModeSelector, TaskViewMode } from '../../src/components/ViewModeSelector';
 import { resolveTaskImage } from '../../src/utils/taskImage';
 import { initialsOf, displayNameOf } from '../../src/utils/initials';
 
@@ -43,7 +44,7 @@ export default function CurrentUserProfileScreen() {
   const tileWidth = Math.floor((containerWidth - 10) / 2);
   const tileHeight = Math.round(tileWidth * 1.3);
 
-  const [viewMode, setViewMode] = useState<'gallery' | 'list'>('gallery');
+  const [viewMode, setViewMode] = useState<TaskViewMode>('gallery');
   const albums = useAlbums(user?.id);
   const requests = useIncomingRequestCount(user?.id);
 
@@ -190,26 +191,7 @@ export default function CurrentUserProfileScreen() {
           ) : (
             <View />
           )}
-          <View style={[styles.viewToggle, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-            {([
-              ['gallery', LayoutGrid, t('profile.view_gallery')],
-              ['list', List, t('profile.view_list')],
-            ] as const).map(([mode, IconCmp, label]) => {
-              const on = viewMode === mode;
-              return (
-                <Pressable
-                  key={mode}
-                  onPress={() => setViewMode(mode)}
-                  accessibilityRole="button"
-                  accessibilityLabel={label}
-                  accessibilityState={{ selected: on }}
-                  style={[styles.toggleBtn, on && { backgroundColor: theme.colors.primary }]}
-                >
-                  <IconCmp size={18} color={on ? theme.colors.primaryForeground : theme.colors.foregroundMuted} />
-                </Pressable>
-              );
-            })}
-          </View>
+          <ViewModeSelector mode={viewMode} onChange={setViewMode} />
         </View>
 
         {bucketsQuery.isLoading ? (
@@ -242,6 +224,36 @@ export default function CurrentUserProfileScreen() {
                     <Text style={styles.captionTitle} numberOfLines={1}>{item.title}</Text>
                     <Text style={styles.captionSub} numberOfLines={1}>
                       {formatDate(item.completed_at ?? item.created_at)}
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : viewMode === 'compact' ? (
+          <View style={{ gap: 8 }}>
+            {recent.map((item) => {
+              return (
+                <Pressable
+                  key={item.id}
+                  onPress={() => router.push(`/bucket/${item.id}` as any)}
+                  accessibilityRole="button"
+                  style={[styles.compactRow, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+                >
+                  <View style={styles.compactThumb}>
+                    <BucketCover
+                      value={resolveTaskImage(item, { preferThumb: true })}
+                      title={item.title}
+                      seed={item.id}
+                      style={StyleSheet.absoluteFill}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.compactTitle, { color: theme.colors.foreground }]} numberOfLines={1}>
+                      {item.title}
+                    </Text>
+                    <Text style={[styles.compactSub, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
+                      {[item.location_text, formatDate(item.completed_at)].filter(Boolean).join(' · ')}
                     </Text>
                   </View>
                 </Pressable>
@@ -345,6 +357,10 @@ const styles = StyleSheet.create({
   listThumb: { width: 56, height: 56, borderRadius: 12, overflow: 'hidden', backgroundColor: '#2A2A2A' },
   listTitle: { fontFamily: fontFamily.serifBold, fontSize: 17, lineHeight: 21 },
   listSub: { fontFamily: fontFamily.regular, fontSize: 13, marginTop: 3 },
+  compactRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1, borderRadius: 14 },
+  compactThumb: { width: 40, height: 40, borderRadius: 8, overflow: 'hidden', backgroundColor: '#2A2A2A' },
+  compactTitle: { fontFamily: fontFamily.semibold, fontSize: 14 },
+  compactSub: { fontFamily: fontFamily.regular, fontSize: 12, marginTop: 2 },
   empty: { borderWidth: 1, borderRadius: 20, padding: 24, alignItems: 'center' },
   emptyText: { fontFamily: fontFamily.regular, fontSize: 14, textAlign: 'center' },
 });

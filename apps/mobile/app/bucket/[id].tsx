@@ -462,7 +462,7 @@ export default function BucketDetailScreen() {
               >
                 <MessageCircle size={18} color="rgba(255,255,255,0.4)" />
                 <Typography variant="body" color={theme.colors.foregroundMuted}>
-                  Sé el primero en añadir un comentario...
+                  Añade un comentario...
                 </Typography>
               </Pressable>
             ) : (
@@ -667,14 +667,14 @@ export default function BucketDetailScreen() {
         selected={[
           ...(bucket.user_id !== state.user?.id
             ? [
-                {
-                  id: bucket.user_id,
-                  username: bucket.user?.username || '',
-                  display_name: bucket.user?.display_name || null,
-                  avatar_url: bucket.user?.avatar_url || null,
-                  status: 'accepted' as const,
-                },
-              ]
+              {
+                id: bucket.user_id,
+                username: bucket.user?.username || '',
+                display_name: bucket.user?.display_name || null,
+                avatar_url: bucket.user?.avatar_url || null,
+                status: 'accepted' as const,
+              },
+            ]
             : []),
           ...state.participantsData.filter(
             (p: any) => p.id !== state.user?.id && p.id !== bucket.user_id

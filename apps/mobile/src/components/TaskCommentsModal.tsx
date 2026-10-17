@@ -12,7 +12,16 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
-import { MessageCircle, X, Send, Heart, CornerDownRight, AtSign } from 'lucide-react-native';
+import {
+  MessageCircle,
+  X,
+  Send,
+  Heart,
+  CornerDownRight,
+  AtSign,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react-native';
 import { Avatar, fontFamily, gold } from '@bucketlist/ui';
 import { useAuthStore } from '../stores/auth.store';
 import {
@@ -52,6 +61,9 @@ export function TaskCommentsModal({
   const [replyingTo, setReplyingTo] = useState<ReplyingToState | null>(null);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
+
+  // Set de IDs de comentarios cuyas respuestas están visibles (por defecto escondidas)
+  const [expandedCommentIds, setExpandedCommentIds] = useState<Set<string>>(new Set());
 
   // Estado para autocompletar menciones con @
   const [showMentionPicker, setShowMentionPicker] = useState(false);
@@ -97,16 +109,29 @@ export function TaskCommentsModal({
   const deleteComment = useDeleteComment();
   const toggleCommentLike = useToggleCommentLike();
 
-  // Construye el árbol anidado para que las respuestas salgan inmediatamente debajo
-  // de su comentario padre y tabuladas / indentadas.
-  const threadedComments = useMemo(() => {
+  const toggleReplies = (commentId: string) => {
+    setExpandedCommentIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(commentId)) {
+        next.delete(commentId);
+      } else {
+        next.add(commentId);
+      }
+      return next;
+    });
+  };
+
+  // Construye la lista de elementos para el FlatList:
+  // - Comentarios principales (raíz)
+  // - Si el comentario tiene respuestas y está desplegado, añade las respuestas debajo tabuladas
+  // - Botón de alternar "Ver X respuestas" / "Ocultar respuestas" (por defecto escondidas)
+  const visibleItems = useMemo(() => {
     const commentMap = new Map<string, any>();
     comments.forEach((c) => {
       commentMap.set(c.id, { ...c, replies: [] });
     });
 
     const roots: any[] = [];
-
     comments.forEach((c) => {
       const item = commentMap.get(c.id);
       if (c.parent_id && commentMap.has(c.parent_id)) {
@@ -116,20 +141,34 @@ export function TaskCommentsModal({
       }
     });
 
-    const result: Array<{ comment: any; isReply: boolean; depth: number }> = [];
+    const list: Array<
+      | { type: 'comment'; key: string; comment: any; isReply: boolean; depth: number }
+      | { type: 'toggle_replies'; key: string; parentCommentId: string; replyCount: number; isExpanded: boolean }
+    > = [];
 
-    function traverse(node: any, depth: number) {
-      result.push({ comment: node, isReply: depth > 0, depth });
-      if (node.replies && node.replies.length > 0) {
-        node.replies.forEach((child: any) => {
-          traverse(child, Math.min(depth + 1, 2));
+    roots.forEach((root) => {
+      list.push({ type: 'comment', key: `comment-${root.id}`, comment: root, isReply: false, depth: 0 });
+
+      const replyCount = root.replies.length;
+      if (replyCount > 0) {
+        const isExpanded = expandedCommentIds.has(root.id);
+        if (isExpanded) {
+          root.replies.forEach((reply: any) => {
+            list.push({ type: 'comment', key: `comment-${reply.id}`, comment: reply, isReply: true, depth: 1 });
+          });
+        }
+        list.push({
+          type: 'toggle_replies',
+          key: `toggle-${root.id}`,
+          parentCommentId: root.id,
+          replyCount,
+          isExpanded,
         });
       }
-    }
+    });
 
-    roots.forEach((root) => traverse(root, 0));
-    return result;
-  }, [comments]);
+    return list;
+  }, [comments, expandedCommentIds]);
 
   const handleTextChange = (newText: string) => {
     setText(newText);
@@ -173,6 +212,13 @@ export function TaskCommentsModal({
       const parentId = replyingTo?.id || null;
       setReplyingTo(null);
 
+      // Si es una respuesta, desplegamos automáticamente el hilo padre para ver la nueva respuesta
+      if (parentId) {
+        const parentComment = comments.find((c) => c.id === parentId);
+        const rootId = parentComment?.parent_id || parentId;
+        setExpandedCommentIds((prev) => new Set(prev).add(rootId));
+      }
+
       await addComment.mutateAsync({
         bucketId,
         userId: user.id,
@@ -180,7 +226,6 @@ export function TaskCommentsModal({
         parentId,
       });
 
-      // Desplazar al final al enviar nuevo comentario
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 150);
@@ -331,7 +376,7 @@ export function TaskCommentsModal({
             </Pressable>
           </View>
 
-          {/* Lista de comentarios tabulada */}
+          {/* Lista de comentarios sin caja exterior, con fotos a la izquierda y respuestas plegables */}
           {isLoading ? (
             <View style={styles.centerContainer}>
               <ActivityIndicator color={gold[400]} size="small" />
@@ -349,11 +394,39 @@ export function TaskCommentsModal({
           ) : (
             <FlatList
               ref={flatListRef}
-              data={threadedComments}
-              keyExtractor={(item) => item.comment.id}
+              data={visibleItems}
+              keyExtractor={(item) => item.key}
               contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
-              renderItem={({ item: { comment, isReply, depth } }) => {
+              renderItem={({ item }) => {
+                if (item.type === 'toggle_replies') {
+                  return (
+                    <Pressable
+                      style={styles.toggleRepliesRow}
+                      onPress={() => toggleReplies(item.parentCommentId)}
+                      hitSlop={6}
+                    >
+                      <View style={styles.toggleRepliesLine} />
+                      {item.isExpanded ? (
+                        <ChevronUp size={13} color={gold[400]} />
+                      ) : (
+                        <ChevronDown size={13} color="rgba(255,255,255,0.5)" />
+                      )}
+                      <Text
+                        style={[
+                          styles.toggleRepliesText,
+                          item.isExpanded && styles.toggleRepliesTextActive,
+                        ]}
+                      >
+                        {item.isExpanded
+                          ? 'Ocultar respuestas'
+                          : `Ver ${item.replyCount} ${item.replyCount === 1 ? 'respuesta' : 'respuestas'}`}
+                      </Text>
+                    </Pressable>
+                  );
+                }
+
+                const { comment, isReply } = item;
                 const author = comment.user;
                 const isAuthorOfComment = !!user && comment.user_id === user.id;
                 const isTaskOwner = !!user && user.id === bucketOwnerId;
@@ -369,27 +442,22 @@ export function TaskCommentsModal({
                     style={[
                       styles.commentRow,
                       isReply && styles.replyCommentRow,
-                      isReply && depth > 1 && styles.deepReplyCommentRow,
                     ]}
                   >
-                    {/* Conector gráfico de hilo para respuestas */}
+                    {/* Conector gráfico de hilo para respuestas tabuladas */}
                     {isReply && (
                       <View style={styles.replyThreadConnector} pointerEvents="none" />
                     )}
 
-                    {/* Icono del perfil centrado verticalmente con el comentario */}
+                    {/* Foto de perfil a la izquierda del usuario */}
                     <Avatar
                       uri={author?.avatar_url}
                       initials={initialsOf(author)}
                       size={isReply ? 'sm' : 'md'}
                     />
 
-                    <View
-                      style={[
-                        styles.commentBodyWrapper,
-                        isReply && styles.replyBodyWrapper,
-                      ]}
-                    >
+                    {/* Contenido sin caja exterior */}
+                    <View style={styles.commentContent}>
                       {/* Cabecera del comentario */}
                       <View style={styles.commentHeaderRow}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', flex: 1 }}>
@@ -784,51 +852,39 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 16,
     paddingTop: 14,
-    paddingBottom: 16,
-    gap: 16,
+    paddingBottom: 20,
+    gap: 14,
   },
   commentRow: {
     flexDirection: 'row',
-    alignItems: 'center', // Centrado vertical del icono de perfil con el comentario
+    alignItems: 'flex-start', // Foto de perfil a la izquierda, alineada con el nombre del usuario
     gap: 12,
   },
   replyCommentRow: {
-    marginLeft: 32,
+    marginLeft: 36,
     position: 'relative',
-  },
-  deepReplyCommentRow: {
-    marginLeft: 48,
+    marginTop: -4,
   },
   replyThreadConnector: {
     position: 'absolute',
-    left: -20,
-    top: -8,
-    bottom: '50%',
-    width: 14,
+    left: -18,
+    top: 6,
+    bottom: '55%',
+    width: 12,
     borderLeftWidth: 1.5,
     borderBottomWidth: 1.5,
     borderLeftColor: 'rgba(212, 175, 55, 0.35)',
     borderBottomColor: 'rgba(212, 175, 55, 0.35)',
     borderBottomLeftRadius: 8,
   },
-  commentBodyWrapper: {
-    flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  replyBodyWrapper: {
-    backgroundColor: 'rgba(255,255,255,0.025)',
-    borderColor: 'rgba(212, 175, 55, 0.12)',
+  commentContent: {
+    flex: 1, // Sin caja, sin marco, texto limpio y fluido
   },
   commentHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: 3,
   },
   authorName: {
     color: '#FFF',
@@ -856,7 +912,7 @@ const styles = StyleSheet.create({
     color: '#F2EFE8',
     fontSize: 14,
     fontFamily: fontFamily.regular,
-    lineHeight: 19,
+    lineHeight: 20,
   },
   mentionHighlight: {
     color: gold[400],
@@ -866,8 +922,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
-    marginTop: 8,
-    paddingTop: 4,
+    marginTop: 6,
   },
   actionTextBold: {
     color: 'rgba(255,255,255,0.65)',
@@ -887,6 +942,27 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.6)',
     fontSize: 12,
     fontFamily: fontFamily.semibold,
+  },
+  toggleRepliesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 46,
+    marginTop: -4,
+    marginBottom: 4,
+    gap: 8,
+  },
+  toggleRepliesLine: {
+    width: 22,
+    height: 1.5,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+  },
+  toggleRepliesText: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 12,
+    fontFamily: fontFamily.semibold,
+  },
+  toggleRepliesTextActive: {
+    color: gold[400],
   },
   editContainer: {
     marginTop: 4,

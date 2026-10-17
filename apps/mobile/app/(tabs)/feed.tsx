@@ -14,6 +14,8 @@ import { FeedHeader } from '../../src/features/feed/components/FeedHeader';
 import { FriendsFeedTab } from '../../src/features/feed/components/FriendsFeedTab';
 import { ExploreFeedTab } from '../../src/features/feed/components/ExploreFeedTab';
 
+import { TaskViewMode } from '../../src/components/ViewModeSelector';
+
 export default function FeedScreen() {
   const { theme } = useTheme();
   const router = useRouter();
@@ -22,6 +24,7 @@ export default function FeedScreen() {
   const { height: windowHeight } = useWindowDimensions();
 
   const [homeTab, setHomeTab] = useState<'friends' | 'explore'>('friends');
+  const [viewMode, setViewMode] = useState<TaskViewMode>('list');
   const friendsListRef = useRef<any>(null);
   const exploreListRef = useRef<any>(null);
 
@@ -144,6 +147,8 @@ export default function FeedScreen() {
       onOpenFriends={openFriends}
       exploreSearch={exploreSearch}
       onChangeExploreSearch={setExploreSearch}
+      viewMode={viewMode}
+      onChangeViewMode={setViewMode}
     />
   );
 
@@ -164,6 +169,7 @@ export default function FeedScreen() {
           onOpenFriends={() => openFriends()}
           onRetry={() => void refetchFriends()}
           listRef={friendsListRef}
+          viewMode={viewMode}
         />
       ) : (
         <ExploreFeedTab
@@ -180,6 +186,7 @@ export default function FeedScreen() {
           fetchNextPage={fetchNextExplore}
           windowHeight={windowHeight}
           listRef={exploreListRef}
+          viewMode={viewMode}
         />
       )}
     </SafeAreaView>

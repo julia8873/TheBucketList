@@ -17,6 +17,7 @@ import { useFollowUser, useUnfollowUser } from '../../src/hooks/useSocial';
 import { useUserFavorites, useToggleFavoriteAlbum } from '../../src/hooks/useFavorites';
 import { ProfileSkeleton, TaskRowSkeleton } from '../../src/components/TaskSkeletons';
 import { PublicTaskRow } from '../../src/components/PublicTaskRow';
+import { ViewModeSelector, TaskViewMode } from '../../src/components/ViewModeSelector';
 import { displayNameOf } from '../../src/utils/initials';
 
 import { styles } from '../../src/features/public-profile/styles/profile.styles';
@@ -36,6 +37,7 @@ export default function PublicProfileScreen() {
   const [activeTab, setActiveTab] = useState<'list' | 'albums'>('list');
   const [filter, setFilter] = useState<Filter>('all');
   const [albumFilter, setAlbumFilter] = useState<AlbumFilter>('all');
+  const [taskViewMode, setTaskViewMode] = useState<TaskViewMode>('list');
 
   const isOwnProfile = !!user && user.id === id;
 
@@ -208,7 +210,10 @@ export default function PublicProfileScreen() {
 
           {activeTab === 'list' ? (
             <>
-              <SectionLabel highlight="Tareas" rest={`públicas · ${taskCount}`} style={styles.sectionLabel} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <SectionLabel highlight="Tareas" rest={`públicas · ${taskCount}`} style={styles.sectionLabel} />
+                <ViewModeSelector mode={taskViewMode} onChange={setTaskViewMode} />
+              </View>
               <View style={styles.filters}>
                 <FilterChip label="Todas" active={filter === 'all'} onPress={() => setFilter('all')} />
                 <FilterChip label="En curso" active={filter === 'active'} onPress={() => setFilter('active')} />
@@ -250,17 +255,21 @@ export default function PublicProfileScreen() {
       </View>
 
       <FlatList
+        key={taskViewMode}
         refreshing={refreshing}
         onRefresh={() => void onRefresh()}
         data={isLocked || activeTab !== 'list' ? [] : filtered}
         keyExtractor={(item: any) => item.id}
+        numColumns={taskViewMode === 'gallery' ? 2 : 1}
+        columnWrapperStyle={taskViewMode === 'gallery' ? { gap: 12 } : undefined}
         ListHeaderComponent={header}
         contentContainerStyle={styles.listContent}
-        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+        ItemSeparatorComponent={() => <View style={{ height: taskViewMode === 'compact' ? 8 : 12 }} />}
         renderItem={({ item }) => (
           <PublicTaskRow
             bucket={item}
             isOwnProfile={isOwnProfile}
+            mode={taskViewMode}
             onPress={() => router.push(`/bucket/${item.id}` as any)}
           />
         )}

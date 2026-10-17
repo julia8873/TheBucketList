@@ -118,4 +118,18 @@ export const styles = StyleSheet.create({
   userInfo: {
     flex: 1,
   },
+  feedControlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 2,
+  },
+  feedSectionLabel: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 12,
+    color: '#8A8A8A',
+    letterSpacing: 0.8,
+  },
 });

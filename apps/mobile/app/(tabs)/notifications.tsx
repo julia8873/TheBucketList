@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ActivityIndicator, FlatList, Pressable, Text, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Typography, useTheme, spacing, Avatar, Button, Icon, PageTitle, Skeleton } from '@bucketlist/ui';
-import { Check, Heart, MessageCircle, UserPlus, CheckCircle, Bell, Users, X, Folder } from 'lucide-react-native';
+import { Typography, useTheme, spacing, Avatar, Button, Icon, PageTitle, Skeleton, gold } from '@bucketlist/ui';
+import { Check, CheckCheck, Heart, MessageCircle, UserPlus, CheckCircle, Bell, Users, X, Folder } from 'lucide-react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNotifications, useMarkAsRead, useMarkAllAsRead } from '../../src/hooks/useNotifications';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { usePullToRefresh } from '../../src/hooks/useAutoRefresh';
@@ -164,7 +165,7 @@ export default function NotificationsScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={[styles.header, { borderBottomColor: theme.dark ? '#222222' : '#cccccc' }]}>
           <PageTitle>Notificaciones</PageTitle>
         </View>
@@ -180,26 +181,44 @@ export default function NotificationsScreen() {
             </View>
           ))}
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   const unreadCount = notifications?.filter(n => !n.is_read).length || 0;
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={[styles.header, { borderBottomColor: theme.dark ? '#222222' : '#cccccc' }]}>
         <PageTitle>Notificaciones</PageTitle>
-        {unreadCount > 0 && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
+        {unreadCount > 0 ? (
+          <Pressable
             onPress={() => user && markAllAsRead.mutate(user.id)}
             disabled={markAllAsRead.isPending}
+            style={({ pressed }) => [
+              styles.markAllBtn,
+              { opacity: pressed || markAllAsRead.isPending ? 0.7 : 1 },
+            ]}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Leer todas las notificaciones"
           >
-            Marcar como leídas
-          </Button>
-        )}
+            <CheckCheck size={16} color={gold[400]} />
+            <Text style={styles.markAllText}>Leer todas</Text>
+          </Pressable>
+        ) : notifications && notifications.length > 0 ? (
+          <Pressable
+            onPress={() => user && markAllAsRead.mutate(user.id)}
+            disabled={markAllAsRead.isPending}
+            style={styles.allReadBadge}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Todas leídas"
+          >
+            <Check size={14} color="#8A8A8A" />
+            <Text style={styles.allReadText}>Leídas</Text>
+          </Pressable>
+        ) : null}
       </View>
 
       <FlatList
@@ -298,7 +317,7 @@ export default function NotificationsScreen() {
           </View>
         }
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -314,11 +333,43 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing[4],
-    paddingTop: spacing[6],
-    paddingBottom: spacing[4],
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#ccc',
+    borderBottomColor: '#222222',
+  },
+  markAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: 'rgba(212, 175, 55, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.35)',
+  },
+  markAllText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 13,
+    color: gold[400],
+  },
+  allReadBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 14,
+    backgroundColor: '#181818',
+    borderWidth: 1,
+    borderColor: '#262626',
+  },
+  allReadText: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    color: '#8A8A8A',
   },
   notificationRow: {
     flexDirection: 'row',

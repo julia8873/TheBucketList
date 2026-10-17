@@ -6,6 +6,7 @@ import { Users } from 'lucide-react-native';
 import { EmptyState, Typography, Avatar, gold } from '@bucketlist/ui';
 import { FeedCard } from '../../../components/FeedCard';
 import { FeedCardSkeleton } from '../../../components/FeedCardSkeleton';
+import { TaskViewMode } from '../../../components/ViewModeSelector';
 import { styles } from '../styles/feed.styles';
 
 interface ExploreFeedTabProps {
@@ -22,6 +23,7 @@ interface ExploreFeedTabProps {
   fetchNextPage: () => void;
   windowHeight: number;
   listRef?: React.RefObject<any>;
+  viewMode?: TaskViewMode;
 }
 
 export function ExploreFeedTab({
@@ -38,6 +40,7 @@ export function ExploreFeedTab({
   fetchNextPage,
   windowHeight,
   listRef,
+  viewMode = 'list',
 }: ExploreFeedTabProps) {
   const router = useRouter();
 
@@ -100,8 +103,11 @@ export function ExploreFeedTab({
   return (
     <FlashList
       ref={listRef}
+      key={viewMode}
       data={exploreBuckets}
       keyExtractor={(item) => item.id}
+      numColumns={viewMode === 'gallery' ? 2 : 1}
+      contentContainerStyle={viewMode === 'gallery' ? { paddingHorizontal: 10 } : undefined}
       renderItem={({ item, index }) => (
         <FeedCard
           event={{
@@ -111,10 +117,11 @@ export function ExploreFeedTab({
             created_at: item.created_at,
           }}
           index={index}
+          mode={viewMode}
           onPress={() => router.push(`/bucket/${item.id}` as any)}
         />
       )}
-      estimatedItemSize={300}
+      estimatedItemSize={viewMode === 'gallery' ? 240 : viewMode === 'compact' ? 70 : 300}
       ListHeaderComponent={
         <View>
           {headerElement}
