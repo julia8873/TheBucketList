@@ -85,8 +85,15 @@ export function FeedCard({ event, onPress, index, mode = 'list' }: FeedCardProps
   };
 
   if (mode === 'gallery') {
+    const isLeftColumn = index % 2 === 0;
     return (
-      <Animated.View entering={FadeInUp.delay(Math.min(index, 6) * 50).springify()} style={styles.galleryCardWrapper}>
+      <Animated.View
+        entering={FadeInUp.delay(Math.min(index, 6) * 50).springify()}
+        style={[
+          styles.galleryCardWrapper,
+          isLeftColumn ? styles.galleryLeftCol : styles.galleryRightCol,
+        ]}
+      >
         <Pressable
           onPress={onPress}
           style={({ pressed }) => [styles.galleryCard, { opacity: pressed ? 0.9 : 1 }]}
@@ -392,7 +399,15 @@ const styles = StyleSheet.create({
   // Galería
   galleryCardWrapper: {
     flex: 1,
-    padding: 6,
+    paddingVertical: 5,
+  },
+  galleryLeftCol: {
+    paddingLeft: 16,
+    paddingRight: 5,
+  },
+  galleryRightCol: {
+    paddingLeft: 5,
+    paddingRight: 16,
   },
   galleryCard: {
     borderRadius: 18,

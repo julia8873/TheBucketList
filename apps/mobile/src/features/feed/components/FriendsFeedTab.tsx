@@ -75,7 +75,6 @@ export function FriendsFeedTab({
       data={friendsItems}
       keyExtractor={(item) => item.id}
       numColumns={viewMode === 'gallery' ? 2 : 1}
-      contentContainerStyle={viewMode === 'gallery' ? { paddingHorizontal: 10 } : undefined}
       renderItem={({ item, index }) => (
         <FeedCard
           event={item}
