@@ -278,37 +278,67 @@ export function useAlbumDetailState() {
     });
   };
 
+  const pendingTitle = useRef<string | null>(null);
+  const lastSavedTitle = useRef<string | null>(null);
+  const pendingDesc = useRef<string | null>(null);
+  const lastSavedDesc = useRef<string | null>(null);
+
+  const flushTitleChange = async () => {
+    if (titleTimeout.current) {
+      clearTimeout(titleTimeout.current);
+      titleTimeout.current = null;
+    }
+    const titleToSave = pendingTitle.current;
+    if (titleToSave === null || !titleToSave.trim()) return;
+    if (lastSavedTitle.current !== null && titleToSave.trim() === lastSavedTitle.current) return;
+
+    lastSavedTitle.current = titleToSave.trim();
+    const { error } = await supabase
+      .from('albums')
+      .update({ title: titleToSave.trim() })
+      .eq('id', id);
+    if (!error) {
+      void queryClient.invalidateQueries({ queryKey: ['albums'] });
+      void queryClient.invalidateQueries({ queryKey: ['album', id] });
+    }
+  };
+
   const handleTitleChange = (newTitle: string) => {
+    pendingTitle.current = newTitle;
     queryClient.setQueryData(['album', id, user?.id], (old: any) =>
       old ? { ...old, title: newTitle } : old
     );
     if (titleTimeout.current) clearTimeout(titleTimeout.current);
-    titleTimeout.current = setTimeout(async () => {
-      if (!newTitle.trim()) return;
-      const { error } = await supabase
-        .from('albums')
-        .update({ title: newTitle.trim() })
-        .eq('id', id);
-      if (!error) {
-        void queryClient.invalidateQueries({ queryKey: ['albums'] });
-      }
-    }, 500);
+    titleTimeout.current = setTimeout(flushTitleChange, 1500);
+  };
+
+  const flushDescriptionChange = async () => {
+    if (descTimeout.current) {
+      clearTimeout(descTimeout.current);
+      descTimeout.current = null;
+    }
+    const descToSave = pendingDesc.current;
+    if (descToSave === null) return;
+    if (lastSavedDesc.current !== null && descToSave.trim() === (lastSavedDesc.current || '').trim()) return;
+
+    lastSavedDesc.current = descToSave.trim();
+    const { error } = await supabase
+      .from('albums')
+      .update({ description: descToSave.trim() })
+      .eq('id', id);
+    if (!error) {
+      void queryClient.invalidateQueries({ queryKey: ['albums'] });
+      void queryClient.invalidateQueries({ queryKey: ['album', id] });
+    }
   };
 
   const handleDescriptionChange = (newDesc: string) => {
+    pendingDesc.current = newDesc;
     queryClient.setQueryData(['album', id, user?.id], (old: any) =>
       old ? { ...old, description: newDesc } : old
     );
     if (descTimeout.current) clearTimeout(descTimeout.current);
-    descTimeout.current = setTimeout(async () => {
-      const { error } = await supabase
-        .from('albums')
-        .update({ description: newDesc.trim() })
-        .eq('id', id);
-      if (!error) {
-        void queryClient.invalidateQueries({ queryKey: ['albums'] });
-      }
-    }, 500);
+    descTimeout.current = setTimeout(flushDescriptionChange, 1500);
   };
 
   const handleChangeVisibility = async (newVisibility: 'public' | 'followers' | 'private') => {
@@ -720,7 +750,9 @@ export function useAlbumDetailState() {
     handleCollaboratorsChange,
     confirmLeaveAlbum,
     handleTitleChange,
+    flushTitleChange,
     handleDescriptionChange,
+    flushDescriptionChange,
     handleChangeVisibility,
     handleChangePriority,
     handleToggleCloseAlbum,

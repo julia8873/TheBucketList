@@ -9,7 +9,7 @@ type SubtaskInsert = Database['public']['Tables']['item_subtasks']['Insert'];
 
 export const bucketApi = {
   getBuckets: async (userId?: string) => {
-    const baseSelect = '*, category:categories(*), item_subtasks(*), album_items(album_id), bucket_photos(id, thumb_path, storage_path, created_at)';
+    const baseSelect = '*, category:categories(*), item_subtasks(*), album_items(album_id), bucket_photos(id, thumb_path, storage_path, created_at, completed_at, title)';
 
     if (!userId) {
       const { data, error } = await supabase

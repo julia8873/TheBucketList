@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
+import * as Notifications from 'expo-notifications';
 import { supabase } from '../services/supabase';
 
 /**
@@ -74,6 +76,23 @@ export function useRealtimeSync(userId?: string) {
         if (bucketId) schedule(`collab:${bucketId}`, () => invalidate('bucketCollaborators', bucketId));
         refreshBucket(bucketId);
       })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, (p: any) => {
+        const bucketId = p.new?.bucket_id ?? p.old?.bucket_id;
+        if (bucketId) {
+          invalidate('comments', bucketId);
+          invalidate('bucketComments', bucketId);
+        }
+        refreshBucket(bucketId);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, (p: any) => {
+        const bucketId = p.new?.bucket_id ?? p.old?.bucket_id;
+        if (bucketId) invalidate('bucketReactions', bucketId);
+        refreshBucket(bucketId);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'comment_likes' }, () => {
+        invalidate('comments');
+        invalidate('bucketComments');
+      })
       // Añadir/quitar una tarea de un álbum: es lo que hace que le aparezca (o desaparezca)
       // a los demás miembros. La fila de `buckets` no les llega al crearse porque aún no
       // está en el álbum y RLS la oculta; este evento es el que lo dispara.
@@ -100,6 +119,42 @@ export function useRealtimeSync(userId?: string) {
       )
       .on('postgres_changes', { event: '*', schema: 'public', table: 'albums' }, refreshAlbums)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'album_members' }, refreshAlbums)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `recipient_id=eq.${userId}`,
+        },
+        async (payload: any) => {
+          invalidate('notifications');
+          invalidate('unreadNotificationsCount');
+
+          const record = payload.new;
+          if (record && record.content && record.actor_id !== userId) {
+            try {
+              await Notifications.scheduleNotificationAsync({
+                content: {
+                  title: 'The Bucket List',
+                  body: record.content,
+                  data: {
+                    notificationId: record.id,
+                    bucketId: record.bucket_id,
+                    albumId: record.album_id,
+                    type: record.type,
+                  },
+                  sound: 'default',
+                  priority: Notifications.AndroidNotificationPriority.MAX,
+                },
+                trigger: (Platform.OS === 'android' ? { channelId: 'default' } : null) as any,
+              });
+            } catch (err) {
+              console.warn('Error scheduling local notification in useRealtimeSync:', err);
+            }
+          }
+        }
+      )
       .subscribe();
 
     return () => {

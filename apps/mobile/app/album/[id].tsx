@@ -394,6 +394,7 @@ export default function AlbumDetailScreen() {
           <TextInput
             defaultValue={title}
             onChangeText={state.handleTitleChange}
+            onBlur={state.flushTitleChange}
             placeholder="Nombre del álbum"
             placeholderTextColor="#8F8F8F"
             style={styles.titleInput}
@@ -408,6 +409,7 @@ export default function AlbumDetailScreen() {
           <TextInput
             defaultValue={album.description || ''}
             onChangeText={state.handleDescriptionChange}
+            onBlur={state.flushDescriptionChange}
             placeholder="Añade una descripción..."
             placeholderTextColor="#666666"
             style={styles.albumDescriptionInput}

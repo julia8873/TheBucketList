@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Alert, Share, Dimensions, Animated, Platform, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -774,6 +774,65 @@ export function useBucketDetailState() {
     invalidateBucket();
   };
 
+  const handleUpdatePhotoTitle = useCallback(
+    async (photoId: string, title: string) => {
+      const targetId = Array.isArray(id) ? id[0] : id;
+      queryClient.setQueryData(['bucketDetail', targetId], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          bucket_photos: (oldData.bucket_photos || []).map((p: any) =>
+            p.id === photoId ? { ...p, title } : p
+          ),
+        };
+      });
+      const { error } = await supabase
+        .from('bucket_photos')
+        .update({ title: title.trim() || null })
+        .eq('id', photoId);
+      if (error) {
+        console.error('Error al actualizar título de foto:', error);
+      }
+    },
+    [id, queryClient]
+  );
+
+  const handleUpdatePhotoDate = useCallback(
+    async (photoId: string, field: 'created_at' | 'completed_at', date: string | null) => {
+      const targetId = Array.isArray(id) ? id[0] : id;
+      const previous = queryClient.getQueryData(['bucketDetail', targetId]);
+
+      // 1. Actualización optimista inmediata en cache
+      queryClient.setQueryData(['bucketDetail', targetId], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          bucket_photos: (oldData.bucket_photos || []).map((p: any) =>
+            p.id === photoId ? { ...p, [field]: date } : p
+          ),
+        };
+      });
+
+      // 2. Persistencia en Supabase
+      const { error } = await supabase
+        .from('bucket_photos')
+        .update({ [field]: date })
+        .eq('id', photoId);
+
+      if (error) {
+        console.error('Error al guardar fecha de foto:', error);
+        queryClient.setQueryData(['bucketDetail', targetId], previous);
+        Alert.alert('Error', 'No se pudo guardar la fecha: ' + (error.message || 'Error desconocido'));
+        return;
+      }
+
+      // 3. Invalidación solo tras confirmación de la BD
+      await queryClient.invalidateQueries({ queryKey: ['bucketDetail', targetId] });
+      void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+    },
+    [id, queryClient]
+  );
+
   const uploadPhotos = () => {
     closeSheet(() => void pickAndUploadPhotos());
   };
@@ -1039,29 +1098,57 @@ export function useBucketDetailState() {
     void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
   };
 
+  const pendingTitle = useRef<string | null>(null);
+  const lastSavedTitle = useRef<string | null>(null);
+  const pendingDesc = useRef<string | null>(null);
+  const lastSavedDesc = useRef<string | null>(null);
+
+  const flushTitleChange = async () => {
+    if (titleTimeout.current) {
+      clearTimeout(titleTimeout.current);
+      titleTimeout.current = null;
+    }
+    const titleToSave = pendingTitle.current;
+    if (titleToSave === null || !titleToSave.trim()) return;
+    if (lastSavedTitle.current !== null && titleToSave.trim() === lastSavedTitle.current) return;
+
+    lastSavedTitle.current = titleToSave.trim();
+    const { error } = await supabase.from('buckets').update({ title: titleToSave.trim() }).eq('id', id);
+    if (!error) {
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+      void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+    }
+  };
+
   const handleTitleChange = (newTitle: string) => {
+    pendingTitle.current = newTitle;
     queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, title: newTitle } : oldData);
     if (titleTimeout.current) clearTimeout(titleTimeout.current);
-    titleTimeout.current = setTimeout(async () => {
-      if (!newTitle.trim()) return;
-      const { error } = await supabase.from('buckets').update({ title: newTitle.trim() }).eq('id', id);
-      if (!error) {
-        void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
-        void queryClient.invalidateQueries({ queryKey: ['buckets'] });
-      }
-    }, 500);
+    titleTimeout.current = setTimeout(flushTitleChange, 1500);
+  };
+
+  const flushDescriptionChange = async () => {
+    if (descTimeout.current) {
+      clearTimeout(descTimeout.current);
+      descTimeout.current = null;
+    }
+    const descToSave = pendingDesc.current;
+    if (descToSave === null) return;
+    if (lastSavedDesc.current !== null && descToSave.trim() === (lastSavedDesc.current || '').trim()) return;
+
+    lastSavedDesc.current = descToSave.trim();
+    const { error } = await supabase.from('buckets').update({ description: descToSave.trim() }).eq('id', id);
+    if (!error) {
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+      void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+    }
   };
 
   const handleDescriptionChange = (newDesc: string) => {
+    pendingDesc.current = newDesc;
     queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, description: newDesc } : oldData);
     if (descTimeout.current) clearTimeout(descTimeout.current);
-    descTimeout.current = setTimeout(async () => {
-      const { error } = await supabase.from('buckets').update({ description: newDesc.trim() }).eq('id', id);
-      if (!error) {
-        void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
-        void queryClient.invalidateQueries({ queryKey: ['buckets'] });
-      }
-    }, 500);
+    descTimeout.current = setTimeout(flushDescriptionChange, 1500);
   };
 
   const handleAddSubtask = async () => {
@@ -1239,12 +1326,16 @@ export function useBucketDetailState() {
     handleDeleteSubtask,
     handleMoveSubtask,
     handleTitleChange,
+    flushTitleChange,
     handleDescriptionChange,
+    flushDescriptionChange,
     handleAddSubtask,
     handleCollaboratorsChange,
     isFav,
     toggleFavorite,
     toggleReaction,
     copyBucket,
+    handleUpdatePhotoTitle,
+    handleUpdatePhotoDate,
   };
 }

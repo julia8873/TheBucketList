@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StatusBar,
@@ -8,6 +8,7 @@ import {
   TextInput,
   ActivityIndicator,
   StyleSheet,
+  Text,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -38,6 +39,8 @@ import { TaskMentionPickerSheet } from '@/components/TaskMentionPickerSheet';
 import { TaskMentionList } from '@/components/TaskMentionList';
 import { CollaboratorPickerSheet } from '@/components/CollaboratorPickerSheet';
 import { NotificationSubscribersModal } from '@/components/NotificationSubscribersModal';
+import { TaskCommentsModal } from '@/components/TaskCommentsModal';
+import { timeAgo } from '@/utils/timeAgo';
 
 import { useBucketDetailState } from '@/features/bucket-detail/hooks/useBucketDetailState';
 import {
@@ -63,6 +66,7 @@ export default function BucketDetailScreen() {
   const insets = useSafeAreaInsets();
   const coverTotalHeight = COVER_HEIGHT + insets.top;
   const state = useBucketDetailState();
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
 
   if (state.isLoading) {
     return (
@@ -206,6 +210,7 @@ export default function BucketDetailScreen() {
               style={[styles.title, { color: theme.colors.foreground, padding: 0 }]}
               defaultValue={bucket.title}
               onChangeText={state.handleTitleChange}
+              onBlur={state.flushTitleChange}
               multiline
             />
           ) : (
@@ -318,12 +323,18 @@ export default function BucketDetailScreen() {
                 {state.totalReactions}
               </Typography>
             </Pressable>
-            <View style={[styles.statItem, { marginLeft: 24 }]}>
+            <Pressable
+              onPress={() => setShowCommentsModal(true)}
+              style={[styles.statItem, { marginLeft: 24 }]}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Ver comentarios"
+            >
               <MessageCircle color={theme.colors.foregroundMuted} size={18} strokeWidth={1.8} />
               <Typography variant="body" color={theme.colors.foregroundMuted} style={{ marginLeft: 6 }}>
                 {state.comments.length} {state.comments.length === 1 ? 'comentario' : 'comentarios'}
               </Typography>
-            </View>
+            </Pressable>
           </View>
 
           {/* Contador */}
@@ -416,6 +427,94 @@ export default function BucketDetailScreen() {
             setViewingPhotoIndex={state.setViewingPhotoIndex}
             pickAndUploadPhotos={() => void state.pickAndUploadPhotos()}
           />
+
+          {/* Sección de Comentarios en la tarea */}
+          <View style={{ marginTop: 24, marginBottom: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <Typography variant="caption" color={gold[400]} style={{ letterSpacing: 1.2 }}>
+                COMENTARIOS · {state.comments.length}
+              </Typography>
+              <Pressable
+                onPress={() => setShowCommentsModal(true)}
+                hitSlop={8}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+              >
+                <Typography variant="caption" color={gold[400]}>
+                  {state.comments.length > 0 ? 'Ver todos' : 'Comentar'}
+                </Typography>
+              </Pressable>
+            </View>
+
+            {state.comments.length === 0 ? (
+              <Pressable
+                onPress={() => setShowCommentsModal(true)}
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.04)',
+                  borderRadius: 16,
+                  borderWidth: 1,
+                  borderColor: 'rgba(255,255,255,0.08)',
+                  padding: 16,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'row',
+                  gap: 10,
+                }}
+              >
+                <MessageCircle size={18} color="rgba(255,255,255,0.4)" />
+                <Typography variant="body" color={theme.colors.foregroundMuted}>
+                  Sé el primero en añadir un comentario...
+                </Typography>
+              </Pressable>
+            ) : (
+              <View style={{ gap: 8 }}>
+                {state.comments.slice(-2).map((c: any) => (
+                  <Pressable
+                    key={c.id}
+                    onPress={() => setShowCommentsModal(true)}
+                    style={{
+                      backgroundColor: 'rgba(255,255,255,0.04)',
+                      borderRadius: 14,
+                      borderWidth: 1,
+                      borderColor: 'rgba(255,255,255,0.06)',
+                      padding: 12,
+                      gap: 4,
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Text style={{ color: '#FFF', fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+                        {c.user?.display_name || c.user?.username || 'Usuario'}
+                      </Text>
+                      <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>
+                        {timeAgo(c.created_at)}
+                      </Text>
+                    </View>
+                    <Text style={{ color: '#F2EFE8', fontSize: 13, lineHeight: 18 }} numberOfLines={2}>
+                      {c.body}
+                    </Text>
+                  </Pressable>
+                ))}
+
+                <Pressable
+                  onPress={() => setShowCommentsModal(true)}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: 'rgba(255,255,255,0.06)',
+                    borderRadius: 20,
+                    paddingHorizontal: 14,
+                    paddingVertical: 10,
+                    marginTop: 4,
+                    gap: 10,
+                  }}
+                >
+                  <MessageCircle size={16} color="rgba(255,255,255,0.4)" />
+                  <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, flex: 1 }}>
+                    Añade un comentario...
+                  </Text>
+                </Pressable>
+              </View>
+            )}
+          </View>
         </View>
       </ScrollView>
 
@@ -438,34 +537,8 @@ export default function BucketDetailScreen() {
         setViewingPhotoIndex={state.setViewingPhotoIndex}
         isOwner={state.canEdit}
         onDelete={state.confirmDeletePhoto}
-        onUpdateTitle={(photoId, title) => {
-          state.queryClient.setQueryData(['bucketDetail', state.id], (oldData: any) => {
-            if (!oldData) return oldData;
-            return {
-              ...oldData,
-              bucket_photos: (oldData.bucket_photos || []).map((p: any) =>
-                p.id === photoId ? { ...p, title } : p
-              ),
-            };
-          });
-          void supabase
-            .from('bucket_photos')
-            .update({ title: title.trim() || null })
-            .eq('id', photoId);
-        }}
-        onUpdatePhotoDate={(photoId, field, date) => {
-          state.queryClient.setQueryData(['bucketDetail', state.id], (oldData: any) => {
-            if (!oldData) return oldData;
-            return {
-              ...oldData,
-              bucket_photos: (oldData.bucket_photos || []).map((p: any) =>
-                p.id === photoId ? { ...p, [field]: date } : p
-              ),
-            };
-          });
-          void supabase.from('bucket_photos').update({ [field]: date }).eq('id', photoId);
-          void state.queryClient.invalidateQueries({ queryKey: ['bucketDetail', state.id] });
-        }}
+        onUpdateTitle={state.handleUpdatePhotoTitle}
+        onUpdatePhotoDate={state.handleUpdatePhotoDate}
       />
 
       {/* Botón flotante inferior para cambiar estado */}
@@ -567,14 +640,15 @@ export default function BucketDetailScreen() {
           if (type === 'completed_at') {
             patch.status = 'completed';
           }
-          state.queryClient.setQueryData(['bucketDetail', state.id], (oldData: any) =>
+          const targetBucketId = Array.isArray(state.id) ? state.id[0] : state.id;
+          state.queryClient.setQueryData(['bucketDetail', targetBucketId], (oldData: any) =>
             oldData ? { ...oldData, ...patch } : oldData
           );
-          const { error } = await supabase.from('buckets').update(patch).eq('id', state.id);
+          const { error } = await supabase.from('buckets').update(patch).eq('id', targetBucketId);
           if (error) {
             console.error('No se pudo guardar la fecha', error.message);
           }
-          void state.queryClient.invalidateQueries({ queryKey: ['bucketDetail', state.id] });
+          await state.queryClient.invalidateQueries({ queryKey: ['bucketDetail', targetBucketId] });
           void state.queryClient.invalidateQueries({ queryKey: ['buckets'] });
           void state.queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
         }}
@@ -582,7 +656,7 @@ export default function BucketDetailScreen() {
 
       <TaskMentionPickerSheet
         visible={state.showMentionPicker}
-        currentBucketId={state.id}
+        currentBucketId={Array.isArray(state.id) ? state.id[0] : state.id}
         mentionedIds={(state.mentionsData ?? []).map((m) => m.task.id)}
         onToggle={state.toggleMention}
         onClose={() => state.setShowMentionPicker(false)}
@@ -624,10 +698,18 @@ export default function BucketDetailScreen() {
         visible={state.showNotificationModal}
         onClose={() => state.setShowNotificationModal(false)}
         targetType="bucket"
-        targetId={state.id}
+        targetId={Array.isArray(state.id) ? state.id[0] : state.id}
         targetTitle={bucket.title}
         ownerId={bucket.user_id}
         currentUserId={state.user?.id}
+      />
+
+      <TaskCommentsModal
+        visible={showCommentsModal}
+        onClose={() => setShowCommentsModal(false)}
+        bucketId={Array.isArray(state.id) ? state.id[0] : (state.id as string)}
+        bucketTitle={bucket.title}
+        bucketOwnerId={bucket.user_id}
       />
     </View>
   );

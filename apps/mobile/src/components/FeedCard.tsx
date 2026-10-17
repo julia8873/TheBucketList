@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { Check, Heart, MessageCircle } from 'lucide-react-native';
 import { Avatar, fontFamily, gold } from '@bucketlist/ui';
 import { BucketCover } from './BucketCover';
+import { TaskCommentsModal } from './TaskCommentsModal';
 import { resolveTaskImage } from '../utils/taskImage';
 import { useAuthStore } from '../stores/auth.store';
 import { useCopiedBucketIds, useCopyBucket, useToggleLike } from '../hooks/useSocial';
@@ -27,6 +28,7 @@ interface FeedCardProps {
 export function FeedCard({ event, onPress, index }: FeedCardProps) {
   const router = useRouter();
   const { user } = useAuthStore();
+  const [showComments, setShowComments] = useState(false);
   const toggleLike = useToggleLike();
   const copyBucket = useCopyBucket();
   const { data: copiedIds } = useCopiedBucketIds(user?.id);
@@ -136,7 +138,13 @@ export function FeedCard({ event, onPress, index }: FeedCardProps) {
           <Text style={styles.count}>{likeCount}</Text>
         </Pressable>
 
-        <Pressable onPress={onPress} style={styles.action} hitSlop={8} accessibilityRole="button" accessibilityLabel="Comentarios">
+        <Pressable
+          onPress={() => setShowComments(true)}
+          style={styles.action}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Comentarios"
+        >
           <MessageCircle size={24} color="#F2EFE8" strokeWidth={1.8} />
           <Text style={styles.count}>{commentCount}</Text>
         </Pressable>
@@ -160,6 +168,14 @@ export function FeedCard({ event, onPress, index }: FeedCardProps) {
       </View>
 
       {caption ? <Text style={styles.caption}>{caption}</Text> : null}
+
+      <TaskCommentsModal
+        visible={showComments}
+        onClose={() => setShowComments(false)}
+        bucketId={bucket.id}
+        bucketTitle={bucket.title}
+        bucketOwnerId={bucket.user_id}
+      />
     </Animated.View>
   );
 }

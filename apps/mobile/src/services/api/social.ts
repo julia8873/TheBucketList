@@ -91,15 +91,79 @@ export const socialApi = {
   },
 
   // Comments
-  addComment: async (bucketId: string, userId: string, body: string) => {
+  getComments: async (bucketId: string) => {
     const { data, error } = await supabase
       .from('comments')
-      .insert({ bucket_id: bucketId, user_id: userId, body })
-      .select('*, user:profiles(*)')
+      .select('*, user:profiles!comments_user_id_fkey(*), likes:comment_likes(id, user_id)')
+      .eq('bucket_id', bucketId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  addComment: async (bucketId: string, userId: string, body: string, parentId?: string | null) => {
+    const payload: any = { bucket_id: bucketId, user_id: userId, body };
+    if (parentId) {
+      payload.parent_id = parentId;
+    }
+
+    const { data, error } = await supabase
+      .from('comments')
+      .insert(payload)
+      .select('*, user:profiles!comments_user_id_fkey(*), likes:comment_likes(id, user_id)')
       .single();
 
     if (error) throw error;
     return data;
+  },
+
+  updateComment: async (commentId: string, body: string) => {
+    const trimmed = body.trim();
+    if (!trimmed) throw new Error('El comentario no puede estar vacío');
+
+    const { data, error } = await supabase
+      .from('comments')
+      .update({ body: trimmed, updated_at: new Date().toISOString() })
+      .eq('id', commentId)
+      .select('*, user:profiles!comments_user_id_fkey(*), likes:comment_likes(id, user_id)')
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  deleteComment: async (commentId: string) => {
+    const { error } = await supabase
+      .from('comments')
+      .delete()
+      .eq('id', commentId);
+
+    if (error) throw error;
+    return true;
+  },
+
+  toggleCommentLike: async (commentId: string, userId: string) => {
+    const { data: existing, error: fetchErr } = await supabase
+      .from('comment_likes')
+      .select('id')
+      .match({ comment_id: commentId, user_id: userId })
+      .maybeSingle();
+
+    if (fetchErr) throw fetchErr;
+
+    if (existing) {
+      const { error } = await supabase.from('comment_likes').delete().eq('id', existing.id);
+      if (error) throw error;
+      return { liked: false };
+    }
+
+    const { error } = await supabase
+      .from('comment_likes')
+      .insert({ comment_id: commentId, user_id: userId });
+
+    if (error) throw error;
+    return { liked: true };
   },
 
   /** IDs de las tareas ajenas que ya he copiado a mi lista. */

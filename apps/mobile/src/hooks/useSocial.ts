@@ -208,17 +208,101 @@ export function useUserFollows(userId?: string) {
 
 export const COMMENTS_QUERY_KEY = ['comments'];
 
+export function useComments(bucketId?: string) {
+  return useQuery({
+    queryKey: [...COMMENTS_QUERY_KEY, bucketId],
+    queryFn: () => (bucketId ? socialApi.getComments(bucketId) : Promise.resolve([])),
+    enabled: !!bucketId,
+  });
+}
+
 export function useAddComment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ bucketId, userId, body }: { bucketId: string; userId: string; body: string }) =>
-      socialApi.addComment(bucketId, userId, body),
+    mutationFn: ({
+      bucketId,
+      userId,
+      body,
+      parentId,
+    }: {
+      bucketId: string;
+      userId: string;
+      body: string;
+      parentId?: string | null;
+    }) => socialApi.addComment(bucketId, userId, body, parentId),
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: [...COMMENTS_QUERY_KEY, variables.bucketId] });
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', variables.bucketId] });
       void queryClient.invalidateQueries({ queryKey: ['bucketComments', variables.bucketId] });
       void queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
+    },
+  });
+}
+
+export function useUpdateComment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ commentId, body }: { commentId: string; bucketId: string; body: string }) =>
+      socialApi.updateComment(commentId, body),
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: [...COMMENTS_QUERY_KEY, variables.bucketId] });
+      void queryClient.invalidateQueries({ queryKey: ['bucketComments', variables.bucketId] });
+    },
+  });
+}
+
+export function useDeleteComment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ commentId, bucketId }: { commentId: string; bucketId: string }) =>
+      socialApi.deleteComment(commentId),
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: [...COMMENTS_QUERY_KEY, variables.bucketId] });
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', variables.bucketId] });
+      void queryClient.invalidateQueries({ queryKey: ['bucketComments', variables.bucketId] });
+      void queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
+    },
+  });
+}
+
+export function useToggleCommentLike() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ commentId, userId }: { commentId: string; bucketId: string; userId: string }) =>
+      socialApi.toggleCommentLike(commentId, userId),
+    onMutate: async ({ commentId, bucketId, userId }) => {
+      await queryClient.cancelQueries({ queryKey: [...COMMENTS_QUERY_KEY, bucketId] });
+      const previousComments = queryClient.getQueryData([...COMMENTS_QUERY_KEY, bucketId]);
+
+      queryClient.setQueryData([...COMMENTS_QUERY_KEY, bucketId], (old: any[] | undefined) => {
+        if (!old) return old;
+        return old.map((c) => {
+          if (c.id !== commentId) return c;
+          const currentLikes: Array<{ id?: string; user_id: string }> = c.likes ?? [];
+          const alreadyLiked = currentLikes.some((l) => l.user_id === userId);
+          const newLikes = alreadyLiked
+            ? currentLikes.filter((l) => l.user_id !== userId)
+            : [...currentLikes, { id: 'temp-' + Date.now(), user_id: userId }];
+          return {
+            ...c,
+            likes: newLikes,
+          };
+        });
+      });
+
+      return { previousComments };
+    },
+    onError: (_err, variables, context) => {
+      if (context?.previousComments) {
+        queryClient.setQueryData([...COMMENTS_QUERY_KEY, variables.bucketId], context.previousComments);
+      }
+    },
+    onSettled: (_data, _err, variables) => {
+      void queryClient.invalidateQueries({ queryKey: [...COMMENTS_QUERY_KEY, variables.bucketId] });
     },
   });
 }

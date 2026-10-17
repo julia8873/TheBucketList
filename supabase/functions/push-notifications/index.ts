@@ -33,15 +33,27 @@ export default {
 
         const actorName = actor?.display_name || actor?.username || 'Someone';
 
-        let title = 'New Activity';
-        let body = `${actorName} interacted with your bucket.`;
+        let title = 'The Bucket List';
+        let body = record.content || `${actorName} ha interactuado con tu lista.`;
 
         if (record.type === 'reaction') {
-          title = 'New Reaction';
-          body = `${actorName} reacted to your bucket list item.`;
+          title = 'Nueva reacción';
+          body = record.content || `${actorName} ha reaccionado a tu tarea.`;
         } else if (record.type === 'comment') {
-          title = 'New Comment';
-          body = `${actorName} commented on your bucket list item.`;
+          title = 'Nuevo comentario';
+          body = record.content || `${actorName} comentó en tu publicación.`;
+        } else if (record.type === 'mention') {
+          title = 'Nueva mención';
+          body = record.content || `${actorName} te ha mencionado en un comentario.`;
+        } else if (record.type === 'bucket_update') {
+          title = 'Actualización de tarea';
+          body = record.content || `${actorName} actualizó una tarea.`;
+        } else if (record.type === 'album_update') {
+          title = 'Actualización de álbum';
+          body = record.content || `${actorName} actualizó un álbum.`;
+        } else if (record.type === 'collaborator_invite') {
+          title = 'Invitación de colaborador';
+          body = record.content || `${actorName} te ha invitado como colaborador.`;
         }
 
         // Send to Expo
@@ -55,9 +67,15 @@ export default {
           body: JSON.stringify({
             to: profile.push_token,
             sound: 'default',
+            channelId: 'default',
             title,
             body,
-            data: { notificationId: record.id, bucketId: record.bucket_id },
+            data: {
+              notificationId: record.id,
+              bucketId: record.bucket_id,
+              albumId: record.album_id,
+              type: record.type,
+            },
           }),
         });
 

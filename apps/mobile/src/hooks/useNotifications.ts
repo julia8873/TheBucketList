@@ -59,31 +59,9 @@ export function useUnreadCount(userId?: string) {
           table: 'notifications',
           filter: `recipient_id=eq.${userId}`,
         },
-        async (payload: any) => {
+        async () => {
           void queryClient.invalidateQueries({ queryKey: [...UNREAD_COUNT_KEY, userId] });
           void queryClient.invalidateQueries({ queryKey: [...NOTIFICATIONS_QUERY_KEY, userId] });
-
-          const record = payload.new;
-          if (record && record.content) {
-            try {
-              await Notifications.scheduleNotificationAsync({
-                content: {
-                  title: 'The Bucket List',
-                  body: record.content,
-                  data: {
-                    notificationId: record.id,
-                    bucketId: record.bucket_id,
-                    albumId: record.album_id,
-                    type: record.type,
-                  },
-                  sound: 'default',
-                },
-                trigger: null,
-              });
-            } catch (e) {
-              console.log('Error scheduling local push notification:', e);
-            }
-          }
         }
       )
       .on(
