@@ -123,6 +123,8 @@ export function FriendsFeedTab({
           <AlbumFeedCard
             album={item}
             colorIndex={index}
+            index={index}
+            mode={contentFilter === 'albumes' ? 'list' : viewMode}
             isLiked={isLiked}
             likeCount={likeCount}
             onToggleLike={currentUserId ? () => toggleAlbumLike.mutate({ albumId: item.id, userId: currentUserId }) : undefined}
@@ -143,7 +145,7 @@ export function FriendsFeedTab({
         />
       );
     },
-    [viewMode, router, currentUserId, likedAlbumIds, savedAlbumIds, toggleAlbumLike, toggleSaveAlbum, albumSaveCounts, albumLikeCounts]
+    [viewMode, contentFilter, router, currentUserId, likedAlbumIds, savedAlbumIds, toggleAlbumLike, toggleSaveAlbum, albumSaveCounts, albumLikeCounts]
   );
 
   const loading = isLoading || isAlbumsLoading;

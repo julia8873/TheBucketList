@@ -120,6 +120,8 @@ export function ExploreFeedTab({
           <AlbumFeedCard
             album={item}
             colorIndex={index}
+            index={index}
+            mode={contentFilter === 'albumes' ? 'list' : viewMode}
             isLiked={isLiked}
             likeCount={likeCount}
             onToggleLike={currentUserId ? () => toggleAlbumLike.mutate({ albumId: item.id, userId: currentUserId }) : undefined}
@@ -146,7 +148,7 @@ export function ExploreFeedTab({
         />
       );
     },
-    [viewMode, router, currentUserId, likedAlbumIds, savedAlbumIds, toggleAlbumLike, toggleSaveAlbum, albumSaveCounts, albumLikeCounts]
+    [viewMode, contentFilter, router, currentUserId, likedAlbumIds, savedAlbumIds, toggleAlbumLike, toggleSaveAlbum, albumSaveCounts, albumLikeCounts]
   );
 
   if (debouncedSearch.length >= 2) {

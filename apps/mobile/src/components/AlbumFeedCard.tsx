@@ -10,6 +10,7 @@ import { Avatar, useTheme, gold, fontFamily, fontSize, radii } from '@bucketlist
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useRouter } from 'expo-router';
+import { TaskViewMode } from './ViewModeSelector';
 
 // Gradient fallbacks when no cover
 const COVER_GRADIENTS: Array<[string, string]> = [
@@ -55,6 +56,8 @@ interface AlbumFeedCardProps {
   onToggleFavorite?: () => void;
   onPress?: () => void;
   isOwn?: boolean;
+  mode?: TaskViewMode;
+  index?: number;
 }
 
 export function AlbumFeedCard({
@@ -70,6 +73,8 @@ export function AlbumFeedCard({
   onToggleFavorite,
   onPress,
   isOwn = false,
+  mode = 'list',
+  index = 0,
 }: AlbumFeedCardProps) {
   const router = useRouter();
   const { theme } = useTheme();
@@ -121,6 +126,179 @@ export function AlbumFeedCard({
   const timeAgo = album.created_at
     ? formatDistanceToNow(new Date(album.created_at), { addSuffix: true, locale: es })
     : '';
+
+  if (mode === 'gallery') {
+    const isLeftColumn = index % 2 === 0;
+    return (
+      <View
+        style={[
+          styles.galleryCardWrapper,
+          isLeftColumn ? styles.galleryLeftCol : styles.galleryRightCol,
+        ]}
+      >
+        <Pressable
+          onPress={onPress}
+          style={({ pressed }) => [
+            styles.galleryCard,
+            { backgroundColor: theme.dark ? '#1E1E1E' : '#F0EDE6', borderColor: theme.colors.border, opacity: pressed ? 0.9 : 1 },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={album.title}
+        >
+          <View style={styles.galleryCover}>
+            {backgroundContent}
+            <LinearGradient
+              colors={['rgba(0,0,0,0.65)', 'transparent', 'rgba(0,0,0,0.88)']}
+              locations={[0, 0.45, 1]}
+              style={StyleSheet.absoluteFill}
+              pointerEvents="none"
+            />
+
+            {/* Header flotante: autor y badge de álbum */}
+            <View style={styles.galleryHeaderRow}>
+              <Pressable
+                onPress={(e) => {
+                  e.stopPropagation();
+                  if (album.owner?.id) router.push(`/profile/${album.owner.id}` as any);
+                }}
+                style={styles.galleryHeader}
+                hitSlop={6}
+                accessibilityRole="button"
+              >
+                <Avatar
+                  source={album.owner?.avatar_url ? { uri: album.owner.avatar_url } : undefined}
+                  fallback={ownerName.charAt(0).toUpperCase() || '?'}
+                  size="xs"
+                />
+                <Text style={styles.galleryUsername} numberOfLines={1}>
+                  @{album.owner?.username || ownerName}
+                </Text>
+              </Pressable>
+
+              <View style={styles.galleryAlbumBadge}>
+                <Images size={10} color="rgba(255,255,255,0.95)" />
+                <Text style={styles.galleryAlbumBadgeText}>Álbum</Text>
+              </View>
+            </View>
+
+            {/* Pie: título, progreso y acciones */}
+            <View style={styles.galleryBottom} pointerEvents="box-none">
+              <Text style={styles.galleryTitle} numberOfLines={2}>
+                {album.title}
+              </Text>
+              <Text style={styles.gallerySubtext} numberOfLines={1}>
+                {album.completed_tasks}/{album.total_tasks} tareas
+              </Text>
+
+              <View style={styles.galleryActions}>
+                {onToggleLike && (
+                  <Pressable onPress={onToggleLike} hitSlop={6} style={styles.galleryActionItem}>
+                    <Heart
+                      size={14}
+                      color={isLiked ? '#EF4444' : '#F2EFE8'}
+                      fill={isLiked ? '#EF4444' : 'transparent'}
+                      strokeWidth={1.8}
+                    />
+                    {likeCount > 0 && <Text style={styles.galleryActionText}>{likeCount}</Text>}
+                  </Pressable>
+                )}
+
+                {!isOwn && handleSave && (
+                  <Pressable onPress={handleSave} hitSlop={6} style={styles.galleryActionItem}>
+                    <Bookmark
+                      size={13}
+                      color={actualSaved ? gold[400] : '#F2EFE8'}
+                      fill={actualSaved ? gold[400] : 'transparent'}
+                      strokeWidth={1.8}
+                    />
+                    {saveCount > 0 && <Text style={styles.galleryActionText}>{saveCount}</Text>}
+                  </Pressable>
+                )}
+              </View>
+            </View>
+          </View>
+        </Pressable>
+      </View>
+    );
+  }
+
+  if (mode === 'compact') {
+    return (
+      <View style={styles.compactCardWrapper}>
+        <Pressable
+          onPress={onPress}
+          style={({ pressed }) => [
+            styles.compactCard,
+            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, opacity: pressed ? 0.85 : 1 },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={album.title}
+        >
+          <View style={styles.compactThumbWrapper}>
+            {backgroundContent}
+          </View>
+
+          <View style={styles.compactInfo}>
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation();
+                if (album.owner?.id) router.push(`/profile/${album.owner.id}` as any);
+              }}
+              style={styles.compactUserHeader}
+              hitSlop={4}
+            >
+              <Avatar
+                source={album.owner?.avatar_url ? { uri: album.owner.avatar_url } : undefined}
+                fallback={ownerName.charAt(0).toUpperCase() || '?'}
+                size="xs"
+              />
+              <Text style={[styles.compactUsername, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
+                @{album.owner?.username || ownerName}
+              </Text>
+              <Text style={[styles.compactDot, { color: theme.colors.foregroundSubtle }]}>·</Text>
+              <Text style={[styles.compactTime, { color: theme.colors.foregroundSubtle }]}>
+                {album.completed_tasks}/{album.total_tasks} tareas
+              </Text>
+            </Pressable>
+            <Text style={[styles.compactTitle, { color: theme.colors.foreground }]} numberOfLines={1}>
+              {album.title}
+            </Text>
+          </View>
+
+          <View style={styles.compactActions}>
+            {onToggleLike && (
+              <Pressable onPress={onToggleLike} hitSlop={6} style={styles.compactActionBtn}>
+                <Heart
+                  size={16}
+                  color={isLiked ? '#EF4444' : theme.colors.foregroundSubtle}
+                  fill={isLiked ? '#EF4444' : 'transparent'}
+                  strokeWidth={1.8}
+                />
+                <Text style={[styles.compactActionCount, { color: isLiked ? '#EF4444' : theme.colors.foregroundSubtle }]}>
+                  {likeCount}
+                </Text>
+              </Pressable>
+            )}
+            {!isOwn && handleSave && (
+              <Pressable onPress={handleSave} hitSlop={6} style={styles.compactActionBtn}>
+                <Bookmark
+                  size={15}
+                  color={actualSaved ? gold[400] : theme.colors.foregroundSubtle}
+                  fill={actualSaved ? gold[400] : 'transparent'}
+                  strokeWidth={1.8}
+                />
+                {saveCount > 0 && (
+                  <Text style={[styles.compactActionCount, { color: actualSaved ? gold[400] : theme.colors.foregroundSubtle }]}>
+                    {saveCount}
+                  </Text>
+                )}
+              </Pressable>
+            )}
+          </View>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <View
@@ -433,6 +611,170 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   taskCount: {
+    fontFamily: fontFamily.medium,
+    fontSize: 12,
+  },
+  // Gallery mode styles
+  galleryCardWrapper: {
+    flex: 1,
+    paddingVertical: 5,
+  },
+  galleryLeftCol: {
+    paddingLeft: 16,
+    paddingRight: 5,
+  },
+  galleryRightCol: {
+    paddingLeft: 5,
+    paddingRight: 16,
+  },
+  galleryCard: {
+    borderRadius: 18,
+    overflow: 'hidden',
+    borderWidth: 1,
+  },
+  galleryCover: {
+    width: '100%',
+    aspectRatio: 0.85,
+    position: 'relative',
+  },
+  galleryHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 8,
+    zIndex: 2,
+  },
+  galleryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+    marginRight: 6,
+  },
+  galleryUsername: {
+    fontFamily: fontFamily.medium,
+    fontSize: 12,
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.85)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  galleryAlbumBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  galleryAlbumBadgeText: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 9,
+    color: 'rgba(255,255,255,0.95)',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  galleryBottom: {
+    position: 'absolute',
+    left: 10,
+    right: 10,
+    bottom: 10,
+    zIndex: 2,
+  },
+  galleryTitle: {
+    fontFamily: fontFamily.serifBold,
+    fontSize: 14,
+    lineHeight: 18,
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.9)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  gallerySubtext: {
+    fontFamily: fontFamily.medium,
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 2,
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  galleryActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 6,
+  },
+  galleryActionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  galleryActionText: {
+    fontFamily: fontFamily.medium,
+    fontSize: 12,
+    color: '#F2EFE8',
+  },
+  // Compact mode styles
+  compactCardWrapper: {
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+  },
+  compactCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  compactThumbWrapper: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginRight: 10,
+    position: 'relative',
+  },
+  compactInfo: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  compactUserHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 2,
+  },
+  compactUsername: {
+    fontFamily: fontFamily.medium,
+    fontSize: 11,
+  },
+  compactDot: {
+    fontSize: 11,
+  },
+  compactTime: {
+    fontFamily: fontFamily.regular,
+    fontSize: 11,
+  },
+  compactTitle: {
+    fontFamily: fontFamily.serifBold,
+    fontSize: 13,
+    lineHeight: 16,
+  },
+  compactActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginLeft: 8,
+  },
+  compactActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    padding: 4,
+  },
+  compactActionCount: {
     fontFamily: fontFamily.medium,
     fontSize: 12,
   },
