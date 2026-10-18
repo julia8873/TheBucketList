@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { ChevronLeft, Bookmark } from "lucide-react-native";
+import { ChevronLeft, Bookmark, CheckCircle2, Images } from "lucide-react-native";
 import { fontFamily, gold, useTheme } from "@bucketlist/ui";
 import { useAuthStore } from "../../src/stores/auth.store";
 import {
@@ -79,30 +79,55 @@ export default function SavedScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      {/* Tabs */}
-      <View style={[styles.tabRow, { borderBottomColor: theme.colors.border }]}>
-        {(["tareas", "albumes"] as Tab[]).map((tab) => {
-          const label = tab === "tareas" ? "Tareas" : "Álbumes";
-          const isActive = activeTab === tab;
-          return (
-            <Pressable
-              key={tab}
-              onPress={() => setActiveTab(tab)}
-              style={[styles.tab, isActive && styles.tabActive]}
+      {/* Segment Tabs */}
+      <View style={styles.segmentWrapper}>
+        <View style={[styles.segmentContainer, { backgroundColor: theme.dark ? "#1A1A1A" : "#EFECE6", borderColor: theme.colors.border }]}>
+          <Pressable
+            onPress={() => setActiveTab("tareas")}
+            style={[
+              styles.segmentBtn,
+              activeTab === "tareas" && [styles.segmentBtnActive, { backgroundColor: theme.colors.surface }],
+            ]}
+          >
+            <CheckCircle2
+              size={15}
+              color={activeTab === "tareas" ? gold[400] : theme.colors.foregroundMuted}
+              style={{ marginRight: 6 }}
+            />
+            <Text
+              style={[
+                styles.segmentText,
+                { color: activeTab === "tareas" ? theme.colors.foreground : theme.colors.foregroundMuted },
+                activeTab === "tareas" && styles.segmentTextActive,
+              ]}
             >
-              <Text
-                style={[
-                  styles.tabText,
-                  { color: isActive ? gold[400] : theme.colors.foregroundMuted },
-                  isActive && styles.tabTextActive,
-                ]}
-              >
-                {label}
-              </Text>
-              {isActive && <View style={styles.tabUnderline} />}
-            </Pressable>
-          );
-        })}
+              Tareas ({buckets?.length ?? 0})
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setActiveTab("albumes")}
+            style={[
+              styles.segmentBtn,
+              activeTab === "albumes" && [styles.segmentBtnActive, { backgroundColor: theme.colors.surface }],
+            ]}
+          >
+            <Images
+              size={15}
+              color={activeTab === "albumes" ? gold[400] : theme.colors.foregroundMuted}
+              style={{ marginRight: 6 }}
+            />
+            <Text
+              style={[
+                styles.segmentText,
+                { color: activeTab === "albumes" ? theme.colors.foreground : theme.colors.foregroundMuted },
+                activeTab === "albumes" && styles.segmentTextActive,
+              ]}
+            >
+              Álbumes ({albums?.length ?? 0})
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       {/* Content */}
@@ -184,33 +209,37 @@ const styles = StyleSheet.create({
     fontSize: 20,
     letterSpacing: 0.3,
   },
-  tabRow: {
-    flexDirection: "row",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  tab: {
-    flex: 1,
-    alignItems: "center",
+  segmentWrapper: {
+    paddingHorizontal: 16,
     paddingVertical: 12,
-    position: "relative",
   },
-  tabActive: {},
-  tabText: {
+  segmentContainer: {
+    flexDirection: "row",
+    borderRadius: 999,
+    padding: 3,
+    borderWidth: 1,
+  },
+  segmentBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 9,
+    borderRadius: 999,
+  },
+  segmentBtnActive: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  segmentText: {
     fontFamily: fontFamily.medium,
     fontSize: 14,
   },
-  tabTextActive: {
+  segmentTextActive: {
     fontFamily: fontFamily.semibold,
-    color: gold[400],
-  },
-  tabUnderline: {
-    position: "absolute",
-    bottom: 0,
-    left: "20%",
-    right: "20%",
-    height: 2,
-    backgroundColor: gold[400],
-    borderRadius: 1,
   },
   listContent: { paddingBottom: 40, paddingTop: 12 },
   emptyContainer: {
