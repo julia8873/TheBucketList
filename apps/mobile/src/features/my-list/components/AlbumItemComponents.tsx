@@ -144,7 +144,7 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
   index?: number;
   isFav: boolean;
   onPress: () => void;
-  onToggleFavorite: () => void;
+  onToggleFavorite?: () => void;
 }) {
   const { theme } = useTheme();
   const total = item.total_tasks ?? 0;
@@ -200,13 +200,21 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
             <Text style={[styles.listAlbumTitle, { color: theme.colors.foreground }]} numberOfLines={1}>
               {item.title}
             </Text>
-            <Pressable hitSlop={8} onPress={onToggleFavorite}>
+            {onToggleFavorite ? (
+              <Pressable hitSlop={8} onPress={onToggleFavorite}>
+                <Star
+                  size={16}
+                  color={isFav ? theme.colors.primary : theme.colors.foregroundMuted}
+                  fill={isFav ? theme.colors.primary : 'transparent'}
+                />
+              </Pressable>
+            ) : isFav ? (
               <Star
                 size={16}
-                color={isFav ? theme.colors.primary : theme.colors.foregroundMuted}
-                fill={isFav ? theme.colors.primary : 'transparent'}
+                color={theme.colors.primary}
+                fill={theme.colors.primary}
               />
-            </Pressable>
+            ) : null}
           </View>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>

@@ -61,6 +61,12 @@ export default function PublicProfileScreen() {
     void AsyncStorage.setItem('@public_profile_view_mode', mode).catch(() => undefined);
   };
 
+  const [albumViewMode, setAlbumViewModeState] = useState<TaskViewMode>('gallery');
+  const setAlbumViewMode = (mode: TaskViewMode) => {
+    setAlbumViewModeState(mode);
+    void AsyncStorage.setItem('@public_profile_album_view_mode', mode).catch(() => undefined);
+  };
+
   useEffect(() => {
     AsyncStorage.getItem('@public_profile_tab')
       .then((saved) => {
@@ -71,6 +77,13 @@ export default function PublicProfileScreen() {
       .then((saved) => {
         if (saved === 'list' || saved === 'gallery' || saved === 'compact') {
           setTaskViewModeState(saved as TaskViewMode);
+        }
+      })
+      .catch(() => undefined);
+    AsyncStorage.getItem('@public_profile_album_view_mode')
+      .then((saved) => {
+        if (saved === 'list' || saved === 'gallery' || saved === 'compact') {
+          setAlbumViewModeState(saved as TaskViewMode);
         }
       })
       .catch(() => undefined);
@@ -300,6 +313,8 @@ export default function PublicProfileScreen() {
               totalCount={publicAlbums?.length ?? 0}
               albumFilter={albumFilter}
               onChangeFilter={setAlbumFilter}
+              albumViewMode={albumViewMode}
+              onChangeViewMode={setAlbumViewMode}
               albumsLoading={albumsLoading}
               filteredAlbums={filteredAlbums}
               isAlbumFavorite={isAlbumFavorite}
@@ -342,7 +357,7 @@ export default function PublicProfileScreen() {
       </View>
 
       <FlatList
-        key={taskViewMode}
+        key={`${activeTab}-${activeTab === 'list' ? taskViewMode : albumViewMode}`}
         refreshing={refreshing}
         onRefresh={() => void onRefresh()}
         data={isLocked || activeTab !== 'list' ? [] : filtered}

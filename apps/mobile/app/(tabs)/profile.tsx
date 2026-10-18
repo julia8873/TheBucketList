@@ -61,6 +61,12 @@ export default function CurrentUserProfileScreen() {
     void AsyncStorage.setItem('@my_profile_view_mode', mode).catch(() => undefined);
   };
 
+  const [albumViewMode, setAlbumViewModeState] = useState<TaskViewMode>('gallery');
+  const setAlbumViewMode = (mode: TaskViewMode) => {
+    setAlbumViewModeState(mode);
+    void AsyncStorage.setItem('@my_profile_album_view_mode', mode).catch(() => undefined);
+  };
+
   useEffect(() => {
     AsyncStorage.getItem('@my_profile_tab')
       .then((saved) => {
@@ -71,6 +77,13 @@ export default function CurrentUserProfileScreen() {
       .then((saved) => {
         if (saved === 'list' || saved === 'gallery' || saved === 'compact') {
           setTaskViewModeState(saved as TaskViewMode);
+        }
+      })
+      .catch(() => undefined);
+    AsyncStorage.getItem('@my_profile_album_view_mode')
+      .then((saved) => {
+        if (saved === 'list' || saved === 'gallery' || saved === 'compact') {
+          setAlbumViewModeState(saved as TaskViewMode);
         }
       })
       .catch(() => undefined);
@@ -165,7 +178,7 @@ export default function CurrentUserProfileScreen() {
   const taskCount = publicBuckets?.length ?? 0;
 
   const header = (
-    <View style={{ paddingHorizontal: 20 }}>
+    <View>
       {/* Identidad */}
       <View style={styles.identity}>
         <Avatar uri={profile?.avatar_url} initials={initialsOf(profile)} size="xl" goldRing />
@@ -263,6 +276,8 @@ export default function CurrentUserProfileScreen() {
           totalCount={publicAlbums?.length ?? 0}
           albumFilter={albumFilter}
           onChangeFilter={setAlbumFilter}
+          albumViewMode={albumViewMode}
+          onChangeViewMode={setAlbumViewMode}
           albumsLoading={albumsLoading}
           filteredAlbums={filteredAlbums}
           isAlbumFavorite={isAlbumFavorite}
@@ -310,17 +325,14 @@ export default function CurrentUserProfileScreen() {
         <ProfileSkeleton />
       ) : (
         <FlatList
-          key={taskViewMode}
+          key={`${activeTab}-${activeTab === 'list' ? taskViewMode : albumViewMode}`}
           refreshControl={<RefreshControl refreshing={manualRefreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
           data={activeTab === 'list' ? filteredTasks : []}
           keyExtractor={(item: any) => item.id}
           numColumns={taskViewMode === 'gallery' ? 2 : 1}
-          columnWrapperStyle={taskViewMode === 'gallery' ? { gap: 12, paddingHorizontal: 20 } : undefined}
+          columnWrapperStyle={taskViewMode === 'gallery' ? { gap: 12 } : undefined}
           ListHeaderComponent={header}
-          contentContainerStyle={[
-            styles.listContent,
-            taskViewMode !== 'gallery' && { paddingHorizontal: 20 },
-          ]}
+          contentContainerStyle={styles.listContent}
           ItemSeparatorComponent={() => <View style={{ height: taskViewMode === 'compact' ? 8 : 12 }} />}
           renderItem={({ item }) => (
             <PublicTaskRow
@@ -373,7 +385,7 @@ function Stat({ value, label, onPress }: { value: number; label: string; onPress
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  listContent: { paddingBottom: 48 },
+  listContent: { paddingHorizontal: 20, paddingBottom: 48 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 12, paddingHorizontal: 20 },
   roundBtn: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   identity: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 20 },
