@@ -40,9 +40,13 @@ import { timeAgo } from '../utils/timeAgo';
 interface TaskCommentsModalProps {
   visible: boolean;
   onClose: () => void;
-  bucketId: string;
+  bucketId?: string;
+  albumId?: string;
+  targetType?: 'bucket' | 'album';
   bucketTitle?: string;
+  albumTitle?: string;
   bucketOwnerId?: string;
+  albumOwnerId?: string;
   autoFocus?: boolean;
 }
 
@@ -61,10 +65,19 @@ function TaskCommentsModalContent({
   visible,
   onClose,
   bucketId,
+  albumId,
+  targetType,
   bucketTitle,
+  albumTitle,
   bucketOwnerId,
+  albumOwnerId,
   autoFocus = false,
 }: TaskCommentsModalProps) {
+  const effectiveTargetType: 'bucket' | 'album' = targetType || (albumId ? 'album' : 'bucket');
+  const effectiveId = (effectiveTargetType === 'album' ? albumId : bucketId) || '';
+  const effectiveTitle = (effectiveTargetType === 'album' ? (albumTitle || bucketTitle) : (bucketTitle || albumTitle)) || '';
+  const effectiveOwnerId = effectiveTargetType === 'album' ? (albumOwnerId || bucketOwnerId) : (bucketOwnerId || albumOwnerId);
+
   const { user } = useAuthStore();
   const [text, setText] = useState('');
   const [replyingTo, setReplyingTo] = useState<ReplyingToState | null>(null);
@@ -153,7 +166,7 @@ function TaskCommentsModalContent({
     avatar_url: (user?.user_metadata?.avatar_url) as string | undefined,
   };
 
-  const { data: comments = [], isLoading } = useComments(bucketId);
+  const { data: comments = [], isLoading } = useComments(effectiveId, effectiveTargetType);
   const addComment = useAddComment();
   const updateComment = useUpdateComment();
   const deleteComment = useDeleteComment();
@@ -270,7 +283,9 @@ function TaskCommentsModalContent({
       }
 
       await addComment.mutateAsync({
-        bucketId,
+        bucketId: effectiveTargetType === 'bucket' ? effectiveId : undefined,
+        albumId: effectiveTargetType === 'album' ? effectiveId : undefined,
+        targetType: effectiveTargetType,
         userId: user.id,
         body: trimmed,
         parentId,
@@ -326,7 +341,8 @@ function TaskCommentsModalContent({
     try {
       await updateComment.mutateAsync({
         commentId,
-        bucketId,
+        bucketId: effectiveTargetType === 'bucket' ? effectiveId : undefined,
+        albumId: effectiveTargetType === 'album' ? effectiveId : undefined,
         body: trimmed,
       });
       setEditingCommentId(null);
@@ -345,7 +361,11 @@ function TaskCommentsModalContent({
       destructive: true,
       onConfirm: () => {
         deleteComment.mutate(
-          { commentId, bucketId },
+          {
+            commentId,
+            bucketId: effectiveTargetType === 'bucket' ? effectiveId : undefined,
+            albumId: effectiveTargetType === 'album' ? effectiveId : undefined,
+          },
           {
             onSuccess: () => {
               toast.success('Comentario eliminado');
@@ -362,7 +382,7 @@ function TaskCommentsModalContent({
     if (!user) return;
     toggleCommentLike.mutate({
       commentId,
-      bucketId,
+      bucketId: effectiveTargetType === 'bucket' ? effectiveId : '',
       userId: user.id,
     });
   };
@@ -420,9 +440,9 @@ function TaskCommentsModalContent({
                     </View>
                   )}
                 </View>
-                {bucketTitle ? (
+                {effectiveTitle ? (
                   <Text style={styles.headerSubtitle} numberOfLines={1}>
-                    {bucketTitle}
+                    {effectiveTitle}
                   </Text>
                 ) : null}
               </View>
@@ -506,8 +526,8 @@ function TaskCommentsModalContent({
                 const { comment, isReply } = item;
                 const author = comment.user;
                 const isAuthorOfComment = !!user && comment.user_id === user.id;
-                const isTaskOwner = !!user && user.id === bucketOwnerId;
-                const isCreator = comment.user_id === bucketOwnerId;
+                const isItemOwner = !!user && user.id === effectiveOwnerId;
+                const isCreator = !!effectiveOwnerId && comment.user_id === effectiveOwnerId;
                 const isEditing = editingCommentId === comment.id;
 
                 const likes: Array<{ id?: string; user_id: string }> = comment.likes ?? [];
@@ -660,8 +680,8 @@ function TaskCommentsModalContent({
                                 <Text style={styles.actionTextBold}>Reply</Text>
                               </Pressable>
 
-                              {/* Si es dueño de la tarea también puede moderar/borrar */}
-                              {isTaskOwner && (
+                              {/* Si es dueño del elemento también puede moderar/borrar */}
+                              {isItemOwner && (
                                 <Pressable
                                   hitSlop={6}
                                   onPress={() => handleDelete(comment.id)}

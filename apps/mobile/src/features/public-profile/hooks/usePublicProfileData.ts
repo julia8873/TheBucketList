@@ -7,6 +7,7 @@ interface UsePublicProfileDataParams {
   isOwnProfile: boolean;
   isLocked: boolean;
   followStatus: string;
+  publicOnly?: boolean;
 }
 
 export function usePublicProfileData({
@@ -14,9 +15,10 @@ export function usePublicProfileData({
   isOwnProfile,
   isLocked,
   followStatus,
+  publicOnly,
 }: UsePublicProfileDataParams) {
   // Query for profile data
-  const { data: profile, isLoading: profileLoading } = useQuery({
+  const { data: profile, isLoading: profileLoading, refetch: refetchProfile } = useQuery({
     queryKey: ['profile', id],
     queryFn: async () => {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', id!).single();
@@ -27,8 +29,8 @@ export function usePublicProfileData({
   });
 
   // Query for public buckets
-  const { data: buckets, isLoading: bucketsLoading } = useQuery({
-    queryKey: ['buckets', 'public', id, followStatus],
+  const { data: buckets, isLoading: bucketsLoading, refetch: refetchBuckets } = useQuery({
+    queryKey: ['buckets', 'public', id, followStatus, !!publicOnly],
     queryFn: async () => {
       const baseSelect = `
         *,
@@ -44,7 +46,7 @@ export function usePublicProfileData({
         .neq('status', 'archived')
         .order('created_at', { ascending: false });
 
-      if (!isOwnProfile) {
+      if (!isOwnProfile || publicOnly) {
         ownQuery = ownQuery.neq('visibility', 'private');
       }
 
@@ -75,7 +77,7 @@ export function usePublicProfileData({
         .neq('status', 'archived')
         .order('created_at', { ascending: false });
 
-      if (!isOwnProfile) {
+      if (!isOwnProfile || publicOnly) {
         sharedQuery = sharedQuery.neq('visibility', 'private');
       }
 
@@ -98,7 +100,7 @@ export function usePublicProfileData({
           .neq('status', 'archived')
           .order('created_at', { ascending: false });
 
-        if (!isOwnProfile) {
+        if (!isOwnProfile || publicOnly) {
           albumQuery = albumQuery.neq('visibility', 'private');
         }
 
@@ -126,7 +128,7 @@ export function usePublicProfileData({
   });
 
   // Query for public albums
-  const { data: publicAlbums, isLoading: albumsLoading } = useQuery({
+  const { data: publicAlbums, isLoading: albumsLoading, refetch: refetchAlbums } = useQuery({
     queryKey: ['albums', 'public', id, followStatus],
     queryFn: async (): Promise<AlbumWithProgress[]> => {
       if (!id) return [];
@@ -196,6 +198,10 @@ export function usePublicProfileData({
     enabled: !!id && !isLocked,
   });
 
+  const refetch = async () => {
+    await Promise.all([refetchProfile(), refetchBuckets(), refetchAlbums()]);
+  };
+
   return {
     profile,
     profileLoading,
@@ -203,5 +209,9 @@ export function usePublicProfileData({
     bucketsLoading,
     publicAlbums,
     albumsLoading,
+    refetch,
+    refetchProfile,
+    refetchBuckets,
+    refetchAlbums,
   };
 }

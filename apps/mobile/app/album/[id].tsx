@@ -27,12 +27,14 @@ import {
   RotateCcw,
   CheckCircle2,
   FolderPlus,
+  UserPlus,
 } from 'lucide-react-native';
 import { Skeleton, Avatar } from '@bucketlist/ui';
 
 import { TaskRowSkeleton } from '@/components/TaskSkeletons';
 import { TaskItem } from '@/services/api/albumsService';
 import { supabase } from '@/services/supabase';
+import { normalizeStorageUrl } from '@/constants/urls';
 import { CollaboratorPickerSheet } from '@/components/CollaboratorPickerSheet';
 import { DraggableTaskList } from '@/components/DraggableTaskList';
 import { NotificationSubscribersModal } from '@/components/NotificationSubscribersModal';
@@ -462,72 +464,91 @@ export default function AlbumDetailScreen() {
           <Text style={styles.albumDescription}>{album.description}</Text>
         ) : null}
 
-        {/* Creadores del álbum */}
-        {album.owner && state.id !== 'unassigned' && (
-          <View style={{ paddingHorizontal: 20, marginTop: 12, marginBottom: 6 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: '#8F8F8F' }}>
-                {state.albumCollaborators?.length ? 'Creadores:' : 'Creado por:'}
-              </Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                {/* Propietario */}
+        {/* Colaboradores y creadores del álbum (círculos consistentes con tareas, sin "Creado por:") */}
+        {(album.owner || (state.albumCollaborators && state.albumCollaborators.length > 0) || state.canEdit) && state.id !== 'unassigned' && (
+          <View style={styles.collaboratorsSection}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.collaboratorsRow}
+            >
+              {/* Propietario */}
+              {album.owner && (
                 <Pressable
+                  key={`owner-${album.owner.id}`}
                   onPress={() => state.router.push(`/profile/${album.owner!.id}` as any)}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 6,
-                    backgroundColor: 'rgba(255,255,255,0.06)',
-                    paddingHorizontal: 8,
-                    paddingVertical: 4,
-                    borderRadius: 20,
-                    borderWidth: 1,
-                    borderColor: '#D4B13A',
-                  }}
+                  style={[styles.collaboratorCircle, { borderColor: '#D4B13A', borderWidth: 2.5 }]}
                   accessibilityRole="button"
-                  accessibilityLabel={`Perfil de ${album.owner.display_name || album.owner.username}`}
+                  accessibilityLabel={`Perfil de ${album.owner.display_name || album.owner.username || 'propietario'}`}
                 >
-                  <Avatar
-                    source={album.owner.avatar_url ? { uri: album.owner.avatar_url } : undefined}
-                    fallback={(album.owner.display_name || album.owner.username || '?').charAt(0).toUpperCase()}
-                    size="xs"
-                  />
-                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#F3EEE3' }}>
-                    {album.owner.display_name || album.owner.username}
-                  </Text>
-                </Pressable>
-
-                {/* Colaboradores aceptados */}
-                {state.albumCollaborators?.filter((c: any) => c.status === 'accepted' && c.id !== album.owner?.id).map((collab: any) => (
-                  <Pressable
-                    key={collab.id}
-                    onPress={() => state.router.push(`/profile/${collab.id}` as any)}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 6,
-                      backgroundColor: 'rgba(255,255,255,0.06)',
-                      paddingHorizontal: 8,
-                      paddingVertical: 4,
-                      borderRadius: 20,
-                      borderWidth: 1,
-                      borderColor: 'rgba(255,255,255,0.12)',
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Perfil de ${collab.display_name || collab.username}`}
-                  >
-                    <Avatar
-                      source={collab.avatar_url ? { uri: collab.avatar_url } : undefined}
-                      fallback={(collab.display_name || collab.username || '?').charAt(0).toUpperCase()}
-                      size="xs"
+                  {album.owner.avatar_url ? (
+                    <Image
+                      source={{ uri: normalizeStorageUrl(album.owner.avatar_url) }}
+                      style={styles.collaboratorAvatarImg}
                     />
-                    <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: '#D4B13A' }}>
-                      {collab.display_name || collab.username}
+                  ) : (
+                    <Text style={styles.collaboratorInitials}>
+                      {(album.owner.display_name || album.owner.username || '?').slice(0, 2).toUpperCase()}
                     </Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </View>
+                  )}
+                </Pressable>
+              )}
+
+              {/* Colaboradores */}
+              {state.albumCollaborators
+                ?.filter((c: any) => c.id !== album.owner?.id && (c.status === 'accepted' || (state.canEdit && c.status === 'pending') || c.id === state.user?.id))
+                .map((collab: any) => {
+                  const isPending = collab.status === 'pending';
+                  return (
+                    <Pressable
+                      key={collab.id}
+                      onPress={() => {
+                        if (isPending && state.canEdit) {
+                          state.setShowCollaboratorPicker(true);
+                        } else if (collab.id) {
+                          state.router.push(`/profile/${collab.id}` as any);
+                        }
+                      }}
+                      style={[
+                        styles.collaboratorCircle,
+                        { borderColor: isPending ? 'rgba(212, 177, 58, 0.45)' : 'rgba(255, 255, 255, 0.15)', borderWidth: 2 },
+                        isPending && styles.collaboratorCirclePending,
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Perfil de ${collab.display_name || collab.username || 'colaborador'}`}
+                    >
+                      {collab.avatar_url ? (
+                        <Image
+                          source={{ uri: normalizeStorageUrl(collab.avatar_url) }}
+                          style={[styles.collaboratorAvatarImg, isPending && { opacity: 0.35 }]}
+                        />
+                      ) : (
+                        <Text style={[styles.collaboratorInitials, isPending && { opacity: 0.35 }]}>
+                          {(collab.display_name || collab.username || '?').slice(0, 2).toUpperCase()}
+                        </Text>
+                      )}
+                      {isPending && (
+                        <View style={styles.pendingCenterOverlay}>
+                          <Text style={styles.pendingCenterText}>Pendiente</Text>
+                        </View>
+                      )}
+                    </Pressable>
+                  );
+                })}
+
+              {/* Botón para añadir colaborador si puede editar */}
+              {state.canEdit && (
+                <Pressable
+                  style={styles.addCollaboratorCircle}
+                  onPress={() => state.setShowCollaboratorPicker(true)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Añadir colaborador"
+                >
+                  <UserPlus size={22} color="#D4B13A" strokeWidth={1.8} />
+                </Pressable>
+              )}
+            </ScrollView>
           </View>
         )}
 

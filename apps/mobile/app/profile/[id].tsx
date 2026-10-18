@@ -101,7 +101,7 @@ export default function PublicProfileScreen() {
   const followUser = useFollowUser();
   const unfollowUser = useUnfollowUser();
 
-  const { isAlbumFavorite } = useUserFavorites(user?.id);
+  const { isAlbumFavorite, isBucketFavorite } = useUserFavorites(user?.id);
   const toggleFavoriteAlbum = useToggleFavoriteAlbum();
 
   const { data: stats, isLoading: statsLoading } = useProfileStats(id);
@@ -125,22 +125,33 @@ export default function PublicProfileScreen() {
 
   const filtered = useMemo(() => {
     const list = buckets ?? [];
-    if (filter === 'completed') return list.filter((b: any) => b.status === 'completed');
-    if (filter === 'active') return list.filter((b: any) => b.status === 'pending' || b.status === 'in_progress');
-    return list;
-  }, [buckets, filter]);
+    let res = list;
+    if (filter === 'completed') res = list.filter((b: any) => b.status === 'completed');
+    else if (filter === 'active') res = list.filter((b: any) => b.status === 'pending' || b.status === 'in_progress');
+    return [...res].sort((a: any, b: any) => {
+      const favA = isBucketFavorite(a.id) ? 1 : 0;
+      const favB = isBucketFavorite(b.id) ? 1 : 0;
+      if (favA !== favB) return favB - favA;
+      return 0;
+    });
+  }, [buckets, filter, isBucketFavorite]);
 
   const filteredAlbums = useMemo(() => {
     const list = publicAlbums ?? [];
-    if (albumFilter === 'closed') return list.filter((a) => a.is_closed);
-    if (albumFilter === 'completed') {
-      return list.filter((a) => !a.is_closed && a.total_tasks > 0 && a.completed_tasks >= a.total_tasks);
+    let res = list;
+    if (albumFilter === 'closed') res = list.filter((a) => a.is_closed);
+    else if (albumFilter === 'completed') {
+      res = list.filter((a) => !a.is_closed && a.total_tasks > 0 && a.completed_tasks >= a.total_tasks);
+    } else if (albumFilter === 'active') {
+      res = list.filter((a) => !a.is_closed && (a.total_tasks === 0 || a.completed_tasks < a.total_tasks));
     }
-    if (albumFilter === 'active') {
-      return list.filter((a) => !a.is_closed && (a.total_tasks === 0 || a.completed_tasks < a.total_tasks));
-    }
-    return list;
-  }, [publicAlbums, albumFilter]);
+    return [...res].sort((a, b) => {
+      const favA = isAlbumFavorite(a.id) ? 1 : 0;
+      const favB = isAlbumFavorite(b.id) ? 1 : 0;
+      if (favA !== favB) return favB - favA;
+      return 0;
+    });
+  }, [publicAlbums, albumFilter, isAlbumFavorite]);
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed' as any));
 
@@ -291,8 +302,10 @@ export default function PublicProfileScreen() {
               onChangeFilter={setAlbumFilter}
               albumsLoading={albumsLoading}
               filteredAlbums={filteredAlbums}
-              isAlbumFavorite={() => false}
-              onToggleFavoriteAlbum={undefined}
+              isAlbumFavorite={isAlbumFavorite}
+              onToggleFavoriteAlbum={(albumId, isFav) =>
+                toggleFavoriteAlbum.mutate({ albumId, currentlyFavorite: isFav })
+              }
               hasUser={!!user}
             />
           )}
@@ -343,6 +356,7 @@ export default function PublicProfileScreen() {
           <PublicTaskRow
             bucket={item}
             isOwnProfile={isOwnProfile}
+            isFavorite={isBucketFavorite(item.id)}
             mode={taskViewMode}
             onPress={() => router.push(`/bucket/${item.id}` as any)}
           />

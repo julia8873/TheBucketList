@@ -3,6 +3,7 @@ import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { differenceInCalendarDays } from 'date-fns';
 import { Pill, ProgressBar, UrgencyChip, fontFamily, gold, useTheme, toast } from '@bucketlist/ui';
+import { Star } from 'lucide-react-native';
 import { BucketCover } from './BucketCover';
 import { resolveTaskImage } from '../utils/taskImage';
 import { useAuthStore } from '../stores/auth.store';
@@ -13,6 +14,7 @@ interface PublicTaskRowProps {
   bucket: any;
   /** true si el perfil que se está viendo es el mío. */
   isOwnProfile?: boolean;
+  isFavorite?: boolean;
   onPress: () => void;
   mode?: TaskViewMode;
 }
@@ -51,7 +53,7 @@ function buildProgress(bucket: any): number | null {
 }
 
 /** Fila/tarjeta de tarea de un perfil público (soporta list, gallery y compact). */
-export function PublicTaskRow({ bucket, isOwnProfile = false, onPress, mode = 'list' }: PublicTaskRowProps) {
+export function PublicTaskRow({ bucket, isOwnProfile = false, isFavorite = false, onPress, mode = 'list' }: PublicTaskRowProps) {
   const { theme } = useTheme();
   const { user } = useAuthStore();
   const copyBucket = useCopyBucket();
@@ -117,6 +119,12 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, onPress, mode = 'l
             pointerEvents="none"
           />
 
+          {isFavorite ? (
+            <View style={styles.favoriteBadge}>
+              <Star size={13} color={gold[400]} fill={gold[400]} />
+            </View>
+          ) : null}
+
           {chip ? <View style={styles.galleryTopChip}>{chip}</View> : null}
 
           <View style={styles.galleryBottom} pointerEvents="none">
@@ -156,9 +164,12 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, onPress, mode = 'l
         />
 
         <View style={styles.compactContent}>
-          <Text style={[styles.compactTitle, { color: theme.colors.foreground }]} numberOfLines={1}>
-            {bucket.title}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+            {isFavorite ? <Star size={13} color={gold[400]} fill={gold[400]} /> : null}
+            <Text style={[styles.compactTitle, { color: theme.colors.foreground, flex: 1 }]} numberOfLines={1}>
+              {bucket.title}
+            </Text>
+          </View>
           <Text style={[styles.compactMeta, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
             {buildMeta(bucket)}
           </Text>
@@ -192,9 +203,12 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, onPress, mode = 'l
       />
 
       <View style={styles.content}>
-        <Text style={[styles.title, { color: theme.colors.foreground }]} numberOfLines={2}>
-          {bucket.title}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          {isFavorite ? <Star size={14} color={gold[400]} fill={gold[400]} /> : null}
+          <Text style={[styles.title, { color: theme.colors.foreground, flex: 1 }]} numberOfLines={2}>
+            {bucket.title}
+          </Text>
+        </View>
         <Text style={[styles.meta, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
           {buildMeta(bucket)}
         </Text>
@@ -242,6 +256,18 @@ const styles = StyleSheet.create({
     top: 8,
     right: 8,
     zIndex: 2,
+  },
+  favoriteBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    zIndex: 3,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   galleryBottom: {
     position: 'absolute',

@@ -208,11 +208,11 @@ export function useUserFollows(userId?: string) {
 
 export const COMMENTS_QUERY_KEY = ['comments'];
 
-export function useComments(bucketId?: string) {
+export function useComments(targetId?: string, targetType: 'bucket' | 'album' = 'bucket') {
   return useQuery({
-    queryKey: [...COMMENTS_QUERY_KEY, bucketId],
-    queryFn: () => (bucketId ? socialApi.getComments(bucketId) : Promise.resolve([])),
-    enabled: !!bucketId,
+    queryKey: [...COMMENTS_QUERY_KEY, targetType, targetId],
+    queryFn: () => (targetId ? socialApi.getComments(targetId, targetType) : Promise.resolve([])),
+    enabled: !!targetId,
   });
 }
 
@@ -222,19 +222,34 @@ export function useAddComment() {
   return useMutation({
     mutationFn: ({
       bucketId,
+      albumId,
+      targetType = albumId ? 'album' : 'bucket',
       userId,
       body,
       parentId,
     }: {
-      bucketId: string;
+      bucketId?: string;
+      albumId?: string;
+      targetType?: 'bucket' | 'album';
       userId: string;
       body: string;
       parentId?: string | null;
-    }) => socialApi.addComment(bucketId, userId, body, parentId),
+    }) => {
+      const id = targetType === 'album' ? (albumId || bucketId!) : (bucketId || albumId!);
+      return socialApi.addComment(id, userId, body, parentId, targetType);
+    },
     onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: [...COMMENTS_QUERY_KEY, variables.bucketId] });
-      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', variables.bucketId] });
-      void queryClient.invalidateQueries({ queryKey: ['bucketComments', variables.bucketId] });
+      const targetType = variables.targetType ?? (variables.albumId ? 'album' : 'bucket');
+      const id = targetType === 'album' ? (variables.albumId || variables.bucketId!) : (variables.bucketId || variables.albumId!);
+      void queryClient.invalidateQueries({ queryKey: [...COMMENTS_QUERY_KEY, targetType, id] });
+      void queryClient.invalidateQueries({ queryKey: [...COMMENTS_QUERY_KEY, id] });
+      if (targetType === 'bucket') {
+        void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+        void queryClient.invalidateQueries({ queryKey: ['bucketComments', id] });
+      } else {
+        void queryClient.invalidateQueries({ queryKey: ['albumDetail', id] });
+        void queryClient.invalidateQueries({ queryKey: ['albumComments', id] });
+      }
       void queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
     },
   });
@@ -244,11 +259,19 @@ export function useUpdateComment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ commentId, body }: { commentId: string; bucketId: string; body: string }) =>
+    mutationFn: ({ commentId, body }: { commentId: string; bucketId?: string; albumId?: string; body: string }) =>
       socialApi.updateComment(commentId, body),
     onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: [...COMMENTS_QUERY_KEY, variables.bucketId] });
-      void queryClient.invalidateQueries({ queryKey: ['bucketComments', variables.bucketId] });
+      if (variables.bucketId) {
+        void queryClient.invalidateQueries({ queryKey: [...COMMENTS_QUERY_KEY, 'bucket', variables.bucketId] });
+        void queryClient.invalidateQueries({ queryKey: [...COMMENTS_QUERY_KEY, variables.bucketId] });
+        void queryClient.invalidateQueries({ queryKey: ['bucketComments', variables.bucketId] });
+      }
+      if (variables.albumId) {
+        void queryClient.invalidateQueries({ queryKey: [...COMMENTS_QUERY_KEY, 'album', variables.albumId] });
+        void queryClient.invalidateQueries({ queryKey: [...COMMENTS_QUERY_KEY, variables.albumId] });
+        void queryClient.invalidateQueries({ queryKey: ['albumComments', variables.albumId] });
+      }
     },
   });
 }
@@ -257,12 +280,21 @@ export function useDeleteComment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ commentId, bucketId }: { commentId: string; bucketId: string }) =>
+    mutationFn: ({ commentId, bucketId, albumId }: { commentId: string; bucketId?: string; albumId?: string }) =>
       socialApi.deleteComment(commentId),
     onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: [...COMMENTS_QUERY_KEY, variables.bucketId] });
-      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', variables.bucketId] });
-      void queryClient.invalidateQueries({ queryKey: ['bucketComments', variables.bucketId] });
+      if (variables.bucketId) {
+        void queryClient.invalidateQueries({ queryKey: [...COMMENTS_QUERY_KEY, 'bucket', variables.bucketId] });
+        void queryClient.invalidateQueries({ queryKey: [...COMMENTS_QUERY_KEY, variables.bucketId] });
+        void queryClient.invalidateQueries({ queryKey: ['bucketDetail', variables.bucketId] });
+        void queryClient.invalidateQueries({ queryKey: ['bucketComments', variables.bucketId] });
+      }
+      if (variables.albumId) {
+        void queryClient.invalidateQueries({ queryKey: [...COMMENTS_QUERY_KEY, 'album', variables.albumId] });
+        void queryClient.invalidateQueries({ queryKey: [...COMMENTS_QUERY_KEY, variables.albumId] });
+        void queryClient.invalidateQueries({ queryKey: ['albumDetail', variables.albumId] });
+        void queryClient.invalidateQueries({ queryKey: ['albumComments', variables.albumId] });
+      }
       void queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
     },
   });

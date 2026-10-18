@@ -1,16 +1,18 @@
 /**
  * AlbumFeedCard — wide card for albums shown in the friends/explore feed.
  */
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Images, Lock, Users, Heart, Bookmark } from 'lucide-react-native';
+import { Images, Lock, Users, Heart, Bookmark, MessageCircle } from 'lucide-react-native';
 import { Avatar, useTheme, gold, fontFamily, fontSize, radii } from '@bucketlist/ui';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useRouter } from 'expo-router';
 import { TaskViewMode } from './ViewModeSelector';
+import { useComments } from '../hooks/useSocial';
+import { TaskCommentsModal } from './TaskCommentsModal';
 
 // Gradient fallbacks when no cover
 const COVER_GRADIENTS: Array<[string, string]> = [
@@ -52,6 +54,7 @@ interface AlbumFeedCardProps {
   isSaved?: boolean;
   onToggleSave?: () => void;
   saveCount?: number;
+  commentCount?: number;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
   onPress?: () => void;
@@ -69,6 +72,7 @@ export function AlbumFeedCard({
   isSaved = false,
   onToggleSave,
   saveCount = 0,
+  commentCount: propCommentCount,
   isFavorite = false,
   onToggleFavorite,
   onPress,
@@ -78,6 +82,10 @@ export function AlbumFeedCard({
 }: AlbumFeedCardProps) {
   const router = useRouter();
   const { theme } = useTheme();
+  const [showComments, setShowComments] = useState(false);
+  const { data: albumComments = [] } = useComments(album.id, 'album');
+  const commentCount = propCommentCount !== undefined ? propCommentCount : albumComments.length;
+
   const [g1, g2] = COVER_GRADIENTS[colorIndex % COVER_GRADIENTS.length] ?? ['#1B4D3E', '#0A2E25'];
   const progress = album.total_tasks > 0 ? album.completed_tasks / album.total_tasks : 0;
 
@@ -203,6 +211,11 @@ export function AlbumFeedCard({
                   </Pressable>
                 )}
 
+                <Pressable onPress={() => setShowComments(true)} hitSlop={6} style={styles.galleryActionItem}>
+                  <MessageCircle size={14} color="#F2EFE8" strokeWidth={1.8} />
+                  <Text style={styles.galleryActionText}>{commentCount}</Text>
+                </Pressable>
+
                 {!isOwn && handleSave && (
                   <Pressable onPress={handleSave} hitSlop={6} style={styles.galleryActionItem}>
                     <Bookmark
@@ -218,6 +231,17 @@ export function AlbumFeedCard({
             </View>
           </View>
         </Pressable>
+
+        {showComments && (
+          <TaskCommentsModal
+            visible={showComments}
+            onClose={() => setShowComments(false)}
+            albumId={album.id}
+            targetType="album"
+            albumTitle={album.title}
+            albumOwnerId={album.owner?.id}
+          />
+        )}
       </View>
     );
   }
@@ -279,23 +303,23 @@ export function AlbumFeedCard({
                 </Text>
               </Pressable>
             )}
-            {!isOwn && handleSave && (
-              <Pressable onPress={handleSave} hitSlop={6} style={styles.compactActionBtn}>
-                <Bookmark
-                  size={15}
-                  color={actualSaved ? gold[400] : theme.colors.foregroundSubtle}
-                  fill={actualSaved ? gold[400] : 'transparent'}
-                  strokeWidth={1.8}
-                />
-                {saveCount > 0 && (
-                  <Text style={[styles.compactActionCount, { color: actualSaved ? gold[400] : theme.colors.foregroundSubtle }]}>
-                    {saveCount}
-                  </Text>
-                )}
-              </Pressable>
-            )}
+            <Pressable onPress={() => setShowComments(true)} hitSlop={6} style={styles.compactActionBtn}>
+              <MessageCircle size={16} color={theme.colors.foregroundSubtle} strokeWidth={1.8} />
+              <Text style={[styles.compactActionCount, { color: theme.colors.foregroundSubtle }]}>{commentCount}</Text>
+            </Pressable>
           </View>
         </Pressable>
+
+        {showComments && (
+          <TaskCommentsModal
+            visible={showComments}
+            onClose={() => setShowComments(false)}
+            albumId={album.id}
+            targetType="album"
+            albumTitle={album.title}
+            albumOwnerId={album.owner?.id}
+          />
+        )}
       </View>
     );
   }
@@ -374,6 +398,21 @@ export function AlbumFeedCard({
             </Pressable>
           )}
 
+          <Pressable
+            onPress={() => setShowComments(true)}
+            hitSlop={10}
+            style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.7 }]}
+            accessibilityRole="button"
+            accessibilityLabel="Comentarios"
+          >
+            <MessageCircle
+              size={16}
+              color="rgba(255,255,255,0.85)"
+              strokeWidth={2}
+            />
+            {commentCount > 0 && <Text style={styles.actionCount}>{commentCount}</Text>}
+          </Pressable>
+
           {!isOwn && handleSave && (
             <Pressable
               onPress={handleSave}
@@ -451,6 +490,17 @@ export function AlbumFeedCard({
           </Text>
         </View>
       </Pressable>
+
+      {showComments && (
+        <TaskCommentsModal
+          visible={showComments}
+          onClose={() => setShowComments(false)}
+          albumId={album.id}
+          targetType="album"
+          albumTitle={album.title}
+          albumOwnerId={album.owner?.id}
+        />
+      )}
     </View>
   );
 }

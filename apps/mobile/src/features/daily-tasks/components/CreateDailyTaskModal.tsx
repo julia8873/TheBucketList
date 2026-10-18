@@ -9,6 +9,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import {
   Pin,
@@ -107,6 +108,8 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
   renderTagModal,
 }) => {
   const { theme } = useTheme();
+  const { height: windowHeight } = useWindowDimensions();
+  const maxScrollHeight = Math.max(480, Math.min(560, windowHeight - 200));
   const scrollViewRef = useRef<ScrollView>(null);
   const titleInputRef = useRef<TextInput>(null);
   const isInitialScroll = useRef(true);
@@ -178,7 +181,8 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
             ref={scrollViewRef}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-            style={{ maxHeight: 360 }}
+            bounces={false}
+            style={{ maxHeight: maxScrollHeight }}
             onContentSizeChange={() => {
               if (isInitialScroll.current) {
                 scrollViewRef.current?.scrollTo({ y: 0, animated: false });

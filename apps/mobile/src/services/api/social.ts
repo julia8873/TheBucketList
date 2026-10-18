@@ -121,19 +121,36 @@ export const socialApi = {
   },
 
   // Comments
-  getComments: async (bucketId: string) => {
-    const { data, error } = await supabase
+  getComments: async (targetId: string, targetType: 'bucket' | 'album' = 'bucket') => {
+    let query = supabase
       .from('comments')
-      .select('*, user:profiles!comments_user_id_fkey(*), likes:comment_likes(id, user_id)')
-      .eq('bucket_id', bucketId)
-      .order('created_at', { ascending: true });
+      .select('*, user:profiles!comments_user_id_fkey(*), likes:comment_likes(id, user_id)');
+
+    if (targetType === 'album') {
+      query = query.eq('album_id', targetId);
+    } else {
+      query = query.eq('bucket_id', targetId);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: true });
 
     if (error) throw error;
     return data || [];
   },
 
-  addComment: async (bucketId: string, userId: string, body: string, parentId?: string | null) => {
-    const payload: any = { bucket_id: bucketId, user_id: userId, body };
+  addComment: async (
+    targetId: string,
+    userId: string,
+    body: string,
+    parentId?: string | null,
+    targetType: 'bucket' | 'album' = 'bucket'
+  ) => {
+    const payload: any = { user_id: userId, body };
+    if (targetType === 'album') {
+      payload.album_id = targetId;
+    } else {
+      payload.bucket_id = targetId;
+    }
     if (parentId) {
       payload.parent_id = parentId;
     }
@@ -148,22 +165,38 @@ export const socialApi = {
 
     // Enviar push al dueño de la publicación y a usuarios mencionados
     try {
-      const { data: bucketData } = await supabase
-        .from('buckets')
-        .select('user_id, title')
-        .eq('id', bucketId)
-        .single();
+      let ownerId: string | undefined;
+      let itemTitle: string = 'tu publicación';
+
+      if (targetType === 'album') {
+        const { data: albumData } = await supabase
+          .from('albums')
+          .select('owner_id, title')
+          .eq('id', targetId)
+          .single();
+        ownerId = albumData?.owner_id;
+        itemTitle = albumData?.title || 'tu álbum';
+      } else {
+        const { data: bucketData } = await supabase
+          .from('buckets')
+          .select('user_id, title')
+          .eq('id', targetId)
+          .single();
+        ownerId = bucketData?.user_id;
+        itemTitle = bucketData?.title || 'tu tarea';
+      }
 
       const authorName = data?.user?.display_name || data?.user?.username || 'Alguien';
-      const taskTitle = bucketData?.title || 'tu tarea';
 
-      // 1. Al dueño de la tarea
-      if (bucketData?.user_id && bucketData.user_id !== userId) {
+      // 1. Al dueño de la tarea o álbum
+      if (ownerId && ownerId !== userId) {
         void sendPushNotification(
-          bucketData.user_id,
+          ownerId,
           'Nuevo comentario 💬',
-          `${authorName} comentó en tu publicación "${taskTitle}": "${body.slice(0, 50)}"`,
-          { bucketId, commentId: data.id, type: 'comment' }
+          `${authorName} comentó en "${itemTitle}": "${body.slice(0, 50)}"`,
+          targetType === 'album'
+            ? { albumId: targetId, commentId: data.id, type: 'comment' }
+            : { bucketId: targetId, commentId: data.id, type: 'comment' }
         );
       }
 
@@ -178,12 +211,14 @@ export const socialApi = {
             .ilike('username', un)
             .maybeSingle();
 
-          if (mentionedUser?.id && mentionedUser.id !== userId && mentionedUser.id !== bucketData?.user_id) {
+          if (mentionedUser?.id && mentionedUser.id !== userId && mentionedUser.id !== ownerId) {
             void sendPushNotification(
               mentionedUser.id,
               'Nueva mención 🏷️',
-              `${authorName} te ha mencionado en un comentario en "${taskTitle}"`,
-              { bucketId, commentId: data.id, type: 'mention' }
+              `${authorName} te ha mencionado en un comentario en "${itemTitle}"`,
+              targetType === 'album'
+                ? { albumId: targetId, commentId: data.id, type: 'mention' }
+                : { bucketId: targetId, commentId: data.id, type: 'mention' }
             );
           }
         }
