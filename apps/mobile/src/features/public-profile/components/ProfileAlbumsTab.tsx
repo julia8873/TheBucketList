@@ -270,7 +270,7 @@ export function ProfileAlbumsTab({
           ))}
         </View>
       ) : (
-        <View style={{ gap: 10, marginTop: 4, marginBottom: 20 }}>
+        <View style={{ marginTop: 4, marginBottom: 20 }}>
           {filteredAlbums.map((item, idx) => (
             <AlbumListItemRow
               key={item.id}

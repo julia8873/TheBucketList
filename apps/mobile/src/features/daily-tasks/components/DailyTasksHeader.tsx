@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TextInput, Pressable, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
 import {
   Plus,
   Tag as TagIcon,
@@ -10,16 +10,43 @@ import {
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  Check,
 } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { gold } from '@bucketlist/ui/src/tokens/colors';
-import { PageTitle, useTheme } from '@bucketlist/ui';
+import { PageTitle, useTheme, FilterChip } from '@bucketlist/ui';
 import { useTranslation } from 'react-i18next';
 import { styles } from '../styles/explore.styles';
 import { DailyTag, DailySortField, DailySortDirection, TimeView, StatusFilter } from '../types';
 import type { WeekBlockItem } from './DailyWeekView';
+import { TagSheetShell } from '@/components/TagSheetShell';
+
+const DAILY_STATUS_OPTIONS: Array<{ key: 'all' | 'pending' | 'completed' | 'favorites'; label: string; desc: string }> = [
+  { key: 'all', label: 'Todas las tareas', desc: 'Muestra todas las tareas sin filtrar por estado' },
+  { key: 'pending', label: 'Pendientes', desc: 'Tareas activas o pendientes de realizar' },
+  { key: 'completed', label: 'Completadas', desc: 'Tareas que ya has marcado como completadas' },
+  { key: 'favorites', label: 'Fijadas', desc: 'Tareas destacadas o ancladas arriba' },
+];
+
+const DAILY_PRIORITY_OPTIONS: Array<{ key: string; label: string; desc: string }> = [
+  { key: 'all', label: 'Todas las prioridades', desc: 'Muestra tareas de cualquier prioridad' },
+  { key: 'urgent', label: '🚨 Urgente', desc: 'Tareas críticas que requieren atención inmediata' },
+  { key: 'high', label: '🔴 Alta', desc: 'Tareas prioritarias o de gran importancia' },
+  { key: 'medium', label: '🟡 Media', desc: 'Tareas de prioridad habitual' },
+  { key: 'low', label: '🟢 Baja', desc: 'Tareas secundarias sin urgencia' },
+];
+
+const DAILY_PRIORITY_SHORT_LABEL: Record<string, string> = {
+  all: 'Filtrar por prioridad',
+  urgent: 'Prioridad: 🚨 Urgente',
+  high: 'Prioridad: 🔴 Alta',
+  medium: 'Prioridad: 🟡 Media',
+  low: 'Prioridad: 🟢 Baja',
+};
 
 export interface DailyTasksTopBarProps {
   timeView: TimeView;
@@ -206,6 +233,13 @@ export function DailyTasksScrollControls({
   setWeekOffset,
 }: DailyTasksScrollControlsProps) {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
+  const [statusSheetVisible, setStatusSheetVisible] = useState(false);
+  const [prioritySheetVisible, setPrioritySheetVisible] = useState(false);
+
+  const isStatusActive = statusFilter !== 'all' || onlyFavorites;
+  const isPriorityActive = priorityFilter !== 'all';
+  const hasActiveFilters = isStatusActive || isPriorityActive || selectedTagFilters.length > 0;
 
   return (
     <View style={{ marginBottom: 6 }}>
@@ -295,44 +329,115 @@ export function DailyTasksScrollControls({
         </View>
       )}
 
-      {/* Quick Filters Bar (Etiquetas, Pendientes, Completadas, Favoritas) */}
+      {/* Quick Filters Bar agrupada y consistente */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={[
           styles.tagsFilterScroll,
-          { paddingLeft: 16, paddingRight: 32 },
+          { paddingLeft: 16, paddingRight: 32, gap: 8 },
         ]}
         style={{ marginHorizontal: -16 }}
       >
-        {/* Botón principal "Etiquetas" que abre el panel inferior de filtrado múltiple y edición */}
+        {/* Todas */}
+        <FilterChip
+          label="Todas"
+          active={statusFilter === 'all' && !onlyFavorites && priorityFilter === 'all'}
+          onPress={() => {
+            setStatusFilter('all');
+            setOnlyFavorites(false);
+            setPriorityFilter('all');
+          }}
+        />
+
+        {/* Filtrar por estado */}
         <Pressable
           style={[
             styles.tagFilterPill,
-            styles.tagFilterMainBtn,
-            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
-            selectedTagFilters.length > 0 && styles.tagFilterMainBtnActive,
+            {
+              backgroundColor: isStatusActive
+                ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.14)')
+                : theme.colors.surface,
+              borderColor: isStatusActive ? gold[400] : theme.colors.border,
+            },
+          ]}
+          onPress={() => setStatusSheetVisible(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Filtrar por estado"
+        >
+          <Text
+            style={[
+              styles.tagFilterText,
+              { color: isStatusActive ? gold[400] : theme.colors.foregroundMuted },
+            ]}
+          >
+            {onlyFavorites
+              ? `Estado: Fijadas${favoritesCount > 0 ? ` (${favoritesCount})` : ''}`
+              : statusFilter === 'pending'
+              ? 'Estado: Pendientes'
+              : statusFilter === 'completed'
+              ? 'Estado: Completadas'
+              : 'Filtrar por estado'}
+          </Text>
+          <ChevronDown size={14} color={isStatusActive ? gold[400] : theme.colors.foregroundMuted} />
+        </Pressable>
+
+        {/* Botón Etiquetas */}
+        <Pressable
+          style={[
+            styles.tagFilterPill,
+            {
+              backgroundColor: selectedTagFilters.length > 0
+                ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.14)')
+                : theme.colors.surface,
+              borderColor: selectedTagFilters.length > 0 ? gold[400] : theme.colors.border,
+            },
           ]}
           onPress={onOpenTagFilterSheet}
+          accessibilityRole="button"
           accessibilityLabel="Gestionar y filtrar etiquetas"
         >
           <TagIcon
             size={13}
-            color={selectedTagFilters.length > 0 ? '#0E0E0E' : gold[400]}
+            color={selectedTagFilters.length > 0 ? gold[400] : theme.colors.foregroundMuted}
             strokeWidth={2.2}
           />
           <Text
             style={[
               styles.tagFilterText,
-              styles.tagFilterMainBtnText,
-              { color: theme.colors.foregroundMuted },
-              selectedTagFilters.length > 0 && styles.tagFilterMainBtnTextActive,
+              { color: selectedTagFilters.length > 0 ? gold[400] : theme.colors.foregroundMuted },
             ]}
           >
             {selectedTagFilters.length > 0
               ? `Etiquetas (${selectedTagFilters.length})`
               : 'Etiquetas'}
           </Text>
+        </Pressable>
+
+        {/* Filtrar por prioridad */}
+        <Pressable
+          style={[
+            styles.tagFilterPill,
+            {
+              backgroundColor: isPriorityActive
+                ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.14)')
+                : theme.colors.surface,
+              borderColor: isPriorityActive ? gold[400] : theme.colors.border,
+            },
+          ]}
+          onPress={() => setPrioritySheetVisible(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Filtrar por prioridad"
+        >
+          <Text
+            style={[
+              styles.tagFilterText,
+              { color: isPriorityActive ? gold[400] : theme.colors.foregroundMuted },
+            ]}
+          >
+            {DAILY_PRIORITY_SHORT_LABEL[priorityFilter] || 'Filtrar por prioridad'}
+          </Text>
+          <ChevronDown size={14} color={isPriorityActive ? gold[400] : theme.colors.foregroundMuted} />
         </Pressable>
 
         {/* Etiquetas activas individuales seleccionadas con icono/emoji y nombre */}
@@ -374,115 +479,8 @@ export function DailyTasksScrollControls({
           );
         })}
 
-        {/* Filtro rápido: Todas (entre etiquetas y pendientes) */}
-        <Pressable
-          style={[
-            styles.tagFilterPill,
-            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
-            statusFilter === 'all' && [styles.filterPillActive, { backgroundColor: theme.dark ? '#262012' : '#FDF4DC' }],
-          ]}
-          onPress={() => setStatusFilter('all')}
-          accessibilityLabel="Ver todas las tareas"
-        >
-          <Text
-            style={[
-              styles.tagFilterText,
-              { color: theme.colors.foregroundMuted },
-              statusFilter === 'all' && styles.filterPillTextActive,
-            ]}
-          >
-            Todas
-          </Text>
-        </Pressable>
-
-        {/* Filtro rápido: Pendientes */}
-        <Pressable
-          style={[
-            styles.tagFilterPill,
-            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
-            statusFilter === 'pending' && [styles.filterPillActive, { backgroundColor: theme.dark ? '#262012' : '#FDF4DC' }],
-          ]}
-          onPress={() => {
-            setStatusFilter((prev) => (prev === 'pending' ? 'all' : 'pending'));
-          }}
-          accessibilityLabel="Filtrar por tareas pendientes"
-        >
-          <ListTodo
-            size={12}
-            color={statusFilter === 'pending' ? gold[400] : theme.colors.foregroundMuted}
-            strokeWidth={2}
-          />
-          <Text
-            style={[
-              styles.tagFilterText,
-              { color: theme.colors.foregroundMuted },
-              statusFilter === 'pending' && styles.filterPillTextActive,
-            ]}
-          >
-            Pendientes
-          </Text>
-        </Pressable>
-
-        {/* Filtro rápido: Completadas */}
-        <Pressable
-          style={[
-            styles.tagFilterPill,
-            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
-            statusFilter === 'completed' && [styles.filterPillActive, { backgroundColor: theme.dark ? '#262012' : '#FDF4DC' }],
-          ]}
-          onPress={() => {
-            setStatusFilter((prev) => (prev === 'completed' ? 'all' : 'completed'));
-          }}
-          accessibilityLabel="Filtrar por tareas completadas"
-        >
-          <CheckCircle2
-            size={12}
-            color={statusFilter === 'completed' ? '#34C759' : theme.colors.foregroundMuted}
-            strokeWidth={2}
-          />
-          <Text
-            style={[
-              styles.tagFilterText,
-              { color: theme.colors.foregroundMuted },
-              statusFilter === 'completed' && styles.filterPillTextActive,
-            ]}
-          >
-            Completadas
-          </Text>
-        </Pressable>
-
-        {/* Filtro rápido: Fijadas */}
-        <Pressable
-          style={[
-            styles.tagFilterPill,
-            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
-            onlyFavorites && [styles.filterPillActive, { backgroundColor: theme.dark ? '#262012' : '#FDF4DC' }],
-          ]}
-          onPress={() => setOnlyFavorites((prev) => !prev)}
-          accessibilityLabel="Filtrar por fijadas"
-        >
-          <Pin
-            size={12}
-            color={onlyFavorites ? gold[400] : theme.colors.foregroundMuted}
-            fill={onlyFavorites ? gold[400] : 'transparent'}
-            strokeWidth={2}
-          />
-          <Text
-            style={[
-              styles.tagFilterText,
-              { color: theme.colors.foregroundMuted },
-              onlyFavorites && styles.filterPillTextActive,
-            ]}
-          >
-            Fijadas{favoritesCount > 0 ? ` (${favoritesCount})` : ''}
-          </Text>
-        </Pressable>
-
         {/* Botón rápido para limpiar filtros activos */}
-        {(statusFilter !== 'all' ||
-          onlyFavorites ||
-          priorityFilter !== 'all' ||
-          selectedTagFilters.length > 0) && (
+        {hasActiveFilters && (
           <Pressable
             style={[styles.clearFiltersPill, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
             onPress={() => {
@@ -534,9 +532,182 @@ export function DailyTasksScrollControls({
           {(sortField !== 'manual' || groupByTag) && <View style={styles.sortActiveDot} />}
         </Pressable>
       </View>
+
+      {/* Bottom Sheet: Filtrar por Estado */}
+      <TagSheetShell visible={statusSheetVisible} onClose={() => setStatusSheetVisible(false)}>
+        <View style={[dailySheetStyles.sheetContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+          <View style={dailySheetStyles.sheetHeader}>
+            <Text style={[dailySheetStyles.sheetTitle, { color: theme.colors.foreground }]}>Filtrar por estado</Text>
+            <Pressable
+              onPress={() => setStatusSheetVisible(false)}
+              hitSlop={8}
+              style={[dailySheetStyles.sheetCloseBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+              accessibilityRole="button"
+              accessibilityLabel="Cerrar filtro de estado"
+            >
+              <X size={16} color={theme.colors.foregroundMuted} />
+            </Pressable>
+          </View>
+
+          <View style={dailySheetStyles.sheetOptionList}>
+            {DAILY_STATUS_OPTIONS.map((opt) => {
+              const isSelected =
+                opt.key === 'favorites'
+                  ? onlyFavorites
+                  : !onlyFavorites && statusFilter === opt.key;
+              return (
+                <Pressable
+                  key={opt.key}
+                  onPress={() => {
+                    if (opt.key === 'favorites') {
+                      setOnlyFavorites(true);
+                      setStatusFilter('all');
+                    } else {
+                      setOnlyFavorites(false);
+                      setStatusFilter(opt.key);
+                    }
+                    setStatusSheetVisible(false);
+                  }}
+                  style={({ pressed }) => [
+                    dailySheetStyles.sheetOptionRow,
+                    {
+                      backgroundColor: isSelected
+                        ? (theme.dark ? 'rgba(212, 177, 58, 0.08)' : 'rgba(212, 177, 58, 0.12)')
+                        : theme.colors.surface,
+                      borderColor: isSelected ? gold[400] : theme.colors.border,
+                    },
+                    pressed && { opacity: 0.8 },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Filtrar por ${opt.label}`}
+                >
+                  <View style={{ flex: 1, marginRight: 12 }}>
+                    <Text
+                      style={[
+                        dailySheetStyles.sheetOptionTitle,
+                        { color: isSelected ? gold[400] : theme.colors.foreground },
+                      ]}
+                    >
+                      {opt.label}
+                    </Text>
+                    <Text style={[dailySheetStyles.sheetOptionDesc, { color: theme.colors.foregroundMuted }]}>{opt.desc}</Text>
+                  </View>
+                  {isSelected && <Check size={18} color={gold[400]} strokeWidth={2.5} />}
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      </TagSheetShell>
+
+      {/* Bottom Sheet: Filtrar por Prioridad */}
+      <TagSheetShell visible={prioritySheetVisible} onClose={() => setPrioritySheetVisible(false)}>
+        <View style={[dailySheetStyles.sheetContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+          <View style={dailySheetStyles.sheetHeader}>
+            <Text style={[dailySheetStyles.sheetTitle, { color: theme.colors.foreground }]}>Filtrar por prioridad</Text>
+            <Pressable
+              onPress={() => setPrioritySheetVisible(false)}
+              hitSlop={8}
+              style={[dailySheetStyles.sheetCloseBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+              accessibilityRole="button"
+              accessibilityLabel="Cerrar filtro de prioridad"
+            >
+              <X size={16} color={theme.colors.foregroundMuted} />
+            </Pressable>
+          </View>
+
+          <View style={dailySheetStyles.sheetOptionList}>
+            {DAILY_PRIORITY_OPTIONS.map((opt) => {
+              const isSelected = priorityFilter === opt.key;
+              return (
+                <Pressable
+                  key={opt.key}
+                  onPress={() => {
+                    setPriorityFilter(opt.key);
+                    setPrioritySheetVisible(false);
+                  }}
+                  style={({ pressed }) => [
+                    dailySheetStyles.sheetOptionRow,
+                    {
+                      backgroundColor: isSelected
+                        ? (theme.dark ? 'rgba(212, 177, 58, 0.08)' : 'rgba(212, 177, 58, 0.12)')
+                        : theme.colors.surface,
+                      borderColor: isSelected ? gold[400] : theme.colors.border,
+                    },
+                    pressed && { opacity: 0.8 },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Filtrar por prioridad ${opt.label}`}
+                >
+                  <View style={{ flex: 1, marginRight: 12 }}>
+                    <Text
+                      style={[
+                        dailySheetStyles.sheetOptionTitle,
+                        { color: isSelected ? gold[400] : theme.colors.foreground },
+                      ]}
+                    >
+                      {opt.label}
+                    </Text>
+                    <Text style={[dailySheetStyles.sheetOptionDesc, { color: theme.colors.foregroundMuted }]}>{opt.desc}</Text>
+                  </View>
+                  {isSelected && <Check size={18} color={gold[400]} strokeWidth={2.5} />}
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      </TagSheetShell>
     </View>
   );
 }
+
+const dailySheetStyles = StyleSheet.create({
+  sheetContent: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
+  },
+  sheetTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: 'Newsreader_700Bold',
+  },
+  sheetCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sheetOptionList: {
+    gap: 8,
+  },
+  sheetOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  sheetOptionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  sheetOptionDesc: {
+    fontSize: 12,
+  },
+});
 
 export interface DailyTasksHeaderProps extends DailyTasksTopBarProps, DailyTasksScrollControlsProps {}
 

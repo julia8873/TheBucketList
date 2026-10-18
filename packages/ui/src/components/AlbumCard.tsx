@@ -21,8 +21,8 @@ import { fontFamily, fontSize } from '../tokens/typography';
 import { gold, dark, green } from '../tokens/colors';
 import { radii } from '../tokens/radii';
 
-const CARD_WIDTH = (Dimensions.get('window').width - 20 * 2 - 12) / 2;
-const CARD_HEIGHT = CARD_WIDTH * 1.45;
+const CARD_WIDTH = Math.floor((Dimensions.get('window').width - 20 * 2 - 12) / 2);
+const CARD_HEIGHT = Math.round(CARD_WIDTH * 1.45);
 
 // ── Gradient cover colours used when no image ──────────────────────────────
 const COVER_GRADIENTS: Array<[string, string]> = [
