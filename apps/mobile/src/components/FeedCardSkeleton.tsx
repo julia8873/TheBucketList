@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Skeleton } from '@bucketlist/ui';
+import { Skeleton, useTheme } from '@bucketlist/ui';
 
 export function FeedCardSkeleton() {
+  const { theme } = useTheme();
   return (
     <View style={styles.container}>
       {/* Header: Avatar, Name, Handle, Time */}
@@ -16,7 +17,12 @@ export function FeedCardSkeleton() {
       </View>
 
       {/* Cover Skeleton */}
-      <View style={styles.coverWrapper}>
+      <View
+        style={[
+          styles.coverWrapper,
+          { backgroundColor: theme.colors.surfaceSunken, borderColor: theme.colors.border },
+        ]}
+      >
         <Skeleton borderRadius={24} style={{ width: '100%', height: '100%' }} />
       </View>
 
@@ -60,9 +66,7 @@ const styles = StyleSheet.create({
     aspectRatio: 1.4,
     borderRadius: 24,
     overflow: 'hidden',
-    backgroundColor: '#161616',
     borderWidth: 1,
-    borderColor: '#242424',
   },
   actions: {
     flexDirection: 'row',

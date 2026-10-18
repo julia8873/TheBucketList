@@ -23,6 +23,7 @@ import {
   XCircle,
 } from 'lucide-react-native';
 import { normalizeStorageUrl } from '@/constants/urls';
+import { useTheme } from '@bucketlist/ui';
 import { getInitials } from './BucketCollaboratorsRow';
 
 export type CollaborationMode = 'invite_only' | 'request' | 'open';
@@ -47,6 +48,7 @@ export function TaskCollaborationSettingsModal({
   onSaveSettings,
   onRespondRequest,
 }: TaskCollaborationSettingsModalProps) {
+  const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [mode, setMode] = useState<CollaborationMode>(currentMode);
   const [audience, setAudience] = useState<CollaborationAudience>(currentAudience);
@@ -93,25 +95,29 @@ export function TaskCollaborationSettingsModal({
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <Pressable style={styles.backdrop} onPress={onClose} />
-        <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 20) + 12 }]}>
+        <View style={[styles.sheet, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, paddingBottom: Math.max(insets.bottom, 20) + 12 }]}>
           {/* Handle */}
-          <View style={styles.dragHandle} />
+          <View style={[styles.dragHandle, { backgroundColor: theme.dark ? '#333333' : '#E0DCD3' }]} />
 
           {/* Cabecera */}
-          <View style={styles.header}>
+          <View style={[styles.header, { borderBottomColor: theme.colors.border }]}>
             <View>
-              <Text style={styles.title}>Ajustes de colaboración</Text>
-              <Text style={styles.subtitle}>Define quién y cómo pueden colaborar en tu tarea</Text>
+              <Text style={[styles.title, { color: theme.colors.foreground }]}>Ajustes de colaboración</Text>
+              <Text style={[styles.subtitle, { color: theme.colors.foregroundMuted }]}>Define quién y cómo pueden colaborar en tu tarea</Text>
             </View>
-            <Pressable onPress={onClose} hitSlop={10} style={styles.closeBtn}>
-              <X size={20} color="#9E9E9E" />
+            <Pressable
+              onPress={onClose}
+              hitSlop={10}
+              style={[styles.closeBtn, { backgroundColor: theme.dark ? '#222222' : '#EAE6DD' }]}
+            >
+              <X size={20} color={theme.colors.foregroundMuted} />
             </Pressable>
           </View>
 
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             {/* Solicitudes pendientes de aprobación */}
             {pendingCollaborators.length > 0 && (
-              <View style={styles.pendingSection}>
+              <View style={[styles.pendingSection, { backgroundColor: theme.dark ? 'rgba(212, 177, 58, 0.08)' : '#FDF7E7', borderColor: theme.dark ? 'rgba(212, 177, 58, 0.3)' : '#E8C56A' }]}>
                 <View style={styles.pendingHeader}>
                   <Clock size={16} color="#D4B13A" />
                   <Text style={styles.pendingTitle}>
@@ -122,7 +128,17 @@ export function TaskCollaborationSettingsModal({
                 {pendingCollaborators.map((c: any) => {
                   const isResponding = respondingId === c.id;
                   return (
-                    <View key={c.id} style={styles.pendingItem}>
+                    <View
+                      key={c.id}
+                      style={[
+                        styles.pendingItem,
+                        {
+                          backgroundColor: theme.colors.surfaceElevated ?? (theme.dark ? '#1C1C1C' : '#F7F5F0'),
+                          borderColor: theme.colors.border,
+                          borderWidth: 1,
+                        },
+                      ]}
+                    >
                       <View style={styles.pendingUserInfo}>
                         {c.avatar_url ? (
                           <Image
@@ -130,17 +146,17 @@ export function TaskCollaborationSettingsModal({
                             style={styles.avatarImg}
                           />
                         ) : (
-                          <View style={styles.initialsCircle}>
+                          <View style={[styles.initialsCircle, { backgroundColor: theme.dark ? '#2A2A2A' : '#E5E1D8' }]}>
                             <Text style={styles.initialsText}>
                               {getInitials(c.display_name || c.username)}
                             </Text>
                           </View>
                         )}
                         <View style={{ flex: 1, marginLeft: 10 }}>
-                          <Text style={styles.userName} numberOfLines={1}>
+                          <Text style={[styles.userName, { color: theme.colors.foreground }]} numberOfLines={1}>
                             {c.display_name || c.username}
                           </Text>
-                          <Text style={styles.userHandle} numberOfLines={1}>
+                          <Text style={[styles.userHandle, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
                             @{c.username}
                           </Text>
                         </View>
@@ -158,11 +174,15 @@ export function TaskCollaborationSettingsModal({
                             <Text style={styles.acceptBtnText}>Aceptar</Text>
                           </Pressable>
                           <Pressable
-                            style={[styles.actionBtn, styles.declineBtn]}
+                            style={[
+                              styles.actionBtn,
+                              styles.declineBtn,
+                              { backgroundColor: theme.dark ? '#2B2B2B' : '#E5E1D8' },
+                            ]}
                             onPress={() => handleRespond(c.id, false)}
                           >
-                            <X size={14} color="#E0E0E0" strokeWidth={2} />
-                            <Text style={styles.declineBtnText}>Rechazar</Text>
+                            <X size={14} color={theme.colors.foreground} strokeWidth={2} />
+                            <Text style={[styles.declineBtnText, { color: theme.colors.foreground }]}>Rechazar</Text>
                           </Pressable>
                         </View>
                       )}
@@ -173,72 +193,96 @@ export function TaskCollaborationSettingsModal({
             )}
 
             {/* Sección 1: Modo de colaboración */}
-            <Text style={styles.sectionHeading}>¿CÓMO PUEDEN COLABORAR?</Text>
+            <Text style={[styles.sectionHeading, { color: theme.colors.foregroundMuted }]}>¿CÓMO PUEDEN COLABORAR?</Text>
 
             {/* Opción A: Solo invitación */}
             <Pressable
-              style={[styles.optionCard, mode === 'invite_only' && styles.optionCardActive]}
+              style={[
+                styles.optionCard,
+                {
+                  backgroundColor: mode === 'invite_only'
+                    ? (theme.dark ? 'rgba(212, 177, 58, 0.08)' : '#FDF7E7')
+                    : (theme.colors.surfaceElevated ?? (theme.dark ? '#1C1C1C' : '#F7F5F0')),
+                  borderColor: mode === 'invite_only' ? '#D4B13A' : theme.colors.border,
+                },
+              ]}
               onPress={() => handleSelectMode('invite_only')}
             >
-              <View style={styles.optionIconContainer}>
-                <Lock size={20} color={mode === 'invite_only' ? '#D4B13A' : '#888888'} />
+              <View style={[styles.optionIconContainer, { backgroundColor: theme.dark ? '#262626' : '#ECE8DF' }]}>
+                <Lock size={20} color={mode === 'invite_only' ? '#D4B13A' : theme.colors.foregroundMuted} />
               </View>
               <View style={styles.optionContent}>
-                <Text style={[styles.optionTitle, mode === 'invite_only' && styles.optionTitleActive]}>
+                <Text style={[styles.optionTitle, { color: theme.colors.foreground }]}>
                   Solo por invitación
                 </Text>
-                <Text style={styles.optionDesc}>
+                <Text style={[styles.optionDesc, { color: theme.colors.foregroundMuted }]}>
                   Solo tú puedes añadir colaboradores manualmente a esta tarea.
                 </Text>
               </View>
-              <View style={[styles.radio, mode === 'invite_only' && styles.radioActive]}>
+              <View style={[styles.radio, { borderColor: theme.dark ? '#444444' : '#CCC8BD' }, mode === 'invite_only' && styles.radioActive]}>
                 {mode === 'invite_only' && <View style={styles.radioDot} />}
               </View>
             </Pressable>
 
             {/* Opción B: Con solicitud */}
             <Pressable
-              style={[styles.optionCard, mode === 'request' && styles.optionCardActive]}
+              style={[
+                styles.optionCard,
+                {
+                  backgroundColor: mode === 'request'
+                    ? (theme.dark ? 'rgba(212, 177, 58, 0.08)' : '#FDF7E7')
+                    : (theme.colors.surfaceElevated ?? (theme.dark ? '#1C1C1C' : '#F7F5F0')),
+                  borderColor: mode === 'request' ? '#D4B13A' : theme.colors.border,
+                },
+              ]}
               onPress={() => handleSelectMode('request')}
             >
-              <View style={styles.optionIconContainer}>
-                <UserCheck size={20} color={mode === 'request' ? '#D4B13A' : '#888888'} />
+              <View style={[styles.optionIconContainer, { backgroundColor: theme.dark ? '#262626' : '#ECE8DF' }]}>
+                <UserCheck size={20} color={mode === 'request' ? '#D4B13A' : theme.colors.foregroundMuted} />
               </View>
               <View style={styles.optionContent}>
-                <Text style={[styles.optionTitle, mode === 'request' && styles.optionTitleActive]}>
+                <Text style={[styles.optionTitle, { color: theme.colors.foreground }]}>
                   Con solicitud de permiso
                 </Text>
-                <Text style={styles.optionDesc}>
+                <Text style={[styles.optionDesc, { color: theme.colors.foregroundMuted }]}>
                   Los usuarios pueden pedir colaborar. Tú apruebas o rechazas cada solicitud.
                 </Text>
               </View>
-              <View style={[styles.radio, mode === 'request' && styles.radioActive]}>
+              <View style={[styles.radio, { borderColor: theme.dark ? '#444444' : '#CCC8BD' }, mode === 'request' && styles.radioActive]}>
                 {mode === 'request' && <View style={styles.radioDot} />}
               </View>
             </Pressable>
 
             {/* Opción C: Colaboración abierta */}
             <Pressable
-              style={[styles.optionCard, mode === 'open' && styles.optionCardActive]}
+              style={[
+                styles.optionCard,
+                {
+                  backgroundColor: mode === 'open'
+                    ? (theme.dark ? 'rgba(212, 177, 58, 0.08)' : '#FDF7E7')
+                    : (theme.colors.surfaceElevated ?? (theme.dark ? '#1C1C1C' : '#F7F5F0')),
+                  borderColor: mode === 'open' ? '#D4B13A' : theme.colors.border,
+                },
+              ]}
               onPress={() => handleSelectMode('open')}
             >
-              <View style={styles.optionIconContainer}>
-                <Zap size={20} color={mode === 'open' ? '#D4B13A' : '#888888'} />
+              <View style={[styles.optionIconContainer, { backgroundColor: theme.dark ? '#262626' : '#ECE8DF' }]}>
+                <Zap size={20} color={mode === 'open' ? '#D4B13A' : theme.colors.foregroundMuted} />
               </View>
               <View style={styles.optionContent}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={[styles.optionTitle, mode === 'open' && styles.optionTitleActive]}>
+                  <Text style={[styles.optionTitle, { color: theme.colors.foreground }]}>
                     Unirse libremente
                   </Text>
                   <View style={styles.openBadge}>
                     <Text style={styles.openBadgeText}>Sin permiso</Text>
                   </View>
                 </View>
-                <Text style={styles.optionDesc}>
+                <Text style={[styles.optionDesc, { color: theme.colors.foregroundMuted }]}>
                   Los usuarios pueden meterse directamente como colaboradores por su propia cuenta.
                 </Text>
               </View>
-              <View style={[styles.radio, mode === 'open' && styles.radioActive]}>
+              <View style={[styles.radio, { borderColor: theme.dark ? '#444444' : '#CCC8BD' }, mode === 'open' && styles.radioActive]}>
                 {mode === 'open' && <View style={styles.radioDot} />}
               </View>
             </Pressable>
@@ -246,56 +290,62 @@ export function TaskCollaborationSettingsModal({
             {/* Sección 2: Audiencia permitida (solo visible si no es solo por invitación) */}
             {mode !== 'invite_only' && (
               <View style={{ marginTop: 20 }}>
-                <Text style={styles.sectionHeading}>¿QUIÉN PUEDE UNIRSE O SOLICITAR?</Text>
+                <Text style={[styles.sectionHeading, { color: theme.colors.foregroundMuted }]}>¿QUIÉN PUEDE UNIRSE O SOLICITAR?</Text>
 
                 {/* Audiencia A: Solo seguidores */}
                 <Pressable
-                  style={[styles.optionCard, audience === 'followers' && styles.optionCardActive]}
+                  style={[
+                    styles.optionCard,
+                    {
+                      backgroundColor: audience === 'followers'
+                        ? (theme.dark ? 'rgba(212, 177, 58, 0.08)' : '#FDF7E7')
+                        : (theme.colors.surfaceElevated ?? (theme.dark ? '#1C1C1C' : '#F7F5F0')),
+                      borderColor: audience === 'followers' ? '#D4B13A' : theme.colors.border,
+                    },
+                  ]}
                   onPress={() => handleSelectAudience('followers')}
                 >
-                  <View style={styles.optionIconContainer}>
-                    <Users size={20} color={audience === 'followers' ? '#D4B13A' : '#888888'} />
+                  <View style={[styles.optionIconContainer, { backgroundColor: theme.dark ? '#262626' : '#ECE8DF' }]}>
+                    <Users size={20} color={audience === 'followers' ? '#D4B13A' : theme.colors.foregroundMuted} />
                   </View>
                   <View style={styles.optionContent}>
-                    <Text
-                      style={[
-                        styles.optionTitle,
-                        audience === 'followers' && styles.optionTitleActive,
-                      ]}
-                    >
+                    <Text style={[styles.optionTitle, { color: theme.colors.foreground }]}>
                       Solo mis seguidores
                     </Text>
-                    <Text style={styles.optionDesc}>
+                    <Text style={[styles.optionDesc, { color: theme.colors.foregroundMuted }]}>
                       Únicamente los usuarios que te siguen pueden {mode === 'open' ? 'unirse' : 'solicitar colaborar'}.
                     </Text>
                   </View>
-                  <View style={[styles.radio, audience === 'followers' && styles.radioActive]}>
+                  <View style={[styles.radio, { borderColor: theme.dark ? '#444444' : '#CCC8BD' }, audience === 'followers' && styles.radioActive]}>
                     {audience === 'followers' && <View style={styles.radioDot} />}
                   </View>
                 </Pressable>
 
                 {/* Audiencia B: Todos los usuarios */}
                 <Pressable
-                  style={[styles.optionCard, audience === 'anyone' && styles.optionCardActive]}
+                  style={[
+                    styles.optionCard,
+                    {
+                      backgroundColor: audience === 'anyone'
+                        ? (theme.dark ? 'rgba(212, 177, 58, 0.08)' : '#FDF7E7')
+                        : (theme.colors.surfaceElevated ?? (theme.dark ? '#1C1C1C' : '#F7F5F0')),
+                      borderColor: audience === 'anyone' ? '#D4B13A' : theme.colors.border,
+                    },
+                  ]}
                   onPress={() => handleSelectAudience('anyone')}
                 >
-                  <View style={styles.optionIconContainer}>
-                    <Globe size={20} color={audience === 'anyone' ? '#D4B13A' : '#888888'} />
+                  <View style={[styles.optionIconContainer, { backgroundColor: theme.dark ? '#262626' : '#ECE8DF' }]}>
+                    <Globe size={20} color={audience === 'anyone' ? '#D4B13A' : theme.colors.foregroundMuted} />
                   </View>
                   <View style={styles.optionContent}>
-                    <Text
-                      style={[
-                        styles.optionTitle,
-                        audience === 'anyone' && styles.optionTitleActive,
-                      ]}
-                    >
+                    <Text style={[styles.optionTitle, { color: theme.colors.foreground }]}>
                       Todos los usuarios de la app
                     </Text>
-                    <Text style={styles.optionDesc}>
+                    <Text style={[styles.optionDesc, { color: theme.colors.foregroundMuted }]}>
                       Cualquier usuario de The Bucket List puede {mode === 'open' ? 'unirse directamente' : 'solicitar colaborar'}.
                     </Text>
                   </View>
-                  <View style={[styles.radio, audience === 'anyone' && styles.radioActive]}>
+                  <View style={[styles.radio, { borderColor: theme.dark ? '#444444' : '#CCC8BD' }, audience === 'anyone' && styles.radioActive]}>
                     {audience === 'anyone' && <View style={styles.radioDot} />}
                   </View>
                 </Pressable>

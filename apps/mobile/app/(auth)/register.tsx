@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme, fontFamily } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
+import { useAuthStore } from '../../src/stores/auth.store';
 import { useGoogleAuth } from '../../src/hooks/useGoogleAuth';
 import { useOnboardingStore } from '../../src/stores/onboarding.store';
 import { mapAuthError, EMAIL_RE, USERNAME_RE, sanitizeUsername } from '../../src/utils/authErrors';
@@ -27,6 +28,15 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { oauthError, setOAuthError } = useAuthStore();
+
+  useEffect(() => {
+    if (oauthError) {
+      setError(mapAuthError(oauthError, t));
+      setOAuthError(null);
+    }
+  }, [oauthError, t, setOAuthError]);
   // ── Verificación por código (OTP) enviado al correo (comentada temporalmente) ──
   // const [sentTo, setSentTo] = useState<string | null>(null);
   // const [code, setCode] = useState('');

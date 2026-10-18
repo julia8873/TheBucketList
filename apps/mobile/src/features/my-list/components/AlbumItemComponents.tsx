@@ -215,7 +215,10 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
             </Text>
 
             {item.is_shared && (
-              <View style={[styles.listAlbumBadge, { backgroundColor: theme.colors.surfaceSunken, borderColor: theme.colors.border }]}>
+              <View style={[styles.listAlbumBadge, {
+                backgroundColor: theme.dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                borderColor: theme.dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)',
+              }]}>
                 <Users size={10} color={theme.colors.foregroundMuted} />
                 <Text style={[styles.listAlbumBadgeText, { color: theme.colors.foregroundMuted }]}>Compartido</Text>
               </View>

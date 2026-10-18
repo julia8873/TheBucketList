@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Search, Lock } from 'lucide-react-native';
-import { EmptyState, SectionLabel, gold } from '@bucketlist/ui';
+import { EmptyState, SectionLabel, gold, useTheme } from '@bucketlist/ui';
 import { PersonRow } from '../../../components/PersonRow';
 import { FollowButton } from '../../../components/FollowButton';
 import { UserRowSkeleton } from '../../../components/TaskSkeletons';
@@ -55,6 +55,7 @@ export function FriendsAccountsTab({
   onFollowPress,
   currentUserId,
 }: FriendsAccountsTabProps) {
+  const { theme } = useTheme();
   const authUser = useAuthStore((s) => s.user);
   const activeUserId = currentUserId ?? authUser?.id;
 
@@ -76,9 +77,19 @@ export function FriendsAccountsTab({
                 onPress={() => onChangeKind(key)}
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
-                style={[styles.chip, on && styles.chipOn]}
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: on
+                      ? (theme.dark ? '#2A2411' : '#FDF4DC')
+                      : theme.colors.surface,
+                    borderColor: on ? gold[400] : theme.colors.border,
+                  },
+                ]}
               >
-                <Text style={[styles.chipText, on && { color: gold[400] }]}>{label}</Text>
+                <Text style={[styles.chipText, { color: on ? gold[400] : theme.colors.foregroundMuted }]}>
+                  {label}
+                </Text>
               </Pressable>
             );
           })}
@@ -177,9 +188,9 @@ export function FriendsAccountsTab({
         })
       )}
 
-      <View style={styles.note}>
+      <View style={[styles.note, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
         <Lock size={16} color={gold[400]} strokeWidth={1.8} />
-        <Text style={styles.noteText}>
+        <Text style={[styles.noteText, { color: theme.colors.foregroundMuted }]}>
           De las cuentas privadas solo verás sus tareas cuando acepten tu solicitud.
         </Text>
       </View>

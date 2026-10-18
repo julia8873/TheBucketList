@@ -87,12 +87,12 @@ export default function TagsScreen() {
       </View>
 
       {/* Buscador */}
-      <View style={styles.searchBox}>
-        <Search color="#9A9A9A" size={20} />
+      <View style={[styles.searchBox, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+        <Search color={theme.colors.foregroundMuted} size={20} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: theme.colors.foreground }]}
           placeholder="Buscar etiqueta"
-          placeholderTextColor="#8A8A8A"
+          placeholderTextColor={theme.colors.foregroundMuted}
           value={query}
           onChangeText={setQuery}
           autoCorrect={false}
@@ -100,7 +100,7 @@ export default function TagsScreen() {
         />
         {query.length > 0 && (
           <Pressable onPress={() => setQuery('')} hitSlop={10} accessibilityLabel="Borrar búsqueda">
-            <X color="#9A9A9A" size={18} />
+            <X color={theme.colors.foregroundMuted} size={18} />
           </Pressable>
         )}
       </View>
@@ -125,7 +125,7 @@ export default function TagsScreen() {
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={manualRefreshing} onRefresh={onRefresh} tintColor={GOLD} />}
       >
-        <Text style={styles.sectionLabel}>
+        <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
           <Text style={{ color: GOLD }}>TUS</Text> ETIQUETAS · {list.length}
         </Text>
 
@@ -140,11 +140,11 @@ export default function TagsScreen() {
           </View>
         ) : list.length === 0 ? (
           <View style={styles.stateBox}>
-            <TagIcon size={34} color="#5A5A5A" strokeWidth={1.5} />
-            <Text style={styles.stateTitle}>
+            <TagIcon size={34} color={theme.colors.foregroundMuted} strokeWidth={1.5} />
+            <Text style={[styles.stateTitle, { color: theme.colors.foreground }]}>
               {tags.length === 0 ? 'Aún no tienes etiquetas' : mode === 'unused' && !query.trim() ? 'No tienes etiquetas sin usar' : 'Sin resultados'}
             </Text>
-            <Text style={styles.stateText}>
+            <Text style={[styles.stateText, { color: theme.colors.foregroundMuted }]}>
               {tags.length === 0
                 ? 'Crea la primera para organizar tus tareas.'
                 : query.trim()
@@ -159,17 +159,17 @@ export default function TagsScreen() {
               onPress={() => openEdit(tag)}
               accessibilityRole="button"
               accessibilityLabel={`Editar etiqueta ${tag.name}`}
-              style={styles.row}
+              style={[styles.row, { borderBottomColor: theme.colors.border }]}
             >
               <TagBadge emoji={tag.emoji} color={tag.color} size={42} />
               <View style={styles.rowText}>
-                <Text style={styles.rowName} numberOfLines={1}>
+                <Text style={[styles.rowName, { color: theme.colors.foreground }]} numberOfLines={1}>
                   {tag.name}
                 </Text>
-                <Text style={styles.rowSub}>{countLabel(counts[tag.id] ?? 0)}</Text>
+                <Text style={[styles.rowSub, { color: theme.colors.foregroundMuted }]}>{countLabel(counts[tag.id] ?? 0)}</Text>
               </View>
-              <View style={styles.editBtn}>
-                <Pencil size={18} color="#F5F0E6" strokeWidth={1.8} />
+              <View style={[styles.editBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+                <Pencil size={18} color={theme.colors.foreground} strokeWidth={1.8} />
               </View>
             </Pressable>
           ))
@@ -177,7 +177,7 @@ export default function TagsScreen() {
       </ScrollView>
 
       {/* Pie */}
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) + 8 }]}>
+      <View style={[styles.footer, { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.border, paddingBottom: Math.max(insets.bottom, 16) + 8 }]}>
         <Pressable style={styles.cta} onPress={openCreate} accessibilityRole="button">
           <Text style={styles.ctaText}>Nueva etiqueta</Text>
         </Pressable>

@@ -49,7 +49,7 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <View style={[styles.sheetCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
           {/* Handle bar */}
-          <View style={styles.sheetHandle} />
+          <View style={[styles.sheetHandle, { backgroundColor: theme.dark ? '#333333' : '#E0DCD3' }]} />
 
           {/* Header */}
           <View style={styles.sheetHeader}>
@@ -177,7 +177,14 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
 
                     {/* Edit Button */}
                     <Pressable
-                      style={styles.sheetTagEditBtn}
+                      style={[
+                        styles.sheetTagEditBtn,
+                        {
+                          backgroundColor: theme.colors.surfaceElevated ?? (theme.dark ? '#202020' : '#ECE7DC'),
+                          borderWidth: 1,
+                          borderColor: theme.colors.border,
+                        },
+                      ]}
                       onPress={() => openEditTag(tag)}
                       hitSlop={8}
                       accessibilityLabel={`Editar etiqueta ${tag.name}`}

@@ -50,6 +50,7 @@ export function useBucketDetailState() {
   const { data: entitySub } = useEntitySubscription('bucket', id, user?.id);
   const subStatus = entitySub?.status;
   const [locationModalVisible, setLocationModalVisible] = useState(false);
+  const [driveModalVisible, setDriveModalVisible] = useState(false);
   const sheetTranslateY = useRef(new Animated.Value(420)).current;
 
   const subtaskTimeouts = useRef<Record<string, any>>({});
@@ -578,6 +579,20 @@ export function useBucketDetailState() {
     void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
     void queryClient.invalidateQueries({ queryKey: ['buckets'] });
     void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
+  };
+
+  const handleSaveDriveUrl = async (newUrl: string | null) => {
+    queryClient.setQueryData(['bucketDetail', id], (old: any) =>
+      old ? { ...old, drive_url: newUrl } : old
+    );
+    const { error } = await supabase.from('buckets').update({ drive_url: newUrl }).eq('id', id);
+    if (error) {
+      toast.error('No se pudo guardar el enlace');
+    } else {
+      toast.success(newUrl ? 'Enlace de Google Drive guardado' : 'Enlace eliminado');
+    }
+    void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+    void queryClient.invalidateQueries({ queryKey: ['buckets'] });
   };
 
   const handleRemoveCompletedAt = async () => {
@@ -1552,6 +1567,9 @@ export function useBucketDetailState() {
     subStatus,
     locationModalVisible,
     setLocationModalVisible,
+    driveModalVisible,
+    setDriveModalVisible,
+    handleSaveDriveUrl,
     photoSearchQuery,
     setPhotoSearchQuery,
     photoSortField,

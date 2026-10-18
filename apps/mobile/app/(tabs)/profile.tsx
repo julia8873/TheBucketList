@@ -4,9 +4,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { LayoutGrid, List, Moon, Settings, Sun, Users } from 'lucide-react-native';
+import { LayoutGrid, List, Moon, Settings, Sun, Users, MoreHorizontal } from 'lucide-react-native';
+import * as Clipboard from 'expo-clipboard';
 import { useTranslation } from 'react-i18next';
-import { Avatar, fontFamily, useTheme, PageTitle, Skeleton } from '@bucketlist/ui';
+import { Avatar, fontFamily, useTheme, PageTitle, Skeleton, toast } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useThemeStore } from '../../src/stores/theme.store';
@@ -110,14 +111,34 @@ export default function CurrentUserProfileScreen() {
       {/* Cabecera */}
       <View style={styles.header}>
         <PageTitle gold={t('profile.title_gold', { defaultValue: 'Mi' })} rest={t('profile.title_rest', { defaultValue: 'perfil' })} />
-        <Pressable
-          onPress={() => router.push('/(modals)/settings' as any)}
-          accessibilityRole="button"
-          accessibilityLabel={t('settings.title')}
-          style={[styles.roundBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
-        >
-          <Settings size={22} color={theme.colors.foreground} />
-        </Pressable>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Pressable
+            onPress={async () => {
+              if (profile) {
+                const shareUrl = `https://thebucketlist.app/profile/${profile.username || user?.id || ''}`;
+                await Clipboard.setStringAsync(shareUrl);
+                toast.show({
+                  type: 'info',
+                  title: name || 'Mi perfil',
+                  message: 'Enlace a tu perfil copiado al portapapeles',
+                });
+              }
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Opciones de perfil"
+            style={[styles.roundBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+          >
+            <MoreHorizontal size={22} color={theme.colors.foreground} strokeWidth={2} />
+          </Pressable>
+          <Pressable
+            onPress={() => router.push('/(modals)/settings' as any)}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.title')}
+            style={[styles.roundBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+          >
+            <Settings size={22} color={theme.colors.foreground} />
+          </Pressable>
+        </View>
       </View>
 
       {profileQuery.isLoading ? (
@@ -358,17 +379,17 @@ const styles = StyleSheet.create({
   viewToggle: { flexDirection: 'row', padding: 3, borderWidth: 1, borderRadius: 20, gap: 2 },
   toggleBtn: { width: 38, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  tile: { borderRadius: 12, overflow: 'hidden', backgroundColor: '#2A2A2A' },
+  tile: { borderRadius: 12, overflow: 'hidden' },
   tileImage: { width: '100%', height: '100%' },
   caption: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', padding: 6 },
   captionTitle: { fontFamily: fontFamily.medium, fontSize: 12, color: '#fff' },
   captionSub: { fontFamily: fontFamily.regular, fontSize: 12, color: 'rgba(255,255,255,0.7)' },
   listRow: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderWidth: 1, borderRadius: 20 },
-  listThumb: { width: 56, height: 56, borderRadius: 12, overflow: 'hidden', backgroundColor: '#2A2A2A' },
+  listThumb: { width: 56, height: 56, borderRadius: 12, overflow: 'hidden' },
   listTitle: { fontFamily: fontFamily.serifBold, fontSize: 17, lineHeight: 21 },
   listSub: { fontFamily: fontFamily.regular, fontSize: 13, marginTop: 3 },
   compactRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1, borderRadius: 14 },
-  compactThumb: { width: 40, height: 40, borderRadius: 8, overflow: 'hidden', backgroundColor: '#2A2A2A' },
+  compactThumb: { width: 40, height: 40, borderRadius: 8, overflow: 'hidden' },
   compactTitle: { fontFamily: fontFamily.semibold, fontSize: 14 },
   compactSub: { fontFamily: fontFamily.regular, fontSize: 12, marginTop: 2 },
   empty: { borderWidth: 1, borderRadius: 20, padding: 24, alignItems: 'center' },

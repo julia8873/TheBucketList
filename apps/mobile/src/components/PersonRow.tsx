@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Avatar, fontFamily } from '@bucketlist/ui';
+import { Avatar, fontFamily, useTheme } from '@bucketlist/ui';
 import { displayNameOf, initialsOf } from '../utils/initials';
 
 interface PersonRowProps {
@@ -19,20 +19,25 @@ interface PersonRowProps {
 
 /** Fila de persona: avatar con aro dorado, nombre, subtítulo y acciones. */
 export function PersonRow({ person, subtitle, right, onPress }: PersonRowProps) {
+  const { theme } = useTheme();
   return (
     <Pressable
       onPress={onPress}
       disabled={!onPress}
-      style={({ pressed }) => [styles.row, pressed && onPress ? { opacity: 0.8 } : null]}
+      style={({ pressed }) => [
+        styles.row,
+        { borderBottomColor: theme.colors.border },
+        pressed && onPress ? { opacity: 0.8 } : null,
+      ]}
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityLabel={displayNameOf(person)}
     >
       <Avatar uri={person.avatar_url} initials={initialsOf(person)} size="lg" goldRing />
       <View style={styles.text}>
-        <Text style={styles.name} numberOfLines={1}>
+        <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={1}>
           {displayNameOf(person)}
         </Text>
-        <Text style={styles.subtitle} numberOfLines={2}>
+        <Text style={[styles.subtitle, { color: theme.colors.foregroundMuted }]} numberOfLines={2}>
           {subtitle}
         </Text>
       </View>
@@ -48,10 +53,10 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#2A2A2A',
   },
   text: { flex: 1, gap: 2 },
-  name: { fontFamily: fontFamily.semibold, fontSize: 16, color: '#FFFFFF' },
-  subtitle: { fontFamily: fontFamily.regular, fontSize: 13, lineHeight: 18, color: '#9A9A9A' },
+  name: { fontFamily: fontFamily.semibold, fontSize: 16 },
+  subtitle: { fontFamily: fontFamily.regular, fontSize: 13, lineHeight: 18 },
   right: { flexDirection: 'row', alignItems: 'center', gap: 10 },
 });
+

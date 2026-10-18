@@ -56,10 +56,8 @@ export const styles = StyleSheet.create({
   inputCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#141414',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#242424',
     paddingLeft: 12,
     paddingRight: 6,
     paddingVertical: 4,
@@ -69,18 +67,15 @@ export const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'Inter_400Regular',
     fontSize: 13.5,
-    color: '#F5F5F5',
     paddingVertical: 6,
   },
   quickOptionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E1E1E',
     paddingHorizontal: 8,
     paddingVertical: 5,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#2C2C2C',
     marginLeft: 6,
     gap: 4,
   },
@@ -115,12 +110,9 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 999,
-    backgroundColor: '#141414',
     borderWidth: 1,
-    borderColor: '#242424',
   },
   tagFilterPillActive: {
-    backgroundColor: '#262012',
     borderColor: gold[400],
   },
   tagFilterText: {
@@ -133,7 +125,6 @@ export const styles = StyleSheet.create({
     fontFamily: 'Inter_600SemiBold',
   },
   filterPillActive: {
-    backgroundColor: '#262012',
     borderColor: gold[400],
   },
   filterPillTextActive: {
@@ -147,9 +138,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 5,
     borderRadius: 999,
-    backgroundColor: '#1A1A1A',
     borderWidth: 1,
-    borderColor: '#333',
   },
   clearFiltersPillText: {
     fontFamily: 'Inter_500Medium',
@@ -175,9 +164,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: 999,
-    backgroundColor: '#121212',
     borderWidth: 1,
-    borderColor: '#1E1E1E',
   },
   statusChipActive: {
     backgroundColor: '#202020',
@@ -213,9 +200,7 @@ export const styles = StyleSheet.create({
     minHeight: 46,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    backgroundColor: '#131313',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#1E1E1E',
   },
   compactRowCompleted: {
     opacity: 0.85,
@@ -300,7 +285,6 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 5,
     paddingVertical: 1.5,
     borderRadius: 5,
-    backgroundColor: '#1C1C1E',
     gap: 3,
   },
   dateChipOverdue: {
@@ -778,13 +762,10 @@ export const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 7,
     borderRadius: 8,
-    backgroundColor: '#222',
     borderWidth: 1,
-    borderColor: '#333',
     alignItems: 'center',
   },
   modalPresetBtnActive: {
-    backgroundColor: '#2A2210',
     borderColor: gold[400],
   },
   modalPresetText: {
@@ -800,10 +781,8 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#1E1E1E',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#2C2C2C',
     paddingHorizontal: 12,
     paddingVertical: 9,
     marginBottom: 4,
@@ -826,9 +805,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
-    backgroundColor: '#121212',
     borderWidth: 1,
-    borderColor: '#262626',
   },
   tagToggleText: {
     fontFamily: 'Inter_500Medium',
@@ -847,13 +824,11 @@ export const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     borderRadius: 10,
-    backgroundColor: '#222',
     alignItems: 'center',
   },
   modalCancelBtnText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 13,
-    color: '#AAA',
   },
   modalSubmitBtn: {
     flex: 1.4,
@@ -951,9 +926,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
-    backgroundColor: '#1E1908',
     borderWidth: 1,
-    borderColor: '#3D3310',
   },
   addTagPillText: {
     fontFamily: 'Inter_600SemiBold',
@@ -1252,9 +1225,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 9,
     paddingHorizontal: 6,
     borderRadius: 8,
-    backgroundColor: '#1E1E1E',
     borderWidth: 1,
-    borderColor: '#2A2A2A',
   },
   prioritySelectorPillText: {
     fontFamily: 'Inter_500Medium',
@@ -1303,8 +1274,6 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#1E1B12',
-    borderColor: '#443812',
     borderWidth: 1,
   },
   tagFilterMainBtnActive: {
@@ -1454,7 +1423,6 @@ export const styles = StyleSheet.create({
   sheetTagEditBtn: {
     padding: 8,
     borderRadius: 6,
-    backgroundColor: '#202020',
   },
   sheetEmptyTags: {
     alignItems: 'center',
@@ -1880,9 +1848,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 7,
     paddingVertical: 1.5,
     borderRadius: 999,
-    backgroundColor: '#262010',
     borderWidth: 1,
-    borderColor: '#3D3310',
   },
   subtasksCounterBadgeText: {
     fontFamily: 'Inter_600SemiBold',
@@ -1890,10 +1856,8 @@ export const styles = StyleSheet.create({
     color: gold[400],
   },
   subtasksContainer: {
-    backgroundColor: '#161616',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#242424',
     overflow: 'hidden',
     marginBottom: 8,
   },
@@ -1903,7 +1867,6 @@ export const styles = StyleSheet.create({
     paddingVertical: 9,
     paddingHorizontal: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#202020',
     gap: 8,
   },
   subtaskCheckBtn: {
@@ -1916,7 +1879,6 @@ export const styles = StyleSheet.create({
     height: 16,
     borderRadius: 8,
     borderWidth: 1.6,
-    borderColor: '#555',
   },
   subtaskItemTitle: {
     flex: 1,
@@ -1941,14 +1903,9 @@ export const styles = StyleSheet.create({
   addSubtaskInput: {
     flex: 1,
     height: 40,
-    backgroundColor: '#1C1C1E',
-    borderWidth: 1,
-    borderColor: '#2C2C2E',
-    borderRadius: 8,
     paddingHorizontal: 12,
     fontFamily: 'Inter_400Regular',
     fontSize: 12.5,
-    color: '#FFF',
   },
   addSubtaskActionBtn: {
     width: 38,
@@ -1959,7 +1916,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addSubtaskActionBtnDisabled: {
-    backgroundColor: '#262626',
+    opacity: 0.4,
   },
   subtasksBadgeChip: {
     flexDirection: 'row',
@@ -1968,13 +1925,9 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 1.5,
     borderRadius: 5,
-    backgroundColor: '#231E10',
     borderWidth: 1,
-    borderColor: '#3D3310',
   },
   subtasksBadgeChipDone: {
-    backgroundColor: '#0F2916',
-    borderColor: '#194D26',
   },
   subtasksBadgeText: {
     fontFamily: 'Inter_600SemiBold',

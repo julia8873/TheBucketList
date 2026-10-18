@@ -35,7 +35,7 @@ import {
   DailyTaskPriority,
   DailyTaskRecurrenceUnit,
 } from '../types';
-import { PRIORITY_CONFIG, PRIORITY_ORDER } from '../constants';
+import { PRIORITY_CONFIG, PRIORITY_ORDER, getPriorityConfig } from '../constants';
 import { parseLocalDate, toDateString } from '../utils/dailyTaskDateUtils';
 import { RecurrenceSelector } from './RecurrenceSelector';
 
@@ -246,70 +246,38 @@ export function EditDailyTaskModal({
               {/* Fecha */}
               <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>Fecha</Text>
               <View style={styles.modalPresetsRow}>
-                <Pressable
-                  style={[
-                    styles.modalPresetBtn,
-                    { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
-                    editDueDate === todayStr && styles.modalPresetBtnActive,
-                  ]}
-                  onPress={() => onSelectDueDate(todayStr)}
-                >
-                  <Text
-                    style={[
-                      styles.modalPresetText,
-                      { color: theme.colors.foregroundMuted },
-                      editDueDate === todayStr && styles.modalPresetTextActive,
-                    ]}
-                  >
-                    Hoy
-                  </Text>
-                </Pressable>
-                <Pressable
-                  style={[
-                    styles.modalPresetBtn,
-                    { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
-                    editDueDate === toDateString(addDays(new Date(), 1)) &&
-                      styles.modalPresetBtnActive,
-                  ]}
-                  onPress={() => {
-                    const d = toDateString(addDays(new Date(), 1));
-                    onSelectDueDate(d);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.modalPresetText,
-                      { color: theme.colors.foregroundMuted },
-                      editDueDate === toDateString(addDays(new Date(), 1)) &&
-                        styles.modalPresetTextActive,
-                    ]}
-                  >
-                    Mañana
-                  </Text>
-                </Pressable>
-                <Pressable
-                  style={[
-                    styles.modalPresetBtn,
-                    { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
-                    editDueDate === toDateString(addDays(new Date(), 7)) &&
-                      styles.modalPresetBtnActive,
-                  ]}
-                  onPress={() => {
-                    const d = toDateString(addDays(new Date(), 7));
-                    onSelectDueDate(d);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.modalPresetText,
-                      { color: theme.colors.foregroundMuted },
-                      editDueDate === toDateString(addDays(new Date(), 7)) &&
-                        styles.modalPresetTextActive,
-                    ]}
-                  >
-                    +7 días
-                  </Text>
-                </Pressable>
+                {[
+                  { label: 'Hoy', value: todayStr },
+                  { label: 'Mañana', value: toDateString(addDays(new Date(), 1)) },
+                  { label: '+7 días', value: toDateString(addDays(new Date(), 7)) },
+                ].map((preset) => {
+                  const isActive = editDueDate === preset.value;
+                  return (
+                    <Pressable
+                      key={preset.label}
+                      style={[
+                        styles.modalPresetBtn,
+                        {
+                          backgroundColor: isActive
+                            ? (theme.dark ? '#2A2210' : '#FDF4DC')
+                            : (theme.colors.surfaceElevated ?? theme.colors.surface),
+                          borderColor: isActive ? gold[400] : theme.colors.border,
+                        },
+                      ]}
+                      onPress={() => onSelectDueDate(preset.value)}
+                    >
+                      <Text
+                        style={[
+                          styles.modalPresetText,
+                          { color: isActive ? (theme.dark ? gold[400] : '#926F12') : theme.colors.foregroundMuted },
+                          isActive && { fontFamily: 'Inter_600SemiBold' },
+                        ]}
+                      >
+                        {preset.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
               </View>
 
               <Pressable
@@ -343,16 +311,18 @@ export function EditDailyTaskModal({
               <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>Prioridad</Text>
               <View style={styles.prioritySelectorRow}>
                 {PRIORITY_ORDER.map((p) => {
-                  const cfg = PRIORITY_CONFIG[p];
+                  const cfg = getPriorityConfig(p, theme.dark);
                   const isSelected = editPriority === p;
                   return (
                     <Pressable
                       key={p}
                       style={[
                         styles.prioritySelectorPill,
-                        isSelected && {
-                          backgroundColor: cfg.bgColor,
-                          borderColor: cfg.borderColor,
+                        {
+                          backgroundColor: isSelected
+                            ? cfg.bgColor
+                            : (theme.colors.surfaceElevated ?? theme.colors.surface),
+                          borderColor: isSelected ? cfg.borderColor : theme.colors.border,
                         },
                       ]}
                       onPress={() => onSelectPriority(p)}
@@ -365,7 +335,8 @@ export function EditDailyTaskModal({
                       <Text
                         style={[
                           styles.prioritySelectorPillText,
-                          isSelected && { color: cfg.color, fontFamily: 'Inter_600SemiBold' },
+                          { color: isSelected ? cfg.color : theme.colors.foregroundMuted },
+                          isSelected && { fontFamily: 'Inter_600SemiBold' },
                         ]}
                       >
                         {cfg.label}
@@ -426,8 +397,16 @@ export function EditDailyTaskModal({
                   <Text style={[styles.fieldLabelNoMargin, { color: theme.colors.foregroundMuted }]}>Subtareas</Text>
                 </View>
                 {editSubtasks.length > 0 && (
-                  <View style={styles.subtasksCounterBadge}>
-                    <Text style={styles.subtasksCounterBadgeText}>
+                  <View
+                    style={[
+                      styles.subtasksCounterBadge,
+                      {
+                        backgroundColor: theme.dark ? '#262010' : '#FDF4DC',
+                        borderColor: theme.dark ? '#3D3310' : '#E8C56A',
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.subtasksCounterBadgeText, { color: theme.dark ? gold[400] : '#926F12' }]}>
                       {editSubtasks.filter((s) => s.is_completed).length}/{editSubtasks.length}
                     </Text>
                   </View>
@@ -436,13 +415,24 @@ export function EditDailyTaskModal({
 
               {/* Lista de subtareas en edición */}
               {editSubtasks.length > 0 && (
-                <View style={styles.subtasksContainer}>
+                <View
+                  style={[
+                    styles.subtasksContainer,
+                    {
+                      backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+                      borderColor: theme.colors.border,
+                    },
+                  ]}
+                >
                   {editSubtasks.map((st) => (
                     <View
                       key={st.id}
                       style={[
                         styles.subtaskItemRow,
-                        { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
+                        {
+                          backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+                          borderBottomColor: theme.colors.border,
+                        },
                       ]}
                     >
                       <Pressable
@@ -455,7 +445,7 @@ export function EditDailyTaskModal({
                         {st.is_completed ? (
                           <CheckCircle2 size={17} color="#34C759" />
                         ) : (
-                          <View style={[styles.subtaskUncheckedCircle, { borderColor: theme.colors.border }]} />
+                          <View style={[styles.subtaskUncheckedCircle, { borderColor: theme.colors.foregroundMuted }]} />
                         )}
                       </Pressable>
                       <Text
@@ -485,11 +475,22 @@ export function EditDailyTaskModal({
               <View
                 style={[
                   styles.addSubtaskInputWrapper,
-                  { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
+                  {
+                    backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+                    borderColor: theme.colors.border,
+                    borderWidth: 1,
+                    borderRadius: 8,
+                  },
                 ]}
               >
                 <TextInput
-                  style={[styles.addSubtaskInput, { color: theme.colors.foreground }]}
+                  style={[
+                    styles.addSubtaskInput,
+                    {
+                      color: theme.colors.foreground,
+                      backgroundColor: 'transparent',
+                    },
+                  ]}
                   placeholder="Añadir una subtarea..."
                   placeholderTextColor={theme.colors.foregroundMuted}
                   value={editSubtaskTitle}
@@ -500,13 +501,17 @@ export function EditDailyTaskModal({
                 <Pressable
                   style={[
                     styles.addSubtaskActionBtn,
-                    !editSubtaskTitle.trim() && styles.addSubtaskActionBtnDisabled,
+                    !editSubtaskTitle.trim() && { backgroundColor: theme.dark ? '#262626' : '#E6E1D5' },
                   ]}
                   onPress={onAddSubtask}
                   disabled={!editSubtaskTitle.trim()}
                   accessibilityLabel="Crear subtarea"
                 >
-                  <Plus size={16} color={editSubtaskTitle.trim() ? '#0E0E0E' : '#555'} strokeWidth={2.5} />
+                  <Plus
+                    size={16}
+                    color={editSubtaskTitle.trim() ? '#0E0E0E' : theme.colors.foregroundMuted}
+                    strokeWidth={2.5}
+                  />
                 </Pressable>
               </View>
 

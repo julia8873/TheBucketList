@@ -249,7 +249,7 @@ export default function EditProfileScreen() {
 
           <Label gold={t('profile.username_a')} rest={t('profile.username_b')} />
           <View style={[fieldStyle, styles.usernameRow]}>
-            <Text style={[styles.input, { color: theme.colors.foregroundMuted, paddingHorizontal: 0 }]}>@ </Text>
+            <Text style={[{ color: theme.colors.foregroundMuted, fontFamily: fontFamily.regular, fontSize: 16, lineHeight: 52, paddingHorizontal: 0, includeFontPadding: false }]}>@</Text>
             <TextInput
               value={username}
               onChangeText={(v) => setUsername(v.replace(/\s/g, '').toLowerCase())}

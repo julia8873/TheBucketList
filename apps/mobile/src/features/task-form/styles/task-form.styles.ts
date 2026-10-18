@@ -234,9 +234,7 @@ export const styles = StyleSheet.create({
   priorityText: { fontFamily: 'Inter_500Medium', fontSize: 16, color: '#E5E5E5' },
   settingsCard: {
     borderRadius: 16,
-    backgroundColor: '#161616',
     borderWidth: 1,
-    borderColor: '#2A2A2A',
     overflow: 'hidden',
     marginTop: 14,
   },
@@ -246,7 +244,6 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#2A2A2A',
   },
   settingLabel: { fontFamily: 'Inter_500Medium', fontSize: 18, color: '#FFF', marginLeft: 16, flex: 1 },
   settingValue: { fontFamily: 'Inter_400Regular', fontSize: 17, color: '#9A9A9A' },
@@ -305,4 +302,67 @@ export const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   collaboratorChipText: { fontFamily: 'Inter_500Medium', fontSize: 13, color: '#D4B13A' },
+  visibilityModalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
+  visibilityModalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  visibilitySheetCard: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderWidth: 1,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 36,
+  },
+  visibilitySheetHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  visibilitySheetHeader: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  visibilitySheetTitle: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 18,
+  },
+  visibilitySheetOptions: {
+    gap: 8,
+  },
+  visibilitySheetOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  visibilitySheetIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  visibilitySheetOptionText: {
+    flex: 1,
+  },
+  visibilitySheetOptionTitle: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 15,
+    marginBottom: 2,
+  },
+  visibilitySheetOptionSubtitle: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12.5,
+  },
 });

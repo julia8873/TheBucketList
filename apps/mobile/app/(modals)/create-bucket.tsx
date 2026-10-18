@@ -22,6 +22,7 @@ import { LocationPickerModal } from '../../src/components/LocationPickerModal';
 import type { TagItem } from '../../src/components/TagPickerSheet';
 import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
 import { AlbumPickerSheet } from '../../src/components/AlbumPickerSheet';
+import { GoogleDriveModal } from '../../src/components/GoogleDriveModal';
 import { useAlbums } from '../../src/hooks/useAlbums';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { ChevronLeft } from 'lucide-react-native';
@@ -48,6 +49,8 @@ export default function CreateBucketModal() {
     params.albumId && params.albumId !== 'new' ? String(params.albumId) : null
   );
   const [showAlbumPicker, setShowAlbumPicker] = useState(false);
+  const [driveUrl, setDriveUrl] = useState<string | null>(null);
+  const [showDriveModal, setShowDriveModal] = useState(false);
 
   const [steps, setSteps] = useState<TaskStepItem[]>([]);
   const [isTitleFocused, setIsTitleFocused] = useState(false);
@@ -119,6 +122,7 @@ export default function CreateBucketModal() {
       const payload = {
         ...data,
         cover_image: finalCoverImage,
+        drive_url: driveUrl,
         album_id: albumId,
         tag_ids,
         collaborator_ids,
@@ -225,8 +229,10 @@ export default function CreateBucketModal() {
             onOpenAlbumPicker={() => setShowAlbumPicker(true)}
             selectedTags={selectedTags}
             onChangeTags={setSelectedTags}
-            isPublic={visibilityValue === 'public'}
-            onTogglePublic={(pub) => setValue('visibility', pub ? 'public' : 'private')}
+            driveUrl={driveUrl}
+            onOpenDriveModal={() => setShowDriveModal(true)}
+            visibilityValue={visibilityValue as any}
+            onChangeVisibilityValue={(val) => setValue('visibility', val)}
           />
 
           {/* PASOS */}
@@ -283,6 +289,14 @@ export default function CreateBucketModal() {
             setValue('location_lng', loc ? loc.lng : null);
           }}
           onClose={() => setIsEditingLocation(false)}
+        />
+
+        <GoogleDriveModal
+          visible={showDriveModal}
+          onClose={() => setShowDriveModal(false)}
+          currentUrl={driveUrl}
+          onSave={(u) => setDriveUrl(u)}
+          canEdit={true}
         />
 
         {/* BOTTOM BAR */}

@@ -142,6 +142,15 @@ function RootNavigator() {
   useEffect(() => {
     const handleUrl = async (url: string | null) => {
       if (!url) return;
+
+      // Si hay un flujo OAuth en curso gestionado por useGoogleAuth (openAuthSessionAsync),
+      // ese hook ya maneja el redirect completo. Ignoramos aquí para evitar doble apertura.
+      const isOAuthCallback =
+        url.includes('auth/callback') ||
+        url.includes('access_token') ||
+        (url.includes('code=') && (url.includes('mode=login') || url.includes('mode=register')));
+      if (isOAuthCallback && useAuthStore.getState().oauthMode !== null) return;
+
       try {
         const fragment = url.split('#')[1];
         if (fragment) {
@@ -154,9 +163,10 @@ function RootNavigator() {
             const { error } = await supabase.auth.setSession({ access_token, refresh_token });
             if (error) setRecovering(false);
 
+            // Solo procesamos modo OAuth si NO hay un flujo activo de WebBrowser
             const activeMode = (params.get('mode') as 'login' | 'register') || useAuthStore.getState().oauthMode;
-            if (activeMode) {
-              await validateOAuthSession(activeMode);
+            if (activeMode && !isRecovery) {
+              await validateOAuthSession(activeMode, router);
             }
             return;
           }
@@ -170,7 +180,7 @@ function RootNavigator() {
             await supabase.auth.exchangeCodeForSession(code);
             const activeMode = (params.get('mode') as 'login' | 'register') || useAuthStore.getState().oauthMode;
             if (activeMode) {
-              await validateOAuthSession(activeMode);
+              await validateOAuthSession(activeMode, router);
             }
           }
         }
@@ -178,10 +188,21 @@ function RootNavigator() {
         console.warn('Error handling deep link URL:', err);
       }
     };
-    void Linking.getInitialURL().then(handleUrl);
+
+    // Solo procesamos la URL inicial si NO es un callback OAuth
+    // (los callbacks OAuth son manejados por useGoogleAuth o AuthCallbackScreen)
+    Linking.getInitialURL().then((url) => {
+      if (!url) return;
+      const isOAuthCallback =
+        url.includes('auth/callback') ||
+        url.includes('access_token') ||
+        url.includes('code=');
+      if (!isOAuthCallback) void handleUrl(url);
+    });
+
     const sub = Linking.addEventListener('url', (e) => void handleUrl(e.url));
     return () => sub.remove();
-  }, []);
+  }, [router]);
 
   // ¿Ha completado el onboarding este usuario?
   useEffect(() => {
@@ -219,17 +240,18 @@ function RootNavigator() {
     if (!isInitialized) return;
     const group = segments[0];
     if (!session) {
-      if (group !== '(auth)') router.replace('/(auth)/welcome');
+      if (group !== '(auth)' && group !== 'auth') router.replace('/(auth)/welcome');
       return;
     }
     if (isRecovering) return; // dejar terminar "nueva contraseña"
-    if (useAuthStore.getState().oauthMode === 'login') return; // validando login con OAuth
+    if (useAuthStore.getState().oauthMode !== null) return; // validando login o register con OAuth
+    if (segments[0] === 'auth' && segments[1] === 'callback') return; // en pantalla de callback OAuth
     if (onboardingCompleted === null) return; // cargando perfil
     if (!onboardingCompleted) {
       if (group !== '(onboarding)') router.replace('/(onboarding)/username');
       return;
     }
-    if (group === '(auth)') router.replace('/(tabs)/my-list');
+    if (group === '(auth)' || group === 'auth') router.replace('/(tabs)/my-list');
   }, [session, isInitialized, onboardingCompleted, isRecovering, segments]);
 
   return (

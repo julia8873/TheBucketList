@@ -18,6 +18,7 @@ export const createBucketSchema = z.object({
   location_lat: z.number().optional().nullable(),
   location_lng: z.number().optional().nullable(),
   subtasks: z.array(subtaskSchema).max(10).optional(),
+  drive_url: z.string().optional().nullable(),
 });
 
 export const updateBucketSchema = createBucketSchema.partial().extend({

@@ -139,6 +139,7 @@ export const bucketApi = {
       location_lng: payload.location_lng || null,
       status: 'pending',
       cover_image: payload.cover_image || null,
+      drive_url: payload.drive_url || null,
       collaboration_mode: payload.collaboration_mode || 'invite_only',
       collaboration_audience: payload.collaboration_audience || 'followers',
     };
@@ -232,6 +233,7 @@ export const bucketApi = {
       location_lng: payload.location_lng,
       status: payload.status as 'pending' | 'in_progress' | 'completed' | 'expired' | 'archived' | undefined,
       completed_at: payload.completed_at ? payload.completed_at.toISOString() : undefined,
+      drive_url: payload.drive_url !== undefined ? payload.drive_url : undefined,
     };
 
     if (payload.collaboration_mode !== undefined) {

@@ -3,12 +3,14 @@ import { Alert, FlatList, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, MoreHorizontal } from 'lucide-react-native';
+import * as Clipboard from 'expo-clipboard';
 import {
   EmptyState,
   FilterChip,
   SectionLabel,
   SegmentedControl,
   useTheme,
+  toast,
 } from '@bucketlist/ui';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { usePullToRefresh } from '../../src/hooks/useAutoRefresh';
@@ -159,20 +161,23 @@ export default function PublicProfileScreen() {
     }
   };
 
-  const openMenu = () => {
-    if (isOwnProfile || !id) return;
-    const buttons: Array<{ text: string; style?: 'cancel' | 'destructive'; onPress?: () => void }> = [];
-    const unfollowNow = () => {
-      if (!user) return;
-      unfollowUser.mutate(
-        { followerId: user.id, followingId: id },
-        { onError: (error: any) => Alert.alert('No se pudo completar', error?.message ?? 'Inténtalo de nuevo.') }
-      );
-    };
-    if (followStatus === 'accepted') buttons.push({ text: 'Dejar de seguir', style: 'destructive', onPress: unfollowNow });
-    if (followStatus === 'pending') buttons.push({ text: 'Cancelar solicitud', style: 'destructive', onPress: unfollowNow });
-    buttons.push({ text: 'Cerrar', style: 'cancel' });
-    Alert.alert(displayNameOf(profile), `@${profile?.username ?? ''}`, buttons);
+  const openMenu = async () => {
+    if (!profile) return;
+    try {
+      const shareUrl = `https://thebucketlist.app/profile/${profile.username || id}`;
+      await Clipboard.setStringAsync(shareUrl);
+      toast.show({
+        type: 'info',
+        title: displayNameOf(profile),
+        message: 'Enlace al perfil copiado al portapapeles',
+      });
+    } catch {
+      toast.show({
+        type: 'info',
+        title: displayNameOf(profile),
+        message: `@${profile.username ?? ''}`,
+      });
+    }
   };
 
   if (profileLoading || statsLoading) {

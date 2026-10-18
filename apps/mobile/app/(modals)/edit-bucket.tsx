@@ -25,6 +25,7 @@ import { LocationPickerModal } from '../../src/components/LocationPickerModal';
 import type { TagItem } from '../../src/components/TagPickerSheet';
 import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
 import { AlbumPickerSheet } from '../../src/components/AlbumPickerSheet';
+import { GoogleDriveModal } from '../../src/components/GoogleDriveModal';
 
 import { styles } from '../../src/features/task-form/styles/task-form.styles';
 import { TaskSettingsCard } from '../../src/features/task-form/components/TaskSettingsCard';
@@ -53,6 +54,8 @@ export default function EditBucketModal() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isEditingLocation, setIsEditingLocation] = useState(false);
   const [isTitleFocused, setIsTitleFocused] = useState(false);
+  const [driveUrl, setDriveUrl] = useState<string | null>(null);
+  const [showDriveModal, setShowDriveModal] = useState(false);
 
   // Etiquetas
   const [selectedTags, setSelectedTags] = useState<TagItem[]>([]);
@@ -116,7 +119,7 @@ export default function EditBucketModal() {
 
     supabase
       .from('buckets')
-      .select('title, description, visibility, location_text, location_lat, location_lng, deadline, collaboration_mode, collaboration_audience, cover_image')
+      .select('title, description, visibility, location_text, location_lat, location_lng, deadline, collaboration_mode, collaboration_audience, cover_image, drive_url')
       .eq('id', id)
       .single()
       .then(({ data, error }) => {
@@ -142,6 +145,9 @@ export default function EditBucketModal() {
         if ((data as any).cover_image) {
           setCoverImage((data as any).cover_image);
           initialCoverImage.current = (data as any).cover_image;
+        }
+        if ((data as any).drive_url) {
+          setDriveUrl((data as any).drive_url);
         }
         setLoading(false);
       });
@@ -194,6 +200,7 @@ export default function EditBucketModal() {
       collaboration_mode: collaborationMode,
       collaboration_audience: collaborationAudience,
       cover_image: finalCoverImage,
+      drive_url: driveUrl,
     } as any;
 
     try {
@@ -333,6 +340,9 @@ export default function EditBucketModal() {
             onOpenAlbumPicker={() => setShowAlbumPicker(true)}
             selectedTags={selectedTags}
             onChangeTags={setSelectedTags}
+            driveUrl={driveUrl}
+            onOpenDriveModal={() => setShowDriveModal(true)}
+            onClearDriveUrl={() => setDriveUrl(null)}
             visibilityMode="chips"
             visibilityValue={visibility}
             onChangeVisibilityValue={setVisibility}
@@ -379,6 +389,14 @@ export default function EditBucketModal() {
             setLocationLng(loc ? loc.lng : null);
           }}
           onClose={() => setIsEditingLocation(false)}
+        />
+
+        <GoogleDriveModal
+          visible={showDriveModal}
+          onClose={() => setShowDriveModal(false)}
+          currentUrl={driveUrl}
+          onSave={(u) => setDriveUrl(u)}
+          canEdit={true}
         />
 
         {/* BOTTOM BAR */}

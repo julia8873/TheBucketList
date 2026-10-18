@@ -3,7 +3,7 @@ import { View, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Typography } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
-import { MapPin, CheckCircle2, Calendar, X, Map } from 'lucide-react-native';
+import { MapPin, CheckCircle2, Calendar, X, Map, HardDrive, ExternalLink, HelpCircle } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { styles } from '../styles/bucket-detail.styles';
@@ -17,6 +17,9 @@ interface BucketMetaSectionProps {
   onOpenDatePicker: (config: { visible: boolean; type: 'deadline' | 'completed_at'; date: Date }) => void;
   onRemoveCompletedAt: () => void;
   onRemoveDeadline: () => void;
+  onOpenDriveModal?: () => void;
+  onOpenDriveLink?: () => void;
+  onRemoveDriveUrl?: () => void;
 }
 
 export function BucketMetaSection({
@@ -28,6 +31,9 @@ export function BucketMetaSection({
   onOpenDatePicker,
   onRemoveCompletedAt,
   onRemoveDeadline,
+  onOpenDriveModal,
+  onOpenDriveLink,
+  onRemoveDriveUrl,
 }: BucketMetaSectionProps) {
   const router = useRouter();
 
@@ -172,6 +178,54 @@ export function BucketMetaSection({
           <Calendar color={gold[400]} size={16} strokeWidth={1.8} />
           <Typography variant="body" color={gold[400]} style={styles.metaText}>
             + Añadir fecha límite
+          </Typography>
+        </Pressable>
+      ) : null}
+
+      {/* Google Drive */}
+      {bucket.drive_url ? (
+        <View style={styles.metaRowBetween}>
+          <Pressable
+            style={styles.metaRowClickable}
+            onPress={onOpenDriveLink}
+          >
+            <HardDrive color={gold[400]} size={16} strokeWidth={1.8} />
+            <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText} numberOfLines={1}>
+              Abrir carpeta en Google Drive
+            </Typography>
+            <ExternalLink color={gold[400]} size={14} style={{ marginLeft: 4 }} />
+          </Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {canEdit && onOpenDriveModal && (
+              <Pressable
+                onPress={onOpenDriveModal}
+                hitSlop={8}
+                style={{ padding: 4, marginRight: 6 }}
+                accessibilityLabel="Editar enlace o ver ayuda de seguridad"
+              >
+                <HelpCircle color={gold[400]} size={16} strokeWidth={1.8} />
+              </Pressable>
+            )}
+            {canEdit && onRemoveDriveUrl && (
+              <Pressable
+                onPress={onRemoveDriveUrl}
+                hitSlop={8}
+                style={styles.metaRemoveBtn}
+                accessibilityLabel="Quitar enlace de Drive"
+              >
+                <X color={theme.colors.foregroundMuted} size={14} />
+              </Pressable>
+            )}
+          </View>
+        </View>
+      ) : canEdit && onOpenDriveModal ? (
+        <Pressable
+          style={styles.metaRowClickable}
+          onPress={onOpenDriveModal}
+        >
+          <HardDrive color={gold[400]} size={16} strokeWidth={1.8} />
+          <Typography variant="body" color={gold[400]} style={styles.metaText}>
+            + Añadir enlace a Google Drive
           </Typography>
         </Pressable>
       ) : null}

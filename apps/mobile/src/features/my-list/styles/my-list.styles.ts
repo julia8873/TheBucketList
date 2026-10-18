@@ -199,7 +199,6 @@ export const styles = StyleSheet.create({
     height: ((SCREEN_WIDTH - 40 - 14) / 2) * 1.3,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: '#1E1E1E',
   },
   galleryCardSingle: {
     width: '100%',
@@ -277,10 +276,8 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     height: 48,
     paddingHorizontal: 14,
-    backgroundColor: '#161616',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#242424',
   },
   compactRowCompleted: {
     opacity: 0.85,
@@ -357,10 +354,8 @@ export const styles = StyleSheet.create({
   listAlbumCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#161616',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#242424',
     padding: 10,
   },
   listAlbumTitle: {
@@ -382,9 +377,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: 6,
-    backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.12)',
   },
   listAlbumBadgeText: {
     fontFamily: 'Inter_500Medium',
@@ -394,7 +387,6 @@ export const styles = StyleSheet.create({
   listAlbumProgressTrack: {
     height: 3,
     borderRadius: 1.5,
-    backgroundColor: 'rgba(255,255,255,0.1)',
     marginTop: 8,
     overflow: 'hidden',
   },

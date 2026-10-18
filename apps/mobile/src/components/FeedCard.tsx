@@ -96,7 +96,10 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
       >
         <Pressable
           onPress={onPress}
-          style={({ pressed }) => [styles.galleryCard, { opacity: pressed ? 0.9 : 1 }]}
+          style={({ pressed }) => [
+            styles.galleryCard,
+            { backgroundColor: theme.dark ? '#1E1E1E' : '#F0EDE6', borderColor: theme.colors.border, opacity: pressed ? 0.9 : 1 },
+          ]}
           accessibilityRole="button"
           accessibilityLabel={bucket.title}
         >
@@ -437,9 +440,7 @@ const styles = StyleSheet.create({
   galleryCard: {
     borderRadius: 18,
     overflow: 'hidden',
-    backgroundColor: '#1E1E1E',
     borderWidth: 1,
-    borderColor: '#2A2A2A',
   },
   galleryCover: {
     width: '100%',
@@ -504,9 +505,7 @@ const styles = StyleSheet.create({
   compactCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#161616',
     borderWidth: 1,
-    borderColor: '#262626',
     borderRadius: 14,
     padding: 10,
     gap: 12,
@@ -516,7 +515,6 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 10,
     overflow: 'hidden',
-    backgroundColor: '#2A2A2A',
   },
   compactInfo: {
     flex: 1,

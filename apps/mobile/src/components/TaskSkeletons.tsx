@@ -1,13 +1,19 @@
 import React from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
-import { Skeleton } from '@bucketlist/ui';
+import { Skeleton, useTheme } from '@bucketlist/ui';
 
 /**
  * Skeleton para vista detallada de tareas (List mode en Mis Tareas).
  */
 export function TaskRowSkeleton() {
+  const { theme } = useTheme();
   return (
-    <View style={styles.taskRow}>
+    <View
+      style={[
+        styles.taskRow,
+        { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+      ]}
+    >
       <Skeleton width={54} height={54} borderRadius={14} style={{ marginRight: 12 }} />
       <View style={{ flex: 1, justifyContent: 'center' }}>
         <Skeleton width="70%" height={15} borderRadius={6} style={{ marginBottom: 8 }} />
@@ -25,8 +31,17 @@ export function TaskRowSkeleton() {
  * Skeleton para vista compacta de tareas (Día a día / explore.tsx y Compact mode en Mis Tareas).
  */
 export function TaskCompactSkeleton() {
+  const { theme } = useTheme();
   return (
-    <View style={styles.taskCompact}>
+    <View
+      style={[
+        styles.taskCompact,
+        {
+          backgroundColor: theme.colors.surface,
+          borderBottomColor: theme.colors.border,
+        },
+      ]}
+    >
       <Skeleton width={18} height={18} borderRadius={9} style={{ marginRight: 10 }} />
       <View style={{ flex: 1, justifyContent: 'center' }}>
         <Skeleton width="65%" height={14} borderRadius={6} style={{ marginBottom: 4 }} />
@@ -42,10 +57,16 @@ export function TaskCompactSkeleton() {
  */
 export function TaskGallerySkeleton() {
   const { width } = useWindowDimensions();
+  const { theme } = useTheme();
   const cardWidth = Math.floor((width - 44) / 2);
 
   return (
-    <View style={[styles.taskGalleryCard, { width: cardWidth }]}>
+    <View
+      style={[
+        styles.taskGalleryCard,
+        { width: cardWidth, backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+      ]}
+    >
       <Skeleton width="100%" height={150} borderRadius={16} />
       <View style={{ padding: 8 }}>
         <Skeleton width="80%" height={13} borderRadius={5} style={{ marginBottom: 6 }} />
@@ -94,6 +115,7 @@ export function UserRowSkeleton() {
  */
 export function ProfileSkeleton() {
   const { width } = useWindowDimensions();
+  const { theme } = useTheme();
   const tileWidth = Math.floor((width - 50) / 2);
   const tileHeight = Math.round(tileWidth * 1.3);
 
@@ -115,7 +137,12 @@ export function ProfileSkeleton() {
       </View>
 
       {/* Stats row */}
-      <View style={styles.profileStats}>
+      <View
+        style={[
+          styles.profileStats,
+          { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+        ]}
+      >
         <Skeleton width="28%" height={36} borderRadius={8} />
         <Skeleton width="28%" height={36} borderRadius={8} />
         <Skeleton width="28%" height={36} borderRadius={8} />
@@ -140,10 +167,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    backgroundColor: '#141414',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#222222',
     marginBottom: 10,
   },
   taskCompact: {
@@ -152,15 +177,11 @@ const styles = StyleSheet.create({
     minHeight: 46,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: '#131313',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#1E1E1E',
   },
   taskGalleryCard: {
-    backgroundColor: '#141414',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#222222',
     overflow: 'hidden',
     marginBottom: 12,
   },
@@ -186,9 +207,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 12,
-    backgroundColor: '#141414',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#222222',
   },
 });

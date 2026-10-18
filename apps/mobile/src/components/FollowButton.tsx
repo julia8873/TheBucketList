@@ -1,7 +1,7 @@
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
 import { Check } from 'lucide-react-native';
-import { fontFamily, gold } from '@bucketlist/ui';
+import { fontFamily, gold, useTheme } from '@bucketlist/ui';
 import type { FollowStatus } from '../services/api/friends';
 
 interface FollowButtonProps {
@@ -21,6 +21,7 @@ interface FollowButtonProps {
  *   none + privada → "Solicitar" · none → "Seguir"
  */
 export function FollowButton({ status, isPrivate = false, loading = false, onPress, size = 'pill', style }: FollowButtonProps) {
+  const { theme } = useTheme();
   const block = size === 'block';
 
   let label: string;
@@ -39,7 +40,12 @@ export function FollowButton({ status, isPrivate = false, loading = false, onPre
     variant = 'solid';
   }
 
-  const textColor = variant === 'solid' ? '#111111' : variant === 'outline' ? gold[400] : '#CFCFCF';
+  const textColor =
+    variant === 'solid'
+      ? '#111111'
+      : variant === 'outline'
+      ? gold[400]
+      : theme.colors.foregroundMuted;
 
   return (
     <Pressable
@@ -52,7 +58,7 @@ export function FollowButton({ status, isPrivate = false, loading = false, onPre
         block ? styles.block : styles.pill,
         variant === 'solid' && styles.solid,
         variant === 'outline' && styles.outline,
-        variant === 'muted' && styles.muted,
+        variant === 'muted' && { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
         { opacity: pressed ? 0.75 : 1 },
         style,
       ]}
@@ -89,7 +95,6 @@ const styles = StyleSheet.create({
   },
   solid: { backgroundColor: gold[400], borderColor: gold[400] },
   outline: { backgroundColor: 'transparent', borderColor: gold[400] },
-  muted: { backgroundColor: '#161616', borderColor: '#2A2A2A' },
   label: { fontFamily: fontFamily.semibold, fontSize: 14 },
   check: { marginRight: 6 },
 });

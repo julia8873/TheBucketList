@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ActivityIndicator, FlatList, Pressable, Text, Alert, AppState } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, FlatList, Pressable, Text, AppState } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Typography, useTheme, spacing, Avatar, Button, Icon, PageTitle, Skeleton, gold } from '@bucketlist/ui';
-import { Check, CheckCheck, Heart, MessageCircle, UserPlus, CheckCircle, Bell, Users, X, Folder } from 'lucide-react-native';
+import { Typography, useTheme, spacing, Avatar, Button, Icon, PageTitle, Skeleton, gold, toast, confirm } from '@bucketlist/ui';
+import { Check, CheckCheck, Heart, MessageCircle, UserPlus, CheckCircle, Bell, Users, X, Folder, HardDrive } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNotifications, useMarkAsRead, useMarkAllAsRead } from '../../src/hooks/useNotifications';
 import { useAuthStore } from '../../src/stores/auth.store';
@@ -56,14 +56,13 @@ export default function NotificationsScreen() {
 
   const handleEnablePermissions = async () => {
     if (!permStatus?.granted && !permStatus?.canAskAgain) {
-      Alert.alert(
-        'Permisos desactivados',
-        'Las notificaciones están bloqueadas en los ajustes de tu teléfono. Pulsa "Abrir Ajustes" para activarlas.',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Abrir Ajustes', onPress: openAppNotificationSettings },
-        ]
-      );
+      confirm.show({
+        title: 'Permisos desactivados',
+        message: 'Las notificaciones están bloqueadas en los ajustes de tu teléfono. Pulsa "Abrir Ajustes" para activarlas.',
+        confirmLabel: 'Abrir Ajustes',
+        cancelLabel: 'Cancelar',
+        onConfirm: openAppNotificationSettings,
+      });
       return;
     }
 
@@ -71,7 +70,7 @@ export default function NotificationsScreen() {
     setPermStatus(res);
     if (res.granted && user?.id) {
       await registerForPushNotificationsAsync(user.id);
-      Alert.alert('¡Notificaciones activadas!', 'Ahora recibirás avisos en tu móvil cuando haya novedades.');
+      toast.success('¡Notificaciones activadas! Ahora recibirás avisos en tu móvil.');
     }
   };
 
@@ -147,7 +146,7 @@ export default function NotificationsScreen() {
         }
       }
     } catch (e: any) {
-      Alert.alert('Error', e?.message ?? 'No se pudo responder');
+      toast.error(e?.message ?? 'No se pudo responder', 'Error');
     } finally {
       setRespondingId(null);
     }
@@ -176,7 +175,8 @@ export default function NotificationsScreen() {
       notification.type === 'notification_accepted' ||
       notification.type === 'collaboration_request' ||
       notification.type === 'collaborator_joined' ||
-      notification.type === 'collaboration_accepted'
+      notification.type === 'collaboration_accepted' ||
+      notification.type === 'drive_access'
     ) {
       if (notification.bucket_id) {
         router.push(`/bucket/${notification.bucket_id}` as any);
@@ -204,6 +204,7 @@ export default function NotificationsScreen() {
       case 'notification_accepted':
       case 'bucket_update':
       case 'album_update': return <Bell size={16} color="#D4B13A" />;
+      case 'drive_access': return <HardDrive size={16} color={gold[400]} />;
       default: return <Bell size={16} color={theme.dark ? '#FFFFFF' : theme.colors.foregroundMuted} />;
     }
   };
@@ -228,6 +229,7 @@ export default function NotificationsScreen() {
       case 'notification_accepted': return notification.content || `${actorName} aceptó la solicitud de notificaciones.`;
       case 'bucket_update': return notification.content || `${actorName} ha actualizado una tarea que sigues.`;
       case 'album_update': return notification.content || `${actorName} ha actualizado un álbum que sigues.`;
+      case 'drive_access': return notification.content || `${actorName} ha accedido al enlace de Google Drive en tu tarea.`;
       default: return notification.content || `Tienes una nueva notificación.`;
     }
   };
@@ -279,13 +281,17 @@ export default function NotificationsScreen() {
           <Pressable
             onPress={() => user && markAllAsRead.mutate(user.id)}
             disabled={markAllAsRead.isPending}
-            style={styles.allReadBadge}
+            style={({ pressed }) => [
+              styles.allReadBadge,
+              { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+              { opacity: pressed || markAllAsRead.isPending ? 0.7 : 1 },
+            ]}
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel="Todas leídas"
           >
-            <Check size={14} color="#8A8A8A" />
-            <Text style={styles.allReadText}>Leídas</Text>
+            <Check size={14} color={theme.colors.foregroundMuted} />
+            <Text style={[styles.allReadText, { color: theme.colors.foregroundMuted }]}>Leídas</Text>
           </Pressable>
         ) : null}
       </View>
@@ -462,14 +468,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 14,
-    backgroundColor: '#181818',
     borderWidth: 1,
-    borderColor: '#262626',
   },
   allReadText: {
     fontFamily: 'Inter_400Regular',
     fontSize: 12,
-    color: '#8A8A8A',
   },
   notificationRow: {
     flexDirection: 'row',

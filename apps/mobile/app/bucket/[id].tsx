@@ -42,8 +42,10 @@ import { CollaboratorPickerSheet } from '@/components/CollaboratorPickerSheet';
 import { NotificationSubscribersModal } from '@/components/NotificationSubscribersModal';
 import { TaskCommentsModal } from '@/components/TaskCommentsModal';
 import { ImageLinkModal } from '@/components/ImageLinkModal';
+import { GoogleDriveModal } from '@/components/GoogleDriveModal';
 import { TaskCollaborationSettingsModal } from '@/features/bucket-detail/components/TaskCollaborationSettingsModal';
 import { TaskCollaborationViewerCard } from '@/features/bucket-detail/components/TaskCollaborationViewerCard';
+import { openGoogleDriveLink } from '@/utils/driveAccess';
 import { timeAgo } from '@/utils/timeAgo';
 
 import { useBucketDetailState } from '@/features/bucket-detail/hooks/useBucketDetailState';
@@ -289,7 +291,7 @@ export default function BucketDetailScreen() {
             onFollowOwner={state.handleFollowOwner}
           />
 
-          {/* Meta (Ubicación, fechas) */}
+          {/* Meta (Ubicación, fechas, Google Drive) */}
           <BucketMetaSection
             bucket={bucket}
             canEdit={state.canEdit}
@@ -299,6 +301,18 @@ export default function BucketDetailScreen() {
             onOpenDatePicker={(config) => state.setDatePickerConfig(config)}
             onRemoveCompletedAt={() => void state.handleRemoveCompletedAt()}
             onRemoveDeadline={() => void state.handleRemoveDeadline()}
+            onOpenDriveModal={() => state.setDriveModalVisible(true)}
+            onOpenDriveLink={() =>
+              void openGoogleDriveLink({
+                driveUrl: bucket.drive_url,
+                bucketId: bucket.id,
+                bucketTitle: bucket.title,
+                bucketOwnerId: bucket.user_id,
+                currentUserId: state.user?.id,
+                currentUserName: state.user?.user_metadata?.full_name || state.user?.user_metadata?.username,
+              })
+            }
+            onRemoveDriveUrl={() => void state.handleSaveDriveUrl(null)}
           />
 
           {/* Descripción */}
@@ -809,6 +823,14 @@ export default function BucketDetailScreen() {
         onClose={() => state.setShowCollaborationSettingsModal(false)}
         onSaveSettings={state.handleUpdateCollaborationSettings}
         onRespondRequest={state.handleRespondCollaboratorRequest}
+      />
+
+      <GoogleDriveModal
+        visible={state.driveModalVisible}
+        onClose={() => state.setDriveModalVisible(false)}
+        currentUrl={bucket?.drive_url}
+        onSave={(u) => void state.handleSaveDriveUrl(u)}
+        canEdit={state.canEdit}
       />
     </View>
   );

@@ -148,8 +148,14 @@ export default function FriendsScreen() {
   return (
     <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.header}>
-        <Pressable onPress={goBack} style={styles.back} hitSlop={8} accessibilityRole="button" accessibilityLabel="Volver">
-          <ChevronLeft size={22} color="#F2EFE8" strokeWidth={2} />
+        <Pressable
+          onPress={goBack}
+          style={[styles.back, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Volver"
+        >
+          <ChevronLeft size={22} color={theme.colors.foreground} strokeWidth={2} />
         </Pressable>
 
         {isOtherUser ? (
@@ -158,25 +164,31 @@ export default function FriendsScreen() {
             rest={targetProfileQuery.data?.username ? `de @${targetProfileQuery.data.username}` : ''}
           />
         ) : tab === 'accounts' ? (
-          <View style={[styles.searchField, (focused || query.length > 0) && { borderColor: gold[400] }]}>
-            <Search size={18} color="#9A9A9A" strokeWidth={1.8} />
+          <View
+            style={[
+              styles.searchField,
+              { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+              (focused || query.length > 0) && { borderColor: gold[400] },
+            ]}
+          >
+            <Search size={18} color={theme.colors.foregroundMuted} strokeWidth={1.8} />
             <TextInput
               value={query}
               onChangeText={setQuery}
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
               placeholder="Buscar personas"
-              placeholderTextColor="#7A7A7A"
+              placeholderTextColor={theme.colors.foregroundMuted}
               autoFocus={false}
               autoCapitalize="none"
               autoCorrect={false}
               returnKeyType="search"
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: theme.colors.foreground }]}
               selectionColor={gold[400]}
             />
             {query.length > 0 ? (
               <Pressable onPress={() => setQuery('')} hitSlop={10} accessibilityRole="button" accessibilityLabel="Borrar búsqueda">
-                <X size={18} color="#9A9A9A" strokeWidth={2} />
+                <X size={18} color={theme.colors.foregroundMuted} strokeWidth={2} />
               </Pressable>
             ) : null}
           </View>

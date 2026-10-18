@@ -37,17 +37,24 @@ if (!isExpoGo) {
   }
 }
 
+import { useRouter } from 'expo-router';
+import { confirm } from '@bucketlist/ui';
+
 /**
  * Valida si la sesión OAuth entrante corresponde a una cuenta existente o nueva,
  * y aplica las reglas de negocio para login ('ya tengo cuenta') o registro ('crear cuenta').
  */
 export async function validateOAuthSession(
   mode: 'login' | 'register',
+  router?: any,
   onError?: (message: string) => void
 ): Promise<boolean> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return false;
+    if (!session?.user) {
+      useAuthStore.getState().setOAuthMode(null);
+      return false;
+    }
 
     const user = session.user;
 
@@ -56,7 +63,7 @@ export async function validateOAuthSession(
     for (let i = 0; i < 4; i++) {
       const { data } = await supabase
         .from('profiles')
-        .select('id, onboarding_completed, created_at, username')
+        .select('id, onboarding_completed, created_at, username, email')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -88,32 +95,73 @@ export async function validateOAuthSession(
         if (onError) {
           onError('no_account_google');
         }
+
+        confirm.show({
+          title: 'Cuenta no encontrada',
+          message: 'No existe ninguna cuenta asociada a este correo de Google. ¿Deseas crear una cuenta?',
+          confirmLabel: 'Crear cuenta',
+          cancelLabel: 'Cancelar',
+          onConfirm: () => {
+            if (router) router.replace('/(auth)/register');
+          },
+          onCancel: () => {
+            if (router) router.replace('/(auth)/login');
+          },
+        });
+
         return false;
       }
 
-      // Cuenta existente válida: login exitoso
+      // Cuenta existente válida: login exitoso directo a Home
       useAuthStore.getState().setOAuthMode(null);
       useAuthStore.getState().setOnboardingCompleted(true);
+      if (router) {
+        router.replace('/(tabs)/my-list');
+      }
       return true;
     }
 
     if (mode === 'register') {
       if (isExistingAccount) {
-        // Ya tenía la cuenta creada anteriormente: entra directo
+        // Ya tenía la cuenta creada anteriormente: avisar que ya existe y dar opción de ir a login
+        await supabase.auth.signOut();
+        useAuthStore.getState().signOut();
         useAuthStore.getState().setOAuthMode(null);
-        useAuthStore.getState().setOnboardingCompleted(true);
-        return true;
+        useAuthStore.getState().setOAuthError('already_registered');
+
+        if (onError) {
+          onError('already_registered');
+        }
+
+        confirm.show({
+          title: 'Esta cuenta ya existe',
+          message: 'Ya existe una cuenta vinculada a este correo de Google. ¿Quieres ir a iniciar sesión?',
+          confirmLabel: 'Iniciar sesión',
+          cancelLabel: 'Cancelar',
+          onConfirm: () => {
+            if (router) router.replace('/(auth)/login');
+          },
+          onCancel: () => {
+            if (router) router.replace('/(auth)/register');
+          },
+        });
+
+        return false;
       }
 
       // Nueva cuenta: marcar onboarding pendiente para que configure @username, foto, etc.
       useAuthStore.getState().setOAuthMode(null);
       useAuthStore.getState().setOnboardingCompleted(false);
+      if (router) {
+        router.replace('/(onboarding)/username');
+      }
       return true;
     }
 
     return true;
   } catch (e: any) {
     console.error('[GoogleAuth] Error en validateOAuthSession:', e);
+    useAuthStore.getState().setOAuthMode(null);
     return false;
   }
 }
@@ -127,6 +175,7 @@ export function useGoogleAuth(
   onError: (message: string) => void,
   mode: 'login' | 'register' = 'login'
 ) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const start = async () => {
@@ -140,6 +189,13 @@ export function useGoogleAuth(
         try {
           await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
           const signInResult = await GoogleSignin.signIn();
+
+          // Si el usuario canceló explícitamente en el diálogo nativo, no forzar navegador
+          if (signInResult?.type === 'cancelled') {
+            useAuthStore.getState().setOAuthMode(null);
+            return;
+          }
+
           const idToken = (signInResult as any)?.data?.idToken ?? (signInResult as any)?.idToken;
 
           if (idToken) {
@@ -155,7 +211,7 @@ export function useGoogleAuth(
             }
 
             if (sessionData?.session) {
-              await validateOAuthSession(mode, onError);
+              await validateOAuthSession(mode, router, onError);
               return;
             }
           }
@@ -164,7 +220,8 @@ export function useGoogleAuth(
           if (
             nativeErr?.code === statusCodes?.SIGN_IN_CANCELLED ||
             nativeErr?.code === '12501' ||
-            nativeErr?.message?.includes('cancelled')
+            nativeErr?.message?.includes('cancelled') ||
+            nativeErr?.message?.includes('cancel')
           ) {
             useAuthStore.getState().setOAuthMode(null);
             return;
@@ -218,7 +275,7 @@ export function useGoogleAuth(
                 onError(sessionErr.message);
                 return;
               }
-              await validateOAuthSession(mode, onError);
+              await validateOAuthSession(mode, router, onError);
               return;
             }
           }
@@ -244,7 +301,7 @@ export function useGoogleAuth(
                 onError(exchangeErr.message);
                 return;
               }
-              await validateOAuthSession(mode, onError);
+              await validateOAuthSession(mode, router, onError);
               return;
             }
           }

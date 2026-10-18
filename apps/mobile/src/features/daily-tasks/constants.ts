@@ -20,4 +20,20 @@ export const PRIORITY_CONFIG: Record<
   urgent: { label: 'Urgente', color: '#EF4444', bgColor: '#2A1111', borderColor: '#592020' },
 };
 
+export function getPriorityConfig(priority: DailyTaskPriority, isDark: boolean = true) {
+  if (isDark) return PRIORITY_CONFIG[priority];
+  switch (priority) {
+    case 'low':
+      return { label: 'Baja', color: '#059669', bgColor: '#ECFDF5', borderColor: '#A7F3D0' };
+    case 'medium':
+      return { label: 'Media', color: '#B45309', bgColor: '#FFFBEB', borderColor: '#FDE68A' };
+    case 'high':
+      return { label: 'Alta', color: '#EA580C', bgColor: '#FFF7ED', borderColor: '#FED7AA' };
+    case 'urgent':
+      return { label: 'Urgente', color: '#DC2626', bgColor: '#FEF2F2', borderColor: '#FECACA' };
+    default:
+      return PRIORITY_CONFIG[priority];
+  }
+}
+
 export const PRIORITY_ORDER: DailyTaskPriority[] = ['low', 'medium', 'high', 'urgent'];

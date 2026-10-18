@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { Check, X } from 'lucide-react-native';
-import { EmptyState, gold } from '@bucketlist/ui';
+import { EmptyState, gold, useTheme } from '@bucketlist/ui';
 import { PersonRow } from '../../../components/PersonRow';
 import { UserRowSkeleton } from '../../../components/TaskSkeletons';
 import { styles } from '../styles/friends.styles';
@@ -33,6 +33,7 @@ export function FriendsRequestsTab({
   onCancelOutgoing,
   onOpenProfile,
 }: FriendsRequestsTabProps) {
+  const { theme } = useTheme();
   if (isLoading && incomingList.length === 0 && outgoingList.length === 0) {
     return (
       <View style={{ marginTop: 8 }}>
@@ -74,11 +75,11 @@ export function FriendsRequestsTab({
                   <>
                     <Pressable
                       onPress={() => onReject(person.id)}
-                      style={[styles.roundButton, styles.rejectButton]}
+                      style={[styles.roundButton, styles.rejectButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
                       accessibilityRole="button"
                       accessibilityLabel="Rechazar solicitud"
                     >
-                      <X size={18} color="#CFCFCF" strokeWidth={2} />
+                      <X size={18} color={theme.colors.foregroundMuted} strokeWidth={2} />
                     </Pressable>
                     <Pressable
                       onPress={() => onAccept(person.id)}
@@ -100,7 +101,7 @@ export function FriendsRequestsTab({
         <GoldLabel>{`Enviadas · ${outgoingList.length}`}</GoldLabel>
       </View>
       {outgoingList.length === 0 ? (
-        <Text style={styles.empty}>No has enviado solicitudes.</Text>
+        <Text style={[styles.empty, { color: theme.colors.foregroundMuted }]}>No has enviado solicitudes.</Text>
       ) : (
         outgoingList.map(({ person }) => (
           <PersonRow
@@ -111,11 +112,11 @@ export function FriendsRequestsTab({
             right={
               <Pressable
                 onPress={() => onCancelOutgoing(person.id)}
-                style={styles.cancelButton}
+                style={[styles.cancelButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
                 accessibilityRole="button"
                 accessibilityLabel="Cancelar solicitud"
               >
-                <Text style={styles.cancelText}>Cancelar</Text>
+                <Text style={[styles.cancelText, { color: theme.colors.foregroundMuted }]}>Cancelar</Text>
               </Pressable>
             }
           />

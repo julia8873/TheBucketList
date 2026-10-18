@@ -25,7 +25,7 @@ import { gold, useTheme } from '@bucketlist/ui';
 import { styles } from '../styles/explore.styles';
 import { RecurrenceSelector } from './RecurrenceSelector';
 import { parseLocalDate, toDateString } from '../utils/dailyTaskDateUtils';
-import { PRIORITY_ORDER, PRIORITY_CONFIG } from '../constants';
+import { PRIORITY_ORDER, PRIORITY_CONFIG, getPriorityConfig } from '../constants';
 import type {
   DailyTaskPriority,
   DailyTaskRecurrenceUnit,
@@ -210,16 +210,20 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
               <Pressable
                 style={[
                   styles.modalPresetBtn,
-                  { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
-                  dueDate === todayStr && styles.modalPresetBtnActive,
+                  {
+                    backgroundColor: dueDate === todayStr
+                      ? (theme.dark ? '#2A2210' : '#FDF4DC')
+                      : (theme.colors.surfaceElevated ?? theme.colors.surface),
+                    borderColor: dueDate === todayStr ? gold[400] : theme.colors.border,
+                  },
                 ]}
                 onPress={() => setDueDate(todayStr)}
               >
                 <Text
                   style={[
                     styles.modalPresetText,
-                    { color: theme.colors.foregroundMuted },
-                    dueDate === todayStr && styles.modalPresetTextActive,
+                    { color: dueDate === todayStr ? (theme.dark ? gold[400] : '#926F12') : theme.colors.foregroundMuted },
+                    dueDate === todayStr && { fontFamily: 'Inter_600SemiBold' },
                   ]}
                 >
                   Hoy
@@ -228,18 +232,24 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
               <Pressable
                 style={[
                   styles.modalPresetBtn,
-                  { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
-                  dueDate === toDateString(addDays(new Date(), 1)) &&
-                    styles.modalPresetBtnActive,
+                  {
+                    backgroundColor: dueDate === toDateString(addDays(new Date(), 1))
+                      ? (theme.dark ? '#2A2210' : '#FDF4DC')
+                      : (theme.colors.surfaceElevated ?? theme.colors.surface),
+                    borderColor: dueDate === toDateString(addDays(new Date(), 1)) ? gold[400] : theme.colors.border,
+                  },
                 ]}
                 onPress={() => setDueDate(toDateString(addDays(new Date(), 1)))}
               >
                 <Text
                   style={[
                     styles.modalPresetText,
-                    { color: theme.colors.foregroundMuted },
-                    dueDate === toDateString(addDays(new Date(), 1)) &&
-                      styles.modalPresetBtnActive,
+                    {
+                      color: dueDate === toDateString(addDays(new Date(), 1))
+                        ? (theme.dark ? gold[400] : '#926F12')
+                        : theme.colors.foregroundMuted,
+                    },
+                    dueDate === toDateString(addDays(new Date(), 1)) && { fontFamily: 'Inter_600SemiBold' },
                   ]}
                 >
                   Mañana
@@ -248,18 +258,24 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
               <Pressable
                 style={[
                   styles.modalPresetBtn,
-                  { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
-                  dueDate === toDateString(addDays(new Date(), 7)) &&
-                    styles.modalPresetBtnActive,
+                  {
+                    backgroundColor: dueDate === toDateString(addDays(new Date(), 7))
+                      ? (theme.dark ? '#2A2210' : '#FDF4DC')
+                      : (theme.colors.surfaceElevated ?? theme.colors.surface),
+                    borderColor: dueDate === toDateString(addDays(new Date(), 7)) ? gold[400] : theme.colors.border,
+                  },
                 ]}
                 onPress={() => setDueDate(toDateString(addDays(new Date(), 7)))}
               >
                 <Text
                   style={[
                     styles.modalPresetText,
-                    { color: theme.colors.foregroundMuted },
-                    dueDate === toDateString(addDays(new Date(), 7)) &&
-                      styles.modalPresetTextActive,
+                    {
+                      color: dueDate === toDateString(addDays(new Date(), 7))
+                        ? (theme.dark ? gold[400] : '#926F12')
+                        : theme.colors.foregroundMuted,
+                    },
+                    dueDate === toDateString(addDays(new Date(), 7)) && { fontFamily: 'Inter_600SemiBold' },
                   ]}
                 >
                   +7 días
@@ -297,16 +313,18 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
             <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>Prioridad</Text>
             <View style={styles.prioritySelectorRow}>
               {PRIORITY_ORDER.map((p) => {
-                const cfg = PRIORITY_CONFIG[p];
+                const cfg = getPriorityConfig(p, theme.dark);
                 const isSelected = priority === p;
                 return (
                   <Pressable
                     key={p}
                     style={[
                       styles.prioritySelectorPill,
-                      isSelected && {
-                        backgroundColor: cfg.bgColor,
-                        borderColor: cfg.borderColor,
+                      {
+                        backgroundColor: isSelected
+                          ? cfg.bgColor
+                          : (theme.colors.surfaceElevated ?? theme.colors.surface),
+                        borderColor: isSelected ? cfg.borderColor : theme.colors.border,
                       },
                     ]}
                     onPress={() => setPriority(p)}
@@ -319,7 +337,8 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
                     <Text
                       style={[
                         styles.prioritySelectorPillText,
-                        isSelected && { color: cfg.color, fontFamily: 'Inter_600SemiBold' },
+                        { color: isSelected ? cfg.color : theme.colors.foregroundMuted },
+                        isSelected && { fontFamily: 'Inter_600SemiBold' },
                       ]}
                     >
                       {cfg.label}
@@ -384,8 +403,16 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
                 <Text style={[styles.fieldLabelNoMargin, { color: theme.colors.foregroundMuted }]}>Subtareas</Text>
               </View>
               {subtasks.length > 0 && (
-                <View style={styles.subtasksCounterBadge}>
-                  <Text style={styles.subtasksCounterBadgeText}>
+                <View
+                  style={[
+                    styles.subtasksCounterBadge,
+                    {
+                      backgroundColor: theme.dark ? '#262010' : '#FDF4DC',
+                      borderColor: theme.dark ? '#3D3310' : '#E8C56A',
+                    },
+                  ]}
+                >
+                  <Text style={[styles.subtasksCounterBadgeText, { color: theme.dark ? gold[400] : '#926F12' }]}>
                     {subtasks.filter((s) => s.is_completed).length}/{subtasks.length}
                   </Text>
                 </View>
@@ -394,13 +421,24 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
 
             {/* Lista de subtareas en creación */}
             {subtasks.length > 0 && (
-              <View style={styles.subtasksContainer}>
+              <View
+                style={[
+                  styles.subtasksContainer,
+                  {
+                    backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+                    borderColor: theme.colors.border,
+                  },
+                ]}
+              >
                 {subtasks.map((st) => (
                   <View
                     key={st.id}
                     style={[
                       styles.subtaskItemRow,
-                      { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
+                      {
+                        backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+                        borderBottomColor: theme.colors.border,
+                      },
                     ]}
                   >
                     <Pressable
@@ -413,7 +451,7 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
                       {st.is_completed ? (
                         <CheckCircle2 size={17} color="#34C759" />
                       ) : (
-                        <View style={[styles.subtaskUncheckedCircle, { borderColor: theme.colors.border }]} />
+                        <View style={[styles.subtaskUncheckedCircle, { borderColor: theme.colors.foregroundMuted }]} />
                       )}
                     </Pressable>
                     <Text
@@ -443,11 +481,22 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
             <View
               style={[
                 styles.addSubtaskInputWrapper,
-                { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
+                {
+                  backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  borderWidth: 1,
+                  borderRadius: 8,
+                },
               ]}
             >
               <TextInput
-                style={[styles.addSubtaskInput, { color: theme.colors.foreground }]}
+                style={[
+                  styles.addSubtaskInput,
+                  {
+                    color: theme.colors.foreground,
+                    backgroundColor: 'transparent',
+                  },
+                ]}
                 placeholder="Añadir una subtarea..."
                 placeholderTextColor={theme.colors.foregroundMuted}
                 value={subtaskTitle}
@@ -458,13 +507,17 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
               <Pressable
                 style={[
                   styles.addSubtaskActionBtn,
-                  !subtaskTitle.trim() && styles.addSubtaskActionBtnDisabled,
+                  !subtaskTitle.trim() && { backgroundColor: theme.dark ? '#262626' : '#E6E1D5' },
                 ]}
                 onPress={onAddSubtask}
                 disabled={!subtaskTitle.trim()}
                 accessibilityLabel="Crear subtarea"
               >
-                <Plus size={16} color={subtaskTitle.trim() ? '#0E0E0E' : '#555'} strokeWidth={2.5} />
+                <Plus
+                  size={16}
+                  color={subtaskTitle.trim() ? '#0E0E0E' : theme.colors.foregroundMuted}
+                  strokeWidth={2.5}
+                />
               </Pressable>
             </View>
 

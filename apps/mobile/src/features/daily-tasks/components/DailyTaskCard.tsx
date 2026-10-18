@@ -14,7 +14,7 @@ import {
 import { gold, useTheme } from '@bucketlist/ui';
 import { styles } from '../styles/explore.styles';
 import { DailyTask, DailyTag, DailySortField, TimeView } from '../types';
-import { PRIORITY_CONFIG } from '../constants';
+import { PRIORITY_CONFIG, getPriorityConfig } from '../constants';
 import { formatTaskDateBadge, getRecurrenceLabel } from '../utils/dailyTaskDateUtils';
 import { DragHandle } from '@/components/DraggableTaskList';
 
@@ -145,45 +145,58 @@ export function DailyTaskCard({
             : null}
 
           {/* Priority chip */}
-          {item.priority && (
-            <View
-              style={[
-                styles.priorityChip,
-                {
-                  borderColor: PRIORITY_CONFIG[item.priority]?.borderColor,
-                  backgroundColor: PRIORITY_CONFIG[item.priority]?.bgColor,
-                },
-              ]}
-            >
-              <Flag size={9} color={PRIORITY_CONFIG[item.priority]?.color} strokeWidth={2.4} />
-              <Text
+          {item.priority && (() => {
+            const pCfg = getPriorityConfig(item.priority, theme.dark);
+            return (
+              <View
                 style={[
-                  styles.priorityChipText,
-                  { color: PRIORITY_CONFIG[item.priority]?.color },
+                  styles.priorityChip,
+                  {
+                    borderColor: pCfg.borderColor,
+                    backgroundColor: pCfg.bgColor,
+                  },
                 ]}
               >
-                {PRIORITY_CONFIG[item.priority]?.label}
-              </Text>
-            </View>
-          )}
+                <Flag size={9} color={pCfg.color} strokeWidth={2.4} />
+                <Text
+                  style={[
+                    styles.priorityChipText,
+                    { color: pCfg.color },
+                  ]}
+                >
+                  {pCfg.label}
+                </Text>
+              </View>
+            );
+          })()}
 
           {/* Date chip */}
           {(timeView !== 'today' || dateBadge.isOverdue || dateBadge.text !== 'Hoy') && (
             <View
               style={[
                 styles.dateChip,
-                dateBadge.isOverdue && !isCompleted && styles.dateChipOverdue,
+                {
+                  backgroundColor: dateBadge.isOverdue && !isCompleted
+                    ? (theme.dark ? '#2E1515' : '#FDE8E8')
+                    : (theme.dark ? '#1E1E1E' : '#F4EFE6'),
+                  borderColor: dateBadge.isOverdue && !isCompleted
+                    ? (theme.dark ? '#5C1D1D' : '#FCA5A5')
+                    : (theme.dark ? '#2A2A2A' : '#E8E2D2'),
+                  borderWidth: 1,
+                },
               ]}
             >
               <Calendar
                 size={10}
-                color={dateBadge.isOverdue && !isCompleted ? '#FF453A' : '#888'}
+                color={dateBadge.isOverdue && !isCompleted ? '#FF453A' : theme.colors.foregroundMuted}
                 strokeWidth={2}
               />
               <Text
                 style={[
                   styles.dateChipText,
-                  dateBadge.isOverdue && !isCompleted && styles.dateChipTextOverdue,
+                  {
+                    color: dateBadge.isOverdue && !isCompleted ? '#FF453A' : theme.colors.foregroundMuted,
+                  },
                 ]}
               >
                 {dateBadge.text}
@@ -192,28 +205,40 @@ export function DailyTaskCard({
           )}
 
           {/* Subtasks progress chip */}
-          {item.subtasks && item.subtasks.length > 0 && (
-            <View
-              style={[
-                styles.subtasksBadgeChip,
-                item.subtasks.every((s) => s.is_completed) && styles.subtasksBadgeChipDone,
-              ]}
-            >
-              <ListChecks
-                size={10}
-                color={item.subtasks.every((s) => s.is_completed) ? '#34C759' : gold[400]}
-                strokeWidth={2}
-              />
-              <Text
+          {item.subtasks && item.subtasks.length > 0 && (() => {
+            const allDone = item.subtasks.every((s) => s.is_completed);
+            return (
+              <View
                 style={[
-                  styles.subtasksBadgeText,
-                  item.subtasks.every((s) => s.is_completed) && styles.subtasksBadgeTextDone,
+                  styles.subtasksBadgeChip,
+                  {
+                    backgroundColor: allDone
+                      ? (theme.dark ? '#0F2916' : '#ECFDF5')
+                      : (theme.dark ? '#231E10' : '#FDF4DC'),
+                    borderColor: allDone
+                      ? (theme.dark ? '#194D26' : '#A7F3D0')
+                      : (theme.dark ? '#3D3310' : '#E8C56A'),
+                  },
                 ]}
               >
-                {item.subtasks.filter((s) => s.is_completed).length}/{item.subtasks.length}
-              </Text>
-            </View>
-          )}
+                <ListChecks
+                  size={10}
+                  color={allDone ? '#10B981' : (theme.dark ? gold[400] : '#926F12')}
+                  strokeWidth={2}
+                />
+                <Text
+                  style={[
+                    styles.subtasksBadgeText,
+                    {
+                      color: allDone ? '#10B981' : (theme.dark ? gold[400] : '#926F12'),
+                    },
+                  ]}
+                >
+                  {item.subtasks.filter((s) => s.is_completed).length}/{item.subtasks.length}
+                </Text>
+              </View>
+            );
+          })()}
 
           {/* Recurrence badge chip */}
           {item.is_recurring && (
@@ -397,51 +422,66 @@ export function DailyOverdueTaskCard({
               ))}
 
             {/* Priority badge */}
-            {item.priority && (
-              <View
-                style={[
-                  styles.priorityChip,
-                  {
-                    borderColor: PRIORITY_CONFIG[item.priority]?.borderColor,
-                    backgroundColor: PRIORITY_CONFIG[item.priority]?.bgColor,
-                  },
-                ]}
-              >
-                <Flag size={9} color={PRIORITY_CONFIG[item.priority]?.color} strokeWidth={2.4} />
-                <Text
+            {item.priority && (() => {
+              const pCfg = getPriorityConfig(item.priority, theme.dark);
+              return (
+                <View
                   style={[
-                    styles.priorityChipText,
-                    { color: PRIORITY_CONFIG[item.priority]?.color },
+                    styles.priorityChip,
+                    {
+                      borderColor: pCfg.borderColor,
+                      backgroundColor: pCfg.bgColor,
+                    },
                   ]}
                 >
-                  {PRIORITY_CONFIG[item.priority]?.label}
-                </Text>
-              </View>
-            )}
+                  <Flag size={9} color={pCfg.color} strokeWidth={2.4} />
+                  <Text
+                    style={[
+                      styles.priorityChipText,
+                      { color: pCfg.color },
+                    ]}
+                  >
+                    {pCfg.label}
+                  </Text>
+                </View>
+              );
+            })()}
 
             {/* Subtasks progress chip */}
-            {item.subtasks && item.subtasks.length > 0 && (
-              <View
-                style={[
-                  styles.subtasksBadgeChip,
-                  item.subtasks.every((s) => s.is_completed) && styles.subtasksBadgeChipDone,
-                ]}
-              >
-                <ListChecks
-                  size={10}
-                  color={item.subtasks.every((s) => s.is_completed) ? '#34C759' : gold[400]}
-                  strokeWidth={2}
-                />
-                <Text
+            {item.subtasks && item.subtasks.length > 0 && (() => {
+              const allDone = item.subtasks.every((s) => s.is_completed);
+              return (
+                <View
                   style={[
-                    styles.subtasksBadgeText,
-                    item.subtasks.every((s) => s.is_completed) && styles.subtasksBadgeTextDone,
+                    styles.subtasksBadgeChip,
+                    {
+                      backgroundColor: allDone
+                        ? (theme.dark ? '#0F2916' : '#ECFDF5')
+                        : (theme.dark ? '#231E10' : '#FDF4DC'),
+                      borderColor: allDone
+                        ? (theme.dark ? '#194D26' : '#A7F3D0')
+                        : (theme.dark ? '#3D3310' : '#E8C56A'),
+                    },
                   ]}
                 >
-                  {item.subtasks.filter((s) => s.is_completed).length}/{item.subtasks.length}
-                </Text>
-              </View>
-            )}
+                  <ListChecks
+                    size={10}
+                    color={allDone ? '#10B981' : (theme.dark ? gold[400] : '#926F12')}
+                    strokeWidth={2}
+                  />
+                  <Text
+                    style={[
+                      styles.subtasksBadgeText,
+                      {
+                        color: allDone ? '#10B981' : (theme.dark ? gold[400] : '#926F12'),
+                      },
+                    ]}
+                  >
+                    {item.subtasks.filter((s) => s.is_completed).length}/{item.subtasks.length}
+                  </Text>
+                </View>
+              );
+            })()}
           </View>
         </Pressable>
 
