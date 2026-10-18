@@ -10,7 +10,6 @@ import { useTranslation } from 'react-i18next';
 import {
   Avatar,
   EmptyState,
-  FilterChip,
   PageTitle,
   SectionLabel,
   SegmentedControl,
@@ -26,6 +25,7 @@ import { ProfileSkeleton, TaskRowSkeleton } from '../../src/components/TaskSkele
 import { PublicTaskRow } from '../../src/components/PublicTaskRow';
 import { ViewModeSelector, TaskViewMode } from '../../src/components/ViewModeSelector';
 import { ProfileAlbumsTab, type AlbumFilter } from '../../src/features/public-profile/components/ProfileAlbumsTab';
+import { ProfileTaskFilterButton } from '../../src/features/public-profile/components/ProfileTaskFilterButton';
 import { usePublicProfileData } from '../../src/features/public-profile/hooks/usePublicProfileData';
 import { initialsOf, displayNameOf } from '../../src/utils/initials';
 
@@ -265,10 +265,8 @@ export default function CurrentUserProfileScreen() {
             <SectionLabel highlight="Tareas" rest={`públicas · ${taskCount}`} style={styles.sectionLabel} />
             <ViewModeSelector mode={taskViewMode} onChange={setTaskViewMode} />
           </View>
-          <View style={styles.filters}>
-            <FilterChip label="Todas" active={filter === 'all'} onPress={() => setFilter('all')} />
-            <FilterChip label="En curso" active={filter === 'active'} onPress={() => setFilter('active')} />
-            <FilterChip label="Completadas" active={filter === 'completed'} onPress={() => setFilter('completed')} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14, marginBottom: 16 }}>
+            <ProfileTaskFilterButton filter={filter} onChangeFilter={setFilter} />
           </View>
         </>
       ) : (

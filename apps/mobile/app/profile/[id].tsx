@@ -6,7 +6,6 @@ import { ChevronLeft, MoreHorizontal } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import {
   EmptyState,
-  FilterChip,
   SectionLabel,
   SegmentedControl,
   useTheme,
@@ -27,6 +26,7 @@ import { usePublicProfileData } from '../../src/features/public-profile/hooks/us
 import { ProfileBioAndStats } from '../../src/features/public-profile/components/ProfileBioAndStats';
 import { ProfileLockedState } from '../../src/features/public-profile/components/ProfileLockedState';
 import { ProfileAlbumsTab, type AlbumFilter } from '../../src/features/public-profile/components/ProfileAlbumsTab';
+import { ProfileTaskFilterButton } from '../../src/features/public-profile/components/ProfileTaskFilterButton';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Filter = 'all' | 'active' | 'completed';
@@ -302,10 +302,8 @@ export default function PublicProfileScreen() {
                 <SectionLabel highlight="Tareas" rest={`públicas · ${taskCount}`} style={styles.sectionLabel} />
                 <ViewModeSelector mode={taskViewMode} onChange={setTaskViewMode} />
               </View>
-              <View style={styles.filters}>
-                <FilterChip label="Todas" active={filter === 'all'} onPress={() => setFilter('all')} />
-                <FilterChip label="En curso" active={filter === 'active'} onPress={() => setFilter('active')} />
-                <FilterChip label="Completadas" active={filter === 'completed'} onPress={() => setFilter('completed')} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14, marginBottom: 16 }}>
+                <ProfileTaskFilterButton filter={filter} onChangeFilter={setFilter} />
               </View>
             </>
           ) : (

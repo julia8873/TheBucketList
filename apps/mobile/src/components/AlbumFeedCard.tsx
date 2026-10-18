@@ -307,6 +307,21 @@ export function AlbumFeedCard({
               <MessageCircle size={16} color={theme.colors.foregroundSubtle} strokeWidth={1.8} />
               <Text style={[styles.compactActionCount, { color: theme.colors.foregroundSubtle }]}>{commentCount}</Text>
             </Pressable>
+            {!isOwn && handleSave && (
+              <Pressable onPress={handleSave} hitSlop={6} style={styles.compactActionBtn}>
+                <Bookmark
+                  size={16}
+                  color={actualSaved ? gold[400] : theme.colors.foregroundSubtle}
+                  fill={actualSaved ? gold[400] : 'transparent'}
+                  strokeWidth={1.8}
+                />
+                {saveCount > 0 && (
+                  <Text style={[styles.compactActionCount, { color: actualSaved ? gold[400] : theme.colors.foregroundSubtle }]}>
+                    {saveCount}
+                  </Text>
+                )}
+              </Pressable>
+            )}
           </View>
         </Pressable>
 
@@ -413,7 +428,7 @@ export function AlbumFeedCard({
             {commentCount > 0 && <Text style={styles.actionCount}>{commentCount}</Text>}
           </Pressable>
 
-          {!isOwn && handleSave && (
+          {(!isOwn && handleSave) ? (
             <Pressable
               onPress={handleSave}
               hitSlop={10}
@@ -431,8 +446,18 @@ export function AlbumFeedCard({
                 fill={actualSaved ? gold[400] : 'transparent'}
                 strokeWidth={2}
               />
+              {saveCount > 0 && <Text style={styles.actionCount}>{saveCount}</Text>}
             </Pressable>
-          )}
+          ) : saveCount > 0 ? (
+            <View style={styles.actionBtn}>
+              <Bookmark
+                size={16}
+                color="rgba(255,255,255,0.85)"
+                strokeWidth={2}
+              />
+              <Text style={styles.actionCount}>{saveCount}</Text>
+            </View>
+          ) : null}
         </View>
       </View>
 
@@ -474,16 +499,6 @@ export function AlbumFeedCard({
               ) : null}
             </View>
           </Pressable>
-
-          {/* Saves count if > 0 */}
-          {saveCount > 0 && (
-            <View style={styles.saveBadge}>
-              <Bookmark size={11} color={gold[400]} fill={gold[400]} />
-              <Text style={[styles.saveBadgeText, { color: theme.colors.foregroundMuted }]}>
-                {saveCount}
-              </Text>
-            </View>
-          )}
 
           <Text style={[styles.taskCount, { color: theme.colors.foregroundMuted }]}>
             {album.completed_tasks}/{album.total_tasks} tareas

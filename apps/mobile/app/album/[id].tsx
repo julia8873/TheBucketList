@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -28,6 +28,7 @@ import {
   CheckCircle2,
   FolderPlus,
   UserPlus,
+  MessageCircle,
 } from 'lucide-react-native';
 import { Skeleton, Avatar } from '@bucketlist/ui';
 
@@ -42,6 +43,8 @@ import { ImageLinkModal } from '@/components/ImageLinkModal';
 import { TagAssignSheet } from '@/components/TagAssignSheet';
 import { PhotoCropModal } from '@/components/PhotoCropModal';
 import { hexToRgba } from '@/constants/tagPresets';
+import { TaskCommentsModal } from '@/components/TaskCommentsModal';
+import { useComments } from '@/hooks/useSocial';
 
 import { styles } from '@/features/album-detail/styles/album-detail.styles';
 import { AlbumTaskCard } from '@/features/album-detail/components/AlbumTaskCard';
@@ -72,6 +75,8 @@ export function getInitials(name?: string | null): string {
 export default function AlbumDetailScreen() {
   const insets = useSafeAreaInsets();
   const state = useAlbumDetailState();
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const { data: albumComments = [] } = useComments(state.album?.id, 'album');
 
   if (state.isLoading) {
     return (
@@ -383,6 +388,36 @@ export default function AlbumDetailScreen() {
                       fill={state.subStatus === 'accepted' ? '#D4B13A' : 'transparent'}
                       strokeWidth={1.8}
                     />
+                  </Pressable>
+                )}
+                {state.currentUserId && (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Comentarios"
+                    style={styles.heroBtn}
+                    onPress={() => setShowCommentsModal(true)}
+                  >
+                    <MessageCircle size={20} color="#F3EEE3" strokeWidth={1.8} />
+                    {albumComments.length > 0 && (
+                      <View
+                        style={{
+                          position: 'absolute',
+                          top: -3,
+                          right: -3,
+                          backgroundColor: '#D4B13A',
+                          borderRadius: 8,
+                          minWidth: 16,
+                          height: 16,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          paddingHorizontal: 3,
+                        }}
+                      >
+                        <Text style={{ color: '#000', fontSize: 10, fontWeight: '700' }}>
+                          {albumComments.length}
+                        </Text>
+                      </View>
+                    )}
                   </Pressable>
                 )}
                 <Pressable
@@ -910,6 +945,18 @@ export default function AlbumDetailScreen() {
         onChange={state.handleSaveAlbumTags}
         onClose={() => state.setShowTagAssignSheet(false)}
       />
+
+      {/* Modal de comentarios */}
+      {state.id !== 'unassigned' && (
+        <TaskCommentsModal
+          visible={showCommentsModal}
+          onClose={() => setShowCommentsModal(false)}
+          albumId={album.id}
+          targetType="album"
+          albumTitle={album.title}
+          albumOwnerId={album.ownerId}
+        />
+      )}
     </View>
   );
 }
