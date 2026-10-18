@@ -12,6 +12,7 @@ import { useAuthStore } from '../stores/auth.store';
 import { useCopiedBucketIds, useCopyBucket, useToggleLike, useBatchBucketSaveCounts, useSavedBucketIds, useToggleSaveBucket } from '../hooks/useSocial';
 import { daysBetween, timeAgo } from '../utils/timeAgo';
 import { displayNameOf, initialsOf } from '../utils/initials';
+import { OfficialBadge, isUserAdmin } from './OfficialBadge';
 
 import { TaskViewMode } from './ViewModeSelector';
 
@@ -262,9 +263,12 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
       <Pressable onPress={openProfile} style={styles.header} accessibilityRole="button">
         <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="lg" goldRing />
         <View style={styles.headerText}>
-          <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={1}>
-            {displayNameOf(actor)}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+            <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={1}>
+              {displayNameOf(actor)}
+            </Text>
+            {isUserAdmin(actor) && <OfficialBadge size="xs" />}
+          </View>
           <Text style={[styles.handle, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
             @{actor.username}
           </Text>

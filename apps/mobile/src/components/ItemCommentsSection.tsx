@@ -15,6 +15,7 @@ import { useComments, useAddComment, useToggleCommentLike } from '../hooks/useSo
 import { useAuthStore } from '../stores/auth.store';
 import { displayNameOf, initialsOf } from '../utils/initials';
 import { timeAgo } from '../utils/timeAgo';
+import { OfficialBadge, isUserAdmin } from './OfficialBadge';
 
 interface ItemCommentsSectionProps {
   targetId: string;
@@ -148,6 +149,7 @@ export function ItemCommentsSection({
                     >
                       {displayNameOf(author)}
                     </Text>
+                    {isUserAdmin(author) && <OfficialBadge size="xs" />}
                     {isCreator && (
                       <View style={styles.creatorTag}>
                         <Text style={styles.creatorTagText}>Autor</Text>

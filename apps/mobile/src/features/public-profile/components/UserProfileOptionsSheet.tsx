@@ -1,0 +1,304 @@
+import React from 'react';
+import {
+  View,
+  Text,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Share,
+  Platform,
+} from 'react-native';
+import {
+  Share2,
+  UserX,
+  UserCheck,
+  Flag,
+  X,
+  Copy,
+} from 'lucide-react-native';
+import * as Clipboard from 'expo-clipboard';
+import { Avatar, useToast, fontFamily } from '@bucketlist/ui';
+
+interface UserProfileOptionsSheetProps {
+  visible: boolean;
+  onClose: () => void;
+  user: {
+    id: string;
+    username: string;
+    display_name?: string | null;
+    avatar_url?: string | null;
+  };
+  isBlocked?: boolean;
+  onConfirmBlock: () => void;
+  onConfirmUnblock: () => void;
+  onOpenReport: () => void;
+}
+
+export function UserProfileOptionsSheet({
+  visible,
+  onClose,
+  user,
+  isBlocked = false,
+  onConfirmBlock,
+  onConfirmUnblock,
+  onOpenReport,
+}: UserProfileOptionsSheetProps) {
+  const toast = useToast();
+
+  if (!visible) return null;
+
+  const profileUrl = `https://thebucketlist.app/profile/${user.username || user.id}`;
+
+  const handleShare = async () => {
+    onClose();
+    try {
+      await Share.share({
+        message: Platform.select({
+          ios: `¡Echa un vistazo al perfil de @${user.username} en The Bucket List!`,
+          default: `¡Echa un vistazo al perfil de @${user.username} en The Bucket List!\n${profileUrl}`,
+        }),
+        url: Platform.OS === 'ios' ? profileUrl : undefined,
+        title: `Perfil de @${user.username}`,
+      });
+    } catch {
+      // Fallback a portapapeles si falla la hoja nativa
+      await Clipboard.setStringAsync(profileUrl);
+      toast.show({
+        type: 'info',
+        title: 'Enlace copiado',
+        message: 'El enlace al perfil se ha copiado al portapapeles',
+      });
+    }
+  };
+
+  const handleCopyLink = async () => {
+    onClose();
+    await Clipboard.setStringAsync(profileUrl);
+    toast.show({
+      type: 'info',
+      title: 'Enlace copiado',
+      message: 'El enlace al perfil se ha copiado al portapapeles',
+    });
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <View style={styles.backdrop}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <View style={styles.sheetContainer}>
+          {/* Handle */}
+          <View style={styles.handle} />
+
+          {/* Header con información del usuario */}
+          <View style={styles.header}>
+            <Avatar
+              source={user.avatar_url ? { uri: user.avatar_url } : undefined}
+              fallback={user.display_name?.charAt(0) || user.username.charAt(0)}
+              size="md"
+            />
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text style={styles.displayName} numberOfLines={1}>
+                {user.display_name || user.username}
+              </Text>
+              <Text style={styles.username} numberOfLines={1}>
+                @{user.username}
+              </Text>
+            </View>
+            <Pressable style={styles.closeBtn} onPress={onClose} hitSlop={8}>
+              <X color="#8F8F8F" size={20} />
+            </Pressable>
+          </View>
+
+          <View style={styles.divider} />
+
+          {/* Opciones */}
+          <View style={styles.optionsList}>
+            {/* Compartir perfil */}
+            <Pressable style={styles.optionRow} onPress={handleShare}>
+              <View style={[styles.iconBox, { backgroundColor: 'rgba(212, 175, 55, 0.12)' }]}>
+                <Share2 color="#D4B13A" size={20} />
+              </View>
+              <View style={styles.optionTexts}>
+                <Text style={styles.optionTitle}>Compartir perfil de usuario</Text>
+                <Text style={styles.optionSubtitle}>
+                  Envía el perfil mediante tus apps o redes sociales
+                </Text>
+              </View>
+            </Pressable>
+
+            {/* Copiar enlace directo */}
+            <Pressable style={styles.optionRow} onPress={handleCopyLink}>
+              <View style={styles.iconBox}>
+                <Copy color="#A0A0A0" size={20} />
+              </View>
+              <View style={styles.optionTexts}>
+                <Text style={styles.optionTitle}>Copiar enlace al perfil</Text>
+                <Text style={styles.optionSubtitle}>{profileUrl}</Text>
+              </View>
+            </Pressable>
+
+            {/* Bloquear / Desbloquear */}
+            <Pressable
+              style={styles.optionRow}
+              onPress={() => {
+                onClose();
+                if (isBlocked) onConfirmUnblock();
+                else onConfirmBlock();
+              }}
+            >
+              <View
+                style={[
+                  styles.iconBox,
+                  {
+                    backgroundColor: isBlocked
+                      ? 'rgba(16, 185, 129, 0.12)'
+                      : 'rgba(239, 68, 68, 0.12)',
+                  },
+                ]}
+              >
+                {isBlocked ? (
+                  <UserCheck color="#10B981" size={20} />
+                ) : (
+                  <UserX color="#EF4444" size={20} />
+                )}
+              </View>
+              <View style={styles.optionTexts}>
+                <Text
+                  style={[
+                    styles.optionTitle,
+                    { color: isBlocked ? '#10B981' : '#EF4444' },
+                  ]}
+                >
+                  {isBlocked ? 'Desbloquear a este usuario' : `Bloquear a @${user.username}`}
+                </Text>
+                <Text style={styles.optionSubtitle}>
+                  {isBlocked
+                    ? 'Podrá volver a interactuar contigo y ver tu contenido'
+                    : 'No podrá ver tus publicaciones, seguirte ni contactarte'}
+                </Text>
+              </View>
+            </Pressable>
+
+            {/* Reportar usuario */}
+            <Pressable
+              style={[styles.optionRow, { borderBottomWidth: 0 }]}
+              onPress={() => {
+                onClose();
+                onOpenReport();
+              }}
+            >
+              <View
+                style={[
+                  styles.iconBox,
+                  { backgroundColor: 'rgba(239, 68, 68, 0.12)' },
+                ]}
+              >
+                <Flag color="#EF4444" size={20} />
+              </View>
+              <View style={styles.optionTexts}>
+                <Text style={[styles.optionTitle, { color: '#EF4444' }]}>
+                  Reportar a este usuario
+                </Text>
+                <Text style={styles.optionSubtitle}>
+                  Avisar al administrador por contenido o comportamiento inadecuado
+                </Text>
+              </View>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'flex-end',
+  },
+  sheetContainer: {
+    backgroundColor: '#141414',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderWidth: 1,
+    borderColor: '#262626',
+    paddingBottom: Platform.OS === 'ios' ? 36 : 24,
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#333',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: 10,
+    marginBottom: 12,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  displayName: {
+    color: '#F3EEE3',
+    fontSize: 16,
+    fontFamily: fontFamily.semibold,
+  },
+  username: {
+    color: '#8F8F8F',
+    fontSize: 13,
+    marginTop: 2,
+  },
+  closeBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#1F1F1F',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#202020',
+    marginVertical: 8,
+  },
+  optionsList: {
+    paddingHorizontal: 16,
+  },
+  optionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1A1A1A',
+  },
+  iconBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#1E1E1E',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  optionTexts: {
+    flex: 1,
+  },
+  optionTitle: {
+    color: '#F3EEE3',
+    fontSize: 15,
+    fontFamily: fontFamily.medium,
+  },
+  optionSubtitle: {
+    color: '#777',
+    fontSize: 12,
+    marginTop: 3,
+    lineHeight: 16,
+  },
+});

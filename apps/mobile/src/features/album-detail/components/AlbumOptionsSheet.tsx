@@ -31,6 +31,7 @@ import {
   Link2,
   Crop,
   Maximize2,
+  Sparkles,
 } from 'lucide-react-native';
 import { styles } from '../styles/album-detail.styles';
 
@@ -42,6 +43,7 @@ interface AlbumOptionsSheetProps {
   sheetTranslateY: Animated.Value;
   isFav: boolean;
   isSaved?: boolean;
+  isAdmin?: boolean;
   isOwner: boolean;
   isCollaborator: boolean;
   canEdit: boolean;
@@ -73,6 +75,7 @@ interface AlbumOptionsSheetProps {
   onSetSheetMode: (mode: SheetMode) => void;
   onOpenCollaborators: () => void;
   onOpenTags?: () => void;
+  onPromoteToCollection?: () => void;
   onConfirmDelete: () => void;
   onConfirmLeave: () => void;
 }
@@ -83,6 +86,7 @@ export function AlbumOptionsSheet({
   sheetTranslateY,
   isFav,
   isSaved = false,
+  isAdmin = false,
   isOwner,
   isCollaborator,
   canEdit,
@@ -114,6 +118,7 @@ export function AlbumOptionsSheet({
   onSetSheetMode,
   onOpenCollaborators,
   onOpenTags,
+  onPromoteToCollection,
   onConfirmDelete,
   onConfirmLeave,
 }: AlbumOptionsSheetProps) {
@@ -244,6 +249,17 @@ export function AlbumOptionsSheet({
                         onPress={onClose}
                       />
                     </>
+                  )}
+                  {isAdmin && onPromoteToCollection && (
+                    <SheetOption
+                      icon={<Sparkles color="#D4AF37" size={20} />}
+                      title="Promocionar a Colección (Admin)"
+                      subtitle="Publica este álbum en la pestaña Colecciones para todos"
+                      onPress={() => {
+                        onClose();
+                        onPromoteToCollection();
+                      }}
+                    />
                   )}
                   {isOwner && (
                     <SheetOption

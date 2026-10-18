@@ -366,27 +366,27 @@ export function AlbumFeedCard({
           </View>
         </Pressable>
 
-        {/* Top badge: album type */}
-        <View style={styles.topBadge} pointerEvents="none">
-          <Images size={12} color="rgba(255,255,255,0.9)" strokeWidth={2} />
-          <Text style={styles.topBadgeText}>Álbum</Text>
+        {/* Top Badges (columna a la izquierda con Álbum y debajo Compartido) */}
+        <View style={styles.topBadgesContainer} pointerEvents="none">
+          <View style={styles.topBadge}>
+            <Images size={12} color="rgba(255,255,255,0.9)" strokeWidth={2} />
+            <Text style={styles.topBadgeText}>Álbum</Text>
+          </View>
+
+          {album.is_shared && (
+            <View style={styles.sharedBadge}>
+              <Users size={10} color="#FFF" strokeWidth={2} />
+              <Text style={styles.sharedText}>Compartido</Text>
+            </View>
+          )}
+
+          {album.is_closed && (
+            <View style={styles.closedBadge}>
+              <Lock size={10} color={gold[400]} />
+              <Text style={styles.closedText}>Cerrado</Text>
+            </View>
+          )}
         </View>
-
-        {/* Closed badge */}
-        {album.is_closed && (
-          <View style={styles.closedBadge} pointerEvents="none">
-            <Lock size={10} color={gold[400]} />
-            <Text style={styles.closedText}>Cerrado</Text>
-          </View>
-        )}
-
-        {/* Shared badge */}
-        {album.is_shared && (
-          <View style={styles.sharedBadge} pointerEvents="none">
-            <Users size={10} color="#FFF" strokeWidth={2} />
-            <Text style={styles.sharedText}>Compartido</Text>
-          </View>
-        )}
 
         {/* Top Right Buttons: Like and/or Save */}
         <View style={styles.topActions} pointerEvents="box-none">
@@ -554,10 +554,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#FFF',
   },
-  topBadge: {
+  topBadgesContainer: {
     position: 'absolute',
     top: 10,
     left: 10,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 6,
+    zIndex: 2,
+  },
+  topBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
@@ -565,7 +571,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
-    zIndex: 2,
   },
   topBadgeText: {
     fontFamily: fontFamily.semibold,
@@ -575,9 +580,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   closedBadge: {
-    position: 'absolute',
-    top: 10,
-    left: 85,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
@@ -585,7 +587,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
-    zIndex: 2,
   },
   closedText: {
     fontFamily: fontFamily.medium,
@@ -593,9 +594,6 @@ const styles = StyleSheet.create({
     color: gold[400],
   },
   sharedBadge: {
-    position: 'absolute',
-    top: 10,
-    left: 85,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
@@ -603,7 +601,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
-    zIndex: 2,
   },
   sharedText: {
     fontFamily: fontFamily.medium,

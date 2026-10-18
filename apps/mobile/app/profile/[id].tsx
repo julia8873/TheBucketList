@@ -27,6 +27,14 @@ import { ProfileBioAndStats } from '../../src/features/public-profile/components
 import { ProfileLockedState } from '../../src/features/public-profile/components/ProfileLockedState';
 import { ProfileAlbumsTab, type AlbumFilter } from '../../src/features/public-profile/components/ProfileAlbumsTab';
 import { ProfileTaskFilterButton } from '../../src/features/public-profile/components/ProfileTaskFilterButton';
+import { UserProfileOptionsSheet } from '../../src/features/public-profile/components/UserProfileOptionsSheet';
+import { ReportUserModal } from '../../src/features/public-profile/components/ReportUserModal';
+import {
+  useIsUserBlocked,
+  useBlockUser,
+  useUnblockUser,
+  useReportUser,
+} from '../../src/hooks/useBlockReport';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Filter = 'all' | 'active' | 'completed';
@@ -185,23 +193,55 @@ export default function PublicProfileScreen() {
     }
   };
 
-  const openMenu = async () => {
+  const [optionsSheetVisible, setOptionsSheetVisible] = useState(false);
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+
+  const { data: isBlocked } = useIsUserBlocked(id);
+  const blockMutation = useBlockUser();
+  const unblockMutation = useUnblockUser();
+  const reportMutation = useReportUser();
+
+  const openMenu = () => {
+    setOptionsSheetVisible(true);
+  };
+
+  const handleConfirmBlock = () => {
     if (!profile) return;
-    try {
-      const shareUrl = `https://thebucketlist.app/profile/${profile.username || id}`;
-      await Clipboard.setStringAsync(shareUrl);
-      toast.show({
-        type: 'info',
-        title: displayNameOf(profile),
-        message: 'Enlace al perfil copiado al portapapeles',
-      });
-    } catch {
-      toast.show({
-        type: 'info',
-        title: displayNameOf(profile),
-        message: `@${profile.username ?? ''}`,
-      });
-    }
+    Alert.alert(
+      `¿Bloquear a @${profile.username}?`,
+      'Ya no podrá ver tus publicaciones, seguirte ni enviarte mensajes, y sus contenidos se ocultarán.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Bloquear',
+          style: 'destructive',
+          onPress: () => blockMutation.mutate(id),
+        },
+      ]
+    );
+  };
+
+  const handleConfirmUnblock = () => {
+    if (!profile) return;
+    Alert.alert(
+      `¿Desbloquear a @${profile.username}?`,
+      'Podrá volver a ver tus publicaciones públicas y seguirte.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Desbloquear',
+          onPress: () => unblockMutation.mutate(id),
+        },
+      ]
+    );
+  };
+
+  const handleSubmitReport = async (reason: string, details?: string) => {
+    await reportMutation.mutateAsync({
+      reportedUserId: id,
+      reason,
+      details,
+    });
   };
 
   if (profileLoading || statsLoading) {
@@ -388,6 +428,33 @@ export default function PublicProfileScreen() {
           )
         }
       />
+
+      {profile && (
+        <>
+          <UserProfileOptionsSheet
+            visible={optionsSheetVisible}
+            onClose={() => setOptionsSheetVisible(false)}
+            user={{
+              id,
+              username: profile.username,
+              display_name: profile.display_name,
+              avatar_url: profile.avatar_url,
+            }}
+            isBlocked={Boolean(isBlocked)}
+            onConfirmBlock={handleConfirmBlock}
+            onConfirmUnblock={handleConfirmUnblock}
+            onOpenReport={() => setReportModalVisible(true)}
+          />
+
+          <ReportUserModal
+            visible={reportModalVisible}
+            onClose={() => setReportModalVisible(false)}
+            username={profile.username}
+            onSubmit={handleSubmitReport}
+            isLoading={reportMutation.isPending}
+          />
+        </>
+      )}
     </SafeAreaView>
   );
 }

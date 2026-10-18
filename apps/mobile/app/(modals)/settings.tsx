@@ -23,6 +23,9 @@ import {
 import {
   Card, ConfirmDialog, OptionDialog, PillToggle, Row, SectionTitle, ToggleRow,
 } from '../../src/components/SettingsParts';
+import { useIsAdmin } from '../../src/hooks/useCurrentUserProfile';
+import { useAdminReports } from '../../src/hooks/useBlockReport';
+import { OfficialBadge } from '../../src/components/OfficialBadge';
 
 type Visibility = 'public' | 'followers' | 'private';
 const PUSH_KEYS = ['reaction_push', 'comment_push', 'follow_push', 'friend_completed_push'] as const;
@@ -36,6 +39,9 @@ export default function SettingsScreen() {
   const { override, setOverride } = useThemeStore();
   const { language, setLanguage } = useLanguageStore();
   const { hapticsEnabled, setHapticsEnabled } = useHapticsStore();
+  const isAdmin = useIsAdmin();
+  const { data: adminReports = [] } = useAdminReports();
+  const pendingReportsCount = adminReports.filter((r) => !r.resolved && r.status === 'pending').length;
 
   const [langOpen, setLangOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
@@ -250,6 +256,11 @@ export default function SettingsScreen() {
             subtitle={t('settings.public_default_desc')}
             value={publicByDefault}
             onChange={(v) => updateProfile.mutate({ default_task_visibility: v ? 'public' : 'private' })}
+          />
+          <Row
+            title="Usuarios bloqueados"
+            subtitle="Gestiona los perfiles que tienes bloqueados"
+            onPress={() => router.push('/(modals)/blocked-users' as any)}
             last
           />
         </Card>
@@ -373,6 +384,46 @@ export default function SettingsScreen() {
             }
           />
         </Card>
+
+        {isAdmin && (
+          <>
+            <SectionTitle gold="ADMINISTRACIÓN" />
+            <Card>
+              <Row
+                title="Gestionar colecciones"
+                subtitle="Crear, ver, editar y eliminar colecciones publicadas"
+                onPress={() => router.push('/(modals)/manage-collections' as any)}
+              />
+              <Row
+                title="Reportes de usuarios"
+                subtitle="Revisar denuncias de la comunidad y moderar cuentas"
+                onPress={() => router.push('/(modals)/admin-reports' as any)}
+                right={
+                  pendingReportsCount > 0 ? (
+                    <View
+                      style={{
+                        backgroundColor: '#EF4444',
+                        paddingHorizontal: 8,
+                        paddingVertical: 3,
+                        borderRadius: 10,
+                      }}
+                    >
+                      <Text style={{ color: '#FFF', fontSize: 11, fontFamily: fontFamily.bold }}>
+                        {pendingReportsCount}
+                      </Text>
+                    </View>
+                  ) : undefined
+                }
+              />
+              <Row
+                title="Gestionar administradores"
+                subtitle="Añadir o revocar permisos de administración a otros usuarios"
+                onPress={() => router.push('/(modals)/manage-admins' as any)}
+                last
+              />
+            </Card>
+          </>
+        )}
 
         <View style={{ marginTop: 24 }}>
           <Card>

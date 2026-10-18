@@ -1,0 +1,429 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TextInput,
+  Pressable,
+  ActivityIndicator,
+  StyleSheet,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  ChevronLeft,
+  ShieldCheck,
+  UserPlus,
+  Trash2,
+  Crown,
+  ShieldAlert,
+} from 'lucide-react-native';
+import { Avatar, PageTitle, fontFamily, gold } from '@bucketlist/ui';
+import { useIsAdmin } from '../../src/hooks/useCurrentUserProfile';
+import {
+  useAdminsList,
+  useAddAdmin,
+  useRemoveAdmin,
+} from '../../src/hooks/useAdmins';
+import { AdminUser } from '../../src/services/api/admins';
+import { useAuthStore } from '../../src/stores/auth.store';
+
+export default function ManageAdminsScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const isAdmin = useIsAdmin();
+  const { user } = useAuthStore();
+
+  const [usernameInput, setUsernameInput] = useState('');
+  const { data: admins = [], isLoading } = useAdminsList();
+  const addAdminMutation = useAddAdmin();
+  const removeAdminMutation = useRemoveAdmin();
+
+  const handleAddAdmin = () => {
+    const trimmed = usernameInput.trim().replace(/^@/, '');
+    if (!trimmed) {
+      Alert.alert('Atención', 'Introduce el nombre de usuario (ej: @juanperez).');
+      return;
+    }
+
+    Alert.alert(
+      `¿Nombrar administrador a @${trimmed}?`,
+      'Este usuario tendrá permisos para moderar contenido, gestionar denuncias y publicar colecciones oficiales.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Confirmar',
+          onPress: async () => {
+            try {
+              await addAdminMutation.mutateAsync(trimmed);
+              setUsernameInput('');
+            } catch {}
+          },
+        },
+      ]
+    );
+  };
+
+  const handleRemoveAdmin = (targetAdmin: AdminUser) => {
+    if (targetAdmin.username?.toLowerCase() === 'juliamiralles8873') {
+      Alert.alert('Acción no permitida', 'No se pueden retirar permisos al administrador principal.');
+      return;
+    }
+
+    if (targetAdmin.id === user?.id) {
+      Alert.alert('Acción no permitida', 'No puedes retirar tus propios permisos de administrador desde aquí.');
+      return;
+    }
+
+    Alert.alert(
+      `¿Revocar permisos a @${targetAdmin.username}?`,
+      'El usuario volverá a tener una cuenta estándar y perderá acceso a las herramientas de administración.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Revocar',
+          style: 'destructive',
+          onPress: () => removeAdminMutation.mutate(targetAdmin.id),
+        },
+      ]
+    );
+  };
+
+  if (!isAdmin) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top + 20, justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
+        <ShieldAlert color="#EF4444" size={56} />
+        <Text style={styles.restrictedTitle}>Acceso Restringido</Text>
+        <Text style={styles.restrictedText}>
+          Solo los administradores autorizados pueden acceder a este apartado.
+        </Text>
+        <Pressable style={styles.backBtnModal} onPress={() => router.back()}>
+          <Text style={styles.backBtnText}>Volver</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <Pressable
+            style={styles.backBtn}
+            onPress={() => router.back()}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Volver"
+          >
+            <ChevronLeft color="#F3EEE3" size={24} />
+          </Pressable>
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <PageTitle gold="Gestionar" rest=" administradores" />
+              <View style={styles.adminBadge}>
+                <ShieldCheck size={12} color="#D4AF37" />
+                <Text style={styles.adminBadgeText}>ADMIN</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        <Text style={styles.description}>
+          Añade a personas de confianza para que te ayuden a moderar reportes y gestionar la comunidad.
+        </Text>
+
+        {/* Formulario añadir admin */}
+        <View style={styles.addCard}>
+          <Text style={styles.sectionLabel}>AÑADIR NUEVO ADMINISTRADOR</Text>
+          <View style={styles.inputRow}>
+            <TextInput
+              style={styles.input}
+              placeholder="Nombre de usuario (ej: @carlos)"
+              placeholderTextColor="#666"
+              value={usernameInput}
+              onChangeText={setUsernameInput}
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="done"
+              onSubmitEditing={handleAddAdmin}
+            />
+            <Pressable
+              style={[styles.addBtn, (!usernameInput.trim() || addAdminMutation.isPending) && { opacity: 0.6 }]}
+              onPress={handleAddAdmin}
+              disabled={!usernameInput.trim() || addAdminMutation.isPending}
+            >
+              {addAdminMutation.isPending ? (
+                <ActivityIndicator size="small" color="#0D0D0D" />
+              ) : (
+                <>
+                  <UserPlus size={16} color="#0D0D0D" />
+                  <Text style={styles.addBtnText}>Añadir</Text>
+                </>
+              )}
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Lista de administradores */}
+        <View style={{ flex: 1, paddingHorizontal: 20 }}>
+          <Text style={[styles.sectionLabel, { marginTop: 12, marginBottom: 10 }]}>
+            ADMINISTRADORES ACTUALES ({admins.length})
+          </Text>
+
+          {isLoading ? (
+            <View style={styles.centered}>
+              <ActivityIndicator size="large" color="#D4AF37" />
+            </View>
+          ) : (
+            <FlatList
+              data={admins}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item }) => {
+                const isPrimary = item.username?.toLowerCase() === 'juliamiralles8873';
+                const isMe = item.id === user?.id;
+
+                return (
+                  <View style={styles.adminCard}>
+                    <Avatar
+                      source={item.avatar_url ? { uri: item.avatar_url } : undefined}
+                      fallback={item.display_name?.charAt(0) || item.username?.charAt(0) || '?'}
+                      size="md"
+                    />
+                    <View style={styles.adminInfo}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={styles.displayName} numberOfLines={1}>
+                          {item.display_name || item.username}
+                        </Text>
+                        {isPrimary && (
+                          <View style={styles.primaryPill}>
+                            <Crown size={10} color="#D4AF37" />
+                            <Text style={styles.primaryPillText}>Principal</Text>
+                          </View>
+                        )}
+                        {isMe && !isPrimary && (
+                          <View style={styles.mePill}>
+                            <Text style={styles.mePillText}>Tú</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.username} numberOfLines={1}>
+                        @{item.username}
+                      </Text>
+                    </View>
+
+                    {!isPrimary && !isMe && (
+                      <Pressable
+                        style={styles.removeBtn}
+                        onPress={() => handleRemoveAdmin(item)}
+                        disabled={removeAdminMutation.isPending}
+                        hitSlop={8}
+                      >
+                        <Trash2 size={16} color="#EF4444" />
+                      </Pressable>
+                    )}
+                  </View>
+                );
+              }}
+            />
+          )}
+        </View>
+      </KeyboardAvoidingView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0D0D0D',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  backBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#1A1A1A',
+    borderWidth: 1,
+    borderColor: '#262626',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  adminBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.4)',
+  },
+  adminBadgeText: {
+    color: '#D4AF37',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  description: {
+    color: '#8F8F8F',
+    fontSize: 13,
+    paddingHorizontal: 20,
+    marginTop: 6,
+    marginBottom: 16,
+    lineHeight: 18,
+  },
+  addCard: {
+    backgroundColor: '#161616',
+    borderWidth: 1,
+    borderColor: '#262626',
+    borderRadius: 16,
+    padding: 16,
+    marginHorizontal: 20,
+    marginBottom: 8,
+  },
+  sectionLabel: {
+    color: '#8F8F8F',
+    fontSize: 11,
+    fontFamily: fontFamily.semibold,
+    letterSpacing: 0.5,
+    marginBottom: 10,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'center',
+  },
+  input: {
+    flex: 1,
+    backgroundColor: '#1F1F1F',
+    borderWidth: 1,
+    borderColor: '#2E2E2E',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    color: '#F3EEE3',
+    fontSize: 14,
+  },
+  addBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#D4AF37',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  addBtnText: {
+    color: '#0D0D0D',
+    fontSize: 14,
+    fontFamily: fontFamily.bold,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  listContent: {
+    paddingBottom: 40,
+    gap: 10,
+  },
+  adminCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#161616',
+    borderWidth: 1,
+    borderColor: '#262626',
+    borderRadius: 14,
+    padding: 12,
+  },
+  adminInfo: {
+    flex: 1,
+    marginLeft: 12,
+    marginRight: 10,
+  },
+  displayName: {
+    color: '#F3EEE3',
+    fontSize: 15,
+    fontFamily: fontFamily.semibold,
+  },
+  username: {
+    color: '#8F8F8F',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  primaryPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.35)',
+  },
+  primaryPillText: {
+    color: '#D4AF37',
+    fontSize: 9,
+    fontFamily: fontFamily.bold,
+  },
+  mePill: {
+    backgroundColor: '#262626',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  mePillText: {
+    color: '#AAA',
+    fontSize: 10,
+    fontFamily: fontFamily.medium,
+  },
+  removeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  restrictedTitle: {
+    color: '#F3EEE3',
+    fontSize: 20,
+    fontFamily: fontFamily.bold,
+    marginTop: 16,
+  },
+  restrictedText: {
+    color: '#8F8F8F',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  backBtnModal: {
+    backgroundColor: '#222',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  backBtnText: {
+    color: '#FFF',
+    fontFamily: fontFamily.semibold,
+  },
+});

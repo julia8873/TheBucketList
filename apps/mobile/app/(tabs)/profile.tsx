@@ -4,8 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { Settings, Users, MoreHorizontal } from 'lucide-react-native';
-import * as Clipboard from 'expo-clipboard';
+import { Settings, Users } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import {
   Avatar,
@@ -14,7 +13,6 @@ import {
   SectionLabel,
   SegmentedControl,
   fontFamily,
-  toast,
   useTheme,
 } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
@@ -28,6 +26,8 @@ import { ProfileAlbumsTab, type AlbumFilter } from '../../src/features/public-pr
 import { ProfileTaskFilterButton } from '../../src/features/public-profile/components/ProfileTaskFilterButton';
 import { usePublicProfileData } from '../../src/features/public-profile/hooks/usePublicProfileData';
 import { initialsOf, displayNameOf } from '../../src/utils/initials';
+import { OfficialBadge } from '../../src/components/OfficialBadge';
+import { useIsAdmin } from '../../src/hooks/useCurrentUserProfile';
 
 type Filter = 'all' | 'active' | 'completed';
 
@@ -36,6 +36,7 @@ export default function CurrentUserProfileScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const isAdmin = useIsAdmin();
 
   const [activeTab, setActiveTabState] = useState<'list' | 'albums'>('list');
   const setActiveTab = (tab: 'list' | 'albums') => {
@@ -183,9 +184,12 @@ export default function CurrentUserProfileScreen() {
       <View style={styles.identity}>
         <Avatar uri={profile?.avatar_url} initials={initialsOf(profile)} size="xl" goldRing />
         <View style={{ flex: 1, gap: 3 }}>
-          <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={2} ellipsizeMode="tail">
-            {name}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={2} ellipsizeMode="tail">
+              {name}
+            </Text>
+            {isAdmin && <OfficialBadge size="sm" />}
+          </View>
           <Text style={[styles.handle, { color: theme.colors.foregroundMuted }]} numberOfLines={1} ellipsizeMode="tail">
             @{profile?.username}
           </Text>
@@ -293,30 +297,14 @@ export default function CurrentUserProfileScreen() {
       {/* Cabecera */}
       <View style={styles.header}>
         <PageTitle gold={t('profile.title_gold', { defaultValue: 'Mi' })} rest={t('profile.title_rest', { defaultValue: 'perfil' })} />
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Pressable
-            onPress={async () => {
-              if (profile) {
-                const shareUrl = `https://thebucketlist.app/profile/${profile.username || user?.id || ''}`;
-                await Clipboard.setStringAsync(shareUrl);
-                toast.show({ type: 'info', title: name || 'Mi perfil', message: 'Enlace a tu perfil copiado al portapapeles' });
-              }
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Compartir perfil"
-            style={[styles.roundBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
-          >
-            <MoreHorizontal size={22} color={theme.colors.foreground} strokeWidth={2} />
-          </Pressable>
-          <Pressable
-            onPress={() => router.push('/(modals)/settings' as any)}
-            accessibilityRole="button"
-            accessibilityLabel={t('settings.title')}
-            style={[styles.roundBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
-          >
-            <Settings size={22} color={theme.colors.foreground} />
-          </Pressable>
-        </View>
+        <Pressable
+          onPress={() => router.push('/(modals)/settings' as any)}
+          accessibilityRole="button"
+          accessibilityLabel={t('settings.title')}
+          style={[styles.roundBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+        >
+          <Settings size={22} color={theme.colors.foreground} />
+        </Pressable>
       </View>
 
       {profileLoading ? (

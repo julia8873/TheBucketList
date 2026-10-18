@@ -7,6 +7,7 @@ import { getAlbumTagsStorageKey } from '../../../hooks/useAlbumTags';
 const STORAGE_CUSTOM_COLLECTIONS = '@bucketlist_custom_collections';
 const STORAGE_COLLECTION_CLONES = '@bucketlist_collection_clones';
 const STORAGE_COLLECTION_LIKES = '@bucketlist_collection_likes';
+const STORAGE_DELETED_COLLECTIONS = '@bucketlist_deleted_collections';
 
 export const collectionsService = {
   /**
@@ -51,8 +52,18 @@ export const collectionsService = {
       }
     } catch {}
 
+    let deletedLocalSet = new Set<string>();
+    try {
+      const rawDeleted = await AsyncStorage.getItem(STORAGE_DELETED_COLLECTIONS);
+      if (rawDeleted) {
+        const arr = JSON.parse(rawDeleted);
+        if (Array.isArray(arr)) deletedLocalSet = new Set(arr);
+      }
+    } catch {}
+
     // Intentar consultar Supabase en caso de que exista tabla 'collections' remota
     let remoteList: CollectionItem[] = [];
+    let deletedRemoteSet = new Set<string>();
     try {
       const { data, error } = await supabase
         .from('collections')
@@ -60,36 +71,54 @@ export const collectionsService = {
         .order('created_at', { ascending: false });
 
       if (!error && Array.isArray(data) && data.length > 0) {
-        remoteList = data.map((item: any) => ({
-          id: item.id,
-          title: item.title,
-          description: item.description || '',
-          category: item.category || 'general',
-          badge: item.badge || '✨ Colección',
-          emoji: item.emoji || '📁',
-          gradientColors: item.gradient_colors || ['#1E1E1E', '#333333'],
-          cover_path: item.cover_path || JSON.stringify({ type: 'gradient', colors: ['#1E1E1E', '#333333'], diagonal: true }),
-          author: {
-            name: item.author_name || 'Comunidad',
-            isOfficial: Boolean(item.is_official),
-            avatar_url: item.author_avatar || undefined,
-            user_id: item.user_id,
-          },
-          clonesCount: item.clones_count || 0,
-          likesCount: item.likes_count || 0,
-          isLiked: false,
-          tags: item.tags || [],
-          tasks: Array.isArray(item.tasks) ? item.tasks : [],
-        }));
+        data.forEach((item: any) => {
+          if (item.is_deleted) {
+            deletedRemoteSet.add(item.id);
+            return;
+          }
+          remoteList.push({
+            id: item.id,
+            title: item.title,
+            description: item.description || '',
+            category: item.category || 'general',
+            badge: item.badge || '✨ Colección',
+            emoji: item.emoji || '📁',
+            gradientColors: item.gradient_colors || ['#1E1E1E', '#333333'],
+            cover_path: item.cover_path || JSON.stringify({ type: 'gradient', colors: ['#1E1E1E', '#333333'], diagonal: true }),
+            author: {
+              name: item.author_name || 'Comunidad',
+              isOfficial: Boolean(item.is_official),
+              avatar_url: item.author_avatar || undefined,
+              user_id: item.user_id,
+            },
+            clonesCount: item.clones_count || 0,
+            likesCount: item.likes_count || 0,
+            isLiked: false,
+            tags: item.tags || [],
+            tasks: Array.isArray(item.tasks) ? item.tasks : [],
+          });
+        });
       }
     } catch {
       // Ignorado si la tabla collections remota no existe aún
     }
 
     const map = new Map<string, CollectionItem>();
-    DEFAULT_COLLECTIONS.forEach((c) => map.set(c.id, { ...c }));
-    remoteList.forEach((c) => map.set(c.id, { ...c }));
-    customList.forEach((c) => map.set(c.id, { ...c }));
+    DEFAULT_COLLECTIONS.forEach((c) => {
+      if (!deletedRemoteSet.has(c.id) && !deletedLocalSet.has(c.id)) {
+        map.set(c.id, { ...c });
+      }
+    });
+    remoteList.forEach((c) => {
+      if (!deletedRemoteSet.has(c.id) && !deletedLocalSet.has(c.id)) {
+        map.set(c.id, { ...c });
+      }
+    });
+    customList.forEach((c) => {
+      if (!deletedRemoteSet.has(c.id) && !deletedLocalSet.has(c.id)) {
+        map.set(c.id, { ...c });
+      }
+    });
 
     // Aplicar métricas reales (clones reales + likes reales) a todas las colecciones
     const result = Array.from(map.values()).map((col) => {
@@ -274,5 +303,252 @@ export const collectionsService = {
     } catch {}
 
     return newCollection;
+  },
+
+  /**
+   * Crea una nueva colección oficial (exclusivo para administradores).
+   * Se guarda directamente en la base de datos de Supabase para que sea visible por todos.
+   */
+  createCollection: async (params: {
+    title: string;
+    description?: string;
+    category?: string;
+    badge?: string;
+    emoji?: string;
+    gradientColors?: [string, string, ...string[]];
+    cover_path?: string;
+    authorName?: string;
+    authorAvatar?: string;
+    tags?: string[];
+    tasks?: { title: string; description?: string; priority?: 'low' | 'medium' | 'high' }[];
+    isOfficial?: boolean;
+    userId?: string;
+  }): Promise<CollectionItem> => {
+    const { data: userAuth } = await supabase.auth.getUser();
+    const currentUserId = params.userId || userAuth.user?.id;
+
+    const row = {
+      title: params.title.trim(),
+      description: params.description?.trim() || '',
+      category: params.category || 'general',
+      badge: params.badge || '✨ Colección',
+      emoji: params.emoji || '📁',
+      gradient_colors: params.gradientColors || ['#1E1E1E', '#333333'],
+      cover_path: params.cover_path || JSON.stringify({ type: 'gradient', colors: params.gradientColors || ['#1E1E1E', '#333333'], diagonal: true }),
+      author_name: params.authorName || 'The Bucket List',
+      author_avatar: params.authorAvatar || null,
+      user_id: currentUserId || null,
+      is_official: params.isOfficial ?? true,
+      tags: params.tags || [],
+      tasks: params.tasks || [],
+    };
+
+    const { data, error } = await (supabase.from('collections') as any)
+      .insert(row)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating collection:', error);
+      throw new Error(error.message || 'Error al crear la colección');
+    }
+
+    return {
+      id: data.id,
+      title: data.title,
+      description: data.description || '',
+      category: data.category || 'general',
+      badge: data.badge || '✨ Colección',
+      emoji: data.emoji || '📁',
+      gradientColors: (data.gradient_colors as [string, string, ...string[]]) || ['#1E1E1E', '#333333'],
+      cover_path: data.cover_path || '',
+      author: {
+        name: data.author_name || 'The Bucket List',
+        isOfficial: Boolean(data.is_official),
+        avatar_url: data.author_avatar || undefined,
+        user_id: data.user_id || undefined,
+      },
+      clonesCount: data.clones_count || 0,
+      likesCount: data.likes_count || 0,
+      isLiked: false,
+      tags: (data.tags as string[]) || [],
+      tasks: (data.tasks as any[]) || [],
+    };
+  },
+
+  /**
+   * Promociona un álbum de usuario existente a colección comunitaria (Admin)
+   */
+  promoteAlbumToCollection: async (params: {
+    albumId: string;
+    category?: string;
+    badge?: string;
+    emoji?: string;
+  }): Promise<string> => {
+    const { data, error } = await (supabase.rpc as any)('promote_album_to_collection', {
+      p_album_id: params.albumId,
+      p_category: params.category || 'general',
+      p_badge: params.badge || '⭐ Destacada',
+      p_emoji: params.emoji || '🌟',
+    });
+
+    if (error) {
+      console.error('Error promoting album to collection:', error);
+      throw new Error(error.message || 'Error al promocionar el álbum');
+    }
+
+    return data as string;
+  },
+
+  /**
+   * Actualiza una colección existente (Admin)
+   */
+  updateCollection: async (params: {
+    id: string;
+    title: string;
+    description?: string;
+    category?: string;
+    badge?: string;
+    emoji?: string;
+    gradientColors?: [string, string, ...string[]];
+    cover_path?: string;
+    tags?: string[];
+    tasks?: { title: string; description?: string; priority?: 'low' | 'medium' | 'high' }[];
+  }): Promise<CollectionItem> => {
+    const row = {
+      id: params.id,
+      title: params.title.trim(),
+      description: params.description?.trim() || '',
+      category: params.category || 'general',
+      badge: params.badge || '✨ Colección',
+      emoji: params.emoji || '📁',
+      gradient_colors: params.gradientColors || ['#1E1E1E', '#333333'],
+      cover_path: params.cover_path || JSON.stringify({ type: 'gradient', colors: params.gradientColors || ['#1E1E1E', '#333333'], diagonal: true }),
+      tags: params.tags || [],
+      tasks: params.tasks || [],
+      is_deleted: false,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data, error } = await (supabase.from('collections') as any)
+      .upsert(row, { onConflict: 'id' })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating collection in Supabase:', error);
+      try {
+        const raw = await AsyncStorage.getItem(STORAGE_CUSTOM_COLLECTIONS);
+        if (raw) {
+          const list: CollectionItem[] = JSON.parse(raw);
+          const idx = list.findIndex((c) => c.id === params.id);
+          const existing = list[idx];
+          if (idx !== -1 && existing) {
+            const updatedItem: CollectionItem = {
+              ...existing,
+              id: params.id,
+              title: row.title,
+              description: row.description,
+              category: row.category,
+              badge: row.badge,
+              emoji: row.emoji,
+              gradientColors: row.gradient_colors,
+              cover_path: row.cover_path,
+              tags: row.tags,
+              tasks: row.tasks,
+            };
+            list[idx] = updatedItem;
+            await AsyncStorage.setItem(STORAGE_CUSTOM_COLLECTIONS, JSON.stringify(list));
+            return updatedItem;
+          }
+        }
+      } catch {}
+      throw new Error(error.message || 'Error al actualizar la colección');
+    }
+
+    try {
+      const raw = await AsyncStorage.getItem(STORAGE_CUSTOM_COLLECTIONS);
+      if (raw) {
+        const list: CollectionItem[] = JSON.parse(raw);
+        const idx = list.findIndex((c) => c.id === params.id);
+        const existing = list[idx];
+        if (idx !== -1 && existing) {
+          list[idx] = {
+            ...existing,
+            title: data.title,
+            description: data.description,
+            category: data.category,
+            badge: data.badge,
+            emoji: data.emoji,
+            gradientColors: data.gradient_colors,
+            cover_path: data.cover_path,
+            tasks: data.tasks,
+          };
+          await AsyncStorage.setItem(STORAGE_CUSTOM_COLLECTIONS, JSON.stringify(list));
+        }
+      }
+    } catch {}
+
+    return {
+      id: data.id,
+      title: data.title,
+      description: data.description || '',
+      category: data.category || 'general',
+      badge: data.badge || '✨ Colección',
+      emoji: data.emoji || '📁',
+      gradientColors: (data.gradient_colors as [string, string, ...string[]]) || ['#1E1E1E', '#333333'],
+      cover_path: data.cover_path || '',
+      author: {
+        name: data.author_name || 'The Bucket List',
+        isOfficial: Boolean(data.is_official),
+        avatar_url: data.author_avatar || undefined,
+        user_id: data.user_id || undefined,
+      },
+      clonesCount: data.clones_count || 0,
+      likesCount: data.likes_count || 0,
+      isLiked: false,
+      tags: (data.tags as string[]) || [],
+      tasks: (data.tasks as any[]) || [],
+    };
+  },
+
+  /**
+   * Elimina una colección (Admin)
+   */
+  deleteCollection: async (collectionId: string): Promise<void> => {
+    // 1. Marcar como eliminada en Supabase mediante upsert (funciona tanto para colecciones por defecto como creadas)
+    try {
+      await (supabase.from('collections') as any).upsert(
+        {
+          id: collectionId,
+          title: 'Deleted',
+          is_deleted: true,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' }
+      );
+    } catch (e) {
+      console.warn('Error marking collection as deleted in Supabase:', e);
+    }
+
+    // 2. Guardar en almacenamiento local de eliminadas
+    try {
+      const raw = await AsyncStorage.getItem(STORAGE_DELETED_COLLECTIONS);
+      const list: string[] = raw ? JSON.parse(raw) : [];
+      if (!list.includes(collectionId)) {
+        list.push(collectionId);
+        await AsyncStorage.setItem(STORAGE_DELETED_COLLECTIONS, JSON.stringify(list));
+      }
+    } catch {}
+
+    // 3. Eliminar de colecciones locales en caso de que estuviera ahí
+    try {
+      const raw = await AsyncStorage.getItem(STORAGE_CUSTOM_COLLECTIONS);
+      if (raw) {
+        const list: CollectionItem[] = JSON.parse(raw);
+        const filtered = list.filter((c) => c.id !== collectionId);
+        await AsyncStorage.setItem(STORAGE_CUSTOM_COLLECTIONS, JSON.stringify(filtered));
+      }
+    } catch {}
   },
 };

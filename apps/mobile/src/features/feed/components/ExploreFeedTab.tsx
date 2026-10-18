@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, ScrollView, FlatList, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, FlatList, Pressable, ActivityIndicator } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
-import { Users, Images, Sparkles } from 'lucide-react-native';
+import { Users, Images, Sparkles, Plus, ShieldCheck } from 'lucide-react-native';
 import { EmptyState, Typography, Avatar, gold } from '@bucketlist/ui';
 import { FeedCard } from '../../../components/FeedCard';
 import { FeedCardSkeleton } from '../../../components/FeedCardSkeleton';
@@ -129,18 +129,18 @@ export function ExploreFeedTab({
     ({ item, index }: { item: any; index: number }) => {
       if (item._type === 'collection') {
         return (
-          <View style={{ paddingHorizontal: 16 }}>
-            <CollectionCard
-              collection={item}
-              onPress={() => {
-                setSelectedCollection(item);
-                setDetailModalVisible(true);
-              }}
-              onClone={() => cloneMutation.mutate(item)}
-              isCloning={cloneMutation.isPending && (cloneMutation.variables as any)?.id === item.id}
-              onToggleLike={() => toggleCollectionLike.mutate(item.id)}
-            />
-          </View>
+          <CollectionCard
+            collection={item}
+            index={index}
+            mode={viewMode}
+            onPress={() => {
+              setSelectedCollection(item);
+              setDetailModalVisible(true);
+            }}
+            onClone={() => cloneMutation.mutate(item)}
+            isCloning={cloneMutation.isPending && (cloneMutation.variables as any)?.id === item.id}
+            onToggleLike={() => toggleCollectionLike.mutate(item.id)}
+          />
         );
       }
 
@@ -286,7 +286,15 @@ export function ExploreFeedTab({
         keyExtractor={(item) => `${item._type ?? 'task'}-${item.id}`}
         numColumns={viewMode === 'gallery' ? 2 : 1}
         renderItem={renderItem}
-        estimatedItemSize={contentFilter === 'colecciones' ? 260 : contentFilter === 'albumes' ? 240 : viewMode === 'gallery' ? 240 : viewMode === 'compact' ? 70 : 300}
+        estimatedItemSize={
+          viewMode === 'compact'
+            ? 70
+            : viewMode === 'gallery'
+            ? 240
+            : contentFilter === 'colecciones'
+            ? 260
+            : 300
+        }
         ListHeaderComponent={
           <View>
             {headerElement}

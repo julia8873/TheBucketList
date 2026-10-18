@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Avatar, fontFamily, useTheme } from '@bucketlist/ui';
 import { displayNameOf, initialsOf } from '../utils/initials';
+import { OfficialBadge, isUserAdmin } from './OfficialBadge';
 
 interface PersonRowProps {
   person: {
@@ -34,9 +35,12 @@ export function PersonRow({ person, subtitle, right, onPress }: PersonRowProps) 
     >
       <Avatar uri={person.avatar_url} initials={initialsOf(person)} size="lg" goldRing />
       <View style={styles.text}>
-        <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={1}>
-          {displayNameOf(person)}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+          <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={1}>
+            {displayNameOf(person)}
+          </Text>
+          {isUserAdmin(person) && <OfficialBadge size="xs" />}
+        </View>
         <Text style={[styles.subtitle, { color: theme.colors.foregroundMuted }]} numberOfLines={2}>
           {subtitle}
         </Text>

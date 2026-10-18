@@ -97,3 +97,111 @@ export function useCloneCollection() {
     },
   });
 }
+
+export function useCreateCollection() {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: async (params: Parameters<typeof collectionsService.createCollection>[0]) => {
+      return collectionsService.createCollection(params);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: COLLECTIONS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
+      toast.show({
+        title: '¡Colección creada!',
+        message: `"${data.title}" ya está visible para toda la comunidad.`,
+        type: 'success',
+      });
+    },
+    onError: (err: any) => {
+      toast.show({
+        title: 'Error al crear colección',
+        message: err.message || 'No se pudo crear la colección.',
+        type: 'error',
+      });
+    },
+  });
+}
+
+export function usePromoteAlbumToCollection() {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: async (params: Parameters<typeof collectionsService.promoteAlbumToCollection>[0]) => {
+      return collectionsService.promoteAlbumToCollection(params);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: COLLECTIONS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
+      toast.show({
+        title: '¡Álbum promocionado!',
+        message: 'El álbum ahora figura como colección comunitaria destacada.',
+        type: 'success',
+      });
+    },
+    onError: (err: any) => {
+      toast.show({
+        title: 'Error al promocionar',
+        message: err.message || 'No se pudo promocionar a colección.',
+        type: 'error',
+      });
+    },
+  });
+}
+
+export function useUpdateCollection() {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: async (params: Parameters<typeof collectionsService.updateCollection>[0]) => {
+      return collectionsService.updateCollection(params);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: COLLECTIONS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
+      toast.show({
+        title: '¡Colección actualizada!',
+        message: `Los cambios en "${data.title}" se han guardado correctamente.`,
+        type: 'success',
+      });
+    },
+    onError: (err: any) => {
+      toast.show({
+        title: 'Error al actualizar',
+        message: err.message || 'No se pudo actualizar la colección.',
+        type: 'error',
+      });
+    },
+  });
+}
+
+export function useDeleteCollection() {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: async (collectionId: string) => {
+      return collectionsService.deleteCollection(collectionId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: COLLECTIONS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
+      toast.show({
+        title: 'Colección eliminada',
+        message: 'La colección ha sido retirada correctamente.',
+        type: 'success',
+      });
+    },
+    onError: (err: any) => {
+      toast.show({
+        title: 'Error al eliminar',
+        message: err.message || 'No se pudo eliminar la colección.',
+        type: 'error',
+      });
+    },
+  });
+}

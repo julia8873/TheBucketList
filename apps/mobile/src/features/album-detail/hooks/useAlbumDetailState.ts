@@ -253,13 +253,13 @@ export function useAlbumDetailState() {
   };
 
   const { data: albumCollaborators = [], refetch: refetchCollaborators } = useQuery({
-    queryKey: ['albumCollaborators', id, currentUserId],
+    queryKey: ['albumCollaborators', cleanId],
     queryFn: async () => {
-      if (!id || id === 'unassigned') return [];
+      if (!cleanId || cleanId === 'unassigned') return [];
       const { data, error } = await supabase
         .from('album_members')
         .select('user_id, status, profiles:user_id(id, username, display_name, avatar_url)')
-        .eq('album_id', id);
+        .eq('album_id', cleanId);
       if (error) {
         console.warn('Error fetching album collaborators:', error);
         return [];
@@ -275,7 +275,7 @@ export function useAlbumDetailState() {
         };
       });
     },
-    enabled: !!id && id !== 'unassigned',
+    enabled: !!cleanId && cleanId !== 'unassigned',
   });
 
   const isOwner = Boolean(rawOwnerId && isSelf(rawOwnerId));
@@ -306,12 +306,12 @@ export function useAlbumDetailState() {
           status: existingStatusMap.get(c.id) || 'pending',
         })),
       ];
-      queryClient.setQueryData(['albumCollaborators', id], mergedCollabs);
+      queryClient.setQueryData(['albumCollaborators', cleanId], mergedCollabs);
 
       if (toAdd.length > 0) {
         const { error: insErr } = await supabase.from('album_members').insert(
           toAdd.map((c) => ({
-            album_id: id,
+            album_id: cleanId,
             user_id: c.id,
             role: 'member',
             status: 'pending',
@@ -324,7 +324,7 @@ export function useAlbumDetailState() {
         const { error: delErr } = await supabase
           .from('album_members')
           .delete()
-          .eq('album_id', id)
+          .eq('album_id', cleanId)
           .in('user_id', toRemoveIds);
         if (delErr) console.warn('Error removing album members:', delErr);
       }
@@ -337,7 +337,9 @@ export function useAlbumDetailState() {
       }
 
       void refetchCollaborators();
-      void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+      void queryClient.invalidateQueries({ queryKey: ['albumCollaborators', cleanId] });
+      void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
+      void queryClient.invalidateQueries({ queryKey: ['albums'] });
       void queryClient.invalidateQueries({ queryKey: ['albums'] });
     } catch (err) {
       console.warn('Error updating album collaborators:', err);

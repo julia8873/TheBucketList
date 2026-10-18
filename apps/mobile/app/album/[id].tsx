@@ -14,7 +14,6 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   ChevronLeft,
-  Share as ShareIcon,
   MoreHorizontal,
   Star,
   Heart,
@@ -28,7 +27,6 @@ import {
   CheckCircle2,
   FolderPlus,
   UserPlus,
-  MessageCircle,
 } from 'lucide-react-native';
 import { Skeleton, Avatar } from '@bucketlist/ui';
 
@@ -45,7 +43,6 @@ import { PhotoCropModal } from '@/components/PhotoCropModal';
 import { hexToRgba } from '@/constants/tagPresets';
 import { TaskCommentsModal } from '@/components/TaskCommentsModal';
 import { ItemCommentsSection } from '@/components/ItemCommentsSection';
-import { useComments } from '@/hooks/useSocial';
 
 import { styles } from '@/features/album-detail/styles/album-detail.styles';
 import { AlbumTaskCard } from '@/features/album-detail/components/AlbumTaskCard';
@@ -53,6 +50,8 @@ import { AlbumOptionsSheet } from '@/features/album-detail/components/AlbumOptio
 import { AlbumHeaderBadges } from '@/features/album-detail/components/AlbumHeaderBadges';
 import { AlbumSortModal, TaskSortField } from '@/features/album-detail/components/AlbumSortModal';
 import { useAlbumDetailState } from '@/features/album-detail/hooks/useAlbumDetailState';
+import { useIsAdmin } from '@/hooks/useCurrentUserProfile';
+import { usePromoteAlbumToCollection } from '@/features/collections/hooks/useCollections';
 
 const GRADIENTS = {
   aurora: ['#0E4B43', '#1F8560'],
@@ -76,8 +75,32 @@ export function getInitials(name?: string | null): string {
 export default function AlbumDetailScreen() {
   const insets = useSafeAreaInsets();
   const state = useAlbumDetailState();
+  const isAdmin = useIsAdmin();
+  const promoteMutation = usePromoteAlbumToCollection();
   const [showCommentsModal, setShowCommentsModal] = useState(false);
-  const { data: albumComments = [] } = useComments(state.album?.id, 'album');
+
+  const handlePromoteToCollection = () => {
+    const currentAlbum = state.album;
+    if (!currentAlbum) return;
+    Alert.alert(
+      'Promocionar a Colección',
+      `¿Deseas convertir el álbum "${currentAlbum.title}" en una colección pública destacada en la pestaña Colecciones?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Promocionar',
+          onPress: () => {
+            promoteMutation.mutate({
+              albumId: currentAlbum.id,
+              category: 'general',
+              badge: '⭐ Destacada',
+              emoji: '🌟',
+            });
+          },
+        },
+      ]
+    );
+  };
 
   if (state.isLoading) {
     return (
@@ -391,44 +414,6 @@ export default function AlbumDetailScreen() {
                     />
                   </Pressable>
                 )}
-                {state.currentUserId && (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Comentarios"
-                    style={styles.heroBtn}
-                    onPress={() => setShowCommentsModal(true)}
-                  >
-                    <MessageCircle size={20} color="#F3EEE3" strokeWidth={1.8} />
-                    {albumComments.length > 0 && (
-                      <View
-                        style={{
-                          position: 'absolute',
-                          top: -3,
-                          right: -3,
-                          backgroundColor: '#D4B13A',
-                          borderRadius: 8,
-                          minWidth: 16,
-                          height: 16,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          paddingHorizontal: 3,
-                        }}
-                      >
-                        <Text style={{ color: '#000', fontSize: 10, fontWeight: '700' }}>
-                          {albumComments.length}
-                        </Text>
-                      </View>
-                    )}
-                  </Pressable>
-                )}
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Compartir"
-                  style={styles.heroBtn}
-                  onPress={state.handleShare}
-                >
-                  <ShareIcon size={20} color="#F3EEE3" strokeWidth={1.8} />
-                </Pressable>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Más opciones"
@@ -532,7 +517,7 @@ export default function AlbumDetailScreen() {
 
               {/* Colaboradores */}
               {state.albumCollaborators
-                ?.filter((c: any) => c.id !== album.owner?.id && (c.status === 'accepted' || (state.canEdit && c.status === 'pending') || c.id === state.user?.id))
+                ?.filter((c: any) => c.id !== album.owner?.id)
                 .map((collab: any) => {
                   const isPending = collab.status === 'pending';
                   return (
@@ -894,6 +879,8 @@ export default function AlbumDetailScreen() {
           state.closeSheet();
           state.setShowTagAssignSheet(true);
         }}
+        isAdmin={isAdmin}
+        onPromoteToCollection={handlePromoteToCollection}
         onConfirmDelete={state.confirmDeleteAlbum}
         onConfirmLeave={state.confirmLeaveAlbum}
       />

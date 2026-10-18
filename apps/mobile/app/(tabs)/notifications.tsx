@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator, FlatList, Pressable, Text, AppState } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Typography, useTheme, spacing, Avatar, Button, Icon, PageTitle, Skeleton, gold, toast, confirm } from '@bucketlist/ui';
-import { Check, CheckCheck, Heart, MessageCircle, UserPlus, CheckCircle, Bell, Users, X, Folder, HardDrive } from 'lucide-react-native';
+import { Check, CheckCheck, Heart, MessageCircle, UserPlus, CheckCircle, Bell, Users, X, Folder, HardDrive, ShieldAlert } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNotifications, useMarkAsRead, useMarkAllAsRead } from '../../src/hooks/useNotifications';
 import { useAuthStore } from '../../src/stores/auth.store';
@@ -158,7 +158,9 @@ export default function NotificationsScreen() {
     }
     
     // Navigate based on type
-    if (notification.type === 'follow' || notification.type === 'follow_accepted') {
+    if (notification.type === 'user_reported') {
+      router.push('/(modals)/admin-reports' as any);
+    } else if (notification.type === 'follow' || notification.type === 'follow_accepted') {
       router.push(`/profile/${notification.actor_id}` as any);
     } else if (notification.type === 'follow_request') {
       router.push('/friends?tab=requests' as any);
@@ -188,6 +190,7 @@ export default function NotificationsScreen() {
 
   const getIconForType = (type: string) => {
     switch (type) {
+      case 'user_reported': return <ShieldAlert size={16} color="#EF4444" />;
       case 'reaction': return <Heart size={16} color={theme.colors.primary} />;
       case 'comment': return <MessageCircle size={16} color={theme.colors.primary} />;
       case 'follow': 
@@ -213,6 +216,7 @@ export default function NotificationsScreen() {
     const actorName = notification.actor?.display_name || notification.actor?.username || 'Alguien';
     
     switch (notification.type) {
+      case 'user_reported': return notification.content || `${actorName} ha enviado un reporte de usuario.`;
       case 'reaction': return `${actorName} ha reaccionado a tu tarea.`;
       case 'comment': return `${actorName} ha comentado en tu tarea.`;
       case 'follow': return `${actorName} ha empezado a seguirte.`;

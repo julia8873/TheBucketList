@@ -36,6 +36,7 @@ import {
 import { useConnections, usePeopleSearch } from '../hooks/useFriends';
 import { displayNameOf, initialsOf } from '../utils/initials';
 import { timeAgo } from '../utils/timeAgo';
+import { OfficialBadge, isUserAdmin } from './OfficialBadge';
 
 interface TaskCommentsModalProps {
   visible: boolean;
@@ -561,6 +562,7 @@ function TaskCommentsModalContent({
                           <Text style={styles.authorName} numberOfLines={1}>
                             {displayNameOf(author)}
                           </Text>
+                          {isUserAdmin(author) && <OfficialBadge size="xs" />}
                           {isCreator && (
                             <View style={styles.creatorTag}>
                               <Text style={styles.creatorTagText}>Autor</Text>

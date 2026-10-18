@@ -4,6 +4,7 @@ import { Lock } from 'lucide-react-native';
 import { Avatar, useTheme } from '@bucketlist/ui';
 import { FollowButton } from '../../../components/FollowButton';
 import { displayNameOf, initialsOf } from '../../../utils/initials';
+import { OfficialBadge, isUserAdmin } from '../../../components/OfficialBadge';
 import { styles } from '../styles/profile.styles';
 
 interface ProfileBioAndStatsProps {
@@ -91,9 +92,12 @@ export function ProfileBioAndStats({
       <View style={styles.identity}>
         <Avatar uri={profile.avatar_url} initials={initialsOf(profile)} size="xl" goldRing />
         <View style={styles.identityText}>
-          <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={2} ellipsizeMode="tail">
-            {displayNameOf(profile)}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={2} ellipsizeMode="tail">
+              {displayNameOf(profile)}
+            </Text>
+            {isUserAdmin(profile) && <OfficialBadge size="sm" />}
+          </View>
           <View style={styles.handleRow}>
             <Text style={[styles.handle, { color: theme.colors.foregroundMuted }]} numberOfLines={1} ellipsizeMode="tail">
               @{profile.username}
