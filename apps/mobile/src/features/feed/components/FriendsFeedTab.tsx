@@ -10,6 +10,8 @@ import { AlbumFeedCard, type AlbumFeedItem } from '../../../components/AlbumFeed
 import { TaskViewMode } from '../../../components/ViewModeSelector';
 import type { ContentFilter } from './FeedHeader';
 import { styles } from '../styles/feed.styles';
+import { useUserFavorites, useToggleFavoriteAlbum } from '../../../hooks/useFavorites';
+import { useAuthStore } from '../../../stores/auth.store';
 
 interface FriendsFeedTabProps {
   headerElement: React.ReactElement;
@@ -57,6 +59,9 @@ export function FriendsFeedTab({
   viewMode = 'list',
 }: FriendsFeedTabProps) {
   const router = useRouter();
+  const { user } = useAuthStore();
+  const { isAlbumFavorite } = useUserFavorites(user?.id);
+  const toggleAlbumFav = useToggleFavoriteAlbum();
 
   // Build combined & filtered list
   const combinedItems = React.useMemo(() => {
@@ -87,10 +92,13 @@ export function FriendsFeedTab({
   const renderItem = React.useCallback(
     ({ item, index }: { item: any; index: number }) => {
       if (item._type === 'album') {
+        const fav = isAlbumFavorite(item.id);
         return (
           <AlbumFeedCard
             album={item}
             colorIndex={index}
+            isFavorite={fav}
+            onToggleFavorite={() => toggleAlbumFav.mutate({ albumId: item.id, currentlyFavorite: fav })}
             onPress={() => router.push(`/album/${item.id}` as any)}
           />
         );

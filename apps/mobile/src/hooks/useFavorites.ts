@@ -130,7 +130,82 @@ export function useToggleFavoriteAlbum() {
     onSettled: () => {
       if (userId) {
         void queryClient.invalidateQueries({ queryKey: [...FAVORITES_QUERY_KEY, userId] });
+        void queryClient.invalidateQueries({ queryKey: ['saved-albums', userId] });
       }
     },
   });
 }
+
+/** Full album details for albums the user has liked/favorited. */
+export function useSavedAlbums(userId: string | undefined) {
+  const { supabase: _s } = { supabase: null }; // unused, just for scope
+  return useQuery({
+    queryKey: ['saved-albums', userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const { supabase: supabaseClient } = await import('../services/supabase');
+
+      const { data: favRows, error: favErr } = await (supabaseClient as any)
+        .from('user_favorites')
+        .select('album_id')
+        .eq('user_id', userId)
+        .not('album_id', 'is', null);
+
+      if (favErr) throw favErr;
+
+      const albumIds = (favRows ?? [])
+        .map((r: any) => r.album_id)
+        .filter(Boolean) as string[];
+
+      if (albumIds.length === 0) return [];
+
+      const { data: albums, error: albumsErr } = await supabaseClient
+        .from('albums')
+        .select('*')
+        .in('id', albumIds)
+        .order('created_at', { ascending: false });
+
+      if (albumsErr) throw albumsErr;
+
+      const ownerIds = [...new Set((albums ?? []).map((a: any) => a.owner_id as string))];
+      const ownerMap = new Map<string, any>();
+      if (ownerIds.length > 0) {
+        const { data: profiles } = await supabaseClient
+          .from('profiles')
+          .select('id, username, display_name, avatar_url')
+          .in('id', ownerIds);
+        (profiles ?? []).forEach((p: any) => ownerMap.set(p.id, p));
+      }
+
+      const { data: progressData } = await supabaseClient
+        .from('album_progress')
+        .select('*')
+        .in('album_id', albumIds);
+
+      return (albums ?? []).map((album: any) => {
+        const prog = (progressData ?? []).find((p: any) => p.album_id === album.id);
+        const owner = ownerMap.get(album.owner_id);
+        return {
+          id: album.id,
+          title: album.title,
+          description: album.description ?? null,
+          cover_path: album.cover_path ?? null,
+          visibility: album.visibility,
+          is_shared: album.is_shared,
+          priority: (album.priority || 'medium') as 'low' | 'medium' | 'high' | 'urgent',
+          is_closed: Boolean(album.is_closed),
+          closed_at: album.closed_at ?? null,
+          created_at: album.created_at ?? undefined,
+          total_tasks: prog?.total_tasks ?? 0,
+          completed_tasks: prog?.completed_tasks ?? 0,
+          owner_id: album.owner_id,
+          owner_username: owner?.username ?? null,
+          owner_display_name: owner?.display_name ?? null,
+          owner_avatar_url: owner?.avatar_url ?? null,
+        };
+      });
+    },
+    enabled: !!userId,
+  });
+}
+

@@ -5,7 +5,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Images, Lock, Users } from 'lucide-react-native';
+import { Images, Lock, Users, Heart } from 'lucide-react-native';
 import { Avatar, useTheme, gold, fontFamily, fontSize, radii } from '@bucketlist/ui';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -44,10 +44,12 @@ export interface AlbumFeedItem {
 interface AlbumFeedCardProps {
   album: AlbumFeedItem;
   colorIndex?: number;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
   onPress?: () => void;
 }
 
-export function AlbumFeedCard({ album, colorIndex = 0, onPress }: AlbumFeedCardProps) {
+export function AlbumFeedCard({ album, colorIndex = 0, isFavorite = false, onToggleFavorite, onPress }: AlbumFeedCardProps) {
   const { theme } = useTheme();
   const [g1, g2] = COVER_GRADIENTS[colorIndex % COVER_GRADIENTS.length] ?? ['#1B4D3E', '#0A2E25'];
   const progress = album.total_tasks > 0 ? album.completed_tasks / album.total_tasks : 0;
@@ -134,6 +136,24 @@ export function AlbumFeedCard({ album, colorIndex = 0, onPress }: AlbumFeedCardP
           </View>
         )}
 
+        {/* Like/favorite button */}
+        {onToggleFavorite && (
+          <Pressable
+            onPress={(e) => { e.stopPropagation(); onToggleFavorite(); }}
+            hitSlop={10}
+            style={styles.heartBtn}
+            accessibilityRole="button"
+            accessibilityLabel={isFavorite ? 'Quitar de guardados' : 'Guardar álbum'}
+          >
+            <Heart
+              size={16}
+              color={isFavorite ? '#EF4444' : 'rgba(255,255,255,0.85)'}
+              fill={isFavorite ? '#EF4444' : 'transparent'}
+              strokeWidth={2}
+            />
+          </Pressable>
+        )}
+
         {/* Cover bottom: title + progress */}
         <View style={styles.coverBottom}>
           <Text style={styles.title} numberOfLines={2}>{album.title}</Text>
@@ -181,6 +201,17 @@ const styles = StyleSheet.create({
   coverWrapper: {
     height: 190,
     position: 'relative',
+  },
+  heartBtn: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    padding: 7,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 4,
   },
   topBadge: {
     position: 'absolute',

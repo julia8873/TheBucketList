@@ -10,6 +10,8 @@ import { AlbumFeedCard, type AlbumFeedItem } from '../../../components/AlbumFeed
 import { TaskViewMode } from '../../../components/ViewModeSelector';
 import type { ContentFilter } from './FeedHeader';
 import { styles } from '../styles/feed.styles';
+import { useUserFavorites, useToggleFavoriteAlbum } from '../../../hooks/useFavorites';
+import { useAuthStore } from '../../../stores/auth.store';
 
 interface ExploreFeedTabProps {
   headerElement: React.ReactElement;
@@ -57,6 +59,9 @@ export function ExploreFeedTab({
   viewMode = 'list',
 }: ExploreFeedTabProps) {
   const router = useRouter();
+  const { user } = useAuthStore();
+  const { isAlbumFavorite } = useUserFavorites(user?.id);
+  const toggleAlbumFav = useToggleFavoriteAlbum();
 
   // Combined + filtered list
   const combinedItems = React.useMemo(() => {
@@ -86,10 +91,13 @@ export function ExploreFeedTab({
   const renderItem = React.useCallback(
     ({ item, index }: { item: any; index: number }) => {
       if (item._type === 'album') {
+        const fav = isAlbumFavorite(item.id);
         return (
           <AlbumFeedCard
             album={item}
             colorIndex={index}
+            isFavorite={fav}
+            onToggleFavorite={() => toggleAlbumFav.mutate({ albumId: item.id, currentlyFavorite: fav })}
             onPress={() => router.push(`/album/${item.id}` as any)}
           />
         );
