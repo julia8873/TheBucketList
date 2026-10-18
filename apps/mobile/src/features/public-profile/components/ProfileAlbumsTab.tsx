@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SlidersHorizontal, ChevronDown, Check, X } from 'lucide-react-native';
 import { SectionLabel, AlbumCard, gold, useTheme, fontFamily } from '@bucketlist/ui';
+import { AlbumCardSkeleton } from '../../../components/TaskSkeletons';
 import type { AlbumWithProgress } from '../../../hooks/useAlbums';
 import { AlbumCompactItemRow, AlbumListItemRow } from '../../my-list/components/AlbumItemComponents';
 import { ViewModeSelector, type TaskViewMode } from '../../../components/ViewModeSelector';
@@ -228,7 +229,16 @@ export function ProfileAlbumsTab({
       </Modal>
 
       {albumsLoading ? (
-        <ActivityIndicator style={{ marginTop: 24 }} color={gold[400]} />
+        albumViewMode === 'gallery' ? (
+          <View style={styles.albumGrid}>
+            <AlbumCardSkeleton />
+            <AlbumCardSkeleton />
+            <AlbumCardSkeleton />
+            <AlbumCardSkeleton />
+          </View>
+        ) : (
+          <ActivityIndicator style={{ marginTop: 24 }} color={gold[400]} />
+        )
       ) : filteredAlbums.length === 0 ? (
         <Text style={styles.empty}>
           {albumFilter === 'all'

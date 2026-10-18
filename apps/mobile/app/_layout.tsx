@@ -27,6 +27,7 @@ import { supabase } from '../src/services/supabase';
 import { useAutoRefresh } from '../src/hooks/useAutoRefresh';
 import { useRealtimeSync } from '../src/hooks/useRealtimeSync';
 import { validateOAuthSession } from '../src/hooks/useGoogleAuth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import 'intl-pluralrules';
 import '../../../packages/shared/src/i18n'; // initialize i18n
 
@@ -164,7 +165,12 @@ function RootNavigator() {
             if (error) setRecovering(false);
 
             // Solo procesamos modo OAuth si NO hay un flujo activo de WebBrowser
-            const activeMode = (params.get('mode') as 'login' | 'register') || useAuthStore.getState().oauthMode;
+            let activeMode = (params.get('mode') as 'login' | 'register') || useAuthStore.getState().oauthMode;
+            if (!activeMode) {
+              const saved = await AsyncStorage.getItem('@oauth_mode').catch(() => null);
+              if (saved === 'register' || saved === 'login') activeMode = saved;
+            }
+            if (!activeMode) activeMode = 'register';
             if (activeMode && !isRecovery) {
               await validateOAuthSession(activeMode, router);
             }
@@ -178,7 +184,12 @@ function RootNavigator() {
           const code = params.get('code');
           if (code) {
             await supabase.auth.exchangeCodeForSession(code);
-            const activeMode = (params.get('mode') as 'login' | 'register') || useAuthStore.getState().oauthMode;
+            let activeMode = (params.get('mode') as 'login' | 'register') || useAuthStore.getState().oauthMode;
+            if (!activeMode) {
+              const saved = await AsyncStorage.getItem('@oauth_mode').catch(() => null);
+              if (saved === 'register' || saved === 'login') activeMode = saved;
+            }
+            if (!activeMode) activeMode = 'register';
             if (activeMode) {
               await validateOAuthSession(activeMode, router);
             }

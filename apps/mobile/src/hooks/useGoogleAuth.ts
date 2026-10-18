@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import * as WebBrowser from 'expo-web-browser';
-import { makeRedirectUri } from 'expo-auth-session';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../stores/auth.store';
+import { getOAuthRedirectUri } from '../constants/urls';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -39,6 +39,7 @@ if (!isExpoGo) {
 
 import { useRouter } from 'expo-router';
 import { confirm } from '@bucketlist/ui';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
  * Valida si la sesión OAuth entrante corresponde a una cuenta existente o nueva,
@@ -76,44 +77,10 @@ export async function validateOAuthSession(
 
     const isExistingAccount = !!profile && profile.onboarding_completed === true;
 
-    if (mode === 'login') {
-      if (!isExistingAccount) {
-        // El usuario pulsó "Ya tengo cuenta", pero no existe ninguna cuenta creada
-        // 1. Borramos de auth.users el registro recién creado para no dejar cuenta huérfana
-        try {
-          await supabase.rpc('cleanup_unregistered_oauth_user');
-        } catch (err) {
-          console.warn('[GoogleAuth] Error al limpiar usuario no registrado:', err);
-        }
-
-        // 2. Cerramos sesión completamente
-        await supabase.auth.signOut();
-        useAuthStore.getState().signOut();
-        useAuthStore.getState().setOAuthMode(null);
-        useAuthStore.getState().setOAuthError('no_account_google');
-
-        if (onError) {
-          onError('no_account_google');
-        }
-
-        confirm.show({
-          title: 'Cuenta no encontrada',
-          message: 'No existe ninguna cuenta asociada a este correo de Google. ¿Deseas crear una cuenta?',
-          confirmLabel: 'Crear cuenta',
-          cancelLabel: 'Cancelar',
-          onConfirm: () => {
-            if (router) router.replace('/(auth)/register');
-          },
-          onCancel: () => {
-            if (router) router.replace('/(auth)/login');
-          },
-        });
-
-        return false;
-      }
-
-      // Cuenta existente válida: login exitoso directo a Home
+    // Si la cuenta ya existe y completó el onboarding, iniciar sesión directamente siempre
+    if (isExistingAccount) {
       useAuthStore.getState().setOAuthMode(null);
+      await AsyncStorage.removeItem('@oauth_mode').catch(() => undefined);
       useAuthStore.getState().setOnboardingCompleted(true);
       if (router) {
         router.replace('/(tabs)/my-list');
@@ -121,47 +88,57 @@ export async function validateOAuthSession(
       return true;
     }
 
-    if (mode === 'register') {
-      if (isExistingAccount) {
-        // Ya tenía la cuenta creada anteriormente: avisar que ya existe y dar opción de ir a login
-        await supabase.auth.signOut();
-        useAuthStore.getState().signOut();
-        useAuthStore.getState().setOAuthMode(null);
-        useAuthStore.getState().setOAuthError('already_registered');
-
-        if (onError) {
-          onError('already_registered');
-        }
-
-        confirm.show({
-          title: 'Esta cuenta ya existe',
-          message: 'Ya existe una cuenta vinculada a este correo de Google. ¿Quieres ir a iniciar sesión?',
-          confirmLabel: 'Iniciar sesión',
-          cancelLabel: 'Cancelar',
-          onConfirm: () => {
-            if (router) router.replace('/(auth)/login');
-          },
-          onCancel: () => {
-            if (router) router.replace('/(auth)/register');
-          },
-        });
-
-        return false;
+    // Si NO es una cuenta existente (es nueva o no completó onboarding):
+    if (mode === 'login') {
+      // El usuario pulsó explícitamente "Ya tengo cuenta", pero no existe ninguna cuenta completada
+      // 1. Borramos de auth.users el registro recién creado para no dejar cuenta huérfana
+      try {
+        await supabase.rpc('cleanup_unregistered_oauth_user');
+      } catch (err) {
+        console.warn('[GoogleAuth] Error al limpiar usuario no registrado:', err);
       }
 
-      // Nueva cuenta: marcar onboarding pendiente para que configure @username, foto, etc.
+      // 2. Cerramos sesión completamente
+      await supabase.auth.signOut();
+      useAuthStore.getState().signOut();
       useAuthStore.getState().setOAuthMode(null);
-      useAuthStore.getState().setOnboardingCompleted(false);
-      if (router) {
-        router.replace('/(onboarding)/username');
+      await AsyncStorage.removeItem('@oauth_mode').catch(() => undefined);
+      useAuthStore.getState().setOAuthError('no_account_google');
+
+      if (onError) {
+        onError('no_account_google');
       }
-      return true;
+
+      confirm.show({
+        title: 'Cuenta no encontrada',
+        message: 'No existe ninguna cuenta asociada a este correo de Google. ¿Deseas crear una cuenta?',
+        confirmLabel: 'Crear cuenta',
+        cancelLabel: 'Cancelar',
+        onConfirm: () => {
+          if (router) router.replace('/(auth)/register');
+        },
+        onCancel: () => {
+          if (router) router.replace('/(auth)/login');
+        },
+      });
+
+      return false;
     }
 
+    // Modo register (Crear cuenta):
+    // Nueva cuenta: marcar onboarding pendiente para que configure @username, foto, bio.
+    // El usuario y correo NO quedan registrados definitivamente hasta finalizar todo el proceso.
+    useAuthStore.getState().setOAuthMode(null);
+    await AsyncStorage.removeItem('@oauth_mode').catch(() => undefined);
+    useAuthStore.getState().setOnboardingCompleted(false);
+    if (router) {
+      router.replace('/(onboarding)/username');
+    }
     return true;
   } catch (e: any) {
     console.error('[GoogleAuth] Error en validateOAuthSession:', e);
     useAuthStore.getState().setOAuthMode(null);
+    await AsyncStorage.removeItem('@oauth_mode').catch(() => undefined);
     return false;
   }
 }
@@ -182,6 +159,7 @@ export function useGoogleAuth(
     try {
       setLoading(true);
       useAuthStore.getState().setOAuthMode(mode);
+      await AsyncStorage.setItem('@oauth_mode', mode).catch(() => undefined);
       useAuthStore.getState().setOAuthError(null);
 
       // ── 1. Intentar inicio de sesión nativo (Google Play Services, sin abrir navegador) ──
@@ -232,11 +210,7 @@ export function useGoogleAuth(
       }
 
       // ── 2. Fallback WebBrowser (si no hay Google Play Services o se ejecuta en Expo Go) ──
-      const redirectTo = makeRedirectUri({
-        scheme: 'bucketlist',
-        path: 'auth/callback',
-        queryParams: { mode },
-      });
+      const redirectTo = getOAuthRedirectUri(mode);
       console.log(`[GoogleAuth] Iniciando fallback OAuth web con modo [${mode}], Redirect URI:`, redirectTo);
 
       const { data, error } = await supabase.auth.signInWithOAuth({

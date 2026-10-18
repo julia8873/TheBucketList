@@ -17,6 +17,7 @@ export interface AlbumWithProgress {
   created_at?: string;
   total_tasks: number;
   completed_tasks: number;
+  tags?: string[];
 }
 
 export function useAlbums(userId?: string) {
@@ -69,6 +70,37 @@ export function useAlbums(userId?: string) {
         .select('*')
         .in('album_id', allAlbums.map(a => a.id));
 
+      const albumTagsMap: Record<string, string[]> = {};
+      try {
+        const { data: atRows } = await supabase
+          .from('album_tags')
+          .select('album_id, tag_id')
+          .in('album_id', allAlbums.map(a => a.id));
+        if (atRows) {
+          for (const row of atRows) {
+            if (row?.album_id && row?.tag_id) {
+              const list = albumTagsMap[row.album_id] || [];
+              list.push(row.tag_id);
+              albumTagsMap[row.album_id] = list;
+            }
+          }
+        }
+      } catch {
+        // Ignored
+      }
+
+      allAlbums.forEach(album => {
+        if (album.cover_path && typeof album.cover_path === 'string' && album.cover_path.startsWith('{')) {
+          try {
+            const parsed = JSON.parse(album.cover_path);
+            if (Array.isArray(parsed?.tag_ids) && parsed.tag_ids.length > 0) {
+              const existing = albumTagsMap[album.id] || [];
+              albumTagsMap[album.id] = Array.from(new Set([...existing, ...parsed.tag_ids]));
+            }
+          } catch {}
+        }
+      });
+
       return allAlbums.map(album => {
         const prog = progressData?.find(p => p.album_id === album.id);
 
@@ -85,6 +117,7 @@ export function useAlbums(userId?: string) {
           created_at: album.created_at || undefined,
           total_tasks: prog?.total_tasks || 0,
           completed_tasks: prog?.completed_tasks || 0,
+          tags: albumTagsMap[album.id] || [],
         };
       });
     },

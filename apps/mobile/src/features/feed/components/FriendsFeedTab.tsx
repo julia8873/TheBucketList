@@ -6,6 +6,7 @@ import { Users, Images } from 'lucide-react-native';
 import { EmptyState, gold } from '@bucketlist/ui';
 import { FeedCard } from '../../../components/FeedCard';
 import { FeedCardSkeleton } from '../../../components/FeedCardSkeleton';
+import { TaskGallerySkeleton } from '../../../components/TaskSkeletons';
 import { AlbumFeedCard, type AlbumFeedItem } from '../../../components/AlbumFeedCard';
 import { TaskViewMode } from '../../../components/ViewModeSelector';
 import type { ContentFilter } from './FeedHeader';
@@ -124,7 +125,7 @@ export function FriendsFeedTab({
             album={item}
             colorIndex={index}
             index={index}
-            mode={contentFilter === 'albumes' ? 'list' : viewMode}
+            mode={viewMode}
             isLiked={isLiked}
             likeCount={likeCount}
             onToggleLike={currentUserId ? () => toggleAlbumLike.mutate({ albumId: item.id, userId: currentUserId }) : undefined}
@@ -151,6 +152,19 @@ export function FriendsFeedTab({
   const loading = isLoading || isAlbumsLoading;
 
   if (loading && combinedItems.length === 0) {
+    if (viewMode === 'gallery') {
+      return (
+        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+          {headerElement}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: 10 }}>
+            <TaskGallerySkeleton />
+            <TaskGallerySkeleton />
+            <TaskGallerySkeleton />
+            <TaskGallerySkeleton />
+          </View>
+        </ScrollView>
+      );
+    }
     return (
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {headerElement}
@@ -197,7 +211,7 @@ export function FriendsFeedTab({
       data={combinedItems}
       extraData={extraData}
       keyExtractor={(item) => `${item._type ?? 'task'}-${item.id}`}
-      numColumns={viewMode === 'gallery' && contentFilter !== 'albumes' ? 2 : 1}
+      numColumns={viewMode === 'gallery' ? 2 : 1}
       renderItem={renderItem}
       estimatedItemSize={contentFilter === 'albumes' ? 240 : viewMode === 'gallery' ? 240 : viewMode === 'compact' ? 70 : 430}
       ListHeaderComponent={headerElement}

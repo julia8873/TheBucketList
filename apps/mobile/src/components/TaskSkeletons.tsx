@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
-import { Skeleton, useTheme } from '@bucketlist/ui';
+import { Skeleton, useTheme, getAlbumCardDimensions } from '@bucketlist/ui';
 
 /**
  * Skeleton para vista detallada de tareas (List mode en Mis Tareas).
@@ -58,7 +58,7 @@ export function TaskCompactSkeleton() {
 export function TaskGallerySkeleton() {
   const { width } = useWindowDimensions();
   const { theme } = useTheme();
-  const cardWidth = Math.floor((width - 44) / 2);
+  const cardWidth = Math.floor((width - 40 - 12 - 2) / 2);
 
   return (
     <View
@@ -81,11 +81,11 @@ export function TaskGallerySkeleton() {
  */
 export function AlbumCardSkeleton() {
   const { width } = useWindowDimensions();
-  const cardWidth = Math.floor((width - 44) / 2);
+  const { cardWidth, cardHeight } = getAlbumCardDimensions(width);
 
   return (
     <View style={[styles.albumCard, { width: cardWidth }]}>
-      <Skeleton width="100%" height={160} borderRadius={20} />
+      <Skeleton width="100%" height={cardHeight} borderRadius={20} />
       <View style={{ paddingHorizontal: 4, paddingTop: 8 }}>
         <Skeleton width="75%" height={14} borderRadius={5} style={{ marginBottom: 6 }} />
         <Skeleton width="40%" height={11} borderRadius={4} />

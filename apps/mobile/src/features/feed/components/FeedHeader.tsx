@@ -6,7 +6,7 @@ import { PageTitle, useTheme, gold, fontFamily } from '@bucketlist/ui';
 import { ViewModeSelector, TaskViewMode } from '../../../components/ViewModeSelector';
 import { styles } from '../styles/feed.styles';
 
-export type ContentFilter = 'todo' | 'tareas' | 'albumes';
+export type ContentFilter = 'todo' | 'tareas' | 'albumes' | 'colecciones';
 
 interface FeedHeaderProps {
   homeTab: 'friends' | 'explore';
@@ -203,10 +203,12 @@ export function FeedHeader({
         </View>
       )}
 
-      {/* Content filter: Todo / Tareas / Álbumes */}
+      {/* Content filter: Todo / Tareas / Álbumes / Colecciones (Colecciones solo en Explorar) */}
       {!(homeTab === 'explore' && exploreSearch.length >= 2) && (
         <View style={styles.contentFilterRow}>
-          {(['todo', 'tareas', 'albumes'] as ContentFilter[]).map((f) => (
+          {((homeTab === 'explore'
+            ? ['todo', 'tareas', 'albumes', 'colecciones']
+            : ['todo', 'tareas', 'albumes']) as ContentFilter[]).map((f) => (
             <Pressable
               key={f}
               onPress={() => onChangeContentFilter(f)}
@@ -228,7 +230,7 @@ export function FeedHeader({
                   { color: contentFilter === f ? gold[400] : theme.colors.foregroundMuted },
                 ]}
               >
-                {f === 'todo' ? 'Todo' : f === 'tareas' ? 'Tareas' : 'Álbumes'}
+                {f === 'todo' ? 'Todo' : f === 'tareas' ? 'Tareas' : f === 'albumes' ? 'Álbumes' : 'Colecciones'}
               </Text>
             </Pressable>
           ))}

@@ -280,8 +280,8 @@ export function AlbumFeedCard({
                 @{album.owner?.username || ownerName}
               </Text>
               <Text style={[styles.compactDot, { color: theme.colors.foregroundSubtle }]}>·</Text>
-              <Text style={[styles.compactTime, { color: theme.colors.foregroundSubtle }]}>
-                {album.completed_tasks}/{album.total_tasks} tareas
+              <Text style={[styles.compactTime, { color: theme.colors.foregroundSubtle }]} numberOfLines={1}>
+                {album.completed_tasks}/{album.total_tasks}
               </Text>
             </Pressable>
             <Text style={[styles.compactTitle, { color: theme.colors.foreground }]} numberOfLines={1}>
@@ -290,38 +290,33 @@ export function AlbumFeedCard({
           </View>
 
           <View style={styles.compactActions}>
-            {onToggleLike && (
-              <Pressable onPress={onToggleLike} hitSlop={6} style={styles.compactActionBtn}>
-                <Heart
-                  size={16}
-                  color={isLiked ? '#EF4444' : theme.colors.foregroundSubtle}
-                  fill={isLiked ? '#EF4444' : 'transparent'}
-                  strokeWidth={1.8}
-                />
-                <Text style={[styles.compactActionCount, { color: isLiked ? '#EF4444' : theme.colors.foregroundSubtle }]}>
-                  {likeCount}
-                </Text>
-              </Pressable>
-            )}
-            <Pressable onPress={() => setShowComments(true)} hitSlop={6} style={styles.compactActionBtn}>
+            <Pressable
+              onPress={onToggleLike}
+              hitSlop={6}
+              style={styles.compactActionBtn}
+              accessibilityRole="button"
+              accessibilityLabel={isLiked ? 'Quitar me gusta' : 'Me gusta'}
+            >
+              <Heart
+                size={16}
+                color={isLiked ? theme.colors.primary : theme.colors.foregroundSubtle}
+                fill={isLiked ? theme.colors.primary : 'transparent'}
+                strokeWidth={1.8}
+              />
+              <Text style={[styles.compactActionCount, { color: isLiked ? theme.colors.primary : theme.colors.foregroundSubtle }]}>
+                {likeCount}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setShowComments(true)}
+              hitSlop={6}
+              style={styles.compactActionBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Comentarios"
+            >
               <MessageCircle size={16} color={theme.colors.foregroundSubtle} strokeWidth={1.8} />
               <Text style={[styles.compactActionCount, { color: theme.colors.foregroundSubtle }]}>{commentCount}</Text>
             </Pressable>
-            {!isOwn && handleSave && (
-              <Pressable onPress={handleSave} hitSlop={6} style={styles.compactActionBtn}>
-                <Bookmark
-                  size={16}
-                  color={actualSaved ? gold[400] : theme.colors.foregroundSubtle}
-                  fill={actualSaved ? gold[400] : 'transparent'}
-                  strokeWidth={1.8}
-                />
-                {saveCount > 0 && (
-                  <Text style={[styles.compactActionCount, { color: actualSaved ? gold[400] : theme.colors.foregroundSubtle }]}>
-                    {saveCount}
-                  </Text>
-                )}
-              </Pressable>
-            )}
           </View>
         </Pressable>
 
@@ -789,55 +784,55 @@ const styles = StyleSheet.create({
   compactCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 8,
-    borderRadius: 14,
     borderWidth: 1,
+    borderRadius: 14,
+    padding: 10,
+    gap: 12,
   },
   compactThumbWrapper: {
     width: 44,
     height: 44,
     borderRadius: 10,
     overflow: 'hidden',
-    marginRight: 10,
     position: 'relative',
   },
   compactInfo: {
     flex: 1,
-    justifyContent: 'center',
+    gap: 2,
+    minWidth: 0,
   },
   compactUserHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 2,
   },
   compactUsername: {
     fontFamily: fontFamily.medium,
-    fontSize: 11,
+    fontSize: 12,
+    flexShrink: 1,
   },
   compactDot: {
-    fontSize: 11,
+    fontSize: 12,
   },
   compactTime: {
     fontFamily: fontFamily.regular,
     fontSize: 11,
+    flexShrink: 0,
   },
   compactTitle: {
     fontFamily: fontFamily.serifBold,
-    fontSize: 13,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 18,
   },
   compactActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginLeft: 8,
+    gap: 14,
   },
   compactActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    padding: 4,
+    gap: 4,
   },
   compactActionCount: {
     fontFamily: fontFamily.medium,

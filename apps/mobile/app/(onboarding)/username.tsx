@@ -68,13 +68,24 @@ export default function UsernameScreen() {
     : status === 'checking' ? t('onboarding.checking')
     : null;
 
+  const cancelRegistration = async () => {
+    try {
+      await supabase.rpc('cleanup_unregistered_oauth_user');
+    } catch (err) {
+      console.warn('[Onboarding] Error eliminando usuario no completado:', err);
+    }
+    await supabase.auth.signOut().catch(() => undefined);
+    useAuthStore.getState().signOut();
+    useOnboardingStore.getState().reset();
+    router.replace('/(auth)/welcome');
+  };
+
   return (
     <AuthScreen
       title={t('onboarding.username_title')}
       subtitle={t('onboarding.username_subtitle')}
       progress={1 / 3}
-      // Aún no hay nada guardado: volver = cerrar sesión (al volver a entrar se retoma aquí)
-      onBack={() => void supabase.auth.signOut()}
+      onBack={cancelRegistration}
       footer={
         <PillButton title={t('auth.continue')} onPress={() => void submit()} loading={saving} disabled={status !== 'available'} />
       }

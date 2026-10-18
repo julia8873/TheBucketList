@@ -663,6 +663,11 @@ export function useMyListState() {
       result = result.filter((a: any) => (a.priority || 'medium') === albumPriorityFilter);
     }
 
+    if (selectedTagIds.length > 0) {
+      const wanted = new Set(selectedTagIds);
+      result = result.filter((a: any) => (a.tags ?? []).some((id: string) => wanted.has(id)));
+    }
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
@@ -674,7 +679,7 @@ export function useMyListState() {
     }
 
     return result;
-  }, [albums, albumFilter, albumPriorityFilter, searchQuery]);
+  }, [albums, albumFilter, albumPriorityFilter, searchQuery, selectedTagIds]);
 
   const byAlbumManual = (a: any, b: any) => {
     const idxA = albumManualOrder.indexOf(a.id);

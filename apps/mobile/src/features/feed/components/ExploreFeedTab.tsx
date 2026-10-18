@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { View, ScrollView, FlatList, Pressable, ActivityIndicator } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
-import { Users, Images } from 'lucide-react-native';
+import { Users, Images, Sparkles } from 'lucide-react-native';
 import { EmptyState, Typography, Avatar, gold } from '@bucketlist/ui';
 import { FeedCard } from '../../../components/FeedCard';
 import { FeedCardSkeleton } from '../../../components/FeedCardSkeleton';
+import { TaskGallerySkeleton } from '../../../components/TaskSkeletons';
 import { AlbumFeedCard, type AlbumFeedItem } from '../../../components/AlbumFeedCard';
 import { TaskViewMode } from '../../../components/ViewModeSelector';
 import type { ContentFilter } from './FeedHeader';
@@ -19,6 +20,10 @@ import {
   useBatchAlbumLikeCounts,
 } from '../../../hooks/useSocial';
 import { useAuthStore } from '../../../stores/auth.store';
+import { useCollections, useCloneCollection, useToggleCollectionLike } from '../../collections/hooks/useCollections';
+import { CollectionCard } from '../../collections/components/CollectionCard';
+import { CollectionDetailModal } from '../../collections/components/CollectionDetailModal';
+import type { CollectionItem } from '../../collections/types';
 
 interface ExploreFeedTabProps {
   headerElement: React.ReactElement;
@@ -30,6 +35,7 @@ interface ExploreFeedTabProps {
   exploreBuckets: any[];
   exploreAlbums: AlbumFeedItem[];
   contentFilter: ContentFilter;
+  onChangeContentFilter?: (f: ContentFilter) => void;
   manualRefreshing: boolean;
   onRefresh: () => void;
   hasNextPage?: boolean;
@@ -53,6 +59,7 @@ export function ExploreFeedTab({
   exploreBuckets,
   exploreAlbums,
   contentFilter,
+  onChangeContentFilter,
   manualRefreshing,
   onRefresh,
   hasNextPage,
@@ -73,12 +80,23 @@ export function ExploreFeedTab({
   const { data: savedAlbumIds } = useSavedAlbumIds(currentUserId);
   const toggleSaveAlbum = useToggleSaveAlbum();
 
-  const albumIds = React.useMemo(() => exploreAlbums.map((a) => a.id), [exploreAlbums]);
+  // Colecciones
+  const { data: collections = [] } = useCollections();
+  const cloneMutation = useCloneCollection();
+  const toggleCollectionLike = useToggleCollectionLike();
+  const [selectedCollection, setSelectedCollection] = useState<CollectionItem | null>(null);
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+
+  const albumIds = useMemo(() => exploreAlbums.map((a) => a.id), [exploreAlbums]);
   const { data: albumSaveCounts } = useBatchAlbumSaveCounts(albumIds);
   const { data: albumLikeCounts } = useBatchAlbumLikeCounts(albumIds);
 
   // Combined + filtered list
-  const combinedItems = React.useMemo(() => {
+  const combinedItems = useMemo(() => {
+    if (contentFilter === 'colecciones') {
+      return collections.map((c) => ({ ...c, _type: 'collection' as const }));
+    }
+
     const tasks = contentFilter !== 'albumes'
       ? exploreBuckets.map((item) => ({ ...item, _type: 'task' as const }))
       : [];
@@ -100,15 +118,32 @@ export function ExploreFeedTab({
     });
     while (ai < albums.length) merged.push(albums[ai++]);
     return merged;
-  }, [exploreBuckets, exploreAlbums, contentFilter]);
+  }, [exploreBuckets, exploreAlbums, contentFilter, collections]);
 
-  const extraData = React.useMemo(
+  const extraData = useMemo(
     () => `${likedAlbumIds?.join(',') ?? ''}-${savedAlbumIds?.join(',') ?? ''}-${JSON.stringify(albumSaveCounts ?? {})}-${JSON.stringify(albumLikeCounts ?? {})}`,
     [likedAlbumIds, savedAlbumIds, albumSaveCounts, albumLikeCounts]
   );
 
-  const renderItem = React.useCallback(
+  const renderItem = useCallback(
     ({ item, index }: { item: any; index: number }) => {
+      if (item._type === 'collection') {
+        return (
+          <View style={{ paddingHorizontal: 16 }}>
+            <CollectionCard
+              collection={item}
+              onPress={() => {
+                setSelectedCollection(item);
+                setDetailModalVisible(true);
+              }}
+              onClone={() => cloneMutation.mutate(item)}
+              isCloning={cloneMutation.isPending && (cloneMutation.variables as any)?.id === item.id}
+              onToggleLike={() => toggleCollectionLike.mutate(item.id)}
+            />
+          </View>
+        );
+      }
+
       if (item._type === 'album') {
         const isLiked = !!currentUserId && !!likedAlbumIds?.includes(item.id);
         const isSaved = !!currentUserId && !!savedAlbumIds?.includes(item.id);
@@ -121,7 +156,7 @@ export function ExploreFeedTab({
             album={item}
             colorIndex={index}
             index={index}
-            mode={contentFilter === 'albumes' ? 'list' : viewMode}
+            mode={viewMode}
             isLiked={isLiked}
             likeCount={likeCount}
             onToggleLike={currentUserId ? () => toggleAlbumLike.mutate({ albumId: item.id, userId: currentUserId }) : undefined}
@@ -133,6 +168,7 @@ export function ExploreFeedTab({
           />
         );
       }
+
       return (
         <FeedCard
           event={{
@@ -148,7 +184,7 @@ export function ExploreFeedTab({
         />
       );
     },
-    [viewMode, contentFilter, router, currentUserId, likedAlbumIds, savedAlbumIds, toggleAlbumLike, toggleSaveAlbum, albumSaveCounts, albumLikeCounts]
+    [viewMode, contentFilter, router, currentUserId, likedAlbumIds, savedAlbumIds, toggleAlbumLike, toggleSaveAlbum, albumSaveCounts, albumLikeCounts, cloneMutation, toggleCollectionLike]
   );
 
   if (debouncedSearch.length >= 2) {
@@ -197,8 +233,21 @@ export function ExploreFeedTab({
     );
   }
 
-  const loading = isExploreLoading || isAlbumsLoading;
+  const loading = (isExploreLoading || isAlbumsLoading) && contentFilter !== 'colecciones';
   if (loading && combinedItems.length === 0) {
+    if (viewMode === 'gallery') {
+      return (
+        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+          {headerElement}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: 10 }}>
+            <TaskGallerySkeleton />
+            <TaskGallerySkeleton />
+            <TaskGallerySkeleton />
+            <TaskGallerySkeleton />
+          </View>
+        </ScrollView>
+      );
+    }
     return (
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {headerElement}
@@ -209,55 +258,75 @@ export function ExploreFeedTab({
   }
 
   const onEndReached = () => {
+    if (contentFilter === 'colecciones') return;
     if (contentFilter !== 'albumes' && hasNextPage && !isFetchingNextPage) void fetchNextPage();
     if (contentFilter !== 'tareas' && hasNextAlbumsPage && !isFetchingNextAlbumsPage) void fetchNextAlbumsPage();
   };
 
   const isFetchingNext = isFetchingNextPage || isFetchingNextAlbumsPage;
 
-  const emptyTitle = contentFilter === 'albumes'
+  const emptyTitle = contentFilter === 'colecciones'
+    ? 'No hay colecciones disponibles aún'
+    : contentFilter === 'albumes'
     ? 'No hay álbumes públicos aún'
     : 'No hay ideas públicas aún';
-  const emptyMessage = contentFilter === 'albumes'
+  const emptyMessage = contentFilter === 'colecciones'
+    ? 'Pronto añadiremos más colecciones prediseñadas para clonar.'
+    : contentFilter === 'albumes'
     ? 'Sé el primero en crear un álbum público para la comunidad.'
     : 'Sé el primero en compartir un objetivo público con la comunidad.';
 
   return (
-    <FlashList
-      ref={listRef}
-      key={`${viewMode}-${contentFilter}`}
-      data={combinedItems}
-      extraData={extraData}
-      keyExtractor={(item) => `${item._type ?? 'task'}-${item.id}`}
-      numColumns={viewMode === 'gallery' && contentFilter !== 'albumes' ? 2 : 1}
-      renderItem={renderItem}
-      estimatedItemSize={contentFilter === 'albumes' ? 240 : viewMode === 'gallery' ? 240 : viewMode === 'compact' ? 70 : 300}
-      ListHeaderComponent={
-        <View>
-          {headerElement}
-          <Typography variant="h3" style={styles.sectionTitle}>
-            {contentFilter === 'albumes' ? 'Álbumes de la comunidad' : 'Ideas para empezar'}
-          </Typography>
-        </View>
-      }
-      refreshing={manualRefreshing}
-      onRefresh={onRefresh}
-      onEndReached={onEndReached}
-      onEndReachedThreshold={0.5}
-      ListFooterComponent={
-        isFetchingNext ? (
-          <ActivityIndicator style={styles.footer} color={gold[400]} />
-        ) : null
-      }
-      ListEmptyComponent={
-        <View style={[styles.emptyWrap, { minHeight: windowHeight * 0.45 }]}>
-          <EmptyState
-            title={emptyTitle}
-            message={emptyMessage}
-            icon={contentFilter === 'albumes' ? Images : Users}
-          />
-        </View>
-      }
-    />
+    <View style={{ flex: 1 }}>
+      <FlashList
+        ref={listRef}
+        key={`${viewMode}-${contentFilter}`}
+        data={combinedItems}
+        extraData={extraData}
+        keyExtractor={(item) => `${item._type ?? 'task'}-${item.id}`}
+        numColumns={viewMode === 'gallery' ? 2 : 1}
+        renderItem={renderItem}
+        estimatedItemSize={contentFilter === 'colecciones' ? 260 : contentFilter === 'albumes' ? 240 : viewMode === 'gallery' ? 240 : viewMode === 'compact' ? 70 : 300}
+        ListHeaderComponent={
+          <View>
+            {headerElement}
+            <Typography variant="h3" style={styles.sectionTitle}>
+              {contentFilter === 'colecciones'
+                ? 'Colecciones prediseñadas'
+                : contentFilter === 'albumes'
+                ? 'Álbumes de la comunidad'
+                : 'Ideas para empezar'}
+            </Typography>
+          </View>
+        }
+        refreshing={manualRefreshing}
+        onRefresh={onRefresh}
+        onEndReached={onEndReached}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          isFetchingNext ? (
+            <ActivityIndicator style={styles.footer} color={gold[400]} />
+          ) : null
+        }
+        ListEmptyComponent={
+          <View style={[styles.emptyWrap, { minHeight: windowHeight * 0.45 }]}>
+            <EmptyState
+              title={emptyTitle}
+              message={emptyMessage}
+              icon={contentFilter === 'colecciones' ? Sparkles : contentFilter === 'albumes' ? Images : Users}
+            />
+          </View>
+        }
+      />
+
+      <CollectionDetailModal
+        visible={detailModalVisible}
+        collection={selectedCollection}
+        onClose={() => {
+          setDetailModalVisible(false);
+          setSelectedCollection(null);
+        }}
+      />
+    </View>
   );
 }

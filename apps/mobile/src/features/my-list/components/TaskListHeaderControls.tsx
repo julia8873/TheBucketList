@@ -54,7 +54,7 @@ const STATUS_OPTIONS: Array<{ key: FilterType; label: string; desc: string }> = 
 ];
 
 const STATUS_SHORT_LABEL: Record<FilterType, string> = {
-  all: 'Filtrar por estado',
+  all: 'Estado',
   active: 'Estado: En curso',
   in_progress: 'Estado: En progreso',
   completed: 'Estado: Completadas',
@@ -70,7 +70,7 @@ const PRIORITY_OPTIONS: Array<{ key: PriorityFilter; label: string; desc: string
 ];
 
 const PRIORITY_SHORT_LABEL: Record<PriorityFilter, string> = {
-  all: 'Filtrar por prioridad',
+  all: 'Prioridad',
   high: 'Prioridad: 🔴 Alta',
   medium: 'Prioridad: 🟡 Media',
   low: 'Prioridad: 🟢 Baja',
@@ -109,8 +109,8 @@ export function TaskListHeaderControls({
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 20 }}
-        style={{ marginBottom: 12, marginHorizontal: -20, paddingHorizontal: 20 }}
+        contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+        style={{ marginBottom: 16 }}
       >
         {/* Todas */}
         <FilterChip
@@ -143,6 +143,27 @@ export function TaskListHeaderControls({
           <ChevronDown size={14} color={filter !== 'all' ? gold[400] : theme.colors.foregroundMuted} />
         </Pressable>
 
+        {/* Filtrar por prioridad */}
+        <Pressable
+          onPress={() => setPrioritySheetVisible(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Filtrar por prioridad"
+          style={[
+            styles.tagFilterBtn,
+            {
+              backgroundColor: priorityFilter !== 'all'
+                ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
+                : theme.colors.surface,
+              borderColor: priorityFilter !== 'all' ? gold[400] : theme.colors.border,
+            },
+          ]}
+        >
+          <Text style={[styles.tagFilterText, { color: priorityFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted }]}>
+            {PRIORITY_SHORT_LABEL[priorityFilter]}
+          </Text>
+          <ChevronDown size={14} color={priorityFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted} />
+        </Pressable>
+
         {/* Etiquetas */}
         <Pressable
           onPress={onOpenTagFilterSheet}
@@ -166,27 +187,6 @@ export function TaskListHeaderControls({
               ? '1 etiqueta'
               : `${selectedTagIds.length} etiquetas`}
           </Text>
-        </Pressable>
-
-        {/* Filtrar por prioridad */}
-        <Pressable
-          onPress={() => setPrioritySheetVisible(true)}
-          accessibilityRole="button"
-          accessibilityLabel="Filtrar por prioridad"
-          style={[
-            styles.tagFilterBtn,
-            {
-              backgroundColor: priorityFilter !== 'all'
-                ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
-                : theme.colors.surface,
-              borderColor: priorityFilter !== 'all' ? gold[400] : theme.colors.border,
-            },
-          ]}
-        >
-          <Text style={[styles.tagFilterText, { color: priorityFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted }]}>
-            {PRIORITY_SHORT_LABEL[priorityFilter]}
-          </Text>
-          <ChevronDown size={14} color={priorityFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted} />
         </Pressable>
 
         {/* Chips de etiquetas seleccionadas */}
@@ -219,7 +219,7 @@ export function TaskListHeaderControls({
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: 10,
+          marginBottom: 14,
         }}
       >
         {/* Izquierda: Contador de tareas */}
@@ -228,7 +228,7 @@ export function TaskListHeaderControls({
         </Typography>
 
         {/* Derecha: 1. Modo de vista (lista, galería, compacto), 2. Ordenar (Estado / etc.) */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           {/* Modos de vista a la izquierda de ordenar */}
           <View style={[styles.viewModeToggle, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
             <Pressable

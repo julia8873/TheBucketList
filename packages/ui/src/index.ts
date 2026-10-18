@@ -28,7 +28,7 @@ export { FilterChip } from './components/FilterChip';
 export { Pill, UrgencyChip } from './components/Pill';
 export type { PillVariant } from './components/Pill';
 export { TaskRow } from './components/TaskRow';
-export { AlbumCard, NewAlbumCard, NoAlbumRow, NoAlbumCard, NewAlbumRow } from './components/AlbumCard';
+export { AlbumCard, NewAlbumCard, NoAlbumRow, NoAlbumCard, NewAlbumRow, getAlbumCardDimensions } from './components/AlbumCard';
 export { FAB } from './components/FAB';
 export { ToastProvider, useToast, toast } from './components/Toast';
 export type { ToastOptions, ToastContextType } from './components/Toast';

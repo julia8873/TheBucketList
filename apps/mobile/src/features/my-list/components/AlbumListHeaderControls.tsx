@@ -1,16 +1,34 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { LayoutList, LayoutGrid, AlignJustify, ArrowDown, ArrowUp, ChevronDown, Check, X } from 'lucide-react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import {
+  Tag as TagIcon,
+  X,
+  LayoutList,
+  LayoutGrid,
+  AlignJustify,
+  ArrowDown,
+  ArrowUp,
+  ChevronDown,
+  Check,
+} from 'lucide-react-native';
 import { Typography, FilterChip } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from '../styles/my-list.styles';
-import { PriorityFilter, SortField, SortDir, AlbumViewMode } from '../types';
+import { AlbumFilterType, PriorityFilter, SortField, SortDir, AlbumViewMode } from '../types';
+import { Tag } from '@/hooks/useTags';
+import { hexToRgba } from '@/constants/tagPresets';
 import { TagSheetShell } from '@/components/TagSheetShell';
 
 interface AlbumListHeaderControlsProps {
+  albumFilter: AlbumFilterType;
+  setAlbumFilter: (f: AlbumFilterType) => void;
   albumPriorityFilter: PriorityFilter;
   setAlbumPriorityFilter: React.Dispatch<React.SetStateAction<PriorityFilter>>;
+  onOpenTagFilterSheet: () => void;
+  selectedTagIds: string[];
+  selectedTags: Tag[];
+  onRemoveTagFilter: (id: string) => void;
   albumViewMode: AlbumViewMode;
   setAlbumViewMode: (mode: AlbumViewMode) => void;
   albumsCount: number;
@@ -24,6 +42,20 @@ interface AlbumListHeaderControlsProps {
   theme: any;
 }
 
+const ALBUM_STATUS_OPTIONS: Array<{ key: AlbumFilterType; label: string; desc: string }> = [
+  { key: 'all', label: 'Todos los álbumes', desc: 'Muestra todos los álbumes sin filtrar por estado' },
+  { key: 'active', label: 'En curso', desc: 'Álbumes activos con tareas pendientes' },
+  { key: 'completed', label: 'Completados', desc: 'Álbumes con todas sus tareas finalizadas' },
+  { key: 'closed', label: 'Cerrados', desc: 'Álbumes archivados o cerrados' },
+];
+
+const ALBUM_STATUS_SHORT_LABEL: Record<AlbumFilterType, string> = {
+  all: 'Estado',
+  active: 'Estado: En curso',
+  completed: 'Estado: Completados',
+  closed: 'Estado: Cerrados',
+};
+
 const PRIORITY_OPTIONS: Array<{ key: PriorityFilter; label: string; desc: string }> = [
   { key: 'all', label: 'Todas las prioridades', desc: 'Muestra álbumes de cualquier prioridad' },
   { key: 'high', label: '🔴 Alta', desc: 'Álbumes urgentes o de máxima prioridad' },
@@ -32,15 +64,21 @@ const PRIORITY_OPTIONS: Array<{ key: PriorityFilter; label: string; desc: string
 ];
 
 const PRIORITY_SHORT_LABEL: Record<PriorityFilter, string> = {
-  all: 'Filtrar por prioridad',
+  all: 'Prioridad',
   high: 'Prioridad: 🔴 Alta',
   medium: 'Prioridad: 🟡 Media',
   low: 'Prioridad: 🟢 Baja',
 };
 
 export function AlbumListHeaderControls({
+  albumFilter,
+  setAlbumFilter,
   albumPriorityFilter,
   setAlbumPriorityFilter,
+  onOpenTagFilterSheet,
+  selectedTagIds,
+  selectedTags,
+  onRemoveTagFilter,
   albumViewMode,
   setAlbumViewMode,
   albumsCount,
@@ -54,133 +92,219 @@ export function AlbumListHeaderControls({
   theme,
 }: AlbumListHeaderControlsProps) {
   const insets = useSafeAreaInsets();
+  const [statusSheetVisible, setStatusSheetVisible] = useState(false);
   const [prioritySheetVisible, setPrioritySheetVisible] = useState(false);
 
   return (
     <View>
-      {/* Filtro por prioridad de álbum + Toggle de modos de vista */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, marginRight: 8 }}>
-          <FilterChip
-            label="Todas"
-            active={albumPriorityFilter === 'all'}
-            onPress={() => setAlbumPriorityFilter('all')}
-          />
+      {/* Fila única de Filtros */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+        style={{ marginBottom: 16 }}
+      >
+        {/* Todas */}
+        <FilterChip
+          label="Todas"
+          active={albumFilter === 'all' && albumPriorityFilter === 'all'}
+          onPress={() => {
+            setAlbumFilter('all');
+            setAlbumPriorityFilter('all');
+          }}
+        />
+
+        {/* Filtrar por estado */}
+        <Pressable
+          onPress={() => setStatusSheetVisible(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Filtrar por estado"
+          style={[
+            styles.tagFilterBtn,
+            {
+              backgroundColor: albumFilter !== 'all'
+                ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
+                : theme.colors.surface,
+              borderColor: albumFilter !== 'all' ? gold[400] : theme.colors.border,
+            },
+          ]}
+        >
+          <Text style={[styles.tagFilterText, { color: albumFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted }]}>
+            {ALBUM_STATUS_SHORT_LABEL[albumFilter]}
+          </Text>
+          <ChevronDown size={14} color={albumFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted} />
+        </Pressable>
+
+        {/* Filtrar por prioridad */}
+        <Pressable
+          onPress={() => setPrioritySheetVisible(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Filtrar por prioridad"
+          style={[
+            styles.tagFilterBtn,
+            {
+              backgroundColor: albumPriorityFilter !== 'all'
+                ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
+                : theme.colors.surface,
+              borderColor: albumPriorityFilter !== 'all' ? gold[400] : theme.colors.border,
+            },
+          ]}
+        >
+          <Text style={[styles.tagFilterText, { color: albumPriorityFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted }]}>
+            {PRIORITY_SHORT_LABEL[albumPriorityFilter]}
+          </Text>
+          <ChevronDown size={14} color={albumPriorityFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted} />
+        </Pressable>
+
+        {/* Etiquetas */}
+        <Pressable
+          onPress={onOpenTagFilterSheet}
+          accessibilityRole="button"
+          accessibilityLabel="Filtrar por etiquetas"
+          style={[
+            styles.tagFilterBtn,
+            {
+              backgroundColor: selectedTagIds.length > 0
+                ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
+                : theme.colors.surface,
+              borderColor: selectedTagIds.length > 0 ? gold[400] : theme.colors.border,
+            },
+          ]}
+        >
+          <TagIcon size={14} color={selectedTagIds.length > 0 ? gold[400] : theme.colors.foregroundMuted} strokeWidth={2} />
+          <Text style={[styles.tagFilterText, { color: selectedTagIds.length > 0 ? gold[400] : theme.colors.foregroundMuted }]}>
+            {selectedTagIds.length === 0
+              ? 'Etiquetas'
+              : selectedTagIds.length === 1
+              ? '1 etiqueta'
+              : `${selectedTagIds.length} etiquetas`}
+          </Text>
+        </Pressable>
+
+        {/* Chips de etiquetas seleccionadas */}
+        {selectedTags.map((t) => (
           <Pressable
-            onPress={() => setPrioritySheetVisible(true)}
+            key={t.id}
+            onPress={() => onRemoveTagFilter(t.id)}
             accessibilityRole="button"
-            accessibilityLabel="Filtrar por prioridad"
-            style={[
-              styles.tagFilterBtn,
-              {
-                backgroundColor: albumPriorityFilter !== 'all'
-                  ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
-                  : theme.colors.surface,
-                borderColor: albumPriorityFilter !== 'all' ? gold[400] : theme.colors.border,
-              },
-            ]}
+            accessibilityLabel={`Quitar etiqueta ${t.name}`}
+            style={[styles.activeTagChip, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
           >
-            <Text
-              style={[
-                styles.tagFilterText,
-                { color: albumPriorityFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted },
-              ]}
-              numberOfLines={1}
-            >
-              {PRIORITY_SHORT_LABEL[albumPriorityFilter]}
+            {t.emoji ? (
+              <View style={[styles.activeTagEmoji, { backgroundColor: hexToRgba(t.color, 0.3) }]}>
+                <Text style={styles.activeTagEmojiText}>{t.emoji}</Text>
+              </View>
+            ) : (
+              <View style={[styles.activeTagDot, { backgroundColor: t.color }]} />
+            )}
+            <Text style={[styles.activeTagText, { color: theme.colors.foreground }]} numberOfLines={1}>
+              {t.name}
             </Text>
-            <ChevronDown size={14} color={albumPriorityFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted} />
+            <X size={15} color={theme.colors.foregroundMuted} strokeWidth={2} />
           </Pressable>
-        </View>
+        ))}
+      </ScrollView>
 
-        {/* Toggle de vistas: Lista | Galería | Compacta */}
-        <View style={[styles.viewModeToggle, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-          <Pressable
-            onPress={() => setAlbumViewMode('list')}
-            style={[styles.viewModeBtn, albumViewMode === 'list' && styles.viewModeBtnActive]}
-            hitSlop={4}
-            accessibilityRole="button"
-            accessibilityLabel="Vista detallada"
-          >
-            <LayoutList size={15} color={albumViewMode === 'list' ? '#0E0E0E' : theme.colors.foregroundMuted} />
-          </Pressable>
-          <Pressable
-            onPress={() => setAlbumViewMode('gallery')}
-            style={[styles.viewModeBtn, albumViewMode === 'gallery' && styles.viewModeBtnActive]}
-            hitSlop={4}
-            accessibilityRole="button"
-            accessibilityLabel="Vista galería"
-          >
-            <LayoutGrid size={15} color={albumViewMode === 'gallery' ? '#0E0E0E' : theme.colors.foregroundMuted} />
-          </Pressable>
-          <Pressable
-            onPress={() => setAlbumViewMode('compact')}
-            style={[styles.viewModeBtn, albumViewMode === 'compact' && styles.viewModeBtnActive]}
-            hitSlop={4}
-            accessibilityRole="button"
-            accessibilityLabel="Vista compacta"
-          >
-            <AlignJustify size={15} color={albumViewMode === 'compact' ? '#0E0E0E' : theme.colors.foregroundMuted} />
-          </Pressable>
-        </View>
-      </View>
-
-      {/* Fila de Ordenar por álbumes */}
-      <View style={styles.sortRow}>
+      {/* Fila: Contador de álbumes (izq) + Modos de vista y Ordenar (der) */}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 14,
+        }}
+      >
+        {/* Izquierda: Contador de álbumes */}
         <Typography variant="caption" color={theme.colors.foregroundMuted} style={styles.tasksCountLabel}>
           {albumsCount} {albumsCount === 1 ? 'ÁLBUM' : 'ÁLBUMES'}
         </Typography>
-        <View style={styles.sortTriggerContainer}>
-          <Typography variant="caption" color={theme.colors.foregroundMuted}>
-            Ordenar por:
-          </Typography>
-          <Pressable
-            ref={albumSortTriggerRef}
-            collapsable={false}
-            onPress={openSortMenu}
-            hitSlop={8}
-            style={[
-              styles.sortTriggerBtn,
-              {
-                height: 32,
-                paddingHorizontal: 8,
-                borderRadius: 8,
-                backgroundColor: theme.colors.surface,
-                borderWidth: 1,
-                borderColor: theme.colors.border,
-              },
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="Ordenar álbumes"
-          >
-            <Typography variant="caption" color={gold[400]} style={{ fontWeight: '600' }}>
-              {albumSortField === 'manual'
-                ? 'Manual'
-                : albumSortField === 'status'
-                ? (isAlbumReordering ? 'Estado (manual)' : 'Estado')
-                : albumSortField === 'priority'
-                ? 'Prioridad'
-                : albumSortField === 'alphabetical'
-                ? 'Alfabético'
-                : 'Fecha'}
-            </Typography>
-            {albumSortField !== 'manual' && !isAlbumReordering &&
-              (albumSortDir === 'desc' ? (
-                <ArrowDown color={gold[400]} size={14} />
-              ) : (
-                <ArrowUp color={gold[400]} size={14} />
-              ))}
-          </Pressable>
+
+        {/* Derecha: 1. Modo de vista (lista, galería, compacto), 2. Ordenar (sin texto "Ordenar por:") */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          {/* Modos de vista a la izquierda de ordenar */}
+          <View style={[styles.viewModeToggle, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+            <Pressable
+              onPress={() => setAlbumViewMode('list')}
+              style={[styles.viewModeBtn, albumViewMode === 'list' && styles.viewModeBtnActive]}
+              hitSlop={4}
+              accessibilityRole="button"
+              accessibilityLabel="Vista detallada"
+            >
+              <LayoutList size={15} color={albumViewMode === 'list' ? '#0E0E0E' : theme.colors.foregroundMuted} />
+            </Pressable>
+            <Pressable
+              onPress={() => setAlbumViewMode('gallery')}
+              style={[styles.viewModeBtn, albumViewMode === 'gallery' && styles.viewModeBtnActive]}
+              hitSlop={4}
+              accessibilityRole="button"
+              accessibilityLabel="Vista galería"
+            >
+              <LayoutGrid size={15} color={albumViewMode === 'gallery' ? '#0E0E0E' : theme.colors.foregroundMuted} />
+            </Pressable>
+            <Pressable
+              onPress={() => setAlbumViewMode('compact')}
+              style={[styles.viewModeBtn, albumViewMode === 'compact' && styles.viewModeBtnActive]}
+              hitSlop={4}
+              accessibilityRole="button"
+              accessibilityLabel="Vista compacta"
+            >
+              <AlignJustify size={15} color={albumViewMode === 'compact' ? '#0E0E0E' : theme.colors.foregroundMuted} />
+            </Pressable>
+          </View>
+
+          {/* Ordenar (Estado / Manual / etc.) */}
+          <View style={styles.sortTriggerContainer}>
+            <Pressable
+              ref={albumSortTriggerRef}
+              collapsable={false}
+              onPress={openSortMenu}
+              hitSlop={8}
+              style={[
+                styles.sortTriggerBtn,
+                {
+                  height: 32,
+                  paddingHorizontal: 8,
+                  borderRadius: 8,
+                  backgroundColor: theme.colors.surface,
+                  borderWidth: 1,
+                  borderColor: theme.colors.border,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Ordenar álbumes"
+            >
+              <Typography variant="caption" color={gold[400]} style={{ fontWeight: '600' }}>
+                {albumSortField === 'manual'
+                  ? 'Manual'
+                  : albumSortField === 'status'
+                  ? isAlbumReordering
+                    ? 'Estado (manual)'
+                    : 'Estado'
+                  : albumSortField === 'priority'
+                  ? 'Prioridad'
+                  : albumSortField === 'alphabetical'
+                  ? 'Alfabético'
+                  : 'Fecha'}
+              </Typography>
+              {albumSortField !== 'manual' &&
+                !isAlbumReordering &&
+                (albumSortDir === 'desc' ? (
+                  <ArrowDown color={gold[400]} size={13} />
+                ) : (
+                  <ArrowUp color={gold[400]} size={13} />
+                ))}
+            </Pressable>
+          </View>
 
           {!isSearching && isAlbumReordering && (
             <Pressable
               onPress={() => setIsAlbumReordering(false)}
               style={{
                 backgroundColor: gold[400],
-                paddingHorizontal: 12,
-                paddingVertical: 4,
+                paddingHorizontal: 10,
+                paddingVertical: 3,
                 borderRadius: 6,
-                marginLeft: 8,
+                marginLeft: 2,
               }}
               hitSlop={8}
             >
@@ -190,7 +314,65 @@ export function AlbumListHeaderControls({
         </View>
       </View>
 
-      {/* Bottom Sheet: Filtrar por Prioridad de Álbumes */}
+      {/* Bottom Sheet: Filtrar por Estado */}
+      <TagSheetShell visible={statusSheetVisible} onClose={() => setStatusSheetVisible(false)}>
+        <View style={[localStyles.sheetContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+          <View style={localStyles.sheetHeader}>
+            <Text style={[localStyles.sheetTitle, { color: theme.colors.foreground }]}>Filtrar álbumes por estado</Text>
+            <Pressable
+              onPress={() => setStatusSheetVisible(false)}
+              hitSlop={8}
+              style={[localStyles.sheetCloseBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+              accessibilityRole="button"
+              accessibilityLabel="Cerrar filtro de estado"
+            >
+              <X size={16} color={theme.colors.foregroundMuted} />
+            </Pressable>
+          </View>
+
+          <View style={localStyles.sheetOptionList}>
+            {ALBUM_STATUS_OPTIONS.map((opt) => {
+              const isSelected = albumFilter === opt.key;
+              return (
+                <Pressable
+                  key={opt.key}
+                  onPress={() => {
+                    setAlbumFilter(opt.key);
+                    setStatusSheetVisible(false);
+                  }}
+                  style={({ pressed }) => [
+                    localStyles.sheetOptionRow,
+                    {
+                      backgroundColor: isSelected
+                        ? (theme.dark ? 'rgba(212, 177, 58, 0.08)' : 'rgba(212, 177, 58, 0.12)')
+                        : theme.colors.surface,
+                      borderColor: isSelected ? gold[400] : theme.colors.border,
+                    },
+                    pressed && { opacity: 0.8 },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Filtrar por ${opt.label}`}
+                >
+                  <View style={{ flex: 1, marginRight: 12 }}>
+                    <Text
+                      style={[
+                        localStyles.sheetOptionTitle,
+                        { color: isSelected ? gold[400] : theme.colors.foreground },
+                      ]}
+                    >
+                      {opt.label}
+                    </Text>
+                    <Text style={[localStyles.sheetOptionDesc, { color: theme.colors.foregroundMuted }]}>{opt.desc}</Text>
+                  </View>
+                  {isSelected && <Check size={18} color={gold[400]} strokeWidth={2.5} />}
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      </TagSheetShell>
+
+      {/* Bottom Sheet: Filtrar por Prioridad */}
       <TagSheetShell visible={prioritySheetVisible} onClose={() => setPrioritySheetVisible(false)}>
         <View style={[localStyles.sheetContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
           <View style={localStyles.sheetHeader}>
@@ -261,40 +443,50 @@ const localStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   sheetTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    fontFamily: 'Newsreader_700Bold',
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 18,
+    color: '#FFF',
   },
   sheetCloseBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    borderWidth: 1,
+    backgroundColor: '#222',
     alignItems: 'center',
     justifyContent: 'center',
   },
   sheetOptionList: {
-    gap: 8,
+    gap: 10,
   },
   sheetOptionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 12,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: '#1C1C1C',
     borderWidth: 1,
+    borderColor: '#2A2A2A',
+  },
+  sheetOptionRowActive: {
+    backgroundColor: 'rgba(212, 177, 58, 0.08)',
+    borderColor: gold[400],
   },
   sheetOptionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 15,
+    color: '#F0F0F0',
     marginBottom: 2,
   },
+  sheetOptionTitleActive: {
+    color: gold[400],
+  },
   sheetOptionDesc: {
+    fontFamily: 'Inter_400Regular',
     fontSize: 12,
+    color: '#8A8A80',
   },
 });

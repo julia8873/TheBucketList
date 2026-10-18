@@ -11,6 +11,7 @@ import {
   StyleSheet,
   type ViewStyle,
   Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,8 +22,16 @@ import { fontFamily, fontSize } from '../tokens/typography';
 import { gold, dark, green } from '../tokens/colors';
 import { radii } from '../tokens/radii';
 
-const CARD_WIDTH = Math.floor((Dimensions.get('window').width - 20 * 2 - 12) / 2);
-const CARD_HEIGHT = Math.round(CARD_WIDTH * 1.45);
+export function getAlbumCardDimensions(windowWidth: number) {
+  // Padding horizontal en listas (20 * 2 = 40) + gap (12) + 2px de margen contra subpíxeles
+  const cardWidth = Math.floor((windowWidth - 40 - 12 - 2) / 2);
+  const cardHeight = Math.round(cardWidth * 1.45);
+  return { cardWidth, cardHeight };
+}
+
+const DEFAULT_DIMS = getAlbumCardDimensions(Dimensions.get('window').width);
+const CARD_WIDTH = DEFAULT_DIMS.cardWidth;
+const CARD_HEIGHT = DEFAULT_DIMS.cardHeight;
 
 // ── Gradient cover colours used when no image ──────────────────────────────
 const COVER_GRADIENTS: Array<[string, string]> = [
@@ -62,6 +71,8 @@ export function AlbumCard({
   style,
 }: AlbumCardProps) {
   const { theme } = useTheme();
+  const { width } = useWindowDimensions();
+  const { cardWidth, cardHeight } = getAlbumCardDimensions(width);
   const progress = totalTasks > 0 ? completedTasks / totalTasks : 0;
   const [g1, g2] = COVER_GRADIENTS[colorIndex % COVER_GRADIENTS.length] || ['#1B4D3E', '#0A2E25'];
 
@@ -108,9 +119,10 @@ export function AlbumCard({
       style={({ pressed }) => [
         styles.card,
         {
+          width: cardWidth,
+          height: cardHeight,
           backgroundColor: theme.colors.surface,
           opacity: pressed ? 0.85 : 1,
-          height: CARD_HEIGHT,
         },
         style,
       ]}
@@ -226,6 +238,8 @@ export function AlbumCard({
 
 export function NewAlbumCard({ onPress, style }: { onPress?: () => void; style?: ViewStyle }) {
   const { theme } = useTheme();
+  const { width } = useWindowDimensions();
+  const { cardWidth, cardHeight } = getAlbumCardDimensions(width);
   return (
     <Pressable
       onPress={onPress}
@@ -233,6 +247,8 @@ export function NewAlbumCard({ onPress, style }: { onPress?: () => void; style?:
         styles.card,
         styles.newCard,
         {
+          width: cardWidth,
+          height: cardHeight,
           borderColor: theme.colors.primary,
           opacity: pressed ? 0.7 : 1,
         },
@@ -286,6 +302,8 @@ interface NoAlbumCardProps {
 
 export function NoAlbumCard({ count, onPress, style }: NoAlbumCardProps) {
   const { theme } = useTheme();
+  const { width } = useWindowDimensions();
+  const { cardWidth, cardHeight } = getAlbumCardDimensions(width);
   return (
     <Pressable
       onPress={onPress}
@@ -293,6 +311,8 @@ export function NoAlbumCard({ count, onPress, style }: NoAlbumCardProps) {
         styles.card,
         styles.noAlbumCard,
         {
+          width: cardWidth,
+          height: cardHeight,
           borderColor: theme.colors.border,
           backgroundColor: pressed
             ? (theme.dark ? '#1A1A1A' : '#E8E3D8')
@@ -357,8 +377,6 @@ export function NewAlbumRow({ onPress, style }: { onPress?: () => void; style?: 
 const styles = StyleSheet.create({
   // AlbumCard
   card: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
     borderRadius: radii.xl,
     overflow: 'hidden',
     backgroundColor: dark[300],

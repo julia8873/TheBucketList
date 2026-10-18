@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import { useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect, useRouter, useNavigation } from 'expo-router';
+import { useFocusEffect, useRouter, useNavigation, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '@bucketlist/ui';
 import { useFeed, useExploreFeed, useFriendsAlbums, useExploreAlbums } from '../../src/hooks/useFeed';
 import { useSearchUsers } from '../../src/hooks/useSocial';
@@ -23,10 +23,14 @@ export default function FeedScreen() {
   const navigation = useNavigation();
   const { user } = useAuthStore();
   const { height: windowHeight } = useWindowDimensions();
+  const params = useLocalSearchParams<{ tab?: string; filter?: string }>();
 
   const [homeTab, setHomeTabState] = useState<'friends' | 'explore'>('friends');
   const setHomeTab = (tab: 'friends' | 'explore') => {
     setHomeTabState(tab);
+    if (tab === 'friends' && contentFilter === 'colecciones') {
+      setContentFilter('todo');
+    }
     void AsyncStorage.setItem('@feed_home_tab', tab).catch(() => undefined);
   };
 
@@ -43,14 +47,31 @@ export default function FeedScreen() {
   };
 
   useEffect(() => {
+    if (params.tab === 'explore' || params.tab === 'friends') {
+      setHomeTabState(params.tab);
+      void AsyncStorage.setItem('@feed_home_tab', params.tab).catch(() => undefined);
+    }
+    if (params.filter === 'colecciones' || params.filter === 'todo' || params.filter === 'tareas' || params.filter === 'albumes') {
+      setContentFilterState(params.filter as ContentFilter);
+      void AsyncStorage.setItem('@feed_content_filter', params.filter).catch(() => undefined);
+    }
+  }, [params.tab, params.filter]);
+
+  useEffect(() => {
     AsyncStorage.getItem('@feed_home_tab').then((saved) => {
-      if (saved === 'friends' || saved === 'explore') setHomeTabState(saved);
+      if (!params.tab && (saved === 'friends' || saved === 'explore')) setHomeTabState(saved);
     }).catch(() => undefined);
     AsyncStorage.getItem('@feed_view_mode').then((saved) => {
       if (saved === 'list' || saved === 'gallery' || saved === 'compact') setViewModeState(saved as TaskViewMode);
     }).catch(() => undefined);
     AsyncStorage.getItem('@feed_content_filter').then((saved) => {
-      if (saved === 'todo' || saved === 'tareas' || saved === 'albumes') setContentFilterState(saved as ContentFilter);
+      if (!params.filter && (saved === 'todo' || saved === 'tareas' || saved === 'albumes' || saved === 'colecciones')) {
+        if (saved === 'colecciones' && homeTab === 'friends') {
+          setContentFilterState('todo');
+        } else {
+          setContentFilterState(saved as ContentFilter);
+        }
+      }
     }).catch(() => undefined);
   }, []);
 
@@ -248,6 +269,7 @@ export default function FeedScreen() {
           exploreBuckets={exploreBuckets}
           exploreAlbums={exploreAlbums}
           contentFilter={contentFilter}
+          onChangeContentFilter={setContentFilter}
           manualRefreshing={manualRefreshingExplore}
           onRefresh={handleRefreshExplore}
           hasNextPage={hasNextExplore}

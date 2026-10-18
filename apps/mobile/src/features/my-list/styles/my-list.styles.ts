@@ -43,14 +43,14 @@ export const styles = StyleSheet.create({
   },
   tagFilterBtn: {
     height: 34,
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     borderRadius: 17,
     borderWidth: 1,
     borderColor: '#333333',
     backgroundColor: '#1A1A1A',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   tagFilterBtnActive: {
     borderColor: gold[400],
@@ -63,14 +63,14 @@ export const styles = StyleSheet.create({
   },
   activeTagChip: {
     height: 34,
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     borderRadius: 17,
     borderWidth: 1,
     borderColor: '#2A2A2A',
     backgroundColor: '#1A1A1A',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   activeTagDot: { width: 8, height: 8, borderRadius: 4 },
   activeTagEmoji: {
@@ -113,7 +113,7 @@ export const styles = StyleSheet.create({
     marginBottom: 14,
   },
   compactList: {
-    gap: 10,
+    gap: 12,
   },
   expiredHeader: {
     fontFamily: 'PlayfairDisplay_700Bold',
@@ -331,7 +331,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
-    marginBottom: 12,
+    marginBottom: 16,
   },
   compactNewAlbumBtn: {
     flexDirection: 'row',
@@ -398,5 +398,35 @@ export const styles = StyleSheet.create({
   empty: {
     paddingTop: 60,
     alignItems: 'center',
+  },
+  exploreCollectionsBanner: {
+    marginTop: 20,
+    marginBottom: 40,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  exploreCollectionsIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  exploreCollectionsTextWrap: {
+    flex: 1,
+  },
+  exploreCollectionsTitle: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 15,
+    marginBottom: 2,
+  },
+  exploreCollectionsSubtitle: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
   },
 });

@@ -157,27 +157,27 @@ export default function RegisterScreen() {
 
   const usernameMessage =
     usernameStatus === 'available' ? t('onboarding.username_available', { u: cleanUsername })
-    : usernameStatus === 'taken' ? t('onboarding.username_taken', { u: cleanUsername })
-    : usernameStatus === 'invalid' ? t('onboarding.username_invalid')
-    : usernameStatus === 'checking' ? t('onboarding.checking')
-    : null;
+      : usernameStatus === 'taken' ? t('onboarding.username_taken', { u: cleanUsername })
+        : usernameStatus === 'invalid' ? t('onboarding.username_invalid')
+          : usernameStatus === 'checking' ? t('onboarding.checking')
+            : null;
 
   const usernameTone =
     usernameStatus === 'available' ? 'ok'
-    : usernameStatus === 'taken' || usernameStatus === 'invalid' ? 'error'
-    : 'muted';
+      : usernameStatus === 'taken' || usernameStatus === 'invalid' ? 'error'
+        : 'muted';
 
   const emailMessage =
     emailStatus === 'available' ? t('auth.email_available')
-    : emailStatus === 'taken' ? t('auth.err_exists')
-    : emailStatus === 'invalid' && cleanEmail.length > 0 ? t('auth.err_email_invalid')
-    : emailStatus === 'checking' ? t('onboarding.checking')
-    : null;
+      : emailStatus === 'taken' ? t('auth.err_exists')
+        : emailStatus === 'invalid' && cleanEmail.length > 0 ? t('auth.err_email_invalid')
+          : emailStatus === 'checking' ? t('onboarding.checking')
+            : null;
 
   const emailTone =
     emailStatus === 'available' ? 'ok'
-    : emailStatus === 'taken' || (emailStatus === 'invalid' && cleanEmail.length > 0) ? 'error'
-    : 'muted';
+      : emailStatus === 'taken' || (emailStatus === 'invalid' && cleanEmail.length > 0) ? 'error'
+        : 'muted';
 
   const isPasswordShort = password.length > 0 && password.length < 8;
   const passwordMessage = isPasswordShort ? t('auth.err_password_short') : null;

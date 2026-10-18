@@ -30,6 +30,8 @@ interface TagFilterSheetProps {
   ctaLabel?: string;
   /** Modo `assign`: crear una etiqueta nueva sin salir del menú. */
   onCreate?: () => void;
+  /** Tipo de entidad para el texto del botón: 'task' (por defecto) o 'album'. */
+  itemType?: 'task' | 'album';
   /** Contenido extra dentro de la hoja (p. ej. otra hoja anidada). */
   overlay?: React.ReactNode;
 }
@@ -53,6 +55,7 @@ export function TagFilterSheet({
   mode = 'filter',
   ctaLabel: ctaLabelProp,
   onCreate,
+  itemType = 'task',
   overlay,
 }: TagFilterSheetProps) {
   const assign = mode === 'assign';
@@ -89,13 +92,16 @@ export function TagFilterSheet({
   };
 
   const n = selectedIds.length > 0 ? matchCount : totalCount;
+  const isAlbum = itemType === 'album';
   const ctaLabel =
     ctaLabelProp ??
     (assign
       ? 'Guardar etiquetas'
       : selectedIds.length > 0
-        ? `Ver ${n} ${n === 1 ? 'tarea' : 'tareas'}`
-        : 'Ver todas las tareas');
+        ? `Ver ${n} ${n === 1 ? (isAlbum ? 'álbum' : 'tarea') : (isAlbum ? 'álbumes' : 'tareas')}`
+        : isAlbum
+          ? 'Ver todos los álbumes'
+          : 'Ver todas las tareas');
 
   return (
     <TagSheetShell visible={visible} onClose={onClose} fixedHeight={TAG_SHEET_H}>

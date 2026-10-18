@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
-import Constants from 'expo-constants';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as Device from 'expo-device';
+import { makeRedirectUri } from 'expo-auth-session';
 
 /** APP_ENV: 'local' | 'staging' | 'prod' */
 const APP_ENV =
@@ -87,17 +88,69 @@ export function normalizeStorageUrl<T extends string | null | undefined>(url: T)
   return `${base.replace(/\/$/, '')}${url.slice(i)}` as T;
 }
 
+const isExpoGoEnvironment =
+  Constants.appOwnership === 'expo' ||
+  Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
 /**
  * URL a la que Supabase redirige tras verificar el correo / restablecer la contraseña.
- * - Web: EXPO_PUBLIC_SITE_URL (producción) o el origen actual.
- * - Nativo: deep link `bucketlist://<path>`.
- * Debe estar en Authentication → URL Configuration → Redirect URLs de Supabase.
+ * - Web: origen local en desarrollo (__DEV__) o EXPO_PUBLIC_SITE_URL en producción.
+ * - Expo Go: deep link `exp://...` para no activar la app instalada en el dispositivo.
+ * - Nativo standalone: deep link `bucketlist://<path>`.
  */
 export function getAuthRedirectUrl(path = ''): string {
-  const site = process.env['EXPO_PUBLIC_SITE_URL'];
+  const normalizedPath = path.replace(/^\//, '');
+
   if (Platform.OS === 'web') {
-    if (site) return site.replace(/\/$/, '');
-    if (typeof window !== 'undefined' && window.location?.origin) return window.location.origin;
+    if (typeof window !== 'undefined' && window.location?.origin) {
+      if (__DEV__ || !process.env['EXPO_PUBLIC_SITE_URL']) {
+        return normalizedPath ? `${window.location.origin}/${normalizedPath}` : window.location.origin;
+      }
+    }
+    const site = process.env['EXPO_PUBLIC_SITE_URL'];
+    if (site) {
+      return normalizedPath ? `${site.replace(/\/$/, '')}/${normalizedPath}` : site.replace(/\/$/, '');
+    }
+    if (typeof window !== 'undefined' && window.location?.origin) {
+      return normalizedPath ? `${window.location.origin}/${normalizedPath}` : window.location.origin;
+    }
   }
-  return `bucketlist://${path}`;
+
+  // En Expo Go no debemos usar scheme 'bucketlist' porque Android/iOS abrirá la app real instalada
+  if (isExpoGoEnvironment) {
+    return makeRedirectUri({ path: normalizedPath });
+  }
+
+  return `bucketlist://${normalizedPath}`;
 }
+
+/**
+ * URL de redirección para flujos OAuth (ej: Google Login con Supabase).
+ * En desarrollo local (Expo Go o Web local), garantiza que la sesión retorne
+ * al entorno de depuración activo y no sea interceptada por la app de producción instalada.
+ */
+export function getOAuthRedirectUri(mode: 'login' | 'register' = 'login'): string {
+  // 1. En Web: usar siempre el origen del navegador actual (ej. http://localhost:8081/auth/callback)
+  if (Platform.OS === 'web') {
+    if (typeof window !== 'undefined' && window.location?.origin) {
+      return `${window.location.origin}/auth/callback?mode=${mode}`;
+    }
+  }
+
+  // 2. En Expo Go: omitir 'scheme: bucketlist' para generar 'exp://...'
+  // De esta forma, el sistema operativo devuelve el callback a Expo Go y no a la app real instalada
+  if (isExpoGoEnvironment) {
+    return makeRedirectUri({
+      path: 'auth/callback',
+      queryParams: { mode },
+    });
+  }
+
+  // 3. En compilaciones nativas (Standalone / Dev Client):
+  return makeRedirectUri({
+    scheme: 'bucketlist',
+    path: 'auth/callback',
+    queryParams: { mode },
+  });
+}
+

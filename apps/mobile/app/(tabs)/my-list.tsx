@@ -17,7 +17,7 @@ import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Search, X, Plus, ChevronLeft } from 'lucide-react-native';
+import { Search, X, Plus, ChevronLeft, Sparkles, ChevronRight } from 'lucide-react-native';
 import { DraggableTaskList } from '@/components/DraggableTaskList';
 import { BulkTaskActionBar } from '@/components/BulkTaskActionBar';
 import { CalendarTab } from '@/components/CalendarTab';
@@ -527,8 +527,16 @@ export default function MyListScreen() {
             }
           >
             <AlbumListHeaderControls
+              albumFilter={state.albumFilter}
+              setAlbumFilter={state.setAlbumFilter}
               albumPriorityFilter={state.albumPriorityFilter}
               setAlbumPriorityFilter={state.setAlbumPriorityFilter}
+              onOpenTagFilterSheet={() => state.setTagSheetOpen(true)}
+              selectedTagIds={state.selectedTagIds}
+              selectedTags={state.selectedTags}
+              onRemoveTagFilter={(id) =>
+                state.setSelectedTagIds((prev) => prev.filter((x) => x !== id))
+              }
               albumViewMode={state.albumViewMode}
               setAlbumViewMode={state.setAlbumViewMode}
               albumsCount={state.filteredAlbums.length}
@@ -544,6 +552,8 @@ export default function MyListScreen() {
 
             {state.isLoadingAlbums ? (
               <View style={styles.albumGrid}>
+                <AlbumCardSkeleton />
+                <AlbumCardSkeleton />
                 <AlbumCardSkeleton />
                 <AlbumCardSkeleton />
               </View>
@@ -684,6 +694,54 @@ export default function MyListScreen() {
                 <NewAlbumCard onPress={() => router.push('/(modals)/create-album')} />
               </View>
             )}
+
+            {/* Botón para descubrir colecciones prediseñadas en Explorar */}
+            <Pressable
+              style={({ pressed }) => [
+                styles.exploreCollectionsBanner,
+                {
+                  backgroundColor: theme.dark ? '#181818' : '#FAF6EE',
+                  borderColor: theme.dark ? 'rgba(212,177,58,0.25)' : 'rgba(212,177,58,0.35)',
+                },
+                pressed && { opacity: 0.85, transform: [{ scale: 0.99 }] },
+              ]}
+              onPress={() => {
+                router.push({
+                  pathname: '/(tabs)/feed',
+                  params: { tab: 'explore', filter: 'colecciones' },
+                } as any);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Explorar colecciones prediseñadas"
+            >
+              <View
+                style={[
+                  styles.exploreCollectionsIconWrap,
+                  { backgroundColor: theme.dark ? 'rgba(212,177,58,0.15)' : 'rgba(212,177,58,0.18)' },
+                ]}
+              >
+                <Sparkles size={20} color={gold[400]} />
+              </View>
+              <View style={styles.exploreCollectionsTextWrap}>
+                <Text
+                  style={[
+                    styles.exploreCollectionsTitle,
+                    { color: theme.colors.foreground },
+                  ]}
+                >
+                  Colecciones prediseñadas
+                </Text>
+                <Text
+                  style={[
+                    styles.exploreCollectionsSubtitle,
+                    { color: theme.colors.foregroundMuted },
+                  ]}
+                >
+                  Descubre ideas y clona álbumes temáticos
+                </Text>
+              </View>
+              <ChevronRight size={18} color={gold[400]} />
+            </Pressable>
           </ScrollView>
         </View>
       )}
@@ -696,8 +754,9 @@ export default function MyListScreen() {
         visible={state.tagSheetOpen}
         selectedIds={state.selectedTagIds}
         onChange={state.setSelectedTagIds}
-        matchCount={state.filteredBuckets.length}
-        totalCount={state.totalCount}
+        matchCount={state.activeTab === 'albums' ? state.filteredAlbums.length : state.filteredBuckets.length}
+        totalCount={state.activeTab === 'albums' ? (state.albums?.length || 0) : state.totalCount}
+        itemType={state.activeTab === 'albums' ? 'album' : 'task'}
         onClose={() => state.setTagSheetOpen(false)}
         onManage={() => {
           state.setTagSheetOpen(false);

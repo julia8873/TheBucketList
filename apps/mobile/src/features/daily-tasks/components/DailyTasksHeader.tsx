@@ -41,7 +41,7 @@ const DAILY_PRIORITY_OPTIONS: Array<{ key: string; label: string; desc: string }
 ];
 
 const DAILY_PRIORITY_SHORT_LABEL: Record<string, string> = {
-  all: 'Filtrar por prioridad',
+  all: 'Prioridad',
   urgent: 'Prioridad: 🚨 Urgente',
   high: 'Prioridad: 🔴 Alta',
   medium: 'Prioridad: 🟡 Media',
@@ -335,7 +335,7 @@ export function DailyTasksScrollControls({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={[
           styles.tagsFilterScroll,
-          { paddingLeft: 16, paddingRight: 32, gap: 8 },
+          { paddingLeft: 16, paddingRight: 32, gap: 10 },
         ]}
         style={{ marginHorizontal: -16 }}
       >
@@ -377,9 +377,35 @@ export function DailyTasksScrollControls({
               ? 'Estado: Pendientes'
               : statusFilter === 'completed'
               ? 'Estado: Completadas'
-              : 'Filtrar por estado'}
+              : 'Estado'}
           </Text>
           <ChevronDown size={14} color={isStatusActive ? gold[400] : theme.colors.foregroundMuted} />
+        </Pressable>
+
+        {/* Filtrar por prioridad */}
+        <Pressable
+          style={[
+            styles.tagFilterPill,
+            {
+              backgroundColor: isPriorityActive
+                ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.14)')
+                : theme.colors.surface,
+              borderColor: isPriorityActive ? gold[400] : theme.colors.border,
+            },
+          ]}
+          onPress={() => setPrioritySheetVisible(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Filtrar por prioridad"
+        >
+          <Text
+            style={[
+              styles.tagFilterText,
+              { color: isPriorityActive ? gold[400] : theme.colors.foregroundMuted },
+            ]}
+          >
+            {DAILY_PRIORITY_SHORT_LABEL[priorityFilter] || 'Prioridad'}
+          </Text>
+          <ChevronDown size={14} color={isPriorityActive ? gold[400] : theme.colors.foregroundMuted} />
         </Pressable>
 
         {/* Botón Etiquetas */}
@@ -412,32 +438,6 @@ export function DailyTasksScrollControls({
               ? `Etiquetas (${selectedTagFilters.length})`
               : 'Etiquetas'}
           </Text>
-        </Pressable>
-
-        {/* Filtrar por prioridad */}
-        <Pressable
-          style={[
-            styles.tagFilterPill,
-            {
-              backgroundColor: isPriorityActive
-                ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.14)')
-                : theme.colors.surface,
-              borderColor: isPriorityActive ? gold[400] : theme.colors.border,
-            },
-          ]}
-          onPress={() => setPrioritySheetVisible(true)}
-          accessibilityRole="button"
-          accessibilityLabel="Filtrar por prioridad"
-        >
-          <Text
-            style={[
-              styles.tagFilterText,
-              { color: isPriorityActive ? gold[400] : theme.colors.foregroundMuted },
-            ]}
-          >
-            {DAILY_PRIORITY_SHORT_LABEL[priorityFilter] || 'Filtrar por prioridad'}
-          </Text>
-          <ChevronDown size={14} color={isPriorityActive ? gold[400] : theme.colors.foregroundMuted} />
         </Pressable>
 
         {/* Etiquetas activas individuales seleccionadas con icono/emoji y nombre */}
