@@ -291,10 +291,8 @@ export default function PublicProfileScreen() {
               onChangeFilter={setAlbumFilter}
               albumsLoading={albumsLoading}
               filteredAlbums={filteredAlbums}
-              isAlbumFavorite={isAlbumFavorite}
-              onToggleFavoriteAlbum={(albumId, isFav) => {
-                toggleFavoriteAlbum.mutate({ albumId, currentlyFavorite: isFav });
-              }}
+              isAlbumFavorite={() => false}
+              onToggleFavoriteAlbum={undefined}
               hasUser={!!user}
             />
           )}

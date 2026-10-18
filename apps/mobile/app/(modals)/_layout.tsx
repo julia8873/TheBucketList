@@ -10,6 +10,8 @@ export default function ModalsLayout() {
       <Stack.Screen name="edit-bucket" options={{ presentation: 'modal' }} />
       <Stack.Screen name="notification-prefs" options={{ presentation: 'modal' }} />
       <Stack.Screen name="change-credential" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="liked-content" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="saved-albums" options={{ presentation: 'modal' }} />
     </Stack>
   );
 }

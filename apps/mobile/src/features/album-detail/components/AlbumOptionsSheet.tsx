@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import {
   Star,
+  Bookmark,
   RotateCcw,
   CheckCircle2,
   FolderPlus,
@@ -40,6 +41,7 @@ interface AlbumOptionsSheetProps {
   sheetMode: SheetMode;
   sheetTranslateY: Animated.Value;
   isFav: boolean;
+  isSaved?: boolean;
   isOwner: boolean;
   isCollaborator: boolean;
   canEdit: boolean;
@@ -55,6 +57,7 @@ interface AlbumOptionsSheetProps {
   coverAspectRatio?: '1:1' | '16:9' | '3:4';
   onClose: () => void;
   onToggleFavorite: () => void;
+  onToggleSave?: () => void;
   onToggleAllTasks: () => void;
   onCopyAlbum: () => void;
   onShare: () => void;
@@ -79,6 +82,7 @@ export function AlbumOptionsSheet({
   sheetMode,
   sheetTranslateY,
   isFav,
+  isSaved = false,
   isOwner,
   isCollaborator,
   canEdit,
@@ -94,6 +98,7 @@ export function AlbumOptionsSheet({
   coverAspectRatio,
   onClose,
   onToggleFavorite,
+  onToggleSave,
   onToggleAllTasks,
   onCopyAlbum,
   onShare,
@@ -149,12 +154,23 @@ export function AlbumOptionsSheet({
                 bounces={false}
               >
                 <View style={styles.sheetOptions}>
-                  {currentUserId && albumId !== 'unassigned' && (
+                  {currentUserId && albumId !== 'unassigned' && canEdit && (
                     <SheetOption
                       icon={<Star color="#D4B13A" fill={isFav ? '#D4B13A' : 'transparent'} size={20} />}
                       title={isFav ? 'Quitar de favoritos' : 'Marcar como favorito'}
                       subtitle={isFav ? 'Elimina este álbum de tu lista de favoritos' : 'Guarda este álbum en tus favoritos'}
                       onPress={onToggleFavorite}
+                    />
+                  )}
+                  {currentUserId && albumId !== 'unassigned' && !canEdit && onToggleSave && (
+                    <SheetOption
+                      icon={<Bookmark color="#D4B13A" fill={isSaved ? '#D4B13A' : 'transparent'} size={20} />}
+                      title={isSaved ? 'Quitar de guardados' : 'Guardar álbum'}
+                      subtitle={isSaved ? 'Elimina este álbum de tus álbumes guardados' : 'Guarda este álbum en tu sección de álbumes guardados'}
+                      onPress={() => {
+                        onClose();
+                        onToggleSave();
+                      }}
                     />
                   )}
                   {canEdit && tasksLength > 0 && (

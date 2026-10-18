@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, View, Pressable, Animated, ActivityIndicator, Alert, StyleSheet, TextInput, ScrollView } from 'react-native';
 import { Typography, toast } from '@bucketlist/ui';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
-import { X, Camera, FolderPlus, ListPlus, Trash2, Circle, MoreHorizontal, CheckCircle2, Check, Eye, Users, Lock, ArrowLeft, FolderOpen, Image as ImageIcon, Tag, LogOut, Flag, Star, Crop, Link2 } from 'lucide-react-native';
+import { X, Camera, FolderPlus, ListPlus, Trash2, Circle, MoreHorizontal, CheckCircle2, Check, Eye, Users, Lock, ArrowLeft, FolderOpen, Image as ImageIcon, Tag, LogOut, Flag, Star, Crop, Link2, Bookmark } from 'lucide-react-native';
 import { styles } from '@/features/bucket-detail/styles/bucket-detail.styles';
 
 type BucketBottomSheetProps = {
@@ -16,6 +16,8 @@ type BucketBottomSheetProps = {
   isCollaborator?: boolean;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
+  isSaved?: boolean;
+  onToggleSave?: () => void;
   onLeaveCollaboration?: () => void;
   uploadPhotos: () => void;
   uploadCover: () => void;
@@ -44,7 +46,7 @@ type BucketBottomSheetProps = {
 };
 
 export function BucketBottomSheet({
-  sheetVisible, sheetMode, sheetTranslateY, closeSheet, theme, isOwner, canEdit, isCollaborator, isFavorite, onToggleFavorite, onLeaveCollaboration, uploadPhotos, uploadCover, pickAndUploadCover, takePhotoAndUploadCover, openCoverLinkModal, recropCurrentCover, removeCover, loadAlbums, user, copyBucket, id, handleDelete, bucket, handleChangeStatus, handleChangeVisibility, handleChangeCategory, handleChangePriority, setSheetMode, albumsLoading, toggleAlbum, removeAllAlbums, albums, bucketAlbums, categories
+  sheetVisible, sheetMode, sheetTranslateY, closeSheet, theme, isOwner, canEdit, isCollaborator, isFavorite, onToggleFavorite, isSaved, onToggleSave, onLeaveCollaboration, uploadPhotos, uploadCover, pickAndUploadCover, takePhotoAndUploadCover, openCoverLinkModal, recropCurrentCover, removeCover, loadAlbums, user, copyBucket, id, handleDelete, bucket, handleChangeStatus, handleChangeVisibility, handleChangeCategory, handleChangePriority, setSheetMode, albumsLoading, toggleAlbum, removeAllAlbums, albums, bucketAlbums, categories
 }: BucketBottomSheetProps) {
   const [albumSearchQuery, setAlbumSearchQuery] = useState('');
   const visibilityLabel = (v: string) => {
@@ -92,7 +94,7 @@ export function BucketBottomSheet({
               </View>
 
               <View style={styles.sheetOptions}>
-                {user && onToggleFavorite && (
+                {canEdit && user && onToggleFavorite && (
                   <Pressable style={styles.sheetOption} onPress={onToggleFavorite}>
                     <View style={styles.sheetIcon}>
                       <Star
@@ -107,6 +109,26 @@ export function BucketBottomSheet({
                       </Typography>
                       <Typography variant="caption" color={theme.colors.foregroundMuted}>
                         {isFavorite ? 'Elimina la tarea de tus favoritas' : 'Añade la tarea a tus favoritas'}
+                      </Typography>
+                    </View>
+                  </Pressable>
+                )}
+
+                {!canEdit && user && onToggleSave && (
+                  <Pressable style={styles.sheetOption} onPress={onToggleSave}>
+                    <View style={styles.sheetIcon}>
+                      <Bookmark
+                        color={gold[400]}
+                        fill={isSaved ? gold[400] : 'transparent'}
+                        size={21}
+                      />
+                    </View>
+                    <View style={styles.sheetOptionText}>
+                      <Typography variant="bodySemibold">
+                        {isSaved ? 'Quitar de guardados' : 'Guardar tarea'}
+                      </Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>
+                        {isSaved ? 'Elimina la tarea de tus guardados' : 'Guarda esta tarea para consultarla más tarde'}
                       </Typography>
                     </View>
                   </Pressable>

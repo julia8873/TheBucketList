@@ -17,6 +17,8 @@ import {
   Share as ShareIcon,
   MoreHorizontal,
   Star,
+  Heart,
+  Bookmark,
   Bell,
   Search,
   ArrowUp,
@@ -26,7 +28,7 @@ import {
   CheckCircle2,
   FolderPlus,
 } from 'lucide-react-native';
-import { Skeleton } from '@bucketlist/ui';
+import { Skeleton, Avatar } from '@bucketlist/ui';
 
 import { TaskRowSkeleton } from '@/components/TaskSkeletons';
 import { TaskItem } from '@/services/api/albumsService';
@@ -316,7 +318,7 @@ export default function AlbumDetailScreen() {
 
             {state.id !== 'unassigned' && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                {state.currentUserId && (
+                {state.canEdit && state.currentUserId && (
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={state.isFav ? 'Quitar de favoritos' : 'Marcar como favorito'}
@@ -335,6 +337,36 @@ export default function AlbumDetailScreen() {
                       strokeWidth={1.8}
                     />
                   </Pressable>
+                )}
+                {!state.canEdit && state.currentUserId && (
+                  <>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={state.isLiked ? 'Quitar me gusta' : 'Dar me gusta'}
+                      style={styles.heroBtn}
+                      onPress={state.handleToggleLikeAlbum}
+                    >
+                      <Heart
+                        size={20}
+                        color={state.isLiked ? '#EF4444' : '#F3EEE3'}
+                        fill={state.isLiked ? '#EF4444' : 'transparent'}
+                        strokeWidth={1.8}
+                      />
+                    </Pressable>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={state.isSaved ? 'Quitar de guardados' : 'Guardar álbum'}
+                      style={styles.heroBtn}
+                      onPress={state.handleToggleSaveAlbum}
+                    >
+                      <Bookmark
+                        size={20}
+                        color={state.isSaved ? '#D4B13A' : '#F3EEE3'}
+                        fill={state.isSaved ? '#D4B13A' : 'transparent'}
+                        strokeWidth={1.8}
+                      />
+                    </Pressable>
+                  </>
                 )}
                 {state.currentUserId && (
                   <Pressable
@@ -429,6 +461,75 @@ export default function AlbumDetailScreen() {
         ) : album.description ? (
           <Text style={styles.albumDescription}>{album.description}</Text>
         ) : null}
+
+        {/* Creadores del álbum */}
+        {album.owner && state.id !== 'unassigned' && (
+          <View style={{ paddingHorizontal: 20, marginTop: 12, marginBottom: 6 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: '#8F8F8F' }}>
+                {state.albumCollaborators?.length ? 'Creadores:' : 'Creado por:'}
+              </Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                {/* Propietario */}
+                <Pressable
+                  onPress={() => state.router.push(`/profile/${album.owner!.id}` as any)}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                    backgroundColor: 'rgba(255,255,255,0.06)',
+                    paddingHorizontal: 8,
+                    paddingVertical: 4,
+                    borderRadius: 20,
+                    borderWidth: 1,
+                    borderColor: '#D4B13A',
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Perfil de ${album.owner.display_name || album.owner.username}`}
+                >
+                  <Avatar
+                    source={album.owner.avatar_url ? { uri: album.owner.avatar_url } : undefined}
+                    fallback={(album.owner.display_name || album.owner.username || '?').charAt(0).toUpperCase()}
+                    size="xs"
+                  />
+                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#F3EEE3' }}>
+                    {album.owner.display_name || album.owner.username}
+                  </Text>
+                </Pressable>
+
+                {/* Colaboradores aceptados */}
+                {state.albumCollaborators?.filter((c: any) => c.status === 'accepted' && c.id !== album.owner?.id).map((collab: any) => (
+                  <Pressable
+                    key={collab.id}
+                    onPress={() => state.router.push(`/profile/${collab.id}` as any)}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                      backgroundColor: 'rgba(255,255,255,0.06)',
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 20,
+                      borderWidth: 1,
+                      borderColor: 'rgba(255,255,255,0.12)',
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Perfil de ${collab.display_name || collab.username}`}
+                  >
+                    <Avatar
+                      source={collab.avatar_url ? { uri: collab.avatar_url } : undefined}
+                      fallback={(collab.display_name || collab.username || '?').charAt(0).toUpperCase()}
+                      size="xs"
+                    />
+                    <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: '#D4B13A' }}>
+                      {collab.display_name || collab.username}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        )}
 
         {/* Etiquetas del álbum */}
         {(state.albumTags.length > 0 || (state.canEdit && state.id !== 'unassigned')) && (
@@ -678,6 +779,7 @@ export default function AlbumDetailScreen() {
         sheetMode={state.sheetMode}
         sheetTranslateY={state.sheetTranslateY}
         isFav={state.isFav}
+        isSaved={state.isSaved}
         isOwner={state.isOwner}
         isCollaborator={state.isCollaborator}
         canEdit={state.canEdit}
@@ -698,6 +800,7 @@ export default function AlbumDetailScreen() {
             currentlyFavorite: state.isFav,
           })
         }
+        onToggleSave={state.handleToggleSaveAlbum}
         onToggleAllTasks={state.handleToggleAllTasks}
         onCopyAlbum={state.handleCopyEntireAlbum}
         onShare={state.handleShare}

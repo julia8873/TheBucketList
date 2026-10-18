@@ -22,7 +22,14 @@ import { useAuthStore } from '@/stores/auth.store';
 import { CollaboratorItem } from '@/components/CollaboratorPickerSheet';
 import { useUserFavorites, useToggleFavoriteAlbum } from '@/hooks/useFavorites';
 import { useEntitySubscription } from '@/hooks/useEntityNotifications';
-import { useCopyBucket, useCopiedBucketIds } from '@/hooks/useSocial';
+import {
+  useCopyBucket,
+  useCopiedBucketIds,
+  useSavedAlbumIds,
+  useToggleSaveAlbum,
+  useUserLikedAlbumIds,
+  useToggleAlbumLike,
+} from '@/hooks/useSocial';
 import { uploadAlbumCover } from '@/services/api/albumCover';
 import { TaskSortField, TaskSortDir } from '../components/AlbumSortModal';
 import { useAlbumTags, useSyncAlbumTags } from '@/hooks/useAlbumTags';
@@ -44,6 +51,38 @@ export function useAlbumDetailState() {
   const copyBucket = useCopyBucket();
   const { data: copiedIds } = useCopiedBucketIds(currentUserId);
   const [copyingAlbum, setCopyingAlbum] = useState(false);
+  const { data: savedAlbumIds } = useSavedAlbumIds(currentUserId);
+  const toggleSaveAlbum = useToggleSaveAlbum();
+  const isSaved = !!savedAlbumIds?.includes(cleanId);
+  const handleToggleSaveAlbum = () => {
+    if (!currentUserId) return;
+    toggleSaveAlbum.mutate(
+      { userId: currentUserId, albumId: cleanId, currentlySaved: isSaved },
+      {
+        onSuccess: () => {
+          toast.success(isSaved ? 'Álbum quitado de guardados' : 'Álbum guardado');
+        },
+        onError: (err: any) => {
+          toast.error(err?.message || 'No se pudo guardar el álbum');
+        },
+      }
+    );
+  };
+
+  const { data: likedAlbumIds } = useUserLikedAlbumIds(currentUserId);
+  const toggleAlbumLike = useToggleAlbumLike();
+  const isLiked = !!likedAlbumIds?.includes(cleanId);
+  const handleToggleLikeAlbum = () => {
+    if (!currentUserId) return;
+    toggleAlbumLike.mutate(
+      { albumId: cleanId, userId: currentUserId },
+      {
+        onSuccess: () => {
+          toast.success(isLiked ? 'Me gusta eliminado' : 'Te gusta este álbum');
+        },
+      }
+    );
+  };
 
   const isSelf = (targetId?: string | null) => {
     if (!targetId || !currentUserId) return false;
@@ -1049,6 +1088,7 @@ export function useAlbumDetailState() {
           priority: album.priority || 'medium',
           visibility: 'private',
           is_shared: false,
+          copied_from_id: cleanId,
         })
         .select()
         .single();
@@ -1174,6 +1214,10 @@ export function useAlbumDetailState() {
     currentUserId,
     isFav,
     toggleFavoriteAlbum,
+    isSaved,
+    handleToggleSaveAlbum,
+    isLiked,
+    handleToggleLikeAlbum,
     copiedIds,
     copyingAlbum,
     album,

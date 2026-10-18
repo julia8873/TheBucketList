@@ -3,13 +3,13 @@ import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { Check, Heart, MessageCircle } from 'lucide-react-native';
+import { Check, Heart, MessageCircle, Bookmark } from 'lucide-react-native';
 import { Avatar, fontFamily, gold, useTheme, toast } from '@bucketlist/ui';
 import { BucketCover } from './BucketCover';
 import { TaskCommentsModal } from './TaskCommentsModal';
 import { resolveTaskImage } from '../utils/taskImage';
 import { useAuthStore } from '../stores/auth.store';
-import { useCopiedBucketIds, useCopyBucket, useToggleLike } from '../hooks/useSocial';
+import { useCopiedBucketIds, useCopyBucket, useToggleLike, useBatchBucketSaveCounts, useSavedBucketIds, useToggleSaveBucket } from '../hooks/useSocial';
 import { daysBetween, timeAgo } from '../utils/timeAgo';
 import { displayNameOf, initialsOf } from '../utils/initials';
 
@@ -37,12 +37,23 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
   const toggleLike = useToggleLike();
   const copyBucket = useCopyBucket();
   const { data: copiedIds } = useCopiedBucketIds(user?.id);
+  const { data: saveCounts } = useBatchBucketSaveCounts(event?.bucket?.id ? [event.bucket.id] : []);
+  const saveCount = saveCounts?.[event?.bucket?.id] ?? 0;
 
   const actor = event?.actor;
   const bucket = event?.bucket;
+  const isOwn = !!user && !!bucket && bucket.user_id === user.id;
+  const { data: savedBucketIds } = useSavedBucketIds(isOwn ? undefined : user?.id);
+  const toggleSaveBucket = useToggleSaveBucket();
+
   if (!actor || !bucket) return null;
 
-  const isOwn = !!user && bucket.user_id === user.id;
+  const isBucketSaved = !isOwn && !!user && !!savedBucketIds?.includes(bucket.id);
+
+  const handleSaveBucket = () => {
+    if (!user || isOwn) return;
+    toggleSaveBucket.mutate({ userId: user.id, bucketId: bucket.id, currentlySaved: isBucketSaved });
+  };
   // Foto subida más reciente, portada o degradado, según lo que haya elegido el dueño de la tarea.
   const coverValue: string | null = resolveTaskImage(bucket);
 
@@ -146,6 +157,17 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
                   <MessageCircle size={14} color="#F2EFE8" strokeWidth={1.8} />
                   <Text style={styles.galleryActionText}>{commentCount}</Text>
                 </Pressable>
+                {!isOwn && (
+                  <Pressable onPress={handleSaveBucket} hitSlop={6} style={styles.galleryActionItem}>
+                    <Bookmark
+                      size={13}
+                      color={isBucketSaved ? gold[400] : '#F2EFE8'}
+                      fill={isBucketSaved ? gold[400] : 'transparent'}
+                      strokeWidth={1.8}
+                    />
+                    {saveCount > 0 && <Text style={styles.galleryActionText}>{saveCount}</Text>}
+                  </Pressable>
+                )}
               </View>
             </View>
           </BucketCover>
@@ -304,6 +326,26 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
           <Text style={[styles.count, { color: theme.colors.foreground }]}>{commentCount}</Text>
         </Pressable>
 
+        {!isOwn && (
+          <Pressable
+            onPress={handleSaveBucket}
+            style={styles.action}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={isBucketSaved ? 'Quitar de guardados' : 'Guardar tarea'}
+          >
+            <Bookmark
+              size={22}
+              color={isBucketSaved ? gold[400] : theme.colors.foreground}
+              fill={isBucketSaved ? gold[400] : 'transparent'}
+              strokeWidth={1.8}
+            />
+            {saveCount > 0 && (
+              <Text style={[styles.count, { color: isBucketSaved ? gold[400] : theme.colors.foreground }]}>{saveCount}</Text>
+            )}
+          </Pressable>
+        )}
+
         <View style={styles.flex} />
 
         {!isOwn && (
@@ -342,18 +384,7 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
   );
 }
 
-export const FeedCard = React.memo(FeedCardComponent, (prev, next) => {
-  return (
-    prev.event?.id === next.event?.id &&
-    prev.event?.bucket?.id === next.event?.bucket?.id &&
-    prev.event?.bucket?.updated_at === next.event?.bucket?.updated_at &&
-    prev.event?.bucket?.status === next.event?.bucket?.status &&
-    (prev.event?.bucket?.reactions?.length ?? 0) === (next.event?.bucket?.reactions?.length ?? 0) &&
-    (prev.event?.bucket?.comments?.[0]?.count ?? 0) === (next.event?.bucket?.comments?.[0]?.count ?? 0) &&
-    prev.mode === next.mode &&
-    prev.index === next.index
-  );
-});
+export const FeedCard = React.memo(FeedCardComponent);
 
 const styles = StyleSheet.create({
   container: {

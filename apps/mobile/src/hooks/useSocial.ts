@@ -328,6 +328,236 @@ export function useCopyBucket() {
         old && !old.includes(variables.bucketId) ? [...old, variables.bucketId] : old ?? [variables.bucketId]
       );
       void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+      void queryClient.invalidateQueries({ queryKey: ['bucket-save-counts'] });
     },
   });
 }
+
+// ─── Tareas guardadas (bookmark de tareas ajenas) ─────────────────────
+
+export function useSavedBucketIds(userId?: string) {
+  return useQuery({
+    queryKey: ['saved-bucket-ids', userId],
+    queryFn: () => socialApi.getSavedBucketIds(userId!),
+    enabled: !!userId,
+  });
+}
+
+export function useSavedBucketsList(userId?: string) {
+  return useQuery({
+    queryKey: ['saved-buckets-full', userId],
+    queryFn: () => socialApi.getSavedBucketsFull(userId!),
+    enabled: !!userId,
+  });
+}
+
+export function useToggleSaveBucket() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      userId,
+      bucketId,
+      currentlySaved,
+    }: {
+      userId: string;
+      bucketId: string;
+      currentlySaved: boolean;
+    }) => socialApi.toggleSaveBucket(userId, bucketId, currentlySaved),
+    onMutate: async ({ userId, bucketId, currentlySaved }) => {
+      const queryKey = ['saved-bucket-ids', userId];
+      await queryClient.cancelQueries({ queryKey });
+      const prev = queryClient.getQueryData<string[]>(queryKey);
+      queryClient.setQueryData<string[]>(queryKey, (old: string[] | undefined) => {
+        const current = old ?? [];
+        return currentlySaved ? current.filter((id) => id !== bucketId) : [...current, bucketId];
+      });
+      return { prev };
+    },
+    onError: (_err, variables, context) => {
+      if (context?.prev) {
+        queryClient.setQueryData(['saved-bucket-ids', variables.userId], context.prev);
+      }
+    },
+    onSettled: (_data, _error, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ['saved-bucket-ids', variables.userId] });
+      void queryClient.invalidateQueries({ queryKey: ['saved-buckets-full', variables.userId] });
+      void queryClient.invalidateQueries({ queryKey: ['bucket-save-counts'] });
+    },
+  });
+}
+
+// ─── Conteo de guardados / copias ──────────────────────────────────────────
+
+export function useBatchBucketSaveCounts(bucketIds: string[]) {
+  return useQuery({
+    queryKey: ['bucket-save-counts', bucketIds.sort().join(',')],
+    queryFn: () => socialApi.getBatchBucketSaveCounts(bucketIds),
+    enabled: bucketIds.length > 0,
+    staleTime: 1000 * 60,
+  });
+}
+
+export function useBatchAlbumSaveCounts(albumIds: string[]) {
+  return useQuery({
+    queryKey: ['album-save-counts', albumIds.sort().join(',')],
+    queryFn: () => socialApi.getBatchAlbumSaveCounts(albumIds),
+    enabled: albumIds.length > 0,
+    staleTime: 1000 * 60,
+  });
+}
+
+export function useBatchAlbumLikeCounts(albumIds: string[]) {
+  return useQuery({
+    queryKey: ['album-like-counts', albumIds.sort().join(',')],
+    queryFn: () => socialApi.getBatchAlbumLikeCounts(albumIds),
+    enabled: albumIds.length > 0,
+    staleTime: 1000 * 60,
+  });
+}
+
+// ─── Likes en Álbumes ────────────────────────────────────────────────────────
+
+export function useUserLikedAlbumIds(userId?: string) {
+  return useQuery({
+    queryKey: ['liked-album-ids', userId],
+    queryFn: () => socialApi.getUserLikedAlbumIds(userId!),
+    enabled: !!userId,
+  });
+}
+
+export function useToggleAlbumLike() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ albumId, userId }: { albumId: string; userId: string }) =>
+      socialApi.toggleAlbumLike(albumId, userId),
+    onMutate: async ({ albumId, userId }) => {
+      // 1. Update liked-ids list (existing)
+      const idsKey = ['liked-album-ids', userId];
+      await queryClient.cancelQueries({ queryKey: idsKey });
+      const prevIds = queryClient.getQueryData<string[]>(idsKey);
+      const alreadyLiked = (prevIds ?? []).includes(albumId);
+      queryClient.setQueryData<string[]>(idsKey, (old: string[] | undefined) => {
+        const current = old ?? [];
+        return alreadyLiked ? current.filter((id: string) => id !== albumId) : [...current, albumId];
+      });
+
+      // 2. Update like count caches optimistically
+      queryClient.setQueriesData(
+        { queryKey: ['album-like-counts'], exact: false },
+        (old: Record<string, number> | undefined) => {
+          if (!old || !(albumId in old)) return old;
+          return { ...old, [albumId]: Math.max(0, (old[albumId] ?? 0) + (alreadyLiked ? -1 : 1)) };
+        }
+      );
+
+      return { prevIds, alreadyLiked };
+    },
+    onError: (_err, variables, context) => {
+      if (context?.prevIds) {
+        queryClient.setQueryData(['liked-album-ids', variables.userId], context.prevIds);
+      }
+      // Revert count change
+      queryClient.setQueriesData(
+        { queryKey: ['album-like-counts'], exact: false },
+        (old: Record<string, number> | undefined) => {
+          if (!old || !(variables.albumId in old)) return old;
+          const wasLiked = context?.alreadyLiked ?? false;
+          return { ...old, [variables.albumId]: Math.max(0, (old[variables.albumId] ?? 0) + (wasLiked ? 1 : -1)) };
+        }
+      );
+    },
+    onSettled: (_data, _error, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ['liked-album-ids', variables.userId] });
+      void queryClient.invalidateQueries({ queryKey: ['album-like-counts'] });
+      void queryClient.invalidateQueries({ queryKey: ['liked-content', variables.userId] });
+      void queryClient.invalidateQueries({ queryKey: ['friends-albums'] });
+      void queryClient.invalidateQueries({ queryKey: ['explore-albums'] });
+    },
+  });
+}
+
+// ─── Álbumes Guardados (Bookmarking) ──────────────────────────────────────────
+
+export function useSavedAlbumIds(userId?: string) {
+  return useQuery({
+    queryKey: ['saved-album-ids', userId],
+    queryFn: () => socialApi.getSavedAlbumIds(userId!),
+    enabled: !!userId,
+  });
+}
+
+export function useSavedAlbumsList(userId?: string) {
+  return useQuery({
+    queryKey: ['saved-albums-full', userId],
+    queryFn: () => socialApi.getSavedAlbumsFull(userId!),
+    enabled: !!userId,
+  });
+}
+
+export function useToggleSaveAlbum() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      userId,
+      albumId,
+      currentlySaved,
+    }: {
+      userId: string;
+      albumId: string;
+      currentlySaved: boolean;
+    }) => socialApi.toggleSaveAlbum(userId, albumId, currentlySaved),
+    onMutate: async ({ userId, albumId, currentlySaved }) => {
+      // 1. Update saved-ids list
+      const idsKey = ['saved-album-ids', userId];
+      await queryClient.cancelQueries({ queryKey: idsKey });
+      const prevIds = queryClient.getQueryData<string[]>(idsKey);
+      queryClient.setQueryData<string[]>(idsKey, (old: string[] | undefined) => {
+        const current = old ?? [];
+        return currentlySaved ? current.filter((id: string) => id !== albumId) : [...current, albumId];
+      });
+
+      // 2. Update save count caches optimistically
+      queryClient.setQueriesData(
+        { queryKey: ['album-save-counts'], exact: false },
+        (old: Record<string, number> | undefined) => {
+          if (!old || !(albumId in old)) return old;
+          return { ...old, [albumId]: Math.max(0, (old[albumId] ?? 0) + (currentlySaved ? -1 : 1)) };
+        }
+      );
+
+      return { prevIds };
+    },
+    onError: (_err, variables, context) => {
+      if (context?.prevIds) {
+        queryClient.setQueryData(['saved-album-ids', variables.userId], context.prevIds);
+      }
+      // Revert count change
+      queryClient.setQueriesData(
+        { queryKey: ['album-save-counts'], exact: false },
+        (old: Record<string, number> | undefined) => {
+          if (!old || !(variables.albumId in old)) return old;
+          return { ...old, [variables.albumId]: Math.max(0, (old[variables.albumId] ?? 0) + (variables.currentlySaved ? 1 : -1)) };
+        }
+      );
+    },
+    onSettled: (_data, _error, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ['saved-album-ids', variables.userId] });
+      void queryClient.invalidateQueries({ queryKey: ['saved-albums-full', variables.userId] });
+      void queryClient.invalidateQueries({ queryKey: ['album-save-counts'] });
+    },
+  });
+}
+
+// ─── Contenido con Me gusta (Tareas y Álbumes) ──────────────────────────────
+
+export function useLikedContent(userId?: string) {
+  return useQuery({
+    queryKey: ['liked-content', userId],
+    queryFn: () => socialApi.getLikedContent(userId!),
+    enabled: !!userId,
+  });
+}
+

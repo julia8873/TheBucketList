@@ -5,10 +5,11 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Images, Lock, Users, Heart } from 'lucide-react-native';
+import { Images, Lock, Users, Heart, Bookmark } from 'lucide-react-native';
 import { Avatar, useTheme, gold, fontFamily, fontSize, radii } from '@bucketlist/ui';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useRouter } from 'expo-router';
 
 // Gradient fallbacks when no cover
 const COVER_GRADIENTS: Array<[string, string]> = [
@@ -44,15 +45,40 @@ export interface AlbumFeedItem {
 interface AlbumFeedCardProps {
   album: AlbumFeedItem;
   colorIndex?: number;
+  isLiked?: boolean;
+  onToggleLike?: () => void;
+  likeCount?: number;
+  isSaved?: boolean;
+  onToggleSave?: () => void;
+  saveCount?: number;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
   onPress?: () => void;
+  isOwn?: boolean;
 }
 
-export function AlbumFeedCard({ album, colorIndex = 0, isFavorite = false, onToggleFavorite, onPress }: AlbumFeedCardProps) {
+export function AlbumFeedCard({
+  album,
+  colorIndex = 0,
+  isLiked = false,
+  onToggleLike,
+  likeCount = 0,
+  isSaved = false,
+  onToggleSave,
+  saveCount = 0,
+  isFavorite = false,
+  onToggleFavorite,
+  onPress,
+  isOwn = false,
+}: AlbumFeedCardProps) {
+  const router = useRouter();
   const { theme } = useTheme();
   const [g1, g2] = COVER_GRADIENTS[colorIndex % COVER_GRADIENTS.length] ?? ['#1B4D3E', '#0A2E25'];
   const progress = album.total_tasks > 0 ? album.completed_tasks / album.total_tasks : 0;
+
+  // Backwards compatibility for onToggleFavorite / isFavorite
+  const actualSaved = isSaved || isFavorite;
+  const handleSave = onToggleSave || onToggleFavorite;
 
   // Parse cover_path JSON
   let backgroundContent: React.ReactElement;
@@ -97,32 +123,46 @@ export function AlbumFeedCard({ album, colorIndex = 0, isFavorite = false, onTog
     : '';
 
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
+    <View
+      style={[
         styles.card,
-        { opacity: pressed ? 0.9 : 1, borderColor: theme.dark ? '#2A2A2A' : '#E0D9CE' },
+        { borderColor: theme.dark ? '#2A2A2A' : '#E0D9CE' },
       ]}
     >
       {/* Cover */}
       <View style={styles.coverWrapper}>
-        {backgroundContent}
-        <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.72)']}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-          style={[StyleSheet.absoluteFill, { top: '35%' }]}
-        />
+        <Pressable
+          onPress={onPress}
+          style={({ pressed }) => [StyleSheet.absoluteFill, { opacity: pressed ? 0.92 : 1 }]}
+          accessibilityRole="button"
+          accessibilityLabel={album.title}
+        >
+          {backgroundContent}
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.72)']}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={[StyleSheet.absoluteFill, { top: '35%' }]}
+          />
+
+          {/* Cover bottom: title + progress */}
+          <View style={styles.coverBottom}>
+            <Text style={styles.title} numberOfLines={2}>{album.title}</Text>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` as any }]} />
+            </View>
+          </View>
+        </Pressable>
 
         {/* Top badge: album type */}
-        <View style={styles.topBadge}>
+        <View style={styles.topBadge} pointerEvents="none">
           <Images size={12} color="rgba(255,255,255,0.9)" strokeWidth={2} />
           <Text style={styles.topBadgeText}>Álbum</Text>
         </View>
 
         {/* Closed badge */}
         {album.is_closed && (
-          <View style={styles.closedBadge}>
+          <View style={styles.closedBadge} pointerEvents="none">
             <Lock size={10} color={gold[400]} />
             <Text style={styles.closedText}>Cerrado</Text>
           </View>
@@ -130,63 +170,110 @@ export function AlbumFeedCard({ album, colorIndex = 0, isFavorite = false, onTog
 
         {/* Shared badge */}
         {album.is_shared && (
-          <View style={styles.sharedBadge}>
+          <View style={styles.sharedBadge} pointerEvents="none">
             <Users size={10} color="#FFF" strokeWidth={2} />
             <Text style={styles.sharedText}>Compartido</Text>
           </View>
         )}
 
-        {/* Like/favorite button */}
-        {onToggleFavorite && (
-          <Pressable
-            onPress={(e) => { e.stopPropagation(); onToggleFavorite(); }}
-            hitSlop={10}
-            style={styles.heartBtn}
-            accessibilityRole="button"
-            accessibilityLabel={isFavorite ? 'Quitar de guardados' : 'Guardar álbum'}
-          >
-            <Heart
-              size={16}
-              color={isFavorite ? '#EF4444' : 'rgba(255,255,255,0.85)'}
-              fill={isFavorite ? '#EF4444' : 'transparent'}
-              strokeWidth={2}
-            />
-          </Pressable>
-        )}
+        {/* Top Right Buttons: Like and/or Save */}
+        <View style={styles.topActions} pointerEvents="box-none">
+          {onToggleLike && (
+            <Pressable
+              onPress={onToggleLike}
+              hitSlop={10}
+              style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.7 }]}
+              accessibilityRole="button"
+              accessibilityLabel={isLiked ? 'Quitar me gusta' : 'Dar me gusta'}
+            >
+              <Heart
+                size={16}
+                color={isLiked ? '#EF4444' : 'rgba(255,255,255,0.85)'}
+                fill={isLiked ? '#EF4444' : 'transparent'}
+                strokeWidth={2}
+              />
+              {likeCount > 0 && <Text style={styles.actionCount}>{likeCount}</Text>}
+            </Pressable>
+          )}
 
-        {/* Cover bottom: title + progress */}
-        <View style={styles.coverBottom}>
-          <Text style={styles.title} numberOfLines={2}>{album.title}</Text>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` as any }]} />
-          </View>
+          {!isOwn && handleSave && (
+            <Pressable
+              onPress={handleSave}
+              hitSlop={10}
+              style={({ pressed }) => [
+                styles.actionBtn,
+                actualSaved && styles.savedBtnActive,
+                pressed && { opacity: 0.7 },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={actualSaved ? 'Quitar de guardados' : 'Guardar álbum'}
+            >
+              <Bookmark
+                size={16}
+                color={actualSaved ? gold[400] : 'rgba(255,255,255,0.85)'}
+                fill={actualSaved ? gold[400] : 'transparent'}
+                strokeWidth={2}
+              />
+            </Pressable>
+          )}
         </View>
       </View>
 
       {/* Footer: owner info + meta */}
-      <View style={[styles.footer, { backgroundColor: theme.dark ? '#111' : '#FAF8F4' }]}>
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.footer,
+          { backgroundColor: theme.dark ? '#111' : '#FAF8F4', opacity: pressed ? 0.85 : 1 },
+        ]}
+        accessibilityRole="button"
+      >
         <View style={styles.ownerRow}>
-          <Avatar
-            source={album.owner?.avatar_url ? { uri: album.owner.avatar_url } : undefined}
-            fallback={ownerName.charAt(0).toUpperCase() || '?'}
-            size="xs"
-          />
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.ownerName, { color: theme.colors.foreground }]} numberOfLines={1}>
-              {ownerName}
-            </Text>
-            {timeAgo ? (
-              <Text style={[styles.timeAgo, { color: theme.colors.foregroundMuted }]}>
-                {timeAgo}
+          <Pressable
+            hitSlop={8}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}
+            onPress={(e) => {
+              e.stopPropagation();
+              if (album.owner?.id) {
+                router.push(`/profile/${album.owner.id}` as any);
+              }
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={`Perfil de ${ownerName}`}
+          >
+            <Avatar
+              source={album.owner?.avatar_url ? { uri: album.owner.avatar_url } : undefined}
+              fallback={ownerName.charAt(0).toUpperCase() || '?'}
+              size="xs"
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.ownerName, { color: theme.colors.foreground }]} numberOfLines={1}>
+                {ownerName}
               </Text>
-            ) : null}
-          </View>
+              {timeAgo ? (
+                <Text style={[styles.timeAgo, { color: theme.colors.foregroundMuted }]}>
+                  {timeAgo}
+                </Text>
+              ) : null}
+            </View>
+          </Pressable>
+
+          {/* Saves count if > 0 */}
+          {saveCount > 0 && (
+            <View style={styles.saveBadge}>
+              <Bookmark size={11} color={gold[400]} fill={gold[400]} />
+              <Text style={[styles.saveBadgeText, { color: theme.colors.foregroundMuted }]}>
+                {saveCount}
+              </Text>
+            </View>
+          )}
+
           <Text style={[styles.taskCount, { color: theme.colors.foregroundMuted }]}>
             {album.completed_tasks}/{album.total_tasks} tareas
           </Text>
         </View>
-      </View>
-    </Pressable>
+      </Pressable>
+    </View>
   );
 }
 
@@ -202,16 +289,32 @@ const styles = StyleSheet.create({
     height: 190,
     position: 'relative',
   },
-  heartBtn: {
+  topActions: {
     position: 'absolute',
     top: 10,
     right: 10,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    padding: 7,
-    borderRadius: 20,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 8,
     zIndex: 4,
+  },
+  actionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: 9,
+    paddingVertical: 7,
+    borderRadius: 20,
+    justifyContent: 'center',
+  },
+  savedBtnActive: {
+    backgroundColor: 'rgba(0,0,0,0.75)',
+  },
+  actionCount: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 12,
+    color: '#FFF',
   },
   topBadge: {
     position: 'absolute',
@@ -219,51 +322,54 @@ const styles = StyleSheet.create({
     left: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
     backgroundColor: 'rgba(0,0,0,0.55)',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 20,
+    borderRadius: 12,
+    zIndex: 2,
   },
   topBadgeText: {
     fontFamily: fontFamily.semibold,
     fontSize: 11,
     color: 'rgba(255,255,255,0.9)',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   closedBadge: {
     position: 'absolute',
     top: 10,
-    right: 10,
+    left: 85,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
+    gap: 4,
     backgroundColor: 'rgba(0,0,0,0.55)',
-    borderWidth: 1,
-    borderColor: gold[400],
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    zIndex: 2,
   },
   closedText: {
-    fontFamily: fontFamily.semibold,
-    fontSize: 10,
+    fontFamily: fontFamily.medium,
+    fontSize: 11,
     color: gold[400],
   },
   sharedBadge: {
     position: 'absolute',
     top: 10,
-    right: 10,
+    left: 85,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    backgroundColor: 'rgba(59,130,246,0.85)',
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 20,
+    gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    zIndex: 2,
   },
   sharedText: {
-    fontFamily: fontFamily.semibold,
-    fontSize: 10,
+    fontFamily: fontFamily.medium,
+    fontSize: 11,
     color: '#FFF',
   },
   coverBottom: {
@@ -271,18 +377,23 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 12,
+    padding: 16,
+    zIndex: 2,
   },
   title: {
-    fontFamily: fontFamily.semibold,
-    fontSize: fontSize.base + 1,
+    fontFamily: fontFamily.serifBold,
+    fontSize: 20,
     color: '#FFF',
+    lineHeight: 25,
     marginBottom: 8,
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   progressTrack: {
     height: 3,
     borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.22)',
+    backgroundColor: 'rgba(255,255,255,0.25)',
     overflow: 'hidden',
   },
   progressFill: {
@@ -291,25 +402,38 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   footer: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   ownerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   ownerName: {
     fontFamily: fontFamily.semibold,
-    fontSize: fontSize.sm,
+    fontSize: 13,
   },
   timeAgo: {
     fontFamily: fontFamily.regular,
-    fontSize: fontSize.xs,
+    fontSize: 11,
     marginTop: 1,
   },
+  saveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    backgroundColor: 'rgba(212, 177, 58, 0.12)',
+  },
+  saveBadgeText: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 11,
+  },
   taskCount: {
-    fontFamily: fontFamily.regular,
-    fontSize: fontSize.xs,
+    fontFamily: fontFamily.medium,
+    fontSize: 12,
   },
 });

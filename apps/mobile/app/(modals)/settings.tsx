@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Constants from 'expo-constants';
-import { Check, ChevronLeft } from 'lucide-react-native';
+import { Check, ChevronLeft, Heart, Bookmark } from 'lucide-react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fontFamily, useTheme, PageTitle } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
@@ -322,6 +322,21 @@ export default function SettingsScreen() {
             subtitle={t('settings.vibration_desc', { defaultValue: 'Vibración ligera al completar tareas diarias y del bucket list' })}
             value={hapticsEnabled}
             onChange={setHapticsEnabled}
+            last
+          />
+        </Card>
+
+        <SectionTitle gold="ACTIVIDAD" />
+        <Card>
+          <Row
+            title="Me gusta"
+            subtitle="Tareas y álbumes a los que has dado me gusta"
+            onPress={() => router.push('/(modals)/liked-content' as any)}
+          />
+          <Row
+            title="Guardados"
+            subtitle="Tareas y álbumes de otras personas que has guardado"
+            onPress={() => router.push('/(modals)/saved-albums' as any)}
             last
           />
         </Card>

@@ -10,7 +10,14 @@ import { AlbumFeedCard, type AlbumFeedItem } from '../../../components/AlbumFeed
 import { TaskViewMode } from '../../../components/ViewModeSelector';
 import type { ContentFilter } from './FeedHeader';
 import { styles } from '../styles/feed.styles';
-import { useUserFavorites, useToggleFavoriteAlbum } from '../../../hooks/useFavorites';
+import {
+  useUserLikedAlbumIds,
+  useToggleAlbumLike,
+  useSavedAlbumIds,
+  useToggleSaveAlbum,
+  useBatchAlbumSaveCounts,
+  useBatchAlbumLikeCounts,
+} from '../../../hooks/useSocial';
 import { useAuthStore } from '../../../stores/auth.store';
 
 interface ExploreFeedTabProps {
@@ -59,9 +66,16 @@ export function ExploreFeedTab({
   viewMode = 'list',
 }: ExploreFeedTabProps) {
   const router = useRouter();
-  const { user } = useAuthStore();
-  const { isAlbumFavorite } = useUserFavorites(user?.id);
-  const toggleAlbumFav = useToggleFavoriteAlbum();
+  const { user, session } = useAuthStore();
+  const currentUserId = user?.id || session?.user?.id;
+  const { data: likedAlbumIds } = useUserLikedAlbumIds(currentUserId);
+  const toggleAlbumLike = useToggleAlbumLike();
+  const { data: savedAlbumIds } = useSavedAlbumIds(currentUserId);
+  const toggleSaveAlbum = useToggleSaveAlbum();
+
+  const albumIds = React.useMemo(() => exploreAlbums.map((a) => a.id), [exploreAlbums]);
+  const { data: albumSaveCounts } = useBatchAlbumSaveCounts(albumIds);
+  const { data: albumLikeCounts } = useBatchAlbumLikeCounts(albumIds);
 
   // Combined + filtered list
   const combinedItems = React.useMemo(() => {
@@ -88,16 +102,31 @@ export function ExploreFeedTab({
     return merged;
   }, [exploreBuckets, exploreAlbums, contentFilter]);
 
+  const extraData = React.useMemo(
+    () => `${likedAlbumIds?.join(',') ?? ''}-${savedAlbumIds?.join(',') ?? ''}-${JSON.stringify(albumSaveCounts ?? {})}-${JSON.stringify(albumLikeCounts ?? {})}`,
+    [likedAlbumIds, savedAlbumIds, albumSaveCounts, albumLikeCounts]
+  );
+
   const renderItem = React.useCallback(
     ({ item, index }: { item: any; index: number }) => {
       if (item._type === 'album') {
-        const fav = isAlbumFavorite(item.id);
+        const isLiked = !!currentUserId && !!likedAlbumIds?.includes(item.id);
+        const isSaved = !!currentUserId && !!savedAlbumIds?.includes(item.id);
+        const isOwn = !!currentUserId && item.owner?.id === currentUserId;
+        const saveCount = albumSaveCounts?.[item.id] ?? 0;
+        const likeCount = albumLikeCounts?.[item.id] ?? 0;
+
         return (
           <AlbumFeedCard
             album={item}
             colorIndex={index}
-            isFavorite={fav}
-            onToggleFavorite={() => toggleAlbumFav.mutate({ albumId: item.id, currentlyFavorite: fav })}
+            isLiked={isLiked}
+            likeCount={likeCount}
+            onToggleLike={currentUserId ? () => toggleAlbumLike.mutate({ albumId: item.id, userId: currentUserId }) : undefined}
+            isSaved={isSaved}
+            onToggleSave={currentUserId && !isOwn ? () => toggleSaveAlbum.mutate({ albumId: item.id, userId: currentUserId, currentlySaved: isSaved }) : undefined}
+            saveCount={saveCount}
+            isOwn={isOwn}
             onPress={() => router.push(`/album/${item.id}` as any)}
           />
         );
@@ -117,7 +146,7 @@ export function ExploreFeedTab({
         />
       );
     },
-    [viewMode, router]
+    [viewMode, router, currentUserId, likedAlbumIds, savedAlbumIds, toggleAlbumLike, toggleSaveAlbum, albumSaveCounts, albumLikeCounts]
   );
 
   if (debouncedSearch.length >= 2) {
@@ -196,6 +225,7 @@ export function ExploreFeedTab({
       ref={listRef}
       key={`${viewMode}-${contentFilter}`}
       data={combinedItems}
+      extraData={extraData}
       keyExtractor={(item) => `${item._type ?? 'task'}-${item.id}`}
       numColumns={viewMode === 'gallery' && contentFilter !== 'albumes' ? 2 : 1}
       renderItem={renderItem}

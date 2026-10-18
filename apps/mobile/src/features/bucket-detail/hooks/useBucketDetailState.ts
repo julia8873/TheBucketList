@@ -12,7 +12,7 @@ import { bucketApi } from '@/services/api/bucket';
 import { processBucketImage } from '@bucketlist/shared';
 import { useAuthStore } from '@/stores/auth.store';
 import { usePullToRefresh } from '@/hooks/useAutoRefresh';
-import { useAddComment, useCopyBucket, useToggleReaction, useFollowUser } from '@/hooks/useSocial';
+import { useAddComment, useCopyBucket, useToggleReaction, useFollowUser, useSavedBucketIds, useToggleSaveBucket } from '@/hooks/useSocial';
 import { useDeleteBucket } from '@/hooks/useBuckets';
 import { useAlbums } from '@/hooks/useAlbums';
 import { useUserFavorites, useToggleFavoriteBucket } from '@/hooks/useFavorites';
@@ -29,6 +29,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export function useBucketDetailState() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const cleanId = Array.isArray(id) ? id[0] : (id ? String(id) : '');
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
@@ -68,6 +69,24 @@ export function useBucketDetailState() {
   const toggleFavorite = useToggleFavoriteBucket();
   const isFav = isBucketFavorite(id);
   const { data: albumsData, isLoading: albumsLoading } = useAlbums(user?.id);
+
+  const { data: savedBucketIds } = useSavedBucketIds(user?.id);
+  const toggleSaveBucket = useToggleSaveBucket();
+  const isSaved = !!savedBucketIds?.includes(cleanId);
+  const handleToggleSaveBucket = () => {
+    if (!user) return;
+    toggleSaveBucket.mutate(
+      { userId: user.id, bucketId: cleanId, currentlySaved: isSaved },
+      {
+        onSuccess: () => {
+          toast.success(isSaved ? 'Tarea quitada de guardados' : 'Tarea guardada');
+        },
+        onError: (err: any) => {
+          toast.error(err?.message || 'No se pudo guardar la tarea');
+        },
+      }
+    );
+  };
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
@@ -1644,5 +1663,7 @@ export function useBucketDetailState() {
     handleUpdateCollaborationSettings,
     handleRespondCollaboratorRequest,
     handleFollowOwner,
+    isSaved,
+    handleToggleSaveBucket,
   };
 }

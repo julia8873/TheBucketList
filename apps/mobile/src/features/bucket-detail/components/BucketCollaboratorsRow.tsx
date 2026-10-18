@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, Pressable, Image } from 'react-native';
 import { UserPlus, SlidersHorizontal, Clock } from 'lucide-react-native';
 import { normalizeStorageUrl } from '@/constants/urls';
+import { useRouter } from 'expo-router';
 import { styles } from '../styles/bucket-detail.styles';
 
 export function getInitials(name?: string | null): string {
@@ -36,6 +37,7 @@ export function BucketCollaboratorsRow({
   onOpenSettings,
   pendingCount = 0,
 }: BucketCollaboratorsRowProps) {
+  const router = useRouter();
   const isOwnerUser = bucket.user_id === user?.id;
   const ownerEntry = {
     id: bucket.user_id,
@@ -62,8 +64,7 @@ export function BucketCollaboratorsRow({
     if (!byId.has(c.id)) byId.set(c.id, c);
   });
   const everyone = Array.from(byId.values());
-  const hasOtherCollaborators = everyone.some((c: any) => c.id !== user?.id);
-  const participants = hasOtherCollaborators ? everyone : [];
+  const participants = everyone;
 
   if (participants.length === 0 && !canEdit) return null;
 
@@ -79,7 +80,15 @@ export function BucketCollaboratorsRow({
           return (
             <Pressable
               key={c.id}
-              onPress={() => canEdit && (isPending && onOpenSettings ? onOpenSettings() : onOpenPicker())}
+              onPress={() => {
+                if (isPending && canEdit && onOpenSettings) {
+                  onOpenSettings();
+                } else if (c.id) {
+                  router.push(`/profile/${c.id}` as any);
+                }
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Perfil de ${c.display_name || c.username || 'usuario'}`}
               style={[
                 styles.collaboratorCircle,
                 isPending && styles.collaboratorCirclePending,

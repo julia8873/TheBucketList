@@ -27,6 +27,7 @@ import {
   Link2,
   CheckCircle2,
   X,
+  Bookmark,
 } from 'lucide-react-native';
 import { supabase } from '@/services/supabase';
 
@@ -177,7 +178,7 @@ export default function BucketDetailScreen() {
               <ArrowLeft color="#FFF" size={20} strokeWidth={2} />
             </Pressable>
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              {state.user && (
+              {state.user && state.canEdit && (
                 <Pressable
                   style={styles.navButton}
                   accessibilityRole="button"
@@ -192,6 +193,21 @@ export default function BucketDetailScreen() {
                   <Star
                     color={state.isFav ? gold[400] : '#FFF'}
                     fill={state.isFav ? gold[400] : 'transparent'}
+                    size={20}
+                    strokeWidth={2}
+                  />
+                </Pressable>
+              )}
+              {state.user && !state.canEdit && (
+                <Pressable
+                  style={styles.navButton}
+                  accessibilityRole="button"
+                  accessibilityLabel={state.isSaved ? 'Quitar de guardados' : 'Guardar tarea'}
+                  onPress={state.handleToggleSaveBucket}
+                >
+                  <Bookmark
+                    color={state.isSaved ? gold[400] : '#FFF'}
+                    fill={state.isSaved ? gold[400] : 'transparent'}
                     size={20}
                     strokeWidth={2}
                   />
@@ -671,6 +687,8 @@ export default function BucketDetailScreen() {
         onToggleFavorite={() => {
           state.toggleFavorite.mutate({ bucketId: state.id, currentlyFavorite: state.isFav });
         }}
+        isSaved={state.isSaved}
+        onToggleSave={state.handleToggleSaveBucket}
         onLeaveCollaboration={state.handleLeaveCollaboration}
         uploadPhotos={state.uploadPhotos}
         uploadCover={state.uploadCover}
