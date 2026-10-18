@@ -20,7 +20,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { X, Download, Trash2, Calendar, CheckCircle2, Pencil, Image as ImageIcon, Check } from 'lucide-react-native';
-import { Typography } from '@bucketlist/ui';
+import { Typography, confirm, toast } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { storageApi } from '../services/api/storage';
 import * as FileSystem from 'expo-file-system';
@@ -294,18 +294,14 @@ export function BucketPhotoViewer({
   };
 
   const handleRemoveCompletedAt = (photoId: string) => {
-    Alert.alert(
-      'Quitar fecha de completado',
-      '¿Deseas quitar la fecha de completado de esta foto?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Quitar',
-          style: 'destructive',
-          onPress: () => onUpdatePhotoDate?.(photoId, 'completed_at', null),
-        },
-      ]
-    );
+    confirm.show({
+      title: 'Quitar fecha de completado',
+      message: '¿Deseas quitar la fecha de completado de esta foto?',
+      confirmLabel: 'Quitar',
+      cancelLabel: 'Cancelar',
+      destructive: true,
+      onConfirm: () => onUpdatePhotoDate?.(photoId, 'completed_at', null),
+    });
   };
 
   return (
@@ -519,7 +515,7 @@ export function BucketPhotoViewer({
                 ]}
                 onPress={() => {
                   onSetAsThumbnail(currentPhoto.id);
-                  Alert.alert('Portada de la tarea', 'Esta foto se ha establecido como imagen principal de la tarea.');
+                  toast.success('Esta foto se ha establecido como imagen principal de la tarea.');
                 }}
               >
                 {currentPhoto.id === selectedThumbnailId ? (
@@ -542,7 +538,7 @@ export function BucketPhotoViewer({
                 try {
                   const { status } = await MediaLibrary.requestPermissionsAsync();
                   if (status !== 'granted') {
-                    Alert.alert('Permiso denegado', 'Activa el permiso de galería en ajustes.');
+                    toast.error('Activa el permiso de galería en los ajustes de tu dispositivo.');
                     return;
                   }
                   const url = storageApi.getPublicUrl(currentPhoto.storage_path);
@@ -550,9 +546,9 @@ export function BucketPhotoViewer({
                   const localUri = FileSystem.cacheDirectory + filename;
                   await FileSystem.downloadAsync(url, localUri);
                   await MediaLibrary.saveToLibraryAsync(localUri);
-                  Alert.alert('Guardada', 'La foto se ha guardado en tu galería.');
+                  toast.success('La foto se ha guardado en tu galería.');
                 } catch {
-                  Alert.alert('Error', 'No se pudo descargar la foto.');
+                  toast.error('No se pudo descargar la foto.');
                 }
               }}
             >

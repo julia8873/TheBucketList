@@ -8,10 +8,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { supabase } from '@/services/supabase';
 import { storageApi } from '@/services/api/storage';
+import { bucketApi } from '@/services/api/bucket';
 import { processBucketImage } from '@bucketlist/shared';
 import { useAuthStore } from '@/stores/auth.store';
 import { usePullToRefresh } from '@/hooks/useAutoRefresh';
-import { useAddComment, useCopyBucket, useToggleReaction } from '@/hooks/useSocial';
+import { useAddComment, useCopyBucket, useToggleReaction, useFollowUser } from '@/hooks/useSocial';
 import { useDeleteBucket } from '@/hooks/useBuckets';
 import { useAlbums } from '@/hooks/useAlbums';
 import { useUserFavorites, useToggleFavoriteBucket } from '@/hooks/useFavorites';
@@ -21,6 +22,8 @@ import { CollaboratorItem } from '@/components/CollaboratorPickerSheet';
 import { ThumbnailMode, resolveTaskImage } from '@/utils/taskImage';
 import { PhotoSortField, PhotoSortDir } from '../components/PhotoSortModal';
 import { DatePickerConfig } from '../components/BucketDatePickerModal';
+import type { CollaborationMode, CollaborationAudience } from '../components/TaskCollaborationSettingsModal';
+import { toast, confirm } from '@bucketlist/ui';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -33,7 +36,7 @@ export function useBucketDetailState() {
 
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [sheetVisible, setSheetVisible] = useState(false);
-  const [sheetMode, setSheetMode] = useState<'menu' | 'visibility' | 'albums' | 'status' | 'category' | 'priority'>('menu');
+  const [sheetMode, setSheetMode] = useState<'menu' | 'visibility' | 'albums' | 'status' | 'category' | 'priority' | 'cover'>('menu');
   const [viewingPhotoIndex, setViewingPhotoIndex] = useState<number | null>(null);
   const [newSubtaskText, setNewSubtaskText] = useState('');
   const [scrollEnabled, setScrollEnabled] = useState(true);
@@ -270,6 +273,117 @@ export function useBucketDetailState() {
     (albumsData ?? []).some((a: any) => a.id === bi.album_id),
   );
   const canEdit = isOwner || isCollaborator || isInSharedAlbum;
+
+  const collaborationMode = ((bucket as any)?.collaboration_mode as CollaborationMode) || 'invite_only';
+  const collaborationAudience = ((bucket as any)?.collaboration_audience as CollaborationAudience) || 'followers';
+
+  const myCollaboration = collaborators.find((c: any) => c.id === user?.id);
+  const isPendingCollaborator = myCollaboration?.status === 'pending';
+  const pendingCollaborators = collaborators.filter((c: any) => c.status === 'pending');
+
+  const { data: isFollowerData } = useQuery({
+    queryKey: ['isFollowerOf', user?.id, bucket?.user_id],
+    queryFn: async () => {
+      if (!user?.id || !bucket?.user_id || user.id === bucket.user_id) return false;
+      const { data } = await supabase
+        .from('follows')
+        .select('id')
+        .eq('follower_id', user.id)
+        .eq('following_id', bucket.user_id)
+        .eq('status', 'accepted')
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: Boolean(user?.id && bucket?.user_id && user.id !== bucket.user_id),
+  });
+  const isFollower = !!isFollowerData;
+
+  const followUserMutation = useFollowUser();
+  const handleFollowOwner = async () => {
+    if (!user?.id || !bucket?.user_id) return;
+    try {
+      await followUserMutation.mutateAsync({
+        followerId: user.id,
+        followingId: bucket.user_id,
+      });
+      void queryClient.invalidateQueries({ queryKey: ['isFollowerOf', user.id, bucket.user_id] });
+    } catch (e: any) {
+      Alert.alert('Error', e?.message || 'No se pudo seguir al usuario');
+    }
+  };
+
+  const [showCollaborationSettingsModal, setShowCollaborationSettingsModal] = useState(false);
+
+  const handleRequestOrJoinCollaboration = async () => {
+    if (!id) return;
+    const bucketId = Array.isArray(id) ? id[0] : id;
+    try {
+      const res = await bucketApi.requestOrJoinCollaboration(bucketId, false);
+      Alert.alert('Colaboración', res.message);
+      void refetchCollaborators();
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', bucketId] });
+      void queryClient.invalidateQueries({ queryKey: ['bucketCollaborators', bucketId] });
+      void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+    } catch (e: any) {
+      Alert.alert('Colaboración', e?.message || 'No se pudo procesar la solicitud');
+    }
+  };
+
+  const handleCancelCollaborationRequest = async () => {
+    if (!id || !user?.id) return;
+    const bucketId = Array.isArray(id) ? id[0] : id;
+    try {
+      await supabase
+        .from('bucket_collaborators')
+        .delete()
+        .eq('bucket_id', bucketId)
+        .eq('user_id', user.id);
+      Alert.alert('Solicitud cancelada', 'Has cancelado tu solicitud de colaboración');
+      void refetchCollaborators();
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', bucketId] });
+      void queryClient.invalidateQueries({ queryKey: ['bucketCollaborators', bucketId] });
+      void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+    } catch (e: any) {
+      Alert.alert('Error', e?.message || 'No se pudo cancelar la solicitud');
+    }
+  };
+
+  const handleUpdateCollaborationSettings = async (
+    newMode: CollaborationMode,
+    newAudience: CollaborationAudience
+  ) => {
+    if (!id) return;
+    const bucketId = Array.isArray(id) ? id[0] : id;
+    try {
+      await bucketApi.updateBucket(bucketId, {
+        collaboration_mode: newMode,
+        collaboration_audience: newAudience,
+      });
+      queryClient.setQueryData(['bucketDetail', bucketId], (old: any) =>
+        old ? { ...old, collaboration_mode: newMode, collaboration_audience: newAudience } : old
+      );
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', bucketId] });
+      void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+    } catch (e: any) {
+      Alert.alert('Error', e?.message || 'No se pudieron guardar los ajustes');
+      throw e;
+    }
+  };
+
+  const handleRespondCollaboratorRequest = async (targetUserId: string, accept: boolean) => {
+    if (!id) return;
+    const bucketId = Array.isArray(id) ? id[0] : id;
+    try {
+      await bucketApi.respondToCollaborationRequest(bucketId, targetUserId, accept);
+      void refetchCollaborators();
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', bucketId] });
+      void queryClient.invalidateQueries({ queryKey: ['bucketCollaborators', bucketId] });
+      void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+    } catch (e: any) {
+      Alert.alert('Error', e?.message || 'No se pudo procesar la respuesta');
+      throw e;
+    }
+  };
 
   let photos: any[] = [...(bucket?.bucket_photos || [])];
   if (photoSearchQuery.trim()) {
@@ -742,10 +856,14 @@ export function useBucketDetailState() {
   };
 
   const confirmDeletePhoto = (photo: any) => {
-    Alert.alert('Borrar foto', 'Se eliminará de esta tarea. Esta acción no se puede deshacer.', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Borrar', style: 'destructive', onPress: () => void deletePhoto(photo) },
-    ]);
+    confirm.show({
+      title: '¿Borrar foto?',
+      message: 'Se eliminará de esta tarea. Esta acción no se puede deshacer.',
+      confirmLabel: 'Borrar foto',
+      cancelLabel: 'Cancelar',
+      destructive: true,
+      onConfirm: () => void deletePhoto(photo),
+    });
   };
 
   const deletePhoto = async (photo: any) => {
@@ -844,14 +962,13 @@ export function useBucketDetailState() {
 
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Permiso necesario', 'Necesitamos acceso a tus fotos para la portada.');
+      toast.error('Necesitamos acceso a tus fotos para la portada');
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [16, 9],
+      allowsEditing: false,
       quality: 1,
     });
 
@@ -860,7 +977,19 @@ export function useBucketDetailState() {
     if (!asset) return;
 
     try {
-      const processed = await processBucketImage(asset.uri);
+      const base = await ImageManipulator.manipulateAsync(
+        asset.uri,
+        asset.width && asset.width > 1600 ? [{ resize: { width: 1600 } }] : [],
+        { compress: 1, format: ImageManipulator.SaveFormat.JPEG },
+      );
+      const edited = await requestPhotoEdit(base, 0, 1);
+      if (edited === null) {
+        setCropRequest(null);
+        return;
+      }
+      setCropRequest(null);
+
+      const processed = await processBucketImage(edited);
       const path = `covers/${id}_${Date.now()}.jpg`;
       const publicUrl = await storageApi.uploadSingle(path, processed.original.uri);
 
@@ -871,16 +1000,153 @@ export function useBucketDetailState() {
 
       if (error) throw error;
 
-      queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, cover_image: publicUrl } : oldData);
+      queryClient.setQueryData(['bucketDetail', id], (oldData: any) =>
+        oldData ? { ...oldData, cover_image: publicUrl } : oldData
+      );
       invalidateBucket();
-      Alert.alert('Portada actualizada', 'La portada se ha actualizado correctamente.');
+      toast.success('Portada actualizada');
     } catch (error: any) {
-      Alert.alert('No se pudo actualizar la portada', error?.message || 'Inténtalo de nuevo.');
+      toast.error(error?.message || 'No se pudo actualizar la portada');
+    }
+  };
+
+  const takePhotoAndUploadCover = async () => {
+    if (!user) return;
+
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      toast.error('Necesitamos acceso a la cámara para la portada');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: false,
+      quality: 1,
+    });
+
+    if (result.canceled || !result.assets.length) return;
+    const asset = result.assets[0];
+    if (!asset) return;
+
+    try {
+      const base = await ImageManipulator.manipulateAsync(
+        asset.uri,
+        asset.width && asset.width > 1600 ? [{ resize: { width: 1600 } }] : [],
+        { compress: 1, format: ImageManipulator.SaveFormat.JPEG },
+      );
+      const edited = await requestPhotoEdit(base, 0, 1);
+      if (edited === null) {
+        setCropRequest(null);
+        return;
+      }
+      setCropRequest(null);
+
+      const processed = await processBucketImage(edited);
+      const path = `covers/${id}_${Date.now()}.jpg`;
+      const publicUrl = await storageApi.uploadSingle(path, processed.original.uri);
+
+      const { error } = await supabase
+        .from('buckets')
+        .update({ cover_image: publicUrl })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      queryClient.setQueryData(['bucketDetail', id], (oldData: any) =>
+        oldData ? { ...oldData, cover_image: publicUrl } : oldData
+      );
+      invalidateBucket();
+      toast.success('Portada actualizada');
+    } catch (error: any) {
+      toast.error(error?.message || 'No se pudo actualizar la portada');
+    }
+  };
+
+  const recropCurrentCover = async () => {
+    if (!user || !bucket?.cover_image) return;
+    try {
+      const uri = bucket.cover_image.startsWith('http')
+        ? bucket.cover_image
+        : storageApi.getPublicUrl(bucket.cover_image);
+
+      const base = await ImageManipulator.manipulateAsync(
+        uri,
+        [],
+        { compress: 1, format: ImageManipulator.SaveFormat.JPEG },
+      );
+      const edited = await requestPhotoEdit(base, 0, 1);
+      if (edited === null) {
+        setCropRequest(null);
+        return;
+      }
+      setCropRequest(null);
+
+      const processed = await processBucketImage(edited);
+      const path = `covers/${id}_${Date.now()}.jpg`;
+      const publicUrl = await storageApi.uploadSingle(path, processed.original.uri);
+
+      const { error } = await supabase
+        .from('buckets')
+        .update({ cover_image: publicUrl })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      queryClient.setQueryData(['bucketDetail', id], (oldData: any) =>
+        oldData ? { ...oldData, cover_image: publicUrl } : oldData
+      );
+      invalidateBucket();
+      toast.success('Portada actualizada');
+    } catch (error: any) {
+      toast.error(error?.message || 'No se pudo reajustar la portada');
+    }
+  };
+
+  const removeCover = async () => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from('buckets')
+        .update({ cover_image: null })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      queryClient.setQueryData(['bucketDetail', id], (oldData: any) =>
+        oldData ? { ...oldData, cover_image: null } : oldData
+      );
+      invalidateBucket();
+      toast.success('Portada eliminada');
+    } catch (error: any) {
+      toast.error(error?.message || 'No se pudo quitar la portada');
+    }
+  };
+
+  const [showCoverLinkModal, setShowCoverLinkModal] = useState(false);
+
+  const handleApplyCoverUrl = async (url: string) => {
+    const targetId = Array.isArray(id) ? id[0] : id;
+    try {
+      const { error } = await supabase
+        .from('buckets')
+        .update({ cover_image: url })
+        .eq('id', targetId);
+
+      if (error) throw error;
+
+      queryClient.setQueryData(['bucketDetail', targetId], (oldData: any) =>
+        oldData ? { ...oldData, cover_image: url } : oldData
+      );
+      invalidateBucket();
+      toast.success('Portada actualizada');
+    } catch (error: any) {
+      toast.error(error?.message || 'No se pudo actualizar la portada');
     }
   };
 
   const uploadCover = () => {
-    closeSheet(() => void pickAndUploadCover());
+    setSheetMode('cover');
+    setSheetVisible(true);
   };
 
   const chooseThumbnail = async (mode: ThumbnailMode, photoId: string | null = null) => {
@@ -913,43 +1179,39 @@ export function useBucketDetailState() {
 
   const handleDelete = () => {
     closeSheet(() => {
-      Alert.alert('Eliminar tarea', '¿Seguro que quieres eliminar esta tarea? No se puede deshacer.', [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: () => deleteBucket.mutate(id, { onSuccess: () => router.back() }),
-        },
-      ]);
+      confirm.show({
+        title: '¿Eliminar tarea?',
+        message: '¿Seguro que quieres eliminar esta tarea? Esta acción no se puede deshacer.',
+        confirmLabel: 'Eliminar tarea',
+        cancelLabel: 'Cancelar',
+        destructive: true,
+        onConfirm: () => deleteBucket.mutate(id, { onSuccess: () => router.back() }),
+      });
     });
   };
 
   const handleLeaveCollaboration = () => {
     closeSheet(() => {
-      Alert.alert(
-        'Dejar de colaborar',
-        '¿Quieres salir de esta tarea colaborativa? Dejará de aparecer en tu lista.',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          {
-            text: 'Salir',
-            style: 'destructive',
-            onPress: async () => {
-              const { error } = await supabase
-                .from('bucket_collaborators')
-                .delete()
-                .eq('bucket_id', id)
-                .eq('user_id', user!.id);
-              if (error) {
-                Alert.alert('Error', error.message);
-              } else {
-                void queryClient.invalidateQueries({ queryKey: ['buckets'] });
-                router.back();
-              }
-            },
-          },
-        ]
-      );
+      confirm.show({
+        title: 'Dejar de colaborar',
+        message: '¿Quieres salir de esta tarea colaborativa? Dejará de aparecer en tu lista.',
+        confirmLabel: 'Salir de la tarea',
+        cancelLabel: 'Cancelar',
+        destructive: true,
+        onConfirm: async () => {
+          const { error } = await supabase
+            .from('bucket_collaborators')
+            .delete()
+            .eq('bucket_id', id)
+            .eq('user_id', user!.id);
+          if (error) {
+            toast.error(error.message);
+          } else {
+            void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+            router.back();
+          }
+        },
+      });
     });
   };
 
@@ -1068,7 +1330,7 @@ export function useBucketDetailState() {
 
     void supabase.from('item_subtasks').delete().eq('id', st.id).then(({ error }) => {
       if (error) {
-        Alert.alert('No se pudo eliminar el paso', error.message);
+        toast.error(error.message || 'No se pudo eliminar el paso');
         void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
         return;
       }
@@ -1320,6 +1582,13 @@ export function useBucketDetailState() {
     confirmDeletePhoto,
     uploadPhotos,
     uploadCover,
+    pickAndUploadCover,
+    takePhotoAndUploadCover,
+    recropCurrentCover,
+    removeCover,
+    showCoverLinkModal,
+    setShowCoverLinkModal,
+    handleApplyCoverUrl,
     chooseThumbnail,
     handleDelete,
     handleLeaveCollaboration,
@@ -1345,5 +1614,17 @@ export function useBucketDetailState() {
     copyBucket,
     handleUpdatePhotoTitle,
     handleUpdatePhotoDate,
+    collaborationMode,
+    collaborationAudience,
+    isFollower,
+    isPendingCollaborator,
+    pendingCollaborators,
+    showCollaborationSettingsModal,
+    setShowCollaborationSettingsModal,
+    handleRequestOrJoinCollaboration,
+    handleCancelCollaborationRequest,
+    handleUpdateCollaborationSettings,
+    handleRespondCollaboratorRequest,
+    handleFollowOwner,
   };
 }

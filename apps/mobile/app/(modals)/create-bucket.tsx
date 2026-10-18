@@ -56,6 +56,8 @@ export default function CreateBucketModal() {
   const [selectedTags, setSelectedTags] = useState<TagItem[]>([]);
   const [selectedCollaborators, setSelectedCollaborators] = useState<CollaboratorItem[]>([]);
   const [showCollaboratorPicker, setShowCollaboratorPicker] = useState(false);
+  const [collaborationMode, setCollaborationMode] = useState<'invite_only' | 'request' | 'open'>('invite_only');
+  const [collaborationAudience, setCollaborationAudience] = useState<'followers' | 'anyone'>('followers');
 
   const { control, handleSubmit, setValue, watch } = useForm<CreateBucketForm>({
     resolver: zodResolver(createBucketSchema),
@@ -120,6 +122,8 @@ export default function CreateBucketModal() {
         album_id: albumId,
         tag_ids,
         collaborator_ids,
+        collaboration_mode: collaborationMode,
+        collaboration_audience: collaborationAudience,
       } as any;
 
       createBucket.mutate(payload, {
@@ -186,7 +190,7 @@ export default function CreateBucketModal() {
           <Text style={styles.sectionLabel}>
             <Text style={{ color: '#D4B13A' }}>TU</Text> PORTADA
           </Text>
-          <TaskCoverPicker coverImage={coverImage} onChangeCover={setCoverImage} />
+          <TaskCoverPicker coverImage={coverImage} onChangeCover={setCoverImage} taskTitle={titleValue} />
 
           {/* PRIORIDAD */}
           <Text style={styles.sectionLabel}>
@@ -249,6 +253,10 @@ export default function CreateBucketModal() {
             onRemoveCollaborator={(collabId) =>
               setSelectedCollaborators((prev) => prev.filter((x) => x.id !== collabId))
             }
+            collaborationMode={collaborationMode}
+            collaborationAudience={collaborationAudience}
+            onChangeCollaborationMode={setCollaborationMode}
+            onChangeCollaborationAudience={setCollaborationAudience}
           />
         </ScrollView>
 

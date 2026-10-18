@@ -17,7 +17,7 @@ interface TaskGalleryItemCardProps {
   onLongPress: () => void;
 }
 
-export function TaskGalleryItemCard({
+function TaskGalleryItemCardComponent({
   item,
   isSingle,
   isSelected,
@@ -115,3 +115,5 @@ export function TaskGalleryItemCard({
     </Pressable>
   );
 }
+
+export const TaskGalleryItemCard = React.memo(TaskGalleryItemCardComponent);

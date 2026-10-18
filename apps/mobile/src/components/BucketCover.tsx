@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, Image, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import React, { memo } from 'react';
+import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { storageApi } from '../services/api/storage';
 import {
@@ -22,12 +23,17 @@ interface BucketCoverProps {
   children?: React.ReactNode;
 }
 
-function PresetArt({ preset, iconSize }: { preset: CoverPreset; iconSize: number }) {
+const PresetArt = memo(function PresetArt({ preset, iconSize }: { preset: CoverPreset; iconSize: number }) {
   const IconComponent = preset.icon;
   return (
     <>
       {preset.image ? (
-        <Image source={preset.image} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        <ExpoImage
+          source={preset.image}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+        />
       ) : (
         <LinearGradient
           colors={preset.colors}
@@ -60,13 +66,14 @@ function PresetArt({ preset, iconSize }: { preset: CoverPreset; iconSize: number
       )}
     </>
   );
-}
+});
 
 /**
  * Portada de una tarea: foto propia, preset elegido o preset automático.
  * Se dibuja a pantalla completa dentro del contenedor (overflow oculto).
+ * Optimizado con expo-image, caché en disco/memoria y React.memo.
  */
-export function BucketCover({
+function BucketCoverComponent({
   value,
   title,
   categorySlug,
@@ -83,7 +90,7 @@ export function BucketCover({
   const preset = chosenPreset ?? autoCoverPreset({ title, categorySlug, seed });
 
   const imageUri = isCustomImage
-    ? (value!.startsWith('http') || value!.startsWith('file:') || value!.startsWith('content:') || value!.startsWith('ph:') || value!.startsWith('blob:'))
+    ? (value!.startsWith('http') || value!.startsWith('file:') || value!.startsWith('content:') || value!.startsWith('ph:') || value!.startsWith('blob:') || value!.startsWith('data:'))
       ? value!
       : storageApi.getPublicUrl(value!)
     : null;
@@ -92,12 +99,20 @@ export function BucketCover({
     <View style={[styles.container, style]}>
       {!isCustomImage && <PresetArt preset={preset} iconSize={iconSize} />}
       {imageUri && (
-        <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        <ExpoImage
+          source={{ uri: imageUri }}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          transition={150}
+        />
       )}
       {children}
     </View>
   );
 }
+
+export const BucketCover = memo(BucketCoverComponent);
 
 const styles = StyleSheet.create({
   container: {

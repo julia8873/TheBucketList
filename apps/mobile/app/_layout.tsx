@@ -18,7 +18,7 @@ import {
   PlayfairDisplay_600SemiBold,
   PlayfairDisplay_700Bold,
 } from '@expo-google-fonts/playfair-display';
-import { ThemeProvider, ToastProvider, useTheme } from '@bucketlist/ui';
+import { ThemeProvider, ToastProvider, ConfirmProvider, useTheme } from '@bucketlist/ui';
 import { useThemeStore, hydrateThemeStore } from '../src/stores/theme.store';
 import { hydrateLanguageStore } from '../src/stores/language.store';
 import { hydrateHapticsStore } from '../src/stores/haptics.store';
@@ -38,8 +38,8 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 3, // 3 minutos: navegación entre pestañas instantánea sin re-peticiones innecesarias
       refetchOnReconnect: true,
-      refetchOnWindowFocus: true,
-      gcTime: 1000 * 60 * 10,   // 10 minutes
+      refetchOnWindowFocus: false, // En móvil evita ráfagas de peticiones al abrir/cerrar modales o alertas
+      gcTime: 1000 * 60 * 15,   // 15 minutos en memoria
       retry: 2,
     },
     mutations: {
@@ -56,17 +56,19 @@ export default function RootLayout() {
   useEffect(() => {
     async function prepare() {
       try {
-        await hydrateThemeStore();
-        await hydrateLanguageStore();
-        await hydrateHapticsStore();
-        await Font.loadAsync({
-          Inter_400Regular,
-          Inter_500Medium,
-          Inter_600SemiBold,
-          Inter_700Bold,
-          PlayfairDisplay_600SemiBold,
-          PlayfairDisplay_700Bold,
-        });
+        await Promise.all([
+          hydrateThemeStore(),
+          hydrateLanguageStore(),
+          hydrateHapticsStore(),
+          Font.loadAsync({
+            Inter_400Regular,
+            Inter_500Medium,
+            Inter_600SemiBold,
+            Inter_700Bold,
+            PlayfairDisplay_600SemiBold,
+            PlayfairDisplay_700Bold,
+          }),
+        ]);
       } catch (e) {
         console.warn(e);
       } finally {
@@ -112,7 +114,9 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <ThemeProvider override={override} onOverrideChange={setOverride}>
             <ToastProvider>
-              <RootNavigator />
+              <ConfirmProvider>
+                <RootNavigator />
+              </ConfirmProvider>
             </ToastProvider>
           </ThemeProvider>
         </QueryClientProvider>

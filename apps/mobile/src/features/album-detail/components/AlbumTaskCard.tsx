@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { GripVertical, Check, Plus } from 'lucide-react-native';
 import type { TaskItem } from '@/services/api/albumsService';
 import { BucketCover } from '@/components/BucketCover';
+import { hexToRgba } from '@/constants/tagPresets';
 import { styles } from '../styles/album-detail.styles';
 
 function getBadgeText(dateStr?: string): string | null {
@@ -20,11 +21,18 @@ function getBadgeText(dateStr?: string): string | null {
 }
 
 function getSubTitle(task: TaskItem): string {
-  if (task.isCompleted) return `${task.categoryName ?? ''} · Completada`;
-  if (task.stepsTotal && task.stepsTotal > 0)
-    return `${task.categoryName ?? ''} · ${task.stepsCompleted ?? 0} de ${task.stepsTotal} pasos`;
-  if (task.location) return `${task.categoryName ?? ''} · ${task.location}`;
-  return task.categoryName ?? '';
+  const cat =
+    task.categoryName && !task.categoryName.startsWith('Prioridad ') && task.categoryName !== 'Sin categoría'
+      ? task.categoryName
+      : null;
+  const parts: string[] = [];
+  if (cat) parts.push(cat);
+  if (task.stepsTotal && task.stepsTotal > 0) {
+    parts.push(`${task.stepsCompleted ?? 0} de ${task.stepsTotal} pasos`);
+  } else if (task.location) {
+    parts.push(task.location);
+  }
+  return parts.join(' · ');
 }
 
 interface AlbumTaskCardProps {
@@ -49,6 +57,51 @@ export function AlbumTaskCard({
   const subTitle = getSubTitle(task);
   const badge = getBadgeText(task.dueDate);
 
+  const itemPriority = task.priority || 'medium';
+  const itemPriorityColor =
+    itemPriority === 'urgent'
+      ? '#DC2626'
+      : itemPriority === 'high'
+      ? '#EF4444'
+      : itemPriority === 'low'
+      ? '#10B981'
+      : '#D4B13A';
+  const itemPriorityLabel =
+    itemPriority === 'urgent'
+      ? 'Urgente'
+      : itemPriority === 'high'
+      ? 'Alta'
+      : itemPriority === 'low'
+      ? 'Baja'
+      : 'Media';
+
+  const priorityBadge = (
+    <View
+      key="priority-badge"
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 7,
+        paddingVertical: 2,
+        borderRadius: 8,
+        backgroundColor:
+          itemPriority === 'urgent' || itemPriority === 'high'
+            ? 'rgba(239, 68, 68, 0.16)'
+            : itemPriority === 'low'
+            ? 'rgba(16, 185, 129, 0.16)'
+            : 'rgba(212, 177, 58, 0.16)',
+        borderWidth: 1,
+        borderColor: itemPriorityColor,
+      }}
+    >
+      <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: itemPriorityColor }} />
+      <Text style={{ fontSize: 11, fontWeight: '700', color: itemPriorityColor }}>
+        {itemPriorityLabel}
+      </Text>
+    </View>
+  );
+
   return (
     <Pressable
       style={styles.taskCard}
@@ -72,7 +125,7 @@ export function AlbumTaskCard({
         >
           {task.title}
         </Text>
-        <Text style={styles.taskSub}>{subTitle}</Text>
+        {subTitle.length > 0 && <Text style={styles.taskSub}>{subTitle}</Text>}
         {!isDone && task.dueDate && new Date(task.dueDate).getTime() < new Date().setHours(0, 0, 0, 0) && (
           <Text style={[styles.taskSub, { color: '#EF4444', marginTop: 2 }]}>
             Programada para:{' '}
@@ -89,6 +142,34 @@ export function AlbumTaskCard({
             />
           </View>
         )}
+        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 5 }}>
+          {priorityBadge}
+          {task.tags &&
+            task.tags.slice(0, 3).map((t) => (
+              <View
+                key={t.id}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 3,
+                  paddingHorizontal: 6,
+                  paddingVertical: 1.5,
+                  borderRadius: 6,
+                  backgroundColor: hexToRgba(t.color || '#D4B13A', 0.16),
+                  borderWidth: 0.5,
+                  borderColor: t.color || '#D4B13A',
+                }}
+              >
+                {t.emoji ? <Text style={{ fontSize: 9 }}>{t.emoji}</Text> : null}
+                <Text style={{ fontSize: 10, fontWeight: '600', color: t.color || '#D4B13A' }}>
+                  {t.name}
+                </Text>
+              </View>
+            ))}
+          {task.tags && task.tags.length > 3 && (
+            <Text style={{ fontSize: 10, color: '#8A8A8A' }}>+{task.tags.length - 3}</Text>
+          )}
+        </View>
       </View>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

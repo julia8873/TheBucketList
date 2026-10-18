@@ -44,6 +44,7 @@ export const defaultTasks: UnassignedTask[] = DEFAULT_TASKS.map((t) => ({ ...t, 
 
 import { supabase } from '../supabase';
 import { resolveTaskImage } from '../../utils/taskImage';
+import { applyAlbumTagsToTasks } from '../../hooks/useAlbumTags';
 
 export const tasksService = {
   /**
@@ -150,6 +151,9 @@ export const tasksService = {
       .upsert(itemsToUpsert);
 
     if (error) throw error;
+
+    // Propagar automáticamente las etiquetas del álbum a las tareas asignadas
+    await applyAlbumTagsToTasks(albumId, taskIds);
   },
 
   async createTasksFromDefaults(ids: string[]): Promise<string[]> {

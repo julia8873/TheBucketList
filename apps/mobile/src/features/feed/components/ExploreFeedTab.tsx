@@ -44,6 +44,24 @@ export function ExploreFeedTab({
 }: ExploreFeedTabProps) {
   const router = useRouter();
 
+  const renderItem = React.useCallback(
+    ({ item, index }: { item: any; index: number }) => (
+      <FeedCard
+        event={{
+          id: item.id,
+          actor: item.user,
+          bucket: item,
+          type: 'new_bucket',
+          created_at: item.created_at,
+        }}
+        index={index}
+        mode={viewMode}
+        onPress={() => router.push(`/bucket/${item.id}` as any)}
+      />
+    ),
+    [viewMode, router]
+  );
+
   if (debouncedSearch.length >= 2) {
     return (
       <View style={styles.container}>
@@ -107,19 +125,7 @@ export function ExploreFeedTab({
       data={exploreBuckets}
       keyExtractor={(item) => item.id}
       numColumns={viewMode === 'gallery' ? 2 : 1}
-      renderItem={({ item, index }) => (
-        <FeedCard
-          event={{
-            actor: item.user,
-            bucket: item,
-            type: 'new_bucket',
-            created_at: item.created_at,
-          }}
-          index={index}
-          mode={viewMode}
-          onPress={() => router.push(`/bucket/${item.id}` as any)}
-        />
-      )}
+      renderItem={renderItem}
       estimatedItemSize={viewMode === 'gallery' ? 240 : viewMode === 'compact' ? 70 : 300}
       ListHeaderComponent={
         <View>

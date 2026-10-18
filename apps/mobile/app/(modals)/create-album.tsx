@@ -14,11 +14,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
 import { PageTitle } from '@bucketlist/ui';
 import { CollaboratorPickerSheet } from '../../src/components/CollaboratorPickerSheet';
+import { TagAssignSheet } from '../../src/components/TagAssignSheet';
 
 import { styles } from '../../src/features/album-form/styles/album-form.styles';
 import { SectionTitle } from '../../src/features/album-form/components/SectionTitle';
 import { AlbumPreviewCard } from '../../src/features/album-form/components/AlbumPreviewCard';
 import { CoverPickerSection } from '../../src/features/album-form/components/CoverPickerSection';
+import { AlbumTagsSection } from '../../src/features/album-form/components/AlbumTagsSection';
 import { AlbumCollaboratorsSection } from '../../src/features/album-form/components/AlbumCollaboratorsSection';
 import { AlbumMetaSettingsSection } from '../../src/features/album-form/components/AlbumMetaSettingsSection';
 import { useAlbumFormData } from '../../src/features/album-form/hooks/useAlbumFormData';
@@ -48,6 +50,11 @@ export default function CreateAlbumScreen() {
     readOnlyIds,
     showCollaboratorPicker,
     setShowCollaboratorPicker,
+    selectedTags,
+    showTagPicker,
+    setShowTagPicker,
+    handleTagPickerChange,
+    handleRemoveTag,
     loadingInitial,
     isSaving,
     handleSave,
@@ -98,6 +105,13 @@ export default function CreateAlbumScreen() {
             />
           </View>
 
+          {/* Sección Portada */}
+          <CoverPickerSection
+            selectedCover={selectedCover}
+            onSelectCover={setSelectedCover}
+            albumTitle={name}
+          />
+
           {/* Sección Descripción */}
           <View style={[styles.section, { marginBottom: 4 }]}>
             <SectionTitle highlight="DESCRIPCIÓN" rest=" DEL ÁLBUM" />
@@ -130,10 +144,11 @@ export default function CreateAlbumScreen() {
             onChangeVisibility={setVisibility}
           />
 
-          {/* Sección Portada */}
-          <CoverPickerSection
-            selectedCover={selectedCover}
-            onSelectCover={setSelectedCover}
+          {/* Sección Etiquetas del Álbum */}
+          <AlbumTagsSection
+            selectedTags={selectedTags}
+            onOpenTagPicker={() => setShowTagPicker(true)}
+            onRemoveTag={handleRemoveTag}
           />
 
           {/* Sección Compartir / Colaboradores */}
@@ -157,6 +172,13 @@ export default function CreateAlbumScreen() {
         onChange={setSelectedCollaborators}
         onClose={() => setShowCollaboratorPicker(false)}
         readOnlyIds={readOnlyIds}
+      />
+
+      <TagAssignSheet
+        visible={showTagPicker}
+        selectedTags={selectedTags}
+        onChange={handleTagPickerChange}
+        onClose={() => setShowTagPicker(false)}
       />
 
       {/* Barra inferior fija */}

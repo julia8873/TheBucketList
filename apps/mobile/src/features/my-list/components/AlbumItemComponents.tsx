@@ -14,7 +14,7 @@ const COVER_GRADIENTS: Array<[string, string]> = [
   ['#6B2FA0', '#3A0070'],
 ];
 
-export function AlbumCoverThumb({
+export const AlbumCoverThumb = React.memo(function AlbumCoverThumb({
   coverUri,
   colorIndex = 0,
   size = 40,
@@ -47,9 +47,9 @@ export function AlbumCoverThumb({
       {inner}
     </View>
   );
-}
+});
 
-export function AlbumCompactItemRow({
+export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
   item,
   drag,
   isFav,
@@ -129,9 +129,9 @@ export function AlbumCompactItemRow({
       </View>
     </Pressable>
   );
-}
+});
 
-export function AlbumListItemRow({
+export const AlbumListItemRow = React.memo(function AlbumListItemRow({
   item,
   drag,
   index = 0,
@@ -211,7 +211,7 @@ export function AlbumListItemRow({
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
             <Text style={[styles.listAlbumMeta, { color: theme.colors.foregroundMuted }]}>
-              {total} {total === 1 ? 'tarea' : 'tareas'} · {completed} {completed === 1 ? 'hecha' : 'hechas'}
+              {total} {total === 1 ? 'tarea' : 'tareas'} · {completed} {completed === 1 ? 'completada' : 'completadas'}
             </Text>
 
             {item.is_shared && (
@@ -243,4 +243,4 @@ export function AlbumListItemRow({
       </Pressable>
     </View>
   );
-}
+});

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StatusBar,
@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   StyleSheet,
   Text,
+  Image as RNImage,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -40,6 +41,9 @@ import { TaskMentionList } from '@/components/TaskMentionList';
 import { CollaboratorPickerSheet } from '@/components/CollaboratorPickerSheet';
 import { NotificationSubscribersModal } from '@/components/NotificationSubscribersModal';
 import { TaskCommentsModal } from '@/components/TaskCommentsModal';
+import { ImageLinkModal } from '@/components/ImageLinkModal';
+import { TaskCollaborationSettingsModal } from '@/features/bucket-detail/components/TaskCollaborationSettingsModal';
+import { TaskCollaborationViewerCard } from '@/features/bucket-detail/components/TaskCollaborationViewerCard';
 import { timeAgo } from '@/utils/timeAgo';
 
 import { useBucketDetailState } from '@/features/bucket-detail/hooks/useBucketDetailState';
@@ -60,14 +64,43 @@ import { BucketPhotosSection } from '@/features/bucket-detail/components/BucketP
 import { BucketThumbnailSelector } from '@/features/bucket-detail/components/BucketThumbnailSelector';
 import { PhotoSortModal } from '@/features/bucket-detail/components/PhotoSortModal';
 import { BucketHeaderBadges } from '@/features/bucket-detail/components/BucketHeaderBadges';
+import { storageApi } from '@/services/api/storage';
 
 export default function BucketDetailScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const coverTotalHeight = COVER_HEIGHT + insets.top;
   const state = useBucketDetailState();
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [commentsAutoFocus, setCommentsAutoFocus] = useState(false);
+  const [isSquareCover, setIsSquareCover] = useState(false);
+
+  useEffect(() => {
+    if (!state.resolvedCover || state.resolvedCover.startsWith('preset:')) {
+      setIsSquareCover(false);
+      return;
+    }
+    const uri =
+      state.resolvedCover.startsWith('http') ||
+      state.resolvedCover.startsWith('file:') ||
+      state.resolvedCover.startsWith('data:')
+        ? state.resolvedCover
+        : storageApi.getPublicUrl(state.resolvedCover);
+
+    if (uri && !uri.startsWith('data:')) {
+      RNImage.getSize(
+        uri,
+        (w, h) => {
+          if (w && h) {
+            setIsSquareCover(Math.abs(w / h - 1) < 0.25);
+          }
+        },
+        () => setIsSquareCover(false)
+      );
+    }
+  }, [state.resolvedCover]);
+
+  const coverHeight = isSquareCover ? Math.min(SCREEN_WIDTH, 340) : COVER_HEIGHT;
+  const coverTotalHeight = coverHeight + insets.top;
 
   if (state.isLoading) {
     return (
@@ -238,6 +271,22 @@ export default function BucketDetailScreen() {
             user={state.user}
             canEdit={state.canEdit}
             onOpenPicker={() => state.setShowCollaboratorPicker(true)}
+            onOpenSettings={() => state.setShowCollaborationSettingsModal(true)}
+            pendingCount={state.pendingCollaborators.length}
+          />
+
+          {/* Tarjeta de invitación/solicitud de colaboración para seguidores y otros usuarios */}
+          <TaskCollaborationViewerCard
+            isOwner={state.isOwner}
+            isCollaborator={state.isCollaborator}
+            collaborationMode={state.collaborationMode}
+            collaborationAudience={state.collaborationAudience}
+            isFollower={state.isFollower}
+            isPendingCollaborator={state.isPendingCollaborator}
+            ownerUsername={bucket.user?.username || 'el creador'}
+            onRequestOrJoin={state.handleRequestOrJoinCollaboration}
+            onCancelRequest={state.handleCancelCollaborationRequest}
+            onFollowOwner={state.handleFollowOwner}
           />
 
           {/* Meta (Ubicación, fechas) */}
@@ -611,6 +660,11 @@ export default function BucketDetailScreen() {
         onLeaveCollaboration={state.handleLeaveCollaboration}
         uploadPhotos={state.uploadPhotos}
         uploadCover={state.uploadCover}
+        pickAndUploadCover={state.pickAndUploadCover}
+        takePhotoAndUploadCover={state.takePhotoAndUploadCover}
+        openCoverLinkModal={() => state.setShowCoverLinkModal(true)}
+        recropCurrentCover={state.recropCurrentCover}
+        removeCover={state.removeCover}
         loadAlbums={state.loadAlbums}
         user={state.user}
         copyBucket={state.copyBucket}
@@ -738,6 +792,23 @@ export default function BucketDetailScreen() {
         bucketTitle={bucket.title}
         bucketOwnerId={bucket.user_id}
         autoFocus={commentsAutoFocus}
+      />
+
+      <ImageLinkModal
+        visible={state.showCoverLinkModal}
+        onClose={() => state.setShowCoverLinkModal(false)}
+        onApplyImage={state.handleApplyCoverUrl}
+        initialQuery={bucket?.title || ''}
+      />
+
+      <TaskCollaborationSettingsModal
+        visible={state.showCollaborationSettingsModal}
+        currentMode={state.collaborationMode}
+        currentAudience={state.collaborationAudience}
+        pendingCollaborators={state.pendingCollaborators}
+        onClose={() => state.setShowCollaborationSettingsModal(false)}
+        onSaveSettings={state.handleUpdateCollaborationSettings}
+        onRespondRequest={state.handleRespondCollaboratorRequest}
       />
     </View>
   );

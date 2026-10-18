@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Modal, View, Pressable, Animated, ActivityIndicator, Alert, StyleSheet, TextInput, ScrollView } from 'react-native';
-import { Typography } from '@bucketlist/ui';
+import { Typography, toast } from '@bucketlist/ui';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
-import { X, Camera, FolderPlus, ListPlus, Trash2, Circle, MoreHorizontal, CheckCircle2, Check, Eye, Users, Lock, ArrowLeft, FolderOpen, Image as ImageIcon, Tag, LogOut, Flag, Star } from 'lucide-react-native';
+import { X, Camera, FolderPlus, ListPlus, Trash2, Circle, MoreHorizontal, CheckCircle2, Check, Eye, Users, Lock, ArrowLeft, FolderOpen, Image as ImageIcon, Tag, LogOut, Flag, Star, Crop, Link2 } from 'lucide-react-native';
 import { styles } from '@/features/bucket-detail/styles/bucket-detail.styles';
 
 type BucketBottomSheetProps = {
   sheetVisible: boolean;
-  sheetMode: 'menu' | 'status' | 'visibility' | 'albums' | 'category' | 'priority';
+  sheetMode: 'menu' | 'status' | 'visibility' | 'albums' | 'category' | 'priority' | 'cover';
   sheetTranslateY: Animated.Value;
   closeSheet: (after?: () => void) => void;
   theme: any;
@@ -19,6 +19,11 @@ type BucketBottomSheetProps = {
   onLeaveCollaboration?: () => void;
   uploadPhotos: () => void;
   uploadCover: () => void;
+  pickAndUploadCover?: () => void;
+  takePhotoAndUploadCover?: () => void;
+  openCoverLinkModal?: () => void;
+  recropCurrentCover?: () => void;
+  removeCover?: () => void;
   loadAlbums: () => void;
   user: any;
   copyBucket: any;
@@ -29,7 +34,7 @@ type BucketBottomSheetProps = {
   handleChangeVisibility: (visibility: 'public' | 'followers' | 'private') => void;
   handleChangeCategory?: (categoryId: string) => void;
   handleChangePriority?: (priority: 'low' | 'medium' | 'high') => void;
-  setSheetMode: (mode: 'menu' | 'status' | 'visibility' | 'albums' | 'category' | 'priority') => void;
+  setSheetMode: (mode: 'menu' | 'status' | 'visibility' | 'albums' | 'category' | 'priority' | 'cover') => void;
   albumsLoading: boolean;
   toggleAlbum: (albumId: string) => void;
   removeAllAlbums: () => void;
@@ -39,7 +44,7 @@ type BucketBottomSheetProps = {
 };
 
 export function BucketBottomSheet({
-  sheetVisible, sheetMode, sheetTranslateY, closeSheet, theme, isOwner, canEdit, isCollaborator, isFavorite, onToggleFavorite, onLeaveCollaboration, uploadPhotos, uploadCover, loadAlbums, user, copyBucket, id, handleDelete, bucket, handleChangeStatus, handleChangeVisibility, handleChangeCategory, handleChangePriority, setSheetMode, albumsLoading, toggleAlbum, removeAllAlbums, albums, bucketAlbums, categories
+  sheetVisible, sheetMode, sheetTranslateY, closeSheet, theme, isOwner, canEdit, isCollaborator, isFavorite, onToggleFavorite, onLeaveCollaboration, uploadPhotos, uploadCover, pickAndUploadCover, takePhotoAndUploadCover, openCoverLinkModal, recropCurrentCover, removeCover, loadAlbums, user, copyBucket, id, handleDelete, bucket, handleChangeStatus, handleChangeVisibility, handleChangeCategory, handleChangePriority, setSheetMode, albumsLoading, toggleAlbum, removeAllAlbums, albums, bucketAlbums, categories
 }: BucketBottomSheetProps) {
   const [albumSearchQuery, setAlbumSearchQuery] = useState('');
   const visibilityLabel = (v: string) => {
@@ -118,11 +123,11 @@ export function BucketBottomSheet({
                 )}
 
                 {canEdit && (
-                  <Pressable style={styles.sheetOption} onPress={() => void uploadCover()}>
+                  <Pressable style={styles.sheetOption} onPress={() => setSheetMode('cover')}>
                     <View style={styles.sheetIcon}><ImageIcon color={gold[400]} size={21} /></View>
                     <View style={styles.sheetOptionText}>
                       <Typography variant="bodySemibold">Cambiar portada</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>Sube una imagen para la cabecera</Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>Sube o reajusta una imagen para la cabecera</Typography>
                     </View>
                   </Pressable>
                 )}
@@ -154,8 +159,8 @@ export function BucketBottomSheet({
                     style={styles.sheetOption}
                     onPress={() => {
                       closeSheet(() => copyBucket.mutate({ bucketId: id, userId: user.id }, {
-                        onSuccess: () => Alert.alert('Añadido a tu lista', 'La tarea se ha copiado a tu lista.'),
-                        onError: (error: any) => Alert.alert('No se pudo copiar', error.message),
+                        onSuccess: () => toast.success('La tarea se ha copiado a tu lista.'),
+                        onError: (error: any) => toast.error(error?.message || 'No se pudo copiar la tarea'),
                       }));
                     }}
                   >
@@ -336,6 +341,87 @@ export function BucketBottomSheet({
                   )}
                 </View>
               )}
+            </>
+          )}
+          {sheetMode === 'cover' && (
+            <>
+              <View style={styles.sheetHeader}>
+                <Pressable style={styles.backSheetButton} onPress={() => setSheetMode('menu')}>
+                  <ArrowLeft color={theme.colors.foreground} size={20} />
+                </Pressable>
+                <Typography variant="h3" color={theme.colors.foreground}>Foto de portada</Typography>
+                <View style={{ width: 36 }} />
+              </View>
+              <View style={styles.sheetOptions}>
+                <Pressable
+                  style={styles.sheetOption}
+                  onPress={() => {
+                    closeSheet(() => void (pickAndUploadCover ? pickAndUploadCover() : uploadCover()));
+                  }}
+                >
+                  <View style={styles.sheetIcon}><ImageIcon color={gold[400]} size={21} /></View>
+                  <View style={styles.sheetOptionText}>
+                    <Typography variant="bodySemibold">Elegir de la galería</Typography>
+                    <Typography variant="caption" color={theme.colors.foregroundMuted}>Selecciona y recorta a tu gusto</Typography>
+                  </View>
+                </Pressable>
+
+                <Pressable
+                  style={styles.sheetOption}
+                  onPress={() => {
+                    closeSheet(() => void (takePhotoAndUploadCover ? takePhotoAndUploadCover() : uploadCover()));
+                  }}
+                >
+                  <View style={styles.sheetIcon}><Camera color={gold[400]} size={21} /></View>
+                  <View style={styles.sheetOptionText}>
+                    <Typography variant="bodySemibold">Hacer foto con la cámara</Typography>
+                    <Typography variant="caption" color={theme.colors.foregroundMuted}>Toma una foto al instante</Typography>
+                  </View>
+                </Pressable>
+
+                <Pressable
+                  style={styles.sheetOption}
+                  onPress={() => {
+                    closeSheet(() => openCoverLinkModal?.());
+                  }}
+                >
+                  <View style={styles.sheetIcon}><Link2 color={gold[400]} size={21} /></View>
+                  <View style={styles.sheetOptionText}>
+                    <Typography variant="bodySemibold">Añadir con enlace de Google / Web</Typography>
+                    <Typography variant="caption" color={theme.colors.foregroundMuted}>Pega un enlace sin descargar la foto</Typography>
+                  </View>
+                </Pressable>
+
+                {bucket?.cover_image && !bucket.cover_image.startsWith('preset:') && (
+                  <Pressable
+                    style={styles.sheetOption}
+                    onPress={() => {
+                      closeSheet(() => void recropCurrentCover?.());
+                    }}
+                  >
+                    <View style={styles.sheetIcon}><Crop color={gold[400]} size={21} /></View>
+                    <View style={styles.sheetOptionText}>
+                      <Typography variant="bodySemibold">Reajustar recorte actual</Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>Ajusta o rota la foto existente</Typography>
+                    </View>
+                  </Pressable>
+                )}
+
+                {bucket?.cover_image && (
+                  <Pressable
+                    style={[styles.sheetOption, styles.dangerOption]}
+                    onPress={() => {
+                      closeSheet(() => void removeCover?.());
+                    }}
+                  >
+                    <View style={styles.sheetIcon}><Trash2 color={theme.colors.error} size={21} /></View>
+                    <View style={styles.sheetOptionText}>
+                      <Typography variant="bodySemibold" color={theme.colors.error}>Quitar foto de portada</Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>Volver al degradado predeterminado</Typography>
+                    </View>
+                  </Pressable>
+                )}
+              </View>
             </>
           )}
         </Animated.View>

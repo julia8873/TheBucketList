@@ -44,6 +44,18 @@ export function FriendsFeedTab({
 }: FriendsFeedTabProps) {
   const router = useRouter();
 
+  const renderItem = React.useCallback(
+    ({ item, index }: { item: any; index: number }) => (
+      <FeedCard
+        event={item}
+        index={index}
+        mode={viewMode}
+        onPress={() => router.push(`/bucket/${item.bucket_id}` as any)}
+      />
+    ),
+    [viewMode, router]
+  );
+
   if (isLoading) {
     return (
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -75,14 +87,7 @@ export function FriendsFeedTab({
       data={friendsItems}
       keyExtractor={(item) => item.id}
       numColumns={viewMode === 'gallery' ? 2 : 1}
-      renderItem={({ item, index }) => (
-        <FeedCard
-          event={item}
-          index={index}
-          mode={viewMode}
-          onPress={() => router.push(`/bucket/${item.bucket_id}` as any)}
-        />
-      )}
+      renderItem={renderItem}
       estimatedItemSize={viewMode === 'gallery' ? 240 : viewMode === 'compact' ? 70 : 430}
       ListHeaderComponent={headerElement}
       refreshing={manualRefreshing}

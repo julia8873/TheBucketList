@@ -78,8 +78,9 @@ export const styles = StyleSheet.create({
     left: 10,
     right: 10,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 8,
     alignItems: 'center',
+    flexWrap: 'wrap',
   },
   coverChangeBtn: {
     flexDirection: 'row',
@@ -92,9 +93,32 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
+  coverChangeBtnActive: {
+    borderColor: '#D4B13A',
+    backgroundColor: 'rgba(212, 177, 58, 0.15)',
+  },
   coverChangeBtnText: {
     color: '#FFF',
     fontSize: 12,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  coverRemoveBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(14, 14, 14, 0.85)',
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  coverRemoveBadgeText: {
+    color: '#FFF',
+    fontSize: 11.5,
     fontFamily: 'Inter_600SemiBold',
   },
   coverRemoveBtn: {

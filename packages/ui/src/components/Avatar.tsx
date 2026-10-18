@@ -51,7 +51,7 @@ interface AvatarProps {
   style?: ViewStyle;
 }
 
-export function Avatar({
+function AvatarComponent({
   source,
   fallback,
   uri,
@@ -146,6 +146,8 @@ export function Avatar({
     </View>
   );
 }
+
+export const Avatar = React.memo(AvatarComponent);
 
 const styles = StyleSheet.create({
   placeholder: {

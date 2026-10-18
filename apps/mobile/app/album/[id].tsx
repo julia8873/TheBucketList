@@ -34,6 +34,10 @@ import { supabase } from '@/services/supabase';
 import { CollaboratorPickerSheet } from '@/components/CollaboratorPickerSheet';
 import { DraggableTaskList } from '@/components/DraggableTaskList';
 import { NotificationSubscribersModal } from '@/components/NotificationSubscribersModal';
+import { ImageLinkModal } from '@/components/ImageLinkModal';
+import { TagAssignSheet } from '@/components/TagAssignSheet';
+import { PhotoCropModal } from '@/components/PhotoCropModal';
+import { hexToRgba } from '@/constants/tagPresets';
 
 import { styles } from '@/features/album-detail/styles/album-detail.styles';
 import { AlbumTaskCard } from '@/features/album-detail/components/AlbumTaskCard';
@@ -150,7 +154,7 @@ export default function AlbumDetailScreen() {
     ? tasks.filter((t) => normalizeText(t.title).includes(searchQ))
     : tasks;
   const pendientes = visibleTasks.filter((t) => !t.isCompleted).sort(compareTasks);
-  const hechas = visibleTasks.filter((t) => t.isCompleted).sort(compareTasks);
+  const completadas = visibleTasks.filter((t) => t.isCompleted).sort(compareTasks);
   const allDone = tasks.filter((t) => t.isCompleted);
 
   const manualDragEnabled =
@@ -188,9 +192,9 @@ export default function AlbumDetailScreen() {
     void state.queryClient.invalidateQueries({ queryKey: ['album', state.id, state.user?.id] });
   };
 
-  const handleReorderSection = (section: 'pendientes' | 'hechas', orderedIds: string[]) => {
+  const handleReorderSection = (section: 'pendientes' | 'completadas', orderedIds: string[]) => {
     const pendIds = pendientes.map((t) => t.id);
-    const doneIds = hechas.map((t) => t.id);
+    const doneIds = completadas.map((t) => t.id);
     void persistTaskOrder(section === 'pendientes' ? [...orderedIds, ...doneIds] : [...pendIds, ...orderedIds]);
   };
 
@@ -271,7 +275,14 @@ export default function AlbumDetailScreen() {
         }
       >
         {/* Hero */}
-        <View style={styles.hero}>
+        <View
+          style={[
+            styles.hero,
+            (parsedCover?.aspectRatio === '1:1' ||
+              (typeof parsedCover?.aspectRatioValue === 'number' &&
+                Math.abs(parsedCover.aspectRatioValue - 1) < 0.25)) && { height: 350 },
+          ]}
+        >
           {parsedCover?.type === 'image' && parsedCover?.uri ? (
             <Image source={{ uri: parsedCover.uri }} style={StyleSheet.absoluteFill} />
           ) : parsedCover?.type === 'solid' && parsedCover?.colors ? (
@@ -419,6 +430,67 @@ export default function AlbumDetailScreen() {
           <Text style={styles.albumDescription}>{album.description}</Text>
         ) : null}
 
+        {/* Etiquetas del álbum */}
+        {(state.albumTags.length > 0 || (state.canEdit && state.id !== 'unassigned')) && (
+          <View style={{ paddingHorizontal: 20, marginTop: 10, marginBottom: 10 }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+              {state.albumTags.map((t) => (
+                <Pressable
+                  key={t.id}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                    paddingHorizontal: 11,
+                    paddingVertical: 5,
+                    borderRadius: 20,
+                    borderWidth: 1,
+                    borderColor: t.color || '#D4B13A',
+                    backgroundColor: hexToRgba(t.color || '#D4B13A', 0.15),
+                  }}
+                  onPress={() => {
+                    if (state.canEdit) {
+                      state.setShowTagAssignSheet(true);
+                    }
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Etiqueta ${t.name}`}
+                >
+                  {t.emoji ? <Text style={{ fontSize: 13 }}>{t.emoji}</Text> : null}
+                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: t.color || '#D4B13A' }}>
+                    {t.name}
+                  </Text>
+                </Pressable>
+              ))}
+
+              {state.canEdit && state.id !== 'unassigned' && (
+                <Pressable
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5,
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
+                    borderRadius: 20,
+                    borderWidth: 1,
+                    borderStyle: 'dashed',
+                    borderColor: '#444444',
+                    backgroundColor: 'rgba(255,255,255,0.04)',
+                  }}
+                  onPress={() => state.setShowTagAssignSheet(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Gestionar etiquetas del álbum"
+                >
+                  <Plus size={14} color="#8F8F8F" strokeWidth={2} />
+                  <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: '#8F8F8F' }}>
+                    {state.albumTags.length === 0 ? 'Añadir etiqueta' : 'Etiquetas'}
+                  </Text>
+                </Pressable>
+              )}
+            </View>
+          </View>
+        )}
+
         {/* Barra de progreso */}
         <View style={styles.progressCard}>
           <Text style={styles.progressPercent}>{progressPercent}%</Text>
@@ -537,32 +609,32 @@ export default function AlbumDetailScreen() {
           </View>
         )}
 
-        {/* Tareas hechas */}
-        {hechas.length > 0 && (
+        {/* Tareas completadas */}
+        {completadas.length > 0 && (
           <View style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitleLeft, { color: '#22C55E' }]}>
-                HECHAS · {hechas.length}
+                COMPLETADAS · {completadas.length}
               </Text>
             </View>
             {manualDragEnabled ? (
               <View style={styles.taskListDraggable}>
                 <DraggableTaskList
-                  items={hechas}
-                  onReorder={(ids) => handleReorderSection('hechas', ids)}
+                  items={completadas}
+                  onReorder={(ids) => handleReorderSection('completadas', ids)}
                   onDraggingChange={state.setDragging}
                   renderItem={(item, drag) => renderTaskCard(item, drag)}
                 />
               </View>
             ) : (
               <View style={styles.taskList}>
-                {hechas.map((task) => renderTaskCard(task))}
+                {completadas.map((task) => renderTaskCard(task))}
               </View>
             )}
           </View>
         )}
 
-        {isSearchingTasks && pendientes.length === 0 && hechas.length === 0 && (
+        {isSearchingTasks && pendientes.length === 0 && completadas.length === 0 && (
           <Text style={styles.noResultsText}>No se encontraron tareas con ese nombre</Text>
         )}
       </ScrollView>
@@ -617,7 +689,9 @@ export default function AlbumDetailScreen() {
         tasksLength={tasks.length}
         currentUserId={state.currentUserId}
         albumId={state.id}
-        onClose={state.closeSheet}
+        hasCustomCover={Boolean(parsedCover?.type === 'image' && parsedCover?.uri)}
+        coverAspectRatio={parsedCover?.aspectRatio || '16:9'}
+        onClose={() => state.closeSheet()}
         onToggleFavorite={() =>
           state.toggleFavoriteAlbum.mutate({
             albumId: state.id,
@@ -627,7 +701,12 @@ export default function AlbumDetailScreen() {
         onToggleAllTasks={state.handleToggleAllTasks}
         onCopyAlbum={state.handleCopyEntireAlbum}
         onShare={state.handleShare}
-        onPickCover={state.pickAndUploadCover}
+        onPickGallery={() => void state.pickAndUploadCover()}
+        onTakePhoto={() => void state.takePhotoAndUploadCover()}
+        onOpenCoverLink={() => state.setShowCoverLinkModal(true)}
+        onRecropCover={() => void state.recropCurrentCover()}
+        onChangeCoverShape={(ratio) => void state.handleChangeCoverShape(ratio)}
+        onRemoveCover={() => void state.removeCover()}
         onToggleClose={state.handleToggleCloseAlbum}
         onChangePriority={state.handleChangePriority}
         onChangeVisibility={state.handleChangeVisibility}
@@ -636,8 +715,24 @@ export default function AlbumDetailScreen() {
           state.closeSheet();
           state.setShowCollaboratorPicker(true);
         }}
+        onOpenTags={() => {
+          state.closeSheet();
+          state.setShowTagAssignSheet(true);
+        }}
         onConfirmDelete={state.confirmDeleteAlbum}
         onConfirmLeave={state.confirmLeaveAlbum}
+      />
+
+      {/* Recorte y edición de fotos para portada */}
+      <PhotoCropModal
+        visible={!!state.cropRequest}
+        uri={state.cropRequest?.uri ?? null}
+        width={state.cropRequest?.width ?? 0}
+        height={state.cropRequest?.height ?? 0}
+        index={state.cropRequest?.index ?? 0}
+        total={state.cropRequest?.total ?? 1}
+        onCancel={() => state.finishPhotoEdit(null)}
+        onDone={(uri) => state.finishPhotoEdit(uri)}
       />
 
       {/* Modal de orden de tareas */}
@@ -674,6 +769,22 @@ export default function AlbumDetailScreen() {
         targetTitle={album.title}
         ownerId={album.ownerId}
         currentUserId={state.currentUserId}
+      />
+
+      {/* Modal para añadir portada desde enlace web o Google */}
+      <ImageLinkModal
+        visible={state.showCoverLinkModal}
+        onClose={() => state.setShowCoverLinkModal(false)}
+        initialQuery={album.title}
+        onApplyImage={(url: string) => void state.handleSaveCoverLink(url)}
+      />
+
+      {/* Modal de etiquetas del álbum */}
+      <TagAssignSheet
+        visible={state.showTagAssignSheet}
+        selectedTags={state.albumTags}
+        onChange={state.handleSaveAlbumTags}
+        onClose={() => state.setShowTagAssignSheet(false)}
       />
     </View>
   );

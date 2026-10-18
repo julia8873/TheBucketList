@@ -100,6 +100,12 @@ export function AlbumCard({
     );
   }
 
+  const isSquare =
+    parsedCover?.aspectRatio === '1:1' ||
+    (typeof parsedCover?.aspectRatioValue === 'number' &&
+      Math.abs(parsedCover.aspectRatioValue - 1) < 0.25);
+  const cardHeight = isSquare ? CARD_WIDTH : CARD_HEIGHT;
+
   const isCompleted = totalTasks > 0 && completedTasks === totalTasks;
 
   return (
@@ -110,6 +116,7 @@ export function AlbumCard({
         {
           backgroundColor: theme.colors.surface,
           opacity: pressed ? 0.85 : 1,
+          height: cardHeight,
         },
         style,
       ]}
@@ -119,10 +126,10 @@ export function AlbumCard({
 
       {/* Bottom gradient so text is readable */}
       <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.72)']}
+        colors={['transparent', 'rgba(0,0,0,0.78)']}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
-        style={[StyleSheet.absoluteFill, { top: '40%' }]}
+        style={[StyleSheet.absoluteFill, { top: isSquare ? '28%' : '40%' }]}
       />
 
       {/* Top left badges */}

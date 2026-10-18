@@ -1,0 +1,544 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  ActivityIndicator,
+  Image,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  X,
+  Lock,
+  UserCheck,
+  Zap,
+  Users,
+  Globe,
+  Check,
+  Clock,
+  CheckCircle2,
+  XCircle,
+} from 'lucide-react-native';
+import { normalizeStorageUrl } from '@/constants/urls';
+import { getInitials } from './BucketCollaboratorsRow';
+
+export type CollaborationMode = 'invite_only' | 'request' | 'open';
+export type CollaborationAudience = 'followers' | 'anyone';
+
+interface TaskCollaborationSettingsModalProps {
+  visible: boolean;
+  currentMode: CollaborationMode;
+  currentAudience: CollaborationAudience;
+  pendingCollaborators: any[];
+  onClose: () => void;
+  onSaveSettings: (mode: CollaborationMode, audience: CollaborationAudience) => Promise<void>;
+  onRespondRequest: (userId: string, accept: boolean) => Promise<void>;
+}
+
+export function TaskCollaborationSettingsModal({
+  visible,
+  currentMode,
+  currentAudience,
+  pendingCollaborators,
+  onClose,
+  onSaveSettings,
+  onRespondRequest,
+}: TaskCollaborationSettingsModalProps) {
+  const insets = useSafeAreaInsets();
+  const [mode, setMode] = useState<CollaborationMode>(currentMode);
+  const [audience, setAudience] = useState<CollaborationAudience>(currentAudience);
+  const [saving, setSaving] = useState(false);
+  const [respondingId, setRespondingId] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (visible) {
+      setMode(currentMode);
+      setAudience(currentAudience);
+    }
+  }, [visible, currentMode, currentAudience]);
+
+  const handleSelectMode = async (newMode: CollaborationMode) => {
+    setMode(newMode);
+    setSaving(true);
+    try {
+      await onSaveSettings(newMode, audience);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSelectAudience = async (newAudience: CollaborationAudience) => {
+    setAudience(newAudience);
+    setSaving(true);
+    try {
+      await onSaveSettings(mode, newAudience);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRespond = async (userId: string, accept: boolean) => {
+    setRespondingId(userId);
+    try {
+      await onRespondRequest(userId, accept);
+    } finally {
+      setRespondingId(null);
+    }
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={styles.overlay}>
+        <Pressable style={styles.backdrop} onPress={onClose} />
+        <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 20) + 12 }]}>
+          {/* Handle */}
+          <View style={styles.dragHandle} />
+
+          {/* Cabecera */}
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.title}>Ajustes de colaboración</Text>
+              <Text style={styles.subtitle}>Define quién y cómo pueden colaborar en tu tarea</Text>
+            </View>
+            <Pressable onPress={onClose} hitSlop={10} style={styles.closeBtn}>
+              <X size={20} color="#9E9E9E" />
+            </Pressable>
+          </View>
+
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            {/* Solicitudes pendientes de aprobación */}
+            {pendingCollaborators.length > 0 && (
+              <View style={styles.pendingSection}>
+                <View style={styles.pendingHeader}>
+                  <Clock size={16} color="#D4B13A" />
+                  <Text style={styles.pendingTitle}>
+                    Solicitudes pendientes ({pendingCollaborators.length})
+                  </Text>
+                </View>
+
+                {pendingCollaborators.map((c: any) => {
+                  const isResponding = respondingId === c.id;
+                  return (
+                    <View key={c.id} style={styles.pendingItem}>
+                      <View style={styles.pendingUserInfo}>
+                        {c.avatar_url ? (
+                          <Image
+                            source={{ uri: normalizeStorageUrl(c.avatar_url) }}
+                            style={styles.avatarImg}
+                          />
+                        ) : (
+                          <View style={styles.initialsCircle}>
+                            <Text style={styles.initialsText}>
+                              {getInitials(c.display_name || c.username)}
+                            </Text>
+                          </View>
+                        )}
+                        <View style={{ flex: 1, marginLeft: 10 }}>
+                          <Text style={styles.userName} numberOfLines={1}>
+                            {c.display_name || c.username}
+                          </Text>
+                          <Text style={styles.userHandle} numberOfLines={1}>
+                            @{c.username}
+                          </Text>
+                        </View>
+                      </View>
+
+                      {isResponding ? (
+                        <ActivityIndicator size="small" color="#D4B13A" />
+                      ) : (
+                        <View style={styles.actionButtons}>
+                          <Pressable
+                            style={[styles.actionBtn, styles.acceptBtn]}
+                            onPress={() => handleRespond(c.id, true)}
+                          >
+                            <Check size={14} color="#0D0D0D" strokeWidth={2.6} />
+                            <Text style={styles.acceptBtnText}>Aceptar</Text>
+                          </Pressable>
+                          <Pressable
+                            style={[styles.actionBtn, styles.declineBtn]}
+                            onPress={() => handleRespond(c.id, false)}
+                          >
+                            <X size={14} color="#E0E0E0" strokeWidth={2} />
+                            <Text style={styles.declineBtnText}>Rechazar</Text>
+                          </Pressable>
+                        </View>
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+
+            {/* Sección 1: Modo de colaboración */}
+            <Text style={styles.sectionHeading}>¿CÓMO PUEDEN COLABORAR?</Text>
+
+            {/* Opción A: Solo invitación */}
+            <Pressable
+              style={[styles.optionCard, mode === 'invite_only' && styles.optionCardActive]}
+              onPress={() => handleSelectMode('invite_only')}
+            >
+              <View style={styles.optionIconContainer}>
+                <Lock size={20} color={mode === 'invite_only' ? '#D4B13A' : '#888888'} />
+              </View>
+              <View style={styles.optionContent}>
+                <Text style={[styles.optionTitle, mode === 'invite_only' && styles.optionTitleActive]}>
+                  Solo por invitación
+                </Text>
+                <Text style={styles.optionDesc}>
+                  Solo tú puedes añadir colaboradores manualmente a esta tarea.
+                </Text>
+              </View>
+              <View style={[styles.radio, mode === 'invite_only' && styles.radioActive]}>
+                {mode === 'invite_only' && <View style={styles.radioDot} />}
+              </View>
+            </Pressable>
+
+            {/* Opción B: Con solicitud */}
+            <Pressable
+              style={[styles.optionCard, mode === 'request' && styles.optionCardActive]}
+              onPress={() => handleSelectMode('request')}
+            >
+              <View style={styles.optionIconContainer}>
+                <UserCheck size={20} color={mode === 'request' ? '#D4B13A' : '#888888'} />
+              </View>
+              <View style={styles.optionContent}>
+                <Text style={[styles.optionTitle, mode === 'request' && styles.optionTitleActive]}>
+                  Con solicitud de permiso
+                </Text>
+                <Text style={styles.optionDesc}>
+                  Los usuarios pueden pedir colaborar. Tú apruebas o rechazas cada solicitud.
+                </Text>
+              </View>
+              <View style={[styles.radio, mode === 'request' && styles.radioActive]}>
+                {mode === 'request' && <View style={styles.radioDot} />}
+              </View>
+            </Pressable>
+
+            {/* Opción C: Colaboración abierta */}
+            <Pressable
+              style={[styles.optionCard, mode === 'open' && styles.optionCardActive]}
+              onPress={() => handleSelectMode('open')}
+            >
+              <View style={styles.optionIconContainer}>
+                <Zap size={20} color={mode === 'open' ? '#D4B13A' : '#888888'} />
+              </View>
+              <View style={styles.optionContent}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={[styles.optionTitle, mode === 'open' && styles.optionTitleActive]}>
+                    Unirse libremente
+                  </Text>
+                  <View style={styles.openBadge}>
+                    <Text style={styles.openBadgeText}>Sin permiso</Text>
+                  </View>
+                </View>
+                <Text style={styles.optionDesc}>
+                  Los usuarios pueden meterse directamente como colaboradores por su propia cuenta.
+                </Text>
+              </View>
+              <View style={[styles.radio, mode === 'open' && styles.radioActive]}>
+                {mode === 'open' && <View style={styles.radioDot} />}
+              </View>
+            </Pressable>
+
+            {/* Sección 2: Audiencia permitida (solo visible si no es solo por invitación) */}
+            {mode !== 'invite_only' && (
+              <View style={{ marginTop: 20 }}>
+                <Text style={styles.sectionHeading}>¿QUIÉN PUEDE UNIRSE O SOLICITAR?</Text>
+
+                {/* Audiencia A: Solo seguidores */}
+                <Pressable
+                  style={[styles.optionCard, audience === 'followers' && styles.optionCardActive]}
+                  onPress={() => handleSelectAudience('followers')}
+                >
+                  <View style={styles.optionIconContainer}>
+                    <Users size={20} color={audience === 'followers' ? '#D4B13A' : '#888888'} />
+                  </View>
+                  <View style={styles.optionContent}>
+                    <Text
+                      style={[
+                        styles.optionTitle,
+                        audience === 'followers' && styles.optionTitleActive,
+                      ]}
+                    >
+                      Solo mis seguidores
+                    </Text>
+                    <Text style={styles.optionDesc}>
+                      Únicamente los usuarios que te siguen pueden {mode === 'open' ? 'unirse' : 'solicitar colaborar'}.
+                    </Text>
+                  </View>
+                  <View style={[styles.radio, audience === 'followers' && styles.radioActive]}>
+                    {audience === 'followers' && <View style={styles.radioDot} />}
+                  </View>
+                </Pressable>
+
+                {/* Audiencia B: Todos los usuarios */}
+                <Pressable
+                  style={[styles.optionCard, audience === 'anyone' && styles.optionCardActive]}
+                  onPress={() => handleSelectAudience('anyone')}
+                >
+                  <View style={styles.optionIconContainer}>
+                    <Globe size={20} color={audience === 'anyone' ? '#D4B13A' : '#888888'} />
+                  </View>
+                  <View style={styles.optionContent}>
+                    <Text
+                      style={[
+                        styles.optionTitle,
+                        audience === 'anyone' && styles.optionTitleActive,
+                      ]}
+                    >
+                      Todos los usuarios de la app
+                    </Text>
+                    <Text style={styles.optionDesc}>
+                      Cualquier usuario de The Bucket List puede {mode === 'open' ? 'unirse directamente' : 'solicitar colaborar'}.
+                    </Text>
+                  </View>
+                  <View style={[styles.radio, audience === 'anyone' && styles.radioActive]}>
+                    {audience === 'anyone' && <View style={styles.radioDot} />}
+                  </View>
+                </Pressable>
+              </View>
+            )}
+
+            {saving && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 16 }}>
+                <ActivityIndicator size="small" color="#D4B13A" />
+                <Text style={{ color: '#D4B13A', fontSize: 13, fontFamily: 'Inter_500Medium' }}>
+                  Guardando ajustes…
+                </Text>
+              </View>
+            )}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.65)',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  sheet: {
+    backgroundColor: '#161616',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '85%',
+    borderWidth: 1,
+    borderColor: '#262626',
+  },
+  dragHandle: {
+    width: 36,
+    height: 4,
+    backgroundColor: '#333333',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: 10,
+    marginBottom: 6,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#242424',
+  },
+  title: {
+    color: '#F5F5F5',
+    fontSize: 18,
+    fontFamily: 'Inter_700Bold',
+  },
+  subtitle: {
+    color: '#8E8E8E',
+    fontSize: 13,
+    fontFamily: 'Inter_400Regular',
+    marginTop: 2,
+  },
+  closeBtn: {
+    padding: 4,
+    borderRadius: 20,
+    backgroundColor: '#222222',
+  },
+  content: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+  pendingSection: {
+    backgroundColor: 'rgba(212, 177, 58, 0.08)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 177, 58, 0.3)',
+    padding: 14,
+    marginBottom: 20,
+  },
+  pendingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  pendingTitle: {
+    color: '#D4B13A',
+    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  pendingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#1C1C1C',
+    padding: 10,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  pendingUserInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  avatarImg: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
+  initialsCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#2A2A2A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  initialsText: {
+    color: '#D4B13A',
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  userName: {
+    color: '#F5F5F5',
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  userHandle: {
+    color: '#8E8E8E',
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  actionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  acceptBtn: {
+    backgroundColor: '#D4B13A',
+  },
+  acceptBtnText: {
+    color: '#0D0D0D',
+    fontSize: 12,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  declineBtn: {
+    backgroundColor: '#2B2B2B',
+  },
+  declineBtnText: {
+    color: '#E0E0E0',
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+  },
+  sectionHeading: {
+    color: '#8E8E8E',
+    fontSize: 11,
+    fontFamily: 'Inter_600SemiBold',
+    letterSpacing: 1.1,
+    marginBottom: 10,
+  },
+  optionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1C1C1C',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
+    padding: 14,
+    marginBottom: 10,
+  },
+  optionCardActive: {
+    borderColor: '#D4B13A',
+    backgroundColor: 'rgba(212, 177, 58, 0.06)',
+  },
+  optionIconContainer: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#262626',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  optionContent: {
+    flex: 1,
+  },
+  optionTitle: {
+    color: '#E5E5E5',
+    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  optionTitleActive: {
+    color: '#F5F5F5',
+  },
+  optionDesc: {
+    color: '#8A8A8A',
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  openBadge: {
+    backgroundColor: 'rgba(212, 177, 58, 0.2)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  openBadgeText: {
+    color: '#D4B13A',
+    fontSize: 10,
+    fontFamily: 'Inter_700Bold',
+  },
+  radio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#444444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+  },
+  radioActive: {
+    borderColor: '#D4B13A',
+  },
+  radioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#D4B13A',
+  },
+});

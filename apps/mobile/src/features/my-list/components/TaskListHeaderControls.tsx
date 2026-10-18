@@ -50,6 +50,7 @@ const STATUS_OPTIONS: Array<{ key: FilterType; label: string; desc: string }> = 
   { key: 'in_progress', label: 'En progreso', desc: 'Tareas marcadas como actualmente en marcha' },
   { key: 'completed', label: 'Completadas', desc: 'Tareas que ya has marcado como finalizadas' },
   { key: 'expired', label: 'Vencidas', desc: 'Tareas cuya fecha límite ya ha expirado' },
+  { key: 'public', label: 'Públicas', desc: 'Tareas con visibilidad pública en la comunidad' },
 ];
 
 const STATUS_SHORT_LABEL: Record<FilterType, string> = {
@@ -58,6 +59,7 @@ const STATUS_SHORT_LABEL: Record<FilterType, string> = {
   in_progress: 'Estado: En progreso',
   completed: 'Estado: Completadas',
   expired: 'Estado: Vencidas',
+  public: 'Estado: Públicas',
 };
 
 const PRIORITY_OPTIONS: Array<{ key: PriorityFilter; label: string; desc: string }> = [

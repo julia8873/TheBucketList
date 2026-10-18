@@ -1,6 +1,7 @@
 import { supabase } from '../supabase';
 import type { Database } from '@bucketlist/shared';
 import type { CreateBucketForm, UpdateBucketForm } from '@bucketlist/shared';
+import { applyAlbumTagsToTasks } from '../../hooks/useAlbumTags';
 
 type Bucket = Database['public']['Tables']['buckets']['Row'];
 type BucketInsert = Database['public']['Tables']['buckets']['Insert'];
@@ -112,13 +113,20 @@ export const bucketApi = {
     }));
   },
 
-  createBucket: async (payload: CreateBucketForm & { cover_image?: string | null, album_id?: string | null, tag_ids?: string[], collaborator_ids?: string[] }) => {
+  createBucket: async (payload: CreateBucketForm & {
+    cover_image?: string | null;
+    album_id?: string | null;
+    tag_ids?: string[];
+    collaborator_ids?: string[];
+    collaboration_mode?: string;
+    collaboration_audience?: string;
+  }) => {
     // 1. Get current user
     const { data: userData, error: userError } = await supabase.auth.getUser();
     if (userError || !userData.user) throw new Error('Not authenticated');
 
     // 2. Insert bucket
-    const bucketInsert: BucketInsert = {
+    const bucketInsert: any = {
       user_id: userData.user.id,
       title: payload.title,
       description: payload.description || null,
@@ -131,6 +139,8 @@ export const bucketApi = {
       location_lng: payload.location_lng || null,
       status: 'pending',
       cover_image: payload.cover_image || null,
+      collaboration_mode: payload.collaboration_mode || 'invite_only',
+      collaboration_audience: payload.collaboration_audience || 'followers',
     };
 
     const { data: bucket, error: bucketError } = await supabase
@@ -201,14 +211,16 @@ export const bucketApi = {
         
       if (albumError) {
         console.error('Failed to insert album relation', albumError);
+      } else {
+        await applyAlbumTagsToTasks(payload.album_id, [(bucket as Bucket).id]);
       }
     }
 
     return bucket;
   },
 
-  updateBucket: async (id: string, payload: UpdateBucketForm) => {
-    const bucketUpdate: BucketUpdate = {
+  updateBucket: async (id: string, payload: UpdateBucketForm & { collaboration_mode?: string; collaboration_audience?: string }) => {
+    const bucketUpdate: any = {
       title: payload.title,
       description: payload.description,
       category_id: payload.category_id,
@@ -222,10 +234,17 @@ export const bucketApi = {
       completed_at: payload.completed_at ? payload.completed_at.toISOString() : undefined,
     };
 
+    if (payload.collaboration_mode !== undefined) {
+      bucketUpdate.collaboration_mode = payload.collaboration_mode;
+    }
+    if (payload.collaboration_audience !== undefined) {
+      bucketUpdate.collaboration_audience = payload.collaboration_audience;
+    }
+
     // Remove undefined fields
     Object.keys(bucketUpdate).forEach(key => {
-      if (bucketUpdate[key as keyof BucketUpdate] === undefined) {
-        delete bucketUpdate[key as keyof BucketUpdate];
+      if (bucketUpdate[key] === undefined) {
+        delete bucketUpdate[key];
       }
     });
 
@@ -249,5 +268,124 @@ export const bucketApi = {
 
     if (error) throw error;
     return id;
-  }
+  },
+
+  /** Solicitar o unirse como colaborador a una tarea (respetando modo abierto o solicitud) */
+  requestOrJoinCollaboration: async (bucketId: string, requestOnly = false) => {
+    const { data: userAuth } = await supabase.auth.getUser();
+    if (!userAuth?.user) throw new Error('Debes iniciar sesión para colaborar');
+    const uid = userAuth.user.id;
+
+    // 1. Intentar vía RPC
+    try {
+      const { data, error } = await (supabase as any).rpc('request_or_join_bucket_collaboration', {
+        p_bucket_id: bucketId,
+        p_request_only: requestOnly,
+      });
+      if (!error && data) {
+        return data as { success: boolean; status: 'accepted' | 'pending'; message: string };
+      }
+      if (error && error.message && !error.message.includes('function') && !error.message.includes('not find')) {
+        throw error;
+      }
+    } catch (e: any) {
+      if (e?.message && !e.message.includes('function') && !e.message.includes('not find')) {
+        throw e;
+      }
+    }
+
+    // 2. Fallback directo en cliente
+    const { data: bucket, error: bErr } = await supabase
+      .from('buckets')
+      .select('user_id, collaboration_mode, collaboration_audience, title')
+      .eq('id', bucketId)
+      .single();
+
+    if (bErr || !bucket) throw new Error('No se pudo encontrar la tarea');
+    if (bucket.user_id === uid) throw new Error('Ya eres el creador de esta tarea');
+
+    const mode = (bucket as any).collaboration_mode || 'invite_only';
+    const audience = (bucket as any).collaboration_audience || 'followers';
+
+    if (mode === 'invite_only') {
+      throw new Error('Esta tarea no permite unirse libremente ni solicitar colaborar');
+    }
+
+    if (audience === 'followers') {
+      const { data: f } = await supabase
+        .from('follows')
+        .select('id')
+        .eq('follower_id', uid)
+        .eq('following_id', bucket.user_id)
+        .eq('status', 'accepted')
+        .maybeSingle();
+      if (!f) throw new Error('Solo los seguidores del creador pueden colaborar en esta tarea');
+    }
+
+    const targetStatus = mode === 'open' && !requestOnly ? 'accepted' : 'pending';
+
+    const { error: insErr } = await supabase
+      .from('bucket_collaborators')
+      .insert({
+        bucket_id: bucketId,
+        user_id: uid,
+        status: targetStatus,
+      });
+
+    if (insErr) throw insErr;
+
+    // Notificación
+    try {
+      await supabase.from('notifications').insert({
+        recipient_id: bucket.user_id,
+        type: targetStatus === 'accepted' ? 'collaborator_joined' : 'collaboration_request',
+        actor_id: uid,
+        bucket_id: bucketId,
+        is_read: false,
+      });
+    } catch {}
+
+    return {
+      success: true,
+      status: targetStatus as 'accepted' | 'pending',
+      message: targetStatus === 'accepted' ? '¡Te has unido como colaborador!' : 'Solicitud enviada al creador',
+    };
+  },
+
+  /** Responder a solicitud de colaboración (aceptar o rechazar) */
+  respondToCollaborationRequest: async (bucketId: string, userId: string, accept: boolean) => {
+    try {
+      const { data, error } = await (supabase as any).rpc('respond_to_collaboration_request', {
+        p_bucket_id: bucketId,
+        p_user_id: userId,
+        p_accept: accept,
+      });
+      if (!error && data) return data;
+      if (error && error.message && !error.message.includes('function') && !error.message.includes('not find')) {
+        throw error;
+      }
+    } catch (e: any) {
+      if (e?.message && !e.message.includes('function') && !e.message.includes('not find')) {
+        throw e;
+      }
+    }
+
+    // Fallback directo
+    if (accept) {
+      const { error } = await supabase
+        .from('bucket_collaborators')
+        .update({ status: 'accepted' })
+        .eq('bucket_id', bucketId)
+        .eq('user_id', userId);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase
+        .from('bucket_collaborators')
+        .delete()
+        .eq('bucket_id', bucketId)
+        .eq('user_id', userId);
+      if (error) throw error;
+    }
+    return { success: true };
+  },
 };

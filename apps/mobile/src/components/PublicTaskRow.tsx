@@ -2,7 +2,7 @@ import React from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { differenceInCalendarDays } from 'date-fns';
-import { Pill, ProgressBar, UrgencyChip, fontFamily, gold, useTheme } from '@bucketlist/ui';
+import { Pill, ProgressBar, UrgencyChip, fontFamily, gold, useTheme, toast } from '@bucketlist/ui';
 import { BucketCover } from './BucketCover';
 import { resolveTaskImage } from '../utils/taskImage';
 import { useAuthStore } from '../stores/auth.store';
@@ -66,7 +66,7 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, onPress, mode = 'l
     if (!user || alreadyCopied || copyBucket.isPending) return;
     copyBucket.mutate(
       { bucketId: bucket.id, userId: user.id },
-      { onError: (error: any) => Alert.alert('No se pudo añadir', error?.message ?? 'Inténtalo de nuevo.') }
+      { onError: (error: any) => toast.error(error?.message ?? 'No se pudo añadir. Inténtalo de nuevo.') }
     );
   };
 

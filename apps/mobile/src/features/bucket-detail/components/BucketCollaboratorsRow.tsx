@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, Pressable, Image } from 'react-native';
-import { UserPlus } from 'lucide-react-native';
+import { UserPlus, SlidersHorizontal, Clock } from 'lucide-react-native';
 import { normalizeStorageUrl } from '@/constants/urls';
 import { styles } from '../styles/bucket-detail.styles';
 
@@ -22,6 +22,8 @@ interface BucketCollaboratorsRowProps {
   user: any;
   canEdit: boolean;
   onOpenPicker: () => void;
+  onOpenSettings?: () => void;
+  pendingCount?: number;
 }
 
 export function BucketCollaboratorsRow({
@@ -31,6 +33,8 @@ export function BucketCollaboratorsRow({
   user,
   canEdit,
   onOpenPicker,
+  onOpenSettings,
+  pendingCount = 0,
 }: BucketCollaboratorsRowProps) {
   const isOwnerUser = bucket.user_id === user?.id;
   const ownerEntry = {
@@ -75,7 +79,7 @@ export function BucketCollaboratorsRow({
           return (
             <Pressable
               key={c.id}
-              onPress={() => canEdit && onOpenPicker()}
+              onPress={() => canEdit && (isPending && onOpenSettings ? onOpenSettings() : onOpenPicker())}
               style={[
                 styles.collaboratorCircle,
                 isPending && styles.collaboratorCirclePending,
@@ -102,15 +106,57 @@ export function BucketCollaboratorsRow({
         })}
 
         {canEdit && (
-          <Pressable
-            style={styles.addCollaboratorCircle}
-            onPress={onOpenPicker}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel="Añadir colaborador"
-          >
-            <UserPlus size={22} color="#D4B13A" strokeWidth={1.8} />
-          </Pressable>
+          <>
+            <Pressable
+              style={styles.addCollaboratorCircle}
+              onPress={onOpenPicker}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Añadir colaborador"
+            >
+              <UserPlus size={22} color="#D4B13A" strokeWidth={1.8} />
+            </Pressable>
+
+            {isOwnerUser && onOpenSettings && (
+              <Pressable
+                style={[
+                  styles.addCollaboratorCircle,
+                  { backgroundColor: 'rgba(255,255,255,0.06)', borderColor: '#333333' },
+                  pendingCount > 0 && { borderColor: '#D4B13A', backgroundColor: 'rgba(212,177,58,0.12)' },
+                ]}
+                onPress={onOpenSettings}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Ajustes de colaboración"
+              >
+                {pendingCount > 0 ? (
+                  <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+                    <Clock size={16} color="#D4B13A" strokeWidth={2.4} />
+                    <View
+                      style={{
+                        position: 'absolute',
+                        top: -8,
+                        right: -8,
+                        backgroundColor: '#EF4444',
+                        borderRadius: 8,
+                        minWidth: 16,
+                        height: 16,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        paddingHorizontal: 3,
+                      }}
+                    >
+                      <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: '700' }}>
+                        {pendingCount}
+                      </Text>
+                    </View>
+                  </View>
+                ) : (
+                  <SlidersHorizontal size={18} color="#CFCABD" strokeWidth={2} />
+                )}
+              </Pressable>
+            )}
+          </>
         )}
       </ScrollView>
     </View>

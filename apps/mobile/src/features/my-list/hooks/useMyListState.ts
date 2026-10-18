@@ -28,7 +28,7 @@ import {
 export function useMyListState() {
   const { user } = useAuthStore();
   const toast = useToast();
-  const params = useLocalSearchParams<{ filter?: string; tab?: string }>();
+  const params = useLocalSearchParams<{ filter?: string; tab?: string; from?: string }>();
 
   const [activeTab, setActiveTabState] = useState(
     params.tab === 'albums' || params.tab === 'calendar' || params.tab === 'list'
@@ -41,7 +41,11 @@ export function useMyListState() {
   };
 
   const [filter, setFilterState] = useState<FilterType>(
-    params.filter === 'completed' || params.filter === 'active' || params.filter === 'in_progress' || params.filter === 'expired'
+    params.filter === 'completed' ||
+    params.filter === 'active' ||
+    params.filter === 'in_progress' ||
+    params.filter === 'expired' ||
+    params.filter === 'public'
       ? (params.filter as FilterType)
       : 'all'
   );
@@ -73,7 +77,7 @@ export function useMyListState() {
     if (!params.filter) {
       AsyncStorage.getItem('@my_list_filter')
         .then((saved) => {
-          if (saved && ['all', 'completed', 'active', 'in_progress', 'expired'].includes(saved)) {
+          if (saved && ['all', 'completed', 'active', 'in_progress', 'expired', 'public'].includes(saved)) {
             setFilterState(saved as FilterType);
           }
         })
@@ -100,6 +104,7 @@ export function useMyListState() {
       params.filter === 'active' ||
       params.filter === 'in_progress' ||
       params.filter === 'expired' ||
+      params.filter === 'public' ||
       params.filter === 'all'
     ) {
       setFilterState(params.filter as FilterType);
@@ -489,6 +494,7 @@ export function useMyListState() {
     if (!buckets) return [];
 
     let result = buckets.filter((b: any) => {
+      if (filter === 'public') return b.visibility === 'public';
       if (filter === 'all') return true;
       if (filter === 'completed') return b.status === 'completed';
 
@@ -830,5 +836,6 @@ export function useMyListState() {
     albumSections,
     sortedAlbumsList,
     toast,
+    from: params.from,
   };
 }

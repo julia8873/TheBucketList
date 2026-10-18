@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  BackHandler,
   Dimensions,
   Image,
   Modal,
@@ -91,6 +92,15 @@ export function PhotoCropModal({ visible, uri, width, height, index, total, onCa
     setEdited(false);
     setBusy(false);
   }, [visible, uri, width, height]);
+
+  useEffect(() => {
+    if (!visible) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      onCancel();
+      return true;
+    });
+    return () => sub.remove();
+  }, [visible, onCancel]);
 
   // Al cambiar la imagen (o girarla) el recorte vuelve a ocupar toda la imagen.
   useEffect(() => {

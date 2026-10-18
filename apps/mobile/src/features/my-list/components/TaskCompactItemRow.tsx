@@ -19,7 +19,7 @@ interface TaskCompactItemRowProps {
   onToggleComplete: () => void;
 }
 
-export function TaskCompactItemRow({
+function TaskCompactItemRowComponent({
   item,
   drag,
   isSelected,
@@ -195,6 +195,8 @@ export function TaskCompactItemRow({
     </Pressable>
   );
 }
+
+export const TaskCompactItemRow = React.memo(TaskCompactItemRowComponent);
 
 const localStyles = StyleSheet.create({
   row: {

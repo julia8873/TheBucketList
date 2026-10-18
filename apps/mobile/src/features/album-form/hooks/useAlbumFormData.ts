@@ -1,11 +1,15 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { toast } from '@bucketlist/ui';
 import { useCreateAlbum, useUpdateAlbum } from '../../../hooks/useAlbums';
 import { supabase } from '../../../services/supabase';
 import { useAuthStore } from '../../../stores/auth.store';
 import { uploadAlbumCover, isLocalUri } from '../../../services/api/albumCover';
 import type { CollaboratorItem } from '../../../components/CollaboratorPickerSheet';
+import type { TagItem } from '../../../components/TagAssignSheet';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSyncAlbumTags, getAlbumTagsStorageKey } from '../../../hooks/useAlbumTags';
 import { COVERS, SOLID_COVERS, type Cover, type AlbumPriority, type AlbumVisibility } from '../types';
 
 export function useAlbumFormData(id?: string) {
@@ -18,17 +22,22 @@ export function useAlbumFormData(id?: string) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<AlbumPriority>('medium');
-  const [selectedCover, setSelectedCover] = useState<Cover>(COVERS[1]!);
+  const [selectedCover, setSelectedCover] = useState<Cover>({ ...COVERS[1]!, aspectRatio: '1:1' });
   const [visibility, setVisibility] = useState<AlbumVisibility>('private');
   const [isShared, setIsShared] = useState(false);
   const [albumOwner, setAlbumOwner] = useState<{ id: string; username?: string; display_name?: string | null; avatar_url?: string | null } | null>(null);
   const [selectedCollaborators, setSelectedCollaborators] = useState<CollaboratorItem[]>([]);
   const [initialCollaboratorIds, setInitialCollaboratorIds] = useState<string[]>([]);
   const [showCollaboratorPicker, setShowCollaboratorPicker] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<TagItem[]>([]);
+  const [initialTagIds, setInitialTagIds] = useState<string[]>([]);
+  const [tagsToRemoveFromTasks, setTagsToRemoveFromTasks] = useState<Set<string>>(new Set());
+  const [showTagPicker, setShowTagPicker] = useState(false);
   const [loadingInitial, setLoadingInitial] = useState(isEditing);
 
   const createAlbum = useCreateAlbum();
   const updateAlbum = useUpdateAlbum();
+  const syncAlbumTags = useSyncAlbumTags();
 
   const isSelf = (targetId?: string | null) => {
     if (!targetId || !currentUserId) return false;
@@ -83,7 +92,11 @@ export function useAlbumFormData(id?: string) {
               COVERS.find((c) => c.id === parsed.id) ||
               SOLID_COVERS.find((c) => c.id === parsed.id) ||
               parsed;
-            setSelectedCover(foundCover);
+            setSelectedCover({
+              ...foundCover,
+              aspectRatio: parsed.aspectRatio || foundCover.aspectRatio || '1:1',
+              uri: parsed.uri || foundCover.uri,
+            });
           } catch {
             // Ignored
           }
@@ -124,6 +137,63 @@ export function useAlbumFormData(id?: string) {
           setSelectedCollaborators(initialSelected);
           setInitialCollaboratorIds(collabs.map((c) => c.id));
         }
+
+        // Load existing album tags
+        try {
+          const { data: albumTagsData } = await supabase
+            .from('album_tags')
+            .select('tag_id, tag:tags(*)')
+            .eq('album_id', id);
+
+          let initialTags: TagItem[] = [];
+          if (albumTagsData && albumTagsData.length > 0) {
+            initialTags = albumTagsData
+              .map((r: any) => r.tag)
+              .filter(Boolean)
+              .map((t: any) => ({
+                id: t.id,
+                name: t.name,
+                color: t.color,
+                emoji: t.emoji ?? null,
+              }));
+          } else if (album.cover_path) {
+            try {
+              const parsed = JSON.parse(album.cover_path);
+              if (Array.isArray(parsed.tag_ids) && parsed.tag_ids.length > 0) {
+                const { data: tagsData } = await supabase
+                  .from('tags')
+                  .select('*')
+                  .in('id', parsed.tag_ids);
+                initialTags = (tagsData || []).map((t: any) => ({
+                  id: t.id,
+                  name: t.name,
+                  color: t.color,
+                  emoji: t.emoji ?? null,
+                }));
+              }
+            } catch {}
+          }
+
+          // Fallback a almacenamiento local AsyncStorage
+          if (initialTags.length === 0 && id) {
+            try {
+              const raw = await AsyncStorage.getItem(getAlbumTagsStorageKey(id));
+              if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                  initialTags = parsed;
+                }
+              }
+            } catch {}
+          }
+
+          if (isMounted) {
+            setSelectedTags(initialTags);
+            setInitialTagIds(initialTags.map((t) => t.id));
+          }
+        } catch {
+          // Ignorado
+        }
       } catch (err) {
         console.error('Error loading album for edit:', err);
       } finally {
@@ -138,21 +208,95 @@ export function useAlbumFormData(id?: string) {
     };
   }, [id, isEditing]);
 
+  const handleTagPickerChange = (newTags: TagItem[]) => {
+    if (isEditing && id) {
+      const removed = selectedTags.filter((t) => !newTags.some((nt) => nt.id === t.id));
+      if (removed.length > 0) {
+        Alert.alert(
+          'Quitar etiquetas de las tareas',
+          `Has deseleccionado ${removed.map((t) => `«${t.name}»`).join(', ')}. ¿Deseas quitar ${removed.length === 1 ? 'esta etiqueta' : 'estas etiquetas'} también de todas las tareas del álbum?`,
+          [
+            {
+              text: 'Solo del álbum',
+              onPress: () => setSelectedTags(newTags),
+            },
+            {
+              text: 'Quitar de todas las tareas',
+              onPress: () => {
+                setSelectedTags(newTags);
+                setTagsToRemoveFromTasks((prev) => {
+                  const updated = new Set(prev);
+                  removed.forEach((t) => updated.add(t.id));
+                  return updated;
+                });
+              },
+            },
+            {
+              text: 'Cancelar',
+              style: 'cancel',
+            },
+          ]
+        );
+        return;
+      }
+    }
+    setSelectedTags(newTags);
+  };
+
+  const handleRemoveTag = (tag: TagItem) => {
+    if (isEditing && id) {
+      Alert.alert(
+        'Quitar etiqueta',
+        `¿Deseas quitar la etiqueta «${tag.name}» también de todas las tareas de este álbum o mantenerla en las tareas?`,
+        [
+          {
+            text: 'Solo del álbum',
+            onPress: () => setSelectedTags((prev) => prev.filter((t) => t.id !== tag.id)),
+          },
+          {
+            text: 'Quitar de todas las tareas',
+            onPress: () => {
+              setSelectedTags((prev) => prev.filter((t) => t.id !== tag.id));
+              setTagsToRemoveFromTasks((prev) => {
+                const updated = new Set(prev);
+                updated.add(tag.id);
+                return updated;
+              });
+            },
+          },
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+          },
+        ]
+      );
+      return;
+    }
+    setSelectedTags((prev) => prev.filter((t) => t.id !== tag.id));
+  };
+
   const handleSave = async () => {
     if (!name.trim()) return;
 
     try {
-      let coverToSave = selectedCover;
+      let coverToSave: any = selectedCover;
       if (selectedCover.type === 'image' && isLocalUri(selectedCover.uri)) {
         if (!user?.id) throw new Error('Debes iniciar sesión para subir la portada.');
         let publicUrl: string;
         try {
           publicUrl = await uploadAlbumCover(user.id, selectedCover.uri!);
-        } catch {
-          throw new Error('No se pudo subir la portada. Vuelve a elegir la imagen e inténtalo de nuevo.');
+        } catch (e: any) {
+          console.error('Error uploading album cover:', e);
+          throw new Error(e?.message || 'No se pudo subir la portada. Vuelve a elegir la imagen e inténtalo de nuevo.');
         }
         coverToSave = { ...selectedCover, uri: publicUrl };
         setSelectedCover(coverToSave);
+      }
+      if (selectedTags.length > 0) {
+        coverToSave = {
+          ...coverToSave,
+          tag_ids: selectedTags.map((t) => t.id),
+        };
       }
       const coverJson = JSON.stringify(coverToSave);
 
@@ -167,6 +311,19 @@ export function useAlbumFormData(id?: string) {
             cover_path: coverJson,
             is_shared: isShared,
           },
+        });
+
+        // Sincronizar etiquetas con las tareas del álbum
+        const currentTagIds = selectedTags.map((t) => t.id);
+        const removedTagIds = initialTagIds.filter((tid) => !currentTagIds.includes(tid));
+        const tagsToDeleteFromTasks = removedTagIds.filter((tid) => tagsToRemoveFromTasks.has(tid));
+
+        await syncAlbumTags.mutateAsync({
+          albumId: id,
+          selectedTagIds: currentTagIds,
+          tags: selectedTags,
+          removedTagIds: tagsToDeleteFromTasks,
+          removeTagsFromTasks: tagsToDeleteFromTasks.length > 0,
         });
 
         // Sync members
@@ -214,6 +371,14 @@ export function useAlbumFormData(id?: string) {
           is_shared: isShared,
         });
 
+        if (newAlbum?.id && selectedTags.length > 0) {
+          await syncAlbumTags.mutateAsync({
+            albumId: newAlbum.id,
+            selectedTagIds: selectedTags.map((t) => t.id),
+            tags: selectedTags,
+          });
+        }
+
         if (isShared && selectedCollaborators.length > 0 && newAlbum?.id) {
           await supabase.from('album_members').insert(
             selectedCollaborators.map((c) => ({
@@ -229,11 +394,11 @@ export function useAlbumFormData(id?: string) {
       }
     } catch (err: any) {
       console.error('Error saving album:', err);
-      Alert.alert('Error', err?.message || 'No se pudo guardar el álbum.');
+      toast.error(err?.message || 'No se pudo guardar el álbum.');
     }
   };
 
-  const isSaving = createAlbum.isPending || updateAlbum.isPending;
+  const isSaving = createAlbum.isPending || updateAlbum.isPending || syncAlbumTags.isPending;
 
   return {
     isEditing,
@@ -255,6 +420,12 @@ export function useAlbumFormData(id?: string) {
     readOnlyIds,
     showCollaboratorPicker,
     setShowCollaboratorPicker,
+    selectedTags,
+    setSelectedTags,
+    showTagPicker,
+    setShowTagPicker,
+    handleTagPickerChange,
+    handleRemoveTag,
     loadingInitial,
     isSaving,
     handleSave,

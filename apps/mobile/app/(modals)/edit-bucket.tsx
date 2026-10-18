@@ -29,6 +29,9 @@ import { AlbumPickerSheet } from '../../src/components/AlbumPickerSheet';
 import { styles } from '../../src/features/task-form/styles/task-form.styles';
 import { TaskSettingsCard } from '../../src/features/task-form/components/TaskSettingsCard';
 import { TaskCollaboratorsSection } from '../../src/features/task-form/components/TaskCollaboratorsSection';
+import { TaskCoverPicker } from '../../src/features/task-form/components/TaskCoverPicker';
+import { processBucketImage } from '@bucketlist/shared';
+import { storageApi } from '../../src/services/api/storage';
 
 type Visibility = 'public' | 'followers' | 'private';
 
@@ -60,6 +63,12 @@ export default function EditBucketModal() {
   const [selectedCollaborators, setSelectedCollaborators] = useState<CollaboratorItem[]>([]);
   const [showCollaboratorPicker, setShowCollaboratorPicker] = useState(false);
   const collaboratorsInitialized = useRef(false);
+  const [collaborationMode, setCollaborationMode] = useState<'invite_only' | 'request' | 'open'>('invite_only');
+  const [collaborationAudience, setCollaborationAudience] = useState<'followers' | 'anyone'>('followers');
+
+  // Portada
+  const [coverImage, setCoverImage] = useState<string>('preset:green');
+  const initialCoverImage = useRef<string>('preset:green');
 
   // Álbum
   const queryClient = useQueryClient();
@@ -107,7 +116,7 @@ export default function EditBucketModal() {
 
     supabase
       .from('buckets')
-      .select('title, description, visibility, location_text, location_lat, location_lng, deadline')
+      .select('title, description, visibility, location_text, location_lat, location_lng, deadline, collaboration_mode, collaboration_audience, cover_image')
       .eq('id', id)
       .single()
       .then(({ data, error }) => {
@@ -124,6 +133,16 @@ export default function EditBucketModal() {
         setLocationLat(data.location_lat ?? null);
         setLocationLng(data.location_lng ?? null);
         setDeadline(data.deadline ? new Date(data.deadline) : null);
+        if ((data as any).collaboration_mode) {
+          setCollaborationMode((data as any).collaboration_mode);
+        }
+        if ((data as any).collaboration_audience) {
+          setCollaborationAudience((data as any).collaboration_audience);
+        }
+        if ((data as any).cover_image) {
+          setCoverImage((data as any).cover_image);
+          initialCoverImage.current = (data as any).cover_image;
+        }
         setLoading(false);
       });
 
@@ -148,6 +167,22 @@ export default function EditBucketModal() {
       return;
     }
 
+    let finalCoverImage = coverImage;
+    if (
+      coverImage &&
+      coverImage !== initialCoverImage.current &&
+      !coverImage.startsWith('preset:') &&
+      !coverImage.startsWith('http')
+    ) {
+      try {
+        const processed = await processBucketImage(coverImage);
+        const path = `covers/${user?.id || 'anon'}_${Date.now()}.jpg`;
+        finalCoverImage = await storageApi.uploadSingle(path, processed.original.uri);
+      } catch (uploadErr) {
+        console.error('Failed to upload cover image:', uploadErr);
+      }
+    }
+
     const data: UpdateBucketForm = {
       title: title.trim(),
       description: description.trim() || undefined,
@@ -156,7 +191,10 @@ export default function EditBucketModal() {
       location_lat: locationText.trim() ? locationLat : null,
       location_lng: locationText.trim() ? locationLng : null,
       deadline,
-    };
+      collaboration_mode: collaborationMode,
+      collaboration_audience: collaborationAudience,
+      cover_image: finalCoverImage,
+    } as any;
 
     try {
       await updateBucket.mutateAsync({ id, data });
@@ -264,6 +302,16 @@ export default function EditBucketModal() {
             multiline
           />
 
+          {/* PORTADA */}
+          <Text style={styles.sectionLabel}>
+            <Text style={{ color: '#D4B13A' }}>FOTO</Text> DE PORTADA
+          </Text>
+          <TaskCoverPicker
+            coverImage={coverImage}
+            onChangeCover={setCoverImage}
+            taskTitle={title}
+          />
+
           {/* AJUSTES */}
           <TaskSettingsCard
             locationText={locationText}
@@ -301,6 +349,10 @@ export default function EditBucketModal() {
             onRemoveCollaborator={(collabId) =>
               setSelectedCollaborators((prev) => prev.filter((x) => x.id !== collabId))
             }
+            collaborationMode={collaborationMode}
+            onChangeCollaborationMode={setCollaborationMode}
+            collaborationAudience={collaborationAudience}
+            onChangeCollaborationAudience={setCollaborationAudience}
           />
         </ScrollView>
 

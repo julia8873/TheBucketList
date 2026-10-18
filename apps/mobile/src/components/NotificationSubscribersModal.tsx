@@ -8,6 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
+import { confirm, toast } from '@bucketlist/ui';
 import { Bell, X } from 'lucide-react-native';
 import {
   useEntitySubscription,
@@ -108,32 +109,31 @@ export function NotificationSubscribersModal({
   };
 
   const handleRemoveSubscriber = (subscriberId: string, name: string) => {
-    Alert.alert(
-      'Eliminar suscriptor',
-      `¿Deseas eliminar a ${name} de las notificaciones de este ${targetType === 'bucket' ? 'tarea' : 'álbum'}?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: () => {
-            removeMutation.mutate(
-              {
-                targetType,
-                targetId,
-                subscriberId,
-              },
-              {
-                onError: (err: any) => {
-                  console.error('Error removing subscriber:', err);
-                  Alert.alert('Error', err?.message || 'No se pudo eliminar al suscriptor.');
-                },
-              }
-            );
+    confirm.show({
+      title: 'Eliminar suscriptor',
+      message: `¿Deseas eliminar a ${name} de las notificaciones de este ${targetType === 'bucket' ? 'tarea' : 'álbum'}?`,
+      confirmLabel: 'Eliminar',
+      cancelLabel: 'Cancelar',
+      destructive: true,
+      onConfirm: () => {
+        removeMutation.mutate(
+          {
+            targetType,
+            targetId,
+            subscriberId,
           },
-        },
-      ]
-    );
+          {
+            onSuccess: () => {
+              toast.success(`${name} eliminado de las notificaciones`);
+            },
+            onError: (err: any) => {
+              console.error('Error removing subscriber:', err);
+              toast.error(err?.message || 'No se pudo eliminar al suscriptor.');
+            },
+          }
+        );
+      },
+    });
   };
 
   const otherSubscribers = subscribers.filter((s) => s.subscriber_id !== effectiveUserId);

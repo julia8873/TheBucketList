@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, Animated, StyleSheet, Alert } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { CheckCircle2, GripVertical, Star, Trash2 } from 'lucide-react-native';
-import { TaskRow, TagChip } from '@bucketlist/ui';
+import { TaskRow, TagChip, confirm } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { BucketCover } from '@/components/BucketCover';
 import { resolveTaskImage } from '@/utils/taskImage';
@@ -30,7 +30,7 @@ interface TaskItemRowProps {
   theme: any;
 }
 
-export function TaskItemRow({
+function TaskItemRowComponent({
   item,
   drag,
   isFirstHeader,
@@ -49,6 +49,8 @@ export function TaskItemRow({
   swipeableRefSetter,
   theme,
 }: TaskItemRowProps) {
+  const localSwipeableRef = React.useRef<Swipeable | null>(null);
+
   if (item.isHeader) {
     return (
       <View style={{ marginTop: isFirstHeader ? 0 : 20, marginBottom: 0 }}>
@@ -193,7 +195,10 @@ export function TaskItemRow({
 
   const swipeableContent = (
     <Swipeable
-      ref={swipeableRefSetter}
+      ref={(r) => {
+        localSwipeableRef.current = r;
+        swipeableRefSetter(r);
+      }}
       enabled={!drag && !isSelectionMode}
       containerStyle={{ backgroundColor: theme.colors.surface, borderRadius: 14 }}
       childrenContainerStyle={{ backgroundColor: theme.colors.surface, borderRadius: 14 }}
@@ -206,14 +211,15 @@ export function TaskItemRow({
           onComplete(item.id);
         } else if (direction === 'right') {
           if (isItemOwner) {
-            Alert.alert(
-              'Eliminar tarea',
-              '¿Estás seguro de que quieres eliminar esta tarea?',
-              [
-                { text: 'Cancelar', style: 'cancel' },
-                { text: 'Eliminar', style: 'destructive', onPress: () => onDelete(item.id) },
-              ]
-            );
+            confirm.show({
+              title: '¿Eliminar tarea?',
+              message: `¿Estás seguro de que quieres eliminar «${item.title}»? Esta acción no se puede deshacer.`,
+              confirmLabel: 'Eliminar',
+              cancelLabel: 'Cancelar',
+              destructive: true,
+              onConfirm: () => onDelete(item.id),
+              onCancel: () => localSwipeableRef.current?.close(),
+            });
           }
         }
       }}
@@ -288,3 +294,5 @@ export function TaskItemRow({
 
   return contentWithSelection;
 }
+
+export const TaskItemRow = React.memo(TaskItemRowComponent);

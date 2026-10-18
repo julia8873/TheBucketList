@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   Modal,
   ScrollView,
   Animated,
+  BackHandler,
 } from 'react-native';
 import {
   Star,
@@ -23,10 +24,16 @@ import {
   X,
   Globe,
   Check,
+  Tag as TagIcon,
+  ChevronLeft,
+  Image as ImageIcon,
+  Link2,
+  Crop,
+  Maximize2,
 } from 'lucide-react-native';
 import { styles } from '../styles/album-detail.styles';
 
-type SheetMode = 'menu' | 'visibility' | 'priority' | 'status';
+type SheetMode = 'menu' | 'visibility' | 'priority' | 'status' | 'cover';
 
 interface AlbumOptionsSheetProps {
   visible: boolean;
@@ -44,17 +51,25 @@ interface AlbumOptionsSheetProps {
   tasksLength: number;
   currentUserId?: string;
   albumId: string;
+  hasCustomCover?: boolean;
+  coverAspectRatio?: '1:1' | '16:9' | '3:4';
   onClose: () => void;
   onToggleFavorite: () => void;
   onToggleAllTasks: () => void;
   onCopyAlbum: () => void;
   onShare: () => void;
-  onPickCover: () => void;
+  onPickGallery?: () => void;
+  onTakePhoto?: () => void;
+  onOpenCoverLink?: () => void;
+  onRecropCover?: () => void;
+  onChangeCoverShape?: (newRatio: '1:1' | '16:9' | '3:4') => void;
+  onRemoveCover?: () => void;
   onToggleClose: (close: boolean) => void;
   onChangePriority: (p: 'low' | 'medium' | 'high') => void;
   onChangeVisibility: (v: 'public' | 'followers' | 'private') => void;
   onSetSheetMode: (mode: SheetMode) => void;
   onOpenCollaborators: () => void;
+  onOpenTags?: () => void;
   onConfirmDelete: () => void;
   onConfirmLeave: () => void;
 }
@@ -75,20 +90,41 @@ export function AlbumOptionsSheet({
   tasksLength,
   currentUserId,
   albumId,
+  hasCustomCover,
+  coverAspectRatio,
   onClose,
   onToggleFavorite,
   onToggleAllTasks,
   onCopyAlbum,
   onShare,
-  onPickCover,
+  onPickGallery,
+  onTakePhoto,
+  onOpenCoverLink,
+  onRecropCover,
+  onChangeCoverShape,
+  onRemoveCover,
   onToggleClose,
   onChangePriority,
   onChangeVisibility,
   onSetSheetMode,
   onOpenCollaborators,
+  onOpenTags,
   onConfirmDelete,
   onConfirmLeave,
 }: AlbumOptionsSheetProps) {
+  useEffect(() => {
+    if (!visible) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (sheetMode !== 'menu') {
+        onSetSheetMode('menu');
+        return true;
+      }
+      onClose();
+      return true;
+    });
+    return () => sub.remove();
+  }, [visible, sheetMode, onSetSheetMode, onClose]);
+
   if (!visible) return null;
 
   return (
@@ -150,8 +186,8 @@ export function AlbumOptionsSheet({
                       <SheetOption
                         icon={<Camera color="#D4B13A" size={20} />}
                         title="Cambiar portada"
-                        subtitle="Elige una foto de tu galería"
-                        onPress={onPickCover}
+                        subtitle="Elige foto de la galería, cámara o enlace web"
+                        onPress={() => onSetSheetMode('cover')}
                       />
                       <SheetOption
                         icon={<Lock color="#D4B13A" size={20} />}
@@ -177,6 +213,14 @@ export function AlbumOptionsSheet({
                         subtitle="Invita o quita personas de este álbum"
                         onPress={onOpenCollaborators}
                       />
+                      {onOpenTags && (
+                        <SheetOption
+                          icon={<TagIcon color="#D4B13A" size={20} />}
+                          title="Gestionar etiquetas"
+                          subtitle="Añade o quita etiquetas del álbum y sus tareas"
+                          onPress={onOpenTags}
+                        />
+                      )}
                       <SheetOption
                         icon={<Pencil color="#D4B13A" size={20} />}
                         title="Editar detalles completos"
@@ -274,6 +318,130 @@ export function AlbumOptionsSheet({
               </View>
             </>
           )}
+
+          {sheetMode === 'cover' && (
+            <>
+              <View style={styles.sheetHeader}>
+                <Pressable
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                  onPress={() => onSetSheetMode('menu')}
+                  hitSlop={8}
+                >
+                  <ChevronLeft color="#D4B13A" size={22} />
+                  <Text style={styles.sheetHeaderText}>Foto de portada</Text>
+                </Pressable>
+                <Pressable style={styles.sheetCloseBtn} onPress={onClose}>
+                  <X color="#8F8F8F" size={20} />
+                </Pressable>
+              </View>
+
+              <ScrollView
+                style={styles.sheetScroll}
+                contentContainerStyle={styles.sheetScrollContent}
+                showsVerticalScrollIndicator={false}
+                bounces={false}
+              >
+                <View style={styles.sheetOptions}>
+                  <SheetOption
+                    icon={<ImageIcon color="#D4B13A" size={20} />}
+                    title="Elegir de la galería"
+                    subtitle="Selecciona una foto y recórtala a tu gusto"
+                    onPress={() => {
+                      onClose();
+                      onPickGallery?.();
+                    }}
+                  />
+
+                  <SheetOption
+                    icon={<Camera color="#D4B13A" size={20} />}
+                    title="Hacer foto con la cámara"
+                    subtitle="Toma una foto al instante con la cámara"
+                    onPress={() => {
+                      onClose();
+                      onTakePhoto?.();
+                    }}
+                  />
+
+                  <SheetOption
+                    icon={<Link2 color="#D4B13A" size={20} />}
+                    title="Añadir con enlace de Google / Web"
+                    subtitle="Pega un enlace o foto copiada de internet"
+                    onPress={() => {
+                      onClose();
+                      onOpenCoverLink?.();
+                    }}
+                  />
+
+                  {hasCustomCover && (
+                    <>
+                      <SheetOption
+                        icon={<Crop color="#D4B13A" size={20} />}
+                        title="Reajustar recorte actual"
+                        subtitle="Ajusta o reencuadra la foto actual"
+                        onPress={() => {
+                          onClose();
+                          onRecropCover?.();
+                        }}
+                      />
+
+                      <SheetOption
+                        icon={<Maximize2 color="#D4B13A" size={20} />}
+                        title={coverAspectRatio === '1:1' ? 'Cambiar a Panorámica (16:9)' : 'Cambiar a Cuadrada (1:1)'}
+                        subtitle={coverAspectRatio === '1:1' ? 'Formato horizontal panorámico' : 'Formato cuadrado 1:1'}
+                        onPress={() => {
+                          onChangeCoverShape?.(coverAspectRatio === '1:1' ? '16:9' : '1:1');
+                        }}
+                      />
+
+                      <SheetOption
+                        icon={<Trash2 color="#EF4444" size={20} />}
+                        title="Quitar foto de portada"
+                        subtitle="Volver al degradado predeterminado"
+                        titleStyle={{ color: '#EF4444' }}
+                        iconStyle={{ backgroundColor: 'rgba(239, 68, 68, 0.12)' }}
+                        onPress={() => {
+                          onClose();
+                          onRemoveCover?.();
+                        }}
+                        noBorder
+                      />
+                    </>
+                  )}
+                </View>
+              </ScrollView>
+            </>
+          )}
+          {sheetMode === 'status' && (
+            <>
+              <View style={styles.sheetHeader}>
+                <Pressable
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                  onPress={() => onSetSheetMode('menu')}
+                  hitSlop={8}
+                >
+                  <ChevronLeft color="#D4B13A" size={22} />
+                  <Text style={styles.sheetHeaderText}>Estado del álbum</Text>
+                </Pressable>
+                <Pressable style={styles.sheetCloseBtn} onPress={onClose}>
+                  <X color="#8F8F8F" size={20} />
+                </Pressable>
+              </View>
+              <View style={styles.sheetOptions}>
+                <SheetOption
+                  icon={<Lock color="#D4B13A" size={20} />}
+                  title={isAlbumClosed ? 'Reabrir álbum' : 'Cerrar álbum'}
+                  subtitle={
+                    isAlbumClosed
+                      ? 'Permite volver a añadir tareas al álbum'
+                      : 'Marca el álbum como cerrado y completado definitivamente'
+                  }
+                  onPress={() => onToggleClose(!isAlbumClosed)}
+                  noBorder
+                />
+              </View>
+            </>
+          )}
+
         </Animated.View>
       </View>
     </Modal>

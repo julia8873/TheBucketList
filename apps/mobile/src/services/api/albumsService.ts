@@ -21,6 +21,7 @@ export interface TaskItem {
   imageValue?: string | null;
   categorySlug?: string | null;
   priority?: string | null;
+  tags?: Array<{ id: string; name: string; color: string; emoji?: string | null }>;
 }
 
 export interface AlbumDetail {
@@ -103,7 +104,7 @@ export const albumsService = {
         return {
           id: b.id,
           title: b.title,
-          categoryName: b.priority ? (b.priority === 'high' ? 'Prioridad Alta' : b.priority === 'low' ? 'Prioridad Baja' : 'Prioridad Media') : (cat?.name_es || 'Sin categoría'),
+          categoryName: cat?.name_es || 'Sin categoría',
           coverKey: 'aurora',
           imageValue: resolveTaskImage(b as any, { preferThumb: true }),
           categorySlug: cat?.slug ?? null,
@@ -111,7 +112,7 @@ export const albumsService = {
           dueDate: b.deadline || undefined,
           completedAt: (b as any).completed_at ?? null,
           position: null,
-          priority: b.priority ?? null,
+          priority: b.priority || 'medium',
           stepsTotal,
           stepsCompleted,
         };
@@ -175,6 +176,26 @@ export const albumsService = {
 
       if (bucketsError) throw bucketsError;
 
+      let tagsByTask = new Map<string, Array<{ id: string; name: string; color: string; emoji?: string | null }>>();
+      try {
+        const { data: itemTags } = await supabase
+          .from('item_tags')
+          .select('item_id, tag:tags(id, name, color, emoji)')
+          .in('item_id', bucketIds);
+        if (itemTags) {
+          for (const it of itemTags) {
+            const t = (it as any).tag;
+            if (t && it.item_id) {
+              const arr = tagsByTask.get(it.item_id) || [];
+              arr.push({ id: t.id, name: t.name, color: t.color, emoji: t.emoji });
+              tagsByTask.set(it.item_id, arr);
+            }
+          }
+        }
+      } catch {
+        // Ignorado
+      }
+
       tasks = (buckets || []).map(b => {
         const cat = b.categories as any;
         const subtasks = b.item_subtasks as any[];
@@ -191,7 +212,7 @@ export const albumsService = {
         return {
           id: b.id,
           title: b.title,
-          categoryName: b.priority ? (b.priority === 'high' ? 'Prioridad Alta' : b.priority === 'low' ? 'Prioridad Baja' : 'Prioridad Media') : (cat?.name_es || 'Sin categoría'),
+          categoryName: cat?.name_es || 'Sin categoría',
           coverKey: coverKey,
           imageValue: resolveTaskImage(b as any, { preferThumb: true }),
           categorySlug: cat?.slug ?? null,
@@ -199,9 +220,10 @@ export const albumsService = {
           dueDate: b.deadline || undefined,
           completedAt: (b as any).completed_at ?? null,
           position: positionByBucket.get(b.id) ?? null,
-          priority: b.priority ?? null,
+          priority: b.priority || 'medium',
           stepsTotal,
           stepsCompleted,
+          tags: tagsByTask.get(b.id) || [],
         };
       });
     }

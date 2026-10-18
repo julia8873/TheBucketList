@@ -9,9 +9,9 @@ import {
   Text,
   Pressable,
   StyleSheet,
-  Image,
   type ViewStyle,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { fontFamily, fontSize } from '../tokens/typography';
 import { gold, dark } from '../tokens/colors';
 import { useTheme } from '../theme/useTheme';
@@ -40,7 +40,7 @@ interface TaskRowProps {
   completed?: boolean;
 }
 
-export function TaskRow({
+function TaskRowComponent({
   title,
   meta,
   deadline,
@@ -134,6 +134,8 @@ export function TaskRow({
     </Pressable>
   );
 }
+
+export const TaskRow = React.memo(TaskRowComponent);
 
 const styles = StyleSheet.create({
   row: {

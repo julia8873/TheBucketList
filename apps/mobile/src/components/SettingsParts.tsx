@@ -109,67 +109,8 @@ export function PillToggle<T extends string>({
   );
 }
 
-interface DialogProps {
-  visible: boolean;
-  title: string;
-  message?: string;
-  confirmLabel: string;
-  cancelLabel: string;
-  destructive?: boolean;
-  /** Si se indica, hay que escribir esta palabra para habilitar el botón. */
-  requireText?: string;
-  loading?: boolean;
-  onConfirm: () => void;
-  onCancel: () => void;
-}
-
-/** Diálogo de confirmación propio (Alert.prompt no existe en Android ni en web). */
-export function ConfirmDialog({
-  visible, title, message, confirmLabel, cancelLabel, destructive, requireText, loading, onConfirm, onCancel,
-}: DialogProps) {
-  const { theme } = useTheme();
-  const [text, setText] = useState('');
-  const ok = !requireText || text.trim().toUpperCase() === requireText.toUpperCase();
-  return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
-      <View style={styles.backdrop}>
-        <View style={[styles.dialog, { backgroundColor: theme.colors.surfaceElevated, borderColor: theme.colors.border }]}>
-          <Text style={[styles.dialogTitle, { color: theme.colors.foreground }]}>{title}</Text>
-          {message ? <Text style={[styles.dialogMsg, { color: theme.colors.foregroundMuted }]}>{message}</Text> : null}
-          {requireText ? (
-            <TextInput
-              value={text}
-              onChangeText={setText}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              placeholder={requireText}
-              placeholderTextColor={theme.colors.foregroundSubtle}
-              style={[styles.dialogInput, { color: theme.colors.foreground, borderColor: theme.colors.border, backgroundColor: theme.colors.surfaceSunken }]}
-            />
-          ) : null}
-          <View style={styles.dialogActions}>
-            <Pressable onPress={() => { setText(''); onCancel(); }} style={[styles.dialogBtn, { borderColor: theme.colors.border }]}>
-              <Text style={[styles.dialogBtnText, { color: theme.colors.foreground }]}>{cancelLabel}</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => { if (ok && !loading) onConfirm(); }}
-              disabled={!ok || loading}
-              style={[styles.dialogBtn, { backgroundColor: destructive ? theme.colors.error : theme.colors.primary, borderColor: 'transparent', opacity: ok ? 1 : 0.4 }]}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={[styles.dialogBtnText, { color: destructive ? theme.colors.errorForeground : theme.colors.primaryForeground }]}>
-                  {confirmLabel}
-                </Text>
-              )}
-            </Pressable>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-}
+export { ConfirmDialog } from '@bucketlist/ui';
+export type { DialogProps } from '@bucketlist/ui';
 
 interface OptionDialogProps<T extends string> {
   visible: boolean;

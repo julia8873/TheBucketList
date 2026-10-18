@@ -4,7 +4,7 @@ import { supabase } from '../supabase';
 const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 /** Decodifica base64 a bytes sin depender de librerías externas. */
-function base64ToArrayBuffer(base64: string): ArrayBuffer {
+export function base64ToArrayBuffer(base64: string): ArrayBuffer {
   const clean = base64.replace(/[^A-Za-z0-9+/]/g, '');
   const bytes = new Uint8Array(Math.floor((clean.length * 3) / 4));
   let p = 0;

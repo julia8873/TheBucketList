@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, Pressable, ScrollView, RefreshControl } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, Text, Pressable, ScrollView, RefreshControl, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   useTheme,
@@ -15,9 +15,9 @@ import {
 } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { FlashList } from '@shopify/flash-list';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Search, X, Plus } from 'lucide-react-native';
+import { Search, X, Plus, ChevronLeft } from 'lucide-react-native';
 import { DraggableTaskList } from '@/components/DraggableTaskList';
 import { BulkTaskActionBar } from '@/components/BulkTaskActionBar';
 import { CalendarTab } from '@/components/CalendarTab';
@@ -42,6 +42,8 @@ import {
 } from '@/features/my-list/components/AlbumItemComponents';
 import { MyListSortModal } from '@/features/my-list/components/MyListSortModal';
 
+const TaskSeparator = () => <View style={{ height: 10 }} />;
+
 export default function MyListScreen() {
   const { theme } = useTheme();
   const router = useRouter();
@@ -49,125 +51,200 @@ export default function MyListScreen() {
   const state = useMyListState();
   const [goldTitle, ...restTitle] = t('nav.my_list', { defaultValue: 'Mi lista' }).split(' ');
 
-  const renderTaskItem = ({ item, drag, index }: { item: any; drag?: any; index?: number }) => {
-    if (item.isHeader) {
-      const isFirst = index === 0 || item.id === state.listData[0]?.id;
+  const renderTaskItem = useCallback(
+    ({ item, drag, index }: { item: any; drag?: any; index?: number }) => {
+      if (item.isHeader) {
+        const isFirst = index === 0 || item.id === state.listData[0]?.id;
+        return (
+          <View key={item.id} style={{ marginTop: isFirst ? 0 : 20, marginBottom: 0 }}>
+            <Text style={[styles.sectionHeader, { marginTop: 8, marginBottom: 4 }]}>{item.title}</Text>
+          </View>
+        );
+      }
+      const isOwner = !item.user_id || item.user_id === state.user?.id;
+      const isExpired = item.status === 'expired';
+      const isFav = state.isBucketFavorite(item.id);
+      const isSel = state.selectedTaskIds.includes(item.id);
+      const itemTagObjs = (item.tags || []).map((tid: string) => state.tagsById.get(tid)).filter(Boolean);
+
       return (
-        <View key={item.id} style={{ marginTop: isFirst ? 0 : 20, marginBottom: 0 }}>
-          <Text style={[styles.sectionHeader, { marginTop: 8, marginBottom: 4 }]}>{item.title}</Text>
-        </View>
+        <TaskItemRow
+          key={item.id}
+          item={item}
+          drag={drag}
+          isItemOwner={isOwner}
+          isItemExpired={isExpired}
+          daysAgo={0}
+          itemTags={itemTagObjs}
+          isFav={isFav}
+          isSelected={isSel}
+          isSelectionMode={state.isSelectionMode}
+          onDelete={(id) => state.deleteBucket.mutate(id)}
+          onComplete={(id) => {
+            const next = item.status === 'completed' ? 'in_progress' : 'completed';
+            state.updateBucket.mutate({ id, data: { status: next } });
+          }}
+          onPress={() => {
+            if (state.isSelectionMode) state.toggleSelectTask(item.id);
+            else router.push(`/bucket/${item.id}` as any);
+          }}
+          onLongPress={() => {
+            if (!state.isSelectionMode) {
+              state.setIsSelectionMode(true);
+              state.setSelectedTaskIds([item.id]);
+            }
+          }}
+          onToggleSelect={() => state.toggleSelectTask(item.id)}
+          swipeableRefSetter={(ref) => {
+            if (ref) state.swipeableRefs.current.set(item.id, ref);
+            else state.swipeableRefs.current.delete(item.id);
+          }}
+          theme={theme}
+        />
       );
-    }
-    const isOwner = !item.user_id || item.user_id === state.user?.id;
-    const isExpired = item.status === 'expired';
-    const isFav = state.isBucketFavorite(item.id);
-    const isSel = state.selectedTaskIds.includes(item.id);
-    const itemTagObjs = (item.tags || []).map((tid: string) => state.tagsById.get(tid)).filter(Boolean);
-
-    return (
-      <TaskItemRow
-        key={item.id}
-        item={item}
-        drag={drag}
-        isItemOwner={isOwner}
-        isItemExpired={isExpired}
-        daysAgo={0}
-        itemTags={itemTagObjs}
-        isFav={isFav}
-        isSelected={isSel}
-        isSelectionMode={state.isSelectionMode}
-        onDelete={(id) => state.deleteBucket.mutate(id)}
-        onComplete={(id) => {
-          const next = item.status === 'completed' ? 'in_progress' : 'completed';
-          state.updateBucket.mutate({ id, data: { status: next } });
-        }}
-        onPress={() => {
-          if (state.isSelectionMode) state.toggleSelectTask(item.id);
-          else router.push(`/bucket/${item.id}` as any);
-        }}
-        onLongPress={() => {
-          if (!state.isSelectionMode) {
-            state.setIsSelectionMode(true);
-            state.setSelectedTaskIds([item.id]);
-          }
-        }}
-        onToggleSelect={() => state.toggleSelectTask(item.id)}
-        swipeableRefSetter={(ref) => {
-          if (ref) state.swipeableRefs.current.set(item.id, ref);
-          else state.swipeableRefs.current.delete(item.id);
-        }}
-        theme={theme}
-      />
-    );
-  };
-
-  const renderCompactTask = ({ item, drag }: { item: any; drag?: any }) => {
-    if (item.isHeader) {
-      return (
-        <View key={item.id} style={{ marginTop: 24, marginBottom: 12 }}>
-          <Text style={styles.sectionHeader}>{item.title}</Text>
-        </View>
-      );
-    }
-    return (
-      <TaskCompactItemRow
-        key={item.id}
-        item={item}
-        drag={drag}
-        isSelected={state.selectedTaskIds.includes(item.id)}
-        isSelectionMode={state.isSelectionMode}
-        isFav={state.isBucketFavorite(item.id)}
-        onPress={() => {
-          if (state.isSelectionMode) state.toggleSelectTask(item.id);
-          else router.push(`/bucket/${item.id}` as any);
-        }}
-        onLongPress={() => {
-          if (!state.isSelectionMode) {
-            state.setIsSelectionMode(true);
-            state.setSelectedTaskIds([item.id]);
-          }
-        }}
-        onToggleSelect={() => state.toggleSelectTask(item.id)}
-        onToggleComplete={() => {
-          const next = item.status === 'completed' ? 'in_progress' : 'completed';
-          state.updateBucket.mutate({ id: item.id, data: { status: next } });
-        }}
-      />
-    );
-  };
-
-  const renderCompactAlbum = ({ item, drag }: { item: any; drag?: any }) => (
-    <AlbumCompactItemRow
-      key={item.id}
-      item={item}
-      drag={drag}
-      isFav={state.isAlbumFavorite(item.id)}
-      onPress={() => router.push(`/album/${item.id}` as any)}
-    />
+    },
+    [
+      state.listData,
+      state.user?.id,
+      state.isBucketFavorite,
+      state.selectedTaskIds,
+      state.tagsById,
+      state.isSelectionMode,
+      state.deleteBucket,
+      state.updateBucket,
+      state.toggleSelectTask,
+      state.setIsSelectionMode,
+      state.setSelectedTaskIds,
+      state.swipeableRefs,
+      router,
+      theme,
+    ]
   );
 
-  const renderListAlbum = ({ item, drag, index = 0 }: { item: any; drag?: any; index?: number }) => (
-    <AlbumListItemRow
-      key={item.id}
-      item={item}
-      drag={drag}
-      index={index}
-      isFav={state.isAlbumFavorite(item.id)}
-      onPress={() => router.push(`/album/${item.id}` as any)}
-      onToggleFavorite={() =>
-        state.toggleFavoriteAlbum.mutate({
-          albumId: item.id,
-          currentlyFavorite: state.isAlbumFavorite(item.id),
-        })
+  const renderCompactTask = useCallback(
+    ({ item, drag }: { item: any; drag?: any }) => {
+      if (item.isHeader) {
+        return (
+          <View key={item.id} style={{ marginTop: 24, marginBottom: 12 }}>
+            <Text style={styles.sectionHeader}>{item.title}</Text>
+          </View>
+        );
       }
-    />
+      return (
+        <TaskCompactItemRow
+          key={item.id}
+          item={item}
+          drag={drag}
+          isSelected={state.selectedTaskIds.includes(item.id)}
+          isSelectionMode={state.isSelectionMode}
+          isFav={state.isBucketFavorite(item.id)}
+          onPress={() => {
+            if (state.isSelectionMode) state.toggleSelectTask(item.id);
+            else router.push(`/bucket/${item.id}` as any);
+          }}
+          onLongPress={() => {
+            if (!state.isSelectionMode) {
+              state.setIsSelectionMode(true);
+              state.setSelectedTaskIds([item.id]);
+            }
+          }}
+          onToggleSelect={() => state.toggleSelectTask(item.id)}
+          onToggleComplete={() => {
+            const next = item.status === 'completed' ? 'in_progress' : 'completed';
+            state.updateBucket.mutate({ id: item.id, data: { status: next } });
+          }}
+        />
+      );
+    },
+    [
+      state.selectedTaskIds,
+      state.isSelectionMode,
+      state.isBucketFavorite,
+      state.toggleSelectTask,
+      state.setIsSelectionMode,
+      state.setSelectedTaskIds,
+      state.updateBucket,
+      router,
+    ]
+  );
+
+  const renderCompactAlbum = useCallback(
+    ({ item, drag }: { item: any; drag?: any }) => (
+      <AlbumCompactItemRow
+        key={item.id}
+        item={item}
+        drag={drag}
+        isFav={state.isAlbumFavorite(item.id)}
+        onPress={() => router.push(`/album/${item.id}` as any)}
+      />
+    ),
+    [state.isAlbumFavorite, router]
+  );
+
+  const renderListAlbum = useCallback(
+    ({ item, drag, index = 0 }: { item: any; drag?: any; index?: number }) => (
+      <AlbumListItemRow
+        key={item.id}
+        item={item}
+        drag={drag}
+        index={index}
+        isFav={state.isAlbumFavorite(item.id)}
+        onPress={() => router.push(`/album/${item.id}` as any)}
+        onToggleFavorite={() =>
+          state.toggleFavoriteAlbum.mutate({
+            albumId: item.id,
+            currentlyFavorite: state.isAlbumFavorite(item.id),
+          })
+        }
+      />
+    ),
+    [state.isAlbumFavorite, state.toggleFavoriteAlbum, router]
+  );
+
+  const isFromProfile = state.from === 'profile';
+  const handleGoBackToProfile = useCallback(() => {
+    router.navigate('/(tabs)/profile');
+  }, [router]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!isFromProfile) return;
+      const onBackPress = () => {
+        handleGoBackToProfile();
+        return true;
+      };
+      const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => sub.remove();
+    }, [isFromProfile, handleGoBackToProfile])
   );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <PageTitle gold={goldTitle} rest={restTitle.join(' ')} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 10 }}>
+          {isFromProfile && (
+            <Pressable
+              onPress={handleGoBackToProfile}
+              hitSlop={12}
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 19,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: theme.colors.surface,
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Volver al perfil"
+            >
+              <ChevronLeft size={22} color={theme.colors.foreground} strokeWidth={2} />
+            </Pressable>
+          )}
+          <PageTitle gold={goldTitle} rest={restTitle.join(' ')} />
+        </View>
         <Pressable
           onPress={state.toggleSearch}
           hitSlop={12}
@@ -404,10 +481,10 @@ export default function MyListScreen() {
           ) : (
             <FlashList
               data={state.listData}
-              renderItem={({ item, index }) => renderTaskItem({ item, index })}
-              keyExtractor={(item) => (item.isHeader ? item.id : item.id)}
+              renderItem={renderTaskItem}
+              keyExtractor={(item) => item.id}
               estimatedItemSize={89}
-              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+              ItemSeparatorComponent={TaskSeparator}
               contentContainerStyle={styles.listContent}
               refreshControl={
                 <RefreshControl refreshing={state.refreshing} onRefresh={state.onRefresh} tintColor={gold[400]} />

@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Check, Heart, MessageCircle } from 'lucide-react-native';
-import { Avatar, fontFamily, gold, useTheme } from '@bucketlist/ui';
+import { Avatar, fontFamily, gold, useTheme, toast } from '@bucketlist/ui';
 import { BucketCover } from './BucketCover';
 import { TaskCommentsModal } from './TaskCommentsModal';
 import { resolveTaskImage } from '../utils/taskImage';
@@ -29,7 +29,7 @@ interface FeedCardProps {
  * y pie con los días que tardó en completarla.
  * Soporta modos: 'list' (por defecto), 'gallery' y 'compact'.
  */
-export function FeedCard({ event, onPress, index, mode = 'list' }: FeedCardProps) {
+function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardProps) {
   const { theme } = useTheme();
   const router = useRouter();
   const { user } = useAuthStore();
@@ -80,7 +80,7 @@ export function FeedCard({ event, onPress, index, mode = 'list' }: FeedCardProps
     if (!user || alreadyCopied || copyBucket.isPending) return;
     copyBucket.mutate(
       { bucketId: bucket.id, userId: user.id },
-      { onError: (error: any) => Alert.alert('No se pudo añadir', error?.message ?? 'Inténtalo de nuevo.') }
+      { onError: (error: any) => toast.error(error?.message ?? 'No se pudo añadir. Inténtalo de nuevo.') }
     );
   };
 
@@ -88,7 +88,7 @@ export function FeedCard({ event, onPress, index, mode = 'list' }: FeedCardProps
     const isLeftColumn = index % 2 === 0;
     return (
       <Animated.View
-        entering={FadeInUp.delay(Math.min(index, 6) * 50).springify()}
+        entering={index < 6 ? FadeInUp.delay(index * 40).duration(260) : undefined}
         style={[
           styles.galleryCardWrapper,
           isLeftColumn ? styles.galleryLeftCol : styles.galleryRightCol,
@@ -148,20 +148,25 @@ export function FeedCard({ event, onPress, index, mode = 'list' }: FeedCardProps
           </BucketCover>
         </Pressable>
 
-        <TaskCommentsModal
-          visible={showComments}
-          onClose={() => setShowComments(false)}
-          bucketId={bucket.id}
-          bucketTitle={bucket.title}
-          bucketOwnerId={bucket.user_id}
-        />
+        {showComments && (
+          <TaskCommentsModal
+            visible={showComments}
+            onClose={() => setShowComments(false)}
+            bucketId={bucket.id}
+            bucketTitle={bucket.title}
+            bucketOwnerId={bucket.user_id}
+          />
+        )}
       </Animated.View>
     );
   }
 
   if (mode === 'compact') {
     return (
-      <Animated.View entering={FadeInUp.delay(Math.min(index, 6) * 50).springify()} style={styles.compactCardWrapper}>
+      <Animated.View
+        entering={index < 6 ? FadeInUp.delay(index * 40).duration(260) : undefined}
+        style={styles.compactCardWrapper}
+      >
         <Pressable
           onPress={onPress}
           style={({ pressed }) => [
@@ -210,19 +215,24 @@ export function FeedCard({ event, onPress, index, mode = 'list' }: FeedCardProps
           </View>
         </Pressable>
 
-        <TaskCommentsModal
-          visible={showComments}
-          onClose={() => setShowComments(false)}
-          bucketId={bucket.id}
-          bucketTitle={bucket.title}
-          bucketOwnerId={bucket.user_id}
-        />
+        {showComments && (
+          <TaskCommentsModal
+            visible={showComments}
+            onClose={() => setShowComments(false)}
+            bucketId={bucket.id}
+            bucketTitle={bucket.title}
+            bucketOwnerId={bucket.user_id}
+          />
+        )}
       </Animated.View>
     );
   }
 
   return (
-    <Animated.View entering={FadeInUp.delay(Math.min(index, 4) * 80).springify()} style={styles.container}>
+    <Animated.View
+      entering={index < 6 ? FadeInUp.delay(index * 60).duration(260) : undefined}
+      style={styles.container}
+    >
       {/* Cabecera */}
       <Pressable onPress={openProfile} style={styles.header} accessibilityRole="button">
         <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="lg" goldRing />
@@ -316,16 +326,31 @@ export function FeedCard({ event, onPress, index, mode = 'list' }: FeedCardProps
 
       {caption ? <Text style={[styles.caption, { color: theme.colors.foregroundMuted }]}>{caption}</Text> : null}
 
-      <TaskCommentsModal
-        visible={showComments}
-        onClose={() => setShowComments(false)}
-        bucketId={bucket.id}
-        bucketTitle={bucket.title}
-        bucketOwnerId={bucket.user_id}
-      />
+      {showComments && (
+        <TaskCommentsModal
+          visible={showComments}
+          onClose={() => setShowComments(false)}
+          bucketId={bucket.id}
+          bucketTitle={bucket.title}
+          bucketOwnerId={bucket.user_id}
+        />
+      )}
     </Animated.View>
   );
 }
+
+export const FeedCard = React.memo(FeedCardComponent, (prev, next) => {
+  return (
+    prev.event?.id === next.event?.id &&
+    prev.event?.bucket?.id === next.event?.bucket?.id &&
+    prev.event?.bucket?.updated_at === next.event?.bucket?.updated_at &&
+    prev.event?.bucket?.status === next.event?.bucket?.status &&
+    (prev.event?.bucket?.reactions?.length ?? 0) === (next.event?.bucket?.reactions?.length ?? 0) &&
+    (prev.event?.bucket?.comments?.[0]?.count ?? 0) === (next.event?.bucket?.comments?.[0]?.count ?? 0) &&
+    prev.mode === next.mode &&
+    prev.index === next.index
+  );
+});
 
 const styles = StyleSheet.create({
   container: {

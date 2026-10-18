@@ -55,6 +55,7 @@ export default function TabsLayout() {
 
   return (
     <Tabs
+      backBehavior="history"
       initialRouteName="my-list"
       screenListeners={{
         // Al cambiar de pestaña, recarga los datos que lleven más de 30 s sin actualizarse

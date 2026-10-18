@@ -1,9 +1,12 @@
+export type CoverAspectRatio = '1:1' | '16:9' | '3:4';
+
 export type Cover = {
   id: string;
   type: 'gradient' | 'solid' | 'image';
   colors?: readonly [string, string, ...string[]];
   diagonal?: boolean;
   uri?: string;
+  aspectRatio?: CoverAspectRatio;
 };
 
 export const COVERS: Cover[] = [

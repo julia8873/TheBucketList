@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { styles } from '../styles/album-form.styles';
 import type { Cover, AlbumVisibility } from '../types';
@@ -26,10 +27,39 @@ export function AlbumPreviewCard({
       : ['#000000', '#000000']
   ) as readonly [string, string, ...string[]];
 
+  const ratio = selectedCover.aspectRatio || '1:1';
+  const screenWidth = Dimensions.get('window').width;
+
+  let dynamicContainerStyle: any = {};
+  if (ratio === '1:1') {
+    const squareSize = Math.min(screenWidth - 40, 310);
+    dynamicContainerStyle = {
+      width: squareSize,
+      height: squareSize,
+      alignSelf: 'center',
+      marginHorizontal: 0,
+    };
+  } else if (ratio === '3:4') {
+    dynamicContainerStyle = {
+      width: Math.min(screenWidth - 40, 240),
+      height: 310,
+      alignSelf: 'center',
+      marginHorizontal: 0,
+    };
+  } else {
+    // 16:9
+    dynamicContainerStyle = {
+      width: screenWidth - 40,
+      height: Math.round((screenWidth - 40) * (9 / 16)),
+      alignSelf: 'center',
+      marginHorizontal: 0,
+    };
+  }
+
   return (
-    <View style={styles.previewContainer}>
+    <View style={[styles.previewContainer, dynamicContainerStyle]}>
       {selectedCover.type === 'image' && selectedCover.uri ? (
-        <Image source={{ uri: selectedCover.uri }} style={StyleSheet.absoluteFill} />
+        <ExpoImage source={{ uri: selectedCover.uri }} style={StyleSheet.absoluteFill} contentFit="cover" />
       ) : (
         <LinearGradient
           colors={gradientColors}
@@ -39,7 +69,7 @@ export function AlbumPreviewCard({
         />
       )}
       <LinearGradient
-        colors={['rgba(0,0,0,0.35)', 'rgba(0,0,0,0.78)']}
+        colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.78)']}
         style={StyleSheet.absoluteFill}
       />
 
@@ -67,7 +97,7 @@ export function AlbumPreviewCard({
         <Text style={styles.previewSubtitle}>
           {isShared && collaborators.length > 0
             ? `${collaborators.length} colaborador${collaborators.length > 1 ? 'es' : ''}`
-            : '0 tareas · 0 hechas'}
+            : '0 tareas · 0 completadas'}
         </Text>
         <View style={styles.progressBarTrack} />
       </View>

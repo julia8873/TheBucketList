@@ -167,19 +167,19 @@ export default function CurrentUserProfileScreen() {
           <Stat
             value={completed.length}
             label={t('profile.completed_items')}
-            onPress={() => router.push('/(tabs)/my-list?tab=list&filter=completed' as any)}
+            onPress={() => router.push('/(tabs)/my-list?tab=list&filter=completed&from=profile' as any)}
           />
           <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
           <Stat
             value={publicBuckets.length}
             label="Públicas"
-            onPress={() => router.push('/(tabs)/my-list?tab=list&filter=all' as any)}
+            onPress={() => router.push('/(tabs)/my-list?tab=list&filter=public&from=profile' as any)}
           />
           <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
           <Stat
             value={albums.data?.length ?? 0}
             label={t('profile.albums')}
-            onPress={() => router.push('/(tabs)/my-list?tab=albums' as any)}
+            onPress={() => router.push('/(tabs)/my-list?tab=albums&from=profile' as any)}
           />
         </View>
 
@@ -191,7 +191,7 @@ export default function CurrentUserProfileScreen() {
         <View style={styles.toolbar}>
           {completed.length > 0 ? (
             <Pressable
-              onPress={() => router.push('/(tabs)/my-list?filter=completed' as any)}
+              onPress={() => router.push('/(tabs)/my-list?tab=list&filter=completed&from=profile' as any)}
               accessibilityRole="button"
               hitSlop={8}
             >

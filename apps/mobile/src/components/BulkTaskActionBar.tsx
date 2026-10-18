@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
+import { confirm, toast } from '@bucketlist/ui';
 import {
   FolderInput,
   Tag as TagIcon,
@@ -82,8 +83,9 @@ export function BulkTaskActionBar({
       });
       setShowMoveModal(false);
       onClearSelection();
+      toast.success('Tareas movidas al álbum');
     } catch (e: any) {
-      Alert.alert('Error', e?.message || 'No se pudieron mover las tareas');
+      toast.error(e?.message || 'No se pudieron mover las tareas');
     }
   };
 
@@ -97,8 +99,9 @@ export function BulkTaskActionBar({
       setShowTagsModal(false);
       setSelectedTagIds([]);
       onClearSelection();
+      toast.success('Etiquetas asignadas');
     } catch (e: any) {
-      Alert.alert('Error', e?.message || 'No se pudieron asignar las etiquetas');
+      toast.error(e?.message || 'No se pudieron asignar las etiquetas');
     }
   };
 
@@ -113,81 +116,68 @@ export function BulkTaskActionBar({
         collaboratorId: friend.id,
       });
       onClearSelection();
-      Alert.alert(
-        'Compartido con éxito',
-        `Se ha añadido a ${friend.display_name || friend.username} a las ${count} tareas.`
-      );
+      toast.success(`Se ha añadido a ${friend.display_name || friend.username} a las ${count} tareas.`);
     } catch (e: any) {
-      Alert.alert('Error', e?.message || 'No se pudieron compartir las tareas');
+      toast.error(e?.message || 'No se pudieron compartir las tareas');
     }
   };
 
   const handleCompleteAll = () => {
-    Alert.alert(
-      '¿Completar tareas?',
-      `Se marcarán como completadas las ${count} tareas seleccionadas.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Completar todas',
-          onPress: async () => {
-            try {
-              await completeAllTasks.mutateAsync(selectedIds);
-              onClearSelection();
-            } catch (e: any) {
-              Alert.alert('Error', e?.message || 'Error al completar las tareas');
-            }
-          },
-        },
-      ]
-    );
+    confirm.show({
+      title: '¿Completar tareas?',
+      message: `Se marcarán como completadas las ${count} tareas seleccionadas.`,
+      confirmLabel: 'Completar todas',
+      cancelLabel: 'Cancelar',
+      onConfirm: async () => {
+        try {
+          await completeAllTasks.mutateAsync(selectedIds);
+          onClearSelection();
+          toast.success(`${count} tareas completadas`);
+        } catch (e: any) {
+          toast.error(e?.message || 'Error al completar las tareas');
+        }
+      },
+    });
   };
 
   const handleDeleteAll = () => {
     setShowMoreMenuModal(false);
-    Alert.alert(
-      'Eliminar tareas',
-      `¿Estás seguro de que quieres eliminar ${count} tareas seleccionadas? Esta acción no se puede deshacer.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar todas',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteAllTasks.mutateAsync(selectedIds);
-              onClearSelection();
-            } catch (e: any) {
-              Alert.alert('Error', e?.message || 'Error al eliminar las tareas');
-            }
-          },
-        },
-      ]
-    );
+    confirm.show({
+      title: '¿Eliminar tareas?',
+      message: `¿Estás seguro de que quieres eliminar ${count} tareas seleccionadas? Esta acción no se puede deshacer.`,
+      confirmLabel: `Eliminar todas (${count})`,
+      cancelLabel: 'Cancelar',
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          await deleteAllTasks.mutateAsync(selectedIds);
+          onClearSelection();
+          toast.success(`${count} tareas eliminadas`);
+        } catch (e: any) {
+          toast.error(e?.message || 'Error al eliminar las tareas');
+        }
+      },
+    });
   };
 
   const handleClearNotifications = () => {
     setShowMoreMenuModal(false);
-    Alert.alert(
-      'Vaciar notificaciones',
-      `¿Deseas vaciar y desactivar las notificaciones de las ${count} tareas seleccionadas?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Vaciar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await clearNotificationsForTasks.mutateAsync(selectedIds);
-              onClearSelection();
-              Alert.alert('Éxito', 'Notificaciones vaciadas de las tareas seleccionadas.');
-            } catch (e: any) {
-              Alert.alert('Error', e?.message || 'Error al vaciar notificaciones');
-            }
-          },
-        },
-      ]
-    );
+    confirm.show({
+      title: 'Vaciar notificaciones',
+      message: `¿Deseas vaciar y desactivar las notificaciones de las ${count} tareas seleccionadas?`,
+      confirmLabel: 'Vaciar notificaciones',
+      cancelLabel: 'Cancelar',
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          await clearNotificationsForTasks.mutateAsync(selectedIds);
+          onClearSelection();
+          toast.success('Notificaciones vaciadas de las tareas seleccionadas');
+        } catch (e: any) {
+          toast.error(e?.message || 'Error al vaciar notificaciones');
+        }
+      },
+    });
   };
 
   return (
@@ -310,9 +300,9 @@ export function BulkTaskActionBar({
               favorite: true,
             });
             onClearSelection();
-            Alert.alert('Favoritas', `Añadidas ${count} tareas a tus favoritas.`);
+            toast.success(`Añadidas ${count} tareas a tus favoritas.`);
           } catch (e: any) {
-            Alert.alert('Error', e?.message || 'Error al marcar como favoritas');
+            toast.error(e?.message || 'Error al marcar como favoritas');
           }
         }}
         onReopenTasks={async () => {
@@ -320,9 +310,9 @@ export function BulkTaskActionBar({
           try {
             await reopenAllTasks.mutateAsync(selectedIds);
             onClearSelection();
-            Alert.alert('Reabiertas', `Se han marcado ${count} tareas como pendientes.`);
+            toast.success(`Se han marcado ${count} tareas como pendientes.`);
           } catch (e: any) {
-            Alert.alert('Error', e?.message || 'Error al reabrir tareas');
+            toast.error(e?.message || 'Error al reabrir tareas');
           }
         }}
         onDeleteAll={handleDeleteAll}
@@ -340,8 +330,9 @@ export function BulkTaskActionBar({
               priority: p,
             });
             onClearSelection();
+            toast.success('Prioridad actualizada');
           } catch (e: any) {
-            Alert.alert('Error', e?.message || 'Error al cambiar prioridad');
+            toast.error(e?.message || 'Error al cambiar prioridad');
           }
         }}
       />
@@ -358,8 +349,9 @@ export function BulkTaskActionBar({
               visibility: v,
             });
             onClearSelection();
+            toast.success('Visibilidad actualizada');
           } catch (e: any) {
-            Alert.alert('Error', e?.message || 'Error al cambiar visibilidad');
+            toast.error(e?.message || 'Error al cambiar visibilidad');
           }
         }}
       />

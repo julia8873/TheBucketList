@@ -24,7 +24,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react-native';
-import { Avatar, fontFamily, gold } from '@bucketlist/ui';
+import { Avatar, fontFamily, gold, confirm, toast } from '@bucketlist/ui';
 import { useAuthStore } from '../stores/auth.store';
 import {
   useComments,
@@ -52,7 +52,12 @@ interface ReplyingToState {
   username?: string | null;
 }
 
-export function TaskCommentsModal({
+export function TaskCommentsModal(props: TaskCommentsModalProps) {
+  if (!props.visible) return null;
+  return <TaskCommentsModalContent {...props} />;
+}
+
+function TaskCommentsModalContent({
   visible,
   onClose,
   bucketId,
@@ -332,26 +337,25 @@ export function TaskCommentsModal({
   };
 
   const handleDelete = (commentId: string) => {
-    Alert.alert(
-      'Eliminar comentario',
-      '¿Seguro que deseas eliminar este comentario?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: () => {
-            deleteComment.mutate(
-              { commentId, bucketId },
-              {
-                onError: (err: any) =>
-                  Alert.alert('Error', err?.message || 'No se pudo eliminar el comentario.'),
-              }
-            );
-          },
-        },
-      ]
-    );
+    confirm.show({
+      title: '¿Eliminar comentario?',
+      message: '¿Estás seguro de que deseas eliminar este comentario? Esta acción no se puede deshacer.',
+      confirmLabel: 'Eliminar',
+      cancelLabel: 'Cancelar',
+      destructive: true,
+      onConfirm: () => {
+        deleteComment.mutate(
+          { commentId, bucketId },
+          {
+            onSuccess: () => {
+              toast.success('Comentario eliminado');
+            },
+            onError: (err: any) =>
+              toast.error(err?.message || 'No se pudo eliminar el comentario.'),
+          }
+        );
+      },
+    });
   };
 
   const handleToggleLike = (commentId: string) => {

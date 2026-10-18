@@ -1,8 +1,9 @@
 /**
  * Toast — transient feedback message with optional "Deshacer" action.
- * Usage via ToastContext (wrap app with ToastProvider).
+ * Styled to match the application's signature dark luxury aesthetic (ConfirmDialog).
+ * Usage via useToast() or global toast helper.
  */
-import React, { createContext, useContext, useRef, useCallback, useState } from 'react';
+import React, { createContext, useContext, useRef, useCallback, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,6 +12,7 @@ import {
   StyleSheet,
   Platform,
 } from 'react-native';
+import { Check, AlertCircle, Info, X } from 'lucide-react-native';
 import { fontFamily, fontSize } from '../tokens/typography';
 import { gold, dark } from '../tokens/colors';
 import { useTheme } from '../theme/useTheme';
@@ -19,15 +21,33 @@ import { useTheme } from '../theme/useTheme';
 
 export interface ToastOptions {
   message: string;
+  title?: string;
+  type?: 'success' | 'error' | 'info' | 'warning';
   undoLabel?: string;
   onUndo?: () => void;
   duration?: number; // ms, default 3500
+  position?: 'bottom' | 'top';
 }
 
-interface ToastContextType {
+export interface ToastContextType {
   show: (opts: ToastOptions) => void;
   hide: () => void;
+  success: (message: string, title?: string) => void;
+  error: (message: string, title?: string) => void;
+  info: (message: string, title?: string) => void;
 }
+
+// ── Global Helper ──────────────────────────────────────────────────────────────
+
+let globalToast: ToastContextType | null = null;
+
+export const toast = {
+  show: (opts: ToastOptions) => globalToast?.show(opts),
+  success: (message: string, title?: string) => globalToast?.success(message, title),
+  error: (message: string, title?: string) => globalToast?.error(message, title),
+  info: (message: string, title?: string) => globalToast?.info(message, title),
+  hide: () => globalToast?.hide(),
+};
 
 // ── Context ───────────────────────────────────────────────────────────────────
 
@@ -42,48 +62,161 @@ export function useToast() {
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
-  const [toast, setToast] = useState<ToastOptions | null>(null);
+  const [currentToast, setCurrentToast] = useState<ToastOptions | null>(null);
   const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(20)).current;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { theme } = useTheme();
 
   const hide = useCallback(() => {
-    Animated.timing(opacity, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => setToast(null));
-  }, [opacity]);
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 12,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setCurrentToast(null));
+  }, [opacity, translateY]);
 
   const show = useCallback((opts: ToastOptions) => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    setToast(opts);
+    setCurrentToast(opts);
     opacity.setValue(0);
-    Animated.timing(opacity, {
-      toValue: 1,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
+    translateY.setValue(20);
+
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+      Animated.spring(translateY, {
+        toValue: 0,
+        friction: 8,
+        tension: 65,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
     timerRef.current = setTimeout(hide, opts.duration ?? 3500);
-  }, [hide, opacity]);
+  }, [hide, opacity, translateY]);
+
+  const success = useCallback((message: string, title?: string) => {
+    show({ message, title, type: 'success' });
+  }, [show]);
+
+  const error = useCallback((message: string, title?: string) => {
+    show({ message, title, type: 'error' });
+  }, [show]);
+
+  const info = useCallback((message: string, title?: string) => {
+    show({ message, title, type: 'info' });
+  }, [show]);
+
+  useEffect(() => {
+    globalToast = { show, hide, success, error, info };
+    return () => {
+      if (globalToast?.show === show) globalToast = null;
+    };
+  }, [show, hide, success, error, info]);
+
+  const type = currentToast?.type ?? 'success';
 
   return (
-    <ToastContext.Provider value={{ show, hide }}>
+    <ToastContext.Provider value={{ show, hide, success, error, info }}>
       {children}
-      {toast ? (
+      {currentToast ? (
         <Animated.View
           style={[
             styles.toast,
-            { backgroundColor: theme.dark ? dark[300] : '#2A2A2A', opacity },
+            {
+              backgroundColor: theme.dark ? '#181818' : theme.colors.surfaceElevated,
+              borderColor:
+                type === 'error'
+                  ? 'rgba(239, 68, 68, 0.45)'
+                  : type === 'warning'
+                  ? 'rgba(245, 158, 11, 0.45)'
+                  : 'rgba(212, 177, 58, 0.4)',
+              opacity,
+              transform: [{ translateY }],
+            },
           ]}
           pointerEvents="box-none"
         >
-          <Text style={styles.message} numberOfLines={2}>{toast.message}</Text>
-          {toast.onUndo ? (
-            <Pressable onPress={() => { toast.onUndo?.(); hide(); }}>
-              <Text style={styles.undo}>{toast.undoLabel ?? 'Deshacer'}</Text>
+          {/* Badge de icono temático */}
+          <View
+            style={[
+              styles.iconBadge,
+              type === 'error'
+                ? styles.iconBadgeError
+                : type === 'warning'
+                ? styles.iconBadgeWarning
+                : styles.iconBadgeSuccess,
+            ]}
+          >
+            {type === 'error' ? (
+              <AlertCircle size={17} color="#EF4444" strokeWidth={2.4} />
+            ) : type === 'warning' ? (
+              <AlertCircle size={17} color="#F59E0B" strokeWidth={2.4} />
+            ) : type === 'info' ? (
+              <Info size={17} color={gold[400]} strokeWidth={2.4} />
+            ) : (
+              <Check size={17} color={gold[400]} strokeWidth={2.8} />
+            )}
+          </View>
+
+          {/* Contenido de texto */}
+          <View style={styles.textContainer}>
+            {currentToast.title ? (
+              <Text style={[styles.title, { color: theme.colors.foreground }]} numberOfLines={1}>
+                {currentToast.title}
+              </Text>
+            ) : null}
+            <Text
+              style={[
+                styles.message,
+                { color: theme.dark ? '#EDEDED' : theme.colors.foreground },
+                currentToast.title ? { marginTop: 2 } : null,
+              ]}
+              numberOfLines={3}
+            >
+              {currentToast.message}
+            </Text>
+          </View>
+
+          {/* Botón de acción / Deshacer */}
+          {currentToast.onUndo ? (
+            <Pressable
+              onPress={() => {
+                currentToast.onUndo?.();
+                hide();
+              }}
+              style={styles.undoBtn}
+              accessibilityRole="button"
+              accessibilityLabel={currentToast.undoLabel ?? 'Deshacer'}
+            >
+              <Text style={styles.undoText}>{currentToast.undoLabel ?? 'Deshacer'}</Text>
             </Pressable>
-          ) : null}
+          ) : (
+            <Pressable
+              onPress={hide}
+              hitSlop={10}
+              style={styles.closeBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Cerrar notificación"
+            >
+              <X size={16} color={theme.colors.foregroundMuted} strokeWidth={2.2} />
+            </Pressable>
+          )}
         </Animated.View>
       ) : null}
     </ToastContext.Provider>
@@ -93,32 +226,75 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 const styles = StyleSheet.create({
   toast: {
     position: 'absolute',
-    bottom: 104,
-    left: 20,
-    right: 20,
+    bottom: 96,
+    left: 16,
+    right: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-    zIndex: 999,
+    gap: 12,
+    paddingVertical: 13,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    zIndex: 9999,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.45,
+    shadowRadius: 16,
+    elevation: 14,
+  },
+  iconBadge: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  iconBadgeSuccess: {
+    backgroundColor: 'rgba(212, 177, 58, 0.15)',
+    borderColor: '#D4B13A',
+  },
+  iconBadgeError: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderColor: '#EF4444',
+  },
+  iconBadgeWarning: {
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    borderColor: '#F59E0B',
+  },
+  textContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  title: {
+    fontFamily: fontFamily.serifBold,
+    fontSize: 15,
+    letterSpacing: 0.2,
   },
   message: {
-    flex: 1,
-    fontFamily: fontFamily.regular,
-    fontSize: fontSize.sm,
-    color: '#FFFFFF',
-    marginRight: 12,
+    fontFamily: fontFamily.medium,
+    fontSize: 13.5,
+    lineHeight: 18,
   },
-  undo: {
-    fontFamily: fontFamily.semibold,
-    fontSize: fontSize.sm,
-    color: gold[400],
+  undoBtn: {
+    backgroundColor: gold[400],
+    paddingHorizontal: 13,
+    paddingVertical: 7,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  undoText: {
+    fontFamily: fontFamily.bold,
+    fontSize: 12.5,
+    color: '#0E0E0E',
+  },
+  closeBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

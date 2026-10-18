@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Alert, TextInput } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { confirm, toast } from '@bucketlist/ui';
 import {
   format,
   addDays,
@@ -603,20 +604,16 @@ export function useDailyTasksState() {
         ((compDate !== null && compDate < todayStr) || (Boolean(task.due_date) && task.due_date! < todayStr));
 
       if (isExpired) {
-        Alert.alert(
-          '¿Quitar de favoritos?',
-          'Esta tarea ya está completada y caducó hace más de un día. Si la quitas de favoritos, se eliminará para siempre.',
-          [
-            { text: 'Cancelar', style: 'cancel' },
-            {
-              text: 'Eliminar para siempre',
-              style: 'destructive',
-              onPress: () => {
-                deleteMutation.mutate(task.id);
-              },
-            },
-          ]
-        );
+        confirm.show({
+          title: '¿Quitar de favoritos?',
+          message: 'Esta tarea ya está completada y caducó hace más de un día. Si la quitas de favoritos, se eliminará para siempre.',
+          confirmLabel: 'Eliminar para siempre',
+          cancelLabel: 'Cancelar',
+          destructive: true,
+          onConfirm: () => {
+            deleteMutation.mutate(task.id);
+          },
+        });
         return;
       }
     }
@@ -735,21 +732,17 @@ export function useDailyTasksState() {
           (Boolean(editingTask.due_date || editDueDate) && (editingTask.due_date || editDueDate) < todayStr));
 
       if (isExpired) {
-        Alert.alert(
-          '¿Quitar de favoritos?',
-          'Esta tarea ya está completada y caducó hace más de un día. Si la quitas de favoritos, se eliminará para siempre.',
-          [
-            { text: 'Cancelar', style: 'cancel' },
-            {
-              text: 'Eliminar para siempre',
-              style: 'destructive',
-              onPress: () => {
-                deleteMutation.mutate(editingTask.id);
-                handleCloseEditModal();
-              },
-            },
-          ]
-        );
+        confirm.show({
+          title: '¿Quitar de favoritos?',
+          message: 'Esta tarea ya está completada y caducó hace más de un día. Si la quitas de favoritos, se eliminará para siempre.',
+          confirmLabel: 'Eliminar para siempre',
+          cancelLabel: 'Cancelar',
+          destructive: true,
+          onConfirm: () => {
+            deleteMutation.mutate(editingTask.id);
+            handleCloseEditModal();
+          },
+        });
         return;
       }
     }
@@ -923,25 +916,21 @@ export function useDailyTasksState() {
   };
 
   const handleDeleteTag = (tag: DailyTag) => {
-    Alert.alert(
-      'Eliminar etiqueta',
-      `¿Seguro que deseas eliminar la etiqueta "${tag.name}"? Se quitará de tus tareas.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteDailyTagMutation.mutateAsync(tag.id);
-            setSelectedTagFilters((prev) => prev.filter((id) => id !== tag.id));
-            setCreateTagIds((prev) => prev.filter((id) => id !== tag.id));
-            setEditTagIds((prev) => prev.filter((id) => id !== tag.id));
-            setEditingDailyTag(null);
-            setShowTagModal(false);
-          },
-        },
-      ]
-    );
+    confirm.show({
+      title: '¿Eliminar etiqueta?',
+      message: `¿Seguro que deseas eliminar la etiqueta «${tag.name}»? Se quitará de tus tareas.`,
+      confirmLabel: 'Eliminar etiqueta',
+      cancelLabel: 'Cancelar',
+      destructive: true,
+      onConfirm: async () => {
+        await deleteDailyTagMutation.mutateAsync(tag.id);
+        setSelectedTagFilters((prev) => prev.filter((id) => id !== tag.id));
+        setCreateTagIds((prev) => prev.filter((id) => id !== tag.id));
+        setEditTagIds((prev) => prev.filter((id) => id !== tag.id));
+        setEditingDailyTag(null);
+        setShowTagModal(false);
+      },
+    });
   };
 
   const handleToggle = (task: DailyTask) => {
@@ -967,14 +956,14 @@ export function useDailyTasksState() {
   };
 
   const handleDelete = (task: DailyTask) => {
-    Alert.alert('Eliminar tarea', `¿Eliminar "${task.title}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Eliminar',
-        style: 'destructive',
-        onPress: () => deleteMutation.mutate(task.id),
-      },
-    ]);
+    confirm.show({
+      title: '¿Eliminar tarea?',
+      message: `¿Estás seguro de que deseas eliminar «${task.title}»?`,
+      confirmLabel: 'Eliminar',
+      cancelLabel: 'Cancelar',
+      destructive: true,
+      onConfirm: () => deleteMutation.mutate(task.id),
+    });
   };
 
   const handleReorder = (orderedIds: string[]) => {
@@ -1007,20 +996,16 @@ export function useDailyTasksState() {
 
   const handleDeleteAllOverdue = () => {
     if (overdueTasks.length === 0) return;
-    Alert.alert(
-      'Borrar tareas atrasadas',
-      `¿Estás seguro de que quieres eliminar las ${overdueTasks.length} tareas atrasadas? Esta acción no se puede deshacer.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar todas',
-          style: 'destructive',
-          onPress: () => {
-            deleteMultipleMutation.mutate(overdueTasks.map((t) => t.id));
-          },
-        },
-      ]
-    );
+    confirm.show({
+      title: '¿Borrar tareas atrasadas?',
+      message: `¿Estás seguro de que quieres eliminar las ${overdueTasks.length} tareas atrasadas? Esta acción no se puede deshacer.`,
+      confirmLabel: `Eliminar todas (${overdueTasks.length})`,
+      cancelLabel: 'Cancelar',
+      destructive: true,
+      onConfirm: () => {
+        deleteMultipleMutation.mutate(overdueTasks.map((t) => t.id));
+      },
+    });
   };
 
   return {

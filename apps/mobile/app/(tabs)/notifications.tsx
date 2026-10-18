@@ -8,6 +8,7 @@ import { useNotifications, useMarkAsRead, useMarkAllAsRead } from '../../src/hoo
 import { useAuthStore } from '../../src/stores/auth.store';
 import { usePullToRefresh } from '../../src/hooks/useAutoRefresh';
 import { supabase } from '../../src/services/supabase';
+import { bucketApi } from '../../src/services/api/bucket';
 import { useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -77,7 +78,16 @@ export default function NotificationsScreen() {
   const handleCollaborationResponse = async (notification: any, accept: boolean) => {
     setRespondingId(notification.id);
     try {
-      if (notification.type === 'notification_request') {
+      if (notification.type === 'collaboration_request') {
+        await bucketApi.respondToCollaborationRequest(notification.bucket_id, notification.actor_id, accept);
+        markAsRead.mutate(notification.id);
+        void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+        void queryClient.invalidateQueries({ queryKey: ['bucketCollaborators', notification.bucket_id] });
+        void queryClient.invalidateQueries({ queryKey: ['bucketDetail', notification.bucket_id] });
+        if (accept && notification.bucket_id) {
+          router.push(`/bucket/${notification.bucket_id}` as any);
+        }
+      } else if (notification.type === 'notification_request') {
         let query = supabase.from('entity_notification_subscribers').update({
           status: accept ? 'accepted' : 'declined',
           updated_at: new Date().toISOString(),
@@ -163,7 +173,10 @@ export default function NotificationsScreen() {
       notification.type === 'friend_completed' || 
       notification.type === 'deadline' ||
       notification.type === 'bucket_update' ||
-      notification.type === 'notification_accepted'
+      notification.type === 'notification_accepted' ||
+      notification.type === 'collaboration_request' ||
+      notification.type === 'collaborator_joined' ||
+      notification.type === 'collaboration_accepted'
     ) {
       if (notification.bucket_id) {
         router.push(`/bucket/${notification.bucket_id}` as any);
@@ -182,7 +195,10 @@ export default function NotificationsScreen() {
       case 'follow_request': return <UserPlus size={16} color={theme.colors.success} />;
       case 'friend_completed': return <CheckCircle size={16} color={theme.colors.success} />;
       case 'deadline': return <Bell size={16} color={theme.colors.error} />;
-      case 'collaboration_invite': return <Users size={16} color="#D4B13A" />;
+      case 'collaboration_invite':
+      case 'collaboration_request':
+      case 'collaborator_joined':
+      case 'collaboration_accepted': return <Users size={16} color="#D4B13A" />;
       case 'album_invite': return <Folder size={16} color="#D4B13A" />;
       case 'notification_request':
       case 'notification_accepted':
@@ -204,6 +220,9 @@ export default function NotificationsScreen() {
       case 'friend_completed': return `¡${actorName} completó una tarea!`;
       case 'deadline': return `Una tarea tiene la fecha límite próxima.`;
       case 'collaboration_invite': return notification.content || `${actorName} te ha invitado a colaborar.`;
+      case 'collaboration_request': return notification.content || `${actorName} ha solicitado colaborar en tu tarea.`;
+      case 'collaborator_joined': return notification.content || `${actorName} se ha unido como colaborador a tu tarea.`;
+      case 'collaboration_accepted': return notification.content || `${actorName} ha aceptado tu solicitud de colaboración.`;
       case 'album_invite': return notification.content || `${actorName} te ha invitado a colaborar en un álbum.`;
       case 'notification_request': return notification.content || `${actorName} ha solicitado activar notificaciones.`;
       case 'notification_accepted': return notification.content || `${actorName} aceptó la solicitud de notificaciones.`;
@@ -355,7 +374,7 @@ export default function NotificationsScreen() {
               >
                 {formatDistanceToNow(new Date(item.created_at), { addSuffix: true, locale: es })}
               </Typography>
-              {(item.type === 'collaboration_invite' || item.type === 'album_invite' || item.type === 'notification_request') && !item.is_read && (
+              {(item.type === 'collaboration_invite' || item.type === 'album_invite' || item.type === 'notification_request' || item.type === 'collaboration_request') && !item.is_read && (
                 <View style={styles.inviteActions}>
                   <Pressable
                     style={[styles.inviteBtn, styles.inviteBtnAccept]}

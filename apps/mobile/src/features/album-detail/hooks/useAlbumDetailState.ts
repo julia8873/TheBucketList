@@ -8,11 +8,13 @@ import {
   Keyboard,
   ScrollView,
   Animated,
+  Image as RNImage,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
-import { useToast } from '@bucketlist/ui';
+import * as ImageManipulator from 'expo-image-manipulator';
+import { useToast, confirm } from '@bucketlist/ui';
 
 import { useAlbumDetail, useDeleteAlbumDetail, TaskItem } from '@/services/api/albumsService';
 import { supabase } from '@/services/supabase';
@@ -23,10 +25,13 @@ import { useEntitySubscription } from '@/hooks/useEntityNotifications';
 import { useCopyBucket, useCopiedBucketIds } from '@/hooks/useSocial';
 import { uploadAlbumCover } from '@/services/api/albumCover';
 import { TaskSortField, TaskSortDir } from '../components/AlbumSortModal';
+import { useAlbumTags, useSyncAlbumTags } from '@/hooks/useAlbumTags';
+import type { TagItem } from '@/components/TagAssignSheet';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export function useAlbumDetailState() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const cleanId = Array.isArray(id) ? id[0] : (id ? String(id) : '');
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user, session } = useAuthStore();
@@ -109,13 +114,38 @@ export function useAlbumDetailState() {
   }, [taskSearchOpen, keyboardHeight]);
 
   const [sheetVisible, setSheetVisible] = useState(false);
-  const [sheetMode, setSheetMode] = useState<'menu' | 'visibility' | 'priority' | 'status'>('menu');
+  const [sheetMode, setSheetMode] = useState<'menu' | 'visibility' | 'priority' | 'status' | 'cover'>('menu');
+  const [showCoverLinkModal, setShowCoverLinkModal] = useState(false);
+  const [showTagAssignSheet, setShowTagAssignSheet] = useState(false);
   const sheetTranslateY = useRef(new Animated.Value(420)).current;
+
+  const [cropRequest, setCropRequest] = useState<{
+    uri: string;
+    width: number;
+    height: number;
+    index: number;
+    total: number;
+  } | null>(null);
+  const cropResolver = useRef<((uri: string | null) => void) | null>(null);
+
+  const requestPhotoEdit = (base: { uri: string; width: number; height: number }, index: number, total: number) =>
+    new Promise<string | null>((resolve) => {
+      cropResolver.current = resolve;
+      setCropRequest({ ...base, index, total });
+    });
+
+  const finishPhotoEdit = (uri: string | null) => {
+    const resolve = cropResolver.current;
+    cropResolver.current = null;
+    resolve?.(uri);
+  };
 
   const titleTimeout = useRef<any>(null);
   const descTimeout = useRef<any>(null);
 
   const { data: album, isLoading, isError, refetch } = useAlbumDetail(id || '1');
+  const { data: albumTags = [] } = useAlbumTags(id);
+  const syncAlbumTags = useSyncAlbumTags();
   const [manualRefreshing, setManualRefreshing] = useState(false);
   const handleRefresh = async () => {
     setManualRefreshing(true);
@@ -261,8 +291,9 @@ export function useAlbumDetailState() {
       }
 
       if (newCollabs.length > 0 && !album?.isShared) {
-        await supabase.from('albums').update({ is_shared: true }).eq('id', id);
-        void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+        await supabase.from('albums').update({ is_shared: true }).eq('id', cleanId);
+        void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
+        if (cleanId !== id) void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
         void queryClient.invalidateQueries({ queryKey: ['albums'] });
       }
 
@@ -277,30 +308,26 @@ export function useAlbumDetailState() {
 
   const confirmLeaveAlbum = () => {
     closeSheet(() => {
-      Alert.alert(
-        'Dejar de colaborar',
-        '¿Quieres salir de este álbum compartido? Dejará de aparecer en tu lista.',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          {
-            text: 'Salir',
-            style: 'destructive',
-            onPress: async () => {
-              const { error } = await supabase
-                .from('album_members')
-                .delete()
-                .eq('album_id', id)
-                .eq('user_id', user!.id);
-              if (error) {
-                Alert.alert('Error', error.message);
-              } else {
-                void queryClient.invalidateQueries({ queryKey: ['albums'] });
-                router.back();
-              }
-            },
-          },
-        ]
-      );
+      confirm.show({
+        title: 'Dejar de colaborar',
+        message: '¿Quieres salir de este álbum compartido? Dejará de aparecer en tu lista.',
+        confirmLabel: 'Salir del álbum',
+        cancelLabel: 'Cancelar',
+        destructive: true,
+        onConfirm: async () => {
+          const { error } = await supabase
+            .from('album_members')
+            .delete()
+            .eq('album_id', id)
+            .eq('user_id', user!.id);
+          if (error) {
+            toast.error(error.message);
+          } else {
+            void queryClient.invalidateQueries({ queryKey: ['albums'] });
+            router.back();
+          }
+        },
+      });
     });
   };
 
@@ -379,7 +406,7 @@ export function useAlbumDetailState() {
       .eq('id', id);
 
     if (error) {
-      Alert.alert('Error', 'No se pudo cambiar la visibilidad');
+      toast.error('No se pudo cambiar la visibilidad');
       void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
       return;
     }
@@ -400,7 +427,7 @@ export function useAlbumDetailState() {
       .eq('id', id);
 
     if (error) {
-      Alert.alert('Error', 'No se pudo cambiar la prioridad');
+      toast.error('No se pudo cambiar la prioridad');
     }
     void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
     void queryClient.invalidateQueries({ queryKey: ['albums'] });
@@ -421,61 +448,488 @@ export function useAlbumDetailState() {
       .eq('id', id);
 
     if (error) {
-      Alert.alert('Error', close ? 'No se pudo cerrar el álbum' : 'No se pudo reabrir el álbum');
+      toast.error(close ? 'No se pudo cerrar el álbum' : 'No se pudo reabrir el álbum');
     }
     void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
     void queryClient.invalidateQueries({ queryKey: ['albums'] });
   };
 
   const pickAndUploadCover = async () => {
+    if (!canEdit || !currentUserId) return;
     try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        toast.error('Necesitamos acceso a tus fotos para la portada');
+        return;
+      }
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [16, 9],
-        quality: 0.8,
+        allowsEditing: false,
+        quality: 1,
       });
 
-      if (!result.canceled && result.assets && result.assets[0]) {
-        if (!currentUserId) {
-          Alert.alert('Inicia sesión', 'Debes iniciar sesión para cambiar la portada.');
-          return;
-        }
-        const localUri = result.assets[0].uri;
-        const previewJson = JSON.stringify({ id: 'custom-img', type: 'image', uri: localUri });
-        queryClient.setQueryData(['album', id, user?.id], (old: any) =>
-          old ? { ...old, coverPath: previewJson, coverKey: 'custom-img' } : old
-        );
+      if (result.canceled || !result.assets?.length) return;
+      const asset = result.assets[0];
+      if (!asset) return;
 
-        let publicUrl: string;
-        try {
-          publicUrl = await uploadAlbumCover(currentUserId, localUri);
-        } catch (uploadErr: any) {
-          Alert.alert('No se pudo subir la portada', uploadErr?.message || 'Inténtalo de nuevo.');
-          void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
-          return;
-        }
-        const coverJson = JSON.stringify({ id: 'custom-img', type: 'image', uri: publicUrl });
+      const base = await ImageManipulator.manipulateAsync(
+        asset.uri,
+        asset.width && asset.width > 1600 ? [{ resize: { width: 1600 } }] : [],
+        { compress: 1, format: ImageManipulator.SaveFormat.JPEG }
+      );
+
+      const edited = await requestPhotoEdit(base, 0, 1);
+      if (edited === null) {
+        setCropRequest(null);
+        return;
+      }
+      setCropRequest(null);
+
+      let determinedRatio: '1:1' | '16:9' | '3:4' = '16:9';
+      let ratioVal = 16 / 9;
+      try {
+        await new Promise<void>((resolve) => {
+          RNImage.getSize(
+            edited,
+            (w, h) => {
+              if (w && h) {
+                ratioVal = w / h;
+                determinedRatio = Math.abs(ratioVal - 1) < 0.25 ? '1:1' : ratioVal < 0.85 ? '3:4' : '16:9';
+              }
+              resolve();
+            },
+            () => resolve()
+          );
+        });
+      } catch {}
+
+      const publicUrl = await uploadAlbumCover(currentUserId, edited);
+      const currentTagIds = albumTags.map((t) => t.id);
+      const coverJson = JSON.stringify({
+        id: 'custom-img',
+        type: 'image',
+        uri: publicUrl,
+        aspectRatio: determinedRatio,
+        aspectRatioValue: ratioVal,
+        tag_ids: currentTagIds,
+      });
+
+      queryClient.setQueryData(['album', cleanId, user?.id], (old: any) =>
+        old ? { ...old, coverPath: coverJson, coverKey: 'custom-img' } : old
+      );
+      if (cleanId !== id) {
         queryClient.setQueryData(['album', id, user?.id], (old: any) =>
           old ? { ...old, coverPath: coverJson, coverKey: 'custom-img' } : old
         );
-
-        const { error } = await supabase
-          .from('albums')
-          .update({ cover_path: coverJson })
-          .eq('id', id);
-
-        if (error) {
-          Alert.alert('Error', 'No se pudo actualizar la portada');
-          void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
-          return;
-        }
-
-        void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
-        void queryClient.invalidateQueries({ queryKey: ['albums'] });
       }
+
+      const { error } = await supabase.from('albums').update({ cover_path: coverJson }).eq('id', cleanId);
+      if (error) throw error;
+
+      void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
+      if (cleanId !== id) void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+      void queryClient.invalidateQueries({ queryKey: ['albums'] });
+      toast.success('Portada actualizada');
     } catch (err: any) {
-      Alert.alert('Error al seleccionar imagen', err?.message || 'Inténtalo de nuevo');
+      setCropRequest(null);
+      toast.error(err?.message || 'No se pudo actualizar la portada');
+    }
+  };
+
+  const takePhotoAndUploadCover = async () => {
+    if (!canEdit || !currentUserId) return;
+    try {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        toast.error('Necesitamos acceso a la cámara para la portada');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: false,
+        quality: 1,
+      });
+
+      if (result.canceled || !result.assets?.length) return;
+      const asset = result.assets[0];
+      if (!asset) return;
+
+      const base = await ImageManipulator.manipulateAsync(
+        asset.uri,
+        asset.width && asset.width > 1600 ? [{ resize: { width: 1600 } }] : [],
+        { compress: 1, format: ImageManipulator.SaveFormat.JPEG }
+      );
+
+      const edited = await requestPhotoEdit(base, 0, 1);
+      if (edited === null) {
+        setCropRequest(null);
+        return;
+      }
+      setCropRequest(null);
+
+      let determinedRatio: '1:1' | '16:9' | '3:4' = '16:9';
+      let ratioVal = 16 / 9;
+      try {
+        await new Promise<void>((resolve) => {
+          RNImage.getSize(
+            edited,
+            (w, h) => {
+              if (w && h) {
+                ratioVal = w / h;
+                determinedRatio = Math.abs(ratioVal - 1) < 0.25 ? '1:1' : ratioVal < 0.85 ? '3:4' : '16:9';
+              }
+              resolve();
+            },
+            () => resolve()
+          );
+        });
+      } catch {}
+
+      const publicUrl = await uploadAlbumCover(currentUserId, edited);
+      const currentTagIds = albumTags.map((t) => t.id);
+      const coverJson = JSON.stringify({
+        id: 'custom-img',
+        type: 'image',
+        uri: publicUrl,
+        aspectRatio: determinedRatio,
+        aspectRatioValue: ratioVal,
+        tag_ids: currentTagIds,
+      });
+
+      queryClient.setQueryData(['album', cleanId, user?.id], (old: any) =>
+        old ? { ...old, coverPath: coverJson, coverKey: 'custom-img' } : old
+      );
+      if (cleanId !== id) {
+        queryClient.setQueryData(['album', id, user?.id], (old: any) =>
+          old ? { ...old, coverPath: coverJson, coverKey: 'custom-img' } : old
+        );
+      }
+
+      const { error } = await supabase.from('albums').update({ cover_path: coverJson }).eq('id', cleanId);
+      if (error) throw error;
+
+      void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
+      if (cleanId !== id) void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+      void queryClient.invalidateQueries({ queryKey: ['albums'] });
+      toast.success('Portada actualizada');
+    } catch (err: any) {
+      setCropRequest(null);
+      toast.error(err?.message || 'No se pudo actualizar la portada');
+    }
+  };
+
+  const recropCurrentCover = async () => {
+    if (!canEdit || !currentUserId || !album?.coverPath) return;
+    try {
+      let parsed: any = null;
+      try {
+        parsed = JSON.parse(album.coverPath);
+      } catch {}
+      const uri = parsed?.uri;
+      if (!uri) return;
+
+      const base = await ImageManipulator.manipulateAsync(
+        uri,
+        [],
+        { compress: 1, format: ImageManipulator.SaveFormat.JPEG }
+      );
+
+      const edited = await requestPhotoEdit(base, 0, 1);
+      if (edited === null) {
+        setCropRequest(null);
+        return;
+      }
+      setCropRequest(null);
+
+      let determinedRatio: '1:1' | '16:9' | '3:4' = '16:9';
+      let ratioVal = 16 / 9;
+      try {
+        await new Promise<void>((resolve) => {
+          RNImage.getSize(
+            edited,
+            (w, h) => {
+              if (w && h) {
+                ratioVal = w / h;
+                determinedRatio = Math.abs(ratioVal - 1) < 0.25 ? '1:1' : ratioVal < 0.85 ? '3:4' : '16:9';
+              }
+              resolve();
+            },
+            () => resolve()
+          );
+        });
+      } catch {}
+
+      const publicUrl = await uploadAlbumCover(currentUserId, edited);
+      const currentTagIds = albumTags.map((t) => t.id);
+      const coverJson = JSON.stringify({
+        ...parsed,
+        uri: publicUrl,
+        aspectRatio: determinedRatio,
+        aspectRatioValue: ratioVal,
+        tag_ids: currentTagIds,
+      });
+
+      queryClient.setQueryData(['album', cleanId, user?.id], (old: any) =>
+        old ? { ...old, coverPath: coverJson, coverKey: 'custom-img' } : old
+      );
+      if (cleanId !== id) {
+        queryClient.setQueryData(['album', id, user?.id], (old: any) =>
+          old ? { ...old, coverPath: coverJson, coverKey: 'custom-img' } : old
+        );
+      }
+
+      const { error } = await supabase.from('albums').update({ cover_path: coverJson }).eq('id', cleanId);
+      if (error) throw error;
+
+      void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
+      if (cleanId !== id) void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+      void queryClient.invalidateQueries({ queryKey: ['albums'] });
+      toast.success('Portada reajustada');
+    } catch (err: any) {
+      setCropRequest(null);
+      toast.error(err?.message || 'No se pudo reajustar la portada');
+    }
+  };
+
+  const removeCover = async () => {
+    if (!canEdit || !cleanId) return;
+    try {
+      queryClient.setQueryData(['album', cleanId, user?.id], (old: any) =>
+        old ? { ...old, coverPath: null, coverKey: 'aurora' } : old
+      );
+      if (cleanId !== id) {
+        queryClient.setQueryData(['album', id, user?.id], (old: any) =>
+          old ? { ...old, coverPath: null, coverKey: 'aurora' } : old
+        );
+      }
+      const { error } = await supabase.from('albums').update({ cover_path: null }).eq('id', cleanId);
+      if (error) throw error;
+
+      void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
+      if (cleanId !== id) void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+      void queryClient.invalidateQueries({ queryKey: ['albums'] });
+      toast.success('Portada eliminada');
+    } catch (err: any) {
+      toast.error(err?.message || 'No se pudo quitar la portada');
+    }
+  };
+
+  const handleSaveCoverLink = async (url: string) => {
+    try {
+      setShowCoverLinkModal(false);
+
+      let finalUrl = url;
+      if (url.startsWith('data:')) {
+        if (!currentUserId) throw new Error('Debes iniciar sesión para subir la portada.');
+        try {
+          finalUrl = await uploadAlbumCover(currentUserId, url);
+        } catch (e: any) {
+          console.error('Error uploading base64 cover:', e);
+          throw new Error(e?.message || 'No se pudo procesar la imagen del portapapeles.');
+        }
+      }
+
+      let determinedRatio: '1:1' | '16:9' | '3:4' = '16:9';
+      let ratioVal = 16 / 9;
+
+      if (!finalUrl.startsWith('data:')) {
+        try {
+          await new Promise<void>((resolve) => {
+            RNImage.getSize(
+              finalUrl,
+              (w, h) => {
+                if (w && h) {
+                  ratioVal = w / h;
+                  determinedRatio =
+                    Math.abs(ratioVal - 1) < 0.25 ? '1:1' : ratioVal < 0.85 ? '3:4' : '16:9';
+                }
+                resolve();
+              },
+              () => resolve()
+            );
+          });
+        } catch {}
+      }
+
+      const currentTagIds = albumTags.map((t) => t.id);
+      const coverJson = JSON.stringify({
+        id: 'custom-img',
+        type: 'image',
+        uri: finalUrl,
+        aspectRatio: determinedRatio,
+        aspectRatioValue: ratioVal,
+        tag_ids: currentTagIds,
+      });
+
+      queryClient.setQueryData(['album', cleanId, user?.id], (old: any) =>
+        old ? { ...old, coverPath: coverJson, coverKey: 'custom-img' } : old
+      );
+      if (cleanId !== id) {
+        queryClient.setQueryData(['album', id, user?.id], (old: any) =>
+          old ? { ...old, coverPath: coverJson, coverKey: 'custom-img' } : old
+        );
+      }
+
+      const { error } = await supabase.from('albums').update({ cover_path: coverJson }).eq('id', cleanId);
+      if (error) {
+        console.error('Error updating album cover:', error);
+        toast.error(error.message || 'No se pudo guardar la portada.');
+        void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
+        return;
+      }
+
+      void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
+      if (cleanId !== id) void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+      void queryClient.invalidateQueries({ queryKey: ['albums'] });
+      toast.success('Portada actualizada');
+    } catch (err: any) {
+      console.error('Error saving cover link:', err);
+      toast.error(err?.message || 'No se pudo guardar la portada.');
+    }
+  };
+
+  const handleChangeCoverShape = async (newRatio: '1:1' | '16:9' | '3:4') => {
+    try {
+      let currentObj: any = {};
+      if (album?.coverPath) {
+        try {
+          currentObj = JSON.parse(album.coverPath);
+        } catch {}
+      }
+      const updated = {
+        ...currentObj,
+        aspectRatio: newRatio,
+        tag_ids: albumTags.map((t) => t.id),
+      };
+      const coverJson = JSON.stringify(updated);
+      queryClient.setQueryData(['album', cleanId, user?.id], (old: any) =>
+        old ? { ...old, coverPath: coverJson } : old
+      );
+      if (cleanId !== id) {
+        queryClient.setQueryData(['album', id, user?.id], (old: any) =>
+          old ? { ...old, coverPath: coverJson } : old
+        );
+      }
+      await supabase.from('albums').update({ cover_path: coverJson }).eq('id', cleanId);
+      void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
+      if (cleanId !== id) void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+      void queryClient.invalidateQueries({ queryKey: ['albums'] });
+      toast.success('Formato de portada actualizado');
+    } catch {
+      toast.error('No se pudo cambiar la forma de la portada.');
+    }
+  };
+
+  const handleSaveAlbumTags = async (newTags: TagItem[]) => {
+    setShowTagAssignSheet(false);
+    if (!id || id === 'unassigned') return;
+
+    const cleanId = Array.isArray(id) ? id[0] : String(id);
+
+    // Actualización optimista inmediata en la UI para la pantalla del álbum
+    queryClient.setQueryData(['album_tags', cleanId, user?.id], newTags);
+    if (cleanId !== id) {
+      queryClient.setQueryData(['album_tags', id, user?.id], newTags);
+    }
+
+    const currentTagIds = albumTags.map((t) => t.id);
+    const newTagIds = newTags.map((t) => t.id);
+    const removed = albumTags.filter((t) => !newTagIds.includes(t.id));
+    const taskIds = album?.tasks?.map((t) => t.id) || [];
+
+    // Actualización optimista de las tareas del álbum para que muestren las etiquetas añadidas
+    const applyTagsToAlbumTasks = (tagsToApply: TagItem[]) => {
+      const updater = (old: any) => {
+        if (!old || !old.tasks) return old;
+        const updatedTasks = old.tasks.map((task: any) => {
+          const existingTags = task.tags || [];
+          const existingIds = new Set(existingTags.map((t: any) => t.id));
+          const toAdd = tagsToApply.filter((t) => !existingIds.has(t.id));
+          return {
+            ...task,
+            tags: [...existingTags, ...toAdd],
+          };
+        });
+        return { ...old, tasks: updatedTasks };
+      };
+      queryClient.setQueryData(['album', cleanId, user?.id], updater);
+      if (cleanId !== id) queryClient.setQueryData(['album', id, user?.id], updater);
+    };
+
+    applyTagsToAlbumTasks(newTags);
+
+    if (removed.length > 0 && taskIds.length > 0) {
+      Alert.alert(
+        'Quitar etiquetas de las tareas',
+        `Has deseleccionado ${removed.map((t) => `«${t.name}»`).join(', ')}. ¿Deseas quitar ${removed.length === 1 ? 'esta etiqueta' : 'estas etiquetas'} también de todas las tareas del álbum?`,
+        [
+          {
+            text: 'Solo del álbum',
+            onPress: () => {
+              void syncAlbumTags.mutateAsync({
+                albumId: id,
+                selectedTagIds: newTagIds,
+                tags: newTags,
+                removedTagIds: removed.map((t) => t.id),
+                removeTagsFromTasks: false,
+                taskIds,
+              });
+            },
+          },
+          {
+            text: 'Quitar de todas las tareas',
+            onPress: () => {
+              // Optimistamente quitar las etiquetas de las tareas
+              const removedIds = new Set(removed.map((t) => t.id));
+              const removeUpdater = (old: any) => {
+                if (!old || !old.tasks) return old;
+                const updatedTasks = old.tasks.map((task: any) => ({
+                  ...task,
+                  tags: (task.tags || []).filter((t: any) => !removedIds.has(t.id)),
+                }));
+                return { ...old, tasks: updatedTasks };
+              };
+              queryClient.setQueryData(['album', cleanId, user?.id], removeUpdater);
+              if (cleanId !== id) queryClient.setQueryData(['album', id, user?.id], removeUpdater);
+
+              void syncAlbumTags.mutateAsync({
+                albumId: id,
+                selectedTagIds: newTagIds,
+                tags: newTags,
+                removedTagIds: removed.map((t) => t.id),
+                removeTagsFromTasks: true,
+                taskIds,
+              });
+            },
+          },
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+            onPress: () => {
+              // Revertir optimismo
+              queryClient.setQueryData(['album_tags', cleanId, user?.id], albumTags);
+              if (cleanId !== id) queryClient.setQueryData(['album_tags', id, user?.id], albumTags);
+              void queryClient.invalidateQueries({ queryKey: ['album', cleanId] });
+            },
+          },
+        ]
+      );
+      return;
+    }
+
+    try {
+      await syncAlbumTags.mutateAsync({
+        albumId: id,
+        selectedTagIds: newTagIds,
+        tags: newTags,
+        taskIds,
+      });
+    } catch {
+      // Revertir optimismo si falló
+      queryClient.setQueryData(['album_tags', cleanId, user?.id], albumTags);
+      if (cleanId !== id) queryClient.setQueryData(['album_tags', id, user?.id], albumTags);
+      void queryClient.invalidateQueries({ queryKey: ['album', cleanId] });
     }
   };
 
@@ -536,7 +990,7 @@ export function useAlbumDetailState() {
       .in('id', taskIds);
 
     if (error) {
-      Alert.alert('Error', 'No se pudieron actualizar las tareas');
+      toast.error('No se pudieron actualizar las tareas');
       void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
       return;
     }
@@ -560,22 +1014,22 @@ export function useAlbumDetailState() {
   const handleCopySingleTask = (task: TaskItem, e: any) => {
     e.stopPropagation();
     if (!currentUserId) {
-      Alert.alert('Inicia sesión', 'Debes iniciar sesión para añadir tareas a tu lista.');
+      toast.info('Debes iniciar sesión para añadir tareas a tu lista.');
       return;
     }
     const alreadyCopied = !!copiedIds?.includes(task.id);
     if (alreadyCopied) {
-      Alert.alert('Ya en tu lista', 'Ya tienes esta tarea en tu lista.');
+      toast.info('Ya tienes esta tarea en tu lista.');
       return;
     }
     copyBucket.mutate(
       { bucketId: task.id, userId: currentUserId },
       {
         onSuccess: () => {
-          toast.show({ message: 'Tarea añadida a tu lista 🎉' });
+          toast.success('Tarea añadida a tu lista 🎉');
         },
         onError: (err: any) => {
-          Alert.alert('No se pudo añadir', err?.message || 'Inténtalo de nuevo.');
+          toast.error(err?.message || 'No se pudo añadir. Inténtalo de nuevo.');
         },
       }
     );
@@ -661,21 +1115,16 @@ export function useAlbumDetailState() {
       void queryClient.invalidateQueries({ queryKey: ['buckets'] });
       void queryClient.invalidateQueries({ queryKey: ['copiedBuckets'] });
 
-      toast.show({ message: 'Álbum y tareas copiados a tu perfil 🎉' });
-      Alert.alert(
-        '¡Álbum copiado!',
-        'El álbum y todas sus tareas se han añadido a tu perfil.',
-        [
-          { text: 'Seguir aquí', style: 'cancel' },
-          {
-            text: 'Ver mi nuevo álbum',
-            onPress: () => router.push(`/album/${newAlbum.id}` as any),
-          },
-        ]
-      );
+      confirm.show({
+        title: '¡Álbum copiado!',
+        message: 'El álbum y todas sus tareas se han añadido a tu perfil.',
+        confirmLabel: 'Ver mi nuevo álbum',
+        cancelLabel: 'Seguir aquí',
+        onConfirm: () => router.push(`/album/${newAlbum.id}` as any),
+      });
     } catch (err: any) {
       console.error('Error copying entire album:', err);
-      Alert.alert('No se pudo copiar el álbum', err?.message || 'Inténtalo de nuevo.');
+      toast.error(err?.message || 'No se pudo copiar el álbum. Inténtalo de nuevo.');
     } finally {
       setCopyingAlbum(false);
     }
@@ -683,21 +1132,16 @@ export function useAlbumDetailState() {
 
   const handleCopyEntireAlbum = () => {
     if (!currentUserId) {
-      Alert.alert('Inicia sesión', 'Debes iniciar sesión para copiar este álbum.');
+      toast.info('Debes iniciar sesión para copiar este álbum.');
       return;
     }
-    Alert.alert(
-      '¿Copiar álbum entero?',
-      `Se creará una copia de «${album?.title}» y sus ${album?.tasks?.length ?? 0} tareas en tu perfil.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Copiar álbum',
-          style: 'default',
-          onPress: () => void executeCopyEntireAlbum(),
-        },
-      ]
-    );
+    confirm.show({
+      title: '¿Copiar álbum entero?',
+      message: `Se creará una copia de «${album?.title}» y sus ${album?.tasks?.length ?? 0} tareas en tu perfil.`,
+      confirmLabel: 'Copiar álbum',
+      cancelLabel: 'Cancelar',
+      onConfirm: () => void executeCopyEntireAlbum(),
+    });
   };
 
   const handleMore = () => {
@@ -707,18 +1151,18 @@ export function useAlbumDetailState() {
 
   const confirmDeleteAlbum = () => {
     closeSheet(() => {
-      Alert.alert('¿Eliminar este álbum?', 'Las tareas pasarán a Sin álbum.', [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar álbum',
-          style: 'destructive',
-          onPress: () => {
-            deleteMutation.mutate(id || '1', {
-              onSuccess: () => router.back(),
-            });
-          },
+      confirm.show({
+        title: '¿Eliminar este álbum?',
+        message: 'Las tareas pasarán a Sin álbum. Esta acción no se puede deshacer.',
+        confirmLabel: 'Eliminar álbum',
+        cancelLabel: 'Cancelar',
+        destructive: true,
+        onConfirm: () => {
+          deleteMutation.mutate(id || '1', {
+            onSuccess: () => router.back(),
+          });
         },
-      ]);
+      });
     });
   };
 
@@ -783,6 +1227,19 @@ export function useAlbumDetailState() {
     handleChangePriority,
     handleToggleCloseAlbum,
     pickAndUploadCover,
+    takePhotoAndUploadCover,
+    recropCurrentCover,
+    removeCover,
+    cropRequest,
+    finishPhotoEdit,
+    showCoverLinkModal,
+    setShowCoverLinkModal,
+    handleSaveCoverLink,
+    handleChangeCoverShape,
+    albumTags,
+    showTagAssignSheet,
+    setShowTagAssignSheet,
+    handleSaveAlbumTags,
     toggleTaskCompleted,
     handleToggleAllTasks,
     handleShare,
