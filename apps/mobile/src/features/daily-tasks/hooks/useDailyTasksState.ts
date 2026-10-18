@@ -605,8 +605,8 @@ export function useDailyTasksState() {
 
       if (isExpired) {
         confirm.show({
-          title: '¿Quitar de favoritos?',
-          message: 'Esta tarea ya está completada y caducó hace más de un día. Si la quitas de favoritos, se eliminará para siempre.',
+          title: '¿Desfijar tarea?',
+          message: 'Esta tarea ya está completada y caducó hace más de un día. Si la desfijas, se eliminará para siempre.',
           confirmLabel: 'Eliminar para siempre',
           cancelLabel: 'Cancelar',
           destructive: true,
@@ -733,8 +733,8 @@ export function useDailyTasksState() {
 
       if (isExpired) {
         confirm.show({
-          title: '¿Quitar de favoritos?',
-          message: 'Esta tarea ya está completada y caducó hace más de un día. Si la quitas de favoritos, se eliminará para siempre.',
+          title: '¿Desfijar tarea?',
+          message: 'Esta tarea ya está completada y caducó hace más de un día. Si la desfijas, se eliminará para siempre.',
           confirmLabel: 'Eliminar para siempre',
           cancelLabel: 'Cancelar',
           destructive: true,

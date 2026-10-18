@@ -11,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import {
-  Star,
+  Pin,
   X,
   Calendar,
   Flag,
@@ -160,9 +160,9 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
                 onPress={() => setIsFavorite((prev) => !prev)}
                 hitSlop={8}
                 style={{ padding: 4 }}
-                accessibilityLabel="Marcar como favorita"
+                accessibilityLabel={isFavorite ? 'Desfijar tarea' : 'Fijar tarea'}
               >
-                <Star
+                <Pin
                   size={18}
                   color={isFavorite ? gold[400] : theme.colors.foregroundMuted}
                   fill={isFavorite ? gold[400] : 'transparent'}

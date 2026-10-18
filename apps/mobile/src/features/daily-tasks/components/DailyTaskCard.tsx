@@ -6,7 +6,7 @@ import {
   Flag,
   ListChecks,
   RotateCw,
-  Star,
+  Pin,
   Trash2,
   AlertCircle,
 } from 'lucide-react-native';
@@ -252,14 +252,14 @@ export function DailyTaskCard({
         </View>
       </Pressable>
 
-      {/* Favorite quick toggle */}
+      {/* Pin quick toggle */}
       <Pressable
         hitSlop={8}
         onPress={() => onToggleFavorite(item)}
         style={styles.favQuickBtn}
-        accessibilityLabel={item.is_favorite ? 'Quitar de favoritos' : 'Marcar como favorito'}
+        accessibilityLabel={item.is_favorite ? 'Desfijar tarea' : 'Fijar tarea'}
       >
-        <Star
+        <Pin
           size={14}
           color={item.is_favorite ? gold[400] : theme.colors.foregroundMuted}
           fill={item.is_favorite ? gold[400] : 'transparent'}
@@ -485,14 +485,14 @@ export function DailyOverdueTaskCard({
           </View>
         </Pressable>
 
-        {/* Favorite quick toggle */}
+        {/* Pin quick toggle */}
         <Pressable
           hitSlop={8}
           onPress={() => onToggleFavorite(item)}
           style={styles.favQuickBtn}
-          accessibilityLabel={item.is_favorite ? 'Quitar de favoritos' : 'Marcar como favorito'}
+          accessibilityLabel={item.is_favorite ? 'Desfijar tarea' : 'Fijar tarea'}
         >
-          <Star
+          <Pin
             size={14}
             color={item.is_favorite ? gold[400] : theme.colors.foregroundMuted}
             fill={item.is_favorite ? gold[400] : 'transparent'}

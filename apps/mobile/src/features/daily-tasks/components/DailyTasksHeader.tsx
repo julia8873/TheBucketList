@@ -6,7 +6,7 @@ import {
   X,
   ListTodo,
   CheckCircle2,
-  Star,
+  Pin,
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
@@ -451,7 +451,7 @@ export function DailyTasksScrollControls({
           </Text>
         </Pressable>
 
-        {/* Filtro rápido: Favoritas */}
+        {/* Filtro rápido: Fijadas */}
         <Pressable
           style={[
             styles.tagFilterPill,
@@ -459,9 +459,9 @@ export function DailyTasksScrollControls({
             onlyFavorites && [styles.filterPillActive, { backgroundColor: theme.dark ? '#262012' : '#FDF4DC' }],
           ]}
           onPress={() => setOnlyFavorites((prev) => !prev)}
-          accessibilityLabel="Filtrar por favoritas"
+          accessibilityLabel="Filtrar por fijadas"
         >
-          <Star
+          <Pin
             size={12}
             color={onlyFavorites ? gold[400] : theme.colors.foregroundMuted}
             fill={onlyFavorites ? gold[400] : 'transparent'}
@@ -474,7 +474,7 @@ export function DailyTasksScrollControls({
               onlyFavorites && styles.filterPillTextActive,
             ]}
           >
-            Favoritas{favoritesCount > 0 ? ` (${favoritesCount})` : ''}
+            Fijadas{favoritesCount > 0 ? ` (${favoritesCount})` : ''}
           </Text>
         </Pressable>
 

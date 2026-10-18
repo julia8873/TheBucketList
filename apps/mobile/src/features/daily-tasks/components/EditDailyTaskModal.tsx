@@ -14,7 +14,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   X,
   Plus,
-  Star,
+  Pin,
   Flag,
   Calendar,
   ListChecks,
@@ -176,9 +176,9 @@ export function EditDailyTaskModal({
                   onPress={onToggleFavorite}
                   hitSlop={8}
                   style={{ padding: 4 }}
-                  accessibilityLabel="Marcar como favorita"
+                  accessibilityLabel={editIsFavorite ? 'Desfijar tarea' : 'Fijar tarea'}
                 >
-                  <Star
+                  <Pin
                     size={18}
                     color={editIsFavorite ? gold[400] : theme.colors.foregroundMuted}
                     fill={editIsFavorite ? gold[400] : 'transparent'}
