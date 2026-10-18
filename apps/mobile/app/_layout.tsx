@@ -26,6 +26,7 @@ import { useAuthStore } from '../src/stores/auth.store';
 import { supabase } from '../src/services/supabase';
 import { useAutoRefresh } from '../src/hooks/useAutoRefresh';
 import { useRealtimeSync } from '../src/hooks/useRealtimeSync';
+import { validateOAuthSession } from '../src/hooks/useGoogleAuth';
 import 'intl-pluralrules';
 import '../../../packages/shared/src/i18n'; // initialize i18n
 
@@ -148,6 +149,11 @@ function RootNavigator() {
             if (isRecovery) setRecovering(true);
             const { error } = await supabase.auth.setSession({ access_token, refresh_token });
             if (error) setRecovering(false);
+
+            const activeMode = (params.get('mode') as 'login' | 'register') || useAuthStore.getState().oauthMode;
+            if (activeMode) {
+              await validateOAuthSession(activeMode);
+            }
             return;
           }
         }
@@ -158,6 +164,10 @@ function RootNavigator() {
           const code = params.get('code');
           if (code) {
             await supabase.auth.exchangeCodeForSession(code);
+            const activeMode = (params.get('mode') as 'login' | 'register') || useAuthStore.getState().oauthMode;
+            if (activeMode) {
+              await validateOAuthSession(activeMode);
+            }
           }
         }
       } catch (err) {
@@ -173,17 +183,31 @@ function RootNavigator() {
   useEffect(() => {
     if (!userId) { setOnboardingCompleted(null); return; }
     let cancelled = false;
-    void supabase
-      .from('profiles')
-      .select('onboarding_completed')
-      .eq('id', userId)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        console.log('ONBOARDING', JSON.stringify({ data, error }));
-        // Ante un error no bloqueamos al usuario fuera de la app
-        setOnboardingCompleted(error || !data ? true : data.onboarding_completed !== false);
-      });
+
+    const checkOnboarding = async (attempt = 0): Promise<void> => {
+      if (cancelled) return;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('onboarding_completed')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (!data && attempt < 4) {
+        // El trigger de base de datos puede tardar unos ms en crear el perfil tras el signup
+        setTimeout(() => {
+          if (!cancelled) void checkOnboarding(attempt + 1);
+        }, 300);
+        return;
+      }
+
+      // Si existe el perfil, completado es estrictamente si onboarding_completed === true
+      const isCompleted = data ? data.onboarding_completed === true : false;
+      setOnboardingCompleted(isCompleted);
+    };
+
+    void checkOnboarding();
     return () => { cancelled = true; };
   }, [userId]);
 
@@ -195,6 +219,7 @@ function RootNavigator() {
       return;
     }
     if (isRecovering) return; // dejar terminar "nueva contraseña"
+    if (useAuthStore.getState().oauthMode === 'login') return; // validando login con OAuth
     if (onboardingCompleted === null) return; // cargando perfil
     if (!onboardingCompleted) {
       if (group !== '(onboarding)') router.replace('/(onboarding)/username');

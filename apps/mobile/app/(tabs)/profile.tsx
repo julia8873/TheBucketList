@@ -102,42 +102,34 @@ export default function CurrentUserProfileScreen() {
   const formatDate = (iso?: string | null) =>
     iso ? new Date(iso).toLocaleDateString(i18n.language === 'en' ? 'en-GB' : 'es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
 
-  if (profileQuery.isLoading) {
-    return (
-      <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <View style={styles.header}>
-          <PageTitle gold={t('profile.title_gold', { defaultValue: 'Mi' })} rest={t('profile.title_rest', { defaultValue: 'perfil' })} />
-        </View>
-        <ProfileSkeleton />
-      </SafeAreaView>
-    );
-  }
-
   const requestCount = requests.data ?? 0;
   const name = displayNameOf(profile);
 
   return (
     <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={manualRefreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
-      >
-        {/* Cabecera */}
-        <View style={styles.header}>
-          <PageTitle gold={t('profile.title_gold', { defaultValue: 'Mi' })} rest={t('profile.title_rest', { defaultValue: 'perfil' })} />
-          <Pressable
-            onPress={() => router.push('/(modals)/settings' as any)}
-            accessibilityRole="button"
-            accessibilityLabel={t('settings.title')}
-            style={[styles.roundBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
-          >
-            <Settings size={22} color={theme.colors.foreground} />
-          </Pressable>
-        </View>
+      {/* Cabecera */}
+      <View style={styles.header}>
+        <PageTitle gold={t('profile.title_gold', { defaultValue: 'Mi' })} rest={t('profile.title_rest', { defaultValue: 'perfil' })} />
+        <Pressable
+          onPress={() => router.push('/(modals)/settings' as any)}
+          accessibilityRole="button"
+          accessibilityLabel={t('settings.title')}
+          style={[styles.roundBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+        >
+          <Settings size={22} color={theme.colors.foreground} />
+        </Pressable>
+      </View>
 
-        {/* Identidad */}
-        <View style={styles.identity}>
+      {profileQuery.isLoading ? (
+        <ProfileSkeleton />
+      ) : (
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={manualRefreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
+        >
+          {/* Identidad */}
+          <View style={styles.identity}>
           <Avatar uri={profile?.avatar_url} initials={initialsOf(profile)} size="xl" goldRing />
           <View style={{ flex: 1, gap: 3 }}>
             <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={2} ellipsizeMode="tail">{name}</Text>
@@ -307,6 +299,7 @@ export default function CurrentUserProfileScreen() {
           </View>
         )}
       </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
@@ -344,7 +337,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { alignItems: 'center', justifyContent: 'center' },
   content: { paddingHorizontal: 20, paddingBottom: 40 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 12 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 12, paddingHorizontal: 20 },
   title: { fontFamily: fontFamily.serifBold, fontSize: 32 },
   roundBtn: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   identity: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 20 },

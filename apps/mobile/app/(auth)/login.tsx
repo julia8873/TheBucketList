@@ -1,9 +1,10 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, type TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme, fontFamily } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
+import { useAuthStore } from '../../src/stores/auth.store';
 import { useGoogleAuth } from '../../src/hooks/useGoogleAuth';
 import { mapAuthError } from '../../src/utils/authErrors';
 import {
@@ -21,7 +22,16 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const google = useGoogleAuth((msg) => setError(mapAuthError(msg, t)));
+  const { oauthError, setOAuthError } = useAuthStore();
+  const google = useGoogleAuth((msg) => setError(mapAuthError(msg, t)), 'login');
+
+  useEffect(() => {
+    if (oauthError) {
+      setError(mapAuthError(oauthError, t));
+      setOAuthError(null);
+    }
+  }, [oauthError, t, setOAuthError]);
+
   const canSubmit = identifier.trim().length > 0 && password.length > 0;
 
   const submit = async () => {

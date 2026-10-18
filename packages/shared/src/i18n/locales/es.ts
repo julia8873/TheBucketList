@@ -83,6 +83,7 @@ const es = {
     err_password_short: 'La contraseña debe tener al menos 8 caracteres.',
     err_mismatch: 'Las contraseñas no coinciden.',
     err_link_expired: 'El enlace ha caducado. Solicita uno nuevo.',
+    err_no_account_google: 'No existe ninguna cuenta asociada a este correo de Google. Por favor, crea una cuenta primero.',
   },
 
   onboarding: {

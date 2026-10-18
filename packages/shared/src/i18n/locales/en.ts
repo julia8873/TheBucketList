@@ -85,6 +85,7 @@ const en = {
     err_password_short: 'Password must be at least 8 characters.',
     err_mismatch: 'Passwords do not match.',
     err_link_expired: 'The link has expired. Please request a new one.',
+    err_no_account_google: 'No account found associated with this Google email. Please create an account first.',
   },
 
   onboarding: {

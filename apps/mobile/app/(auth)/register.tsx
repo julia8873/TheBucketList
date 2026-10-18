@@ -65,7 +65,7 @@ export default function RegisterScreen() {
   // };
   // ─────────────────────────────────────────────────────────────────────────────
 
-  const google = useGoogleAuth((msg) => setError(mapAuthError(msg, t)));
+  const google = useGoogleAuth((msg) => setError(mapAuthError(msg, t)), 'register');
 
   // Comprobación de disponibilidad de nombre de usuario con debounce
   useEffect(() => {
@@ -168,6 +168,10 @@ export default function RegisterScreen() {
     emailStatus === 'available' ? 'ok'
     : emailStatus === 'taken' || (emailStatus === 'invalid' && cleanEmail.length > 0) ? 'error'
     : 'muted';
+
+  const isPasswordShort = password.length > 0 && password.length < 8;
+  const passwordMessage = isPasswordShort ? t('auth.err_password_short') : null;
+  const passwordTone = isPasswordShort ? 'error' : 'muted';
 
   const submit = async () => {
     if (!canSubmit || loading) return;
@@ -377,6 +381,8 @@ export default function RegisterScreen() {
         autoComplete="new-password"
         returnKeyType="go"
         onSubmitEditing={() => void submit()}
+        message={passwordMessage}
+        messageTone={passwordTone}
         error={error}
       />
     </AuthScreen>

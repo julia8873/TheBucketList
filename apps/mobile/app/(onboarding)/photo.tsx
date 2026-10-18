@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -19,10 +19,24 @@ export default function PhotoScreen() {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
-  const { username, setAvatarUrl } = useOnboardingStore();
+  const { username, avatarUrl, setAvatarUrl } = useOnboardingStore();
   const [localUri, setLocalUri] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Obtener avatar de Google si existe
+  const googleAvatar =
+    (user?.user_metadata?.avatar_url as string | undefined) ||
+    (user?.user_metadata?.picture as string | undefined) ||
+    null;
+
+  useEffect(() => {
+    if (googleAvatar && !avatarUrl) {
+      setAvatarUrl(googleAvatar);
+    }
+  }, [googleAvatar, avatarUrl, setAvatarUrl]);
+
+  const activeAvatar = localUri || avatarUrl || googleAvatar;
 
   const pick = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -40,15 +54,22 @@ export default function PhotoScreen() {
   const next = () => router.push('/(onboarding)/bio');
 
   const save = async () => {
-    if (!localUri || !user) return;
+    if (!user) return;
     setSaving(true);
     setError(null);
     try {
-      const url = await uploadAvatar(user.id, localUri);
-      const { error: err } = await supabase.from('profiles').update({ avatar_url: url }).eq('id', user.id);
-      if (err) throw err;
-      setAvatarUrl(url);
-      queryClient.setQueryData(['profile', user.id], (old: any) => ({ ...old, avatar_url: url }));
+      if (localUri) {
+        const url = await uploadAvatar(user.id, localUri);
+        const { error: err } = await supabase.from('profiles').update({ avatar_url: url }).eq('id', user.id);
+        if (err) throw err;
+        setAvatarUrl(url);
+        queryClient.setQueryData(['profile', user.id], (old: any) => ({ ...old, avatar_url: url }));
+      } else if (googleAvatar) {
+        setAvatarUrl(googleAvatar);
+        const { error: err } = await supabase.from('profiles').update({ avatar_url: googleAvatar }).eq('id', user.id);
+        if (err) throw err;
+        queryClient.setQueryData(['profile', user.id], (old: any) => ({ ...old, avatar_url: googleAvatar }));
+      }
       void queryClient.invalidateQueries({ queryKey: ['profile'] });
       next();
     } catch {
@@ -66,12 +87,12 @@ export default function PhotoScreen() {
       onBack={() => router.back()}
       footer={
         <>
-          {localUri ? (
+          {activeAvatar ? (
             <PillButton title={t('auth.continue')} onPress={() => void save()} loading={saving} />
           ) : (
             <PillButton title={t('onboarding.pick_photo')} onPress={() => void pick()} />
           )}
-          {localUri ? (
+          {activeAvatar ? (
             <TextAction title={t('onboarding.change_photo')} onPress={() => void pick()} disabled={saving} />
           ) : (
             <TextAction title={t('onboarding.not_now')} onPress={next} />
@@ -82,7 +103,7 @@ export default function PhotoScreen() {
       <View style={styles.center}>
         <Pressable onPress={() => void pick()} accessibilityRole="button" accessibilityLabel={t('onboarding.pick_photo')}>
           <BigAvatar
-            uri={localUri}
+            uri={activeAvatar}
             initials={initialsOfUsername(username)}
             badge={
               <View style={[styles.badge, { backgroundColor: theme.colors.primary, borderColor: theme.colors.background }]}>
@@ -93,7 +114,7 @@ export default function PhotoScreen() {
         </Pressable>
         <Text style={[styles.handle, { color: theme.colors.foreground }]}>@{username}</Text>
         <Text style={[styles.hint, { color: error ? theme.colors.error : theme.colors.foregroundSubtle }]}>
-          {error ?? (localUri ? ' ' : t('onboarding.photo_none'))}
+          {error ?? (activeAvatar ? ' ' : t('onboarding.photo_none'))}
         </Text>
       </View>
     </AuthScreen>

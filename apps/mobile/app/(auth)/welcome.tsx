@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Platform, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -31,5 +31,5 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing[6] },
   logo: { fontFamily: fontFamily.serifBold, fontSize: 40, letterSpacing: -0.5 },
-  footer: { padding: spacing[5], gap: spacing[3] },
+  footer: { paddingHorizontal: spacing[5], paddingBottom: Platform.OS === 'ios' ? 58 : 52, gap: spacing[3] },
 });

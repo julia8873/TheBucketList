@@ -48,14 +48,15 @@ export default function UsernameScreen() {
     if (status !== 'available' || !user || saving) return;
     setSaving(true);
     setError(null);
-    const { error: err } = await supabase.from('profiles').update({ username }).eq('id', user.id);
+    const displayName = (user.user_metadata?.full_name as string) || (user.user_metadata?.name as string) || username;
+    const { error: err } = await supabase.from('profiles').update({ username, display_name: displayName }).eq('id', user.id);
     setSaving(false);
     if (err) {
       if (err.code === '23505') setStatus('taken');
       else setError(t('auth.err_generic'));
       return;
     }
-    queryClient.setQueryData(['profile', user.id], (old: any) => ({ ...old, username }));
+    queryClient.setQueryData(['profile', user.id], (old: any) => ({ ...old, username, display_name: displayName }));
     void queryClient.invalidateQueries({ queryKey: ['profile'] });
     router.push('/(onboarding)/photo');
   };

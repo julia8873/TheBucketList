@@ -8,6 +8,7 @@ export function mapAuthError(message: string | undefined, t: TFunction): string 
   const m = (message ?? '').toLowerCase();
   if (m.includes('invalid login credentials')) return t('auth.err_invalid');
   if (m.includes('email not confirmed')) return t('auth.err_unconfirmed');
+  if (m.includes('no_account_google') || m.includes('no existe ninguna cuenta') || m.includes('no account found')) return t('auth.err_no_account_google');
   if (m.includes('already registered') || m.includes('already been registered')) return t('auth.err_exists');
   if (m.includes('password should be') || m.includes('weak password')) return t('auth.err_weak');
   if (m.includes('rate limit') || m.includes('too many') || m.includes('security purposes')) return t('auth.err_rate');
