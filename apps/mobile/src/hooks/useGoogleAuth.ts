@@ -1,25 +1,40 @@
 import { useState } from 'react';
 import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../stores/auth.store';
 
 WebBrowser.maybeCompleteAuthSession();
 
-// Inicializar Google Sign-In nativo si está disponible en el entorno
+// Inicializar Google Sign-In nativo de forma segura si NO estamos en Expo Go
+let GoogleSignin: any = null;
+let statusCodes: any = {};
 let isNativeGoogleAvailable = false;
-try {
-  const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
-  if (webClientId) {
-    GoogleSignin.configure({
-      webClientId,
-      scopes: ['profile', 'email'],
-    });
-    isNativeGoogleAvailable = true;
+
+const isExpoGo =
+  Constants.appOwnership === 'expo' ||
+  Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
+if (!isExpoGo) {
+  try {
+    // Dynamic require para evitar que TurboModuleRegistry.getEnforcing falle en tiempo de carga en Expo Go
+    const googleSigninModule = require('@react-native-google-signin/google-signin');
+    GoogleSignin = googleSigninModule?.GoogleSignin;
+    statusCodes = googleSigninModule?.statusCodes ?? {};
+
+    const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+    if (GoogleSignin && webClientId) {
+      GoogleSignin.configure({
+        webClientId,
+        scopes: ['profile', 'email'],
+      });
+      isNativeGoogleAvailable = true;
+    }
+  } catch (e) {
+    isNativeGoogleAvailable = false;
+    console.log('[GoogleAuth] Native Google Sign-In no disponible en este binario, usando fallback web:', e);
   }
-} catch (e) {
-  console.log('[GoogleAuth] Native Google Sign-In no disponible en este entorno (p.ej. Expo Go), usando fallback web:', e);
 }
 
 /**
@@ -121,7 +136,7 @@ export function useGoogleAuth(
       useAuthStore.getState().setOAuthError(null);
 
       // ── 1. Intentar inicio de sesión nativo (Google Play Services, sin abrir navegador) ──
-      if (isNativeGoogleAvailable && process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID) {
+      if (isNativeGoogleAvailable && GoogleSignin && process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID) {
         try {
           await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
           const signInResult = await GoogleSignin.signIn();
@@ -147,7 +162,7 @@ export function useGoogleAuth(
         } catch (nativeErr: any) {
           // Si el usuario simplemente canceló la selección de cuenta
           if (
-            nativeErr?.code === statusCodes.SIGN_IN_CANCELLED ||
+            nativeErr?.code === statusCodes?.SIGN_IN_CANCELLED ||
             nativeErr?.code === '12501' ||
             nativeErr?.message?.includes('cancelled')
           ) {
