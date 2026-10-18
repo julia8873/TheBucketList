@@ -2,11 +2,13 @@ import React from 'react';
 import { View, ScrollView, FlatList, Pressable, ActivityIndicator } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
-import { Users } from 'lucide-react-native';
+import { Users, Images } from 'lucide-react-native';
 import { EmptyState, Typography, Avatar, gold } from '@bucketlist/ui';
 import { FeedCard } from '../../../components/FeedCard';
 import { FeedCardSkeleton } from '../../../components/FeedCardSkeleton';
+import { AlbumFeedCard, type AlbumFeedItem } from '../../../components/AlbumFeedCard';
 import { TaskViewMode } from '../../../components/ViewModeSelector';
+import type { ContentFilter } from './FeedHeader';
 import { styles } from '../styles/feed.styles';
 
 interface ExploreFeedTabProps {
@@ -15,12 +17,18 @@ interface ExploreFeedTabProps {
   isSearchLoading: boolean;
   searchResults?: any[];
   isExploreLoading: boolean;
+  isAlbumsLoading: boolean;
   exploreBuckets: any[];
+  exploreAlbums: AlbumFeedItem[];
+  contentFilter: ContentFilter;
   manualRefreshing: boolean;
   onRefresh: () => void;
   hasNextPage?: boolean;
   isFetchingNextPage: boolean;
   fetchNextPage: () => void;
+  hasNextAlbumsPage?: boolean;
+  isFetchingNextAlbumsPage: boolean;
+  fetchNextAlbumsPage: () => void;
   windowHeight: number;
   listRef?: React.RefObject<any>;
   viewMode?: TaskViewMode;
@@ -32,33 +40,75 @@ export function ExploreFeedTab({
   isSearchLoading,
   searchResults,
   isExploreLoading,
+  isAlbumsLoading,
   exploreBuckets,
+  exploreAlbums,
+  contentFilter,
   manualRefreshing,
   onRefresh,
   hasNextPage,
   isFetchingNextPage,
   fetchNextPage,
+  hasNextAlbumsPage,
+  isFetchingNextAlbumsPage,
+  fetchNextAlbumsPage,
   windowHeight,
   listRef,
   viewMode = 'list',
 }: ExploreFeedTabProps) {
   const router = useRouter();
 
+  // Combined + filtered list
+  const combinedItems = React.useMemo(() => {
+    const tasks = contentFilter !== 'albumes'
+      ? exploreBuckets.map((item) => ({ ...item, _type: 'task' as const }))
+      : [];
+    const albums = contentFilter !== 'tareas'
+      ? exploreAlbums.map((a) => ({ ...a, _type: 'album' as const }))
+      : [];
+
+    if (contentFilter === 'tareas') return tasks;
+    if (contentFilter === 'albumes') return albums;
+
+    // 'todo': interleave albums every 3 tasks
+    const merged: any[] = [];
+    let ai = 0;
+    tasks.forEach((t, i) => {
+      merged.push(t);
+      if ((i + 1) % 3 === 0 && ai < albums.length) {
+        merged.push(albums[ai++]);
+      }
+    });
+    while (ai < albums.length) merged.push(albums[ai++]);
+    return merged;
+  }, [exploreBuckets, exploreAlbums, contentFilter]);
+
   const renderItem = React.useCallback(
-    ({ item, index }: { item: any; index: number }) => (
-      <FeedCard
-        event={{
-          id: item.id,
-          actor: item.user,
-          bucket: item,
-          type: 'new_bucket',
-          created_at: item.created_at,
-        }}
-        index={index}
-        mode={viewMode}
-        onPress={() => router.push(`/bucket/${item.id}` as any)}
-      />
-    ),
+    ({ item, index }: { item: any; index: number }) => {
+      if (item._type === 'album') {
+        return (
+          <AlbumFeedCard
+            album={item}
+            colorIndex={index}
+            onPress={() => router.push(`/album/${item.id}` as any)}
+          />
+        );
+      }
+      return (
+        <FeedCard
+          event={{
+            id: item.id,
+            actor: item.user,
+            bucket: item,
+            type: 'new_bucket',
+            created_at: item.created_at,
+          }}
+          index={index}
+          mode={viewMode}
+          onPress={() => router.push(`/bucket/${item.id}` as any)}
+        />
+      );
+    },
     [viewMode, router]
   );
 
@@ -108,7 +158,8 @@ export function ExploreFeedTab({
     );
   }
 
-  if (isExploreLoading) {
+  const loading = isExploreLoading || isAlbumsLoading;
+  if (loading && combinedItems.length === 0) {
     return (
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {headerElement}
@@ -118,40 +169,52 @@ export function ExploreFeedTab({
     );
   }
 
+  const onEndReached = () => {
+    if (contentFilter !== 'albumes' && hasNextPage && !isFetchingNextPage) void fetchNextPage();
+    if (contentFilter !== 'tareas' && hasNextAlbumsPage && !isFetchingNextAlbumsPage) void fetchNextAlbumsPage();
+  };
+
+  const isFetchingNext = isFetchingNextPage || isFetchingNextAlbumsPage;
+
+  const emptyTitle = contentFilter === 'albumes'
+    ? 'No hay álbumes públicos aún'
+    : 'No hay ideas públicas aún';
+  const emptyMessage = contentFilter === 'albumes'
+    ? 'Sé el primero en crear un álbum público para la comunidad.'
+    : 'Sé el primero en compartir un objetivo público con la comunidad.';
+
   return (
     <FlashList
       ref={listRef}
-      key={viewMode}
-      data={exploreBuckets}
-      keyExtractor={(item) => item.id}
-      numColumns={viewMode === 'gallery' ? 2 : 1}
+      key={`${viewMode}-${contentFilter}`}
+      data={combinedItems}
+      keyExtractor={(item) => `${item._type ?? 'task'}-${item.id}`}
+      numColumns={viewMode === 'gallery' && contentFilter !== 'albumes' ? 2 : 1}
       renderItem={renderItem}
-      estimatedItemSize={viewMode === 'gallery' ? 240 : viewMode === 'compact' ? 70 : 300}
+      estimatedItemSize={contentFilter === 'albumes' ? 240 : viewMode === 'gallery' ? 240 : viewMode === 'compact' ? 70 : 300}
       ListHeaderComponent={
         <View>
           {headerElement}
           <Typography variant="h3" style={styles.sectionTitle}>
-            Ideas para empezar
+            {contentFilter === 'albumes' ? 'Álbumes de la comunidad' : 'Ideas para empezar'}
           </Typography>
         </View>
       }
       refreshing={manualRefreshing}
       onRefresh={onRefresh}
-      onEndReached={() => {
-        if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
-      }}
+      onEndReached={onEndReached}
       onEndReachedThreshold={0.5}
       ListFooterComponent={
-        isFetchingNextPage ? (
+        isFetchingNext ? (
           <ActivityIndicator style={styles.footer} color={gold[400]} />
         ) : null
       }
       ListEmptyComponent={
         <View style={[styles.emptyWrap, { minHeight: windowHeight * 0.45 }]}>
           <EmptyState
-            title="No hay ideas públicas aún"
-            message="Sé el primero en compartir un objetivo público con la comunidad."
-            icon={Users}
+            title={emptyTitle}
+            message={emptyMessage}
+            icon={contentFilter === 'albumes' ? Images : Users}
           />
         </View>
       }

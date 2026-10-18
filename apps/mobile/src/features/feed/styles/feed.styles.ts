@@ -145,4 +145,21 @@ export const styles = StyleSheet.create({
     fontFamily: fontFamily.semibold,
     fontSize: 12,
   },
+  contentFilterRow: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingTop: 6,
+    paddingBottom: 10,
+  },
+  contentFilterPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  contentFilterText: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 12,
+  },
 });

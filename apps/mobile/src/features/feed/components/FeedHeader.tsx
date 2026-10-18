@@ -2,9 +2,11 @@ import React from 'react';
 import { View, Text, Pressable, TextInput } from 'react-native';
 import { Bell, Search, Users, X, Map } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { PageTitle, useTheme, gold } from '@bucketlist/ui';
+import { PageTitle, useTheme, gold, fontFamily } from '@bucketlist/ui';
 import { ViewModeSelector, TaskViewMode } from '../../../components/ViewModeSelector';
 import { styles } from '../styles/feed.styles';
+
+export type ContentFilter = 'todo' | 'tareas' | 'albumes';
 
 interface FeedHeaderProps {
   homeTab: 'friends' | 'explore';
@@ -18,6 +20,8 @@ interface FeedHeaderProps {
   onChangeExploreSearch: (text: string) => void;
   viewMode: TaskViewMode;
   onChangeViewMode: (mode: TaskViewMode) => void;
+  contentFilter: ContentFilter;
+  onChangeContentFilter: (f: ContentFilter) => void;
 }
 
 export function FeedHeader({
@@ -32,6 +36,8 @@ export function FeedHeader({
   onChangeExploreSearch,
   viewMode,
   onChangeViewMode,
+  contentFilter,
+  onChangeContentFilter,
 }: FeedHeaderProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
@@ -194,6 +200,38 @@ export function FeedHeader({
             ) : null}
             <ViewModeSelector mode={viewMode} onChange={onChangeViewMode} />
           </View>
+        </View>
+      )}
+
+      {/* Content filter: Todo / Tareas / Álbumes */}
+      {!(homeTab === 'explore' && exploreSearch.length >= 2) && (
+        <View style={styles.contentFilterRow}>
+          {(['todo', 'tareas', 'albumes'] as ContentFilter[]).map((f) => (
+            <Pressable
+              key={f}
+              onPress={() => onChangeContentFilter(f)}
+              style={[
+                styles.contentFilterPill,
+                contentFilter === f && {
+                  backgroundColor: theme.dark ? 'rgba(212,177,58,0.18)' : 'rgba(212,177,58,0.22)',
+                  borderColor: gold[400],
+                },
+                contentFilter !== f && {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.contentFilterText,
+                  { color: contentFilter === f ? gold[400] : theme.colors.foregroundMuted },
+                ]}
+              >
+                {f === 'todo' ? 'Todo' : f === 'tareas' ? 'Tareas' : 'Álbumes'}
+              </Text>
+            </Pressable>
+          ))}
         </View>
       )}
     </View>
