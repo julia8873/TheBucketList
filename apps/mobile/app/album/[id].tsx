@@ -44,6 +44,7 @@ import { TagAssignSheet } from '@/components/TagAssignSheet';
 import { PhotoCropModal } from '@/components/PhotoCropModal';
 import { hexToRgba } from '@/constants/tagPresets';
 import { TaskCommentsModal } from '@/components/TaskCommentsModal';
+import { ItemCommentsSection } from '@/components/ItemCommentsSection';
 import { useComments } from '@/hooks/useSocial';
 
 import { styles } from '@/features/album-detail/styles/album-detail.styles';
@@ -793,6 +794,21 @@ export default function AlbumDetailScreen() {
 
         {isSearchingTasks && pendientes.length === 0 && completadas.length === 0 && (
           <Text style={styles.noResultsText}>No se encontraron tareas con ese nombre</Text>
+        )}
+
+        {/* Sección de comentarios del álbum al final */}
+        {state.id !== 'unassigned' && (
+          <View style={{ paddingHorizontal: 20, marginTop: 24, marginBottom: 16 }}>
+            <ItemCommentsSection
+              targetId={album.id}
+              targetType="album"
+              ownerId={album.ownerId}
+              title={album.title}
+              onOpenModal={() => {
+                setShowCommentsModal(true);
+              }}
+            />
+          </View>
         )}
       </ScrollView>
 

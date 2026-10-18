@@ -42,6 +42,7 @@ import { TaskMentionList } from '@/components/TaskMentionList';
 import { CollaboratorPickerSheet } from '@/components/CollaboratorPickerSheet';
 import { NotificationSubscribersModal } from '@/components/NotificationSubscribersModal';
 import { TaskCommentsModal } from '@/components/TaskCommentsModal';
+import { ItemCommentsSection } from '@/components/ItemCommentsSection';
 import { ImageLinkModal } from '@/components/ImageLinkModal';
 import { GoogleDriveModal } from '@/components/GoogleDriveModal';
 import { TaskCollaborationSettingsModal } from '@/features/bucket-detail/components/TaskCollaborationSettingsModal';
@@ -516,106 +517,16 @@ export default function BucketDetailScreen() {
           />
 
           {/* Sección de Comentarios en la tarea */}
-          <View style={{ marginTop: 24, marginBottom: 8 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <Typography variant="caption" color={gold[400]} style={{ letterSpacing: 1.2 }}>
-                COMENTARIOS · {state.comments.length}
-              </Typography>
-              <Pressable
-                onPress={() => {
-                  setCommentsAutoFocus(state.comments.length === 0);
-                  setShowCommentsModal(true);
-                }}
-                hitSlop={8}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
-              >
-                <Typography variant="caption" color={gold[400]}>
-                  {state.comments.length > 0 ? 'Ver todos' : 'Comentar'}
-                </Typography>
-              </Pressable>
-            </View>
-
-            {state.comments.length === 0 ? (
-              <Pressable
-                onPress={() => {
-                  setCommentsAutoFocus(true);
-                  setShowCommentsModal(true);
-                }}
-                style={{
-                  backgroundColor: theme.colors.surface,
-                  borderRadius: 16,
-                  borderWidth: 1,
-                  borderColor: theme.colors.border,
-                  padding: 16,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexDirection: 'row',
-                  gap: 10,
-                }}
-              >
-                <MessageCircle size={18} color={theme.colors.foregroundMuted} />
-                <Typography variant="body" color={theme.colors.foregroundMuted}>
-                  Añade un comentario...
-                </Typography>
-              </Pressable>
-            ) : (
-              <View style={{ gap: 8 }}>
-                {state.comments.slice(-2).map((c: any) => (
-                  <Pressable
-                    key={c.id}
-                    onPress={() => {
-                      setCommentsAutoFocus(false);
-                      setShowCommentsModal(true);
-                    }}
-                    style={{
-                      backgroundColor: theme.colors.surface,
-                      borderRadius: 14,
-                      borderWidth: 1,
-                      borderColor: theme.colors.border,
-                      padding: 12,
-                      gap: 4,
-                    }}
-                  >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Text style={{ color: theme.colors.foreground, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
-                        {c.user?.display_name || c.user?.username || 'Usuario'}
-                      </Text>
-                      <Text style={{ color: theme.colors.foregroundMuted, fontSize: 11 }}>
-                        {timeAgo(c.created_at)}
-                      </Text>
-                    </View>
-                    <Text style={{ color: theme.colors.foreground, fontSize: 13, lineHeight: 18 }} numberOfLines={2}>
-                      {c.body}
-                    </Text>
-                  </Pressable>
-                ))}
-
-                <Pressable
-                  onPress={() => {
-                    setCommentsAutoFocus(true);
-                    setShowCommentsModal(true);
-                  }}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    backgroundColor: theme.colors.surface,
-                    borderRadius: 20,
-                    borderWidth: 1,
-                    borderColor: theme.colors.border,
-                    paddingHorizontal: 14,
-                    paddingVertical: 10,
-                    marginTop: 4,
-                    gap: 10,
-                  }}
-                >
-                  <MessageCircle size={16} color={theme.colors.foregroundMuted} />
-                  <Text style={{ color: theme.colors.foregroundMuted, fontSize: 13, flex: 1 }}>
-                    Añade un comentario...
-                  </Text>
-                </Pressable>
-              </View>
-            )}
-          </View>
+          <ItemCommentsSection
+            targetId={Array.isArray(state.id) ? state.id[0] : (state.id as string)}
+            targetType="bucket"
+            ownerId={bucket.user_id}
+            title={bucket.title}
+            onOpenModal={(autoFocus) => {
+              setCommentsAutoFocus(!!autoFocus);
+              setShowCommentsModal(true);
+            }}
+          />
         </View>
       </ScrollView>
 
