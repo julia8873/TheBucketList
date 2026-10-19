@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
 import { Check, UserX } from 'lucide-react-native';
@@ -97,7 +98,7 @@ export function FollowButton({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   base: {
     flexDirection: 'row',
     alignItems: 'center',

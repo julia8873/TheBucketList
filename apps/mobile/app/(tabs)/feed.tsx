@@ -200,7 +200,7 @@ export default function FeedScreen() {
     refetch: refetchExploreAlbums,
   } = exploreAlbumsFeed;
 
-  const { data: searchResults, isLoading: isSearchLoading } = useSearchUsers(debouncedSearch);
+  const { data: searchResults, isLoading: isSearchLoading } = useSearchUsers(debouncedSearch, user?.id);
 
   const exploreBuckets = useMemo(() => {
     return (exploreData?.pages.flatMap((page) => page.items) || []).filter(

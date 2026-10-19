@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -227,7 +228,7 @@ export function TagEditSheet({ visible, tag, usageCount = 0, onClose, onSaved, o
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   content: { flexShrink: 1 },
   title: {
     fontFamily: 'PlayfairDisplay_700Bold',

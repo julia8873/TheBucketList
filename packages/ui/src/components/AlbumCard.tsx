@@ -18,6 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Plus, FolderOpen, ChevronRight, Star, Lock, Check } from 'lucide-react-native';
 
 import { useTheme } from '../theme/useTheme';
+import { useCoverOverlay } from '../theme/coverOverlay';
 import { fontFamily, fontSize } from '../tokens/typography';
 import { gold, dark, green } from '../tokens/colors';
 import { radii } from '../tokens/radii';
@@ -32,14 +33,6 @@ export function getAlbumCardDimensions(windowWidth: number) {
 const DEFAULT_DIMS = getAlbumCardDimensions(Dimensions.get('window').width);
 const CARD_WIDTH = DEFAULT_DIMS.cardWidth;
 const CARD_HEIGHT = DEFAULT_DIMS.cardHeight;
-
-// ── Gradient cover colours used when no image ──────────────────────────────
-const COVER_GRADIENTS: Array<[string, string]> = [
-  ['#1B4D3E', '#0A2E25'],   // teal (Viaje a Noruega)
-  ['#C87A2B', '#7A3D00'],   // orange (Antes de los 30)
-  ['#2B5BA8', '#0D2F6E'],   // blue (Con Marta)
-  ['#6B2FA0', '#3A0070'],   // purple
-];
 
 interface AlbumCardProps {
   title: string;
@@ -71,10 +64,11 @@ export function AlbumCard({
   style,
 }: AlbumCardProps) {
   const { theme } = useTheme();
+  const overlay = useCoverOverlay();
   const { width } = useWindowDimensions();
   const { cardWidth, cardHeight } = getAlbumCardDimensions(width);
   const progress = totalTasks > 0 ? completedTasks / totalTasks : 0;
-  const [g1, g2] = COVER_GRADIENTS[colorIndex % COVER_GRADIENTS.length] || ['#1B4D3E', '#0A2E25'];
+  const [g1, g2] = overlay.placeholders[colorIndex % overlay.placeholders.length] ?? overlay.placeholders[0]!;
 
   let parsedCover: any = null;
   if (coverUri && coverUri.startsWith('{')) {
@@ -112,6 +106,22 @@ export function AlbumCard({
   }
 
   const isCompleted = totalTasks > 0 && completedTasks === totalTasks;
+  const isImageCover = !!(
+    (parsedCover && parsedCover.type === 'image' && parsedCover.uri) ||
+    (!parsedCover && coverUri)
+  );
+
+  const gradientColors: [string, string] = isImageCover
+    ? ['transparent', 'rgba(0,0,0,0.72)']
+    : theme.dark
+      ? ['transparent', 'rgba(0,0,0,0.65)']
+      : ['transparent', 'rgba(0,0,0,0.42)'];
+
+  const titleColor = '#FFFFFF';
+  const metaColor = 'rgba(255,255,255,0.78)';
+  const trackBgColor = 'rgba(255,255,255,0.28)';
+  const floatingBadgeBg = theme.dark ? 'rgba(0,0,0,0.52)' : 'rgba(255,255,255,0.92)';
+  const chipBg = 'rgba(0,0,0,0.45)';
 
   return (
     <Pressable
@@ -130,12 +140,12 @@ export function AlbumCard({
       {/* Background: photo or gradient */}
       {backgroundContent}
 
-      {/* Bottom gradient so text is readable */}
+      {/* Bottom gradient so text is readable without washing out the cover */}
       <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.78)']}
+        colors={gradientColors}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
-        style={[StyleSheet.absoluteFill, { top: '38%' }]}
+        style={[StyleSheet.absoluteFill, { top: isImageCover ? '46%' : '44%' }]}
       />
 
       {/* Top left badges */}
@@ -169,31 +179,41 @@ export function AlbumCard({
             e.stopPropagation();
             onToggleFavorite();
           }}
-          style={styles.favoriteBadge}
+          style={[
+            styles.favoriteBadge,
+            { backgroundColor: floatingBadgeBg },
+            !theme.dark && { borderWidth: 1, borderColor: gold[400] },
+          ]}
           accessibilityRole="button"
           accessibilityLabel={isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
         >
           <Star
             size={14}
-            color={isFavorite ? gold[400] : 'rgba(255,255,255,0.7)'}
-            fill={isFavorite ? gold[400] : 'transparent'}
+            color={isFavorite ? gold[500] : (theme.dark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.45)')}
+            fill={isFavorite ? gold[500] : 'transparent'}
           />
         </Pressable>
       ) : isFavorite ? (
-        <View style={styles.favoriteBadge}>
-          <Star size={14} color={gold[400]} fill={gold[400]} />
+        <View
+          style={[
+            styles.favoriteBadge,
+            { backgroundColor: floatingBadgeBg },
+            !theme.dark && { borderWidth: 1, borderColor: gold[400] },
+          ]}
+        >
+          <Star size={14} color={gold[500]} fill={gold[500]} />
         </View>
       ) : null}
 
       {/* Bottom content */}
       <View style={styles.bottom}>
-        <Text style={styles.title} numberOfLines={2}>{title}</Text>
+        <Text style={[styles.title, { color: titleColor }]} numberOfLines={2}>{title}</Text>
         <View style={styles.metaRow}>
-          <Text style={styles.meta}>
+          <Text style={[styles.meta, { color: metaColor }]}>
             {totalTasks} {totalTasks === 1 ? 'tarea' : 'tareas'} · {completedTasks} {completedTasks === 1 ? 'hecha' : 'hechas'}
           </Text>
           {priority && (
-            <View style={styles.priorityIndicator}>
+            <View style={[styles.priorityIndicator, { backgroundColor: chipBg }]}>
               <View
                 style={[
                   styles.priorityDot,
@@ -226,7 +246,7 @@ export function AlbumCard({
           )}
         </View>
         {/* Progress bar */}
-        <View style={styles.progressTrack}>
+        <View style={[styles.progressTrack, { backgroundColor: trackBgColor }]}>
           <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` as any }]} />
         </View>
       </View>
@@ -277,7 +297,7 @@ export function NoAlbumRow({ count, onPress }: NoAlbumRowProps) {
         styles.noAlbumRow,
         {
           borderColor: theme.colors.border,
-          backgroundColor: pressed ? (theme.dark ? '#1A1A1A' : '#EDE8DE') : 'transparent',
+          backgroundColor: pressed ? theme.colors.secondary : 'transparent',
           opacity: pressed ? 0.8 : 1,
         },
       ]}
@@ -314,9 +334,7 @@ export function NoAlbumCard({ count, onPress, style }: NoAlbumCardProps) {
           width: cardWidth,
           height: cardHeight,
           borderColor: theme.colors.border,
-          backgroundColor: pressed
-            ? (theme.dark ? '#1A1A1A' : '#E8E3D8')
-            : (theme.dark ? '#121212' : '#F5F0E6'),
+          backgroundColor: pressed ? theme.colors.secondary : theme.colors.surfaceSunken,
           opacity: pressed ? 0.75 : 1,
         },
         style,
@@ -325,7 +343,7 @@ export function NoAlbumCard({ count, onPress, style }: NoAlbumCardProps) {
       <View
         style={[
           styles.noAlbumCardIconWrap,
-          { backgroundColor: theme.dark ? '#1E1E1E' : '#E5DFD3' },
+          { backgroundColor: theme.colors.secondary },
         ]}
       >
         <FolderOpen color={theme.colors.foregroundMuted} size={28} strokeWidth={1.8} />
@@ -379,7 +397,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: radii.xl,
     overflow: 'hidden',
-    backgroundColor: dark[300],
+    backgroundColor: 'transparent',
   },
   topLeftBadges: {
     position: 'absolute',

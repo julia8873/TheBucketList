@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState } from 'react';
 import { View, Text, ActivityIndicator, Pressable, Modal, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -301,7 +302,7 @@ export function ProfileAlbumsTab({
   );
 }
 
-const tabStyles = StyleSheet.create({
+const tabStyles = themedStyleSheet({
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',

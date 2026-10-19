@@ -1,15 +1,7 @@
+import { Alert } from '@bucketlist/ui';
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  Pressable,
-  ActivityIndicator,
-  StyleSheet,
-  Alert,
-  RefreshControl,
-  TextInput,
-} from 'react-native';
+import { View, Text, FlatList, Pressable, ActivityIndicator, StyleSheet, RefreshControl, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -263,7 +255,7 @@ export default function ManageCollectionsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   container: {
     flex: 1,
     backgroundColor: '#0D0D0D',

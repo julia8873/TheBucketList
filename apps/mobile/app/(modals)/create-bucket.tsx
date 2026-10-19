@@ -1,15 +1,6 @@
+import { Alert } from '@bucketlist/ui';
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  Text,
-  TextInput,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, ScrollView, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';

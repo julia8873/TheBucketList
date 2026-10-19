@@ -37,6 +37,8 @@ import { SubtaskList } from '@/components/SubtaskList';
 import { PhotoCropModal } from '@/components/PhotoCropModal';
 import { BucketPhotoViewer } from '@/components/BucketPhotoViewer';
 import { BucketBottomSheet } from '@/components/BucketBottomSheet';
+import { ReportModal } from '@/components/ReportModal';
+import { useReportContent } from '@/hooks/useBlockReport';
 import { TaskMentionPickerSheet } from '@/components/TaskMentionPickerSheet';
 import { TaskMentionList } from '@/components/TaskMentionList';
 import { CollaboratorPickerSheet } from '@/components/CollaboratorPickerSheet';
@@ -77,6 +79,8 @@ export default function BucketDetailScreen() {
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [commentsAutoFocus, setCommentsAutoFocus] = useState(false);
   const [isSquareCover, setIsSquareCover] = useState(false);
+  const [reportVisible, setReportVisible] = useState(false);
+  const reportContent = useReportContent();
 
   useEffect(() => {
     if (!state.resolvedCover || state.resolvedCover.startsWith('preset:')) {
@@ -153,20 +157,34 @@ export default function BucketDetailScreen() {
         >
           {state.isCustomCover ? (
             <LinearGradient
-              colors={['rgba(0,0,0,0.3)', 'transparent', 'rgba(0,0,0,0.65)']}
+              colors={
+                theme.dark
+                  ? ['rgba(0,0,0,0.3)', 'transparent', 'rgba(0,0,0,0.65)']
+                  : ['rgba(0,0,0,0.06)', 'transparent', theme.colors.background]
+              }
               locations={[0, 0.45, 1]}
               style={StyleSheet.absoluteFill}
               pointerEvents="none"
             />
           ) : (
             <LinearGradient
-              colors={[
-                'rgba(0,0,0,0.15)',
-                'transparent',
-                'rgba(0,0,0,0.25)',
-                'rgba(0,0,0,0.80)',
-                theme.colors.background,
-              ]}
+              colors={
+                theme.dark
+                  ? [
+                      'rgba(0,0,0,0.15)',
+                      'transparent',
+                      'rgba(0,0,0,0.25)',
+                      'rgba(0,0,0,0.80)',
+                      theme.colors.background,
+                    ]
+                  : [
+                      'rgba(0,0,0,0.03)',
+                      'transparent',
+                      'rgba(250,248,243,0.35)',
+                      'rgba(250,248,243,0.75)',
+                      theme.colors.background,
+                    ]
+              }
               locations={[0, 0.35, 0.65, 0.88, 1]}
               start={{ x: 0.5, y: 0 }}
               end={{ x: 0.5, y: 1 }}
@@ -601,6 +619,7 @@ export default function BucketDetailScreen() {
         isSaved={state.isSaved}
         onToggleSave={state.handleToggleSaveBucket}
         onLeaveCollaboration={state.handleLeaveCollaboration}
+        onReport={() => setTimeout(() => setReportVisible(true), 250)}
         uploadPhotos={state.uploadPhotos}
         uploadCover={state.uploadCover}
         pickAndUploadCover={state.pickAndUploadCover}
@@ -723,6 +742,22 @@ export default function BucketDetailScreen() {
         targetTitle={bucket.title}
         ownerId={bucket.user_id}
         currentUserId={state.user?.id}
+      />
+
+      <ReportModal
+        visible={reportVisible}
+        onClose={() => setReportVisible(false)}
+        kind="bucket"
+        subject={bucket.title}
+        isLoading={reportContent.isPending}
+        onSubmit={async (reason, details) => {
+          await reportContent.mutateAsync({
+            targetType: 'bucket',
+            targetId: Array.isArray(state.id) ? state.id[0]! : (state.id as string),
+            reason,
+            details,
+          });
+        }}
       />
 
       <TaskCommentsModal

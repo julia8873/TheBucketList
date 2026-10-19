@@ -1,3 +1,4 @@
+import { useCoverOverlay } from '@bucketlist/ui';
 /**
  * AlbumFeedCard — wide card for albums shown in the friends/explore feed.
  */
@@ -13,16 +14,6 @@ import { useRouter } from 'expo-router';
 import { TaskViewMode } from './ViewModeSelector';
 import { useComments } from '../hooks/useSocial';
 import { TaskCommentsModal } from './TaskCommentsModal';
-
-// Gradient fallbacks when no cover
-const COVER_GRADIENTS: Array<[string, string]> = [
-  ['#1B4D3E', '#0A2E25'],
-  ['#C87A2B', '#7A3D00'],
-  ['#2B5BA8', '#0D2F6E'],
-  ['#6B2FA0', '#3A0070'],
-  ['#8B3A3A', '#4A0E0E'],
-  ['#2D6A4F', '#1B4332'],
-];
 
 export interface AlbumFeedItem {
   _type: 'album';
@@ -82,11 +73,12 @@ export function AlbumFeedCard({
 }: AlbumFeedCardProps) {
   const router = useRouter();
   const { theme } = useTheme();
+  const overlay = useCoverOverlay();
   const [showComments, setShowComments] = useState(false);
   const { data: albumComments = [] } = useComments(album.id, 'album');
   const commentCount = propCommentCount !== undefined ? propCommentCount : albumComments.length;
 
-  const [g1, g2] = COVER_GRADIENTS[colorIndex % COVER_GRADIENTS.length] ?? ['#1B4D3E', '#0A2E25'];
+  const [g1, g2] = overlay.placeholders[colorIndex % overlay.placeholders.length] ?? overlay.placeholders[0]!;
   const progress = album.total_tasks > 0 ? album.completed_tasks / album.total_tasks : 0;
 
   // Backwards compatibility for onToggleFavorite / isFavorite
@@ -156,7 +148,7 @@ export function AlbumFeedCard({
           <View style={styles.galleryCover}>
             {backgroundContent}
             <LinearGradient
-              colors={['rgba(0,0,0,0.65)', 'transparent', 'rgba(0,0,0,0.88)']}
+              colors={overlay.softBoth}
               locations={[0, 0.45, 1]}
               style={StyleSheet.absoluteFill}
               pointerEvents="none"
@@ -351,7 +343,7 @@ export function AlbumFeedCard({
         >
           {backgroundContent}
           <LinearGradient
-            colors={['transparent', 'rgba(0,0,0,0.72)']}
+            colors={overlay.softFade}
             start={{ x: 0.5, y: 0 }}
             end={{ x: 0.5, y: 1 }}
             style={[StyleSheet.absoluteFill, { top: '35%' }]}

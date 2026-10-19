@@ -1,16 +1,7 @@
+import { Alert } from '@bucketlist/ui';
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  ScrollView,
-  Platform,
-  KeyboardAvoidingView,
-  ActivityIndicator,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import { View, Text, TextInput, Pressable, ScrollView, Platform, KeyboardAvoidingView, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -613,7 +604,7 @@ export default function CreateCollectionModal() {
 }
 
 const getStyles = (theme: any) =>
-  StyleSheet.create({
+  themedStyleSheet({
     container: {
       flex: 1,
       backgroundColor: theme.colors.background,

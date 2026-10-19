@@ -1,41 +1,36 @@
-// ─── Tokens ───────────────────────────────────────────────────────────────────
-export * from './tokens';
-
-// ─── Theme ────────────────────────────────────────────────────────────────────
-export { ThemeProvider, useTheme } from './theme/ThemeProvider';
-export { lightTheme } from './theme/light';
-export { darkTheme } from './theme/dark';
-export type { Theme, ThemeColors, ColorScheme } from './theme/types';
-
-// ─── Base Components ──────────────────────────────────────────────────────────
-export { Typography } from './components/Typography';
-export { Button } from './components/Button';
-export { Card } from './components/Card';
-export { Input } from './components/Input';
-export { Avatar, setAvatarUriResolver } from './components/Avatar';
-export { Badge } from './components/Badge';
-export { Divider } from './components/Divider';
-export { Skeleton } from './components/Skeleton';
-export { ProgressBar } from './components/ProgressBar';
-export { EmptyState } from './components/EmptyState';
-export { Icon } from './components/Icon';
-
-// ─── New Design System Components ────────────────────────────────────────────
-export { SectionLabel } from './components/SectionLabel';
-export { SegmentedControl } from './components/SegmentedControl';
-export type { SegmentOption } from './components/SegmentedControl';
-export { FilterChip } from './components/FilterChip';
-export { Pill, UrgencyChip } from './components/Pill';
-export type { PillVariant } from './components/Pill';
-export { TaskRow } from './components/TaskRow';
-export { AlbumCard, NewAlbumCard, NoAlbumRow, NoAlbumCard, NewAlbumRow, getAlbumCardDimensions } from './components/AlbumCard';
-export { FAB } from './components/FAB';
-export { ToastProvider, useToast, toast } from './components/Toast';
-export type { ToastOptions, ToastContextType } from './components/Toast';
-export { ConfirmDialog, ConfirmProvider, useConfirm, confirm } from './components/ConfirmDialog';
-export type { ConfirmOptions, DialogProps, ConfirmContextType } from './components/ConfirmDialog';
-export { BottomSheet } from './components/BottomSheet';
-export { PageTitle } from './components/PageTitle';
-export type { PageTitleProps } from './components/PageTitle';
-
+// Components
+export * from './components/AlbumCard';
+export * from './components/Avatar';
+export * from './components/Badge';
+export * from './components/BottomSheet';
+export * from './components/Button';
+export * from './components/Card';
+export * from './components/ConfirmDialog';
+export * from './components/Divider';
+export * from './components/EmptyState';
+export * from './components/FAB';
+export * from './components/FilterChip';
+export * from './components/Icon';
+export * from './components/Input';
+export * from './components/PageTitle';
+export * from './components/Pill';
+export * from './components/ProgressBar';
+export * from './components/SectionLabel';
+export * from './components/SegmentedControl';
+export * from './components/Skeleton';
 export * from './components/TagChip';
+export * from './components/TaskRow';
+export * from './components/Toast';
+export * from './components/Typography';
+
+// Theme
+export * from './theme/ThemeProvider';
+export * from './theme/coverOverlay';
+export * from './theme/dark';
+export * from './theme/light';
+export * from './theme/themedStyles';
+export * from './theme/types';
+export * from './theme/useTheme';
+
+// Tokens
+export * from './tokens';

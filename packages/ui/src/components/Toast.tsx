@@ -139,7 +139,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           style={[
             styles.toast,
             {
-              backgroundColor: theme.dark ? '#181818' : theme.colors.surfaceElevated,
+              backgroundColor: theme.colors.surfaceElevated,
+              shadowOpacity: theme.dark ? 0.45 : 0.16,
               borderColor:
                 type === 'error'
                   ? 'rgba(239, 68, 68, 0.45)'
@@ -184,7 +185,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             <Text
               style={[
                 styles.message,
-                { color: theme.dark ? '#EDEDED' : theme.colors.foreground },
+                { color: theme.colors.foreground },
                 currentToast.title ? { marginTop: 2 } : null,
               ]}
               numberOfLines={3}

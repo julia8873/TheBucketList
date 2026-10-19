@@ -1,3 +1,4 @@
+import { Alert } from '@bucketlist/ui';
 import React, { useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { useTheme } from '@bucketlist/ui';
@@ -5,7 +6,7 @@ import { Home, ShoppingBag, ListTodo, User } from 'lucide-react-native';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { checkNotificationPermissionsAsync, registerForPushNotificationsAsync } from '../../src/services/notifications';
 import { useTranslation } from 'react-i18next';
-import { Alert, Platform, View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { gold, dark } from '@bucketlist/ui';
 

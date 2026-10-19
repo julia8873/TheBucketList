@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView, Image, StyleSheet } from 'react-native';
-import { Typography } from '@bucketlist/ui';
+import { Typography, useTheme } from '@bucketlist/ui';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { Check } from 'lucide-react-native';
 import { BucketCover } from '@/components/BucketCover';
@@ -19,6 +19,7 @@ function ThumbOption({
   onPress: () => void;
   children: React.ReactNode;
 }) {
+  const { theme } = useTheme();
   return (
     <Pressable
       onPress={onPress}
@@ -35,7 +36,7 @@ function ThumbOption({
           overflow: 'hidden',
           borderWidth: 2,
           borderColor: selected ? gold[400] : 'transparent',
-          backgroundColor: dark[300],
+          backgroundColor: theme.colors.surface,
         }}
       >
         {children}

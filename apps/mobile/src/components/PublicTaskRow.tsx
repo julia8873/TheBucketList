@@ -1,8 +1,8 @@
 import React from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { differenceInCalendarDays } from 'date-fns';
-import { Pill, ProgressBar, UrgencyChip, fontFamily, gold, useTheme, toast } from '@bucketlist/ui';
+import { Pill, ProgressBar, UrgencyChip, fontFamily, gold, useTheme, useCoverOverlay, toast } from '@bucketlist/ui';
 import { Star } from 'lucide-react-native';
 import { BucketCover } from './BucketCover';
 import { resolveTaskImage } from '../utils/taskImage';
@@ -55,6 +55,7 @@ function buildProgress(bucket: any): number | null {
 /** Fila/tarjeta de tarea de un perfil público (soporta list, gallery y compact). */
 export function PublicTaskRow({ bucket, isOwnProfile = false, isFavorite = false, onPress, mode = 'list' }: PublicTaskRowProps) {
   const { theme } = useTheme();
+  const overlay = useCoverOverlay();
   const { user } = useAuthStore();
   const copyBucket = useCopyBucket();
   const { data: copiedIds } = useCopiedBucketIds(user?.id);
@@ -87,7 +88,7 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, isFavorite = false
     chip = <UrgencyChip deadline={bucket.deadline} />;
   }
 
-  const pressedBg = theme.dark ? '#222222' : '#EDE8DE';
+  const pressedBg = theme.colors.secondary;
 
   if (mode === 'gallery') {
     return (
@@ -113,25 +114,40 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, isFavorite = false
           style={styles.galleryCover}
         >
           <LinearGradient
-            colors={['rgba(0,0,0,0.4)', 'transparent', 'rgba(0,0,0,0.85)']}
+            colors={overlay.fadeBoth}
             locations={[0, 0.45, 1]}
             style={StyleSheet.absoluteFill}
             pointerEvents="none"
           />
 
           {isFavorite ? (
-            <View style={styles.favoriteBadge}>
-              <Star size={13} color={gold[400]} fill={gold[400]} />
+            <View
+              style={[
+                styles.favoriteBadge,
+                {
+                  backgroundColor: theme.dark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.92)',
+                  borderColor: gold[400],
+                  borderWidth: 1,
+                },
+              ]}
+            >
+              <Star size={13} color={gold[500]} fill={gold[500]} />
             </View>
           ) : null}
 
           {chip ? <View style={styles.galleryTopChip}>{chip}</View> : null}
 
           <View style={styles.galleryBottom} pointerEvents="none">
-            <Text style={styles.galleryTitle} numberOfLines={2}>
+            <Text
+              style={[
+                styles.galleryTitle,
+                { color: overlay.title },
+              ]}
+              numberOfLines={2}
+            >
               {bucket.title}
             </Text>
-            <Text style={styles.galleryMeta} numberOfLines={1}>
+            <Text style={[styles.galleryMeta, { color: overlay.meta }]} numberOfLines={1}>
               {buildMeta(bucket)}
             </Text>
           </View>
@@ -228,13 +244,12 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#2A2A2A',
     gap: 12,
   },
   thumb: { width: 56, height: 56, borderRadius: 10 },
   content: { flex: 1, gap: 3 },
-  title: { fontFamily: fontFamily.serif, fontSize: 16, lineHeight: 22, color: '#FFFFFF' },
-  meta: { fontFamily: fontFamily.regular, fontSize: 13, color: '#9A9A9A' },
+  title: { fontFamily: fontFamily.serif, fontSize: 16, lineHeight: 22 },
+  meta: { fontFamily: fontFamily.regular, fontSize: 13 },
   progress: { marginTop: 4 },
   chip: { flexShrink: 0 },
 
@@ -243,9 +258,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#1E1E1E',
     borderWidth: 1,
-    borderColor: '#2A2A2A',
   },
   galleryCover: {
     width: '100%',
@@ -299,12 +312,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#2A2A2A',
     gap: 12,
   },
   compactThumb: { width: 40, height: 40, borderRadius: 8, overflow: 'hidden' },
   compactContent: { flex: 1, gap: 2 },
-  compactTitle: { fontFamily: fontFamily.semibold, fontSize: 14, color: '#FFFFFF' },
-  compactMeta: { fontFamily: fontFamily.regular, fontSize: 12, color: '#9A9A9A' },
+  compactTitle: { fontFamily: fontFamily.semibold, fontSize: 14 },
+  compactMeta: { fontFamily: fontFamily.regular, fontSize: 12 },
 });
 

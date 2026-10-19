@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -187,7 +188,7 @@ export default function SavedScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   container: { flex: 1 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   header: {

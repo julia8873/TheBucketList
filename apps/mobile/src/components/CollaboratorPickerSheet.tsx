@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, Pressable, StyleSheet, ScrollView, Modal,
@@ -272,7 +273,7 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   container: {
     flex: 1,
     backgroundColor: '#121212',

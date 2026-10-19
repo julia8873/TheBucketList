@@ -5,3 +5,11 @@ export const GRADIENTS = {
   violeta: ['#5B2F98', '#2E1A5E'] as const,
   dorado: ['#3A2F18', '#5E4E1F'] as const,
 };
+
+export const LIGHT_GRADIENTS = {
+  aurora: ['#A7F3D0', '#34D399'] as const,
+  atardecer: ['#FED7AA', '#FB923C'] as const,
+  cielo: ['#BAE6FD', '#38BDF8'] as const,
+  violeta: ['#F3E8FF', '#C084FC'] as const,
+  dorado: ['#FEF9C3', '#F59E0B'] as const,
+};

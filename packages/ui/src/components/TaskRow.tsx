@@ -44,7 +44,7 @@ function TaskRowComponent({
   title,
   meta,
   deadline,
-  thumbnailColor = dark[300],
+  thumbnailColor,
   thumbnailUri,
   subtasksDone = 0,
   subtasksTotal = 0,
@@ -85,7 +85,13 @@ function TaskRowComponent({
       accessibilityLabel={title}
     >
       {/* Thumbnail */}
-      <View style={[styles.thumbnail, { backgroundColor: thumbnailColor || theme.colors.surfaceSunken }, completed && styles.thumbnailCompleted]}>
+      <View
+        style={[
+          styles.thumbnail,
+          { backgroundColor: thumbnailColor ?? theme.colors.surface },
+          completed && styles.thumbnailCompleted,
+        ]}
+      >
         {thumbnailElement ? (
           thumbnailElement
         ) : thumbnailUri ? (

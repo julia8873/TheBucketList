@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -172,7 +173,7 @@ export function LocationPickerModal({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   keyboardView: {
     flex: 1,
   },

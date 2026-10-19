@@ -179,10 +179,10 @@ export function useToggleLike() {
 
 // ─── Búsqueda (explorar) ──────────────────────────────────────────────────────
 
-export function useSearchUsers(query: string) {
+export function useSearchUsers(query: string, currentUserId?: string) {
   return useQuery({
-    queryKey: [...PROFILE_SEARCH_KEY, query],
-    queryFn: () => socialApi.searchUsers(query),
+    queryKey: [...PROFILE_SEARCH_KEY, query, currentUserId],
+    queryFn: () => socialApi.searchUsers(query, currentUserId),
     enabled: query.length >= 2,
   });
 }

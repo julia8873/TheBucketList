@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
 import {
@@ -661,7 +662,7 @@ export function DailyTasksScrollControls({
   );
 }
 
-const dailySheetStyles = StyleSheet.create({
+const dailySheetStyles = themedStyleSheet({
   sheetContent: {
     paddingHorizontal: 20,
     paddingTop: 8,

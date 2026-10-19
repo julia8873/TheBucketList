@@ -75,7 +75,20 @@ export function BulkTaskActionBar({
 
   if (count === 0) return null;
 
+  const plural = count === 1 ? '1 tarea seleccionada' : `${count} tareas seleccionadas`;
+  const askBulk = (title: string, message: string, confirmLabel: string) =>
+    confirm.ask({ title, message, confirmLabel, cancelLabel: 'Cancelar' });
+
   const handleMoveToAlbum = async (albumId: string | null) => {
+    const albumName = albumId ? albums.find((a: any) => a.id === albumId)?.title : null;
+    const okMove = await askBulk(
+      '¿Mover tareas?',
+      albumId
+        ? `Se moverán ${plural} al álbum${albumName ? ` «${albumName}»` : ''}.`
+        : `Se sacarán de su álbum ${plural} (quedarán sin álbum).`,
+      'Mover',
+    );
+    if (!okMove) return;
     try {
       await moveTasksToAlbum.mutateAsync({
         taskIds: selectedIds,
@@ -91,6 +104,12 @@ export function BulkTaskActionBar({
 
   const handleAssignTags = async () => {
     if (!selectedTagIds.length) return;
+    const okTags = await askBulk(
+      '¿Asignar etiquetas?',
+      `Se asignarán ${selectedTagIds.length === 1 ? 'la etiqueta elegida' : `las ${selectedTagIds.length} etiquetas elegidas`} a ${plural}.`,
+      'Asignar',
+    );
+    if (!okTags) return;
     try {
       await assignTagsToTasks.mutateAsync({
         taskIds: selectedIds,
@@ -110,6 +129,12 @@ export function BulkTaskActionBar({
     if (!collabs.length) return;
     const friend = collabs[collabs.length - 1];
     if (!friend) return;
+    const okShare = await askBulk(
+      '¿Compartir tareas?',
+      `Se invitará a ${friend.display_name || friend.username} a colaborar en ${plural}.`,
+      'Compartir',
+    );
+    if (!okShare) return;
     try {
       await shareTasksWithUser.mutateAsync({
         taskIds: selectedIds,
@@ -294,6 +319,12 @@ export function BulkTaskActionBar({
         }}
         onAddFavorites={async () => {
           setShowMoreMenuModal(false);
+          const okFav = await askBulk(
+            '¿Añadir a favoritas?',
+            `Se marcarán como favoritas ${plural}.`,
+            'Añadir',
+          );
+          if (!okFav) return;
           try {
             await setFavoritesForTasks.mutateAsync({
               taskIds: selectedIds,
@@ -307,6 +338,12 @@ export function BulkTaskActionBar({
         }}
         onReopenTasks={async () => {
           setShowMoreMenuModal(false);
+          const okReopen = await askBulk(
+            '¿Marcar como pendientes?',
+            `Se volverán a marcar como pendientes ${plural}.`,
+            'Marcar pendientes',
+          );
+          if (!okReopen) return;
           try {
             await reopenAllTasks.mutateAsync(selectedIds);
             onClearSelection();
@@ -324,6 +361,12 @@ export function BulkTaskActionBar({
         onClose={() => setShowPriorityModal(false)}
         onSelectPriority={async (p) => {
           setShowPriorityModal(false);
+          const okPrio = await askBulk(
+            '¿Cambiar prioridad?',
+            `Se cambiará la prioridad de ${plural}.`,
+            'Cambiar',
+          );
+          if (!okPrio) return;
           try {
             await changePriorityForTasks.mutateAsync({
               taskIds: selectedIds,
@@ -343,6 +386,12 @@ export function BulkTaskActionBar({
         onClose={() => setShowVisibilityModal(false)}
         onSelectVisibility={async (v) => {
           setShowVisibilityModal(false);
+          const okVis = await askBulk(
+            '¿Cambiar visibilidad?',
+            `Se cambiará la visibilidad de ${plural}.`,
+            'Cambiar',
+          );
+          if (!okVis) return;
           try {
             await changeVisibilityForTasks.mutateAsync({
               taskIds: selectedIds,

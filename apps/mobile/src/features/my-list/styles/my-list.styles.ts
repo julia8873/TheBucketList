@@ -1,9 +1,10 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import { StyleSheet, Dimensions } from 'react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-export const styles = StyleSheet.create({
+export const styles = themedStyleSheet({
   container: {
     flex: 1,
   },

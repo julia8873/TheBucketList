@@ -1,12 +1,6 @@
+import { Alert } from '@bucketlist/ui';
 import React from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  Pressable,
-  ScrollView,
-  Alert,
-} from 'react-native';
+import { View, Text, Modal, Pressable, ScrollView } from 'react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { confirm, toast } from '@bucketlist/ui';
 import { Bell, X } from 'lucide-react-native';

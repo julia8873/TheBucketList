@@ -1,6 +1,7 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import { StyleSheet } from 'react-native';
 
-export const styles = StyleSheet.create({
+export const styles = themedStyleSheet({
   container: { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 150 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 10 },

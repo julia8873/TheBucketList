@@ -1,5 +1,6 @@
+import { Alert } from '@bucketlist/ui';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, FlatList, Pressable, Text, View } from 'react-native';
+import { FlatList, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, MoreHorizontal, UserX } from 'lucide-react-native';
@@ -30,12 +31,17 @@ import { ProfileAlbumsTab, type AlbumFilter } from '../../src/features/public-pr
 import { ProfileTaskFilterButton } from '../../src/features/public-profile/components/ProfileTaskFilterButton';
 import { UserProfileOptionsSheet } from '../../src/features/public-profile/components/UserProfileOptionsSheet';
 import { ReportUserModal } from '../../src/features/public-profile/components/ReportUserModal';
+import { BlockedByState } from '../../src/features/public-profile/components/BlockedByState';
 import {
   useIsUserBlocked,
+  useIsUserBlockedBy,
+  useBlockerProfile,
   useBlockUser,
   useUnblockUser,
   useReportUser,
+  useAdminDeleteUser,
 } from '../../src/hooks/useBlockReport';
+import { useIsAdmin } from '../../src/hooks/useCurrentUserProfile';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Filter = 'all' | 'active' | 'completed';
@@ -127,12 +133,17 @@ export default function PublicProfileScreen() {
   const toggleFavoriteAlbum = useToggleFavoriteAlbum();
 
   const { data: isBlocked } = useIsUserBlocked(id);
+  // ¿Me ha bloqueado este usuario? (los administradores nunca están bloqueados: ven el perfil siempre)
+  const { data: isBlockedBy, isLoading: blockedByLoading } = useIsUserBlockedBy(id);
+  const { data: blockerProfile } = useBlockerProfile(id, Boolean(isBlockedBy));
   const blockMutation = useBlockUser();
   const unblockMutation = useUnblockUser();
   const reportMutation = useReportUser();
 
   const { data: stats, isLoading: statsLoading } = useProfileStats(id);
   const followStatus = stats?.follow_status ?? 'none';
+  const isAdmin = useIsAdmin();
+  const adminDeleteMutation = useAdminDeleteUser();
   const {
     profile,
     profileLoading,
@@ -254,6 +265,33 @@ export default function PublicProfileScreen() {
     });
   };
 
+  if (blockedByLoading) {
+    return (
+      <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <ProfileSkeleton />
+      </SafeAreaView>
+    );
+  }
+
+  // Quien ha bloqueado al usuario actual:
+  // - Usuario normal: ve su identidad, sin acceso al perfil.
+  // - Admin: ve el aviso de bloqueo + puede eliminar la cuenta.
+  if (isBlockedBy) {
+    return (
+      <BlockedByState
+        profile={profile ?? blockerProfile}
+        onBack={goBack}
+        isAdmin={isAdmin}
+        onAdminDeleteUser={
+          isAdmin
+            ? () => adminDeleteMutation.mutate(id)
+            : undefined
+        }
+        isDeleting={adminDeleteMutation.isPending}
+      />
+    );
+  }
+
   if (profileLoading || statsLoading) {
     return (
       <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -335,7 +373,7 @@ export default function PublicProfileScreen() {
       {isBlocked ? (
         <View style={styles.blockedNotice}>
           <View style={styles.blockedNoticeIcon}>
-            <UserX size={26} color="#EF4444" strokeWidth={2} />
+            <UserX size={26} color={theme.colors.error} strokeWidth={2} />
           </View>
           <Text style={[styles.blockedNoticeTitle, { color: theme.colors.foreground }]}>
             Has bloqueado a este usuario

@@ -1,7 +1,8 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import { StyleSheet } from 'react-native';
 import { fontFamily } from '@bucketlist/ui';
 
-export const styles = StyleSheet.create({
+export const styles = themedStyleSheet({
   container: { flex: 1 },
   center: { justifyContent: 'center', alignItems: 'center' },
   topBar: {

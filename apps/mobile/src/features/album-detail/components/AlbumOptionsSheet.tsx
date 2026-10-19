@@ -58,6 +58,8 @@ interface AlbumOptionsSheetProps {
   hasCustomCover?: boolean;
   coverAspectRatio?: '1:1' | '16:9' | '3:4';
   onClose: () => void;
+  /** Reportar el álbum al administrador (solo quien no es su propietario). */
+  onReport?: () => void;
   onToggleFavorite: () => void;
   onToggleSave?: () => void;
   onToggleAllTasks: () => void;
@@ -121,6 +123,7 @@ export function AlbumOptionsSheet({
   onPromoteToCollection,
   onConfirmDelete,
   onConfirmLeave,
+  onReport,
 }: AlbumOptionsSheetProps) {
   useEffect(() => {
     if (!visible) return;
@@ -201,6 +204,19 @@ export function AlbumOptionsSheet({
                         onPress={onShare}
                       />
                     </>
+                  )}
+                  {!isOwner && currentUserId && albumId !== 'unassigned' && onReport && (
+                    <SheetOption
+                      icon={<Flag color="#EF4444" size={20} />}
+                      title="Reportar álbum"
+                      subtitle="Avisa al administrador de contenido inapropiado"
+                      titleStyle={{ color: '#EF4444' }}
+                      iconStyle={{ backgroundColor: 'rgba(239, 68, 68, 0.12)' }}
+                      onPress={() => {
+                        onClose();
+                        onReport();
+                      }}
+                    />
                   )}
                   {canEdit && (
                     <>

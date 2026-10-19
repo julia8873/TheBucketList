@@ -1,5 +1,6 @@
+import { useCoverOverlay } from '@bucketlist/ui';
 import React, { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
@@ -32,6 +33,7 @@ interface FeedCardProps {
  */
 function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardProps) {
   const { theme } = useTheme();
+  const overlay = useCoverOverlay();
   const router = useRouter();
   const { user } = useAuthStore();
   const [showComments, setShowComments] = useState(false);
@@ -124,7 +126,7 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
             style={styles.galleryCover}
           >
             <LinearGradient
-              colors={['rgba(0,0,0,0.65)', 'transparent', 'rgba(0,0,0,0.88)']}
+              colors={overlay.softBoth}
               locations={[0, 0.45, 1]}
               style={StyleSheet.absoluteFill}
               pointerEvents="none"
@@ -287,7 +289,7 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
           style={[styles.cover, { borderColor: theme.colors.border }]}
         >
           <LinearGradient
-            colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.78)']}
+            colors={overlay.softFade}
             locations={[0.35, 1]}
             style={StyleSheet.absoluteFill}
             pointerEvents="none"

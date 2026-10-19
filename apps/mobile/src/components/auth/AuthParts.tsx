@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { forwardRef, useState } from 'react';
 import {
   View,
@@ -328,7 +329,7 @@ export function BigAvatar({
 
 // ─── Estilos ────────────────────────────────────────────────────────────────
 
-const s = StyleSheet.create({
+const s = themedStyleSheet({
   flex: { flex: 1 },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], paddingHorizontal: spacing[5], paddingTop: spacing[3], minHeight: 44 },
   back: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },

@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState } from 'react';
 import {
   View,
@@ -296,7 +297,7 @@ export function ItemCommentsSection({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   container: {
     marginTop: 24,
     marginBottom: 8,

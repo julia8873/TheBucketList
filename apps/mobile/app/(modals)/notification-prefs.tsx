@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Switch, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -138,7 +139,7 @@ export default function NotificationPrefsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   container: {
     flex: 1,
   },

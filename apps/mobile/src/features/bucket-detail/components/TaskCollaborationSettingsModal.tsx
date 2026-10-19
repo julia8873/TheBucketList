@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState } from 'react';
 import {
   View,
@@ -367,7 +368,7 @@ export function TaskCollaborationSettingsModal({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',

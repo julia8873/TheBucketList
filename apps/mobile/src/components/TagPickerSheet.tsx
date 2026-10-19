@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     View,
@@ -457,7 +458,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
     );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
     overlay: { flex: 1, justifyContent: 'flex-end' },
     backdrop: { backgroundColor: 'rgba(0,0,0,0.6)' },
     sheet: {

@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState } from 'react';
 import {
   View,
@@ -212,7 +213,7 @@ export function AlbumPickerSheet({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.65)',

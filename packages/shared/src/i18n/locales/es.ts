@@ -78,12 +78,14 @@ const es = {
     err_weak: 'La contraseña debe tener al menos 8 caracteres.',
     err_rate: 'Demasiados intentos. Espera un momento.',
     err_network: 'No se pudo conectar. Revisa tu conexión.',
+    err_banned: 'Esta cuenta ha sido bloqueada por incumplir las normas de la comunidad.',
     err_generic: 'Algo salió mal. Inténtalo de nuevo.',
     err_email_invalid: 'Introduce un correo válido.',
     err_password_short: 'La contraseña debe tener al menos 8 caracteres.',
     err_mismatch: 'Las contraseñas no coinciden.',
     err_link_expired: 'El enlace ha caducado. Solicita uno nuevo.',
     err_no_account_google: 'No existe ninguna cuenta asociada a este correo de Google. Por favor, crea una cuenta primero.',
+    err_account_exists_google: 'Ya existe una cuenta asociada a este correo de Google. Por favor, inicia sesión.',
   },
 
   onboarding: {

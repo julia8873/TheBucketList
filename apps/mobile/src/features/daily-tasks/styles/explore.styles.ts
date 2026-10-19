@@ -1,7 +1,8 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import { StyleSheet, Platform } from 'react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 
-export const styles = StyleSheet.create({
+export const styles = themedStyleSheet({
   container: {
     flex: 1,
   },

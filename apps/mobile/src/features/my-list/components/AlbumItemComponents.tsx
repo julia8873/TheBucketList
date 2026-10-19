@@ -3,16 +3,9 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GripVertical, Lock, Star, Users } from 'lucide-react-native';
-import { useTheme } from '@bucketlist/ui';
+import { useTheme, useCoverOverlay } from '@bucketlist/ui';
 import { styles } from '../styles/my-list.styles';
 import { DragHandle } from '@/components/DraggableTaskList';
-
-const COVER_GRADIENTS: Array<[string, string]> = [
-  ['#1B4D3E', '#0A2E25'],
-  ['#C87A2B', '#7A3D00'],
-  ['#2B5BA8', '#0D2F6E'],
-  ['#6B2FA0', '#3A0070'],
-];
 
 export const AlbumCoverThumb = React.memo(function AlbumCoverThumb({
   coverUri,
@@ -23,7 +16,8 @@ export const AlbumCoverThumb = React.memo(function AlbumCoverThumb({
   colorIndex?: number;
   size?: number;
 }) {
-  const [g1, g2] = COVER_GRADIENTS[colorIndex % COVER_GRADIENTS.length] || ['#1B4D3E', '#0A2E25'];
+  const overlay = useCoverOverlay();
+  const [g1, g2] = overlay.placeholders[colorIndex % overlay.placeholders.length] ?? overlay.placeholders[0]!;
   let parsedCover: any = null;
   if (coverUri && coverUri.startsWith('{')) {
     try {
@@ -73,7 +67,7 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
         styles.compactRow,
         {
           backgroundColor: isCompleted
-            ? (theme.dark ? '#121212' : '#EDE8DE')
+            ? theme.colors.surfaceSunken
             : theme.colors.surface,
           borderColor: theme.colors.border,
         },
@@ -112,7 +106,7 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
             borderRadius: 6,
             backgroundColor: isCompleted
               ? 'rgba(52, 199, 89, 0.15)'
-              : (theme.dark ? '#222' : '#E8E3D8'),
+              : theme.colors.secondary,
           }}
         >
           <Text

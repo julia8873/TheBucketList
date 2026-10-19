@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Tag as TagIcon, Plus, X } from 'lucide-react-native';
@@ -81,7 +82,7 @@ export function AlbumTagsSection({
   );
 }
 
-const localStyles = StyleSheet.create({
+const localStyles = themedStyleSheet({
   helpText: {
     fontFamily: 'Inter_400Regular',
     fontSize: 13,

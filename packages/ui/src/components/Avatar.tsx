@@ -5,7 +5,7 @@ import { Image } from 'expo-image';
 import { useTheme } from '../theme/useTheme';
 import { radii } from '../tokens/radii';
 import { spacing } from '../tokens/spacing';
-import { gold } from '../tokens/colors';
+import { gold, GOLD_BG } from '../tokens/colors';
 import { fontFamily } from '../tokens/typography';
 
 /**
@@ -107,7 +107,7 @@ function AvatarComponent({
               width: innerDim,
               height: innerDim,
               borderRadius: innerDim / 2,
-              backgroundColor: '#201B0E',
+              backgroundColor: theme.dark ? GOLD_BG : gold[100],
             },
           ]}
         >
@@ -117,7 +117,7 @@ function AvatarComponent({
               {
                 fontSize,
                 lineHeight,
-                color: gold[400],
+                color: theme.dark ? gold[400] : gold[700],
               },
             ]}
             numberOfLines={1}

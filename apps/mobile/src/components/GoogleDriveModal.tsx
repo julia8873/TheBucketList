@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -397,7 +398,7 @@ export function GoogleDriveModal({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.7)',

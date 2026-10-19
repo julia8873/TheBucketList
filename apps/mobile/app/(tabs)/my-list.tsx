@@ -5,10 +5,8 @@ import {
   useTheme,
   SegmentedControl,
   AlbumCard,
-  NewAlbumCard,
   NoAlbumRow,
   NoAlbumCard,
-  NewAlbumRow,
   FAB,
   Input,
   PageTitle,
@@ -564,14 +562,12 @@ export default function MyListScreen() {
                     count={state.unassignedCount}
                     onPress={() => router.push('/album/unassigned')}
                   />
-                  <NewAlbumCard onPress={() => router.push('/(modals)/create-album')} />
                 </View>
               ) : (
                 <View style={[styles.empty, { gap: 14 }]}>
                   <Text style={{ color: theme.colors.foregroundMuted, fontSize: 14 }}>
                     {state.searchQuery ? 'No se encontraron álbumes' : 'No tienes álbumes'}
                   </Text>
-                  <NewAlbumRow onPress={() => router.push('/(modals)/create-album')} />
                   <NoAlbumRow
                     count={state.unassignedCount}
                     onPress={() => router.push('/album/unassigned')}
@@ -633,7 +629,6 @@ export default function MyListScreen() {
                     {state.sortedAlbumsList.map((item: any) => renderCompactAlbum({ item }))}
                   </View>
                 )}
-                <NewAlbumRow onPress={() => router.push('/(modals)/create-album')} />
                 <NoAlbumRow
                   count={state.unassignedCount}
                   onPress={() => router.push('/album/unassigned')}
@@ -658,7 +653,6 @@ export default function MyListScreen() {
                     renderListAlbum({ item, index: idx })
                   )
                 )}
-                <NewAlbumRow onPress={() => router.push('/(modals)/create-album')} />
                 <NoAlbumRow
                   count={state.unassignedCount}
                   onPress={() => router.push('/album/unassigned')}
@@ -691,7 +685,6 @@ export default function MyListScreen() {
                   count={state.unassignedCount}
                   onPress={() => router.push('/album/unassigned')}
                 />
-                <NewAlbumCard onPress={() => router.push('/(modals)/create-album')} />
               </View>
             )}
 
@@ -743,6 +736,8 @@ export default function MyListScreen() {
               <ChevronRight size={18} color={gold[400]} />
             </Pressable>
           </ScrollView>
+
+          <FAB onPress={() => router.push('/(modals)/create-album')} bottomOffset={24} />
         </View>
       )}
 

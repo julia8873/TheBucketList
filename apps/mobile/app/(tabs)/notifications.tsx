@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator, FlatList, Pressable, Text, AppState } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -158,7 +159,7 @@ export default function NotificationsScreen() {
     }
     
     // Navigate based on type
-    if (notification.type === 'user_reported') {
+    if (notification.type === 'user_reported' || notification.type === 'content_reported') {
       router.push('/(modals)/admin-reports' as any);
     } else if (notification.type === 'follow' || notification.type === 'follow_accepted') {
       router.push(`/profile/${notification.actor_id}` as any);
@@ -190,7 +191,8 @@ export default function NotificationsScreen() {
 
   const getIconForType = (type: string) => {
     switch (type) {
-      case 'user_reported': return <ShieldAlert size={16} color="#EF4444" />;
+      case 'user_reported':
+      case 'content_reported': return <ShieldAlert size={16} color={theme.colors.error} />;
       case 'reaction': return <Heart size={16} color={theme.colors.primary} />;
       case 'comment': return <MessageCircle size={16} color={theme.colors.primary} />;
       case 'follow': 
@@ -217,6 +219,7 @@ export default function NotificationsScreen() {
     
     switch (notification.type) {
       case 'user_reported': return notification.content || `${actorName} ha enviado un reporte de usuario.`;
+      case 'content_reported': return notification.content || `${actorName} ha reportado un contenido.`;
       case 'reaction': return `${actorName} ha reaccionado a tu tarea.`;
       case 'comment': return `${actorName} ha comentado en tu tarea.`;
       case 'follow': return `${actorName} ha empezado a seguirte.`;
@@ -431,7 +434,7 @@ export default function NotificationsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   container: {
     flex: 1,
   },

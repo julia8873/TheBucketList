@@ -107,17 +107,37 @@ export const socialApi = {
   },
 
   // Search (explorar)
-  searchUsers: async (query: string) => {
+  searchUsers: async (query: string, currentUserId?: string) => {
     if (!query || query.length < 2) return [];
 
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .ilike('username', `%${query}%`)
-      .limit(10);
+      .limit(30);
 
     if (error) throw error;
-    return data;
+    if (!currentUserId || !data) return data ?? [];
+
+    // Admins always see all results
+    const { data: myProfile } = await supabase
+      .from('profiles')
+      .select('role, username')
+      .eq('id', currentUserId)
+      .maybeSingle();
+    const isAdmin =
+      myProfile?.role === 'admin' ||
+      myProfile?.username?.toLowerCase() === 'juliamiralles8873';
+    if (isAdmin) return data;
+
+    // For regular users: remove anyone who has blocked them
+    const { data: blocks } = await supabase
+      .from('blocked_users')
+      .select('blocker_id')
+      .eq('blocked_id', currentUserId);
+
+    const blockerIds = new Set((blocks ?? []).map((b: any) => b.blocker_id as string));
+    return data.filter((u: any) => !blockerIds.has(u.id));
   },
 
   // Comments

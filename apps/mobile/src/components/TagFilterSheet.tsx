@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, Pressable, ScrollView, TextInput, StyleSheet, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { Check, Plus, Search, Tag as TagIcon, X } from 'lucide-react-native';
@@ -259,7 +260,7 @@ export function TagFilterSheet({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Check, Plus, Tag as TagIcon } from 'lucide-react-native';
@@ -278,7 +279,7 @@ export function TagAppearanceFields({ name = '', emoji, color, autoColor = false
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   label: {
     fontFamily: 'PlayfairDisplay_700Bold',
     fontSize: 14,

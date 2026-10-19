@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React from 'react';
 import {
   View,
@@ -116,7 +117,7 @@ export default function BlockedUsersScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   container: {
     flex: 1,
     backgroundColor: '#0D0D0D',

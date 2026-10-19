@@ -80,12 +80,14 @@ const en = {
     err_weak: 'Password must be at least 8 characters.',
     err_rate: 'Too many attempts. Please wait a moment.',
     err_network: 'Could not connect. Please check your network.',
+    err_banned: 'This account has been blocked for breaking the community guidelines.',
     err_generic: 'Something went wrong. Please try again.',
     err_email_invalid: 'Please enter a valid email.',
     err_password_short: 'Password must be at least 8 characters.',
     err_mismatch: 'Passwords do not match.',
     err_link_expired: 'The link has expired. Please request a new one.',
     err_no_account_google: 'No account found associated with this Google email. Please create an account first.',
+    err_account_exists_google: 'An account is already associated with this Google email. Please sign in instead.',
   },
 
   onboarding: {

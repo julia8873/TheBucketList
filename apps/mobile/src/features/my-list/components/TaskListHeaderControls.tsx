@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import {
@@ -441,7 +442,7 @@ export function TaskListHeaderControls({
   );
 }
 
-const localStyles = StyleSheet.create({
+const localStyles = themedStyleSheet({
   sheetContent: {
     paddingHorizontal: 20,
     paddingTop: 8,

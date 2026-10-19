@@ -33,33 +33,34 @@ export interface CoverPreset {
   label: string;
   group: CoverPresetGroup;
   colors: [string, string, string];
+  lightColors?: [string, string, string];
   icon?: LucideIcon;
   image?: ImageSourcePropType;
 }
 
 export const COVER_PRESETS: CoverPreset[] = [
   // ── Temas ─────────────────────────────────────────────────────────────────
-  { key: 'restaurant', label: 'Restaurante', group: 'themes', colors: ['#3B0D04', '#B45309', '#F59E0B'], icon: UtensilsCrossed },
-  { key: 'cars',       label: 'Coches',      group: 'themes', colors: ['#0B1120', '#1E3A8A', '#DC2626'], icon: Car },
-  { key: 'travel',     label: 'Viajes',      group: 'themes', colors: ['#0C4A6E', '#0EA5E9', '#FDE68A'], icon: Plane },
-  { key: 'beach',      label: 'Playa',       group: 'themes', colors: ['#115E59', '#22D3EE', '#FDE68A'], icon: Waves },
-  { key: 'mountain',   label: 'Montaña',     group: 'themes', colors: ['#0F172A', '#334155', '#94A3B8'], icon: Mountain },
-  { key: 'nature',     label: 'Naturaleza',  group: 'themes', colors: ['#052E16', '#15803D', '#BEF264'], icon: TreePine },
-  { key: 'sport',      label: 'Deporte',     group: 'themes', colors: ['#022C22', '#059669', '#A7F3D0'], icon: Dumbbell },
-  { key: 'music',      label: 'Música',      group: 'themes', colors: ['#2E1065', '#7E22CE', '#F472B6'], icon: Music },
-  { key: 'art',        label: 'Arte',        group: 'themes', colors: ['#312E81', '#A855F7', '#FBBF24'], icon: Palette },
-  { key: 'party',      label: 'Fiesta',      group: 'themes', colors: ['#500724', '#DB2777', '#FCD34D'], icon: PartyPopper },
-  { key: 'gaming',     label: 'Videojuegos', group: 'themes', colors: ['#0B1026', '#4F46E5', '#22D3EE'], icon: Gamepad2 },
-  { key: 'coffee',     label: 'Café',        group: 'themes', colors: ['#1C0F05', '#78350F', '#D97706'], icon: Coffee },
+  { key: 'restaurant', label: 'Restaurante', group: 'themes', colors: ['#3B0D04', '#B45309', '#F59E0B'], lightColors: ['#9A3412', '#C2410C', '#F59E0B'], icon: UtensilsCrossed },
+  { key: 'cars',       label: 'Coches',      group: 'themes', colors: ['#0B1120', '#1E3A8A', '#DC2626'], lightColors: ['#1E40AF', '#2563EB', '#DC2626'], icon: Car },
+  { key: 'travel',     label: 'Viajes',      group: 'themes', colors: ['#0C4A6E', '#0EA5E9', '#FDE68A'], lightColors: ['#0369A1', '#0EA5E9', '#F59E0B'], icon: Plane },
+  { key: 'beach',      label: 'Playa',       group: 'themes', colors: ['#115E59', '#22D3EE', '#FDE68A'], lightColors: ['#0F766E', '#0D9488', '#F59E0B'], icon: Waves },
+  { key: 'mountain',   label: 'Montaña',     group: 'themes', colors: ['#0F172A', '#334155', '#94A3B8'], lightColors: ['#334155', '#475569', '#94A3B8'], icon: Mountain },
+  { key: 'nature',     label: 'Naturaleza',  group: 'themes', colors: ['#052E16', '#15803D', '#BEF264'], lightColors: ['#166534', '#15803D', '#65A30D'], icon: TreePine },
+  { key: 'sport',      label: 'Deporte',     group: 'themes', colors: ['#022C22', '#059669', '#A7F3D0'], lightColors: ['#065F46', '#059669', '#10B981'], icon: Dumbbell },
+  { key: 'music',      label: 'Música',      group: 'themes', colors: ['#2E1065', '#7E22CE', '#F472B6'], lightColors: ['#6B21A8', '#9333EA', '#EC4899'], icon: Music },
+  { key: 'art',        label: 'Arte',        group: 'themes', colors: ['#312E81', '#A855F7', '#FBBF24'], lightColors: ['#3730A3', '#7C3AED', '#F59E0B'], icon: Palette },
+  { key: 'party',      label: 'Fiesta',      group: 'themes', colors: ['#500724', '#DB2777', '#FCD34D'], lightColors: ['#831843', '#DB2777', '#F59E0B'], icon: PartyPopper },
+  { key: 'gaming',     label: 'Videojuegos', group: 'themes', colors: ['#0B1026', '#4F46E5', '#22D3EE'], lightColors: ['#312E81', '#4F46E5', '#06B6D4'], icon: Gamepad2 },
+  { key: 'coffee',     label: 'Café',        group: 'themes', colors: ['#1C0F05', '#78350F', '#D97706'], lightColors: ['#713F12', '#9A3412', '#D97706'], icon: Coffee },
 
   // ── Degradados ────────────────────────────────────────────────────────────
-  { key: 'sunset',   label: 'Atardecer',   group: 'gradients', colors: ['#F97316', '#DB2777', '#4C1D95'] },
-  { key: 'ocean',    label: 'Océano',      group: 'gradients', colors: ['#0F172A', '#0369A1', '#22D3EE'] },
-  { key: 'forest',   label: 'Bosque',      group: 'gradients', colors: ['#052E16', '#15803D', '#BEF264'] },
-  { key: 'aurora',   label: 'Aurora',      group: 'gradients', colors: ['#0F172A', '#059669', '#7C3AED'] },
-  { key: 'gold',     label: 'Dorado',      group: 'gradients', colors: ['#1A1204', '#7A5F14', '#D4AF37'] },
-  { key: 'midnight', label: 'Medianoche',  group: 'gradients', colors: ['#000000', '#1E1B4B', '#4338CA'] },
-  { key: 'rose',     label: 'Rosa',        group: 'gradients', colors: ['#4C0519', '#BE123C', '#FDA4AF'] },
+  { key: 'sunset',   label: 'Atardecer',   group: 'gradients', colors: ['#F97316', '#DB2777', '#4C1D95'], lightColors: ['#EA580C', '#E11D48', '#7C3AED'] },
+  { key: 'ocean',    label: 'Océano',      group: 'gradients', colors: ['#0F172A', '#0369A1', '#22D3EE'], lightColors: ['#026AA7', '#0284C7', '#06B6D4'] },
+  { key: 'forest',   label: 'Bosque',      group: 'gradients', colors: ['#052E16', '#15803D', '#BEF264'], lightColors: ['#166534', '#15803D', '#65A30D'] },
+  { key: 'aurora',   label: 'Aurora',      group: 'gradients', colors: ['#0F172A', '#059669', '#7C3AED'], lightColors: ['#047857', '#059669', '#7C3AED'] },
+  { key: 'gold',     label: 'Dorado',      group: 'gradients', colors: ['#1A1204', '#7A5F14', '#D4AF37'], lightColors: ['#B45309', '#D97706', '#EAB308'] },
+  { key: 'midnight', label: 'Medianoche',  group: 'gradients', colors: ['#000000', '#1E1B4B', '#4338CA'], lightColors: ['#1E3A8A', '#3730A3', '#6B21A8'] },
+  { key: 'rose',     label: 'Rosa',        group: 'gradients', colors: ['#4C0519', '#BE123C', '#FDA4AF'], lightColors: ['#BE123C', '#E11D48', '#FB7185'] },
 ];
 
 export const THEME_PRESETS = COVER_PRESETS.filter((p) => p.group === 'themes');

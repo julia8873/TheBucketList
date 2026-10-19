@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -100,7 +101,7 @@ export function TagSheetShell({ visible, onClose, fixedHeight, children }: TagSh
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   overlay: { flex: 1, justifyContent: 'flex-end' },
   backdrop: { backgroundColor: 'rgba(0,0,0,0.7)' },
   sheet: {

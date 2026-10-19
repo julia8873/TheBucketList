@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React from 'react';
 import {
   View,
@@ -216,7 +217,7 @@ export function UserProfileOptionsSheet({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.65)',

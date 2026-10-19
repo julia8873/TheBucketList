@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState } from 'react';
 import {
   View,
@@ -213,7 +214,7 @@ export function ProfileTaskFilterButton({ filter, onChangeFilter }: ProfileTaskF
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',

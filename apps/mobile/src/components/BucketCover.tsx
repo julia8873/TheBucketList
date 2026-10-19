@@ -1,3 +1,4 @@
+import { themedStyleSheet, useTheme } from '@bucketlist/ui';
 import React, { memo } from 'react';
 import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
@@ -23,8 +24,18 @@ interface BucketCoverProps {
   children?: React.ReactNode;
 }
 
-const PresetArt = memo(function PresetArt({ preset, iconSize }: { preset: CoverPreset; iconSize: number }) {
+const PresetArt = memo(function PresetArt({
+  preset,
+  iconSize,
+  isDark,
+}: {
+  preset: CoverPreset;
+  iconSize: number;
+  isDark: boolean;
+}) {
   const IconComponent = preset.icon;
+  const colors = !isDark && preset.lightColors ? preset.lightColors : preset.colors;
+
   return (
     <>
       {preset.image ? (
@@ -36,7 +47,7 @@ const PresetArt = memo(function PresetArt({ preset, iconSize }: { preset: CoverP
         />
       ) : (
         <LinearGradient
-          colors={preset.colors}
+          colors={colors}
           start={{ x: 0.1, y: 0 }}
           end={{ x: 0.9, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -53,6 +64,7 @@ const PresetArt = memo(function PresetArt({ preset, iconSize }: { preset: CoverP
             borderRadius: iconSize * 0.8,
             top: -iconSize * 0.5,
             left: -iconSize * 0.45,
+            backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.08)',
           },
         ]}
       />
@@ -61,7 +73,11 @@ const PresetArt = memo(function PresetArt({ preset, iconSize }: { preset: CoverP
           pointerEvents="none"
           style={{ position: 'absolute', right: -iconSize * 0.08, top: '14%' }}
         >
-          <IconComponent color="rgba(255,255,255,0.20)" size={iconSize} strokeWidth={1.2} />
+          <IconComponent
+            color={isDark ? 'rgba(255,255,255,0.20)' : 'rgba(255,255,255,0.25)'}
+            size={iconSize}
+            strokeWidth={1.2}
+          />
         </View>
       )}
     </>
@@ -82,6 +98,7 @@ function BucketCoverComponent({
   style,
   children,
 }: BucketCoverProps) {
+  const { theme } = useTheme();
   const presetKey = presetKeyFromValue(value);
   const chosenPreset = getPresetByKey(presetKey);
   const isCustomImage = !!value && !presetKey;
@@ -96,8 +113,8 @@ function BucketCoverComponent({
     : null;
 
   return (
-    <View style={[styles.container, style]}>
-      {!isCustomImage && <PresetArt preset={preset} iconSize={iconSize} />}
+    <View style={[styles.container, { backgroundColor: theme.colors.surface }, style]}>
+      {!isCustomImage && <PresetArt preset={preset} iconSize={iconSize} isDark={theme.dark} />}
       {imageUri && (
         <ExpoImage
           source={{ uri: imageUri }}
@@ -114,10 +131,9 @@ function BucketCoverComponent({
 
 export const BucketCover = memo(BucketCoverComponent);
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   container: {
     overflow: 'hidden',
-    backgroundColor: '#0E0E0E',
   },
   circle: {
     position: 'absolute',

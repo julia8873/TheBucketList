@@ -1,15 +1,6 @@
+import { Alert } from '@bucketlist/ui';
 import { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Alert,
-  Share,
-  Platform,
-  Dimensions,
-  Keyboard,
-  ScrollView,
-  Animated,
-  Image as RNImage,
-} from 'react-native';
+import { View, Share, Platform, Dimensions, Keyboard, ScrollView, Animated, Image as RNImage } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
@@ -1014,6 +1005,17 @@ export function useAlbumDetailState() {
     const nextStatus = nextCompleted ? 'completed' : 'pending';
     const nextCompletedAt = nextCompleted ? new Date().toISOString() : null;
     const taskIds = album.tasks.map((t) => t.id);
+
+    closeSheet();
+    const confirmedToggle = await confirm.ask({
+      title: nextCompleted ? '¿Completar todas las tareas?' : '¿Marcar todas como pendientes?',
+      message: nextCompleted
+        ? `Se marcarán como completadas las ${taskIds.length} tareas de este álbum.`
+        : `Se marcarán como pendientes las ${taskIds.length} tareas de este álbum.`,
+      confirmLabel: nextCompleted ? 'Completar todas' : 'Marcar pendientes',
+      cancelLabel: 'Cancelar',
+    });
+    if (!confirmedToggle) return;
 
     queryClient.setQueryData(['album', id, user?.id], (old: any) => {
       if (!old) return old;

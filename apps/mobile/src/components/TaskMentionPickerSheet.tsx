@@ -46,8 +46,9 @@ export type MentionTask = {
 
 /** Miniatura cuadrada de una tarea (foto elegida, última foto, portada o degradado automático). */
 export function MentionThumb({ task, size = 48 }: { task: MentionTask; size?: number }) {
+  const { theme } = useTheme();
   return (
-    <View style={{ width: size, height: size, borderRadius: 12, overflow: 'hidden', backgroundColor: dark[400] }}>
+    <View style={{ width: size, height: size, borderRadius: 12, overflow: 'hidden', backgroundColor: theme.colors.surface }}>
       <BucketCover
         value={resolveTaskImage(task as any, { preferThumb: true })}
         title={task.title}

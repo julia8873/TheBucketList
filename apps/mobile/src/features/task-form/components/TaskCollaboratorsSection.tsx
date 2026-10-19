@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Users, Plus, X, Lock, UserCheck, Zap, Globe } from 'lucide-react-native';
@@ -223,7 +224,7 @@ export function TaskCollaboratorsSection({
   );
 }
 
-const localStyles = StyleSheet.create({
+const localStyles = themedStyleSheet({
   settingsBlock: {
     marginTop: 14,
     paddingTop: 12,

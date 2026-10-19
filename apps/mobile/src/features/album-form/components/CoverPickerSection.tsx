@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, Image as RNImage } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';

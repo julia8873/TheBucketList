@@ -231,7 +231,7 @@ function TaskItemRowComponent({
         expiredAction={isItemExpired && item.status !== 'completed'}
         thumbnailElement={
           isItemExpired && item.status !== 'completed' ? (
-            <View style={{ flex: 1, backgroundColor: '#202020', borderRadius: 12 }} />
+            <View style={{ flex: 1, backgroundColor: theme.colors.surfaceSunken, borderRadius: 12 }} />
           ) : (
             <BucketCover
               value={resolveTaskImage(item, { preferThumb: true })}

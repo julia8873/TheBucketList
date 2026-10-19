@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState } from 'react';
 import { Text, Pressable, StyleSheet } from 'react-native';
 import { Tag, ChevronRight } from 'lucide-react-native';
@@ -50,7 +51,7 @@ export function TagsRow({ selectedTags, onChange }: TagsRowProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   settingRow: {
     height: 72,
     flexDirection: 'row',

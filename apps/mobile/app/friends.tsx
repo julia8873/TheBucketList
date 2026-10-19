@@ -1,12 +1,6 @@
+import { Alert } from '@bucketlist/ui';
 import React, { useEffect, useState } from 'react';
-import {
-  Alert,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, RefreshControl, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Search, X } from 'lucide-react-native';

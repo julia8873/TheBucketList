@@ -1,19 +1,7 @@
+import { Alert } from '@bucketlist/ui';
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState, useRef, useMemo, useEffect } from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  Pressable,
-  FlatList,
-  TextInput,
-  KeyboardAvoidingView,
-  Keyboard,
-  ScrollView,
-  Platform,
-  Alert,
-  ActivityIndicator,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, Modal, Pressable, FlatList, TextInput, KeyboardAvoidingView, Keyboard, ScrollView, Platform, ActivityIndicator, StyleSheet } from 'react-native';
 import {
   MessageCircle,
   X,
@@ -37,6 +25,8 @@ import { useConnections, usePeopleSearch } from '../hooks/useFriends';
 import { displayNameOf, initialsOf } from '../utils/initials';
 import { timeAgo } from '../utils/timeAgo';
 import { OfficialBadge, isUserAdmin } from './OfficialBadge';
+import { ReportModal } from './ReportModal';
+import { useReportContent } from '../hooks/useBlockReport';
 
 interface TaskCommentsModalProps {
   visible: boolean;
@@ -90,6 +80,8 @@ function TaskCommentsModalContent({
 
   // Estado para autocompletar menciones con @
   const [showMentionPicker, setShowMentionPicker] = useState(false);
+  const [reportingComment, setReportingComment] = useState<{ id: string; author: string } | null>(null);
+  const reportContent = useReportContent();
   const [mentionFilter, setMentionFilter] = useState('');
 
   const flatListRef = useRef<FlatList>(null);
@@ -682,6 +674,20 @@ function TaskCommentsModalContent({
                                 <Text style={styles.actionTextBold}>Reply</Text>
                               </Pressable>
 
+                              {/* Reportar comentario al administrador */}
+                              {!!user && (
+                                <Pressable
+                                  hitSlop={6}
+                                  onPress={() =>
+                                    setReportingComment({ id: comment.id, author: displayNameOf(author) })
+                                  }
+                                  accessibilityRole="button"
+                                  accessibilityLabel="Reportar comentario"
+                                >
+                                  <Text style={styles.actionTextBold}>Reportar</Text>
+                                </Pressable>
+                              )}
+
                               {/* Si es dueño del elemento también puede moderar/borrar */}
                               {isItemOwner && (
                                 <Pressable
@@ -831,11 +837,28 @@ function TaskCommentsModalContent({
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      <ReportModal
+        visible={!!reportingComment}
+        onClose={() => setReportingComment(null)}
+        kind="comment"
+        subject={reportingComment ? `Comentario de ${reportingComment.author}` : undefined}
+        isLoading={reportContent.isPending}
+        onSubmit={async (reason, details) => {
+          if (!reportingComment) return;
+          await reportContent.mutateAsync({
+            targetType: 'comment',
+            targetId: reportingComment.id,
+            reason,
+            details,
+          });
+        }}
+      />
     </Modal>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',

@@ -33,7 +33,10 @@ export function Skeleton({
 
   const bgColor = shimmer.interpolate({
     inputRange:  [0, 1],
-    outputRange: [theme.colors.border, theme.colors.secondary],
+    // Claro: beige cálido ↔ beige más claro. Oscuro: gris ↔ gris más oscuro.
+    outputRange: theme.dark
+      ? [theme.colors.border, theme.colors.secondary]
+      : [theme.colors.secondary, theme.colors.surfaceSunken],
   });
 
   return (

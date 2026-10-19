@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React from 'react';
 import { View, Pressable, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { LayoutList, LayoutGrid, AlignJustify } from 'lucide-react-native';
@@ -61,7 +62,7 @@ export function ViewModeSelector({ mode, onChange, style }: ViewModeSelectorProp
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   container: {
     flexDirection: 'row',
     alignItems: 'center',

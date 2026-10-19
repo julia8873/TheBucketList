@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -366,7 +367,7 @@ export function ImageLinkModal({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.7)',

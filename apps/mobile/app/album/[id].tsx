@@ -1,15 +1,6 @@
+import { Alert } from '@bucketlist/ui';
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  Pressable,
-  ScrollView,
-  RefreshControl,
-  Image,
-  TextInput,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import { View, Text, Pressable, ScrollView, RefreshControl, Image, TextInput, StyleSheet } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -28,7 +19,7 @@ import {
   FolderPlus,
   UserPlus,
 } from 'lucide-react-native';
-import { Skeleton, Avatar } from '@bucketlist/ui';
+import { Skeleton, Avatar, useTheme } from '@bucketlist/ui';
 
 import { TaskRowSkeleton } from '@/components/TaskSkeletons';
 import { TaskItem } from '@/services/api/albumsService';
@@ -46,6 +37,8 @@ import { ItemCommentsSection } from '@/components/ItemCommentsSection';
 
 import { styles } from '@/features/album-detail/styles/album-detail.styles';
 import { AlbumTaskCard } from '@/features/album-detail/components/AlbumTaskCard';
+import { ReportModal } from '@/components/ReportModal';
+import { useReportContent } from '@/hooks/useBlockReport';
 import { AlbumOptionsSheet } from '@/features/album-detail/components/AlbumOptionsSheet';
 import { AlbumHeaderBadges } from '@/features/album-detail/components/AlbumHeaderBadges';
 import { AlbumSortModal, TaskSortField } from '@/features/album-detail/components/AlbumSortModal';
@@ -74,10 +67,13 @@ export function getInitials(name?: string | null): string {
 
 export default function AlbumDetailScreen() {
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
   const state = useAlbumDetailState();
   const isAdmin = useIsAdmin();
   const promoteMutation = usePromoteAlbumToCollection();
   const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [reportVisible, setReportVisible] = useState(false);
+  const reportContent = useReportContent();
 
   const handlePromoteToCollection = () => {
     const currentAlbum = state.album;
@@ -104,7 +100,7 @@ export default function AlbumDetailScreen() {
 
   if (state.isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: '#0D0D0D' }]}>
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <Skeleton width="100%" height={270} borderRadius={0} />
         <View style={{ padding: 20 }}>
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
@@ -123,7 +119,7 @@ export default function AlbumDetailScreen() {
 
   if (state.isError || !state.album) {
     return (
-      <View style={[styles.center, { backgroundColor: '#0D0D0D' }]}>
+      <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
         <Text style={styles.errorText}>No se pudo cargar el álbum</Text>
       </View>
     );
@@ -271,7 +267,7 @@ export default function AlbumDetailScreen() {
   }
 
   const gradientColors = GRADIENTS[coverKey as keyof typeof GRADIENTS] || GRADIENTS.aurora;
-  const heroColors = [gradientColors[0] || '#0E4B43', gradientColors[1] || '#1F8560', '#0D0D0D'] as readonly [
+  const heroColors = [gradientColors[0] || '#0E4B43', gradientColors[1] || '#1F8560', theme.colors.background] as readonly [
     string,
     string,
     ...string[]
@@ -330,7 +326,11 @@ export default function AlbumDetailScreen() {
 
           {parsedCover?.type !== 'image' && (
             <LinearGradient
-              colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.6)', '#0D0D0D']}
+              colors={
+                theme.dark
+                  ? ['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.6)', theme.colors.background]
+                  : ['rgba(0,0,0,0.05)', 'rgba(250,248,243,0.55)', theme.colors.background]
+              }
               locations={[0, 0.6, 1]}
               style={StyleSheet.absoluteFill}
             />
@@ -617,8 +617,8 @@ export default function AlbumDetailScreen() {
                     borderRadius: 20,
                     borderWidth: 1,
                     borderStyle: 'dashed',
-                    borderColor: '#444444',
-                    backgroundColor: 'rgba(255,255,255,0.04)',
+                    borderColor: theme.colors.border,
+                    backgroundColor: theme.colors.surfaceSunken,
                   }}
                   onPress={() => state.setShowTagAssignSheet(true)}
                   accessibilityRole="button"
@@ -832,6 +832,7 @@ export default function AlbumDetailScreen() {
 
       {/* Sheet de opciones */}
       <AlbumOptionsSheet
+        onReport={() => setTimeout(() => setReportVisible(true), 250)}
         visible={state.sheetVisible}
         sheetMode={state.sheetMode}
         sheetTranslateY={state.sheetTranslateY}
@@ -948,6 +949,24 @@ export default function AlbumDetailScreen() {
         onChange={state.handleSaveAlbumTags}
         onClose={() => state.setShowTagAssignSheet(false)}
       />
+
+      {state.id !== 'unassigned' && (
+        <ReportModal
+          visible={reportVisible}
+          onClose={() => setReportVisible(false)}
+          kind="album"
+          subject={album.title}
+          isLoading={reportContent.isPending}
+          onSubmit={async (reason, details) => {
+            await reportContent.mutateAsync({
+              targetType: 'album',
+              targetId: state.id as string,
+              reason,
+              details,
+            });
+          }}
+        />
+      )}
 
       {/* Modal de comentarios */}
       {state.id !== 'unassigned' && (

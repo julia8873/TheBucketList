@@ -112,15 +112,15 @@ export function BucketPhotosSection({
                     height: 72,
                     padding: 8,
                     borderRadius: 14,
-                    backgroundColor: dark[300],
+                    backgroundColor: theme.colors.surface,
                     borderWidth: 1,
-                    borderColor: drag.isActive ? gold[400] : dark[400],
+                    borderColor: drag.isActive ? gold[400] : theme.colors.border,
                     gap: 12,
                   }}
                 >
                   <Pressable
                     onPress={() => setViewingPhotoIndex(photos.findIndex((p: any) => p.id === photo.id))}
-                    style={{ width: 56, height: 56, borderRadius: 10, overflow: 'hidden', backgroundColor: dark[400] }}
+                    style={{ width: 56, height: 56, borderRadius: 10, overflow: 'hidden', backgroundColor: theme.colors.surface }}
                   >
                     <Image
                       source={{ uri: storageApi.getPublicUrl(photo.thumb_path || photo.storage_path) }}

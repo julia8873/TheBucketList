@@ -1,5 +1,6 @@
+import { Alert } from '@bucketlist/ui';
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Alert, Share, Dimensions, Animated, Platform, View } from 'react-native';
+import { Share, Dimensions, Animated, Platform, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
@@ -675,6 +676,13 @@ export function useBucketDetailState() {
 
   const removeAllAlbums = async () => {
     if (!user) return;
+    const okRemove = await confirm.ask({
+      title: '¿Quitar de todos los álbumes?',
+      message: 'La tarea dejará de pertenecer a cualquiera de sus álbumes.',
+      confirmLabel: 'Quitar',
+      cancelLabel: 'Cancelar',
+    });
+    if (!okRemove) return;
     const { error } = await supabase
       .from('album_items')
       .delete()

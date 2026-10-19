@@ -1,16 +1,7 @@
+import { Alert } from '@bucketlist/ui';
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  TextInput,
-  Pressable,
-  ActivityIndicator,
-  StyleSheet,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+import { View, Text, FlatList, TextInput, Pressable, ActivityIndicator, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -252,7 +243,7 @@ export default function ManageAdminsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   container: {
     flex: 1,
     backgroundColor: '#0D0D0D',

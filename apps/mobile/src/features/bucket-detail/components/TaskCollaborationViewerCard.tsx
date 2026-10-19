@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { Zap, Clock, UserPlus, Users, X, Check, Heart } from 'lucide-react-native';
@@ -173,7 +174,7 @@ export function TaskCollaborationViewerCard({
   return null;
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyleSheet({
   card: {
     borderRadius: 16,
     padding: 14,

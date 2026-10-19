@@ -1,15 +1,6 @@
+import { Alert } from '@bucketlist/ui';
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-  Alert,
-  Pressable,
-} from 'react-native';
+import { View, Text, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Pressable } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';

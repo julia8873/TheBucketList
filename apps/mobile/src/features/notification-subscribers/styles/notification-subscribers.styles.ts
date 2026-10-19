@@ -1,7 +1,8 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import { StyleSheet } from 'react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 
-export const styles = StyleSheet.create({
+export const styles = themedStyleSheet({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.65)',

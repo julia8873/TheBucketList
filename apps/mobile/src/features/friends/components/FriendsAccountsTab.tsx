@@ -164,7 +164,14 @@ export function FriendsAccountsTab({
     <View>
       <SectionLabel highlight="Resultados" rest={`para «${term}»`} style={styles.sectionLabel} />
       {results.length === 0 ? (
-        <Text style={styles.empty}>Nadie coincide con «{term}».</Text>
+        <Text
+          style={[
+            styles.empty,
+            { color: theme.dark ? '#FFFFFF' : theme.colors.foreground },
+          ]}
+        >
+          Nadie coincide con «{term}».
+        </Text>
       ) : (
         results.map((person) => {
           const isSelf = !!activeUserId && person.id === activeUserId;

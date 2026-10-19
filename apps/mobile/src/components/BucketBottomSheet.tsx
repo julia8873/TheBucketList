@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, View, Pressable, Animated, ActivityIndicator, Alert, StyleSheet, TextInput, ScrollView } from 'react-native';
+import { Modal, View, Pressable, Animated, ActivityIndicator, StyleSheet, TextInput, ScrollView } from 'react-native';
 import { Typography, toast } from '@bucketlist/ui';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { X, Camera, FolderPlus, ListPlus, Trash2, Circle, MoreHorizontal, CheckCircle2, Check, Eye, Users, Lock, ArrowLeft, FolderOpen, Image as ImageIcon, Tag, LogOut, Flag, Star, Crop, Link2, Bookmark } from 'lucide-react-native';
@@ -19,6 +19,8 @@ type BucketBottomSheetProps = {
   isSaved?: boolean;
   onToggleSave?: () => void;
   onLeaveCollaboration?: () => void;
+  /** Reportar la tarea al administrador (solo usuarios que no son su autor). */
+  onReport?: () => void;
   uploadPhotos: () => void;
   uploadCover: () => void;
   pickAndUploadCover?: () => void;
@@ -46,7 +48,7 @@ type BucketBottomSheetProps = {
 };
 
 export function BucketBottomSheet({
-  sheetVisible, sheetMode, sheetTranslateY, closeSheet, theme, isOwner, canEdit, isCollaborator, isFavorite, onToggleFavorite, isSaved, onToggleSave, onLeaveCollaboration, uploadPhotos, uploadCover, pickAndUploadCover, takePhotoAndUploadCover, openCoverLinkModal, recropCurrentCover, removeCover, loadAlbums, user, copyBucket, id, handleDelete, bucket, handleChangeStatus, handleChangeVisibility, handleChangeCategory, handleChangePriority, setSheetMode, albumsLoading, toggleAlbum, removeAllAlbums, albums, bucketAlbums, categories
+  sheetVisible, sheetMode, sheetTranslateY, closeSheet, theme, isOwner, canEdit, isCollaborator, isFavorite, onToggleFavorite, isSaved, onToggleSave, onLeaveCollaboration, onReport, uploadPhotos, uploadCover, pickAndUploadCover, takePhotoAndUploadCover, openCoverLinkModal, recropCurrentCover, removeCover, loadAlbums, user, copyBucket, id, handleDelete, bucket, handleChangeStatus, handleChangeVisibility, handleChangeCategory, handleChangePriority, setSheetMode, albumsLoading, toggleAlbum, removeAllAlbums, albums, bucketAlbums, categories
 }: BucketBottomSheetProps) {
   const [albumSearchQuery, setAlbumSearchQuery] = useState('');
   const visibilityLabel = (v: string) => {
@@ -190,6 +192,16 @@ export function BucketBottomSheet({
                     <View style={styles.sheetOptionText}>
                       <Typography variant="bodySemibold">Yo también quiero hacerlo</Typography>
                       <Typography variant="caption" color={theme.colors.foregroundMuted}>Añádelo a tu lista</Typography>
+                    </View>
+                  </Pressable>
+                )}
+
+                {!isOwner && user && onReport && (
+                  <Pressable style={[styles.sheetOption, styles.dangerOption]} onPress={() => closeSheet(onReport)}>
+                    <View style={styles.sheetIcon}><Flag color={theme.colors.error} size={21} /></View>
+                    <View style={styles.sheetOptionText}>
+                      <Typography variant="bodySemibold" color={theme.colors.error}>Reportar tarea</Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>Avisa al administrador de contenido inapropiado</Typography>
                     </View>
                   </Pressable>
                 )}

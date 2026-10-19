@@ -1,6 +1,7 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import { StyleSheet, Platform } from 'react-native';
 
-export const styles = StyleSheet.create({
+export const styles = themedStyleSheet({
   container: { flex: 1, backgroundColor: '#0D0D0D' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   errorText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: '#A0A0A0' },

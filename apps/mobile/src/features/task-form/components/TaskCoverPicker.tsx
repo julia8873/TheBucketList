@@ -1,5 +1,7 @@
+import { themedStyleSheet } from '@bucketlist/ui';
+import { Alert } from '@bucketlist/ui';
 import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet, Alert, Image as RNImage } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Image as RNImage } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Camera, ImagePlus, X, Check, Link2, Crop, Maximize2 } from 'lucide-react-native';
@@ -292,7 +294,7 @@ export function TaskCoverPicker({
                 accessibilityLabel={`Color de portada ${g.id}`}
               >
                 <LinearGradient
-                  colors={g.colors}
+                  colors={!theme.dark && (g as any).lightColors ? (g as any).lightColors : g.colors}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}

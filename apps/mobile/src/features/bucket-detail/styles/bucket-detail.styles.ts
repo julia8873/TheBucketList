@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import { StyleSheet, Dimensions, Platform } from 'react-native';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 
@@ -7,7 +8,7 @@ const BADGES_OVERLAP = 18;
 
 export { SCREEN_WIDTH, COVER_HEIGHT, BADGES_OVERLAP };
 
-export const styles = StyleSheet.create({
+export const styles = themedStyleSheet({
   container: { flex: 1 },
   center: { justifyContent: 'center', alignItems: 'center' },
 

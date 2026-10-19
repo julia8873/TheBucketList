@@ -77,7 +77,47 @@ export async function validateOAuthSession(
 
     const isExistingAccount = !!profile && profile.onboarding_completed === true;
 
-    // Si la cuenta ya existe y completó el onboarding, iniciar sesión directamente siempre
+    if (mode === 'register') {
+      // El usuario pulsó "Crear cuenta" con Google pero ya tiene una cuenta completada
+      if (isExistingAccount) {
+        await supabase.auth.signOut();
+        useAuthStore.getState().signOut();
+        useAuthStore.getState().setOAuthMode(null);
+        await AsyncStorage.removeItem('@oauth_mode').catch(() => undefined);
+        useAuthStore.getState().setOAuthError('account_exists_google');
+
+        if (onError) {
+          onError('account_exists_google');
+        }
+
+        confirm.show({
+          title: 'Cuenta ya registrada',
+          message: 'Ya existe una cuenta asociada a este correo de Google. ¿Deseas iniciar sesión?',
+          confirmLabel: 'Iniciar sesión',
+          cancelLabel: 'Cancelar',
+          onConfirm: () => {
+            if (router) router.replace('/(auth)/login');
+          },
+          onCancel: () => {
+            if (router) router.replace('/(auth)/register');
+          },
+        });
+
+        return false;
+      }
+
+      // Nueva cuenta: marcar onboarding pendiente para que configure @username, foto, bio.
+      useAuthStore.getState().setOAuthMode(null);
+      await AsyncStorage.removeItem('@oauth_mode').catch(() => undefined);
+      useAuthStore.getState().setOnboardingCompleted(false);
+      if (router) {
+        router.replace('/(onboarding)/username');
+      }
+      return true;
+    }
+
+    // Modo login (Ya tengo cuenta):
+    // Si la cuenta existe y completó el onboarding, iniciar sesión directamente
     if (isExistingAccount) {
       useAuthStore.getState().setOAuthMode(null);
       await AsyncStorage.removeItem('@oauth_mode').catch(() => undefined);
@@ -88,53 +128,39 @@ export async function validateOAuthSession(
       return true;
     }
 
-    // Si NO es una cuenta existente (es nueva o no completó onboarding):
-    if (mode === 'login') {
-      // El usuario pulsó explícitamente "Ya tengo cuenta", pero no existe ninguna cuenta completada
-      // 1. Borramos de auth.users el registro recién creado para no dejar cuenta huérfana
-      try {
-        await supabase.rpc('cleanup_unregistered_oauth_user');
-      } catch (err) {
-        console.warn('[GoogleAuth] Error al limpiar usuario no registrado:', err);
-      }
-
-      // 2. Cerramos sesión completamente
-      await supabase.auth.signOut();
-      useAuthStore.getState().signOut();
-      useAuthStore.getState().setOAuthMode(null);
-      await AsyncStorage.removeItem('@oauth_mode').catch(() => undefined);
-      useAuthStore.getState().setOAuthError('no_account_google');
-
-      if (onError) {
-        onError('no_account_google');
-      }
-
-      confirm.show({
-        title: 'Cuenta no encontrada',
-        message: 'No existe ninguna cuenta asociada a este correo de Google. ¿Deseas crear una cuenta?',
-        confirmLabel: 'Crear cuenta',
-        cancelLabel: 'Cancelar',
-        onConfirm: () => {
-          if (router) router.replace('/(auth)/register');
-        },
-        onCancel: () => {
-          if (router) router.replace('/(auth)/login');
-        },
-      });
-
-      return false;
+    // El usuario pulsó "Ya tengo cuenta" pero no existe ninguna cuenta completada
+    // 1. Borrar de auth.users el registro recién creado para no dejar cuenta huérfana
+    try {
+      await supabase.rpc('cleanup_unregistered_oauth_user');
+    } catch (err) {
+      console.warn('[GoogleAuth] Error al limpiar usuario no registrado:', err);
     }
 
-    // Modo register (Crear cuenta):
-    // Nueva cuenta: marcar onboarding pendiente para que configure @username, foto, bio.
-    // El usuario y correo NO quedan registrados definitivamente hasta finalizar todo el proceso.
+    // 2. Cerrar sesión completamente
+    await supabase.auth.signOut();
+    useAuthStore.getState().signOut();
     useAuthStore.getState().setOAuthMode(null);
     await AsyncStorage.removeItem('@oauth_mode').catch(() => undefined);
-    useAuthStore.getState().setOnboardingCompleted(false);
-    if (router) {
-      router.replace('/(onboarding)/username');
+    useAuthStore.getState().setOAuthError('no_account_google');
+
+    if (onError) {
+      onError('no_account_google');
     }
-    return true;
+
+    confirm.show({
+      title: 'Cuenta no encontrada',
+      message: 'No existe ninguna cuenta asociada a este correo de Google. ¿Deseas crear una cuenta?',
+      confirmLabel: 'Crear cuenta',
+      cancelLabel: 'Cancelar',
+      onConfirm: () => {
+        if (router) router.replace('/(auth)/register');
+      },
+      onCancel: () => {
+        if (router) router.replace('/(auth)/login');
+      },
+    });
+
+    return false;
   } catch (e: any) {
     console.error('[GoogleAuth] Error en validateOAuthSession:', e);
     useAuthStore.getState().setOAuthMode(null);
@@ -193,6 +219,11 @@ export function useGoogleAuth(
               return;
             }
           }
+
+          // El flujo nativo completó (ya estaba firmado, account picker cancelado silenciosamente,
+          // etc.) pero sin idToken fresco. No caer al fallback web para evitar doble popup.
+          useAuthStore.getState().setOAuthMode(null);
+          return;
         } catch (nativeErr: any) {
           // Si el usuario simplemente canceló la selección de cuenta
           if (

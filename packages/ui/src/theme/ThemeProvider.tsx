@@ -4,6 +4,7 @@ import { useColorScheme as useSystemColorScheme } from 'react-native';
 import { lightTheme } from './light';
 import { darkTheme } from './dark';
 import type { Theme, ColorScheme } from './types';
+import { setActiveColorScheme } from './themedStyles';
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 
@@ -34,6 +35,8 @@ export function ThemeProvider({
   const resolved: ColorScheme =
     override === 'system' ? systemScheme : override;
   const theme = resolved === 'dark' ? darkTheme : lightTheme;
+  // Sincroniza el esquema para themedStyleSheet antes de renderizar a los hijos.
+  setActiveColorScheme(resolved);
 
   const setColorScheme = useCallback(
     (scheme: ColorScheme | 'system') => {

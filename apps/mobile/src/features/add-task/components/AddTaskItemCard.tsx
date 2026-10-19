@@ -2,9 +2,10 @@ import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Check } from 'lucide-react-native';
+import { useTheme } from '@bucketlist/ui';
 import { BucketCover } from '../../../components/BucketCover';
 import { styles } from '../styles/add-task.styles';
-import { GRADIENTS } from '../constants';
+import { GRADIENTS, LIGHT_GRADIENTS } from '../constants';
 import type { UnassignedTask } from '../../../services/api/tasksService';
 
 interface AddTaskItemCardProps {
@@ -18,7 +19,9 @@ export function AddTaskItemCard({
   isSelected,
   onToggle,
 }: AddTaskItemCardProps) {
-  const thumbGradient = GRADIENTS[task.coverKey as keyof typeof GRADIENTS] || GRADIENTS.aurora;
+  const { theme } = useTheme();
+  const gradientsSet = !theme.dark ? LIGHT_GRADIENTS : GRADIENTS;
+  const thumbGradient = gradientsSet[task.coverKey as keyof typeof gradientsSet] || gradientsSet.aurora;
   const isDiagonal = task.coverKey === 'dorado';
 
   return (

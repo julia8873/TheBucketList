@@ -12,6 +12,15 @@ export interface BlockedUserItem {
   } | null;
 }
 
+export type ReportTargetType = 'user' | 'bucket' | 'album' | 'comment';
+
+export interface BlockerProfile {
+  id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+}
+
 export interface UserReportItem {
   id: string;
   reason: string;
@@ -19,6 +28,12 @@ export interface UserReportItem {
   status: string | null;
   resolved: boolean | null;
   created_at: string | null;
+  target_type: ReportTargetType;
+  target_title: string | null;
+  target_excerpt: string | null;
+  bucket_id: string | null;
+  album_id: string | null;
+  comment_id: string | null;
   reporter: {
     id: string;
     username: string;
@@ -30,12 +45,34 @@ export interface UserReportItem {
     username: string;
     display_name: string | null;
     avatar_url: string | null;
+    suspended_at?: string | null;
   } | null;
 }
 
 function one<T>(value: T | T[] | null | undefined): T | null {
   if (!value) return null;
   return Array.isArray(value) ? (value[0] ?? null) : value;
+}
+
+function normalizeReport(item: any): UserReportItem {
+  const unknownUser = (id: string | null | undefined) =>
+    id ? { id, username: 'usuario', display_name: null, avatar_url: null } : null;
+  return {
+    id: item.id,
+    reason: item.reason,
+    details: item.details ?? null,
+    status: item.status ?? null,
+    resolved: item.resolved ?? null,
+    created_at: item.created_at ?? null,
+    target_type: (item.target_type as ReportTargetType) || 'user',
+    target_title: item.target_title ?? null,
+    target_excerpt: item.target_excerpt ?? null,
+    bucket_id: item.bucket_id ?? null,
+    album_id: item.album_id ?? null,
+    comment_id: item.comment_id ?? null,
+    reporter: one(item.reporter) ?? unknownUser(item.reporter_id),
+    reported: one(item.reported) ?? unknownUser(item.reported_user_id),
+  };
 }
 
 export const blockReportApi = {
@@ -107,6 +144,20 @@ export const blockReportApi = {
 
     if (error) return false;
     return !!data;
+  },
+
+  /**
+   * Identidad mínima (nombre, usuario, foto) de alguien que te ha bloqueado.
+   * Devuelve null si no te ha bloqueado o si eres administrador.
+   * Permite mostrar "Este usuario te ha bloqueado" aunque su perfil completo no sea visible.
+   */
+  getBlockerProfile: async (targetUserId: string): Promise<BlockerProfile | null> => {
+    if (!targetUserId) return null;
+    const { data, error } = await (supabase.rpc as any)('get_blocker_profile', {
+      p_user_id: targetUserId,
+    });
+    if (error || !data) return null;
+    return data as BlockerProfile;
   },
 
   /**
@@ -185,11 +236,43 @@ export const blockReportApi = {
     const { error } = await supabase.from('reports').insert({
       reporter_id: params.reporterId,
       reported_user_id: params.reportedUserId,
+      target_type: 'user',
       reason: params.reason,
       details: params.details?.trim() || null,
       status: 'pending',
       resolved: false,
     });
+
+    if (error) throw new Error(error.message || 'Error al enviar reporte');
+  },
+
+  /**
+   * Reporta una tarea, un álbum o un comentario. El servidor deduce el autor
+   * (usuario reportado) y guarda una copia del contenido para el administrador.
+   */
+  reportContent: async (params: {
+    reporterId: string;
+    targetType: Exclude<ReportTargetType, 'user'>;
+    targetId: string;
+    reason: string;
+    details?: string;
+  }): Promise<void> => {
+    const target =
+      params.targetType === 'bucket'
+        ? { bucket_id: params.targetId }
+        : params.targetType === 'album'
+          ? { album_id: params.targetId }
+          : { comment_id: params.targetId };
+
+    const { error } = await supabase.from('reports').insert({
+      reporter_id: params.reporterId,
+      ...target,
+      target_type: params.targetType,
+      reason: params.reason,
+      details: params.details?.trim() || null,
+      status: 'pending',
+      resolved: false,
+    } as any);
 
     if (error) throw new Error(error.message || 'Error al enviar reporte');
   },
@@ -202,16 +285,7 @@ export const blockReportApi = {
     try {
       const { data, error } = await supabase.rpc('get_admin_reports');
       if (!error && Array.isArray(data)) {
-        return data.map((item: any) => ({
-          id: item.id,
-          reason: item.reason,
-          details: item.details,
-          status: item.status,
-          resolved: item.resolved,
-          created_at: item.created_at,
-          reporter: item.reporter ?? (item.reporter_id ? { id: item.reporter_id, username: 'usuario', display_name: null, avatar_url: null } : null),
-          reported: item.reported ?? (item.reported_user_id ? { id: item.reported_user_id, username: 'usuario', display_name: null, avatar_url: null } : null),
-        }));
+        return data.map(normalizeReport);
       }
     } catch {
       // Continuar con fallback directo
@@ -227,6 +301,12 @@ export const blockReportApi = {
         status,
         resolved,
         created_at,
+        target_type,
+        target_title,
+        target_excerpt,
+        bucket_id,
+        album_id,
+        comment_id,
         reported_user_id,
         reporter_id,
         reporter:reporter_id (
@@ -239,28 +319,15 @@ export const blockReportApi = {
           id,
           username,
           display_name,
-          avatar_url
+          avatar_url,
+          suspended_at
         )
       `)
-      .not('reported_user_id', 'is', null)
       .order('created_at', { ascending: false });
 
     if (error) throw new Error(error.message || 'Error al obtener reportes');
 
-    return (data ?? []).map((row: any) => {
-      const reported = one(row.reported);
-      const reporter = one(row.reporter);
-      return {
-        id: row.id,
-        reason: row.reason,
-        details: row.details,
-        status: row.status,
-        resolved: row.resolved,
-        created_at: row.created_at,
-        reporter: reporter ?? (row.reporter_id ? { id: row.reporter_id, username: 'usuario', display_name: null, avatar_url: null } : null),
-        reported: reported ?? (row.reported_user_id ? { id: row.reported_user_id, username: 'usuario', display_name: null, avatar_url: null } : null),
-      };
-    });
+    return (data ?? []).map(normalizeReport);
   },
 
   /**
@@ -284,5 +351,36 @@ export const blockReportApi = {
     });
 
     if (error) throw new Error(error.message || 'Error al eliminar cuenta de usuario');
+  },
+
+  /**
+   * Elimina el contenido reportado (tarea, álbum o comentario) y cierra el reporte (administrador)
+   */
+  adminRemoveReportedContent: async (reportId: string): Promise<void> => {
+    const { error } = await (supabase.rpc as any)('admin_remove_reported_content', {
+      p_report_id: reportId,
+    });
+    if (error) throw new Error(error.message || 'Error al eliminar el contenido reportado');
+  },
+
+  /**
+   * Bloquea (suspende) la cuenta de un usuario: no podrá iniciar sesión y su contenido deja de verse (administrador)
+   */
+  adminSuspendUser: async (targetUserId: string, reason?: string): Promise<void> => {
+    const { error } = await (supabase.rpc as any)('admin_suspend_user', {
+      p_user_id: targetUserId,
+      p_reason: reason ?? null,
+    });
+    if (error) throw new Error(error.message || 'Error al bloquear la cuenta');
+  },
+
+  /**
+   * Reactiva una cuenta suspendida (administrador)
+   */
+  adminUnsuspendUser: async (targetUserId: string): Promise<void> => {
+    const { error } = await (supabase.rpc as any)('admin_unsuspend_user', {
+      p_user_id: targetUserId,
+    });
+    if (error) throw new Error(error.message || 'Error al reactivar la cuenta');
   },
 };

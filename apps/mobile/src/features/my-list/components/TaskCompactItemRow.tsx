@@ -1,3 +1,4 @@
+import { themedStyleSheet } from '@bucketlist/ui';
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { CheckCircle2, GripVertical, Star, Users } from 'lucide-react-native';
@@ -134,7 +135,9 @@ function TaskCompactItemRowComponent({
           localStyles.thumbContainer,
           {
             borderColor: theme.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-            backgroundColor: theme.dark ? '#181818' : '#E8E3D8',
+            backgroundColor: isCompleted
+              ? (theme.dark ? '#121212' : '#EDE8DE')
+              : theme.colors.surface,
           },
           isCompleted && { opacity: 0.55 },
         ]}
@@ -198,7 +201,7 @@ function TaskCompactItemRowComponent({
 
 export const TaskCompactItemRow = React.memo(TaskCompactItemRowComponent);
 
-const localStyles = StyleSheet.create({
+const localStyles = themedStyleSheet({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
