@@ -14,7 +14,7 @@
  * Los scrims (rgba(0,0,0,a)) y los blancos puros usados como texto sobre
  * imágenes/botones se respetan a propósito.
  */
-import { StyleSheet } from 'react-native';
+import { StyleSheet, ViewStyle, TextStyle, ImageStyle } from 'react-native';
 import { lightTheme } from './light';
 import type { ColorScheme } from './types';
 
@@ -156,9 +156,11 @@ export function themedColor(
   return scheme === 'light' ? mapToLight(kind, value) : value;
 }
 
-type NamedStyles<T> = { [K in keyof T]: any };
+type NamedStyles<T> = { [P in keyof T]: ViewStyle | TextStyle | ImageStyle };
 
-export function themedStyleSheet<T extends NamedStyles<T>>(styles: T): T {
+export function themedStyleSheet<T extends NamedStyles<T> | NamedStyles<any>>(
+  styles: T & NamedStyles<any>,
+): T {
   const base = StyleSheet.create(styles as any) as unknown as Record<string, any>;
   const lightCache: Record<string, any> = {};
   const result: Record<string, any> = {};

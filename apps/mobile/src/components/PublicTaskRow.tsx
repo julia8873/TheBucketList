@@ -91,6 +91,8 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, isFavorite = false
   const pressedBg = theme.colors.secondary;
 
   if (mode === 'gallery') {
+    const coverVal = resolveTaskImage(bucket);
+    const isImageCover = !!coverVal && !coverVal.startsWith('preset:');
     return (
       <Pressable
         onPress={onPress}
@@ -106,19 +108,21 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, isFavorite = false
         accessibilityLabel={bucket.title}
       >
         <BucketCover
-          value={resolveTaskImage(bucket)}
-          title={bucket.title}
-          categorySlug={bucket.category?.slug}
-          seed={bucket.id}
-          iconSize={90}
-          style={styles.galleryCover}
-        >
-          <LinearGradient
-            colors={overlay.fadeBoth}
-            locations={[0, 0.45, 1]}
-            style={StyleSheet.absoluteFill}
-            pointerEvents="none"
-          />
+          value={coverVal}
+            title={bucket.title}
+            categorySlug={bucket.category?.slug}
+            seed={bucket.id}
+            iconSize={90}
+            style={styles.galleryCover}
+          >
+            {!isImageCover && (
+              <LinearGradient
+                colors={overlay.fadeBoth}
+                locations={[0, 0.45, 1]}
+                style={StyleSheet.absoluteFill}
+                pointerEvents="none"
+              />
+            )}
 
           {isFavorite ? (
             <View

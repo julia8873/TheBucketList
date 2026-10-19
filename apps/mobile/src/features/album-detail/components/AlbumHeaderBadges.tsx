@@ -107,17 +107,17 @@ export function AlbumHeaderBadges({
       {/* Segunda fila: Visibilidad */}
       <View style={styles.chipsRowSecond}>
         <Pressable
-          style={[styles.chip, styles.chipMuted, canEdit && styles.chipPressable]}
+          style={[styles.chip, styles.chipGold, canEdit && styles.chipPressable]}
           onPress={onOpenVisibility}
         >
           {album.visibility === 'public' ? (
-            <Eye size={13} color="#CFCABD" strokeWidth={2} style={{ marginRight: 5 }} />
+            <Eye size={13} color={gold[400]} strokeWidth={2} style={{ marginRight: 5 }} />
           ) : album.visibility === 'followers' ? (
-            <Users size={13} color="#CFCABD" strokeWidth={2} style={{ marginRight: 5 }} />
+            <Users size={13} color={gold[400]} strokeWidth={2} style={{ marginRight: 5 }} />
           ) : (
-            <Lock size={13} color="#CFCABD" strokeWidth={2} style={{ marginRight: 5 }} />
+            <Lock size={13} color={gold[400]} strokeWidth={2} style={{ marginRight: 5 }} />
           )}
-          <Text style={[styles.chipText, { color: '#F2EFE8', fontWeight: '600' }]}>
+          <Text style={[styles.chipStatusText, { color: gold[400], fontWeight: '700' }]}>
             {visibilityLabel(album.visibility)}
           </Text>
         </Pressable>

@@ -59,6 +59,7 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
   };
   // Foto subida más reciente, portada o degradado, según lo que haya elegido el dueño de la tarea.
   const coverValue: string | null = resolveTaskImage(bucket);
+  const isImageCover = !!coverValue && !coverValue.startsWith('preset:');
 
   const reactions: Array<{ emoji: string; user_id: string }> = bucket.reactions ?? [];
   const likeCount = reactions.length;
@@ -125,12 +126,14 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
             iconSize={90}
             style={styles.galleryCover}
           >
-            <LinearGradient
-              colors={overlay.softBoth}
-              locations={[0, 0.45, 1]}
-              style={StyleSheet.absoluteFill}
-              pointerEvents="none"
-            />
+            {!isImageCover && (
+              <LinearGradient
+                colors={overlay.softBoth as any}
+                locations={[0, 0.45, 1]}
+                style={StyleSheet.absoluteFill}
+                pointerEvents="none"
+              />
+            )}
 
             {/* Header flotante: autor */}
             <Pressable onPress={openProfile} style={styles.galleryHeader} hitSlop={6} accessibilityRole="button">
@@ -160,17 +163,15 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
                   <MessageCircle size={14} color="#F2EFE8" strokeWidth={1.8} />
                   <Text style={styles.galleryActionText}>{commentCount}</Text>
                 </Pressable>
-                {!isOwn && (
-                  <Pressable onPress={handleSaveBucket} hitSlop={6} style={styles.galleryActionItem}>
-                    <Bookmark
-                      size={13}
-                      color={isBucketSaved ? gold[400] : '#F2EFE8'}
-                      fill={isBucketSaved ? gold[400] : 'transparent'}
-                      strokeWidth={1.8}
-                    />
-                    {saveCount > 0 && <Text style={styles.galleryActionText}>{saveCount}</Text>}
-                  </Pressable>
-                )}
+                <Pressable onPress={handleSaveBucket} hitSlop={6} style={styles.galleryActionItem} disabled={isOwn}>
+                  <Bookmark
+                    size={13}
+                    color={isBucketSaved ? gold[400] : '#F2EFE8'}
+                    fill={isBucketSaved ? gold[400] : 'transparent'}
+                    strokeWidth={1.8}
+                  />
+                  <Text style={styles.galleryActionText}>{saveCount}</Text>
+                </Pressable>
               </View>
             </View>
           </BucketCover>
@@ -240,6 +241,7 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
               <MessageCircle size={16} color={theme.colors.foregroundSubtle} strokeWidth={1.8} />
               <Text style={[styles.compactActionCount, { color: theme.colors.foregroundSubtle }]}>{commentCount}</Text>
             </Pressable>
+
           </View>
         </Pressable>
 
@@ -288,12 +290,14 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
           iconSize={170}
           style={[styles.cover, { borderColor: theme.colors.border }]}
         >
-          <LinearGradient
-            colors={overlay.softFade}
-            locations={[0.35, 1]}
-            style={StyleSheet.absoluteFill}
-            pointerEvents="none"
-          />
+          {!isImageCover && (
+            <LinearGradient
+              colors={overlay.softFade}
+              locations={[0.35, 1]}
+              style={StyleSheet.absoluteFill}
+              pointerEvents="none"
+            />
+          )}
           <View style={styles.coverText} pointerEvents="none">
             <Text style={styles.coverTitle} numberOfLines={2}>
               {bucket.title}
@@ -332,25 +336,22 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
           <Text style={[styles.count, { color: theme.colors.foreground }]}>{commentCount}</Text>
         </Pressable>
 
-        {!isOwn && (
-          <Pressable
-            onPress={handleSaveBucket}
-            style={styles.action}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={isBucketSaved ? 'Quitar de guardados' : 'Guardar tarea'}
-          >
-            <Bookmark
-              size={22}
-              color={isBucketSaved ? gold[400] : theme.colors.foreground}
-              fill={isBucketSaved ? gold[400] : 'transparent'}
-              strokeWidth={1.8}
-            />
-            {saveCount > 0 && (
-              <Text style={[styles.count, { color: isBucketSaved ? gold[400] : theme.colors.foreground }]}>{saveCount}</Text>
-            )}
-          </Pressable>
-        )}
+        <Pressable
+          onPress={handleSaveBucket}
+          style={styles.action}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={isBucketSaved ? 'Quitar de guardados' : 'Guardar tarea'}
+          disabled={isOwn}
+        >
+          <Bookmark
+            size={22}
+            color={isBucketSaved ? gold[400] : theme.colors.foreground}
+            fill={isBucketSaved ? gold[400] : 'transparent'}
+            strokeWidth={1.8}
+          />
+          <Text style={[styles.count, { color: isBucketSaved ? gold[400] : theme.colors.foreground }]}>{saveCount}</Text>
+        </Pressable>
 
         <View style={styles.flex} />
 

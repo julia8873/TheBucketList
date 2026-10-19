@@ -11,6 +11,7 @@ import {
   ArrowUp,
   ChevronDown,
   Check,
+  SlidersHorizontal,
 } from 'lucide-react-native';
 import { Typography, FilterChip } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
@@ -42,6 +43,7 @@ interface TaskListHeaderControlsProps {
   isSearching: boolean;
   sortTriggerRef: any;
   openSortMenu: () => void;
+  onOpenCustomize?: () => void;
   theme: any;
 }
 
@@ -98,6 +100,7 @@ export function TaskListHeaderControls({
   isSearching,
   sortTriggerRef,
   openSortMenu,
+  onOpenCustomize,
   theme,
 }: TaskListHeaderControlsProps) {
   const insets = useSafeAreaInsets();
@@ -293,6 +296,8 @@ export function TaskListHeaderControls({
                   ? 'Prioridad'
                   : sortField === 'alphabetical'
                   ? 'Alfabético'
+                  : sortField === 'completed_at'
+                  ? 'Completado'
                   : 'Fecha'}
               </Typography>
               {sortField !== 'manual' &&
@@ -304,6 +309,31 @@ export function TaskListHeaderControls({
                 ))}
             </Pressable>
           </View>
+
+          {/* Botón Personalizar */}
+          {onOpenCustomize && (
+            <Pressable
+              onPress={onOpenCustomize}
+              hitSlop={8}
+              style={[
+                styles.sortTriggerBtn,
+                {
+                  height: 32,
+                  paddingHorizontal: 8,
+                  borderRadius: 8,
+                  backgroundColor: theme.colors.surface,
+                  borderWidth: 1,
+                  borderColor: theme.colors.border,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Personalizar vista"
+            >
+              <SlidersHorizontal size={14} color={gold[400]} />
+            </Pressable>
+          )}
 
           {!isSearching && isReordering && (
             <Pressable

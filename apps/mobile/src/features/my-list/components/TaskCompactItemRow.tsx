@@ -7,6 +7,8 @@ import { styles } from '../styles/my-list.styles';
 import { DragHandle } from '@/components/DraggableTaskList';
 import { BucketCover } from '@/components/BucketCover';
 import { resolveTaskImage } from '@/utils/taskImage';
+import { TaskViewCustomization } from '@/stores/myListCustomization.store';
+import { Tag } from '@/hooks/useTags';
 
 interface TaskCompactItemRowProps {
   item: any;
@@ -14,6 +16,8 @@ interface TaskCompactItemRowProps {
   isSelected: boolean;
   isSelectionMode: boolean;
   isFav: boolean;
+  itemTags?: Tag[];
+  customization?: TaskViewCustomization;
   onPress: () => void;
   onLongPress: () => void;
   onToggleSelect: () => void;
@@ -26,6 +30,8 @@ function TaskCompactItemRowComponent({
   isSelected,
   isSelectionMode,
   isFav,
+  itemTags,
+  customization,
   onPress,
   onLongPress,
   onToggleSelect,
@@ -56,7 +62,46 @@ function TaskCompactItemRowComponent({
       ? `${counterCount}/${counterTarget}`
       : null;
 
-  const isHighPriority = item.priority === 'urgent' || item.priority === 'high';
+  const itemPriority = item.priority || 'medium';
+  const itemPriorityColor =
+    itemPriority === 'urgent'
+      ? '#DC2626'
+      : itemPriority === 'high'
+      ? '#EF4444'
+      : itemPriority === 'low'
+      ? '#10B981'
+      : '#D4B13A';
+  const itemPriorityLabel =
+    itemPriority === 'urgent'
+      ? 'Urgente'
+      : itemPriority === 'high'
+      ? 'Alta'
+      : itemPriority === 'low'
+      ? 'Baja'
+      : 'Media';
+
+  const subParts: string[] = [];
+  if (customization?.showCategoryLocation) {
+    const catOrLoc = item.category?.name_es || item.category?.name || item.location;
+    if (catOrLoc) subParts.push(catOrLoc);
+  }
+  if (customization?.showDescription && item.description) {
+    subParts.push(item.description.trim());
+  }
+  const extraSubtitle = subParts.join(' · ');
+
+  // Decide which meta badges to render below the title
+  const showPriority = customization?.showPriority ?? true;
+  const showTags = customization?.showTags ?? false;
+  const showProgress = customization?.showSubtasksProgress ?? true;
+  const showDates = customization?.showDates ?? false;
+
+  const hasMetaBadges =
+    showPriority ||
+    (showTags && itemTags && itemTags.length > 0) ||
+    (showProgress && !!progressText) ||
+    (showDates && !!(item.deadline || item.completed_at)) ||
+    isFav;
 
   return (
     <Pressable
@@ -152,47 +197,110 @@ function TaskCompactItemRowComponent({
         />
       </View>
 
-      <Text
-        numberOfLines={1}
-        style={[
-          localStyles.title,
-          { color: isCompleted ? theme.colors.foregroundMuted : theme.colors.foreground },
-          isCompleted && localStyles.titleCompleted,
-        ]}
-      >
-        {item.title}
-      </Text>
-
-      <View style={localStyles.rightContainer}>
-        {item.is_shared && <Users size={12} color={theme.colors.primary} />}
-        {isHighPriority && <View style={localStyles.priorityDot} />}
-        {progressText && (
-          <View
-            style={[
-              localStyles.progressBadge,
-              {
-                backgroundColor: isCompleted
-                  ? 'rgba(52, 199, 89, 0.14)'
-                  : (theme.dark ? '#222222' : '#E8E3D8'),
-              },
-            ]}
-          >
-            <Text
-              style={[
-                localStyles.progressText,
-                { color: isCompleted ? '#34C759' : theme.colors.foregroundMuted },
-              ]}
-            >
-              {progressText}
-            </Text>
+      <View style={{ flex: 1, justifyContent: 'center' }}>
+        <Text
+          numberOfLines={2}
+          style={[
+            localStyles.title,
+            { color: isCompleted ? theme.colors.foregroundMuted : theme.colors.foreground },
+            isCompleted && localStyles.titleCompleted,
+          ]}
+        >
+          {item.title}
+        </Text>
+        {extraSubtitle ? (
+          <Text numberOfLines={1} style={{ fontSize: 11, color: theme.colors.foregroundMuted, marginTop: 1 }}>
+            {extraSubtitle}
+          </Text>
+        ) : null}
+        {hasMetaBadges && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
+            {item.is_shared && <Users size={12} color={theme.colors.primary} />}
+            {showPriority && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 3,
+                  paddingHorizontal: 6,
+                  paddingVertical: 1.5,
+                  borderRadius: 6,
+                  backgroundColor:
+                    itemPriority === 'urgent' || itemPriority === 'high'
+                      ? 'rgba(239, 68, 68, 0.14)'
+                      : itemPriority === 'low'
+                      ? 'rgba(16, 185, 129, 0.14)'
+                      : 'rgba(212, 177, 58, 0.14)',
+                  borderWidth: 1,
+                  borderColor: itemPriorityColor,
+                }}
+              >
+                <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: itemPriorityColor }} />
+                <Text style={{ fontSize: 10, fontWeight: '700', color: itemPriorityColor }}>
+                  {itemPriorityLabel}
+                </Text>
+              </View>
+            )}
+            {showTags && itemTags && itemTags.length > 0 && (
+              <>
+                {itemTags.slice(0, 2).map((t) => (
+                  <View
+                    key={t.id}
+                    style={{
+                      paddingHorizontal: 6,
+                      paddingVertical: 1.5,
+                      borderRadius: 6,
+                      backgroundColor: theme.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                      borderWidth: 1,
+                      borderColor: t.color || theme.colors.border,
+                    }}
+                  >
+                    <Text style={{ fontSize: 10, color: t.color || theme.colors.foreground, fontWeight: '600' }}>
+                      {t.emoji ? `${t.emoji} ` : ''}{t.name}
+                    </Text>
+                  </View>
+                ))}
+                {itemTags.length > 2 && (
+                  <Text style={{ fontSize: 10, color: theme.colors.foregroundMuted, fontWeight: '600' }}>
+                    +{itemTags.length - 2}
+                  </Text>
+                )}
+              </>
+            )}
+            {showProgress && progressText && (
+              <View
+                style={[
+                  localStyles.progressBadge,
+                  {
+                    backgroundColor: isCompleted
+                      ? 'rgba(52, 199, 89, 0.14)'
+                      : (theme.dark ? '#222222' : '#E8E3D8'),
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    localStyles.progressText,
+                    { color: isCompleted ? '#34C759' : theme.colors.foregroundMuted },
+                  ]}
+                >
+                  {progressText}
+                </Text>
+              </View>
+            )}
+            {showDates && (item.deadline || item.completed_at) && (
+              <Text style={{ fontSize: 10, color: theme.colors.foregroundMuted }}>
+                {new Date(item.status === 'completed' && item.completed_at ? item.completed_at : item.deadline).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+              </Text>
+            )}
+            {isFav && (
+              <Star
+                size={12}
+                color={theme.colors.primary}
+                fill={theme.colors.primary}
+              />
+            )}
           </View>
-        )}
-        {isFav && (
-          <Star
-            size={13}
-            color={theme.colors.primary}
-            fill={theme.colors.primary}
-          />
         )}
       </View>
     </Pressable>
@@ -205,7 +313,8 @@ const localStyles = themedStyleSheet({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 52,
+    minHeight: 52,
+    paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 13,
     borderWidth: 1,
@@ -235,7 +344,6 @@ const localStyles = themedStyleSheet({
     marginRight: 11,
   },
   title: {
-    flex: 1,
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
     letterSpacing: -0.2,
@@ -250,6 +358,7 @@ const localStyles = themedStyleSheet({
     gap: 7,
     marginLeft: 8,
   },
+  // kept for backward compat but now unused in main flow
   progressBadge: {
     paddingHorizontal: 7,
     paddingVertical: 2,

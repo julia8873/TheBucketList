@@ -404,6 +404,17 @@ export function useToggleSaveBucket() {
         const current = old ?? [];
         return currentlySaved ? current.filter((id) => id !== bucketId) : [...current, bucketId];
       });
+
+      // Optimistic update for bucket-save-counts
+      queryClient.setQueriesData<Record<string, number>>({ queryKey: ['bucket-save-counts'] }, (old: Record<string, number> | undefined) => {
+        if (!old) return old;
+        const currentCount = old[bucketId] ?? 0;
+        return {
+          ...old,
+          [bucketId]: Math.max(0, currentCount + (currentlySaved ? -1 : 1)),
+        };
+      });
+
       return { prev };
     },
     onError: (_err, variables, context) => {
@@ -555,8 +566,9 @@ export function useToggleSaveAlbum() {
       queryClient.setQueriesData(
         { queryKey: ['album-save-counts'], exact: false },
         (old: Record<string, number> | undefined) => {
-          if (!old || !(albumId in old)) return old;
-          return { ...old, [albumId]: Math.max(0, (old[albumId] ?? 0) + (currentlySaved ? -1 : 1)) };
+          if (!old) return old;
+          const currentCount = old[albumId] ?? 0;
+          return { ...old, [albumId]: Math.max(0, currentCount + (currentlySaved ? -1 : 1)) };
         }
       );
 

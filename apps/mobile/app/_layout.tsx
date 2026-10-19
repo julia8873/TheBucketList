@@ -21,6 +21,7 @@ import {
 } from '@expo-google-fonts/playfair-display';
 import { ThemeProvider, ToastProvider, ConfirmProvider, useTheme } from '@bucketlist/ui';
 import { useThemeStore, hydrateThemeStore } from '../src/stores/theme.store';
+import { hydrateMyListCustomization } from '../src/stores/myListCustomization.store';
 import { hydrateLanguageStore } from '../src/stores/language.store';
 import { hydrateHapticsStore } from '../src/stores/haptics.store';
 import { useAuthStore } from '../src/stores/auth.store';
@@ -62,6 +63,7 @@ export default function RootLayout() {
           hydrateThemeStore(),
           hydrateLanguageStore(),
           hydrateHapticsStore(),
+          hydrateMyListCustomization(),
           Font.loadAsync({
             Inter_400Regular,
             Inter_500Medium,

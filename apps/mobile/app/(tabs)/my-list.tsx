@@ -39,6 +39,8 @@ import {
   AlbumListItemRow,
 } from '@/features/my-list/components/AlbumItemComponents';
 import { MyListSortModal } from '@/features/my-list/components/MyListSortModal';
+import { MyListCustomizeModal } from '@/features/my-list/components/MyListCustomizeModal';
+import { useMyListCustomizationStore } from '@/stores/myListCustomization.store';
 
 const TaskSeparator = () => <View style={{ height: 10 }} />;
 
@@ -48,6 +50,8 @@ export default function MyListScreen() {
   const { t } = useTranslation();
   const state = useMyListState();
   const [goldTitle, ...restTitle] = t('nav.my_list', { defaultValue: 'Mi lista' }).split(' ');
+  const [customizeModalVisible, setCustomizeModalVisible] = React.useState(false);
+  const { taskViews, albumViews } = useMyListCustomizationStore();
 
   const renderTaskItem = useCallback(
     ({ item, drag, index }: { item: any; drag?: any; index?: number }) => {
@@ -63,7 +67,8 @@ export default function MyListScreen() {
       const isExpired = item.status === 'expired';
       const isFav = state.isBucketFavorite(item.id);
       const isSel = state.selectedTaskIds.includes(item.id);
-      const itemTagObjs = (item.tags || []).map((tid: string) => state.tagsById.get(tid)).filter(Boolean);
+      const tagIds = state.tagUsage?.byItem[item.id] ?? (Array.isArray(item.tags) ? item.tags : []);
+      const itemTagObjs = tagIds.map((tid: string) => state.tagsById.get(tid)).filter(Boolean);
 
       return (
         <TaskItemRow
@@ -77,6 +82,7 @@ export default function MyListScreen() {
           isFav={isFav}
           isSelected={isSel}
           isSelectionMode={state.isSelectionMode}
+          customization={taskViews.list}
           onDelete={(id) => state.deleteBucket.mutate(id)}
           onComplete={(id) => {
             const next = item.status === 'completed' ? 'in_progress' : 'completed';
@@ -107,6 +113,7 @@ export default function MyListScreen() {
       state.isBucketFavorite,
       state.selectedTaskIds,
       state.tagsById,
+      state.tagUsage,
       state.isSelectionMode,
       state.deleteBucket,
       state.updateBucket,
@@ -116,6 +123,7 @@ export default function MyListScreen() {
       state.swipeableRefs,
       router,
       theme,
+      taskViews.list,
     ]
   );
 
@@ -128,6 +136,9 @@ export default function MyListScreen() {
           </View>
         );
       }
+      const tagIds = state.tagUsage?.byItem[item.id] ?? (Array.isArray(item.tags) ? item.tags : []);
+      const itemTagObjs = tagIds.map((tid: string) => state.tagsById.get(tid)).filter(Boolean);
+
       return (
         <TaskCompactItemRow
           key={item.id}
@@ -136,6 +147,8 @@ export default function MyListScreen() {
           isSelected={state.selectedTaskIds.includes(item.id)}
           isSelectionMode={state.isSelectionMode}
           isFav={state.isBucketFavorite(item.id)}
+          itemTags={itemTagObjs}
+          customization={taskViews.compact}
           onPress={() => {
             if (state.isSelectionMode) state.toggleSelectTask(item.id);
             else router.push(`/bucket/${item.id}` as any);
@@ -156,6 +169,8 @@ export default function MyListScreen() {
     },
     [
       state.selectedTaskIds,
+      state.tagsById,
+      state.tagUsage,
       state.isSelectionMode,
       state.isBucketFavorite,
       state.toggleSelectTask,
@@ -163,6 +178,7 @@ export default function MyListScreen() {
       state.setSelectedTaskIds,
       state.updateBucket,
       router,
+      taskViews.compact,
     ]
   );
 
@@ -173,10 +189,11 @@ export default function MyListScreen() {
         item={item}
         drag={drag}
         isFav={state.isAlbumFavorite(item.id)}
+        customization={albumViews.compact}
         onPress={() => router.push(`/album/${item.id}` as any)}
       />
     ),
-    [state.isAlbumFavorite, router]
+    [state.isAlbumFavorite, router, albumViews.compact]
   );
 
   const renderListAlbum = useCallback(
@@ -187,6 +204,7 @@ export default function MyListScreen() {
         drag={drag}
         index={index}
         isFav={state.isAlbumFavorite(item.id)}
+        customization={albumViews.list}
         onPress={() => router.push(`/album/${item.id}` as any)}
         onToggleFavorite={() =>
           state.toggleFavoriteAlbum.mutate({
@@ -196,7 +214,7 @@ export default function MyListScreen() {
         }
       />
     ),
-    [state.isAlbumFavorite, state.toggleFavoriteAlbum, router]
+    [state.isAlbumFavorite, state.toggleFavoriteAlbum, router, albumViews.list]
   );
 
   const isFromProfile = state.from === 'profile';
@@ -319,6 +337,7 @@ export default function MyListScreen() {
               isSearching={state.isSearching}
               sortTriggerRef={state.sortTriggerRef}
               openSortMenu={state.openSortMenu}
+              onOpenCustomize={() => setCustomizeModalVisible(true)}
               theme={theme}
             />
           </View>
@@ -402,52 +421,64 @@ export default function MyListScreen() {
                     <View key={sec.key} style={styles.sectionBlock}>
                       <Text style={styles.sectionHeader}>{sec.title}</Text>
                       <View style={styles.galleryGrid}>
-                        {sec.items.map((item: any) => (
-                          <TaskGalleryItemCard
-                            key={item.id}
-                            item={item}
-                            isSingle={sec.items.length === 1}
-                            isSelected={state.selectedTaskIds.includes(item.id)}
-                            isSelectionMode={state.isSelectionMode}
-                            isFav={state.isBucketFavorite(item.id)}
-                            onPress={() => {
-                              if (state.isSelectionMode) state.toggleSelectTask(item.id);
-                              else router.push(`/bucket/${item.id}` as any);
-                            }}
-                            onLongPress={() => {
-                              if (!state.isSelectionMode) {
-                                state.setIsSelectionMode(true);
-                                state.setSelectedTaskIds([item.id]);
-                              }
-                            }}
-                          />
-                        ))}
+                        {sec.items.map((item: any) => {
+                          const tagIds = state.tagUsage?.byItem[item.id] ?? (Array.isArray(item.tags) ? item.tags : []);
+                          const itemTagObjs = tagIds.map((tid: string) => state.tagsById.get(tid)).filter(Boolean);
+                          return (
+                            <TaskGalleryItemCard
+                              key={item.id}
+                              item={item}
+                              isSingle={sec.items.length === 1}
+                              isSelected={state.selectedTaskIds.includes(item.id)}
+                              isSelectionMode={state.isSelectionMode}
+                              isFav={state.isBucketFavorite(item.id)}
+                              itemTags={itemTagObjs}
+                              customization={taskViews.gallery}
+                              onPress={() => {
+                                if (state.isSelectionMode) state.toggleSelectTask(item.id);
+                                else router.push(`/bucket/${item.id}` as any);
+                              }}
+                              onLongPress={() => {
+                                if (!state.isSelectionMode) {
+                                  state.setIsSelectionMode(true);
+                                  state.setSelectedTaskIds([item.id]);
+                                }
+                              }}
+                            />
+                          );
+                        })}
                       </View>
                     </View>
                   );
                 })
               ) : (
                 <View style={styles.galleryGrid}>
-                  {state.sortedFlatBuckets.map((item: any) => (
-                    <TaskGalleryItemCard
-                      key={item.id}
-                      item={item}
-                      isSingle={state.sortedFlatBuckets.length === 1}
-                      isSelected={state.selectedTaskIds.includes(item.id)}
-                      isSelectionMode={state.isSelectionMode}
-                      isFav={state.isBucketFavorite(item.id)}
-                      onPress={() => {
-                        if (state.isSelectionMode) state.toggleSelectTask(item.id);
-                        else router.push(`/bucket/${item.id}` as any);
-                      }}
-                      onLongPress={() => {
-                        if (!state.isSelectionMode) {
-                          state.setIsSelectionMode(true);
-                          state.setSelectedTaskIds([item.id]);
-                        }
-                      }}
-                    />
-                  ))}
+                  {state.sortedFlatBuckets.map((item: any) => {
+                    const tagIds = state.tagUsage?.byItem[item.id] ?? (Array.isArray(item.tags) ? item.tags : []);
+                    const itemTagObjs = tagIds.map((tid: string) => state.tagsById.get(tid)).filter(Boolean);
+                    return (
+                      <TaskGalleryItemCard
+                        key={item.id}
+                        item={item}
+                        isSingle={state.sortedFlatBuckets.length === 1}
+                        isSelected={state.selectedTaskIds.includes(item.id)}
+                        isSelectionMode={state.isSelectionMode}
+                        isFav={state.isBucketFavorite(item.id)}
+                        itemTags={itemTagObjs}
+                        customization={taskViews.gallery}
+                        onPress={() => {
+                          if (state.isSelectionMode) state.toggleSelectTask(item.id);
+                          else router.push(`/bucket/${item.id}` as any);
+                        }}
+                        onLongPress={() => {
+                          if (!state.isSelectionMode) {
+                            state.setIsSelectionMode(true);
+                            state.setSelectedTaskIds([item.id]);
+                          }
+                        }}
+                      />
+                    );
+                  })}
                 </View>
               )}
             </ScrollView>
@@ -545,6 +576,7 @@ export default function MyListScreen() {
               isSearching={state.isSearching}
               albumSortTriggerRef={state.albumSortTriggerRef}
               openSortMenu={state.openSortMenu}
+              onOpenCustomize={() => setCustomizeModalVisible(true)}
               theme={theme}
             />
 
@@ -678,6 +710,14 @@ export default function MyListScreen() {
                     priority={item.priority}
                     isClosed={item.is_closed}
                     colorIndex={index}
+                    showPriority={albumViews.gallery.showPriority}
+                    showTaskCount={albumViews.gallery.showTaskCount}
+                    showProgress={albumViews.gallery.showProgress}
+                    showBadges={albumViews.gallery.showBadges}
+                    showDate={albumViews.gallery.showDate}
+                    showDescription={albumViews.gallery.showDescription}
+                    createdAt={item.created_at}
+                    description={item.description}
                     onPress={() => router.push(`/album/${item.id}` as any)}
                   />
                 ))}
@@ -772,6 +812,13 @@ export default function MyListScreen() {
         isAlbumReordering={state.isAlbumReordering}
         theme={theme}
         onSelectOption={state.handleSortOption}
+      />
+
+      <MyListCustomizeModal
+        visible={customizeModalVisible}
+        onClose={() => setCustomizeModalVisible(false)}
+        initialTab={state.activeTab === 'albums' ? 'albums' : 'tasks'}
+        initialMode={state.activeTab === 'albums' ? state.albumViewMode : state.taskViewMode}
       />
     </SafeAreaView>
   );

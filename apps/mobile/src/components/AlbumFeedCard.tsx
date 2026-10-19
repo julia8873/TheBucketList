@@ -208,16 +208,25 @@ export function AlbumFeedCard({
                   <Text style={styles.galleryActionText}>{commentCount}</Text>
                 </Pressable>
 
-                {!isOwn && handleSave && (
-                  <Pressable onPress={handleSave} hitSlop={6} style={styles.galleryActionItem}>
+                {handleSave ? (
+                  <Pressable onPress={handleSave} hitSlop={6} style={styles.galleryActionItem} disabled={isOwn}>
                     <Bookmark
                       size={13}
                       color={actualSaved ? gold[400] : '#F2EFE8'}
                       fill={actualSaved ? gold[400] : 'transparent'}
                       strokeWidth={1.8}
                     />
-                    {saveCount > 0 && <Text style={styles.galleryActionText}>{saveCount}</Text>}
+                    <Text style={styles.galleryActionText}>{saveCount}</Text>
                   </Pressable>
+                ) : (
+                  <View style={styles.galleryActionItem}>
+                    <Bookmark
+                      size={13}
+                      color="#F2EFE8"
+                      strokeWidth={1.8}
+                    />
+                    <Text style={styles.galleryActionText}>{saveCount}</Text>
+                  </View>
                 )}
               </View>
             </View>
@@ -308,6 +317,22 @@ export function AlbumFeedCard({
             >
               <MessageCircle size={16} color={theme.colors.foregroundSubtle} strokeWidth={1.8} />
               <Text style={[styles.compactActionCount, { color: theme.colors.foregroundSubtle }]}>{commentCount}</Text>
+            </Pressable>
+            <Pressable
+              onPress={handleSave}
+              hitSlop={6}
+              style={styles.compactActionBtn}
+              accessibilityRole="button"
+              accessibilityLabel={actualSaved ? 'Quitar de guardados' : 'Guardar álbum'}
+              disabled={isOwn || !handleSave}
+            >
+              <Bookmark
+                size={16}
+                color={actualSaved ? gold[400] : theme.colors.foregroundSubtle}
+                fill={actualSaved ? gold[400] : 'transparent'}
+                strokeWidth={1.8}
+              />
+              <Text style={[styles.compactActionCount, { color: actualSaved ? gold[400] : theme.colors.foregroundSubtle }]}>{saveCount}</Text>
             </Pressable>
           </View>
         </Pressable>
@@ -415,7 +440,7 @@ export function AlbumFeedCard({
             {commentCount > 0 && <Text style={styles.actionCount}>{commentCount}</Text>}
           </Pressable>
 
-          {(!isOwn && handleSave) ? (
+          {handleSave ? (
             <Pressable
               onPress={handleSave}
               hitSlop={10}
@@ -426,6 +451,7 @@ export function AlbumFeedCard({
               ]}
               accessibilityRole="button"
               accessibilityLabel={actualSaved ? 'Quitar de guardados' : 'Guardar álbum'}
+              disabled={isOwn}
             >
               <Bookmark
                 size={16}
@@ -433,9 +459,9 @@ export function AlbumFeedCard({
                 fill={actualSaved ? gold[400] : 'transparent'}
                 strokeWidth={2}
               />
-              {saveCount > 0 && <Text style={styles.actionCount}>{saveCount}</Text>}
+              <Text style={styles.actionCount}>{saveCount}</Text>
             </Pressable>
-          ) : saveCount > 0 ? (
+          ) : (
             <View style={styles.actionBtn}>
               <Bookmark
                 size={16}
@@ -444,7 +470,7 @@ export function AlbumFeedCard({
               />
               <Text style={styles.actionCount}>{saveCount}</Text>
             </View>
-          ) : null}
+          )}
         </View>
       </View>
 

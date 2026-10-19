@@ -11,6 +11,7 @@ import {
   ArrowUp,
   ChevronDown,
   Check,
+  SlidersHorizontal,
 } from 'lucide-react-native';
 import { Typography, FilterChip } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
@@ -40,6 +41,7 @@ interface AlbumListHeaderControlsProps {
   isSearching: boolean;
   albumSortTriggerRef: any;
   openSortMenu: () => void;
+  onOpenCustomize?: () => void;
   theme: any;
 }
 
@@ -90,6 +92,7 @@ export function AlbumListHeaderControls({
   isSearching,
   albumSortTriggerRef,
   openSortMenu,
+  onOpenCustomize,
   theme,
 }: AlbumListHeaderControlsProps) {
   const insets = useSafeAreaInsets();
@@ -285,6 +288,8 @@ export function AlbumListHeaderControls({
                   ? 'Prioridad'
                   : albumSortField === 'alphabetical'
                   ? 'Alfabético'
+                  : albumSortField === 'completed_at'
+                  ? 'Completado'
                   : 'Fecha'}
               </Typography>
               {albumSortField !== 'manual' &&
@@ -296,6 +301,31 @@ export function AlbumListHeaderControls({
                 ))}
             </Pressable>
           </View>
+
+          {/* Botón Personalizar */}
+          {onOpenCustomize && (
+            <Pressable
+              onPress={onOpenCustomize}
+              hitSlop={8}
+              style={[
+                styles.sortTriggerBtn,
+                {
+                  height: 32,
+                  paddingHorizontal: 8,
+                  borderRadius: 8,
+                  backgroundColor: theme.colors.surface,
+                  borderWidth: 1,
+                  borderColor: theme.colors.border,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Personalizar vista de álbumes"
+            >
+              <SlidersHorizontal size={14} color={gold[400]} />
+            </Pressable>
+          )}
 
           {!isSearching && isAlbumReordering && (
             <Pressable

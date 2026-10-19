@@ -46,6 +46,7 @@ export function MyListSortModal({
             { field: 'priority' as const, label: 'Prioridad' },
             { field: 'alphabetical' as const, label: 'Alfabético' },
             { field: 'created_at' as const, label: 'Fecha de creación' },
+            { field: 'completed_at' as const, label: 'Fecha de completado' },
           ]
         : [
             { field: 'manual' as const, label: 'Manual' },
@@ -53,6 +54,7 @@ export function MyListSortModal({
             { field: 'priority' as const, label: 'Prioridad' },
             { field: 'alphabetical' as const, label: 'Alfabético' },
             { field: 'created_at' as const, label: 'Fecha de creación' },
+            { field: 'completed_at' as const, label: 'Fecha de completado' },
           ]
       : sortField === 'status'
       ? [
@@ -62,6 +64,7 @@ export function MyListSortModal({
           { field: 'priority' as const, label: 'Prioridad' },
           { field: 'alphabetical' as const, label: 'Alfabético' },
           { field: 'created_at' as const, label: 'Fecha de creación' },
+          { field: 'completed_at' as const, label: 'Fecha de completado' },
         ]
       : [
           { field: 'manual' as const, label: 'Manual' },
@@ -69,6 +72,7 @@ export function MyListSortModal({
           { field: 'priority' as const, label: 'Prioridad' },
           { field: 'alphabetical' as const, label: 'Alfabético' },
           { field: 'created_at' as const, label: 'Fecha de creación' },
+          { field: 'completed_at' as const, label: 'Fecha de completado' },
         ];
 
   const currentField = activeTab === 'albums' ? albumSortField : sortField;

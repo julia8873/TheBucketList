@@ -618,6 +618,17 @@ export function useMyListState() {
       });
     }
 
+    if (sortField === 'completed_at') {
+      return [...filteredBuckets].sort((a: any, b: any) => {
+        const da = a.completed_at ? new Date(a.completed_at).getTime() : (a.status === 'completed' ? new Date(a.created_at || 0).getTime() : 0);
+        const db = b.completed_at ? new Date(b.completed_at).getTime() : (b.status === 'completed' ? new Date(b.created_at || 0).getTime() : 0);
+        if (da !== db) {
+          return sortDir === 'asc' ? da - db : db - da;
+        }
+        return byManual(a, b);
+      });
+    }
+
     return [...filteredBuckets].sort(byManual);
   }, [filteredBuckets, sortField, sortDir, manualOrder]);
 
@@ -753,6 +764,29 @@ export function useMyListState() {
         const da = new Date(a.created_at || 0).getTime();
         const db = new Date(b.created_at || 0).getTime();
         return albumSortDir === 'asc' ? da - db : db - da;
+      });
+    }
+
+    if (albumSortField === 'completed_at') {
+      return [...filteredAlbums].sort((a: any, b: any) => {
+        const da = a.closed_at
+          ? new Date(a.closed_at).getTime()
+          : a.completed_at
+          ? new Date(a.completed_at).getTime()
+          : getAlbumStatus(a) === 'completed'
+          ? new Date(a.created_at || 0).getTime()
+          : 0;
+        const db = b.closed_at
+          ? new Date(b.closed_at).getTime()
+          : b.completed_at
+          ? new Date(b.completed_at).getTime()
+          : getAlbumStatus(b) === 'completed'
+          ? new Date(b.created_at || 0).getTime()
+          : 0;
+        if (da !== db) {
+          return albumSortDir === 'asc' ? da - db : db - da;
+        }
+        return byAlbumManual(a, b);
       });
     }
 

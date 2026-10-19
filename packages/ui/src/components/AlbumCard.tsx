@@ -47,6 +47,14 @@ interface AlbumCardProps {
   colorIndex?: number;  // to pick a gradient when no cover
   onPress?: () => void;
   style?: ViewStyle;
+  showPriority?: boolean;
+  showTaskCount?: boolean;
+  showProgress?: boolean;
+  showBadges?: boolean;
+  showDate?: boolean;
+  showDescription?: boolean;
+  createdAt?: string;
+  description?: string;
 }
 
 export function AlbumCard({
@@ -62,6 +70,14 @@ export function AlbumCard({
   colorIndex = 0,
   onPress,
   style,
+  showPriority = true,
+  showTaskCount = true,
+  showProgress = true,
+  showBadges = true,
+  showDate = false,
+  showDescription = false,
+  createdAt,
+  description,
 }: AlbumCardProps) {
   const { theme } = useTheme();
   const overlay = useCoverOverlay();
@@ -149,27 +165,29 @@ export function AlbumCard({
       />
 
       {/* Top left badges */}
-      <View style={styles.topLeftBadges}>
-        {isCompleted && !isClosed && (
-          <View style={styles.completedBadge}>
-            <Check size={10} color="#FFF" strokeWidth={2.5} />
-            <Text style={styles.completedText}>Completado</Text>
-          </View>
-        )}
+      {showBadges && (
+        <View style={styles.topLeftBadges}>
+          {isCompleted && !isClosed && (
+            <View style={styles.completedBadge}>
+              <Check size={10} color="#FFF" strokeWidth={2.5} />
+              <Text style={styles.completedText}>Completado</Text>
+            </View>
+          )}
 
-        {isShared && (
-          <View style={styles.sharedBadge}>
-            <Text style={styles.sharedText}>Compartido</Text>
-          </View>
-        )}
+          {isShared && (
+            <View style={styles.sharedBadge}>
+              <Text style={styles.sharedText}>Compartido</Text>
+            </View>
+          )}
 
-        {isClosed && (
-          <View style={styles.closedBadge}>
-            <Lock size={10} color="#D4B13A" />
-            <Text style={styles.closedText}>Cerrado</Text>
-          </View>
-        )}
-      </View>
+          {isClosed && (
+            <View style={styles.closedBadge}>
+              <Lock size={10} color="#D4B13A" />
+              <Text style={styles.closedText}>Cerrado</Text>
+            </View>
+          )}
+        </View>
+      )}
 
       {/* Favorite badge / button */}
       {onToggleFavorite ? (
@@ -207,12 +225,19 @@ export function AlbumCard({
 
       {/* Bottom content */}
       <View style={styles.bottom}>
-        <Text style={[styles.title, { color: titleColor }]} numberOfLines={2}>{title}</Text>
+        <Text style={[styles.title, { color: titleColor }]} numberOfLines={showDescription && description ? 1 : 2}>{title}</Text>
         <View style={styles.metaRow}>
-          <Text style={[styles.meta, { color: metaColor }]}>
-            {totalTasks} {totalTasks === 1 ? 'tarea' : 'tareas'} · {completedTasks} {completedTasks === 1 ? 'hecha' : 'hechas'}
-          </Text>
-          {priority && (
+          {showTaskCount && (
+            <Text style={[styles.meta, { color: metaColor }]}>
+              {totalTasks} {totalTasks === 1 ? 'tarea' : 'tareas'} · {completedTasks} {completedTasks === 1 ? 'hecha' : 'hechas'}
+            </Text>
+          )}
+          {showDate && createdAt && (
+            <Text style={[styles.meta, { color: metaColor }]}>
+              {new Date(createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+            </Text>
+          )}
+          {showPriority && priority && (
             <View style={[styles.priorityIndicator, { backgroundColor: chipBg }]}>
               <View
                 style={[
@@ -245,10 +270,22 @@ export function AlbumCard({
             </View>
           )}
         </View>
+
+        {showDescription && description ? (
+          <Text
+            style={[styles.meta, { color: metaColor, fontSize: 11, marginTop: 2 }]}
+            numberOfLines={1}
+          >
+            {description.trim()}
+          </Text>
+        ) : null}
+
         {/* Progress bar */}
-        <View style={[styles.progressTrack, { backgroundColor: trackBgColor }]}>
-          <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` as any }]} />
-        </View>
+        {showProgress && (
+          <View style={[styles.progressTrack, { backgroundColor: trackBgColor }]}>
+            <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` as any }]} />
+          </View>
+        )}
       </View>
     </Pressable>
   );

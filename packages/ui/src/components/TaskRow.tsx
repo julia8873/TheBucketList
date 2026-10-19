@@ -32,6 +32,7 @@ interface TaskRowProps {
   thumbnailElement?: React.ReactNode;
   /** Etiquetas de la tarea (se pintan entre el título y la meta). */
   tagsElement?: React.ReactNode;
+  description?: string;
   onPress?: () => void;
   onLongPress?: () => void;
   style?: ViewStyle;
@@ -52,6 +53,7 @@ function TaskRowComponent({
   counterTarget,
   thumbnailElement,
   tagsElement,
+  description,
   onPress,
   onLongPress,
   style,
@@ -109,6 +111,11 @@ function TaskRowComponent({
         {meta ? (
           <Text style={[styles.meta, { color: completed ? theme.colors.foregroundSubtle : theme.colors.foregroundMuted }]} numberOfLines={1}>
             {meta}
+          </Text>
+        ) : null}
+        {description ? (
+          <Text style={[styles.meta, { color: theme.colors.foregroundSubtle, fontSize: 12, marginTop: 2 }]} numberOfLines={1}>
+            {description}
           </Text>
         ) : null}
         {hasSubtaskProgress ? (

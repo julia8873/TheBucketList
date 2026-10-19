@@ -155,18 +155,7 @@ export default function BucketDetailScreen() {
           seed={bucket.id}
           style={{ width: SCREEN_WIDTH, height: coverTotalHeight }}
         >
-          {state.isCustomCover ? (
-            <LinearGradient
-              colors={
-                theme.dark
-                  ? ['rgba(0,0,0,0.3)', 'transparent', 'rgba(0,0,0,0.65)']
-                  : ['rgba(0,0,0,0.06)', 'transparent', theme.colors.background]
-              }
-              locations={[0, 0.45, 1]}
-              style={StyleSheet.absoluteFill}
-              pointerEvents="none"
-            />
-          ) : (
+          {state.isCustomCover ? null : (
             <LinearGradient
               colors={
                 theme.dark

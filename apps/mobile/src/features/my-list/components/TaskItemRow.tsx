@@ -9,6 +9,7 @@ import { resolveTaskImage } from '@/utils/taskImage';
 import { styles } from '../styles/my-list.styles';
 import { DragHandle } from '@/components/DraggableTaskList';
 import { Tag } from '@/hooks/useTags';
+import { TaskViewCustomization } from '@/stores/myListCustomization.store';
 
 interface TaskItemRowProps {
   item: any;
@@ -21,6 +22,7 @@ interface TaskItemRowProps {
   isFav: boolean;
   isSelected: boolean;
   isSelectionMode: boolean;
+  customization?: TaskViewCustomization;
   onDelete: (id: string) => void;
   onComplete: (id: string) => void;
   onPress: () => void;
@@ -41,6 +43,7 @@ function TaskItemRowComponent({
   isFav,
   isSelected,
   isSelectionMode,
+  customization,
   onDelete,
   onComplete,
   onPress,
@@ -59,18 +62,25 @@ function TaskItemRowComponent({
     );
   }
 
+  const showPriority = customization?.showPriority ?? true;
+  const showTags = customization?.showTags ?? true;
+  const showDates = customization?.showDates ?? true;
+  const showCategoryLoc = customization?.showCategoryLocation ?? true;
+  const showSubtasks = customization?.showSubtasksProgress ?? true;
+  const showDesc = customization?.showDescription ?? false;
+
   const subtasksTotal = item.item_subtasks?.length || 0;
   const subtasksDone = item.item_subtasks?.filter((s: any) => s.done).length || 0;
 
   let meta = '';
   if (!isItemOwner) {
     meta = 'Colaboración';
-  } else if (isItemExpired && item.status !== 'completed') {
+  } else if (showDates && isItemExpired && item.status !== 'completed') {
     meta = `Caducó hace ${daysAgo} días`;
-  } else if (subtasksTotal > 0) {
+  } else if (showSubtasks && subtasksTotal > 0) {
     meta = `${subtasksDone} de ${subtasksTotal} pasos`;
-  } else if (item.location) {
-    meta = item.location;
+  } else if (showCategoryLoc && (item.category?.name_es || item.category?.name || item.location)) {
+    meta = [item.category?.name_es || item.category?.name, item.location].filter(Boolean).join(' · ');
   }
 
   const itemPriority = item.priority || 'medium';
@@ -79,7 +89,7 @@ function TaskItemRowComponent({
   const itemPriorityLabel =
     itemPriority === 'high' ? 'Alta' : itemPriority === 'low' ? 'Baja' : 'Media';
 
-  const priorityBadge = (
+  const priorityBadge = showPriority ? (
     <View
       key="priority-badge"
       style={{
@@ -104,7 +114,7 @@ function TaskItemRowComponent({
         {itemPriorityLabel}
       </Text>
     </View>
-  );
+  ) : null;
 
   const favoriteBadge = isFav ? (
     <View
@@ -126,18 +136,21 @@ function TaskItemRowComponent({
     </View>
   ) : null;
 
-  const tagsElement = (
+  const visibleTags = showTags ? itemTags : [];
+  const hasTagsOrBadges = favoriteBadge || priorityBadge || visibleTags.length > 0;
+
+  const tagsElement = hasTagsOrBadges ? (
     <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
       {favoriteBadge}
       {priorityBadge}
-      {itemTags.slice(0, 2).map((t) => (
+      {visibleTags.slice(0, 2).map((t) => (
         <TagChip key={t.id} label={t.name} variant="colored" color={t.color} emoji={t.emoji} size="sm" />
       ))}
-      {itemTags.length > 2 && (
-        <TagChip label={`+${itemTags.length - 2}`} variant="colored" color="#8A8A8A" size="sm" />
+      {visibleTags.length > 2 && (
+        <TagChip label={`+${visibleTags.length - 2}`} variant="colored" color="#8A8A8A" size="sm" />
       )}
     </View>
-  );
+  ) : null;
 
   const renderRightActions = (progress: any) => {
     if (!isItemOwner) return null;
@@ -227,8 +240,8 @@ function TaskItemRowComponent({
       <TaskRow
         title={item.title}
         meta={meta}
-        deadline={item.deadline}
-        expiredAction={isItemExpired && item.status !== 'completed'}
+        deadline={showDates ? item.deadline : undefined}
+        expiredAction={showDates && isItemExpired && item.status !== 'completed'}
         thumbnailElement={
           isItemExpired && item.status !== 'completed' ? (
             <View style={{ flex: 1, backgroundColor: theme.colors.surfaceSunken, borderRadius: 12 }} />
@@ -244,10 +257,11 @@ function TaskItemRowComponent({
           )
         }
         tagsElement={tagsElement}
-        subtasksDone={subtasksDone}
-        subtasksTotal={subtasksTotal}
-        counterCount={(item as any).counter_count}
-        counterTarget={(item as any).counter_target}
+        description={showDesc && item.description ? item.description.trim() : undefined}
+        subtasksDone={showSubtasks ? subtasksDone : 0}
+        subtasksTotal={showSubtasks ? subtasksTotal : 0}
+        counterCount={showSubtasks ? (item as any).counter_count : 0}
+        counterTarget={showSubtasks ? (item as any).counter_target : undefined}
         completed={item.status === 'completed'}
         onPress={onPress}
         onLongPress={onLongPress}
