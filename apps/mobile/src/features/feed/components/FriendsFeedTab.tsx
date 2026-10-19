@@ -154,7 +154,7 @@ export function FriendsFeedTab({
   if (loading && combinedItems.length === 0) {
     if (viewMode === 'gallery') {
       return (
-        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 72 }} showsVerticalScrollIndicator={false}>
           {headerElement}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: 10 }}>
             <TaskGallerySkeleton />
@@ -166,7 +166,7 @@ export function FriendsFeedTab({
       );
     }
     return (
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 72 }} showsVerticalScrollIndicator={false}>
         {headerElement}
         <FeedCardSkeleton />
         <FeedCardSkeleton />
@@ -213,6 +213,7 @@ export function FriendsFeedTab({
       keyExtractor={(item) => `${item._type ?? 'task'}-${item.id}`}
       numColumns={viewMode === 'gallery' ? 2 : 1}
       renderItem={renderItem}
+      contentContainerStyle={{ paddingBottom: 72 }}
       estimatedItemSize={contentFilter === 'albumes' ? 240 : viewMode === 'gallery' ? 240 : viewMode === 'compact' ? 70 : 430}
       ListHeaderComponent={headerElement}
       refreshing={manualRefreshing}

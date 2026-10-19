@@ -249,7 +249,7 @@ export const styles = StyleSheet.create({
     width: 42,
     height: 5,
     borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.22)',
+    backgroundColor: 'rgba(128,128,128,0.3)',
     marginBottom: 12,
   },
   sheetHeader: {
@@ -263,7 +263,7 @@ export const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(128,128,128,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -271,7 +271,7 @@ export const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(128,128,128,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -285,7 +285,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 4,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: dark[400],
+    borderBottomColor: 'rgba(128,128,128,0.2)',
   },
   sheetIcon: {
     width: 42,
@@ -352,7 +352,7 @@ export const styles = StyleSheet.create({
     borderRadius: 25,
     borderWidth: 2,
     borderColor: '#D4B13A',
-    backgroundColor: '#181818',
+    backgroundColor: 'rgba(212, 177, 58, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -360,7 +360,7 @@ export const styles = StyleSheet.create({
   collaboratorCirclePending: {
     borderColor: 'rgba(212, 177, 58, 0.45)',
     borderStyle: 'dashed',
-    backgroundColor: '#141414',
+    backgroundColor: 'rgba(212, 177, 58, 0.06)',
   },
   pendingCenterOverlay: {
     ...StyleSheet.absoluteFillObject,

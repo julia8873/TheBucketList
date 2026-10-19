@@ -1,11 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../../services/supabase';
+import { useAuthStore } from '../../../stores/auth.store';
+import { blockReportApi } from '../../../services/api/blockReport';
 import type { AlbumWithProgress } from '../../../hooks/useAlbums';
 
 interface UsePublicProfileDataParams {
   id?: string;
   isOwnProfile: boolean;
   isLocked: boolean;
+  isBlocked?: boolean;
   followStatus: string;
   publicOnly?: boolean;
 }
@@ -14,15 +17,29 @@ export function usePublicProfileData({
   id,
   isOwnProfile,
   isLocked,
+  isBlocked,
   followStatus,
   publicOnly,
 }: UsePublicProfileDataParams) {
+  const { user } = useAuthStore();
+
   // Query for profile data
   const { data: profile, isLoading: profileLoading, refetch: refetchProfile } = useQuery({
-    queryKey: ['profile', id],
+    queryKey: ['profile', id, user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('profiles').select('*').eq('id', id!).single();
-      if (error) throw error;
+      if (!id) return null;
+
+      // 1. Si el usuario actual fue bloqueado por este perfil, no existe para él
+      if (user?.id && user.id !== id) {
+        const wasBlockedByTarget = await blockReportApi.checkIsBlockedBy(user.id, id);
+        if (wasBlockedByTarget) {
+          return null;
+        }
+      }
+
+      // 2. Obtener el perfil
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', id).maybeSingle();
+      if (error || !data) return null;
       return data;
     },
     enabled: !!id,
@@ -124,7 +141,7 @@ export function usePublicProfileData({
       }
       return merged;
     },
-    enabled: !!id && !isLocked,
+    enabled: !!id && !isLocked && !isBlocked,
   });
 
   // Query for public albums
@@ -195,7 +212,7 @@ export function usePublicProfileData({
         };
       });
     },
-    enabled: !!id && !isLocked,
+    enabled: !!id && !isLocked && !isBlocked,
   });
 
   const refetch = async () => {

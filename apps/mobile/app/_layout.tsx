@@ -1,4 +1,5 @@
 import 'react-native-url-polyfill/auto';
+import '../src/utils/navigationGuard';
 import React, { useEffect, useCallback } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';

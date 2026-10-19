@@ -26,6 +26,16 @@ export function useIsUserBlocked(targetUserId?: string) {
   });
 }
 
+export function useIsUserBlockedBy(targetUserId?: string) {
+  const { user } = useAuthStore();
+  return useQuery({
+    queryKey: [...BLOCKED_USERS_KEY, user?.id, 'is_blocked_by', targetUserId],
+    queryFn: () => blockReportApi.checkIsBlockedBy(user?.id || '', targetUserId || ''),
+    enabled: !!user?.id && !!targetUserId && user.id !== targetUserId,
+    staleTime: 1000 * 30,
+  });
+}
+
 export function useBlockUser() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
@@ -39,19 +49,20 @@ export function useBlockUser() {
       queryClient.invalidateQueries({ queryKey: BLOCKED_USERS_KEY });
       queryClient.invalidateQueries({ queryKey: ['friends'] });
       queryClient.invalidateQueries({ queryKey: ['feed'] });
+      queryClient.invalidateQueries({ queryKey: ['explore'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
-      toast.show({
-        title: 'Usuario bloqueado',
-        message: 'Has bloqueado a este usuario. Ya no verás su contenido ni podréis interactuar.',
-        type: 'info',
-      });
+      queryClient.invalidateQueries({ queryKey: ['buckets'] });
+      queryClient.invalidateQueries({ queryKey: ['albums'] });
+      toast.success(
+        'Has bloqueado a este usuario. Ya no verás su contenido ni podréis interactuar.',
+        'Usuario bloqueado'
+      );
     },
     onError: (err: any) => {
-      toast.show({
-        title: 'Error al bloquear',
-        message: err.message || 'No se pudo bloquear al usuario',
-        type: 'error',
-      });
+      toast.error(
+        err.message || 'No se pudo bloquear al usuario',
+        'Error al bloquear'
+      );
     },
   });
 }
@@ -68,19 +79,20 @@ export function useUnblockUser() {
       queryClient.invalidateQueries({ queryKey: BLOCKED_USERS_KEY });
       queryClient.invalidateQueries({ queryKey: ['friends'] });
       queryClient.invalidateQueries({ queryKey: ['feed'] });
+      queryClient.invalidateQueries({ queryKey: ['explore'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
-      toast.show({
-        title: 'Usuario desbloqueado',
-        message: 'Has desbloqueado a este usuario correctamente.',
-        type: 'success',
-      });
+      queryClient.invalidateQueries({ queryKey: ['buckets'] });
+      queryClient.invalidateQueries({ queryKey: ['albums'] });
+      toast.success(
+        'Has desbloqueado a este usuario correctamente.',
+        'Usuario desbloqueado'
+      );
     },
     onError: (err: any) => {
-      toast.show({
-        title: 'Error al desbloquear',
-        message: err.message || 'No se pudo desbloquear al usuario',
-        type: 'error',
-      });
+      toast.error(
+        err.message || 'No se pudo desbloquear al usuario',
+        'Error al desbloquear'
+      );
     },
   });
 }

@@ -12,6 +12,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ChevronLeft,
+  ChevronRight,
   ShieldCheck,
   ShieldAlert,
   Trash2,
@@ -20,7 +21,7 @@ import {
   User,
   AlertTriangle,
 } from 'lucide-react-native';
-import { Avatar, PageTitle, fontFamily, gold } from '@bucketlist/ui';
+import { Avatar, PageTitle, fontFamily, gold, useTheme } from '@bucketlist/ui';
 import { useIsAdmin } from '../../src/hooks/useCurrentUserProfile';
 import {
   useAdminReports,
@@ -32,6 +33,7 @@ import { UserReportItem } from '../../src/services/api/blockReport';
 export default function AdminReportsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
   const isAdmin = useIsAdmin();
 
   const { data: reports = [], isLoading } = useAdminReports();
@@ -77,44 +79,41 @@ export default function AdminReportsScreen() {
 
   if (!isAdmin) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top + 20, justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
+      <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top + 20, justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
         <ShieldAlert color="#EF4444" size={56} />
-        <Text style={styles.restrictedTitle}>Acceso Restringido</Text>
-        <Text style={styles.restrictedText}>
+        <Text style={[styles.restrictedTitle, { color: theme.colors.foreground }]}>Acceso Restringido</Text>
+        <Text style={[styles.restrictedText, { color: theme.colors.foregroundMuted }]}>
           Este panel de moderación solo está disponible para usuarios con rol de administrador.
         </Text>
-        <Pressable style={styles.backBtnModal} onPress={() => router.back()}>
-          <Text style={styles.backBtnText}>Volver</Text>
+        <Pressable
+          style={[styles.backBtnModal, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderWidth: 1 }]}
+          onPress={() => router.back()}
+        >
+          <Text style={[styles.backBtnText, { color: theme.colors.foreground }]}>Volver</Text>
         </Pressable>
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
         <Pressable
-          style={styles.backBtn}
+          style={[styles.backBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
           onPress={() => router.back()}
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel="Volver"
         >
-          <ChevronLeft color="#F3EEE3" size={24} />
+          <ChevronLeft color={theme.colors.foreground} size={24} />
         </Pressable>
         <View style={{ flex: 1 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <PageTitle gold="Reportes" rest=" de usuarios" />
-            <View style={styles.adminBadge}>
-              <ShieldCheck size={12} color="#D4AF37" />
-              <Text style={styles.adminBadgeText}>ADMIN</Text>
-            </View>
-          </View>
+          <PageTitle gold="Reportes" rest=" de usuarios" />
         </View>
       </View>
 
-      <Text style={styles.description}>
+      <Text style={[styles.description, { color: theme.colors.foregroundMuted }]}>
         Gestiona las denuncias enviadas por la comunidad y decide qué medidas tomar.
       </Text>
 
@@ -134,14 +133,25 @@ export default function AdminReportsScreen() {
             const reporter = item.reporter;
 
             return (
-              <View style={[styles.reportCard, !isPending && { opacity: 0.75 }]}>
+              <View
+                style={[
+                  styles.reportCard,
+                  { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+                  !isPending && { opacity: 0.75 },
+                ]}
+              >
                 {/* Cabecera del reporte */}
                 <View style={styles.reportTopRow}>
                   <View style={styles.reasonBadge}>
                     <AlertTriangle size={12} color="#EF4444" />
                     <Text style={styles.reasonBadgeText}>{item.reason}</Text>
                   </View>
-                  <View style={styles.statusBadge}>
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      { backgroundColor: theme.dark ? '#202020' : (theme.colors.surfaceElevated ?? '#ECE8DF') },
+                    ]}
+                  >
                     <Text style={[styles.statusText, { color: isPending ? '#D4AF37' : '#10B981' }]}>
                       {isPending ? 'Pendiente' : item.status === 'resolved_deleted' ? 'Cuenta borrada' : 'Revisado'}
                     </Text>
@@ -149,53 +159,93 @@ export default function AdminReportsScreen() {
                 </View>
 
                 {/* Usuarios involucrados */}
-                <View style={styles.usersBox}>
+                <View
+                  style={[
+                    styles.usersBox,
+                    { backgroundColor: theme.dark ? '#1C1C1C' : (theme.colors.surfaceElevated ?? '#F2EFE8') },
+                  ]}
+                >
                   {/* Usuario denunciado */}
                   <View style={styles.userSection}>
-                    <Text style={styles.userSectionLabel}>USUARIO DENUNCIADO</Text>
-                    <View style={styles.userRow}>
+                    <Text style={[styles.userSectionLabel, { color: theme.colors.foregroundMuted }]}>USUARIO DENUNCIADO</Text>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.userRow,
+                        pressed && { opacity: 0.65 },
+                      ]}
+                      onPress={() => {
+                        if (reported?.id) {
+                          router.push(`/profile/${reported.id}` as any);
+                        }
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Ver perfil de ${reported?.username || 'usuario denunciado'}`}
+                    >
                       <Avatar
                         source={reported?.avatar_url ? { uri: reported.avatar_url } : undefined}
                         fallback={reported?.display_name?.charAt(0) || reported?.username?.charAt(0) || '?'}
                         size="sm"
                       />
                       <View style={{ marginLeft: 8, flex: 1 }}>
-                        <Text style={styles.userName} numberOfLines={1}>
+                        <Text style={[styles.userName, { color: theme.colors.foreground }]} numberOfLines={1}>
                           {reported?.display_name || reported?.username || 'Usuario'}
                         </Text>
-                        <Text style={styles.userHandle} numberOfLines={1}>
+                        <Text style={[styles.userHandle, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
                           @{reported?.username || 'desconocido'}
                         </Text>
                       </View>
-                    </View>
+                      <ChevronRight size={14} color={theme.colors.foregroundMuted} />
+                    </Pressable>
                   </View>
 
                   {/* Usuario denunciante */}
                   <View style={styles.userSection}>
-                    <Text style={styles.userSectionLabel}>REPORTADO POR</Text>
-                    <View style={styles.userRow}>
+                    <Text style={[styles.userSectionLabel, { color: theme.colors.foregroundMuted }]}>REPORTADO POR</Text>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.userRow,
+                        pressed && { opacity: 0.65 },
+                      ]}
+                      onPress={() => {
+                        if (reporter?.id) {
+                          router.push(`/profile/${reporter.id}` as any);
+                        }
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Ver perfil de ${reporter?.username || 'usuario denunciante'}`}
+                    >
                       <Avatar
                         source={reporter?.avatar_url ? { uri: reporter.avatar_url } : undefined}
                         fallback={reporter?.display_name?.charAt(0) || reporter?.username?.charAt(0) || '?'}
                         size="sm"
                       />
                       <View style={{ marginLeft: 8, flex: 1 }}>
-                        <Text style={styles.userName} numberOfLines={1}>
+                        <Text style={[styles.userName, { color: theme.colors.foreground }]} numberOfLines={1}>
                           {reporter?.display_name || reporter?.username || 'Usuario'}
                         </Text>
-                        <Text style={styles.userHandle} numberOfLines={1}>
+                        <Text style={[styles.userHandle, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
                           @{reporter?.username || 'desconocido'}
                         </Text>
                       </View>
-                    </View>
+                      <ChevronRight size={14} color={theme.colors.foregroundMuted} />
+                    </Pressable>
                   </View>
                 </View>
 
                 {/* Detalles del reporte si existen */}
                 {item.details ? (
-                  <View style={styles.detailsBox}>
-                    <Text style={styles.detailsLabel}>Mensaje del denunciante:</Text>
-                    <Text style={styles.detailsText}>"{item.details}"</Text>
+                  <View
+                    style={[
+                      styles.detailsBox,
+                      {
+                        backgroundColor: theme.dark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)',
+                        borderColor: theme.colors.border,
+                        borderWidth: 1,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.detailsLabel, { color: theme.colors.foregroundMuted }]}>Mensaje del denunciante:</Text>
+                    <Text style={[styles.detailsText, { color: theme.colors.foreground }]}>"{item.details}"</Text>
                   </View>
                 ) : null}
 
@@ -203,12 +253,18 @@ export default function AdminReportsScreen() {
                 {isPending && (
                   <View style={styles.actionsRow}>
                     <Pressable
-                      style={styles.dismissBtn}
+                      style={[
+                        styles.dismissBtn,
+                        {
+                          backgroundColor: theme.dark ? '#242424' : (theme.colors.surfaceElevated ?? '#ECE8DF'),
+                          borderColor: theme.colors.border,
+                        },
+                      ]}
                       onPress={() => handleDismiss(item)}
                       disabled={dismissMutation.isPending || deleteUserMutation.isPending}
                     >
-                      <CheckCircle size={15} color="#A0A0A0" />
-                      <Text style={styles.dismissBtnText}>Desestimar</Text>
+                      <CheckCircle size={15} color={theme.colors.foregroundMuted} />
+                      <Text style={[styles.dismissBtnText, { color: theme.colors.foreground }]}>Desestimar</Text>
                     </Pressable>
 
                     <Pressable
@@ -229,8 +285,8 @@ export default function AdminReportsScreen() {
               <View style={styles.emptyIconBox}>
                 <ShieldCheck size={36} color="#10B981" />
               </View>
-              <Text style={styles.emptyTitle}>Bandeja de moderación limpia</Text>
-              <Text style={styles.emptySubtitle}>
+              <Text style={[styles.emptyTitle, { color: theme.colors.foreground }]}>Bandeja de moderación limpia</Text>
+              <Text style={[styles.emptySubtitle, { color: theme.colors.foregroundMuted }]}>
                 No hay ningún reporte pendiente de revisión en este momento.
               </Text>
             </View>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -25,7 +25,7 @@ import {
   Pencil,
   X,
 } from 'lucide-react-native';
-import { Typography, gold } from '@bucketlist/ui';
+import { Typography, gold, useTheme } from '@bucketlist/ui';
 import { useIsAdmin } from '../../src/hooks/useCurrentUserProfile';
 import {
   useCreateCollection,
@@ -75,6 +75,8 @@ export default function CreateCollectionModal() {
   const updateMutation = useUpdateCollection();
   const deleteMutation = useDeleteCollection();
   const { data: collections = [] } = useCollections();
+  const { theme } = useTheme();
+  const styles = useMemo(() => getStyles(theme), [theme]);
 
   // Form State
   const [title, setTitle] = useState('');
@@ -265,10 +267,10 @@ export default function CreateCollectionModal() {
     return (
       <View style={[styles.container, { paddingTop: insets.top + 20, paddingHorizontal: 24, justifyContent: 'center', alignItems: 'center' }]}>
         <ShieldCheck color="#EF4444" size={56} />
-        <Typography variant="h2" style={{ color: '#F3EEE3', marginTop: 16, textAlign: 'center' }}>
+        <Typography variant="h2" style={{ color: theme.colors.foreground, marginTop: 16, textAlign: 'center' }}>
           Acceso Restringido
         </Typography>
-        <Typography variant="body" style={{ color: '#8F8F8F', marginTop: 8, textAlign: 'center', marginBottom: 24 }}>
+        <Typography variant="body" style={{ color: theme.colors.foregroundMuted, marginTop: 8, textAlign: 'center', marginBottom: 24 }}>
           Solo los usuarios con rol de administrador tienen autorización para crear colecciones públicas.
         </Typography>
         <Pressable style={styles.submitBtn} onPress={() => router.back()}>
@@ -292,11 +294,11 @@ export default function CreateCollectionModal() {
           {/* Header */}
           <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) }]}>
             <Pressable style={styles.backBtn} onPress={() => router.back()} hitSlop={12}>
-              <ChevronLeft color="#F3EEE3" size={24} />
+              <ChevronLeft color={theme.colors.foreground} size={24} />
             </Pressable>
             <View style={{ flex: 1, marginLeft: 12 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Typography variant="h3" style={{ color: '#F3EEE3', fontWeight: 'bold' }}>
+                <Typography variant="h3" style={{ color: theme.colors.foreground, fontWeight: 'bold' }}>
                   {isEditing ? 'Editar Colección' : 'Nueva Colección'}
                 </Typography>
                 <View style={styles.adminBadge}>
@@ -304,7 +306,7 @@ export default function CreateCollectionModal() {
                   <Text style={styles.adminBadgeText}>ADMIN</Text>
                 </View>
               </View>
-              <Typography variant="caption" style={{ color: '#8F8F8F' }}>
+              <Typography variant="caption" style={{ color: theme.colors.foregroundMuted }}>
                 {isEditing ? 'Modifica los campos y tareas de la colección' : 'Se publicará en la pestaña de Colecciones para todos los usuarios'}
               </Typography>
             </View>
@@ -335,7 +337,7 @@ export default function CreateCollectionModal() {
             <TextInput
               style={styles.input}
               placeholder="Ej: 50 Cosas que hacer antes de los 30"
-              placeholderTextColor="#555"
+              placeholderTextColor={theme.dark ? '#666' : '#999'}
               value={title}
               onChangeText={setTitle}
               maxLength={80}
@@ -345,7 +347,7 @@ export default function CreateCollectionModal() {
             <TextInput
               style={[styles.input, styles.multilineInput]}
               placeholder="Explica de qué trata esta selección de objetivos..."
-              placeholderTextColor="#555"
+              placeholderTextColor={theme.dark ? '#666' : '#999'}
               value={description}
               onChangeText={setDescription}
               multiline
@@ -385,7 +387,7 @@ export default function CreateCollectionModal() {
             <TextInput
               style={styles.input}
               placeholder="Ej: ✨ Oficial o 🔥 Tendencia"
-              placeholderTextColor="#555"
+              placeholderTextColor={theme.dark ? '#666' : '#999'}
               value={badge}
               onChangeText={setBadge}
               maxLength={30}
@@ -440,7 +442,7 @@ export default function CreateCollectionModal() {
                 </Text>
                 {editingTaskIndex !== null && (
                   <Pressable onPress={handleCancelEditTask} style={styles.cancelEditBtn}>
-                    <X size={13} color="#999" />
+                    <X size={13} color={theme.colors.foregroundMuted} />
                     <Text style={styles.cancelEditText}>Cancelar</Text>
                   </Pressable>
                 )}
@@ -449,7 +451,7 @@ export default function CreateCollectionModal() {
               <TextInput
                 style={styles.taskInput}
                 placeholder="Nombre del objetivo o tarea *"
-                placeholderTextColor="#555"
+                placeholderTextColor={theme.dark ? '#666' : '#999'}
                 value={newTaskTitle}
                 onChangeText={setNewTaskTitle}
                 returnKeyType="next"
@@ -458,7 +460,7 @@ export default function CreateCollectionModal() {
               <TextInput
                 style={[styles.taskInput, styles.taskDescInput]}
                 placeholder="Descripción o detalles (opcional)..."
-                placeholderTextColor="#555"
+                placeholderTextColor={theme.dark ? '#666' : '#999'}
                 value={newTaskDescription}
                 onChangeText={setNewTaskDescription}
                 multiline
@@ -610,351 +612,354 @@ export default function CreateCollectionModal() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0D0D0D',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#1E1E1E',
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#1A1A1A',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  deleteHeaderBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
-  },
-  adminBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(212, 175, 55, 0.15)',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.4)',
-  },
-  adminBadgeText: {
-    color: '#D4AF37',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  section: {
-    paddingHorizontal: 16,
-    marginTop: 24,
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
-  },
-  sectionLabel: {
-    color: '#8F8F8F',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.6,
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: '#161616',
-    borderWidth: 1,
-    borderColor: '#262626',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    color: '#F3EEE3',
-    fontSize: 15,
-  },
-  multilineInput: {
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  chipsScroll: {
-    gap: 8,
-    paddingVertical: 4,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#161616',
-    borderWidth: 1,
-    borderColor: '#262626',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  chipActive: {
-    backgroundColor: 'rgba(212, 175, 55, 0.15)',
-    borderColor: '#D4AF37',
-  },
-  chipEmoji: {
-    fontSize: 16,
-  },
-  chipText: {
-    color: '#8F8F8F',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  chipTextActive: {
-    color: '#D4AF37',
-  },
-  badgePresetsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 10,
-  },
-  badgePresetChip: {
-    backgroundColor: '#161616',
-    borderWidth: 1,
-    borderColor: '#262626',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 14,
-  },
-  badgePresetChipActive: {
-    borderColor: '#D4AF37',
-    backgroundColor: 'rgba(212, 175, 55, 0.12)',
-  },
-  badgePresetText: {
-    color: '#777',
-    fontSize: 12,
-  },
-  badgePresetTextActive: {
-    color: '#D4AF37',
-    fontWeight: '700',
-  },
-  gradientRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 4,
-  },
-  gradientOption: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  gradientOptionSelected: {
-    borderColor: '#FFF',
-    transform: [{ scale: 1.08 }],
-  },
-  addTaskCard: {
-    backgroundColor: '#161616',
-    borderWidth: 1,
-    borderColor: '#262626',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 12,
-  },
-  addTaskCardEditing: {
-    borderColor: '#D4AF37',
-    backgroundColor: '#1A1710',
-  },
-  taskFormHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  taskFormSubtitle: {
-    color: '#D4AF37',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-  },
-  cancelEditBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    backgroundColor: '#262626',
-  },
-  cancelEditText: {
-    color: '#AAA',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  taskInput: {
-    color: '#F3EEE3',
-    fontSize: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#262626',
-    paddingBottom: 10,
-    marginBottom: 12,
-  },
-  taskDescInput: {
-    minHeight: 46,
-    paddingTop: 4,
-    fontSize: 13,
-    color: '#DDD',
-  },
-  taskControlsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  priorityRow: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  priorityChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#333',
-    backgroundColor: '#1B1B1B',
-  },
-  priorityText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  addTaskBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#D4AF37',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 16,
-  },
-  addTaskBtnText: {
-    color: '#000',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  taskItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    backgroundColor: '#141414',
-    borderWidth: 1,
-    borderColor: '#202020',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
-  },
-  taskItemActiveEdit: {
-    borderColor: '#D4AF37',
-    backgroundColor: '#1A1810',
-  },
-  taskItemIndex: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: '#222',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  taskItemIndexText: {
-    color: '#D4AF37',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  taskItemTitle: {
-    color: '#F3EEE3',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  taskItemDesc: {
-    color: '#999',
-    fontSize: 12,
-    lineHeight: 16,
-    marginTop: 3,
-  },
-  taskItemMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  taskPriorityTag: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  taskItemPriority: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  taskItemActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  editTaskBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(212, 175, 55, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  deleteTaskBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyTasksText: {
-    color: '#666',
-    fontSize: 13,
-    textAlign: 'center',
-    marginTop: 8,
-    fontStyle: 'italic',
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#0D0D0D',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#1E1E1E',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-  },
-  submitBtn: {
-    backgroundColor: '#D4AF37',
-    borderRadius: 14,
-    paddingVertical: 15,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-  },
-  submitBtnText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-});
+const getStyles = (theme: any) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingBottom: 16,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.border,
+    },
+    backBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: theme.colors.surface,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    deleteHeaderBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: theme.dark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.dark ? 'rgba(239, 68, 68, 0.3)' : 'rgba(239, 68, 68, 0.25)',
+    },
+    adminBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: theme.dark ? 'rgba(212, 175, 55, 0.15)' : 'rgba(212, 175, 55, 0.12)',
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 6,
+      borderWidth: 1,
+      borderColor: theme.dark ? 'rgba(212, 175, 55, 0.4)' : 'rgba(212, 175, 55, 0.3)',
+    },
+    adminBadgeText: {
+      color: gold[400],
+      fontSize: 10,
+      fontWeight: '800',
+      letterSpacing: 0.5,
+    },
+    section: {
+      paddingHorizontal: 16,
+      marginTop: 24,
+    },
+    sectionHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 10,
+    },
+    sectionLabel: {
+      color: theme.colors.foregroundMuted,
+      fontSize: 12,
+      fontWeight: '700',
+      letterSpacing: 0.6,
+      marginBottom: 8,
+    },
+    input: {
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      color: theme.colors.foreground,
+      fontSize: 15,
+    },
+    multilineInput: {
+      minHeight: 80,
+      textAlignVertical: 'top',
+    },
+    chipsScroll: {
+      gap: 8,
+      paddingVertical: 4,
+    },
+    chip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderRadius: 20,
+    },
+    chipActive: {
+      backgroundColor: theme.dark ? 'rgba(212, 175, 55, 0.15)' : 'rgba(212, 175, 55, 0.12)',
+      borderColor: gold[400],
+    },
+    chipEmoji: {
+      fontSize: 16,
+    },
+    chipText: {
+      color: theme.colors.foregroundMuted,
+      fontSize: 13,
+      fontWeight: '600',
+    },
+    chipTextActive: {
+      color: gold[400],
+    },
+    badgePresetsRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginTop: 10,
+    },
+    badgePresetChip: {
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 14,
+    },
+    badgePresetChipActive: {
+      borderColor: gold[400],
+      backgroundColor: theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.1)',
+    },
+    badgePresetText: {
+      color: theme.colors.foregroundMuted,
+      fontSize: 12,
+    },
+    badgePresetTextActive: {
+      color: gold[400],
+      fontWeight: '700',
+    },
+    gradientRow: {
+      flexDirection: 'row',
+      gap: 12,
+      marginTop: 4,
+    },
+    gradientOption: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 2,
+      borderColor: 'transparent',
+    },
+    gradientOptionSelected: {
+      borderColor: theme.colors.foreground,
+      transform: [{ scale: 1.08 }],
+    },
+    addTaskCard: {
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: 14,
+      padding: 14,
+      marginBottom: 12,
+    },
+    addTaskCardEditing: {
+      borderColor: gold[400],
+      backgroundColor: theme.dark ? '#1A1710' : '#FFFDF5',
+    },
+    taskFormHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 10,
+    },
+    taskFormSubtitle: {
+      color: gold[400],
+      fontSize: 11,
+      fontWeight: '700',
+      letterSpacing: 0.8,
+    },
+    cancelEditBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 8,
+      backgroundColor: theme.colors.border,
+    },
+    cancelEditText: {
+      color: theme.colors.foregroundMuted,
+      fontSize: 11,
+      fontWeight: '600',
+    },
+    taskInput: {
+      color: theme.colors.foreground,
+      fontSize: 15,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+      paddingBottom: 10,
+      marginBottom: 12,
+    },
+    taskDescInput: {
+      minHeight: 46,
+      paddingTop: 4,
+      fontSize: 13,
+      color: theme.colors.foreground,
+    },
+    taskControlsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    priorityRow: {
+      flexDirection: 'row',
+      gap: 6,
+    },
+    priorityChip: {
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      backgroundColor: theme.dark ? '#1B1B1B' : '#F5F5F0',
+    },
+    priorityText: {
+      fontSize: 11,
+      fontWeight: '700',
+    },
+    addTaskBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: gold[400],
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 16,
+    },
+    addTaskBtnText: {
+      color: '#000',
+      fontSize: 13,
+      fontWeight: '700',
+    },
+    taskItem: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 12,
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: 12,
+      padding: 12,
+      marginBottom: 8,
+    },
+    taskItemActiveEdit: {
+      borderColor: gold[400],
+      backgroundColor: theme.dark ? '#1A1810' : '#FFFDF5',
+    },
+    taskItemIndex: {
+      width: 26,
+      height: 26,
+      borderRadius: 13,
+      backgroundColor: theme.colors.border,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: 2,
+    },
+    taskItemIndexText: {
+      color: gold[400],
+      fontSize: 12,
+      fontWeight: 'bold',
+    },
+    taskItemTitle: {
+      color: theme.colors.foreground,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    taskItemDesc: {
+      color: theme.colors.foregroundMuted,
+      fontSize: 12,
+      lineHeight: 16,
+      marginTop: 3,
+    },
+    taskItemMetaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 6,
+    },
+    taskPriorityTag: {
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 6,
+    },
+    taskItemPriority: {
+      fontSize: 11,
+      fontWeight: '600',
+    },
+    taskItemActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    editTaskBtn: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: theme.dark ? 'rgba(212, 175, 55, 0.1)' : 'rgba(212, 175, 55, 0.12)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    deleteTaskBtn: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: theme.dark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    emptyTasksText: {
+      color: theme.colors.foregroundMuted,
+      fontSize: 13,
+      textAlign: 'center',
+      marginTop: 8,
+      fontStyle: 'italic',
+    },
+    footer: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: theme.colors.background,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.border,
+      paddingHorizontal: 16,
+      paddingTop: 12,
+    },
+    submitBtn: {
+      backgroundColor: gold[400],
+      borderRadius: 14,
+      paddingVertical: 15,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 8,
+    },
+    submitBtnText: {
+      color: '#000',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+  });

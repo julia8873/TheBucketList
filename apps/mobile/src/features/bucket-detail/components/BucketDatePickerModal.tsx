@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Modal, Pressable, Platform } from 'react-native';
-import { Typography } from '@bucketlist/ui';
+import { Typography, useTheme } from '@bucketlist/ui';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 export interface DatePickerConfig {
@@ -41,6 +41,7 @@ function BucketDatePickerModalInner({
   onClose: () => void;
   onChangeDate: (date: Date, type: 'deadline' | 'completed_at') => Promise<void> | void;
 }) {
+  const { theme } = useTheme();
   const [selectedDate, setSelectedDate] = useState<Date>(config.date || new Date());
 
   const handleConfirm = async () => {
@@ -52,10 +53,10 @@ function BucketDatePickerModalInner({
     return (
       <Modal transparent animationType="slide" visible={true} onRequestClose={onClose}>
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <View style={{ backgroundColor: '#1C1C1E', padding: 20, borderTopLeftRadius: 16, borderTopRightRadius: 16 }}>
+          <View style={{ backgroundColor: theme.colors.surface, padding: 20, borderTopLeftRadius: 16, borderTopRightRadius: 16, borderTopWidth: 1, borderColor: theme.colors.border }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
               <Pressable onPress={onClose} hitSlop={10}>
-                <Typography variant="body" color="#8E8E93">Cancelar</Typography>
+                <Typography variant="body" color={theme.colors.foregroundMuted}>Cancelar</Typography>
               </Pressable>
               <Pressable onPress={handleConfirm} hitSlop={10}>
                 <Typography variant="bodySemibold" color="#D4B13A">Guardar</Typography>
@@ -65,7 +66,7 @@ function BucketDatePickerModalInner({
               value={selectedDate}
               mode="date"
               display="spinner"
-              themeVariant="dark"
+              themeVariant={theme.dark ? 'dark' : 'light'}
               maximumDate={config.type === 'completed_at' ? new Date() : undefined}
               onChange={(_event, date) => {
                 if (date) {

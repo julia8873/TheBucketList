@@ -13,7 +13,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
-import { PageTitle } from '@bucketlist/ui';
+import { PageTitle, useTheme } from '@bucketlist/ui';
 import type { UpdateBucketForm } from '@bucketlist/shared';
 import { supabase } from '../../src/services/supabase';
 import { useUpdateBucket } from '../../src/hooks/useBuckets';
@@ -40,6 +40,7 @@ export default function EditBucketModal() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
   const updateBucket = useUpdateBucket();
   const syncTags = useSyncItemTags();
 
@@ -264,32 +265,43 @@ export default function EditBucketModal() {
     : null;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
       <KeyboardAvoidingView
-        style={styles.container}
+        style={[styles.container, { backgroundColor: theme.colors.background }]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           {/* CABECERA */}
           <View style={styles.header}>
             <Pressable
-              style={styles.backButton}
+              style={[
+                styles.backButton,
+                { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+              ]}
               onPress={() => router.back()}
               accessibilityLabel="Volver"
             >
-              <ChevronLeft color="#FFF" size={28} />
+              <ChevronLeft color={theme.colors.foreground} size={28} />
             </Pressable>
             <PageTitle gold="Editar" rest="tarea" />
           </View>
 
           {/* QUÉ QUIERES LOGRAR */}
-          <Text style={styles.sectionLabel}>
+          <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
             <Text style={{ color: '#D4B13A' }}>QUÉ</Text> QUIERES LOGRAR
           </Text>
           <TextInput
-            style={[styles.titleInput, isTitleFocused && { borderColor: '#D4B13A' }]}
+            style={[
+              styles.titleInput,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+                color: theme.colors.foreground,
+              },
+              isTitleFocused && { borderColor: '#D4B13A' },
+            ]}
             placeholder="Ej. Ver auroras boreales"
-            placeholderTextColor="#6B6B6B"
+            placeholderTextColor={theme.colors.foregroundMuted}
             value={title}
             onChangeText={setTitle}
             onFocus={() => setIsTitleFocused(true)}
@@ -297,20 +309,27 @@ export default function EditBucketModal() {
           />
 
           {/* DESCRIPCIÓN */}
-          <Text style={styles.sectionLabel}>
+          <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
             <Text style={{ color: '#D4B13A' }}>DESCRIPCIÓN</Text>
           </Text>
           <TextInput
-            style={styles.descInput}
+            style={[
+              styles.descInput,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+                color: theme.colors.foreground,
+              },
+            ]}
             placeholder="Cuéntanos más…"
-            placeholderTextColor="#6B6B6B"
+            placeholderTextColor={theme.colors.foregroundMuted}
             value={description}
             onChangeText={setDescription}
             multiline
           />
 
           {/* PORTADA */}
-          <Text style={styles.sectionLabel}>
+          <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
             <Text style={{ color: '#D4B13A' }}>FOTO</Text> DE PORTADA
           </Text>
           <TaskCoverPicker
@@ -400,7 +419,16 @@ export default function EditBucketModal() {
         />
 
         {/* BOTTOM BAR */}
-        <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+        <View
+          style={[
+            styles.bottomBar,
+            {
+              backgroundColor: theme.colors.surface,
+              borderTopColor: theme.colors.border,
+              paddingBottom: Math.max(insets.bottom, 16),
+            },
+          ]}
+        >
           <Pressable
             style={[styles.submitButton, (!title.trim() || isSaving) && { opacity: 0.5 }]}
             onPress={() => void handleSave()}

@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Camera, ImagePlus, X, Check, Link2, Crop, Maximize2 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
-import { gold } from '@bucketlist/ui';
+import { gold, useTheme } from '@bucketlist/ui';
 import { styles } from '../styles/task-form.styles';
 import { TASK_COVER_GRADIENTS } from '../constants';
 import { ImageLinkModal } from '@/components/ImageLinkModal';
@@ -23,6 +23,7 @@ export function TaskCoverPicker({
   onChangeCover,
   taskTitle = '',
 }: TaskCoverPickerProps) {
+  const { theme } = useTheme();
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [isSquare, setIsSquare] = useState(false);
   const [cropTarget, setCropTarget] = useState<{ uri: string; width: number; height: number } | null>(null);
@@ -197,7 +198,14 @@ export function TaskCoverPicker({
         <View style={{ gap: 10 }}>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <Pressable
-              style={[styles.uploadCoverBtn, { flex: 1 }]}
+              style={[
+                styles.uploadCoverBtn,
+                {
+                  flex: 1,
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+              ]}
               onPress={() => void pickFromGallery()}
               accessibilityRole="button"
               accessibilityLabel="Subir foto desde la galería"
@@ -206,13 +214,20 @@ export function TaskCoverPicker({
                 <ImagePlus size={20} color="#D4B13A" strokeWidth={2.2} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.uploadCoverTitle}>Galería</Text>
-                <Text style={styles.uploadCoverSubtitle}>Elegir y recortar</Text>
+                <Text style={[styles.uploadCoverTitle, { color: theme.colors.foreground }]}>Galería</Text>
+                <Text style={[styles.uploadCoverSubtitle, { color: theme.colors.foregroundMuted }]}>Elegir y recortar</Text>
               </View>
             </Pressable>
 
             <Pressable
-              style={[styles.uploadCoverBtn, { flex: 1 }]}
+              style={[
+                styles.uploadCoverBtn,
+                {
+                  flex: 1,
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+              ]}
               onPress={() => void takePhoto()}
               accessibilityRole="button"
               accessibilityLabel="Hacer foto con la cámara"
@@ -221,8 +236,8 @@ export function TaskCoverPicker({
                 <Camera size={20} color="#D4B13A" strokeWidth={2.2} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.uploadCoverTitle}>Cámara</Text>
-                <Text style={styles.uploadCoverSubtitle}>Hacer foto</Text>
+                <Text style={[styles.uploadCoverTitle, { color: theme.colors.foreground }]}>Cámara</Text>
+                <Text style={[styles.uploadCoverSubtitle, { color: theme.colors.foregroundMuted }]}>Hacer foto</Text>
               </View>
             </Pressable>
           </View>
@@ -246,7 +261,7 @@ export function TaskCoverPicker({
               <Text style={[styles.uploadCoverTitle, { color: gold[400] }]}>
                 Añadir con enlace de Google / Web
               </Text>
-              <Text style={styles.uploadCoverSubtitle}>
+              <Text style={[styles.uploadCoverSubtitle, { color: theme.colors.foregroundMuted }]}>
                 Pega el enlace sin descargar la foto en tu móvil
               </Text>
             </View>
@@ -256,7 +271,7 @@ export function TaskCoverPicker({
 
       {/* Degradados de color predeterminados */}
       <View style={styles.coverPresetsSection}>
-        <Text style={styles.coverSubLabel}>
+        <Text style={[styles.coverSubLabel, { color: theme.colors.foregroundMuted }]}>
           {hasCustomImage ? 'O cambia a un degradado' : 'O elige un color predeterminado'}
         </Text>
         <View style={styles.coverPresetsRow}>

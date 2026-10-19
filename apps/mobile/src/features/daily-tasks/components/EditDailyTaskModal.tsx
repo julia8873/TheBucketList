@@ -9,6 +9,7 @@ import {
   ScrollView,
   Platform,
   StyleSheet,
+  useWindowDimensions,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
@@ -133,23 +134,43 @@ export function EditDailyTaskModal({
   nestedTagModal,
 }: EditDailyTaskModalProps) {
   const { theme } = useTheme();
+  const { height: windowHeight } = useWindowDimensions();
+  const maxScrollHeight = Math.max(480, Math.min(560, windowHeight - 200));
   const [showDatePicker, setShowDatePicker] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const isInitialScroll = useRef(true);
 
   useEffect(() => {
-    if (visible) {
+    if (visible && editingTask) {
       isInitialScroll.current = true;
       scrollViewRef.current?.scrollTo({ y: 0, animated: false });
-      const timer = setTimeout(() => {
+      const t1 = setTimeout(() => {
         scrollViewRef.current?.scrollTo({ y: 0, animated: false });
       }, 50);
-      return () => clearTimeout(timer);
+      const t2 = setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+      }, 150);
+      const t3 = setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+        isInitialScroll.current = false;
+      }, 350);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+      };
     }
-  }, [visible]);
+  }, [visible, editingTask?.id]);
 
   const handleShow = () => {
+    isInitialScroll.current = true;
     scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    }, 40);
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    }, 120);
   };
 
   if (!visible || !editingTask) return null;
@@ -216,12 +237,12 @@ export function EditDailyTaskModal({
               ref={scrollViewRef}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
-              style={{ maxHeight: 360 }}
-              contentContainerStyle={{ paddingBottom: 6 }}
+              bounces={false}
+              style={{ maxHeight: maxScrollHeight }}
+              contentContainerStyle={{ paddingBottom: 16 }}
               onContentSizeChange={() => {
                 if (isInitialScroll.current) {
                   scrollViewRef.current?.scrollTo({ y: 0, animated: false });
-                  isInitialScroll.current = false;
                 }
               }}
             >

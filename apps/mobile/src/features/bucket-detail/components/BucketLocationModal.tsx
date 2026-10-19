@@ -47,10 +47,10 @@ export function BucketLocationModal({
             style={{
               width: '100%',
               maxWidth: 420,
-              backgroundColor: '#161616',
+              backgroundColor: theme.colors.surface,
               borderRadius: 20,
               borderWidth: 1,
-              borderColor: dark[400],
+              borderColor: theme.colors.border,
               padding: 20,
               minHeight: 320,
             }}

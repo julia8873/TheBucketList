@@ -11,48 +11,47 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, UserX, UserCheck } from 'lucide-react-native';
-import { Avatar, PageTitle, fontFamily, gold } from '@bucketlist/ui';
+import { Avatar, PageTitle, fontFamily, gold, confirm, useTheme } from '@bucketlist/ui';
 import { useBlockedUsers, useUnblockUser } from '../../src/hooks/useBlockReport';
 import { BlockedUserItem } from '../../src/services/api/blockReport';
 
 export default function BlockedUsersScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
   const { data: blockedUsers = [], isLoading } = useBlockedUsers();
   const unblockMutation = useUnblockUser();
 
-  const handleUnblock = (item: BlockedUserItem) => {
+  const handleUnblock = async (item: BlockedUserItem) => {
     const username = item.profile?.username || 'este usuario';
-    Alert.alert(
-      `¿Desbloquear a @${username}?`,
-      'Podrá volver a ver tus publicaciones públicas, buscarte y seguirte.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Desbloquear',
-          onPress: () => unblockMutation.mutate(item.blocked_id),
-        },
-      ]
-    );
+    const confirmed = await confirm.ask({
+      title: `¿Desbloquear a @${username}?`,
+      message: 'Podrá volver a ver tus publicaciones públicas, buscarte y seguirte.',
+      confirmLabel: 'Desbloquear',
+      cancelLabel: 'Cancelar',
+    });
+    if (confirmed) {
+      unblockMutation.mutate(item.blocked_id);
+    }
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
         <Pressable
-          style={styles.backBtn}
+          style={[styles.backBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
           onPress={() => router.back()}
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel="Volver"
         >
-          <ChevronLeft color="#F3EEE3" size={24} />
+          <ChevronLeft color={theme.colors.foreground} size={24} />
         </Pressable>
         <PageTitle gold="Usuarios" rest=" bloqueados" />
       </View>
 
-      <Text style={styles.description}>
+      <Text style={[styles.description, { color: theme.colors.foregroundMuted }]}>
         Los usuarios de esta lista no pueden ver tus objetivos, seguirte ni interactuar contigo.
       </Text>
 
@@ -69,38 +68,44 @@ export default function BlockedUsersScreen() {
           renderItem={({ item }) => {
             const profile = item.profile;
             return (
-              <View style={styles.userCard}>
+              <View style={[styles.userCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
                 <Avatar
                   source={profile?.avatar_url ? { uri: profile.avatar_url } : undefined}
                   fallback={profile?.display_name?.charAt(0) || profile?.username?.charAt(0) || '?'}
                   size="md"
                 />
                 <View style={styles.userInfo}>
-                  <Text style={styles.displayName} numberOfLines={1}>
+                  <Text style={[styles.displayName, { color: theme.colors.foreground }]} numberOfLines={1}>
                     {profile?.display_name || profile?.username || 'Usuario'}
                   </Text>
-                  <Text style={styles.username} numberOfLines={1}>
+                  <Text style={[styles.username, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
                     @{profile?.username || 'usuario'}
                   </Text>
                 </View>
                 <Pressable
-                  style={styles.unblockBtn}
+                  style={[
+                    styles.unblockBtn,
+                    {
+                      backgroundColor: theme.dark ? '#262626' : (theme.colors.surfaceElevated ?? '#ECE8DF'),
+                      borderColor: theme.colors.border,
+                    },
+                  ]}
                   onPress={() => handleUnblock(item)}
                   disabled={unblockMutation.isPending}
                 >
-                  <UserCheck size={14} color="#F3EEE3" />
-                  <Text style={styles.unblockBtnText}>Desbloquear</Text>
+                  <UserCheck size={14} color={theme.colors.foreground} />
+                  <Text style={[styles.unblockBtnText, { color: theme.colors.foreground }]}>Desbloquear</Text>
                 </Pressable>
               </View>
             );
           }}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <View style={styles.emptyIconBox}>
-                <UserX size={32} color="#8F8F8F" />
+              <View style={[styles.emptyIconBox, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderWidth: 1 }]}>
+                <UserX size={32} color={theme.colors.foregroundMuted} />
               </View>
-              <Text style={styles.emptyTitle}>Sin usuarios bloqueados</Text>
-              <Text style={styles.emptySubtitle}>
+              <Text style={[styles.emptyTitle, { color: theme.colors.foreground }]}>Sin usuarios bloqueados</Text>
+              <Text style={[styles.emptySubtitle, { color: theme.colors.foregroundMuted }]}>
                 No tienes a ningún usuario en tu lista de bloqueo.
               </Text>
             </View>

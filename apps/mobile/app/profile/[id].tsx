@@ -2,13 +2,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, FlatList, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, MoreHorizontal } from 'lucide-react-native';
+import { ChevronLeft, MoreHorizontal, UserX } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import {
   EmptyState,
   SectionLabel,
   SegmentedControl,
   useTheme,
+  confirm,
   toast,
 } from '@bucketlist/ui';
 import { useAuthStore } from '../../src/stores/auth.store';
@@ -125,6 +126,11 @@ export default function PublicProfileScreen() {
   const { isAlbumFavorite, isBucketFavorite } = useUserFavorites(user?.id);
   const toggleFavoriteAlbum = useToggleFavoriteAlbum();
 
+  const { data: isBlocked } = useIsUserBlocked(id);
+  const blockMutation = useBlockUser();
+  const unblockMutation = useUnblockUser();
+  const reportMutation = useReportUser();
+
   const { data: stats, isLoading: statsLoading } = useProfileStats(id);
   const followStatus = stats?.follow_status ?? 'none';
   const {
@@ -138,6 +144,7 @@ export default function PublicProfileScreen() {
     id,
     isOwnProfile,
     isLocked: !isOwnProfile && !!stats?.is_locked,
+    isBlocked: Boolean(isBlocked),
     followStatus,
   });
 
@@ -145,6 +152,7 @@ export default function PublicProfileScreen() {
   const isLocked = !isOwnProfile && (!!stats?.is_locked || (isPrivate && followStatus !== 'accepted'));
 
   const filtered = useMemo(() => {
+    if (isBlocked) return [];
     const list = buckets ?? [];
     let res = list;
     if (filter === 'completed') res = list.filter((b: any) => b.status === 'completed');
@@ -155,9 +163,10 @@ export default function PublicProfileScreen() {
       if (favA !== favB) return favB - favA;
       return 0;
     });
-  }, [buckets, filter, isBucketFavorite]);
+  }, [buckets, filter, isBucketFavorite, isBlocked]);
 
   const filteredAlbums = useMemo(() => {
+    if (isBlocked) return [];
     const list = publicAlbums ?? [];
     let res = list;
     if (albumFilter === 'closed') res = list.filter((a) => a.is_closed);
@@ -172,68 +181,69 @@ export default function PublicProfileScreen() {
       if (favA !== favB) return favB - favA;
       return 0;
     });
-  }, [publicAlbums, albumFilter, isAlbumFavorite]);
+  }, [publicAlbums, albumFilter, isAlbumFavorite, isBlocked]);
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed' as any));
 
-  const doFollow = () => {
-    if (!user || !id) return;
-    const vars = { followerId: user.id, followingId: id, targetIsPrivate: isPrivate };
-    const fail = (error: any) => Alert.alert('No se pudo completar', error?.message ?? 'Inténtalo de nuevo.');
-
-    if (followStatus === 'accepted') {
-      Alert.alert(`¿Dejar de seguir a ${displayNameOf(profile)}?`, undefined, [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Dejar de seguir', style: 'destructive', onPress: () => unfollowUser.mutate(vars, { onError: fail }) },
-      ]);
-    } else if (followStatus === 'pending') {
-      unfollowUser.mutate(vars, { onError: fail });
-    } else {
-      followUser.mutate(vars, { onError: fail });
-    }
-  };
-
   const [optionsSheetVisible, setOptionsSheetVisible] = useState(false);
   const [reportModalVisible, setReportModalVisible] = useState(false);
-
-  const { data: isBlocked } = useIsUserBlocked(id);
-  const blockMutation = useBlockUser();
-  const unblockMutation = useUnblockUser();
-  const reportMutation = useReportUser();
 
   const openMenu = () => {
     setOptionsSheetVisible(true);
   };
 
-  const handleConfirmBlock = () => {
+  const handleConfirmUnblock = async () => {
     if (!profile) return;
-    Alert.alert(
-      `¿Bloquear a @${profile.username}?`,
-      'Ya no podrá ver tus publicaciones, seguirte ni enviarte mensajes, y sus contenidos se ocultarán.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Bloquear',
-          style: 'destructive',
-          onPress: () => blockMutation.mutate(id),
-        },
-      ]
-    );
+    const confirmed = await confirm.ask({
+      title: `¿Desbloquear a @${profile.username}?`,
+      message: 'Podrá volver a ver tus publicaciones públicas y seguirte.',
+      confirmLabel: 'Desbloquear',
+      cancelLabel: 'Cancelar',
+    });
+    if (confirmed) {
+      unblockMutation.mutate(id);
+    }
   };
 
-  const handleConfirmUnblock = () => {
+  const handleConfirmBlock = async () => {
     if (!profile) return;
-    Alert.alert(
-      `¿Desbloquear a @${profile.username}?`,
-      'Podrá volver a ver tus publicaciones públicas y seguirte.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Desbloquear',
-          onPress: () => unblockMutation.mutate(id),
-        },
-      ]
-    );
+    const confirmed = await confirm.ask({
+      title: `¿Bloquear a @${profile.username}?`,
+      message: 'Ya no podrá ver tus publicaciones, seguirte ni enviarte mensajes, y sus contenidos se ocultarán.',
+      confirmLabel: 'Bloquear',
+      cancelLabel: 'Cancelar',
+      destructive: true,
+    });
+    if (confirmed) {
+      blockMutation.mutate(id);
+    }
+  };
+
+  const doFollow = async () => {
+    if (!user || !id) return;
+    if (isBlocked) {
+      await handleConfirmUnblock();
+      return;
+    }
+
+    const vars = { followerId: user.id, followingId: id, targetIsPrivate: isPrivate };
+    const fail = (error: any) => Alert.alert('No se pudo completar', error?.message ?? 'Inténtalo de nuevo.');
+
+    if (followStatus === 'accepted') {
+      const confirmed = await confirm.ask({
+        title: `¿Dejar de seguir a ${displayNameOf(profile)}?`,
+        confirmLabel: 'Dejar de seguir',
+        cancelLabel: 'Cancelar',
+        destructive: true,
+      });
+      if (confirmed) {
+        unfollowUser.mutate(vars, { onError: fail });
+      }
+    } else if (followStatus === 'pending') {
+      unfollowUser.mutate(vars, { onError: fail });
+    } else {
+      followUser.mutate(vars, { onError: fail });
+    }
   };
 
   const handleSubmitReport = async (reason: string, details?: string) => {
@@ -299,20 +309,21 @@ export default function PublicProfileScreen() {
         taskCount={taskCount}
         followersCount={stats?.followers_count ?? 0}
         isLocked={isLocked}
+        isBlocked={Boolean(isBlocked)}
         onPressCompleted={() => {
-          if (!isLocked) {
+          if (!isLocked && !isBlocked) {
             setActiveTab('list');
             setFilter('completed');
           }
         }}
         onPressPublic={() => {
-          if (!isLocked) {
+          if (!isLocked && !isBlocked) {
             setActiveTab('list');
             setFilter('all');
           }
         }}
         onPressFollowers={() => {
-          if (!isLocked) {
+          if (!isLocked && !isBlocked) {
             router.push({
               pathname: '/friends',
               params: { userId: id, kind: 'followers' },
@@ -321,7 +332,19 @@ export default function PublicProfileScreen() {
         }}
       />
 
-      {isLocked ? (
+      {isBlocked ? (
+        <View style={styles.blockedNotice}>
+          <View style={styles.blockedNoticeIcon}>
+            <UserX size={26} color="#EF4444" strokeWidth={2} />
+          </View>
+          <Text style={[styles.blockedNoticeTitle, { color: theme.colors.foreground }]}>
+            Has bloqueado a este usuario
+          </Text>
+          <Text style={[styles.blockedNoticeText, { color: theme.colors.foregroundMuted }]}>
+            Sus tareas y álbumes están ocultos. Pulsa en "Bloqueado" si deseas desbloquear a este perfil.
+          </Text>
+        </View>
+      ) : isLocked ? (
         <ProfileLockedState profile={profile} followStatus={followStatus} />
       ) : (
         <>
@@ -398,7 +421,7 @@ export default function PublicProfileScreen() {
         key={`${activeTab}-${activeTab === 'list' ? taskViewMode : albumViewMode}`}
         refreshing={refreshing}
         onRefresh={() => void onRefresh()}
-        data={isLocked || activeTab !== 'list' ? [] : filtered}
+        data={isBlocked || isLocked || activeTab !== 'list' ? [] : filtered}
         keyExtractor={(item: any) => item.id}
         numColumns={taskViewMode === 'gallery' ? 2 : 1}
         columnWrapperStyle={taskViewMode === 'gallery' ? { gap: 12 } : undefined}
@@ -415,7 +438,7 @@ export default function PublicProfileScreen() {
           />
         )}
         ListEmptyComponent={
-          isLocked || activeTab !== 'list' ? null : bucketsLoading ? (
+          isBlocked || isLocked || activeTab !== 'list' ? null : bucketsLoading ? (
             <View style={{ gap: 10, marginTop: 12 }}>
               <TaskRowSkeleton />
               <TaskRowSkeleton />

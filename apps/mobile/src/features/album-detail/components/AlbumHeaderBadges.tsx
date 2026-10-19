@@ -27,15 +27,15 @@ export function AlbumHeaderBadges({
     album.priority === 'high' || album.priority === 'urgent'
       ? '#EF4444'
       : album.priority === 'low'
-      ? '#10B981'
-      : '#D4B13A';
+        ? '#10B981'
+        : '#D4B13A';
 
   const priorityLabel =
     album.priority === 'high' || album.priority === 'urgent'
       ? 'Alta'
       : album.priority === 'low'
-      ? 'Baja'
-      : 'Media';
+        ? 'Baja'
+        : 'Media';
 
   const visibilityLabel = (v: string) => {
     switch (v) {
@@ -57,8 +57,8 @@ export function AlbumHeaderBadges({
             isAlbumClosed
               ? styles.chipGold
               : areAllCompleted
-              ? styles.chipCompleted
-              : styles.chipGold,
+                ? styles.chipCompleted
+                : styles.chipGold,
             canEdit && styles.chipPressable,
           ]}
           onPress={onOpenStatus}

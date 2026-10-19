@@ -62,18 +62,18 @@ export function AlbumTaskCard({
     itemPriority === 'urgent'
       ? '#DC2626'
       : itemPriority === 'high'
-      ? '#EF4444'
-      : itemPriority === 'low'
-      ? '#10B981'
-      : '#D4B13A';
+        ? '#EF4444'
+        : itemPriority === 'low'
+          ? '#10B981'
+          : '#D4B13A';
   const itemPriorityLabel =
     itemPriority === 'urgent'
       ? 'Urgente'
       : itemPriority === 'high'
-      ? 'Alta'
-      : itemPriority === 'low'
-      ? 'Baja'
-      : 'Media';
+        ? 'Alta'
+        : itemPriority === 'low'
+          ? 'Baja'
+          : 'Media';
 
   const priorityBadge = (
     <View
@@ -89,8 +89,8 @@ export function AlbumTaskCard({
           itemPriority === 'urgent' || itemPriority === 'high'
             ? 'rgba(239, 68, 68, 0.16)'
             : itemPriority === 'low'
-            ? 'rgba(16, 185, 129, 0.16)'
-            : 'rgba(212, 177, 58, 0.16)',
+              ? 'rgba(16, 185, 129, 0.16)'
+              : 'rgba(212, 177, 58, 0.16)',
         borderWidth: 1,
         borderColor: itemPriorityColor,
       }}

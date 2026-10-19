@@ -197,7 +197,7 @@ export function ExploreFeedTab({
           <FlatList
             data={searchResults || []}
             keyExtractor={(item) => item.id}
-            contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 10 }}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 72 }}
             renderItem={({ item }) => (
               <Pressable
                 style={styles.userRow}
@@ -237,7 +237,7 @@ export function ExploreFeedTab({
   if (loading && combinedItems.length === 0) {
     if (viewMode === 'gallery') {
       return (
-        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 72 }} showsVerticalScrollIndicator={false}>
           {headerElement}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: 10 }}>
             <TaskGallerySkeleton />
@@ -249,7 +249,7 @@ export function ExploreFeedTab({
       );
     }
     return (
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 72 }} showsVerticalScrollIndicator={false}>
         {headerElement}
         <FeedCardSkeleton />
         <FeedCardSkeleton />
@@ -286,6 +286,7 @@ export function ExploreFeedTab({
         keyExtractor={(item) => `${item._type ?? 'task'}-${item.id}`}
         numColumns={viewMode === 'gallery' ? 2 : 1}
         renderItem={renderItem}
+        contentContainerStyle={{ paddingBottom: 72 }}
         estimatedItemSize={
           viewMode === 'compact'
             ? 70

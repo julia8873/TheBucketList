@@ -21,7 +21,7 @@ import {
   Crown,
   ShieldAlert,
 } from 'lucide-react-native';
-import { Avatar, PageTitle, fontFamily, gold } from '@bucketlist/ui';
+import { Avatar, PageTitle, fontFamily, gold, useTheme } from '@bucketlist/ui';
 import { useIsAdmin } from '../../src/hooks/useCurrentUserProfile';
 import {
   useAdminsList,
@@ -34,6 +34,7 @@ import { useAuthStore } from '../../src/stores/auth.store';
 export default function ManageAdminsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
   const isAdmin = useIsAdmin();
   const { user } = useAuthStore();
 
@@ -94,21 +95,24 @@ export default function ManageAdminsScreen() {
 
   if (!isAdmin) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top + 20, justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
+      <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top + 20, justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
         <ShieldAlert color="#EF4444" size={56} />
-        <Text style={styles.restrictedTitle}>Acceso Restringido</Text>
-        <Text style={styles.restrictedText}>
+        <Text style={[styles.restrictedTitle, { color: theme.colors.foreground }]}>Acceso Restringido</Text>
+        <Text style={[styles.restrictedText, { color: theme.colors.foregroundMuted }]}>
           Solo los administradores autorizados pueden acceder a este apartado.
         </Text>
-        <Pressable style={styles.backBtnModal} onPress={() => router.back()}>
-          <Text style={styles.backBtnText}>Volver</Text>
+        <Pressable
+          style={[styles.backBtnModal, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderWidth: 1 }]}
+          onPress={() => router.back()}
+        >
+          <Text style={[styles.backBtnText, { color: theme.colors.foreground }]}>Volver</Text>
         </Pressable>
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
@@ -116,13 +120,13 @@ export default function ManageAdminsScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Pressable
-            style={styles.backBtn}
+            style={[styles.backBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
             onPress={() => router.back()}
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel="Volver"
           >
-            <ChevronLeft color="#F3EEE3" size={24} />
+            <ChevronLeft color={theme.colors.foreground} size={24} />
           </Pressable>
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -135,18 +139,25 @@ export default function ManageAdminsScreen() {
           </View>
         </View>
 
-        <Text style={styles.description}>
+        <Text style={[styles.description, { color: theme.colors.foregroundMuted }]}>
           Añade a personas de confianza para que te ayuden a moderar reportes y gestionar la comunidad.
         </Text>
 
         {/* Formulario añadir admin */}
-        <View style={styles.addCard}>
-          <Text style={styles.sectionLabel}>AÑADIR NUEVO ADMINISTRADOR</Text>
+        <View style={[styles.addCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+          <Text style={[styles.sectionLabel, { color: theme.colors.foregroundMuted }]}>AÑADIR NUEVO ADMINISTRADOR</Text>
           <View style={styles.inputRow}>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: theme.dark ? '#1F1F1F' : (theme.colors.surfaceElevated ?? '#F0ECE1'),
+                  borderColor: theme.colors.border,
+                  color: theme.colors.foreground,
+                },
+              ]}
               placeholder="Nombre de usuario (ej: @carlos)"
-              placeholderTextColor="#666"
+              placeholderTextColor={theme.colors.foregroundMuted}
               value={usernameInput}
               onChangeText={setUsernameInput}
               autoCapitalize="none"
@@ -173,7 +184,7 @@ export default function ManageAdminsScreen() {
 
         {/* Lista de administradores */}
         <View style={{ flex: 1, paddingHorizontal: 20 }}>
-          <Text style={[styles.sectionLabel, { marginTop: 12, marginBottom: 10 }]}>
+          <Text style={[styles.sectionLabel, { color: theme.colors.foregroundMuted, marginTop: 12, marginBottom: 10 }]}>
             ADMINISTRADORES ACTUALES ({admins.length})
           </Text>
 
@@ -192,7 +203,7 @@ export default function ManageAdminsScreen() {
                 const isMe = item.id === user?.id;
 
                 return (
-                  <View style={styles.adminCard}>
+                  <View style={[styles.adminCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
                     <Avatar
                       source={item.avatar_url ? { uri: item.avatar_url } : undefined}
                       fallback={item.display_name?.charAt(0) || item.username?.charAt(0) || '?'}
@@ -200,7 +211,7 @@ export default function ManageAdminsScreen() {
                     />
                     <View style={styles.adminInfo}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Text style={styles.displayName} numberOfLines={1}>
+                        <Text style={[styles.displayName, { color: theme.colors.foreground }]} numberOfLines={1}>
                           {item.display_name || item.username}
                         </Text>
                         {isPrimary && (
@@ -210,12 +221,12 @@ export default function ManageAdminsScreen() {
                           </View>
                         )}
                         {isMe && !isPrimary && (
-                          <View style={styles.mePill}>
-                            <Text style={styles.mePillText}>Tú</Text>
+                          <View style={[styles.mePill, { backgroundColor: theme.dark ? '#262626' : '#E2DDD4' }]}>
+                            <Text style={[styles.mePillText, { color: theme.colors.foreground }]}>Tú</Text>
                           </View>
                         )}
                       </View>
-                      <Text style={styles.username} numberOfLines={1}>
+                      <Text style={[styles.username, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
                         @{item.username}
                       </Text>
                     </View>

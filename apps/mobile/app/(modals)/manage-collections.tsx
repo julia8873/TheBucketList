@@ -25,7 +25,7 @@ import {
   Heart,
   Copy,
 } from 'lucide-react-native';
-import { PageTitle, fontFamily, gold } from '@bucketlist/ui';
+import { PageTitle, fontFamily, gold, useTheme } from '@bucketlist/ui';
 import { useIsAdmin } from '../../src/hooks/useCurrentUserProfile';
 import { useCollections, useDeleteCollection } from '../../src/features/collections/hooks/useCollections';
 import { CollectionItem } from '../../src/features/collections/types';
@@ -33,6 +33,7 @@ import { CollectionItem } from '../../src/features/collections/types';
 export default function ManageCollectionsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
   const isAdmin = useIsAdmin();
 
   const { data: collections = [], isLoading, refetch, isRefetching } = useCollections();
@@ -81,14 +82,14 @@ export default function ManageCollectionsScreen() {
 
   if (!isAdmin) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top + 40, alignItems: 'center', paddingHorizontal: 24 }]}>
+      <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top + 40, alignItems: 'center', paddingHorizontal: 24 }]}>
         <ShieldCheck color="#EF4444" size={56} />
-        <Text style={[styles.title, { color: '#F3EEE3', marginTop: 16 }]}>Acceso Restringido</Text>
-        <Text style={{ color: '#8F8F8F', textAlign: 'center', marginTop: 8, marginBottom: 24 }}>
+        <Text style={[styles.title, { color: theme.colors.foreground, marginTop: 16 }]}>Acceso Restringido</Text>
+        <Text style={{ color: theme.colors.foregroundMuted, textAlign: 'center', marginTop: 8, marginBottom: 24 }}>
           Solo los administradores pueden gestionar y moderar colecciones.
         </Text>
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={{ color: '#F3EEE3', fontWeight: 'bold' }}>Volver</Text>
+          <Text style={{ color: '#0D0D0D', fontWeight: 'bold' }}>Volver</Text>
         </Pressable>
       </View>
     );
@@ -102,7 +103,7 @@ export default function ManageCollectionsScreen() {
         : ['#1E1E1E', '#333333'];
 
     return (
-      <View style={styles.card}>
+      <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
         {/* Cover strip con emoji y badge */}
         <View style={styles.cardCover}>
           <LinearGradient
@@ -125,11 +126,11 @@ export default function ManageCollectionsScreen() {
 
         {/* Info */}
         <View style={styles.cardBody}>
-          <Text style={styles.cardTitle} numberOfLines={2}>
+          <Text style={[styles.cardTitle, { color: theme.colors.foreground }]} numberOfLines={2}>
             {item.title}
           </Text>
           {item.description ? (
-            <Text style={styles.cardDesc} numberOfLines={2}>
+            <Text style={[styles.cardDesc, { color: theme.colors.foregroundMuted }]} numberOfLines={2}>
               {item.description}
             </Text>
           ) : null}
@@ -137,21 +138,21 @@ export default function ManageCollectionsScreen() {
           {/* Stats */}
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Layers size={13} color="#8F8F8F" />
-              <Text style={styles.statText}>{tasksCount} tareas</Text>
+              <Layers size={13} color={theme.colors.foregroundMuted} />
+              <Text style={[styles.statText, { color: theme.colors.foregroundMuted }]}>{tasksCount} tareas</Text>
             </View>
             <View style={styles.statItem}>
-              <Copy size={13} color="#8F8F8F" />
-              <Text style={styles.statText}>{item.clonesCount || 0} clones</Text>
+              <Copy size={13} color={theme.colors.foregroundMuted} />
+              <Text style={[styles.statText, { color: theme.colors.foregroundMuted }]}>{item.clonesCount || 0} clones</Text>
             </View>
             <View style={styles.statItem}>
-              <Heart size={13} color="#8F8F8F" />
-              <Text style={styles.statText}>{item.likesCount || 0} likes</Text>
+              <Heart size={13} color={theme.colors.foregroundMuted} />
+              <Text style={[styles.statText, { color: theme.colors.foregroundMuted }]}>{item.likesCount || 0} likes</Text>
             </View>
           </View>
 
           {/* Botones de acción: Editar y Borrar */}
-          <View style={styles.actionsRow}>
+          <View style={[styles.actionsRow, { borderTopColor: theme.colors.border }]}>
             <Pressable
               style={styles.editBtn}
               onPress={() => handleEdit(item)}
@@ -178,22 +179,22 @@ export default function ManageCollectionsScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
         <Pressable
           onPress={() => router.back()}
-          style={styles.circleBtn}
+          style={[styles.circleBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel="Volver"
         >
-          <ChevronLeft size={22} color="#F3EEE3" />
+          <ChevronLeft size={22} color={theme.colors.foreground} />
         </Pressable>
 
         <View style={{ flex: 1, marginHorizontal: 12 }}>
           <PageTitle gold="Gestionar" rest="colecciones" />
-          <Text style={styles.headerSub}>
+          <Text style={[styles.headerSub, { color: theme.colors.foregroundMuted }]}>
             {collections.length} {collections.length === 1 ? 'colección disponible' : 'colecciones disponibles'}
           </Text>
         </View>
@@ -210,12 +211,12 @@ export default function ManageCollectionsScreen() {
       </View>
 
       {/* Barra de búsqueda */}
-      <View style={styles.searchBar}>
-        <Search size={16} color="#8F8F8F" />
+      <View style={[styles.searchBar, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+        <Search size={16} color={theme.colors.foregroundMuted} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: theme.colors.foreground }]}
           placeholder="Buscar colección por título o temática..."
-          placeholderTextColor="#666"
+          placeholderTextColor={theme.colors.foregroundMuted}
           value={searchQuery}
           onChangeText={setSearchQuery}
           returnKeyType="search"
@@ -227,7 +228,7 @@ export default function ManageCollectionsScreen() {
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator color={gold[400]} size="large" />
-          <Text style={styles.loadingText}>Cargando colecciones...</Text>
+          <Text style={[styles.loadingText, { color: theme.colors.foregroundMuted }]}>Cargando colecciones...</Text>
         </View>
       ) : (
         <FlatList
@@ -245,11 +246,11 @@ export default function ManageCollectionsScreen() {
           }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Layers size={44} color="#555" />
-              <Text style={styles.emptyTitle}>
+              <Layers size={44} color={theme.colors.foregroundMuted} />
+              <Text style={[styles.emptyTitle, { color: theme.colors.foreground }]}>
                 {searchQuery ? 'No se encontraron colecciones' : 'No hay colecciones creadas'}
               </Text>
-              <Text style={styles.emptySub}>
+              <Text style={[styles.emptySub, { color: theme.colors.foregroundMuted }]}>
                 {searchQuery
                   ? 'Prueba con otro término de búsqueda.'
                   : 'Crea tu primera colección comunitaria para que los usuarios puedan clonarla.'}

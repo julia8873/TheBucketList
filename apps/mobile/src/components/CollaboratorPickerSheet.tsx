@@ -8,6 +8,7 @@ import { ChevronLeft, Search, Check, Users, X } from 'lucide-react-native';
 import { Avatar, fontFamily } from '@bucketlist/ui';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../stores/auth.store';
+import { blockReportApi } from '../services/api/blockReport';
 
 export interface CollaboratorItem {
   id: string;
@@ -63,11 +64,16 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
           q = q.or(`username.ilike.%${trimmed}%,display_name.ilike.%${trimmed}%`);
         }
 
-        const { data, error } = await q;
-        if (!error && data && isMounted) {
+        const [res, blockedIds] = await Promise.all([
+          q,
+          user?.id ? blockReportApi.getMutualBlockedUserIds(user.id) : Promise.resolve([]),
+        ]);
+        const blockedSet = new Set(blockedIds);
+
+        if (!res.error && res.data && isMounted) {
           setProfiles(
-            data
-              .filter((p: any) => p.id !== user?.id)
+            res.data
+              .filter((p: any) => p.id !== user?.id && !blockedSet.has(p.id))
               .map((p: any) => ({
                 id: p.id,
                 username: p.username,

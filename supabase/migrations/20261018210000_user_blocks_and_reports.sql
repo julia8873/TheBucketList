@@ -147,10 +147,10 @@ BEGIN
   VALUES (v_caller, p_target_user_id)
   ON CONFLICT (blocker_id, blocked_id) DO NOTHING;
 
-  -- Eliminar solicitudes y relaciones de amistad / seguimiento mutuas si existen
-  DELETE FROM public.friends
-  WHERE (user_id = v_caller AND friend_id = p_target_user_id)
-     OR (user_id = p_target_user_id AND friend_id = v_caller);
+  -- Eliminar solicitudes y relaciones de seguimiento mutuas si existen
+  DELETE FROM public.follows
+  WHERE (follower_id = v_caller AND following_id = p_target_user_id)
+     OR (follower_id = p_target_user_id AND following_id = v_caller);
 
   RETURN true;
 END;

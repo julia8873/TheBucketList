@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Users, Plus, X, Lock, UserCheck, Zap, Globe } from 'lucide-react-native';
+import { useTheme } from '@bucketlist/ui';
 import { styles as formStyles } from '../styles/task-form.styles';
 import type { CollaboratorItem } from '../../../components/CollaboratorPickerSheet';
 
@@ -26,12 +27,23 @@ export function TaskCollaboratorsSection({
   onChangeCollaborationMode,
   onChangeCollaborationAudience,
 }: TaskCollaboratorsSectionProps) {
+  const { theme } = useTheme();
+
   return (
     <View style={formStyles.collaboratorsContainer}>
       {/* Botón para invitar colaboradores específicos */}
-      <Pressable style={formStyles.collaboratorRow} onPress={onOpenPicker}>
+      <Pressable
+        style={[
+          formStyles.collaboratorRow,
+          { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+        ]}
+        onPress={onOpenPicker}
+      >
         <Users color="#D4B13A" size={22} />
-        <Text style={formStyles.collaboratorPlaceholder} numberOfLines={1}>
+        <Text
+          style={[formStyles.collaboratorPlaceholder, { color: theme.colors.foregroundMuted }]}
+          numberOfLines={1}
+        >
           {selectedCollaborators.length === 0
             ? 'Añadir colaboradores a esta tarea...'
             : `${selectedCollaborators.length} colaborador${selectedCollaborators.length > 1 ? 'es' : ''} añadido${selectedCollaborators.length > 1 ? 's' : ''}`}
@@ -58,9 +70,19 @@ export function TaskCollaboratorsSection({
 
       {/* Selector de Modo de Colaboración */}
       {onChangeCollaborationMode && (
-        <View style={localStyles.settingsBlock}>
-          <Text style={localStyles.blockLabel}>¿CÓMO PUEDEN COLABORAR OTROS USUARIOS?</Text>
-          <View style={localStyles.segmentRow}>
+        <View style={[localStyles.settingsBlock, { borderTopColor: theme.colors.border }]}>
+          <Text style={[localStyles.blockLabel, { color: theme.colors.foregroundMuted }]}>
+            ¿CÓMO PUEDEN COLABORAR OTROS USUARIOS?
+          </Text>
+          <View
+            style={[
+              localStyles.segmentRow,
+              {
+                backgroundColor: theme.dark ? '#161616' : (theme.colors.surfaceElevated ?? '#ECE8DF'),
+                borderColor: theme.colors.border,
+              },
+            ]}
+          >
             {/* Solo por invitación */}
             <Pressable
               style={[
@@ -71,12 +93,13 @@ export function TaskCollaboratorsSection({
             >
               <Lock
                 size={13}
-                color={collaborationMode === 'invite_only' ? '#0D0D0D' : '#999999'}
+                color={collaborationMode === 'invite_only' ? '#0D0D0D' : theme.colors.foregroundMuted}
                 strokeWidth={2.2}
               />
               <Text
                 style={[
                   localStyles.segmentBtnText,
+                  { color: theme.colors.foregroundMuted },
                   collaborationMode === 'invite_only' && localStyles.segmentBtnTextActive,
                 ]}
               >
@@ -94,12 +117,13 @@ export function TaskCollaboratorsSection({
             >
               <UserCheck
                 size={13}
-                color={collaborationMode === 'request' ? '#0D0D0D' : '#999999'}
+                color={collaborationMode === 'request' ? '#0D0D0D' : theme.colors.foregroundMuted}
                 strokeWidth={2.2}
               />
               <Text
                 style={[
                   localStyles.segmentBtnText,
+                  { color: theme.colors.foregroundMuted },
                   collaborationMode === 'request' && localStyles.segmentBtnTextActive,
                 ]}
               >
@@ -117,12 +141,13 @@ export function TaskCollaboratorsSection({
             >
               <Zap
                 size={13}
-                color={collaborationMode === 'open' ? '#0D0D0D' : '#999999'}
+                color={collaborationMode === 'open' ? '#0D0D0D' : theme.colors.foregroundMuted}
                 strokeWidth={2.4}
               />
               <Text
                 style={[
                   localStyles.segmentBtnText,
+                  { color: theme.colors.foregroundMuted },
                   collaborationMode === 'open' && localStyles.segmentBtnTextActive,
                 ]}
               >
@@ -134,22 +159,29 @@ export function TaskCollaboratorsSection({
           {/* Selector de Audiencia (Seguidores vs Todos) */}
           {collaborationMode !== 'invite_only' && onChangeCollaborationAudience && (
             <View style={{ marginTop: 12 }}>
-              <Text style={localStyles.blockLabel}>¿QUIÉN TIENE PERMITIDO UNIRSE O SOLICITAR?</Text>
+              <Text style={[localStyles.blockLabel, { color: theme.colors.foregroundMuted }]}>
+                ¿QUIÉN TIENE PERMITIDO UNIRSE O SOLICITAR?
+              </Text>
               <View style={localStyles.audienceRow}>
                 <Pressable
                   style={[
                     localStyles.audienceBtn,
+                    {
+                      backgroundColor: theme.colors.surface,
+                      borderColor: theme.colors.border,
+                    },
                     collaborationAudience === 'followers' && localStyles.audienceBtnActive,
                   ]}
                   onPress={() => onChangeCollaborationAudience('followers')}
                 >
                   <Users
                     size={14}
-                    color={collaborationAudience === 'followers' ? '#D4B13A' : '#888888'}
+                    color={collaborationAudience === 'followers' ? '#D4B13A' : theme.colors.foregroundMuted}
                   />
                   <Text
                     style={[
                       localStyles.audienceBtnText,
+                      { color: theme.colors.foregroundMuted },
                       collaborationAudience === 'followers' && localStyles.audienceBtnTextActive,
                     ]}
                   >
@@ -160,17 +192,22 @@ export function TaskCollaboratorsSection({
                 <Pressable
                   style={[
                     localStyles.audienceBtn,
+                    {
+                      backgroundColor: theme.colors.surface,
+                      borderColor: theme.colors.border,
+                    },
                     collaborationAudience === 'anyone' && localStyles.audienceBtnActive,
                   ]}
                   onPress={() => onChangeCollaborationAudience('anyone')}
                 >
                   <Globe
                     size={14}
-                    color={collaborationAudience === 'anyone' ? '#D4B13A' : '#888888'}
+                    color={collaborationAudience === 'anyone' ? '#D4B13A' : theme.colors.foregroundMuted}
                   />
                   <Text
                     style={[
                       localStyles.audienceBtnText,
+                      { color: theme.colors.foregroundMuted },
                       collaborationAudience === 'anyone' && localStyles.audienceBtnTextActive,
                     ]}
                   >
@@ -191,10 +228,8 @@ const localStyles = StyleSheet.create({
     marginTop: 14,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#242424',
   },
   blockLabel: {
-    color: '#8E8E8E',
     fontSize: 10,
     fontFamily: 'Inter_600SemiBold',
     letterSpacing: 0.9,
@@ -202,11 +237,9 @@ const localStyles = StyleSheet.create({
   },
   segmentRow: {
     flexDirection: 'row',
-    backgroundColor: '#161616',
     borderRadius: 12,
     padding: 3,
     borderWidth: 1,
-    borderColor: '#262626',
     gap: 4,
   },
   segmentBtn: {
@@ -222,7 +255,6 @@ const localStyles = StyleSheet.create({
     backgroundColor: '#D4B13A',
   },
   segmentBtnText: {
-    color: '#8E8E8E',
     fontSize: 11,
     fontFamily: 'Inter_600SemiBold',
   },
@@ -240,9 +272,7 @@ const localStyles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 9,
     borderRadius: 10,
-    backgroundColor: '#181818',
     borderWidth: 1,
-    borderColor: '#2A2A2A',
     gap: 6,
   },
   audienceBtnActive: {
@@ -250,12 +280,11 @@ const localStyles = StyleSheet.create({
     backgroundColor: 'rgba(212, 177, 58, 0.08)',
   },
   audienceBtnText: {
-    color: '#8E8E8E',
     fontSize: 11,
     fontFamily: 'Inter_500Medium',
   },
   audienceBtnTextActive: {
-    color: '#F5F5F5',
+    color: '#D4B13A',
     fontFamily: 'Inter_600SemiBold',
   },
 });

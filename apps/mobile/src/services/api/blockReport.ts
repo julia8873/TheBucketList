@@ -78,6 +78,70 @@ export const blockReportApi = {
   },
 
   /**
+   * Comprueba si el usuario actual ha sido bloqueado por targetUserId.
+   * Los administradores nunca son bloqueados para poder gestionar perfiles y reportes.
+   */
+  checkIsBlockedBy: async (currentUserId: string, targetUserId: string): Promise<boolean> => {
+    if (!currentUserId || !targetUserId) return false;
+
+    // Si el usuario actual es admin, nunca se le bloquea la visibilidad
+    const { data: myProfile } = await supabase
+      .from('profiles')
+      .select('role, username')
+      .eq('id', currentUserId)
+      .maybeSingle();
+
+    if (
+      myProfile?.role === 'admin' ||
+      myProfile?.username?.toLowerCase() === 'juliamiralles8873'
+    ) {
+      return false;
+    }
+
+    const { data, error } = await supabase
+      .from('blocked_users')
+      .select('id')
+      .eq('blocker_id', targetUserId)
+      .eq('blocked_id', currentUserId)
+      .maybeSingle();
+
+    if (error) return false;
+    return !!data;
+  },
+
+  /**
+   * Obtiene todos los IDs de usuarios con bloqueo mutuo (bloqueados o que te han bloqueado).
+   * Para administradores, no se oculta a quienes hayan bloqueado al admin para poder moderar.
+   */
+  getMutualBlockedUserIds: async (currentUserId: string): Promise<string[]> => {
+    if (!currentUserId) return [];
+
+    const { data: myProfile } = await supabase
+      .from('profiles')
+      .select('role, username')
+      .eq('id', currentUserId)
+      .maybeSingle();
+
+    const isAdmin =
+      myProfile?.role === 'admin' ||
+      myProfile?.username?.toLowerCase() === 'juliamiralles8873';
+
+    const { data, error } = await supabase
+      .from('blocked_users')
+      .select('blocker_id, blocked_id')
+      .or(`blocker_id.eq.${currentUserId},blocked_id.eq.${currentUserId}`);
+
+    if (error || !data) return [];
+    const ids = new Set<string>();
+    for (const row of data) {
+      if (row.blocker_id === currentUserId) ids.add(row.blocked_id);
+      // Solo ocultamos a quienes nos bloquearon si NO somos admin
+      if (!isAdmin && row.blocked_id === currentUserId) ids.add(row.blocker_id);
+    }
+    return Array.from(ids);
+  },
+
+  /**
    * Obtiene la lista de usuarios bloqueados por el usuario actual
    */
   getBlockedUsers: async (currentUserId: string): Promise<BlockedUserItem[]> => {
@@ -134,6 +198,26 @@ export const blockReportApi = {
    * Obtiene la lista de reportes para el panel de administración
    */
   getAdminReports: async (): Promise<UserReportItem[]> => {
+    // 1. Intentar mediante RPC security definer para evitar cualquier bloqueo RLS
+    try {
+      const { data, error } = await supabase.rpc('get_admin_reports');
+      if (!error && Array.isArray(data)) {
+        return data.map((item: any) => ({
+          id: item.id,
+          reason: item.reason,
+          details: item.details,
+          status: item.status,
+          resolved: item.resolved,
+          created_at: item.created_at,
+          reporter: item.reporter ?? (item.reporter_id ? { id: item.reporter_id, username: 'usuario', display_name: null, avatar_url: null } : null),
+          reported: item.reported ?? (item.reported_user_id ? { id: item.reported_user_id, username: 'usuario', display_name: null, avatar_url: null } : null),
+        }));
+      }
+    } catch {
+      // Continuar con fallback directo
+    }
+
+    // 2. Fallback directo a la tabla reports
     const { data, error } = await supabase
       .from('reports')
       .select(`
@@ -143,6 +227,8 @@ export const blockReportApi = {
         status,
         resolved,
         created_at,
+        reported_user_id,
+        reporter_id,
         reporter:reporter_id (
           id,
           username,
@@ -161,16 +247,20 @@ export const blockReportApi = {
 
     if (error) throw new Error(error.message || 'Error al obtener reportes');
 
-    return (data ?? []).map((row: any) => ({
-      id: row.id,
-      reason: row.reason,
-      details: row.details,
-      status: row.status,
-      resolved: row.resolved,
-      created_at: row.created_at,
-      reporter: one(row.reporter),
-      reported: one(row.reported),
-    }));
+    return (data ?? []).map((row: any) => {
+      const reported = one(row.reported);
+      const reporter = one(row.reporter);
+      return {
+        id: row.id,
+        reason: row.reason,
+        details: row.details,
+        status: row.status,
+        resolved: row.resolved,
+        created_at: row.created_at,
+        reporter: reporter ?? (row.reporter_id ? { id: row.reporter_id, username: 'usuario', display_name: null, avatar_url: null } : null),
+        reported: reported ?? (row.reported_user_id ? { id: row.reported_user_id, username: 'usuario', display_name: null, avatar_url: null } : null),
+      };
+    });
   },
 
   /**

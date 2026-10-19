@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
-import { Check } from 'lucide-react-native';
+import { Check, UserX } from 'lucide-react-native';
 import { fontFamily, gold, useTheme } from '@bucketlist/ui';
 import type { FollowStatus } from '../services/api/friends';
 
@@ -13,20 +13,35 @@ interface FollowButtonProps {
   /** "pill" (lista) o "block" (cabecera del perfil, ancho completo). */
   size?: 'pill' | 'block';
   style?: StyleProp<ViewStyle>;
+  /** Si el usuario actual tiene bloqueado a este perfil */
+  isBlocked?: boolean;
 }
 
 /**
- * Botón de seguimiento con 4 estados:
+ * Botón de seguimiento con 5 estados:
+ *   bloqueado → "Bloqueado" (peligro / borde rojo)
  *   accepted → "Siguiendo" · pending → "Pendiente"
  *   none + privada → "Solicitar" · none → "Seguir"
  */
-export function FollowButton({ status, isPrivate = false, loading = false, onPress, size = 'pill', style }: FollowButtonProps) {
+export function FollowButton({
+  status,
+  isPrivate = false,
+  loading = false,
+  onPress,
+  size = 'pill',
+  style,
+  isBlocked = false,
+}: FollowButtonProps) {
   const { theme } = useTheme();
   const block = size === 'block';
 
   let label: string;
-  let variant: 'solid' | 'outline' | 'muted';
-  if (status === 'accepted') {
+  let variant: 'solid' | 'outline' | 'muted' | 'blocked';
+
+  if (isBlocked) {
+    label = 'Bloqueado';
+    variant = 'blocked';
+  } else if (status === 'accepted') {
     label = 'Siguiendo';
     variant = 'muted';
   } else if (status === 'pending') {
@@ -41,7 +56,9 @@ export function FollowButton({ status, isPrivate = false, loading = false, onPre
   }
 
   const textColor =
-    variant === 'solid'
+    variant === 'blocked'
+      ? '#EF4444'
+      : variant === 'solid'
       ? '#111111'
       : variant === 'outline'
       ? gold[400]
@@ -59,6 +76,7 @@ export function FollowButton({ status, isPrivate = false, loading = false, onPre
         variant === 'solid' && styles.solid,
         variant === 'outline' && styles.outline,
         variant === 'muted' && { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+        variant === 'blocked' && styles.blocked,
         { opacity: pressed ? 0.75 : 1 },
         style,
       ]}
@@ -67,7 +85,11 @@ export function FollowButton({ status, isPrivate = false, loading = false, onPre
         <ActivityIndicator size="small" color={textColor} />
       ) : (
         <>
-          {block && status === 'accepted' ? <Check size={16} color={textColor} style={styles.check} /> : null}
+          {variant === 'blocked' ? (
+            <UserX size={15} color="#EF4444" style={styles.check} strokeWidth={2} />
+          ) : block && status === 'accepted' ? (
+            <Check size={16} color={textColor} style={styles.check} />
+          ) : null}
           <Text style={[styles.label, { color: textColor }]}>{label}</Text>
         </>
       )}
@@ -95,6 +117,7 @@ const styles = StyleSheet.create({
   },
   solid: { backgroundColor: gold[400], borderColor: gold[400] },
   outline: { backgroundColor: 'transparent', borderColor: gold[400] },
+  blocked: { backgroundColor: 'rgba(239, 68, 68, 0.08)', borderColor: 'rgba(239, 68, 68, 0.65)' },
   label: { fontFamily: fontFamily.semibold, fontSize: 14 },
   check: { marginRight: 6 },
 });

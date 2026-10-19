@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, Pressable } from 'react-native';
 import { Plus, X } from 'lucide-react-native';
+import { useTheme } from '@bucketlist/ui';
 import { styles } from '../styles/task-form.styles';
 
 export interface TaskStepItem {
@@ -21,21 +22,23 @@ export function TaskStepsSection({
   onUpdateStep,
   onRemoveStep,
 }: TaskStepsSectionProps) {
+  const { theme } = useTheme();
+
   return (
     <View style={styles.stepsContainer}>
       {steps.map((step, index) => (
-        <View key={step.id} style={styles.stepRow}>
-          <View style={styles.stepCircle} />
+        <View key={step.id} style={[styles.stepRow, { borderBottomColor: theme.colors.border }]}>
+          <View style={[styles.stepCircle, { borderColor: theme.colors.border }]} />
           <TextInput
-            style={styles.stepInput}
+            style={[styles.stepInput, { color: theme.colors.foreground }]}
             value={step.title}
             onChangeText={(txt) => onUpdateStep(step.id, txt)}
             placeholder="Escribe un paso..."
-            placeholderTextColor="#6B6B6B"
+            placeholderTextColor={theme.colors.foregroundMuted}
             autoFocus={index === steps.length - 1}
           />
           <Pressable onPress={() => onRemoveStep(step.id)} hitSlop={10}>
-            <X color="#555" size={20} />
+            <X color={theme.colors.foregroundMuted} size={20} />
           </Pressable>
         </View>
       ))}

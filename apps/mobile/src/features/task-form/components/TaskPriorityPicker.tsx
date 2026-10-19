@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Flag } from 'lucide-react-native';
+import { useTheme } from '@bucketlist/ui';
 import { styles } from '../styles/task-form.styles';
 
 interface TaskPriorityPickerProps {
@@ -18,6 +19,8 @@ export function TaskPriorityPicker({
   value = 'medium',
   onChange,
 }: TaskPriorityPickerProps) {
+  const { theme } = useTheme();
+
   return (
     <View style={styles.priorityRow}>
       {PRIORITIES.map((p) => {
@@ -28,11 +31,25 @@ export function TaskPriorityPicker({
             onPress={() => onChange(p.id)}
             style={[
               styles.priorityPill,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+              },
               active && { backgroundColor: p.bgActive, borderColor: p.borderActive },
             ]}
           >
-            <Flag size={15} color={active ? p.color : '#8A8A8A'} strokeWidth={active ? 2.2 : 1.8} />
-            <Text style={[styles.priorityText, active && { color: p.color, fontWeight: '700' }]}>
+            <Flag
+              size={15}
+              color={active ? p.color : theme.colors.foregroundMuted}
+              strokeWidth={active ? 2.2 : 1.8}
+            />
+            <Text
+              style={[
+                styles.priorityText,
+                { color: theme.colors.foregroundMuted },
+                active && { color: p.color, fontWeight: '700' },
+              ]}
+            >
               {p.label}
             </Text>
           </Pressable>

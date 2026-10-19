@@ -17,7 +17,7 @@ import { createBucketSchema, type CreateBucketForm, processBucketImage } from '@
 import { useCreateBucket } from '../../src/hooks/useBuckets';
 import { supabase } from '../../src/services/supabase';
 import { storageApi } from '../../src/services/api/storage';
-import { PageTitle } from '@bucketlist/ui';
+import { PageTitle, useTheme } from '@bucketlist/ui';
 import { LocationPickerModal } from '../../src/components/LocationPickerModal';
 import type { TagItem } from '../../src/components/TagPickerSheet';
 import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
@@ -40,6 +40,7 @@ export default function CreateBucketModal() {
   const params = useLocalSearchParams<{ albumId?: string; title?: string }>();
   const createBucket = useCreateBucket();
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
   const { user } = useAuthStore();
   const { data: albums = [] } = useAlbums(user?.id);
 
@@ -156,22 +157,28 @@ export default function CreateBucketModal() {
     : null;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#0E0E0E' }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['top']}>
       <KeyboardAvoidingView
-        style={styles.container}
+        style={[styles.container, { backgroundColor: theme.colors.background }]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           {/* CABECERA */}
           <View style={styles.header}>
-            <Pressable style={styles.backButton} onPress={() => router.back()}>
-              <ChevronLeft color="#FFF" size={28} />
+            <Pressable
+              style={[
+                styles.backButton,
+                { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+              ]}
+              onPress={() => router.back()}
+            >
+              <ChevronLeft color={theme.colors.foreground} size={28} />
             </Pressable>
             <PageTitle gold="Nueva" rest="tarea" />
           </View>
 
           {/* QUÉ QUIERES LOGRAR */}
-          <Text style={styles.sectionLabel}>
+          <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
             <Text style={{ color: '#D4B13A' }}>QUÉ</Text> QUIERES LOGRAR
           </Text>
           <Controller
@@ -179,9 +186,17 @@ export default function CreateBucketModal() {
             name="title"
             render={({ field: { onChange, value } }) => (
               <TextInput
-                style={[styles.titleInput, isTitleFocused && { borderColor: '#D4B13A' }]}
+                style={[
+                  styles.titleInput,
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.border,
+                    color: theme.colors.foreground,
+                  },
+                  isTitleFocused && { borderColor: '#D4B13A' },
+                ]}
                 placeholder="Ej. Ver auroras boreales"
-                placeholderTextColor="#6B6B6B"
+                placeholderTextColor={theme.colors.foregroundMuted}
                 value={value}
                 onChangeText={onChange}
                 onFocus={() => setIsTitleFocused(true)}
@@ -191,13 +206,13 @@ export default function CreateBucketModal() {
           />
 
           {/* PORTADA */}
-          <Text style={styles.sectionLabel}>
+          <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
             <Text style={{ color: '#D4B13A' }}>TU</Text> PORTADA
           </Text>
           <TaskCoverPicker coverImage={coverImage} onChangeCover={setCoverImage} taskTitle={titleValue} />
 
           {/* PRIORIDAD */}
-          <Text style={styles.sectionLabel}>
+          <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
             <Text style={{ color: '#D4B13A' }}>PRIORIDAD</Text>
           </Text>
           <Controller
@@ -236,7 +251,7 @@ export default function CreateBucketModal() {
           />
 
           {/* PASOS */}
-          <Text style={styles.sectionLabel}>
+          <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
             <Text style={{ color: '#D4B13A' }}>PASOS</Text> · {steps.length}
           </Text>
           <TaskStepsSection
@@ -249,7 +264,7 @@ export default function CreateBucketModal() {
           />
 
           {/* COLABORADORES */}
-          <Text style={styles.sectionLabel}>
+          <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
             <Text style={{ color: '#D4B13A' }}>COLABORADORES</Text>
             {selectedCollaborators.length > 0 ? ` · ${selectedCollaborators.length}` : ''}
           </Text>
@@ -300,7 +315,16 @@ export default function CreateBucketModal() {
         />
 
         {/* BOTTOM BAR */}
-        <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+        <View
+          style={[
+            styles.bottomBar,
+            {
+              backgroundColor: theme.colors.surface,
+              borderTopColor: theme.colors.border,
+              paddingBottom: Math.max(insets.bottom, 16),
+            },
+          ]}
+        >
           <Pressable
             style={[
               styles.submitButton,

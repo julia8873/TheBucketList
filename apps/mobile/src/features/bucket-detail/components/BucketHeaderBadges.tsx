@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Pressable } from 'react-native';
-import { Typography } from '@bucketlist/ui';
+import { Typography, useTheme } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { CheckCircle2, Circle, Flag, Eye, Users, Lock, FolderOpen } from 'lucide-react-native';
 import { styles } from '../styles/bucket-detail.styles';
@@ -26,6 +26,9 @@ export function BucketHeaderBadges({
   onOpenVisibilitySheet,
   onOpenAlbumsSheet,
 }: BucketHeaderBadgesProps) {
+  const { theme } = useTheme();
+  const isDark = theme.dark;
+
   const statusLabel = (s: string) => {
     switch (s) {
       case 'completed': return 'Completada';
@@ -48,9 +51,9 @@ export function BucketHeaderBadges({
   const priorityColor = (p?: string) => {
     switch (p) {
       case 'high': return '#EF4444';
-      case 'low': return '#10B981';
+      case 'low': return isDark ? '#10B981' : '#059669';
       case 'medium':
-      default: return '#D4B13A';
+      default: return isDark ? '#D4B13A' : '#A17808';
     }
   };
 
@@ -63,6 +66,26 @@ export function BucketHeaderBadges({
     }
   };
 
+  const isCompleted = bucket.status === 'completed';
+  const statusBg = isCompleted
+    ? (isDark ? '#121D15' : '#EAF7EE')
+    : (isDark ? '#1E1910' : '#FDF6E2');
+  const statusBorder = isCompleted
+    ? (isDark ? 'rgba(52, 199, 89, 0.55)' : '#A3E3B6')
+    : (isDark ? 'rgba(212, 175, 55, 0.55)' : '#EAD58B');
+  const statusColor = isCompleted
+    ? (isDark ? '#34C759' : '#15803D')
+    : (isDark ? gold[400] : '#997300');
+
+  const mutedBg = isDark ? '#181818' : '#F2EFE8';
+  const mutedBorder = isDark ? '#383838' : theme.colors.border;
+  const mutedIconColor = isDark ? '#CFCABD' : theme.colors.foregroundMuted;
+  const mutedTextColor = isDark ? '#F2EFE8' : theme.colors.foreground;
+  const badgeShadow = {
+    shadowOpacity: isDark ? 0.35 : 0.08,
+    elevation: isDark ? 3 : 1,
+  };
+
   return (
     <View style={styles.badgesContainer}>
       <View style={styles.badgesRow}>
@@ -70,18 +93,19 @@ export function BucketHeaderBadges({
         <Pressable
           style={[
             styles.badge,
-            bucket.status === 'completed' ? styles.badgeCompleted : styles.badgeGold,
+            badgeShadow,
+            { backgroundColor: statusBg, borderColor: statusBorder },
           ]}
           onPress={() => canEdit && onOpenStatusSheet()}
         >
-          {bucket.status === 'completed' ? (
-            <CheckCircle2 color="#34C759" size={13} strokeWidth={2.4} style={{ marginRight: 5 }} />
+          {isCompleted ? (
+            <CheckCircle2 color={statusColor} size={13} strokeWidth={2.4} style={{ marginRight: 5 }} />
           ) : (
-            <Circle color={gold[400]} size={11} strokeWidth={2.4} style={{ marginRight: 5 }} />
+            <Circle color={statusColor} size={11} strokeWidth={2.4} style={{ marginRight: 5 }} />
           )}
           <Typography
             variant="caption"
-            color={bucket.status === 'completed' ? '#34C759' : gold[400]}
+            color={statusColor}
             style={{ fontWeight: '700' }}
           >
             {statusLabel(bucket.status)}
@@ -92,8 +116,11 @@ export function BucketHeaderBadges({
         <Pressable
           style={[
             styles.badge,
-            styles.badgeMuted,
-            { borderColor: `${priorityColor(bucket.priority)}66` },
+            badgeShadow,
+            {
+              backgroundColor: mutedBg,
+              borderColor: `${priorityColor(bucket.priority)}${isDark ? '66' : '99'}`,
+            },
           ]}
           onPress={() => canEdit && onOpenPrioritySheet()}
         >
@@ -105,17 +132,21 @@ export function BucketHeaderBadges({
 
         {/* Visibility */}
         <Pressable
-          style={[styles.badge, styles.badgeMuted]}
+          style={[
+            styles.badge,
+            badgeShadow,
+            { backgroundColor: mutedBg, borderColor: mutedBorder },
+          ]}
           onPress={() => canEdit && onOpenVisibilitySheet()}
         >
           {bucket.visibility === 'public' ? (
-            <Eye color="#CFCABD" size={13} strokeWidth={2} style={{ marginRight: 5 }} />
+            <Eye color={mutedIconColor} size={13} strokeWidth={2} style={{ marginRight: 5 }} />
           ) : bucket.visibility === 'followers' ? (
-            <Users color="#CFCABD" size={13} strokeWidth={2} style={{ marginRight: 5 }} />
+            <Users color={mutedIconColor} size={13} strokeWidth={2} style={{ marginRight: 5 }} />
           ) : (
-            <Lock color="#CFCABD" size={13} strokeWidth={2} style={{ marginRight: 5 }} />
+            <Lock color={mutedIconColor} size={13} strokeWidth={2} style={{ marginRight: 5 }} />
           )}
-          <Typography variant="caption" color="#F2EFE8" style={{ fontWeight: '600' }}>
+          <Typography variant="caption" color={mutedTextColor} style={{ fontWeight: '600' }}>
             {visibilityLabel(bucket.visibility)}
           </Typography>
         </Pressable>
@@ -125,11 +156,15 @@ export function BucketHeaderBadges({
       {(canEdit || (bucketAlbums && bucketAlbums.length > 0)) && (
         <View style={styles.badgesSecondRow}>
           <Pressable
-            style={[styles.badge, styles.badgeMuted]}
+            style={[
+              styles.badge,
+              badgeShadow,
+              { backgroundColor: mutedBg, borderColor: mutedBorder },
+            ]}
             onPress={() => canEdit && onOpenAlbumsSheet()}
           >
-            <FolderOpen color="#CFCABD" size={13} strokeWidth={1.8} style={{ marginRight: 5 }} />
-            <Typography variant="caption" color="#F2EFE8" style={{ fontWeight: '600' }}>
+            <FolderOpen color={mutedIconColor} size={13} strokeWidth={1.8} style={{ marginRight: 5 }} />
+            <Typography variant="caption" color={mutedTextColor} style={{ fontWeight: '600' }}>
               {bucketAlbums && bucketAlbums.length > 0
                 ? (bucketAlbums.length === 1
                   ? (albumsData?.find((a: any) => a.id === bucketAlbums[0]?.album_id)?.title || 'Sin álbum')

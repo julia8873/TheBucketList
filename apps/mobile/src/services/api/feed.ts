@@ -1,24 +1,30 @@
 import { supabase } from '../supabase';
+import { blockReportApi } from './blockReport';
 
 const PAGE_SIZE = 10;
 
 export const feedApi = {
   /**
    * "Momentos de amigos": todas las tareas públicas y para seguidores de la gente a la que sigo.
-   * Se excluyen las tareas del propio usuario.
+   * Se excluyen las tareas del propio usuario y de usuarios bloqueados.
    */
   getFeed: async (userId: string, pageParam: number = 0) => {
-    const { data: follows, error: followsErr } = await supabase
-      .from('follows')
-      .select('following_id')
-      .eq('follower_id', userId)
-      .eq('status', 'accepted');
-    if (followsErr) throw followsErr;
+    const [followsRes, blockedIds] = await Promise.all([
+      supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', userId)
+        .eq('status', 'accepted'),
+      blockReportApi.getMutualBlockedUserIds(userId),
+    ]);
+    if (followsRes.error) throw followsRes.error;
 
-    // Solo amigos seguidos (excluyendo al propio usuario)
-    const targetIds = (follows ?? [])
+    const blockedSet = new Set(blockedIds);
+
+    // Solo amigos seguidos (excluyendo al propio usuario y a usuarios con bloqueo)
+    const targetIds = (followsRes.data ?? [])
       .map((f: any) => f.following_id as string)
-      .filter((id: string) => id !== userId);
+      .filter((id: string) => id !== userId && !blockedSet.has(id));
 
     if (targetIds.length === 0) {
       return {
@@ -67,22 +73,25 @@ export const feedApi = {
   },
 
   /**
-   * "Explorar": tareas públicas de personas a las que el usuario NO sigue (y que no sean del propio usuario).
+   * "Explorar": tareas públicas de personas a las que el usuario NO sigue (y que no sean del propio usuario ni usuarios bloqueados).
    */
   getExploreFeed: async (pageParam: number = 0, userId?: string) => {
     const limit = 15;
     let excludedUserIds: string[] = [];
 
     if (userId) {
-      const { data: follows } = await supabase
-        .from('follows')
-        .select('following_id')
-        .eq('follower_id', userId)
-        .eq('status', 'accepted');
+      const [followsRes, blockedIds] = await Promise.all([
+        supabase
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', userId)
+          .eq('status', 'accepted'),
+        blockReportApi.getMutualBlockedUserIds(userId),
+      ]);
 
-      const friendIds = (follows ?? []).map((f: any) => f.following_id as string);
-      // Excluir al propio usuario Y a todos sus amigos (gente a la que sigue)
-      excludedUserIds = [userId, ...friendIds];
+      const friendIds = (followsRes.data ?? []).map((f: any) => f.following_id as string);
+      // Excluir al propio usuario, a todos sus amigos Y a usuarios con bloqueo
+      excludedUserIds = Array.from(new Set([userId, ...friendIds, ...blockedIds]));
     }
 
     let query = supabase
@@ -100,7 +109,7 @@ export const feedApi = {
       .eq('visibility', 'public')
       .order('created_at', { ascending: false });
 
-    // Excluir al usuario y a sus amigos para que solo salgan personas no seguidas
+    // Excluir al usuario, amigos y bloqueados para que solo salgan personas permitidas
     if (excludedUserIds.length > 0) {
       query = query.not('user_id', 'in', `(${excludedUserIds.join(',')})`);
     }
@@ -126,16 +135,20 @@ export const feedApi = {
    */
   getFriendsAlbums: async (userId: string, pageParam: number = 0) => {
     const PAGE = 10;
-    const { data: follows, error: followsErr } = await supabase
-      .from('follows')
-      .select('following_id')
-      .eq('follower_id', userId)
-      .eq('status', 'accepted');
-    if (followsErr) throw followsErr;
+    const [followsRes, blockedIds] = await Promise.all([
+      supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', userId)
+        .eq('status', 'accepted'),
+      blockReportApi.getMutualBlockedUserIds(userId),
+    ]);
+    if (followsRes.error) throw followsRes.error;
 
-    const targetIds = (follows ?? [])
+    const blockedSet = new Set(blockedIds);
+    const targetIds = (followsRes.data ?? [])
       .map((f: any) => f.following_id as string)
-      .filter((id: string) => id !== userId);
+      .filter((id: string) => id !== userId && !blockedSet.has(id));
 
     if (targetIds.length === 0) return { items: [], nextCursor: undefined };
 
@@ -193,20 +206,23 @@ export const feedApi = {
   },
 
   /**
-   * Álbumes para explorar: álbumes públicos de personas que no sigo.
+   * Álbumes para explorar: álbumes públicos de personas que no sigo (excluyendo bloqueados).
    */
   getExploreAlbums: async (pageParam: number = 0, userId?: string) => {
     const LIMIT = 12;
     let excludedUserIds: string[] = [];
 
     if (userId) {
-      const { data: follows } = await supabase
-        .from('follows')
-        .select('following_id')
-        .eq('follower_id', userId)
-        .eq('status', 'accepted');
-      const friendIds = (follows ?? []).map((f: any) => f.following_id as string);
-      excludedUserIds = [userId, ...friendIds];
+      const [followsRes, blockedIds] = await Promise.all([
+        supabase
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', userId)
+          .eq('status', 'accepted'),
+        blockReportApi.getMutualBlockedUserIds(userId),
+      ]);
+      const friendIds = (followsRes.data ?? []).map((f: any) => f.following_id as string);
+      excludedUserIds = Array.from(new Set([userId, ...friendIds, ...blockedIds]));
     }
 
     let query = supabase

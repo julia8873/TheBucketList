@@ -85,8 +85,8 @@ export default function BucketDetailScreen() {
     }
     const uri =
       state.resolvedCover.startsWith('http') ||
-      state.resolvedCover.startsWith('file:') ||
-      state.resolvedCover.startsWith('data:')
+        state.resolvedCover.startsWith('file:') ||
+        state.resolvedCover.startsWith('data:')
         ? state.resolvedCover
         : storageApi.getPublicUrl(state.resolvedCover);
 

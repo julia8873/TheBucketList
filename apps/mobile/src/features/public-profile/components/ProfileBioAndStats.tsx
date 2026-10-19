@@ -19,6 +19,7 @@ interface ProfileBioAndStatsProps {
   taskCount: number | string;
   followersCount: number;
   isLocked: boolean;
+  isBlocked?: boolean;
   onPressCompleted?: () => void;
   onPressPublic?: () => void;
   onPressFollowers?: () => void;
@@ -81,11 +82,13 @@ export function ProfileBioAndStats({
   taskCount,
   followersCount,
   isLocked,
+  isBlocked = false,
   onPressCompleted,
   onPressPublic,
   onPressFollowers,
 }: ProfileBioAndStatsProps) {
   const { theme } = useTheme();
+  const hideStats = isLocked || isBlocked;
 
   return (
     <>
@@ -125,30 +128,31 @@ export function ProfileBioAndStats({
             isPrivate={isPrivate}
             loading={isFollowPending}
             onPress={onFollow}
+            isBlocked={isBlocked}
           />
         )}
       </View>
 
       <View style={[styles.stats, { borderColor: theme.colors.border }]}>
         <Stat
-          value={isLocked ? '—' : completedCount}
+          value={hideStats ? '—' : completedCount}
           label="Completadas"
           onPress={onPressCompleted}
-          disabled={isLocked}
+          disabled={hideStats}
         />
         <Stat
-          value={isLocked ? '—' : taskCount}
+          value={hideStats ? '—' : taskCount}
           label="Públicas"
           divider
           onPress={onPressPublic}
-          disabled={isLocked}
+          disabled={hideStats}
         />
         <Stat
-          value={isLocked ? '—' : followersCount}
+          value={hideStats ? '—' : followersCount}
           label="Seguidores"
           divider
           onPress={onPressFollowers}
-          disabled={isLocked}
+          disabled={hideStats}
         />
       </View>
     </>

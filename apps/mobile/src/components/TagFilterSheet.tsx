@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, Pressable, ScrollView, TextInput, StyleSheet, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { Check, Plus, Search, Tag as TagIcon, X } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { FilterChip } from '@bucketlist/ui';
+import { FilterChip, useTheme } from '@bucketlist/ui';
 import { TagSheetShell, TAG_SHEET_H } from './TagSheetShell';
 import { sortTags, useTags, useTagUsage, type TagSort } from '../hooks/useTags';
 import { hexToRgba } from '../constants/tagPresets';
@@ -58,6 +58,7 @@ export function TagFilterSheet({
   itemType = 'task',
   overlay,
 }: TagFilterSheetProps) {
+  const { theme } = useTheme();
   const assign = mode === 'assign';
   const insets = useSafeAreaInsets();
   const { data: tags = [], isLoading, isError, refetch } = useTags();
@@ -107,7 +108,7 @@ export function TagFilterSheet({
     <TagSheetShell visible={visible} onClose={onClose} fixedHeight={TAG_SHEET_H}>
       {/* Cabecera */}
       <View style={styles.headerRow}>
-        <Text style={styles.title}>Etiquetas</Text>
+        <Text style={[styles.title, { color: theme.colors.foreground }]}>Etiquetas</Text>
         <Pressable
           onPress={() => onChange([])}
           hitSlop={10}
@@ -121,12 +122,20 @@ export function TagFilterSheet({
       </View>
 
       {/* Buscador */}
-      <View style={styles.searchBox}>
-        <Search color="#9A9A9A" size={20} />
+      <View
+        style={[
+          styles.searchBox,
+          {
+            backgroundColor: theme.dark ? '#161616' : (theme.colors.surfaceElevated ?? '#F0ECE1'),
+            borderColor: theme.colors.border,
+          },
+        ]}
+      >
+        <Search color={theme.colors.foregroundMuted} size={20} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: theme.colors.foreground }]}
           placeholder="Buscar etiqueta"
-          placeholderTextColor="#8A8A8A"
+          placeholderTextColor={theme.colors.foregroundMuted}
           value={query}
           onChangeText={setQuery}
           autoCorrect={false}
@@ -134,7 +143,7 @@ export function TagFilterSheet({
         />
         {query.length > 0 && (
           <Pressable onPress={() => setQuery('')} hitSlop={10} accessibilityLabel="Borrar búsqueda">
-            <X color="#9A9A9A" size={18} />
+            <X color={theme.colors.foregroundMuted} size={18} />
           </Pressable>
         )}
       </View>
@@ -156,7 +165,7 @@ export function TagFilterSheet({
         scrollEventThrottle={64}
       >
         {isLoading ? (
-          <Text style={styles.stateText}>Cargando etiquetas…</Text>
+          <Text style={[styles.stateText, { color: theme.colors.foregroundMuted }]}>Cargando etiquetas…</Text>
         ) : isError ? (
           <View style={styles.stateBox}>
             <Text style={styles.errorText}>No se pudieron cargar tus etiquetas.</Text>
@@ -165,7 +174,7 @@ export function TagFilterSheet({
             </Pressable>
           </View>
         ) : list.length === 0 ? (
-          <Text style={styles.stateText}>
+          <Text style={[styles.stateText, { color: theme.colors.foregroundMuted }]}>
             {tags.length === 0
               ? assign
                 ? 'Aún no tienes etiquetas. Crea la primera con «Nueva etiqueta».'
@@ -182,9 +191,15 @@ export function TagFilterSheet({
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: on }}
                 accessibilityLabel={t.name}
-                style={styles.row}
+                style={[styles.row, { borderBottomColor: theme.colors.border }]}
               >
-                <View style={[styles.checkbox, on && styles.checkboxOn]}>
+                <View
+                  style={[
+                    styles.checkbox,
+                    { borderColor: theme.dark ? '#3A3A3A' : theme.colors.border },
+                    on && styles.checkboxOn,
+                  ]}
+                >
                   {on && <Check size={17} color="#111111" strokeWidth={3} />}
                 </View>
                 <View style={styles.slot}>
@@ -196,24 +211,33 @@ export function TagFilterSheet({
                     <View style={[styles.dot, { backgroundColor: t.color }]} />
                   )}
                 </View>
-                <Text style={styles.name} numberOfLines={1}>
+                <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={1}>
                   {t.name}
                 </Text>
-                <Text style={styles.count}>{counts[t.id] ?? 0}</Text>
+                <Text style={[styles.count, { color: theme.colors.foregroundMuted }]}>{counts[t.id] ?? 0}</Text>
               </Pressable>
             );
           })
         )}
 
         {hidden > 0 && !atEnd && (
-          <Text style={styles.more}>
+          <Text style={[styles.more, { color: theme.colors.foregroundMuted }]}>
             y {hidden} más · desliza para ver todas
           </Text>
         )}
       </ScrollView>
 
       {/* Pie */}
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}>
+      <View
+        style={[
+          styles.footer,
+          {
+            backgroundColor: theme.colors.surface,
+            borderTopColor: theme.colors.border,
+            paddingBottom: Math.max(insets.bottom, 16) + 12,
+          },
+        ]}
+      >
         <Pressable style={styles.cta} onPress={onClose} accessibilityRole="button">
           <Text style={styles.ctaText}>{ctaLabel}</Text>
         </Pressable>
