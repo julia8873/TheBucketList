@@ -28,8 +28,6 @@ import { useAuthStore } from '../src/stores/auth.store';
 import { supabase } from '../src/services/supabase';
 import { useAutoRefresh } from '../src/hooks/useAutoRefresh';
 import { useRealtimeSync } from '../src/hooks/useRealtimeSync';
-import { validateOAuthSession } from '../src/hooks/useGoogleAuth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import 'intl-pluralrules';
 import '../../../packages/shared/src/i18n'; // initialize i18n
 
@@ -131,7 +129,14 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { theme } = useTheme();
-  const { session, isInitialized, onboardingCompleted, isRecovering, setOnboardingCompleted, setRecovering } = useAuthStore();
+  const {
+    session,
+    isInitialized,
+    onboardingCompleted,
+    isRecovering,
+    setOnboardingCompleted,
+    setRecovering,
+  } = useAuthStore();
   const router = useRouter();
   const segments = useSegments();
   const userId = session?.user.id;
@@ -142,18 +147,10 @@ function RootNavigator() {
   // Cambios de otros colaboradores en tiempo real (tareas y álbumes compartidos)
   useRealtimeSync(userId);
 
-  // Enlaces del correo y OAuth (confirmar cuenta / restablecer / login con Google):
+  // Enlaces del correo (confirmar cuenta / restablecer contraseña):
   useEffect(() => {
     const handleUrl = async (url: string | null) => {
       if (!url) return;
-
-      // Si hay un flujo OAuth en curso gestionado por useGoogleAuth (openAuthSessionAsync),
-      // ese hook ya maneja el redirect completo. Ignoramos aquí para evitar doble apertura.
-      const isOAuthCallback =
-        url.includes('auth/callback') ||
-        url.includes('access_token') ||
-        (url.includes('code=') && (url.includes('mode=login') || url.includes('mode=register')));
-      if (isOAuthCallback && useAuthStore.getState().oauthMode !== null) return;
 
       try {
         const fragment = url.split('#')[1];
@@ -161,41 +158,12 @@ function RootNavigator() {
           const params = new URLSearchParams(fragment);
           const access_token = params.get('access_token');
           const refresh_token = params.get('refresh_token');
-          if (access_token && refresh_token) {
-            const isRecovery = params.get('type') === 'recovery';
-            if (isRecovery) setRecovering(true);
+          const isRecovery = params.get('type') === 'recovery';
+          if (access_token && refresh_token && isRecovery) {
+            setRecovering(true);
             const { error } = await supabase.auth.setSession({ access_token, refresh_token });
             if (error) setRecovering(false);
-
-            // Solo procesamos modo OAuth si NO hay un flujo activo de WebBrowser
-            let activeMode = (params.get('mode') as 'login' | 'register') || useAuthStore.getState().oauthMode;
-            if (!activeMode) {
-              const saved = await AsyncStorage.getItem('@oauth_mode').catch(() => null);
-              if (saved === 'register' || saved === 'login') activeMode = saved;
-            }
-            if (!activeMode) activeMode = 'register';
-            if (activeMode && !isRecovery) {
-              await validateOAuthSession(activeMode, router);
-            }
             return;
-          }
-        }
-
-        const query = url.split('?')[1]?.split('#')[0];
-        if (query) {
-          const params = new URLSearchParams(query);
-          const code = params.get('code');
-          if (code) {
-            await supabase.auth.exchangeCodeForSession(code);
-            let activeMode = (params.get('mode') as 'login' | 'register') || useAuthStore.getState().oauthMode;
-            if (!activeMode) {
-              const saved = await AsyncStorage.getItem('@oauth_mode').catch(() => null);
-              if (saved === 'register' || saved === 'login') activeMode = saved;
-            }
-            if (!activeMode) activeMode = 'register';
-            if (activeMode) {
-              await validateOAuthSession(activeMode, router);
-            }
           }
         }
       } catch (err) {
@@ -203,20 +171,15 @@ function RootNavigator() {
       }
     };
 
-    // Solo procesamos la URL inicial si NO es un callback OAuth
-    // (los callbacks OAuth son manejados por useGoogleAuth o AuthCallbackScreen)
     Linking.getInitialURL().then((url) => {
-      if (!url) return;
-      const isOAuthCallback =
-        url.includes('auth/callback') ||
-        url.includes('access_token') ||
-        url.includes('code=');
-      if (!isOAuthCallback) void handleUrl(url);
+      if (url) void handleUrl(url);
     });
 
-    const sub = Linking.addEventListener('url', (e) => void handleUrl(e.url));
+    const sub = Linking.addEventListener('url', (e) => {
+      void handleUrl(e.url);
+    });
     return () => sub.remove();
-  }, [router]);
+  }, [router, setRecovering]);
 
   // ¿Ha completado el onboarding este usuario?
   useEffect(() => {
@@ -254,18 +217,16 @@ function RootNavigator() {
     if (!isInitialized) return;
     const group = segments[0];
     if (!session) {
-      if (group !== '(auth)' && group !== 'auth') router.replace('/(auth)/welcome');
+      if (group !== '(auth)') router.replace('/(auth)/welcome');
       return;
     }
     if (isRecovering) return; // dejar terminar "nueva contraseña"
-    if (useAuthStore.getState().oauthMode !== null) return; // validando login o register con OAuth
-    if (segments[0] === 'auth' && segments[1] === 'callback') return; // en pantalla de callback OAuth
     if (onboardingCompleted === null) return; // cargando perfil
     if (!onboardingCompleted) {
       if (group !== '(onboarding)') router.replace('/(onboarding)/username');
       return;
     }
-    if (group === '(auth)' || group === 'auth') router.replace('/(tabs)/my-list');
+    if (group === '(auth)') router.replace('/(tabs)/my-list');
   }, [session, isInitialized, onboardingCompleted, isRecovering, segments]);
 
   return (

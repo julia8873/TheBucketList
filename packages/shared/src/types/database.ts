@@ -1040,9 +1040,6 @@ isOneToOne: false
 "check_username_available":
 { Args: { "username_to_check": string }; Returns: boolean
                            },
-"cleanup_unregistered_oauth_user":
-{ Args: Record<PropertyKey, never>; Returns: boolean
-                           },
 "delete_user":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },

@@ -4,8 +4,6 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme, fontFamily } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
-import { useAuthStore } from '../../src/stores/auth.store';
-import { useGoogleAuth } from '../../src/hooks/useGoogleAuth';
 import { useOnboardingStore } from '../../src/stores/onboarding.store';
 import { mapAuthError, EMAIL_RE, USERNAME_RE, sanitizeUsername } from '../../src/utils/authErrors';
 import {
@@ -29,14 +27,6 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { oauthError, setOAuthError } = useAuthStore();
-
-  useEffect(() => {
-    if (oauthError) {
-      setError(mapAuthError(oauthError, t));
-      setOAuthError(null);
-    }
-  }, [oauthError, t, setOAuthError]);
   // ── Verificación por código (OTP) enviado al correo (comentada temporalmente) ──
   // const [sentTo, setSentTo] = useState<string | null>(null);
   // const [code, setCode] = useState('');
@@ -74,8 +64,6 @@ export default function RegisterScreen() {
   //   setCooldown(30);
   // };
   // ─────────────────────────────────────────────────────────────────────────────
-
-  const google = useGoogleAuth((msg) => setError(mapAuthError(msg, t)), 'register');
 
   // Comprobación de disponibilidad de nombre de usuario con debounce
   useEffect(() => {
@@ -340,7 +328,7 @@ export default function RegisterScreen() {
         <>
           <PillButton title={t('auth.continue')} onPress={() => void submit()} loading={loading} disabled={!canSubmit} />
           <OrDivider />
-          <GoogleButton title={t('auth.google_signup')} onPress={google.start} disabled={!google.ready} loading={google.loading} />
+          <GoogleButton title={t('auth.google_soon')} />
           <SwitchLink
             prompt={t('auth.already_have')}
             action={t('auth.enter')}

@@ -8,7 +8,6 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
   StyleSheet,
   type TextInputProps,
 } from 'react-native';
@@ -219,32 +218,25 @@ export function GoogleLogo({ size = 18 }: { size?: number }) {
   );
 }
 
-export function GoogleButton({
-  title, onPress, disabled, loading,
-}: { title: string; onPress: () => void; disabled?: boolean; loading?: boolean }) {
+/** Botón de Google deshabilitado: el acceso con Google aún se está implementando. */
+export function GoogleButton({ title }: { title: string }) {
   const { theme } = useTheme();
   return (
     <Pressable
-      onPress={onPress}
-      disabled={disabled || loading}
+      disabled
       accessibilityRole="button"
-      style={({ pressed }) => [
+      accessibilityState={{ disabled: true }}
+      style={[
         s.googleBtn,
         {
           backgroundColor: theme.dark ? 'rgba(255, 255, 255, 0.05)' : '#FFFFFF',
           borderColor: theme.dark ? 'rgba(255, 255, 255, 0.12)' : '#E2E8F0',
-          opacity: disabled ? 0.5 : pressed ? 0.75 : 1,
+          opacity: 0.5,
         },
       ]}
     >
-      {loading ? (
-        <ActivityIndicator size="small" color={theme.colors.foreground} />
-      ) : (
-        <>
-          <GoogleLogo size={18} />
-          <Text style={[s.googleBtnText, { color: theme.colors.foreground }]}>{title}</Text>
-        </>
-      )}
+      <GoogleLogo size={18} />
+      <Text style={[s.googleBtnText, { color: theme.colors.foreground }]}>{title}</Text>
     </Pressable>
   );
 }

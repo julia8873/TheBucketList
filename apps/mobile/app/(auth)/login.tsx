@@ -1,11 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, type TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme, fontFamily } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
-import { useAuthStore } from '../../src/stores/auth.store';
-import { useGoogleAuth } from '../../src/hooks/useGoogleAuth';
 import { mapAuthError } from '../../src/utils/authErrors';
 import {
   AuthScreen, AuthInput, PillButton, GoogleButton, OrDivider, SwitchLink,
@@ -21,16 +19,6 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const { oauthError, setOAuthError } = useAuthStore();
-  const google = useGoogleAuth((msg) => setError(mapAuthError(msg, t)), 'login');
-
-  useEffect(() => {
-    if (oauthError) {
-      setError(mapAuthError(oauthError, t));
-      setOAuthError(null);
-    }
-  }, [oauthError, t, setOAuthError]);
 
   const canSubmit = identifier.trim().length > 0 && password.length > 0;
 
@@ -88,7 +76,7 @@ export default function LoginScreen() {
         <>
           <PillButton title={t('auth.enter')} onPress={() => void submit()} loading={loading} disabled={!canSubmit} />
           <OrDivider />
-          <GoogleButton title={t('auth.google')} onPress={google.start} disabled={!google.ready} loading={google.loading} />
+          <GoogleButton title={t('auth.google_soon')} />
           <SwitchLink
             prompt={t('auth.new_here')}
             action={t('auth.create_account_link')}

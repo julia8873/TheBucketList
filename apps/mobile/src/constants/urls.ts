@@ -123,34 +123,3 @@ export function getAuthRedirectUrl(path = ''): string {
 
   return `bucketlist://${normalizedPath}`;
 }
-
-/**
- * URL de redirección para flujos OAuth (ej: Google Login con Supabase).
- * En desarrollo local (Expo Go o Web local), garantiza que la sesión retorne
- * al entorno de depuración activo y no sea interceptada por la app de producción instalada.
- */
-export function getOAuthRedirectUri(mode: 'login' | 'register' = 'login'): string {
-  // 1. En Web: usar siempre el origen del navegador actual (ej. http://localhost:8081/auth/callback)
-  if (Platform.OS === 'web') {
-    if (typeof window !== 'undefined' && window.location?.origin) {
-      return `${window.location.origin}/auth/callback?mode=${mode}`;
-    }
-  }
-
-  // 2. En Expo Go: omitir 'scheme: bucketlist' para generar 'exp://...'
-  // De esta forma, el sistema operativo devuelve el callback a Expo Go y no a la app real instalada
-  if (isExpoGoEnvironment) {
-    return makeRedirectUri({
-      path: 'auth/callback',
-      queryParams: { mode },
-    });
-  }
-
-  // 3. En compilaciones nativas (Standalone / Dev Client):
-  return makeRedirectUri({
-    scheme: 'bucketlist',
-    path: 'auth/callback',
-    queryParams: { mode },
-  });
-}
-

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -24,19 +24,7 @@ export default function PhotoScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Obtener avatar de Google si existe
-  const googleAvatar =
-    (user?.user_metadata?.avatar_url as string | undefined) ||
-    (user?.user_metadata?.picture as string | undefined) ||
-    null;
-
-  useEffect(() => {
-    if (googleAvatar && !avatarUrl) {
-      setAvatarUrl(googleAvatar);
-    }
-  }, [googleAvatar, avatarUrl, setAvatarUrl]);
-
-  const activeAvatar = localUri || avatarUrl || googleAvatar;
+  const activeAvatar = localUri || avatarUrl;
 
   const pick = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -64,11 +52,6 @@ export default function PhotoScreen() {
         if (err) throw err;
         setAvatarUrl(url);
         queryClient.setQueryData(['profile', user.id], (old: any) => ({ ...old, avatar_url: url }));
-      } else if (googleAvatar) {
-        setAvatarUrl(googleAvatar);
-        const { error: err } = await supabase.from('profiles').update({ avatar_url: googleAvatar }).eq('id', user.id);
-        if (err) throw err;
-        queryClient.setQueryData(['profile', user.id], (old: any) => ({ ...old, avatar_url: googleAvatar }));
       }
       void queryClient.invalidateQueries({ queryKey: ['profile'] });
       next();

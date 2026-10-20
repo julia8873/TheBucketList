@@ -16,7 +16,6 @@ export default function ChangeCredentialScreen() {
   const { user } = useAuthStore();
   const { type } = useLocalSearchParams<{ type?: string }>();
   const isEmail = type === 'email';
-  const isGoogle = user?.app_metadata?.provider === 'google';
 
   const [value, setValue] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -89,14 +88,14 @@ export default function ChangeCredentialScreen() {
             <ChevronLeft size={22} color={theme.colors.foreground} />
           </Pressable>
           <Text style={[styles.title, { color: theme.colors.foreground }]}>
-            {isEmail ? t('settings.change_email') : (isGoogle ? t('settings.set_password') : t('settings.change_password'))}
+            {isEmail ? t('settings.change_email') : t('settings.change_password')}
           </Text>
         </View>
 
         <View style={styles.body}>
           {done ? (
             <Text style={[styles.info, { color: theme.colors.foreground }]}>
-              {isGoogle ? t('settings.set_password_done') : t('settings.password_updated')}
+              {t('settings.password_updated')}
             </Text>
           ) : (
             <>
@@ -145,9 +144,7 @@ export default function ChangeCredentialScreen() {
               <ActivityIndicator color={theme.colors.primaryForeground} />
             ) : (
               <Text style={[styles.ctaText, { color: theme.colors.primaryForeground }]}>
-                {done
-                  ? t('common.done', { defaultValue: 'Listo' })
-                  : (isGoogle && !isEmail ? t('settings.set_password_btn') : t('settings.update'))}
+                {done ? t('common.done', { defaultValue: 'Listo' }) : t('settings.update')}
               </Text>
             )}
           </Pressable>

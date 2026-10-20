@@ -20,7 +20,7 @@ export default function UsernameScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Sugerencia inicial a partir del correo (o del nombre de Google)
+  // Sugerencia inicial a partir del correo
   useEffect(() => {
     if (username || !user) return;
     const base = (user.user_metadata?.full_name as string | undefined)?.split(/\s+/).join('.') ?? user.email?.split('@')[0] ?? '';
@@ -69,11 +69,6 @@ export default function UsernameScreen() {
     : null;
 
   const cancelRegistration = async () => {
-    try {
-      await supabase.rpc('cleanup_unregistered_oauth_user');
-    } catch (err) {
-      console.warn('[Onboarding] Error eliminando usuario no completado:', err);
-    }
     await supabase.auth.signOut().catch(() => undefined);
     useAuthStore.getState().signOut();
     useOnboardingStore.getState().reset();

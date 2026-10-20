@@ -126,8 +126,6 @@ export default function SettingsScreen() {
     }
   };
 
-  const isGoogle = user?.app_metadata?.provider === 'google';
-
   // ── Perfil (privacidad) ────────────────────────────────────────────────────
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.id],
@@ -238,7 +236,7 @@ export default function SettingsScreen() {
           />
           <Row
             title={t('settings.password')}
-            subtitle={isGoogle ? t('settings.set_password') : t('settings.change_password')}
+            subtitle={t('settings.change_password')}
             onPress={() => router.push('/(modals)/change-credential?type=password' as any)}
             last
           />
