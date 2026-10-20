@@ -289,7 +289,12 @@ export function useBucketDetailState() {
   };
 
   const isOwner = bucket?.user_id === user?.id;
-  const isCollaborator = !isOwner && collaborators.some((c: any) => c.id === user?.id && c.status === 'accepted');
+  const isParticipant =
+    !isOwner &&
+    participantsData.some((p: any) => p.id === user?.id && p.status === 'accepted' && !p.isOwner);
+  const isCollaborator =
+    !isOwner &&
+    (collaborators.some((c: any) => c.id === user?.id && c.status === 'accepted') || isParticipant);
   const isInSharedAlbum = (bucketAlbums ?? []).some((bi: any) =>
     (albumsData ?? []).some((a: any) => a.id === bi.album_id),
   );
@@ -298,9 +303,16 @@ export function useBucketDetailState() {
   const collaborationMode = ((bucket as any)?.collaboration_mode as CollaborationMode) || 'invite_only';
   const collaborationAudience = ((bucket as any)?.collaboration_audience as CollaborationAudience) || 'followers';
 
-  const myCollaboration = collaborators.find((c: any) => c.id === user?.id);
+  const myCollaboration =
+    collaborators.find((c: any) => c.id === user?.id) ||
+    participantsData.find((p: any) => p.id === user?.id);
   const isPendingCollaborator = myCollaboration?.status === 'pending';
-  const pendingCollaborators = collaborators.filter((c: any) => c.status === 'pending');
+  const pendingCollaborators = [
+    ...collaborators.filter((c: any) => c.status === 'pending'),
+    ...participantsData.filter(
+      (p: any) => p.status === 'pending' && !collaborators.some((c: any) => c.id === p.id),
+    ),
+  ];
 
   const { data: isFollowerData } = useQuery({
     queryKey: ['isFollowerOf', user?.id, bucket?.user_id],

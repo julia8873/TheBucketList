@@ -48,20 +48,35 @@ export function BucketCollaboratorsRow({
     isOwner: true,
   };
 
+  const ownerId = bucket.user_id;
+
+  const visibleParticipants = participantsData.filter((p: any) => {
+    if (p.id === ownerId) return false;
+    if (!p.status || p.status === 'accepted') return true;
+    if (p.status === 'pending') return canEdit || p.id === user?.id;
+    return false;
+  });
+
   const visibleCollaborators = collaborators.filter((c: any) => {
     if (c.status === 'accepted') return true;
     if (c.status === 'pending') return canEdit || c.id === user?.id;
     return false;
   });
 
-  const ownerId = bucket.user_id;
   const byId = new Map<string, any>();
   [
     ownerEntry,
-    ...participantsData.filter((p: any) => p.id !== ownerId),
+    ...visibleParticipants,
     ...visibleCollaborators.filter((c: any) => c.id !== ownerId),
   ].forEach((c: any) => {
-    if (!byId.has(c.id)) byId.set(c.id, c);
+    if (!byId.has(c.id)) {
+      byId.set(c.id, c);
+    } else {
+      const existing = byId.get(c.id);
+      if (existing?.status === 'pending' && c.status === 'accepted') {
+        byId.set(c.id, { ...existing, ...c });
+      }
+    }
   });
   const everyone = Array.from(byId.values());
   const participants = everyone;
