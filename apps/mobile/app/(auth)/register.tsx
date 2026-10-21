@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Text, StyleSheet, type TextInput } from 'react-native';
+import { Text, Alert, StyleSheet, type TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme, fontFamily } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
 import { useOnboardingStore } from '../../src/stores/onboarding.store';
 import { mapAuthError, EMAIL_RE, USERNAME_RE, sanitizeUsername } from '../../src/utils/authErrors';
+import { useGoogleAuth } from '../../src/hooks/useGoogleAuth';
 import {
   AuthScreen, AuthInput, PillButton, GoogleButton, OrDivider, SwitchLink,
 } from '../../src/components/auth/AuthParts';
@@ -27,43 +28,7 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Verificación por código (OTP) enviado al correo (comentada temporalmente) ──
-  // const [sentTo, setSentTo] = useState<string | null>(null);
-  // const [code, setCode] = useState('');
-  // const [verifying, setVerifying] = useState(false);
-  // const [codeError, setCodeError] = useState<string | null>(null);
-  // const [codeInfo, setCodeInfo] = useState<string | null>(null);
-  // const [cooldown, setCooldown] = useState(0);
-  //
-  // useEffect(() => {
-  //   if (cooldown <= 0) return;
-  //   const id = setTimeout(() => setCooldown((c) => c - 1), 1000);
-  //   return () => clearTimeout(id);
-  // }, [cooldown]);
-  //
-  // const verifyCode = useCallback(async (value: string) => {
-  //   if (!sentTo || verifying || value.length < 6) return;
-  //   setVerifying(true);
-  //   setCodeError(null);
-  //   const { error: err } = await supabase.auth.verifyOtp({ email: sentTo, token: value, type: 'signup' });
-  //   setVerifying(false);
-  //   if (err) {
-  //     setCodeError(t('auth.err_code'));
-  //     return;
-  //   }
-  //   // Sesión iniciada: el RootNavigator lleva al onboarding.
-  // }, [sentTo, verifying, t]);
-  //
-  // const resendCode = async () => {
-  //   if (!sentTo || cooldown > 0) return;
-  //   setCodeError(null);
-  //   setCodeInfo(null);
-  //   const { error: err } = await supabase.auth.resend({ type: 'signup', email: sentTo });
-  //   if (err) { setCodeError(mapAuthError(err.message, t)); return; }
-  //   setCodeInfo(t('auth.code_resent'));
-  //   setCooldown(30);
-  // };
-  // ─────────────────────────────────────────────────────────────────────────────
+  const { signInWithGoogle, loading: googleLoading } = useGoogleAuth('register');
 
   // Comprobación de disponibilidad de nombre de usuario con debounce
   useEffect(() => {
@@ -189,7 +154,6 @@ export default function RegisterScreen() {
     setLoading(true);
     setError(null);
     try {
-      // Comprobar disponibilidad de usuario
       const { data: uAvail, error: uErr } = await supabase.rpc('check_username_available', {
         username_to_check: cleanUsername,
       });
@@ -205,7 +169,6 @@ export default function RegisterScreen() {
         throw new Error(t('onboarding.username_taken', { u: cleanUsername }));
       }
 
-      // Comprobar disponibilidad de email
       const { data: eAvail, error: eErr } = await supabase.rpc('check_email_available', {
         email_to_check: cleanEmail,
       });
@@ -235,9 +198,8 @@ export default function RegisterScreen() {
 
       useOnboardingStore.getState().setUsername(cleanUsername);
 
-      if (data.session) return; // sin confirmación de correo: el RootNavigator lleva a /(tabs)/my-list
+      if (data.session) return;
 
-      // Si Supabase no devuelve sesión automáticamente en el registro, iniciamos sesión directamente
       const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
         password,
@@ -247,12 +209,6 @@ export default function RegisterScreen() {
         router.replace('/(auth)/login');
         return;
       }
-
-      /* ── Verificación por email (comentada temporalmente) ──
-      if (data.user && data.user.identities?.length === 0) throw new Error('User already registered');
-      setSentTo(cleanEmail);
-      setCooldown(30);
-      ──────────────────────────────────────────────────────── */
     } catch (e: any) {
       const msg = e?.message ?? '';
       if (msg.includes('already registered') || msg.includes('already been registered') || (msg.includes('duplicate key') && msg.includes('email'))) {
@@ -269,55 +225,33 @@ export default function RegisterScreen() {
     }
   };
 
-  /* ── Pantalla de verificación por código (OTP) enviada al correo (comentada temporalmente) ──
-  if (sentTo) {
-    return (
-      <AuthScreen
-        title={t('auth.check_email_title')}
-        onBack={() => { setSentTo(null); setCode(''); setCodeError(null); setCodeInfo(null); }}
-        footer={
-          <>
-            <PillButton
-              title={t('auth.verify')}
-              onPress={() => void verifyCode(code)}
-              loading={verifying}
-              disabled={code.length < 6}
-            />
-            <SwitchLink
-              prompt={t('auth.code_not_received')}
-              action={cooldown > 0 ? t('auth.resend_in', { s: cooldown }) : t('auth.resend')}
-              onPress={() => void resendCode()}
-            />
-          </>
-        }
-      >
-        <Text style={[styles.body, { color: theme.colors.foregroundMuted }]}>
-          {t('auth.check_email_body', { email: sentTo })}
-        </Text>
-        <AuthInput
-          label={t('auth.code_label')}
-          placeholder="123456"
-          defaultValue=""
-          onChangeText={(v) => {
-            const digits = v.replace(/\D/g, '').slice(0, 6);
-            setCode(digits);
-            setCodeError(null);
-            if (digits.length === 6) void verifyCode(digits);
-          }}
-          keyboardType="number-pad"
-          maxLength={6}
-          textContentType="oneTimeCode"
-          autoComplete="one-time-code"
-          returnKeyType="go"
-          onSubmitEditing={() => void verifyCode(code)}
-          error={codeError}
-          message={codeInfo}
-          messageTone="ok"
-        />
-      </AuthScreen>
-    );
-  }
-  ──────────────────────────────────────────────────────────────────────────────────────────── */
+  const handleGoogleRegister = async () => {
+    const result = await signInWithGoogle();
+    switch (result.type) {
+      case 'account_exists':
+        // Ya existe una cuenta con ese email → preguntar si quiere iniciar sesión
+        Alert.alert(
+          t('auth.google_account_exists_title'),
+          t('auth.google_account_exists_body', { email: result.email ?? '' }),
+          [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+              text: t('auth.sign_in'),
+              onPress: () => router.replace('/(auth)/login'),
+            },
+          ],
+        );
+        break;
+      case 'error':
+        setError(result.errorMessage ?? t('auth.err_generic'));
+        break;
+      case 'cancelled':
+        break;
+      case 'success':
+        // El RootNavigator detecta onboarding_completed=false y redirige al onboarding
+        break;
+    }
+  };
 
   return (
     <AuthScreen
@@ -328,7 +262,12 @@ export default function RegisterScreen() {
         <>
           <PillButton title={t('auth.continue')} onPress={() => void submit()} loading={loading} disabled={!canSubmit} />
           <OrDivider />
-          <GoogleButton title={t('auth.google_soon')} />
+          <GoogleButton
+            title={t('auth.google_signup')}
+            onPress={() => void handleGoogleRegister()}
+            loading={googleLoading}
+            disabled={loading}
+          />
           <SwitchLink
             prompt={t('auth.already_have')}
             action={t('auth.enter')}

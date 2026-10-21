@@ -1,10 +1,11 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, type TextInput } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Alert, type TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme, fontFamily } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
 import { mapAuthError } from '../../src/utils/authErrors';
+import { useGoogleAuth } from '../../src/hooks/useGoogleAuth';
 import {
   AuthScreen, AuthInput, PillButton, GoogleButton, OrDivider, SwitchLink,
 } from '../../src/components/auth/AuthParts';
@@ -19,6 +20,8 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { signInWithGoogle, loading: googleLoading } = useGoogleAuth('login');
 
   const canSubmit = identifier.trim().length > 0 && password.length > 0;
 
@@ -41,7 +44,6 @@ export default function LoginScreen() {
           const { error: err } = await supabase.auth.signInWithPassword({ email, password });
           if (err) throw err;
         } else {
-          // Si el RPC no devolvió correo, intentar función o lanzar credenciales inválidas
           try {
             const { data, error: fnErr } = await supabase.functions.invoke('login-with-username', {
               body: { identifier: id, password },
@@ -67,6 +69,33 @@ export default function LoginScreen() {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    const result = await signInWithGoogle();
+    switch (result.type) {
+      case 'no_account':
+        // No existe cuenta con ese email de Google → preguntar si quiere crear una
+        Alert.alert(
+          t('auth.google_no_account_title'),
+          t('auth.google_no_account_body', { email: result.email ?? '' }),
+          [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+              text: t('auth.create_account_link'),
+              onPress: () => router.replace('/(auth)/register'),
+            },
+          ],
+        );
+        break;
+      case 'error':
+        setError(result.errorMessage ?? t('auth.err_generic'));
+        break;
+      case 'cancelled':
+      case 'success':
+        // success: el RootNavigator redirige automáticamente
+        break;
+    }
+  };
+
   return (
     <AuthScreen
       title={t('auth.login_title')}
@@ -76,7 +105,12 @@ export default function LoginScreen() {
         <>
           <PillButton title={t('auth.enter')} onPress={() => void submit()} loading={loading} disabled={!canSubmit} />
           <OrDivider />
-          <GoogleButton title={t('auth.google_soon')} />
+          <GoogleButton
+            title={t('auth.google_signin')}
+            onPress={() => void handleGoogleLogin()}
+            loading={googleLoading}
+            disabled={loading}
+          />
           <SwitchLink
             prompt={t('auth.new_here')}
             action={t('auth.create_account_link')}
@@ -88,8 +122,6 @@ export default function LoginScreen() {
       <AuthInput
         label={t('auth.identifier_label')}
         placeholder="tu@correo.com"
-        // Sin `value` (no controlado): en Android un input controlado con
-        // mayúsculas/predictivo puede duplicar la letra tecleada.
         defaultValue=""
         onChangeText={(v) => { setIdentifier(v); setError(null); }}
         keyboardType="email-address"

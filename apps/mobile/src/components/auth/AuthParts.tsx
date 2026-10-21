@@ -218,25 +218,42 @@ export function GoogleLogo({ size = 18 }: { size?: number }) {
   );
 }
 
-/** Botón de Google deshabilitado: el acceso con Google aún se está implementando. */
-export function GoogleButton({ title }: { title: string }) {
+export function GoogleButton({
+  title,
+  onPress,
+  loading,
+  disabled,
+}: {
+  title: string;
+  onPress?: () => void;
+  loading?: boolean;
+  disabled?: boolean;
+}) {
   const { theme } = useTheme();
+  const isDisabled = !!disabled || !!loading;
   return (
     <Pressable
-      disabled
+      onPress={onPress}
+      disabled={isDisabled}
       accessibilityRole="button"
-      accessibilityState={{ disabled: true }}
-      style={[
+      accessibilityState={{ disabled: isDisabled }}
+      style={({ pressed }) => [
         s.googleBtn,
         {
           backgroundColor: theme.dark ? 'rgba(255, 255, 255, 0.05)' : '#FFFFFF',
           borderColor: theme.dark ? 'rgba(255, 255, 255, 0.12)' : '#E2E8F0',
-          opacity: 0.5,
+          opacity: isDisabled ? 0.5 : pressed ? 0.75 : 1,
         },
       ]}
     >
-      <GoogleLogo size={18} />
-      <Text style={[s.googleBtnText, { color: theme.colors.foreground }]}>{title}</Text>
+      {loading ? (
+        <Text style={[s.googleBtnText, { color: theme.colors.foregroundSubtle }]}>…</Text>
+      ) : (
+        <>
+          <GoogleLogo size={18} />
+          <Text style={[s.googleBtnText, { color: theme.colors.foreground }]}>{title}</Text>
+        </>
+      )}
     </Pressable>
   );
 }
