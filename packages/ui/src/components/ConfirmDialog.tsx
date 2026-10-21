@@ -366,6 +366,15 @@ interface QueuedDialog {
   resolve?: (val: boolean) => void;
 }
 
+/**
+ * En Android se usaba una capa "inline" dentro de la jerarquía de la app, pero al ser una vista
+ * semitransparente más, se mezclaba con los elementos de la pantalla de debajo (manchas grises
+ * sobre botones con sombra). El `Modal` nativo vive en su propia ventana y no interfiere. El fallo
+ * original del Modal (tamaño 0 al volver del navegador de Google) se evita ahora esperando a que
+ * la app esté activa antes de mostrar el diálogo (`afterBrowserReturn` en las pantallas de auth).
+ */
+const USE_INLINE_LAYER = false;
+
 export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   const [current, setCurrent] = useState<QueuedDialog | null>(null);
   const queueRef = useRef<QueuedDialog[]>([]);
@@ -463,14 +472,14 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
       onConfirm={handleConfirm}
       onCancel={handleCancel}
       onAction={handleAction}
-      inline={Platform.OS === 'android'}
+      inline={USE_INLINE_LAYER && Platform.OS === 'android'}
     />
   ) : null;
 
   return (
     <ConfirmContext.Provider value={ctx}>
       {children}
-      {Platform.OS === 'android' ? (
+      {USE_INLINE_LAYER && Platform.OS === 'android' ? (
         // Contenedor siempre montado y a pantalla completa: el diálogo se inserta en un
         // contenedor ya maquetado, en vez de crear una capa raíz nueva que Android mide a 0.
         <View
