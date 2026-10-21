@@ -151,7 +151,7 @@ export function ConfirmDialog({
   inline = false,
 }: DialogProps) {
   const { theme } = useTheme();
-  const { width: windowWidth } = useWindowDimensions();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   // Ancho explícito en píxeles: con `width: '100%'` dentro de un Modal el cuadro podía
   // colapsar a ~0 px y solo se veían sus dos bordes laterales ("dos rayas verticales").
   const dialogWidth = Math.max(260, Math.min(380, windowWidth - 48));
@@ -187,14 +187,19 @@ export function ConfirmDialog({
 
   const body = (
       <Pressable
+        collapsable={false}
         style={[
           styles.backdrop,
           inline ? styles.inlineBackdrop : null,
+          // En Android el diálogo inline se mide con tamaño explícito: tras volver del navegador
+          // de Google el layout por flex/absolute podía quedar a 0 (botones arriba a la izquierda).
+          inline ? { width: windowWidth, height: windowHeight } : null,
           { backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(26,20,16,0.45)' },
         ]}
         onPress={onCancel}
       >
         <Pressable
+          collapsable={false}
           style={[
             styles.dialog,
             {
@@ -443,26 +448,40 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
     };
   }, [ctx]);
 
+  const dialogNode = current ? (
+    <ConfirmDialog
+      visible
+      title={current.opts.title}
+      message={current.opts.message}
+      confirmLabel={current.opts.confirmLabel}
+      cancelLabel={current.opts.cancelLabel}
+      destructive={current.opts.destructive}
+      requireText={current.opts.requireText}
+      loading={current.opts.loading}
+      actions={current.opts.actions}
+      tone={current.opts.tone}
+      onConfirm={handleConfirm}
+      onCancel={handleCancel}
+      onAction={handleAction}
+      inline={Platform.OS === 'android'}
+    />
+  ) : null;
+
   return (
     <ConfirmContext.Provider value={ctx}>
       {children}
-      {current && (
-        <ConfirmDialog
-          visible
-          title={current.opts.title}
-          message={current.opts.message}
-          confirmLabel={current.opts.confirmLabel}
-          cancelLabel={current.opts.cancelLabel}
-          destructive={current.opts.destructive}
-          requireText={current.opts.requireText}
-          loading={current.opts.loading}
-          actions={current.opts.actions}
-          tone={current.opts.tone}
-          onConfirm={handleConfirm}
-          onCancel={handleCancel}
-          onAction={handleAction}
-          inline={Platform.OS === 'android'}
-        />
+      {Platform.OS === 'android' ? (
+        // Contenedor siempre montado y a pantalla completa: el diálogo se inserta en un
+        // contenedor ya maquetado, en vez de crear una capa raíz nueva que Android mide a 0.
+        <View
+          collapsable={false}
+          pointerEvents={current ? 'auto' : 'none'}
+          style={styles.inlineHost}
+        >
+          {dialogNode}
+        </View>
+      ) : (
+        dialogNode
       )}
     </ConfirmContext.Provider>
   );
@@ -474,6 +493,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
+  },
+  inlineHost: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 10001,
+    elevation: 100,
   },
   // Capa a pantalla completa por encima de todo (incluidas las pantallas modales de navegación)
   inlineBackdrop: {

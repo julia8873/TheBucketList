@@ -6,6 +6,7 @@ import { useTheme, fontFamily, Alert } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
 import { mapAuthError } from '../../src/utils/authErrors';
 import { useGoogleAuth } from '../../src/hooks/useGoogleAuth';
+import { afterBrowserReturn } from '../../src/utils/afterBrowserReturn';
 import {
   AuthScreen, AuthInput, PillButton, GoogleButton, OrDivider, SwitchLink,
 } from '../../src/components/auth/AuthParts';
@@ -73,7 +74,9 @@ export default function LoginScreen() {
     const result = await signInWithGoogle();
     switch (result.type) {
       case 'no_account':
-        // No existe cuenta con ese email de Google → preguntar si quiere crear una
+        // No existe cuenta con ese email de Google → preguntar si quiere crear una.
+        // Esperamos a que Android termine de re-maquetar tras cerrar el navegador.
+        await afterBrowserReturn();
         Alert.alert(
           t('auth.google_no_account_title'),
           t('auth.google_no_account_body', { email: result.email ?? '' }),

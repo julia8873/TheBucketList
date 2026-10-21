@@ -7,6 +7,7 @@ import { supabase } from '../../src/services/supabase';
 import { useOnboardingStore } from '../../src/stores/onboarding.store';
 import { mapAuthError, EMAIL_RE, USERNAME_RE, sanitizeUsername } from '../../src/utils/authErrors';
 import { useGoogleAuth } from '../../src/hooks/useGoogleAuth';
+import { afterBrowserReturn } from '../../src/utils/afterBrowserReturn';
 import {
   AuthScreen, AuthInput, PillButton, GoogleButton, OrDivider, SwitchLink,
 } from '../../src/components/auth/AuthParts';
@@ -254,6 +255,7 @@ export default function RegisterScreen() {
     switch (result.type) {
       case 'account_exists':
         // Ya existe una cuenta con ese email → preguntar si quiere iniciar sesión
+        await afterBrowserReturn();
         Alert.alert(
           t('auth.google_account_exists_title'),
           t('auth.google_account_exists_body', { email: result.email ?? '' }),
