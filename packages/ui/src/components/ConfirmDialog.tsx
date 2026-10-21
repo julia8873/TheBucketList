@@ -19,6 +19,7 @@ import {
   ActivityIndicator,
   BackHandler,
   Keyboard,
+  Platform,
   useWindowDimensions,
 } from 'react-native';
 import { Check, AlertCircle, Info, ShieldAlert } from 'lucide-react-native';
@@ -56,6 +57,13 @@ export interface DialogProps extends ConfirmOptions {
   onCancel: () => void;
   /** Se invoca al pulsar un botón de `actions` que no es de cancelar. */
   onAction?: (action: ConfirmAction) => void;
+  /**
+   * Dibuja el diálogo como una capa a pantalla completa en la propia jerarquía de la app
+   * en lugar de usar el `Modal` nativo. En Android el `Modal` recién montado podía medirse
+   * con tamaño 0 (diálogo arriba a la izquierda, sin texto). Solo para diálogos globales
+   * (ConfirmProvider), que se montan en la raíz de la app.
+   */
+  inline?: boolean;
 }
 
 export interface ConfirmContextType {
@@ -140,6 +148,7 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
   onAction,
+  inline = false,
 }: DialogProps) {
   const { theme } = useTheme();
   const { width: windowWidth } = useWindowDimensions();
@@ -176,17 +185,11 @@ export function ConfirmDialog({
     tone === 'error' ? AlertCircle : tone === 'warning' ? ShieldAlert : tone === 'info' ? Info : Check;
   const stacked = !!actions && actions.length > 2;
 
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      statusBarTranslucent
-      onRequestClose={onCancel}
-    >
+  const body = (
       <Pressable
         style={[
           styles.backdrop,
+          inline ? styles.inlineBackdrop : null,
           { backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(26,20,16,0.45)' },
         ]}
         onPress={onCancel}
@@ -334,6 +337,19 @@ export function ConfirmDialog({
           )}
         </Pressable>
       </Pressable>
+  );
+
+  if (inline) return visible ? body : null;
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={onCancel}
+    >
+      {body}
     </Modal>
   );
 }
@@ -445,6 +461,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
           onConfirm={handleConfirm}
           onCancel={handleCancel}
           onAction={handleAction}
+          inline={Platform.OS === 'android'}
         />
       )}
     </ConfirmContext.Provider>
@@ -457,6 +474,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
+  },
+  // Capa a pantalla completa por encima de todo (incluidas las pantallas modales de navegación)
+  inlineBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 10001,
+    elevation: 100,
   },
   dialog: {
     maxWidth: 380,
