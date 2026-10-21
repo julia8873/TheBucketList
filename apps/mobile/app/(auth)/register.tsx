@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Text, StyleSheet, type TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useTheme, fontFamily, useConfirm } from '@bucketlist/ui';
+import { useTheme, fontFamily, Alert } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
 import { useOnboardingStore } from '../../src/stores/onboarding.store';
 import { mapAuthError, EMAIL_RE, USERNAME_RE, sanitizeUsername } from '../../src/utils/authErrors';
@@ -17,7 +17,6 @@ export default function RegisterScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const { t } = useTranslation();
-  const confirm = useConfirm();
   const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
 
@@ -106,7 +105,9 @@ export default function RegisterScreen() {
   const cleanEmail = email.trim().toLowerCase();
   const cleanUsername = sanitizeUsername(username);
   const hasInputs = cleanUsername.length >= 3 && EMAIL_RE.test(cleanEmail) && password.length >= 8;
-  const isBlocked = usernameStatus === 'taken' || emailStatus === 'taken';
+  // Un correo ya registrado NO deshabilita el botón: al pulsar "Continuar" se muestra
+  // el diálogo que ofrece ir a iniciar sesión.
+  const isBlocked = usernameStatus === 'taken';
   const canSubmit = hasInputs && !isBlocked && !loading;
 
   const usernameMessage =
@@ -136,6 +137,22 @@ export default function RegisterScreen() {
   const isPasswordShort = password.length > 0 && password.length < 8;
   const passwordMessage = isPasswordShort ? t('auth.err_password_short') : null;
   const passwordTone = isPasswordShort ? 'error' : 'muted';
+
+  /** Diálogo "ya existe una cuenta con este correo" con opción de ir al login. */
+  const showAccountExistsDialog = () => {
+    setEmailStatus('taken');
+    Alert.alert(
+      t('auth.google_account_exists_title'),
+      t('auth.google_account_exists_body', { email: cleanEmail }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('auth.sign_in'),
+          onPress: () => router.replace('/(auth)/login'),
+        },
+      ],
+    );
+  };
 
   const submit = async () => {
     if (!canSubmit || loading) return;
@@ -181,8 +198,8 @@ export default function RegisterScreen() {
         isEmailTaken = !!p;
       }
       if (isEmailTaken) {
-        setEmailStatus('taken');
-        throw new Error(t('auth.err_exists'));
+        showAccountExistsDialog();
+        return;
       }
 
       const { data, error: err } = await supabase.auth.signUp({
@@ -196,6 +213,13 @@ export default function RegisterScreen() {
         },
       });
       if (err) throw err;
+
+      // Supabase no devuelve error si el correo ya está confirmado (por seguridad):
+      // en ese caso `identities` llega vacío.
+      if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        showAccountExistsDialog();
+        return;
+      }
 
       useOnboardingStore.getState().setUsername(cleanUsername);
 
@@ -213,8 +237,7 @@ export default function RegisterScreen() {
     } catch (e: any) {
       const msg = e?.message ?? '';
       if (msg.includes('already registered') || msg.includes('already been registered') || (msg.includes('duplicate key') && msg.includes('email'))) {
-        setEmailStatus('taken');
-        setError(t('auth.err_exists'));
+        showAccountExistsDialog();
       } else if ((msg.includes('duplicate key') && msg.includes('username')) || msg.includes('ya está en uso')) {
         setUsernameStatus('taken');
         setError(t('onboarding.username_taken', { u: cleanUsername }));
@@ -231,22 +254,17 @@ export default function RegisterScreen() {
     switch (result.type) {
       case 'account_exists':
         // Ya existe una cuenta con ese email → preguntar si quiere iniciar sesión
-        confirm.show({
-          title: t('auth.google_account_exists_title'),
-          message: t('auth.google_account_exists_body', { email: result.email ?? '' }),
-          tone: 'info',
-          actions: [
+        Alert.alert(
+          t('auth.google_account_exists_title'),
+          t('auth.google_account_exists_body', { email: result.email ?? '' }),
+          [
+            { text: t('common.cancel'), style: 'cancel' },
             {
-              label: t('common.cancel'),
-              style: 'cancel',
-            },
-            {
-              label: t('auth.sign_in'),
-              style: 'default',
+              text: t('auth.sign_in'),
               onPress: () => router.replace('/(auth)/login'),
             },
           ],
-        });
+        );
         break;
       case 'error':
         setError(result.errorMessage ?? t('auth.err_generic'));

@@ -1,7 +1,7 @@
 import { Alert } from '@bucketlist/ui';
 import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState } from 'react';
-import { View, Text, FlatList, TextInput, Pressable, ActivityIndicator, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, FlatList, TextInput, Pressable, ActivityIndicator, StyleSheet, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -35,6 +35,8 @@ export default function ManageAdminsScreen() {
   const removeAdminMutation = useRemoveAdmin();
 
   const handleAddAdmin = () => {
+    // Cerramos el teclado antes de abrir el diálogo para que no lo tape ni lo desplace.
+    Keyboard.dismiss();
     const trimmed = usernameInput.trim().replace(/^@/, '');
     if (!trimmed) {
       Alert.alert('Atención', 'Introduce el nombre de usuario (ej: @juanperez).');

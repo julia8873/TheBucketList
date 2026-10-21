@@ -66,6 +66,9 @@ export default function TabsLayout() {
       }}
       screenOptions={{
         headerShown: false,
+        // Congela las pestañas que no se ven: dejan de re-renderizarse en segundo plano
+        // (mejora la fluidez) y se reactivan al volver a ellas.
+        freezeOnBlur: true,
         tabBarShowLabel: false,
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.foregroundSubtle,

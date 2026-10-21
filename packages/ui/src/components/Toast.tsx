@@ -11,11 +11,27 @@ import {
   Animated,
   StyleSheet,
   Platform,
+  Keyboard,
+  StatusBar,
+  useWindowDimensions,
 } from 'react-native';
 import { Check, AlertCircle, Info, X } from 'lucide-react-native';
 import { fontFamily, fontSize } from '../tokens/typography';
 import { gold, dark } from '../tokens/colors';
 import { useTheme } from '../theme/useTheme';
+
+// En iOS las pantallas con `presentation: 'modal'` son controladores nativos que tapan todo
+// lo dibujado en la raíz de la app (el toast quedaba oculto detrás). FullWindowOverlay lo
+// dibuja por encima de ellos. Se carga de forma opcional para no romper en web/Android.
+let FullWindowOverlay: React.ComponentType<any> | null = null;
+if (Platform.OS === 'ios') {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    FullWindowOverlay = require('react-native-screens').FullWindowOverlay ?? null;
+  } catch {
+    FullWindowOverlay = null;
+  }
+}
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -67,6 +83,20 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const translateY = useRef(new Animated.Value(20)).current;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { theme } = useTheme();
+  const { width: windowWidth } = useWindowDimensions();
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  // Con el teclado abierto un toast abajo quedaría tapado: lo subimos arriba.
+  useEffect(() => {
+    const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const a = Keyboard.addListener(showEvt, () => setKeyboardVisible(true));
+    const b = Keyboard.addListener(hideEvt, () => setKeyboardVisible(false));
+    return () => {
+      a.remove();
+      b.remove();
+    };
+  }, []);
 
   const hide = useCallback(() => {
     if (timerRef.current) {
@@ -130,15 +160,20 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, [show, hide, success, error, info]);
 
   const type = currentToast?.type ?? 'success';
+  const atTop = currentToast?.position === 'top' || keyboardVisible;
+  const topOffset = Platform.OS === 'ios' ? 64 : (StatusBar.currentHeight ?? 24) + 16;
+  // Ancho explícito (nunca colapsa a 0 aunque el contenedor padre no tenga tamaño).
+  const toastWidth = Math.max(240, windowWidth - 32);
 
-  return (
-    <ToastContext.Provider value={{ show, hide, success, error, info }}>
-      {children}
-      {currentToast ? (
+  const toastView = currentToast ? (
         <Animated.View
           style={[
             styles.toast,
+            atTop ? { top: topOffset, bottom: undefined } : null,
             {
+              width: toastWidth,
+              left: 16,
+              right: undefined,
               backgroundColor: theme.colors.surfaceElevated,
               shadowOpacity: theme.dark ? 0.45 : 0.16,
               borderColor:
@@ -219,7 +254,22 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             </Pressable>
           )}
         </Animated.View>
-      ) : null}
+  ) : null;
+
+  const overlay = toastView ? (
+    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+      {toastView}
+    </View>
+  ) : null;
+
+  return (
+    <ToastContext.Provider value={{ show, hide, success, error, info }}>
+      {children}
+      {overlay && FullWindowOverlay ? (
+        <FullWindowOverlay style={StyleSheet.absoluteFill}>{overlay}</FullWindowOverlay>
+      ) : (
+        overlay
+      )}
     </ToastContext.Provider>
   );
 }

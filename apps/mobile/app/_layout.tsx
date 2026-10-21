@@ -1,13 +1,12 @@
 import 'react-native-url-polyfill/auto';
 import '../src/utils/navigationGuard';
-import React, { useEffect, useCallback, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as Linking from 'expo-linking';
-import * as WebBrowser from 'expo-web-browser';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Font from 'expo-font';
 import {
@@ -28,15 +27,14 @@ import { hydrateHapticsStore } from '../src/stores/haptics.store';
 import { useAuthStore } from '../src/stores/auth.store';
 import { supabase } from '../src/services/supabase';
 import { useAutoRefresh } from '../src/hooks/useAutoRefresh';
+import { bucketApi } from '../src/services/api/bucket';
+import { BUCKETS_QUERY_KEY } from '../src/hooks/useBuckets';
 import { useRealtimeSync } from '../src/hooks/useRealtimeSync';
 import 'intl-pluralrules';
 import '../../../packages/shared/src/i18n'; // initialize i18n
 
 // Keep the splash screen visible while we fetch resources
 void SplashScreen.preventAutoHideAsync();
-
-// En web, cierra al instante la ventana emergente de Google al volver (sin renderizar la app dentro)
-WebBrowser.maybeCompleteAuthSession();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -106,16 +104,10 @@ export default function RootLayout() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded) {
-      await SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
-
   if (!fontsLoaded) return null;
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }} onLayout={() => void onLayoutRootView()}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider override={override} onOverrideChange={setOverride}>
@@ -138,14 +130,35 @@ function RootNavigator() {
     isInitialized,
     onboardingCompleted,
     isRecovering,
-    oauthInProgress,
     setOnboardingCompleted,
     setRecovering,
   } = useAuthStore();
   const router = useRouter();
   const segments = useSegments();
-  const lastRedirect = useRef<string>('');
+  const queryClient = useQueryClient();
   const userId = session?.user.id;
+
+  // Precarga de "Mi lista" EN PARALELO a la comprobación del onboarding: así cuando la
+  // app navega a la pestaña, los datos ya están (o casi) y no se ve la pantalla vacía.
+  useEffect(() => {
+    if (!userId) return;
+    void queryClient.prefetchQuery({
+      queryKey: [...BUCKETS_QUERY_KEY, userId],
+      queryFn: () => bucketApi.getBuckets(userId),
+    });
+  }, [userId, queryClient]);
+
+  // El splash se mantiene hasta saber a qué pantalla ir (antes se quitaba al cargar las
+  // fuentes y quedaba una pantalla en blanco mientras se leía la sesión y el perfil).
+  const appReady = isInitialized && (!session || isRecovering || onboardingCompleted !== null);
+  useEffect(() => {
+    if (appReady) void SplashScreen.hideAsync();
+  }, [appReady]);
+  // Seguro: nunca dejar el splash más de 8 s (p. ej. sin conexión).
+  useEffect(() => {
+    const id = setTimeout(() => void SplashScreen.hideAsync(), 8000);
+    return () => clearTimeout(id);
+  }, []);
 
   // Recarga automática (volver a la app, recuperar conexión, cada 60 s)
   useAutoRefresh();
@@ -221,30 +234,19 @@ function RootNavigator() {
 
   useEffect(() => {
     if (!isInitialized) return;
-    if (oauthInProgress) return; // flujo de Google en curso: la pantalla actual no debe cambiar
-    const group = segments[0] as string | undefined;
-    // En la raíz ("/") decide app/index.tsx; si también redirigiéramos aquí, se abrirían dos pantallas.
-    if (!group || group === 'index') return;
-
-    const go = (target: '/(auth)/welcome' | '/(onboarding)/username' | '/(tabs)/my-list') => {
-      const key = `${target}|${segments.join('/')}`;
-      if (lastRedirect.current === key) return; // evita replace duplicados
-      lastRedirect.current = key;
-      router.replace(target);
-    };
-
+    const group = segments[0];
     if (!session) {
-      if (group !== '(auth)') go('/(auth)/welcome');
+      if (group !== '(auth)') router.replace('/(auth)/welcome');
       return;
     }
     if (isRecovering) return; // dejar terminar "nueva contraseña"
     if (onboardingCompleted === null) return; // cargando perfil
     if (!onboardingCompleted) {
-      if (group !== '(onboarding)') go('/(onboarding)/username');
+      if (group !== '(onboarding)') router.replace('/(onboarding)/username');
       return;
     }
-    if (group === '(auth)') go('/(tabs)/my-list');
-  }, [session, isInitialized, onboardingCompleted, isRecovering, oauthInProgress, segments]);
+    if (group === '(auth)') router.replace('/(tabs)/my-list');
+  }, [session, isInitialized, onboardingCompleted, isRecovering, segments]);
 
   return (
     <>

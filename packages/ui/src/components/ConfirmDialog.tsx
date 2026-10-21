@@ -18,6 +18,8 @@ import {
   StyleSheet,
   ActivityIndicator,
   BackHandler,
+  Keyboard,
+  useWindowDimensions,
 } from 'react-native';
 import { Check, AlertCircle, Info, ShieldAlert } from 'lucide-react-native';
 import { fontFamily } from '../tokens/typography';
@@ -140,6 +142,10 @@ export function ConfirmDialog({
   onAction,
 }: DialogProps) {
   const { theme } = useTheme();
+  const { width: windowWidth } = useWindowDimensions();
+  // Ancho explícito en píxeles: con `width: '100%'` dentro de un Modal el cuadro podía
+  // colapsar a ~0 px y solo se veían sus dos bordes laterales ("dos rayas verticales").
+  const dialogWidth = Math.max(260, Math.min(380, windowWidth - 48));
   const [text, setText] = useState('');
   const ok = !requireText || text.trim().toUpperCase() === requireText.toUpperCase();
 
@@ -148,6 +154,9 @@ export function ConfirmDialog({
       setText('');
       return;
     }
+    // Si había un teclado abierto (p. ej. un campo de texto de la pantalla de atrás),
+    // lo cerramos para que no tape ni desplace el diálogo.
+    Keyboard.dismiss();
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       onCancel();
       return true;
@@ -168,7 +177,13 @@ export function ConfirmDialog({
   const stacked = !!actions && actions.length > 2;
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={onCancel}
+    >
       <Pressable
         style={[
           styles.backdrop,
@@ -180,6 +195,7 @@ export function ConfirmDialog({
           style={[
             styles.dialog,
             {
+              width: dialogWidth,
               backgroundColor: theme.colors.surfaceElevated,
               borderColor: theme.colors.border,
             },
@@ -443,7 +459,6 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   dialog: {
-    width: '100%',
     maxWidth: 380,
     borderRadius: 24,
     borderWidth: 1,
