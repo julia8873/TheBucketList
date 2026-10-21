@@ -87,7 +87,9 @@ export function Button({
             backgroundColor: isDisabled
               ? theme.colors.foregroundSubtle
               : theme.colors.primary,
-            ...shadows.sm,
+            // Deshabilitado: sin sombra. En Android la elevación se dibuja a través del fondo
+            // semitransparente (opacity 0.5) y aparece una mancha gris en el centro del botón.
+            ...(isDisabled ? shadows.none : shadows.sm),
           },
           text: { color: theme.colors.primaryForeground },
         };
@@ -111,7 +113,9 @@ export function Button({
             backgroundColor: isDisabled
               ? theme.colors.foregroundSubtle
               : theme.colors.error,
-            ...shadows.sm,
+            // Deshabilitado: sin sombra. En Android la elevación se dibuja a través del fondo
+            // semitransparente (opacity 0.5) y aparece una mancha gris en el centro del botón.
+            ...(isDisabled ? shadows.none : shadows.sm),
           },
           text: { color: theme.colors.errorForeground },
         };

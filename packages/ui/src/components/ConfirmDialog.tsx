@@ -501,9 +501,10 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 10001,
-    elevation: 100,
   },
   // Capa a pantalla completa por encima de todo (incluidas las pantallas modales de navegación)
+  // Sin `elevation`: en Android una capa semitransparente con elevación proyecta su sombra
+  // a través del fondo y deja manchas grises sobre los elementos de debajo.
   inlineBackdrop: {
     position: 'absolute',
     top: 0,
@@ -511,7 +512,6 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 10001,
-    elevation: 100,
   },
   dialog: {
     maxWidth: 380,
