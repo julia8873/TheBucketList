@@ -2,9 +2,10 @@ import { Redirect } from 'expo-router';
 import { useAuthStore } from '../src/stores/auth.store';
 
 export default function Index() {
-  const { session, isInitialized, onboardingCompleted } = useAuthStore();
+  const { session, isInitialized, onboardingCompleted, oauthInProgress } = useAuthStore();
 
   if (!isInitialized) return null; // Wait until Supabase session is checked
+  if (oauthInProgress) return null; // Flujo Google en curso: no redirigir
 
   if (!session) return <Redirect href="/(auth)/welcome" />;
   if (onboardingCompleted === null) return null; // cargando perfil

@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import * as WebBrowser from 'expo-web-browser';
 import { createClient } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase';
+import { useAuthStore } from '../stores/auth.store';
 import { getAuthRedirectUrl, getSupabaseUrl, getSupabaseAnonKey } from '../constants/urls';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -60,6 +61,8 @@ export function useGoogleAuth(mode: GoogleAuthMode) {
 
   const signInWithGoogle = useCallback(async (): Promise<GoogleAuthResult> => {
     setLoading(true);
+    // Bloquea cualquier redirección automática del RootNavigator mientras dura el flujo
+    useAuthStore.getState().setOauthInProgress(true);
     try {
       const isolatedClient = createIsolatedAuthClient();
 
@@ -187,6 +190,7 @@ export function useGoogleAuth(mode: GoogleAuthMode) {
       return { type: 'error', errorMessage: e?.message ?? 'Error desconocido' };
     } finally {
       setLoading(false);
+      useAuthStore.getState().setOauthInProgress(false);
     }
   }, [mode, redirectUri]);
 

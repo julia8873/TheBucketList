@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Text, Alert, StyleSheet, type TextInput } from 'react-native';
+import { Text, StyleSheet, type TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useTheme, fontFamily } from '@bucketlist/ui';
+import { useTheme, fontFamily, useConfirm } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
 import { useOnboardingStore } from '../../src/stores/onboarding.store';
 import { mapAuthError, EMAIL_RE, USERNAME_RE, sanitizeUsername } from '../../src/utils/authErrors';
@@ -17,6 +17,7 @@ export default function RegisterScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const { t } = useTranslation();
+  const confirm = useConfirm();
   const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
 
@@ -230,17 +231,22 @@ export default function RegisterScreen() {
     switch (result.type) {
       case 'account_exists':
         // Ya existe una cuenta con ese email → preguntar si quiere iniciar sesión
-        Alert.alert(
-          t('auth.google_account_exists_title'),
-          t('auth.google_account_exists_body', { email: result.email ?? '' }),
-          [
-            { text: t('common.cancel'), style: 'cancel' },
+        confirm.show({
+          title: t('auth.google_account_exists_title'),
+          message: t('auth.google_account_exists_body', { email: result.email ?? '' }),
+          tone: 'info',
+          actions: [
             {
-              text: t('auth.sign_in'),
+              label: t('common.cancel'),
+              style: 'cancel',
+            },
+            {
+              label: t('auth.sign_in'),
+              style: 'default',
               onPress: () => router.replace('/(auth)/login'),
             },
           ],
-        );
+        });
         break;
       case 'error':
         setError(result.errorMessage ?? t('auth.err_generic'));

@@ -1,12 +1,13 @@
 import 'react-native-url-polyfill/auto';
 import '../src/utils/navigationGuard';
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useRef } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Font from 'expo-font';
 import {
@@ -33,6 +34,9 @@ import '../../../packages/shared/src/i18n'; // initialize i18n
 
 // Keep the splash screen visible while we fetch resources
 void SplashScreen.preventAutoHideAsync();
+
+// En web, cierra al instante la ventana emergente de Google al volver (sin renderizar la app dentro)
+WebBrowser.maybeCompleteAuthSession();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -134,11 +138,13 @@ function RootNavigator() {
     isInitialized,
     onboardingCompleted,
     isRecovering,
+    oauthInProgress,
     setOnboardingCompleted,
     setRecovering,
   } = useAuthStore();
   const router = useRouter();
   const segments = useSegments();
+  const lastRedirect = useRef<string>('');
   const userId = session?.user.id;
 
   // Recarga automática (volver a la app, recuperar conexión, cada 60 s)
@@ -215,19 +221,30 @@ function RootNavigator() {
 
   useEffect(() => {
     if (!isInitialized) return;
-    const group = segments[0];
+    if (oauthInProgress) return; // flujo de Google en curso: la pantalla actual no debe cambiar
+    const group = segments[0] as string | undefined;
+    // En la raíz ("/") decide app/index.tsx; si también redirigiéramos aquí, se abrirían dos pantallas.
+    if (!group || group === 'index') return;
+
+    const go = (target: '/(auth)/welcome' | '/(onboarding)/username' | '/(tabs)/my-list') => {
+      const key = `${target}|${segments.join('/')}`;
+      if (lastRedirect.current === key) return; // evita replace duplicados
+      lastRedirect.current = key;
+      router.replace(target);
+    };
+
     if (!session) {
-      if (group !== '(auth)') router.replace('/(auth)/welcome');
+      if (group !== '(auth)') go('/(auth)/welcome');
       return;
     }
     if (isRecovering) return; // dejar terminar "nueva contraseña"
     if (onboardingCompleted === null) return; // cargando perfil
     if (!onboardingCompleted) {
-      if (group !== '(onboarding)') router.replace('/(onboarding)/username');
+      if (group !== '(onboarding)') go('/(onboarding)/username');
       return;
     }
-    if (group === '(auth)') router.replace('/(tabs)/my-list');
-  }, [session, isInitialized, onboardingCompleted, isRecovering, segments]);
+    if (group === '(auth)') go('/(tabs)/my-list');
+  }, [session, isInitialized, onboardingCompleted, isRecovering, oauthInProgress, segments]);
 
   return (
     <>

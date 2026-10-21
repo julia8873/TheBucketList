@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Alert, type TextInput } from 'react-native';
+import { View, Text, Pressable, StyleSheet, type TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useTheme, fontFamily } from '@bucketlist/ui';
+import { useTheme, fontFamily, useConfirm } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
 import { mapAuthError } from '../../src/utils/authErrors';
 import { useGoogleAuth } from '../../src/hooks/useGoogleAuth';
@@ -14,6 +14,7 @@ export default function LoginScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const { t } = useTranslation();
+  const confirm = useConfirm();
   const passwordRef = useRef<TextInput>(null);
 
   const [identifier, setIdentifier] = useState('');
@@ -73,18 +74,23 @@ export default function LoginScreen() {
     const result = await signInWithGoogle();
     switch (result.type) {
       case 'no_account':
-        // No existe cuenta con ese email de Google → preguntar si quiere crear una
-        Alert.alert(
-          t('auth.google_no_account_title'),
-          t('auth.google_no_account_body', { email: result.email ?? '' }),
-          [
-            { text: t('common.cancel'), style: 'cancel' },
+        // No existe cuenta con ese email de Google — preguntar si quiere crear una (con la estética de la app)
+        confirm.show({
+          title: t('auth.google_no_account_title'),
+          message: t('auth.google_no_account_body', { email: result.email ?? '' }),
+          tone: 'info',
+          actions: [
             {
-              text: t('auth.create_account_link'),
+              label: t('common.cancel'),
+              style: 'cancel',
+            },
+            {
+              label: t('auth.create_account_link'),
+              style: 'default',
               onPress: () => router.replace('/(auth)/register'),
             },
           ],
-        );
+        });
         break;
       case 'error':
         setError(result.errorMessage ?? t('auth.err_generic'));
