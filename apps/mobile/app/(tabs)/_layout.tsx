@@ -41,18 +41,26 @@ export default function TabsLayout() {
                 {
                   text: 'Activar',
                   onPress: () => {
-                    registerForPushNotificationsAsync(user.id).catch(console.error);
+                    registerForPushNotificationsAsync(user.id)
+                      .then(() => {
+                        void queryClient.invalidateQueries({ queryKey: ['notification_prefs', user.id] });
+                      })
+                      .catch(console.error);
                   },
                 },
               ]
             );
           } else if (perm.granted) {
-            registerForPushNotificationsAsync(user.id).catch(console.error);
+            registerForPushNotificationsAsync(user.id)
+              .then(() => {
+                void queryClient.invalidateQueries({ queryKey: ['notification_prefs', user.id] });
+              })
+              .catch(console.error);
           }
         })
         .catch(console.error);
     }
-  }, [user?.id]);
+  }, [user?.id, queryClient]);
 
   return (
     <Tabs

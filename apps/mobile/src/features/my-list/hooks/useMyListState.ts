@@ -707,12 +707,29 @@ export function useMyListState() {
     const favorites = filteredAlbums.filter((a: any) => isAlbumFavorite(a.id)).sort(byAlbumManual);
     const nonFavorites = filteredAlbums.filter((a: any) => !isAlbumFavorite(a.id));
 
-    const inProgress = nonFavorites.filter((a: any) => getAlbumStatus(a) === 'active').sort(byAlbumManual);
+    const inProgress = nonFavorites
+      .filter((a: any) => {
+        if (getAlbumStatus(a) !== 'active') return false;
+        const total = a.total_tasks ?? 0;
+        const completed = a.completed_tasks ?? 0;
+        return total > 0 && completed > 0 && completed < total;
+      })
+      .sort(byAlbumManual);
+
+    const pending = nonFavorites
+      .filter((a: any) => {
+        if (getAlbumStatus(a) !== 'active') return false;
+        const completed = a.completed_tasks ?? 0;
+        return completed === 0;
+      })
+      .sort(byAlbumManual);
+
     const completed = nonFavorites.filter((a: any) => getAlbumStatus(a) === 'completed').sort(byAlbumManual);
     const closed = nonFavorites.filter((a: any) => getAlbumStatus(a) === 'closed').sort(byAlbumManual);
 
     let otherSections = [
       { key: 'in_progress', title: 'EN PROGRESO', items: inProgress },
+      { key: 'pending', title: 'PENDIENTES', items: pending },
       { key: 'completed', title: 'COMPLETADOS', items: completed },
       { key: 'closed', title: 'CERRADOS', items: closed },
     ];
@@ -726,6 +743,10 @@ export function useMyListState() {
 
   const sortedAlbumsList = useMemo(() => {
     if (!filteredAlbums || filteredAlbums.length === 0) return [];
+
+    if (albumSortField === 'status') {
+      return albumSections.flatMap((s) => s.items);
+    }
 
     if (albumSortField === 'manual') {
       return [...filteredAlbums].sort(byAlbumManual);
@@ -791,7 +812,7 @@ export function useMyListState() {
     }
 
     return [...filteredAlbums].sort(byAlbumManual);
-  }, [filteredAlbums, albumSortField, albumSortDir, albumManualOrder]);
+  }, [filteredAlbums, albumSortField, albumSortDir, albumManualOrder, albumSections]);
 
   return {
     user,

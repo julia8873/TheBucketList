@@ -294,8 +294,7 @@ export default function AlbumDetailScreen() {
         scrollEnabled={!state.dragging}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
-          paddingBottom:
-            insets.bottom + (state.id === 'unassigned' ? 40 : 120) + (state.taskSearchOpen ? state.keyboardHeight : 0),
+          paddingBottom: insets.bottom + (state.id === 'unassigned' ? 40 : 120),
         }}
         refreshControl={
           manualDragEnabled || state.dragging ? undefined : (

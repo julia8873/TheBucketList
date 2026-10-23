@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
+import * as FileSystem from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { supabase } from '@/services/supabase';
@@ -53,6 +54,8 @@ export function useBucketDetailState() {
   const subStatus = entitySub?.status;
   const [locationModalVisible, setLocationModalVisible] = useState(false);
   const [driveModalVisible, setDriveModalVisible] = useState(false);
+  const [showAddPhotoSheet, setShowAddPhotoSheet] = useState(false);
+  const [showPhotoLinkModal, setShowPhotoLinkModal] = useState(false);
   const sheetTranslateY = useRef(new Animated.Value(420)).current;
 
   const subtaskTimeouts = useRef<Record<string, any>>({});
@@ -803,6 +806,74 @@ export function useBucketDetailState() {
     resolve?.(uri);
   };
 
+  const processAndUploadPhotoAssets = async (
+    assets: Array<{ uri: string; width?: number; height?: number }>,
+  ) => {
+    if (!user || assets.length === 0) return;
+
+    try {
+      if (Platform.OS === 'ios') await new Promise((r) => setTimeout(r, 350));
+
+      const editedUris: string[] = [];
+      for (let i = 0; i < assets.length; i++) {
+        const asset = assets[i]!;
+        const base = await ImageManipulator.manipulateAsync(
+          asset.uri,
+          asset.width && asset.width > 1600 ? [{ resize: { width: 1600 } }] : [],
+          { compress: 1, format: ImageManipulator.SaveFormat.JPEG },
+        );
+        const edited = await requestPhotoEdit(base, i, assets.length);
+        if (edited === null) {
+          setCropRequest(null);
+          return;
+        }
+        editedUris.push(edited);
+        if (i + 1 < assets.length) {
+          setCropRequest(null);
+          await new Promise((r) => setTimeout(r, 50));
+        }
+      }
+      setCropRequest(null);
+
+      const maxPosition = Math.max(
+        -1,
+        ...((bucket?.bucket_photos ?? []) as any[]).map((p: any) => p.position ?? 0),
+      );
+      let nextPosition = maxPosition + 1;
+
+      for (const uri of editedUris) {
+        const processed = await processBucketImage(uri);
+        const paths = await storageApi.uploadPhoto(
+          user.id,
+          cleanId,
+          processed.original.uri,
+          processed.thumbnail.uri,
+        );
+
+        const { error } = await supabase.from('bucket_photos').insert({
+          bucket_id: cleanId,
+          user_id: user.id,
+          storage_path: paths.photoPath,
+          thumb_path: paths.thumbPath,
+          width: processed.original.width,
+          height: processed.original.height,
+          size_bytes: processed.original.sizeBytes,
+          thumb_size_bytes: processed.thumbnail.sizeBytes,
+          position: nextPosition++,
+        });
+
+        if (error) throw error;
+      }
+
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', cleanId] });
+      invalidateBucket();
+      toast.success(editedUris.length > 1 ? 'Fotos añadidas al momento' : 'Foto añadida al momento');
+    } catch (error: any) {
+      setCropRequest(null);
+      Alert.alert('No se pudieron subir las fotos', error?.message || 'Inténtalo de nuevo.');
+    }
+  };
+
   const pickAndUploadPhotos = async () => {
     if (!user) return;
 
@@ -820,64 +891,40 @@ export function useBucketDetailState() {
     });
 
     if (result.canceled || !result.assets.length) return;
+    await processAndUploadPhotoAssets(result.assets);
+  };
 
+  const takePhotoAndUploadPhotos = async () => {
+    if (!user) return;
+
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permiso de cámara', 'Necesitamos acceso a la cámara para tomar una foto.');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: false,
+      quality: 1,
+    });
+
+    if (result.canceled || !result.assets.length) return;
+    await processAndUploadPhotoAssets(result.assets);
+  };
+
+  const addPhotoFromUrl = async (targetUrl: string) => {
+    if (!user) return;
     try {
-      if (Platform.OS === 'ios') await new Promise((r) => setTimeout(r, 350));
-
-      const editedUris: string[] = [];
-      for (let i = 0; i < result.assets.length; i++) {
-        const asset = result.assets[i]!;
-        const base = await ImageManipulator.manipulateAsync(
-          asset.uri,
-          asset.width && asset.width > 1600 ? [{ resize: { width: 1600 } }] : [],
-          { compress: 1, format: ImageManipulator.SaveFormat.JPEG },
-        );
-        const edited = await requestPhotoEdit(base, i, result.assets.length);
-        if (edited === null) {
-          setCropRequest(null);
-          return;
-        }
-        editedUris.push(edited);
-        if (i + 1 < result.assets.length) {
-          setCropRequest(null);
-          await new Promise((r) => setTimeout(r, 50));
-        }
+      let localUri = targetUrl;
+      if (targetUrl.startsWith('http')) {
+        const filename = `photo_remote_${Date.now()}.jpg`;
+        const dest = `${FileSystem.cacheDirectory}${filename}`;
+        const download = await FileSystem.downloadAsync(targetUrl, dest);
+        localUri = download.uri;
       }
-      setCropRequest(null);
-
-      const maxPosition = Math.max(-1, ...((bucket?.bucket_photos ?? []) as any[]).map((p: any) => p.position ?? 0));
-      let nextPosition = maxPosition + 1;
-
-      for (const uri of editedUris) {
-        const processed = await processBucketImage(uri);
-        const paths = await storageApi.uploadPhoto(
-          user.id,
-          id,
-          processed.original.uri,
-          processed.thumbnail.uri,
-        );
-
-        const { error } = await supabase.from('bucket_photos').insert({
-          bucket_id: id,
-          user_id: user.id,
-          storage_path: paths.photoPath,
-          thumb_path: paths.thumbPath,
-          width: processed.original.width,
-          height: processed.original.height,
-          size_bytes: processed.original.sizeBytes,
-          thumb_size_bytes: processed.thumbnail.sizeBytes,
-          position: nextPosition++,
-        });
-
-        if (error) throw error;
-      }
-
-      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
-      invalidateBucket();
-      Alert.alert('Fotos subidas', 'Las fotos se han añadido al momento.');
-    } catch (error: any) {
-      setCropRequest(null);
-      Alert.alert('No se pudieron subir las fotos', error?.message || 'Inténtalo de nuevo.');
+      await processAndUploadPhotoAssets([{ uri: localUri }]);
+    } catch (err: any) {
+      toast.error(err?.message || 'Error al descargar la foto');
     }
   };
 
@@ -1008,7 +1055,7 @@ export function useBucketDetailState() {
   );
 
   const uploadPhotos = () => {
-    closeSheet(() => void pickAndUploadPhotos());
+    closeSheet(() => setShowAddPhotoSheet(true));
   };
 
   const pickAndUploadCover = async () => {
@@ -1635,6 +1682,12 @@ export function useBucketDetailState() {
     removeMention,
     handleMoveMention,
     pickAndUploadPhotos,
+    takePhotoAndUploadPhotos,
+    addPhotoFromUrl,
+    showAddPhotoSheet,
+    setShowAddPhotoSheet,
+    showPhotoLinkModal,
+    setShowPhotoLinkModal,
     persistPhotoOrder,
     confirmDeletePhoto,
     uploadPhotos,

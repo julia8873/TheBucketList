@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { BackHandler } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
@@ -28,7 +29,7 @@ export default function UsernameScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  // Comprobación de disponibilidad con debounce
+  // ComprobaciÃ³n de disponibilidad con debounce
   useEffect(() => {
     if (!username) { setStatus('idle'); return; }
     if (!USERNAME_RE.test(username)) { setStatus('invalid'); return; }
@@ -69,11 +70,23 @@ export default function UsernameScreen() {
     : null;
 
   const cancelRegistration = async () => {
+    useAuthStore.getState().setAuthRedirectTarget('/(auth)/register');
     await supabase.auth.signOut().catch(() => undefined);
     useAuthStore.getState().signOut();
     useOnboardingStore.getState().reset();
-    router.replace('/(auth)/welcome');
+    // Volvemos a crear cuenta (no al welcome): llegamos desde el registro con Google.
+    router.replace('/(auth)/register');
   };
+
+  // Interceptar el botón físico o gesto de volver atrás en Android
+  useEffect(() => {
+    const onBackPress = () => {
+      void cancelRegistration();
+      return true; // Previene que Android cierre la aplicación
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, []);
 
   return (
     <AuthScreen
@@ -101,3 +114,4 @@ export default function UsernameScreen() {
     </AuthScreen>
   );
 }
+

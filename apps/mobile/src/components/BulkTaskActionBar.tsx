@@ -80,7 +80,50 @@ export function BulkTaskActionBar({
     confirm.ask({ title, message, confirmLabel, cancelLabel: 'Cancelar' });
 
   const handleMoveToAlbum = async (albumId: string | null) => {
-    const albumName = albumId ? albums.find((a: any) => a.id === albumId)?.title : null;
+    const targetAlbum = albumId ? albums.find((a: any) => a.id === albumId) : null;
+    const albumName = targetAlbum?.title;
+
+    const executeMove = async (updateVis?: 'public' | 'followers' | 'private') => {
+      try {
+        await moveTasksToAlbum.mutateAsync({
+          taskIds: selectedIds,
+          albumId,
+          updateVisibility: updateVis,
+        });
+        setShowMoveModal(false);
+        onClearSelection();
+        toast.success(albumId ? 'Tareas movidas al álbum' : 'Tareas sacadas del álbum');
+      } catch (e: any) {
+        toast.error(e?.message || 'No se pudieron mover las tareas');
+      }
+    };
+
+    if (albumId && targetAlbum?.visibility) {
+      const visLabels: Record<string, string> = {
+        private: 'privada',
+        followers: 'solo para seguidores',
+        public: 'pública',
+      };
+      const visLabel = visLabels[targetAlbum.visibility] || targetAlbum.visibility;
+
+      confirm.show({
+        title: count === 1 ? '¿Cambiar privacidad de la tarea?' : '¿Cambiar privacidad de las tareas?',
+        message: `El álbum «${albumName || 'Álbum'}» es ${visLabel}. ¿Quieres poner la visibilidad de ${plural} en ${visLabel} para que coincida con el álbum?`,
+        actions: [
+          {
+            label: `Poner en ${visLabel}`,
+            onPress: () => void executeMove(targetAlbum.visibility as any),
+          },
+          {
+            label: 'Mantener actual',
+            style: 'cancel',
+            onPress: () => void executeMove(undefined),
+          },
+        ],
+      });
+      return;
+    }
+
     const okMove = await askBulk(
       '¿Mover tareas?',
       albumId
@@ -89,17 +132,7 @@ export function BulkTaskActionBar({
       'Mover',
     );
     if (!okMove) return;
-    try {
-      await moveTasksToAlbum.mutateAsync({
-        taskIds: selectedIds,
-        albumId,
-      });
-      setShowMoveModal(false);
-      onClearSelection();
-      toast.success('Tareas movidas al álbum');
-    } catch (e: any) {
-      toast.error(e?.message || 'No se pudieron mover las tareas');
-    }
+    await executeMove(undefined);
   };
 
   const handleAssignTags = async () => {

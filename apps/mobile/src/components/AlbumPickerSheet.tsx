@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Search, Check, Folder, FolderOpen, X, Globe, Lock, Users } from 'lucide-react-native';
@@ -35,6 +36,10 @@ export function AlbumPickerSheet({
   const { user } = useAuthStore();
   const { data: albums = [], isLoading } = useAlbums(user?.id);
   const [searchQuery, setSearchQuery] = useState('');
+  const { height: windowHeight } = useWindowDimensions();
+  // Altura máxima del sheet en píxeles absolutos para que el ScrollView pueda calcular
+  // correctamente su espacio disponible (el % no funciona bien dentro de KeyboardAvoidingView)
+  const sheetMaxHeight = windowHeight * 0.82;
 
   const filteredAlbums = albums.filter((a) =>
     a.title.toLowerCase().includes(searchQuery.trim().toLowerCase())
@@ -83,8 +88,9 @@ export function AlbumPickerSheet({
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.sheetContainer}
+          keyboardVerticalOffset={0}
         >
-          <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+          <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16), maxHeight: sheetMaxHeight }]}>
             {/* Header */}
             <View style={styles.header}>
               <View style={styles.dragIndicator} />
@@ -229,8 +235,9 @@ const styles = themedStyleSheet({
     backgroundColor: '#121212',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    maxHeight: '80%',
-    minHeight: 360,
+    // maxHeight se pasa como prop en píxeles absolutos para que el ScrollView
+    // tenga una referencia de altura real y pueda hacer scroll correctamente.
+    minHeight: 300,
     borderTopWidth: 1,
     borderColor: '#262626',
   },
@@ -293,6 +300,9 @@ const styles = themedStyleSheet({
   },
   list: {
     flex: 1,
+    // flexShrink asegura que el ScrollView cede espacio al header/search
+    // y no intenta crecer más allá del sheet.
+    flexShrink: 1,
   },
   listContent: {
     paddingHorizontal: 16,

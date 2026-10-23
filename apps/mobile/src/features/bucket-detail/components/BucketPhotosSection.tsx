@@ -25,6 +25,7 @@ interface BucketPhotosSectionProps {
   persistPhotoOrder: (ids: string[]) => Promise<void> | void;
   setViewingPhotoIndex: (index: number) => void;
   pickAndUploadPhotos: () => Promise<void> | void;
+  onOpenAddPhotoSheet?: () => void;
 }
 
 export function BucketPhotosSection({
@@ -42,6 +43,7 @@ export function BucketPhotosSection({
   persistPhotoOrder,
   setViewingPhotoIndex,
   pickAndUploadPhotos,
+  onOpenAddPhotoSheet,
 }: BucketPhotosSectionProps) {
   if (!bucket.bucket_photos?.length && !canEdit) return null;
 
@@ -150,7 +152,7 @@ export function BucketPhotosSection({
             <View style={{ height: 14 }} />
             <Pressable
               style={[styles.photoAddThumb, { width: '100%', height: 64, flexDirection: 'row' }]}
-              onPress={() => void pickAndUploadPhotos()}
+              onPress={() => onOpenAddPhotoSheet ? onOpenAddPhotoSheet() : void pickAndUploadPhotos()}
             >
               <Camera color={gold[400]} size={22} strokeWidth={1.8} />
               <Typography variant="bodySemibold" color={gold[400]} style={{ marginLeft: 10 }}>
@@ -192,7 +194,7 @@ export function BucketPhotosSection({
                   styles.photoAddThumb,
                   photos.length === 0 && { width: '100%', height: 72, flexDirection: 'row' },
                 ]}
-                onPress={() => void pickAndUploadPhotos()}
+                onPress={() => onOpenAddPhotoSheet ? onOpenAddPhotoSheet() : void pickAndUploadPhotos()}
               >
                 <Camera color={gold[400]} size={24} strokeWidth={1.8} />
                 {photos.length === 0 && (

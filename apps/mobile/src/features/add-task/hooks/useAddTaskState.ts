@@ -1,8 +1,9 @@
-import { Alert } from '@bucketlist/ui';
+import { Alert, confirm } from '@bucketlist/ui';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '../../../services/supabase';
 import {
   useUnassignedTasks,
   useAssignTasks,
@@ -19,6 +20,19 @@ export function useAddTaskState(albumId?: string) {
   const { data: userTasksData, isLoading, isError } = useUnassignedTasks(
     albumId && albumId !== 'new' ? albumId : undefined
   );
+  const { data: albumData } = useQuery({
+    queryKey: ['album', albumId],
+    queryFn: async () => {
+      if (!albumId || albumId === 'new') return null;
+      const { data } = await supabase
+        .from('albums')
+        .select('id, title, visibility')
+        .eq('id', albumId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!albumId && albumId !== 'new',
+  });
   const assignMutation = useAssignTasks();
   const createMutation = useCreateTasksFromDefaults();
 
@@ -159,30 +173,85 @@ export function useAddTaskState(albumId?: string) {
   const handleAdd = async () => {
     if (selectedIds.size === 0) return;
 
-    try {
-      const userSelected = userTasks.filter((t) => selectedIds.has(t.id)).map((t) => t.id);
-      const defaultSelected = availableDefaultTasks
-        .filter((t) => selectedIds.has(t.id))
-        .map((t) => t.id);
+    const userSelectedTasks = userTasks.filter((t) => selectedIds.has(t.id));
+    const userSelectedIds = userSelectedTasks.map((t) => t.id);
+    const defaultSelected = availableDefaultTasks
+      .filter((t) => selectedIds.has(t.id))
+      .map((t) => t.id);
 
-      let newIds: string[] = [];
-      if (defaultSelected.length > 0) {
-        newIds = await createMutation.mutateAsync(defaultSelected);
-      }
+    const executeAdd = async (syncVisibility?: 'public' | 'followers' | 'private') => {
+      try {
+        let newIds: string[] = [];
+        if (defaultSelected.length > 0) {
+          newIds = await createMutation.mutateAsync({
+            ids: defaultSelected,
+            visibility: syncVisibility || (albumVisibility || 'public'),
+          });
+        }
 
-      await queryClient.invalidateQueries({ queryKey: ['buckets'] });
-      await queryClient.invalidateQueries({ queryKey: ['unassigned_tasks'] });
+        await queryClient.invalidateQueries({ queryKey: ['buckets'] });
+        await queryClient.invalidateQueries({ queryKey: ['unassigned_tasks'] });
 
-      if (!albumId || albumId === 'new') {
+        if (!albumId || albumId === 'new') {
+          handleBack();
+          return;
+        }
+
+        await assignMutation.mutateAsync({
+          albumId,
+          taskIds: [...userSelectedIds, ...newIds],
+          updateVisibility: syncVisibility,
+        });
         handleBack();
+      } catch (err: any) {
+        Alert.alert('Error', err?.message || 'No se pudieron añadir las tareas');
+      }
+    };
+
+    const albumVisibility = albumData?.visibility as 'public' | 'followers' | 'private' | undefined;
+
+    // Si hay álbum con visibilidad definida, comprobamos si alguna tarea difiere de la privacidad del álbum
+    if (albumId && albumId !== 'new' && albumVisibility) {
+      const tasksWithDifferentVis = userSelectedTasks.filter(
+        (t) => t.visibility && t.visibility !== albumVisibility
+      );
+
+      // Si hay tareas existentes o por defecto con distinta privacidad que el álbum
+      if (tasksWithDifferentVis.length > 0 || (defaultSelected.length > 0 && albumVisibility !== 'public')) {
+        const visLabels: Record<string, string> = {
+          private: 'privada',
+          followers: 'solo para seguidores',
+          public: 'pública',
+        };
+        const visLabel = visLabels[albumVisibility] || albumVisibility;
+        const count = tasksWithDifferentVis.length + (albumVisibility !== 'public' ? defaultSelected.length : 0);
+        const isPlural = count > 1;
+
+        const title = isPlural ? '¿Cambiar privacidad de las tareas?' : '¿Cambiar privacidad de la tarea?';
+        const message = isPlural
+          ? `El álbum es ${visLabel}. ¿Quieres poner la visibilidad de las ${count} tareas añadidas en ${visLabel} para que coincida con el álbum?`
+          : `El álbum es ${visLabel}. ¿Quieres poner la visibilidad de la tarea añadida en ${visLabel} para que coincida con el álbum?`;
+
+        confirm.show({
+          title,
+          message,
+          actions: [
+            {
+              label: `Poner en ${visLabel}`,
+              onPress: () => void executeAdd(albumVisibility),
+            },
+            {
+              label: 'Mantener actual',
+              style: 'cancel',
+              onPress: () => void executeAdd(undefined),
+            },
+          ],
+        });
         return;
       }
-
-      await assignMutation.mutateAsync({ albumId, taskIds: [...userSelected, ...newIds] });
-      handleBack();
-    } catch (err) {
-      Alert.alert('Error', 'No se pudieron añadir las tareas');
     }
+
+    await executeAdd(undefined);
   };
 
   const isPending = assignMutation.isPending || createMutation.isPending;

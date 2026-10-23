@@ -211,8 +211,31 @@ export function useDeleteAlbum() {
       if (error) throw error;
       return id;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ALBUMS_QUERY_KEY });
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ALBUMS_QUERY_KEY });
+      // Guardar snapshot de todas las queries de álbumes
+      const prevQueries = queryClient.getQueriesData<AlbumWithProgress[]>({ queryKey: ALBUMS_QUERY_KEY });
+
+      // Eliminación optimista inmediata en la caché
+      queryClient.setQueriesData<AlbumWithProgress[]>({ queryKey: ALBUMS_QUERY_KEY }, (old: any) => {
+        if (!Array.isArray(old)) return old;
+        return old.filter((a: any) => a.id !== id);
+      });
+      queryClient.removeQueries({ queryKey: ['album', id] });
+
+      return { prevQueries };
+    },
+    onError: (_err, _id, ctx) => {
+      // Revertir en caso de error
+      if (ctx?.prevQueries) {
+        ctx.prevQueries.forEach(([qKey, qData]) => {
+          queryClient.setQueryData(qKey, qData);
+        });
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ALBUMS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: ['buckets'] });
     },
   });
 }

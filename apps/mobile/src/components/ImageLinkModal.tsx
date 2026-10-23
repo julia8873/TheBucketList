@@ -229,7 +229,7 @@ export function ImageLinkModal({
                       </Text>
                     ) : (
                       <Text style={[styles.placeholderText, { color: theme.colors.foregroundMuted }]}>
-                        Pulsa el botón «Pegar» 👉
+                        Pulsa aquí o en el botón Pegar
                       </Text>
                     )}
                   </View>

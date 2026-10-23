@@ -1,6 +1,6 @@
 import 'react-native-url-polyfill/auto';
 import '../src/utils/navigationGuard';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -130,11 +130,15 @@ function RootNavigator() {
     isInitialized,
     onboardingCompleted,
     isRecovering,
+    oauthInProgress,
+    authRedirectTarget,
+    setAuthRedirectTarget,
     setOnboardingCompleted,
     setRecovering,
   } = useAuthStore();
   const router = useRouter();
   const segments = useSegments();
+  const lastRoutedRef = useRef<string | null>(null);
   const queryClient = useQueryClient();
   const userId = session?.user.id;
 
@@ -234,19 +238,59 @@ function RootNavigator() {
 
   useEffect(() => {
     if (!isInitialized) return;
+    // Mientras el flujo de Google OAuth esté en progreso, no interferir con el routing
+    if (oauthInProgress) return;
+
     const group = segments[0];
+
     if (!session) {
-      if (group !== '(auth)') router.replace('/(auth)/welcome');
+      if (group !== '(auth)') {
+        const target = authRedirectTarget || '/(auth)/welcome';
+        if (authRedirectTarget) setAuthRedirectTarget(null);
+        if (lastRoutedRef.current !== target) {
+          lastRoutedRef.current = target;
+          router.replace(target as any);
+        }
+      } else {
+        lastRoutedRef.current = null;
+      }
       return;
     }
+
     if (isRecovering) return; // dejar terminar "nueva contraseña"
     if (onboardingCompleted === null) return; // cargando perfil
+
     if (!onboardingCompleted) {
-      if (group !== '(onboarding)') router.replace('/(onboarding)/username');
+      if (group !== '(onboarding)') {
+        if (lastRoutedRef.current !== '/(onboarding)/username') {
+          lastRoutedRef.current = '/(onboarding)/username';
+          router.replace('/(onboarding)/username');
+        }
+      } else {
+        lastRoutedRef.current = '/(onboarding)/username';
+      }
       return;
     }
-    if (group === '(auth)') router.replace('/(tabs)/my-list');
-  }, [session, isInitialized, onboardingCompleted, isRecovering, segments]);
+
+    if (group === '(auth)' || group === '(onboarding)') {
+      if (lastRoutedRef.current !== '/(tabs)/my-list') {
+        lastRoutedRef.current = '/(tabs)/my-list';
+        router.replace('/(tabs)/my-list');
+      }
+    } else if (group === '(tabs)') {
+      lastRoutedRef.current = null;
+    }
+  }, [
+    session,
+    isInitialized,
+    onboardingCompleted,
+    isRecovering,
+    oauthInProgress,
+    authRedirectTarget,
+    setAuthRedirectTarget,
+    segments,
+    router,
+  ]);
 
   return (
     <>

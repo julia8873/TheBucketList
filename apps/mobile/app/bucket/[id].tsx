@@ -67,6 +67,7 @@ import { BucketDatePickerModal } from '@/features/bucket-detail/components/Bucke
 import { BucketLocationModal } from '@/features/bucket-detail/components/BucketLocationModal';
 import { BucketMetaSection } from '@/features/bucket-detail/components/BucketMetaSection';
 import { BucketPhotosSection } from '@/features/bucket-detail/components/BucketPhotosSection';
+import { AddPhotoSheet } from '@/features/bucket-detail/components/AddPhotoSheet';
 import { BucketThumbnailSelector } from '@/features/bucket-detail/components/BucketThumbnailSelector';
 import { PhotoSortModal } from '@/features/bucket-detail/components/PhotoSortModal';
 import { BucketHeaderBadges } from '@/features/bucket-detail/components/BucketHeaderBadges';
@@ -521,6 +522,7 @@ export default function BucketDetailScreen() {
             persistPhotoOrder={(ids) => void state.persistPhotoOrder(ids)}
             setViewingPhotoIndex={state.setViewingPhotoIndex}
             pickAndUploadPhotos={() => void state.pickAndUploadPhotos()}
+            onOpenAddPhotoSheet={() => state.setShowAddPhotoSheet(true)}
           />
 
           {/* Sección de Comentarios en la tarea */}
@@ -765,6 +767,26 @@ export default function BucketDetailScreen() {
         visible={state.showCoverLinkModal}
         onClose={() => state.setShowCoverLinkModal(false)}
         onApplyImage={state.handleApplyCoverUrl}
+        initialQuery={bucket?.title || ''}
+      />
+
+      {/* Selector de foto desde abajo (Cámara, Galería, Google Fotos / Web) */}
+      <AddPhotoSheet
+        visible={state.showAddPhotoSheet}
+        onClose={() => state.setShowAddPhotoSheet(false)}
+        onPickCamera={() => void state.takePhotoAndUploadPhotos()}
+        onPickGallery={() => void state.pickAndUploadPhotos()}
+        onPickGooglePhotos={() => state.setShowPhotoLinkModal(true)}
+      />
+
+      {/* Modal para añadir foto mediante enlace Google Fotos / Web */}
+      <ImageLinkModal
+        visible={state.showPhotoLinkModal}
+        onClose={() => state.setShowPhotoLinkModal(false)}
+        onApplyImage={(url) => {
+          state.setShowPhotoLinkModal(false);
+          void state.addPhotoFromUrl(url);
+        }}
         initialQuery={bucket?.title || ''}
       />
 

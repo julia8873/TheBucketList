@@ -66,6 +66,22 @@ export default function CreateBucketModal() {
   });
 
   useEffect(() => {
+    // Si la tarea se crea dentro de un álbum, usar preferentemente la visibilidad del álbum
+    if (params.albumId && params.albumId !== 'new') {
+      void supabase
+        .from('albums')
+        .select('visibility')
+        .eq('id', params.albumId)
+        .maybeSingle()
+        .then(({ data }) => {
+          const albumVis = data?.visibility;
+          if (albumVis === 'public' || albumVis === 'followers' || albumVis === 'private') {
+            setValue('visibility', albumVis);
+            return;
+          }
+        });
+    }
+
     void supabase.auth.getUser().then(async ({ data }) => {
       const id = data.user?.id;
       if (!id) return;
@@ -75,9 +91,11 @@ export default function CreateBucketModal() {
         .eq('id', id)
         .maybeSingle();
       const v = (p as any)?.default_task_visibility;
-      if (v === 'public' || v === 'followers' || v === 'private') setValue('visibility', v);
+      if ((v === 'public' || v === 'followers' || v === 'private') && (!params.albumId || params.albumId === 'new')) {
+        setValue('visibility', v);
+      }
     });
-  }, [setValue]);
+  }, [params.albumId, setValue]);
 
   const titleValue = watch('title');
   const locationTextValue = watch('location_text') || '';

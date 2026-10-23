@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Notifications from 'expo-notifications';
 import { supabase } from '../services/supabase';
+import { displayInAppNotification } from '../services/notifications';
 
 /**
  * Espera tras el último cambio antes de recargar. Evita una avalancha de recargas
@@ -132,26 +133,8 @@ export function useRealtimeSync(userId?: string) {
           invalidate('unreadNotificationsCount');
 
           const record = payload.new;
-          if (record && record.content && record.actor_id !== userId) {
-            try {
-              await Notifications.scheduleNotificationAsync({
-                content: {
-                  title: 'The Bucket List',
-                  body: record.content,
-                  data: {
-                    notificationId: record.id,
-                    bucketId: record.bucket_id,
-                    albumId: record.album_id,
-                    type: record.type,
-                  },
-                  sound: 'default',
-                  priority: Notifications.AndroidNotificationPriority.MAX,
-                },
-                trigger: Platform.OS === 'android' ? { channelId: 'default' } : null,
-              });
-            } catch (err) {
-              console.warn('Error scheduling local notification in useRealtimeSync:', err);
-            }
+          if (record && record.actor_id !== userId) {
+            void displayInAppNotification(record, userId);
           }
         }
       )

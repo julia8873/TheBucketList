@@ -17,7 +17,6 @@ import {
   checkNotificationPermissionsAsync,
   requestNotificationPermissionsAsync,
   openAppNotificationSettings,
-  sendLocalTestNotification,
   registerForPushNotificationsAsync,
   type NotificationPermissionStatus,
 } from '../../src/services/notifications';
@@ -50,7 +49,6 @@ export default function SettingsScreen() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const [permStatus, setPermStatus] = useState<NotificationPermissionStatus | null>(null);
-  const [testingNotification, setTestingNotification] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -89,6 +87,7 @@ export default function SettingsScreen() {
     setPermStatus(res);
     if (res.granted && user?.id) {
       await registerForPushNotificationsAsync(user.id);
+      void queryClient.invalidateQueries({ queryKey: ['notification_prefs', user.id] });
       Alert.alert('¡Notificaciones activadas!', 'Ahora recibirás avisos en tu móvil cuando haya novedades.');
     } else if (!res.granted && !res.canAskAgain) {
       Alert.alert(
@@ -99,30 +98,6 @@ export default function SettingsScreen() {
           { text: 'Abrir Ajustes', onPress: openAppNotificationSettings },
         ]
       );
-    }
-  };
-
-  const handleTestNotification = async () => {
-    if (!permStatus?.granted) {
-      Alert.alert(
-        'Permisos desactivados',
-        'Primero debes activar los permisos de notificación en tu dispositivo para poder recibir avisos.',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Activar', onPress: handleEnablePermissions },
-        ]
-      );
-      return;
-    }
-
-    try {
-      setTestingNotification(true);
-      await sendLocalTestNotification();
-      Alert.alert('¡Notificación enviada!', 'Revisa la barra superior de tu teléfono.');
-    } catch (e: any) {
-      Alert.alert('Error', e?.message ?? 'No se pudo enviar la notificación');
-    } finally {
-      setTestingNotification(false);
     }
   };
 
@@ -299,12 +274,6 @@ export default function SettingsScreen() {
                 </Pressable>
               )
             }
-          />
-          <Row
-            title="Enviar notificación de prueba"
-            subtitle="Comprueba que tu teléfono muestra el aviso y emite sonido"
-            onPress={handleTestNotification}
-            loading={testingNotification}
           />
           <ToggleRow
             title={t('settings.push')}

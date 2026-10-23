@@ -217,6 +217,39 @@ export default function MyListScreen() {
     [state.isAlbumFavorite, state.toggleFavoriteAlbum, router, albumViews.list]
   );
 
+  const renderGalleryAlbum = useCallback(
+    ({ item, index = 0 }: { item: any; index?: number }) => (
+      <AlbumCard
+        key={item.id}
+        title={item.title}
+        totalTasks={item.total_tasks ?? 0}
+        completedTasks={item.completed_tasks ?? 0}
+        coverUri={item.cover_path}
+        isShared={item.is_shared}
+        isFavorite={state.isAlbumFavorite(item.id)}
+        onToggleFavorite={() =>
+          state.toggleFavoriteAlbum.mutate({
+            albumId: item.id,
+            currentlyFavorite: state.isAlbumFavorite(item.id),
+          })
+        }
+        priority={item.priority}
+        isClosed={item.is_closed}
+        colorIndex={index}
+        showPriority={albumViews.gallery.showPriority}
+        showTaskCount={albumViews.gallery.showTaskCount}
+        showProgress={albumViews.gallery.showProgress}
+        showBadges={albumViews.gallery.showBadges}
+        showDate={albumViews.gallery.showDate}
+        showDescription={albumViews.gallery.showDescription}
+        createdAt={item.created_at}
+        description={item.description}
+        onPress={() => router.push(`/album/${item.id}` as any)}
+      />
+    ),
+    [state.isAlbumFavorite, state.toggleFavoriteAlbum, albumViews.gallery, router]
+  );
+
   const isFromProfile = state.from === 'profile';
   const handleGoBackToProfile = useCallback(() => {
     router.navigate('/(tabs)/profile');
@@ -691,41 +724,41 @@ export default function MyListScreen() {
                 />
               </>
             ) : (
-              <View style={styles.albumGrid}>
-                {state.sortedAlbumsList.map((item: any, index: number) => (
-                  <AlbumCard
-                    key={item.id}
-                    title={item.title}
-                    totalTasks={item.total_tasks ?? 0}
-                    completedTasks={item.completed_tasks ?? 0}
-                    coverUri={item.cover_path}
-                    isShared={item.is_shared}
-                    isFavorite={state.isAlbumFavorite(item.id)}
-                    onToggleFavorite={() =>
-                      state.toggleFavoriteAlbum.mutate({
-                        albumId: item.id,
-                        currentlyFavorite: state.isAlbumFavorite(item.id),
-                      })
-                    }
-                    priority={item.priority}
-                    isClosed={item.is_closed}
-                    colorIndex={index}
-                    showPriority={albumViews.gallery.showPriority}
-                    showTaskCount={albumViews.gallery.showTaskCount}
-                    showProgress={albumViews.gallery.showProgress}
-                    showBadges={albumViews.gallery.showBadges}
-                    showDate={albumViews.gallery.showDate}
-                    showDescription={albumViews.gallery.showDescription}
-                    createdAt={item.created_at}
-                    description={item.description}
-                    onPress={() => router.push(`/album/${item.id}` as any)}
-                  />
-                ))}
-                <NoAlbumCard
-                  count={state.unassignedCount}
-                  onPress={() => router.push('/album/unassigned')}
-                />
-              </View>
+              <>
+                {state.albumSortField === 'status' ? (
+                  <>
+                    {state.albumSections.map((sec) => {
+                      if (sec.items.length === 0) return null;
+                      return (
+                        <View key={sec.key} style={styles.sectionBlock}>
+                          <Text style={styles.sectionHeader}>{sec.title}</Text>
+                          <View style={styles.albumGrid}>
+                            {sec.items.map((item: any, index: number) =>
+                              renderGalleryAlbum({ item, index })
+                            )}
+                          </View>
+                        </View>
+                      );
+                    })}
+                    <View style={styles.albumGrid}>
+                      <NoAlbumCard
+                        count={state.unassignedCount}
+                        onPress={() => router.push('/album/unassigned')}
+                      />
+                    </View>
+                  </>
+                ) : (
+                  <View style={styles.albumGrid}>
+                    {state.sortedAlbumsList.map((item: any, index: number) =>
+                      renderGalleryAlbum({ item, index })
+                    )}
+                    <NoAlbumCard
+                      count={state.unassignedCount}
+                      onPress={() => router.push('/album/unassigned')}
+                    />
+                  </View>
+                )}
+              </>
             )}
 
             {/* Botón para descubrir colecciones prediseñadas en Explorar */}

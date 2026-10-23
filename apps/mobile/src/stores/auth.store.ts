@@ -11,11 +11,14 @@ interface AuthState {
   isRecovering: boolean;
   /** true mientras dura el flujo OAuth de Google (login/registro): bloquea redirecciones automáticas */
   oauthInProgress: boolean;
+  /** Ruta destino en el grupo (auth) tras un signOut específico (ej: /(auth)/register al cancelar onboarding) */
+  authRedirectTarget: string | null;
   setSession: (session: Session | null) => void;
   setInitialized: (initialized: boolean) => void;
   setOnboardingCompleted: (completed: boolean | null) => void;
   setRecovering: (recovering: boolean) => void;
   setOauthInProgress: (inProgress: boolean) => void;
+  setAuthRedirectTarget: (target: string | null) => void;
   signOut: () => void;
 }
 
@@ -26,6 +29,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   onboardingCompleted: null,
   isRecovering: false,
   oauthInProgress: false,
+  authRedirectTarget: null,
   setSession: (session) =>
     set((state) => {
       const isNewUser = state.user?.id !== session?.user?.id;
@@ -39,6 +43,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   setOnboardingCompleted: (completed) => set({ onboardingCompleted: completed }),
   setRecovering: (recovering) => set({ isRecovering: recovering }),
   setOauthInProgress: (inProgress) => set({ oauthInProgress: inProgress }),
+  setAuthRedirectTarget: (target) => set({ authRedirectTarget: target }),
   signOut: () =>
     set({
       session: null,

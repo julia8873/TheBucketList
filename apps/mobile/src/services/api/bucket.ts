@@ -10,6 +10,9 @@ type SubtaskInsert = Database['public']['Tables']['item_subtasks']['Insert'];
 
 export const bucketApi = {
   getBuckets: async (userId?: string) => {
+    // Seleccionamos los campos imprescindibles para la lista (portada, subtareas, álbum).
+    // bucket_photos no tiene límite aquí porque Supabase no soporta .limit() en relaciones
+    // embebidas; el volumen se controla desde la pantalla de detalle que usa su propia query.
     const baseSelect = '*, category:categories(*), item_subtasks(*), album_items(album_id), bucket_photos(id, thumb_path, storage_path, created_at, completed_at, title)';
 
     if (!userId) {
@@ -24,7 +27,7 @@ export const bucketApi = {
       }));
     }
 
-    // 1. Initial queries in parallel: own buckets, collaborative IDs, and shared album IDs
+    // 1. Round-trip 1: propias + IDs de colaboraciones + IDs de álbumes en paralelo
     const [ownRes, collabRes, memberAlbumsRes, ownedAlbumsRes] = await Promise.all([
       supabase
         .from('buckets')
@@ -49,8 +52,9 @@ export const bucketApi = {
 
     if (ownRes.error) throw ownRes.error;
     const ownData = ownRes.data ?? [];
+    const ownIds = new Set(ownData.map((b: any) => b.id));
 
-    const collabIds = (collabRes.data ?? []).map((c: any) => c.bucket_id);
+    const collabIds = (collabRes.data ?? []).map((c: any) => c.bucket_id).filter((id: string) => !ownIds.has(id));
     const memberAlbumIds = Array.from(
       new Set([
         ...(memberAlbumsRes.data ?? []).map((m: any) => m.album_id),
@@ -58,7 +62,8 @@ export const bucketApi = {
       ])
     );
 
-    // 2. Fetch collaborative buckets and album items in parallel
+    // 2. Round-trip 2: tareas de colaboraciones + IDs de tareas de álbumes compartidos, en paralelo.
+    //    Antes había un 3.er round-trip secuencial; ahora todo cabe en 2 idas a la red.
     const [sharedRes, albumItemRes] = await Promise.all([
       collabIds.length > 0
         ? supabase
@@ -66,19 +71,20 @@ export const bucketApi = {
             .select(baseSelect)
             .in('id', collabIds)
             .order('created_at', { ascending: false })
-        : Promise.resolve({ data: [] }),
+        : Promise.resolve({ data: [] as any[] }),
       memberAlbumIds.length > 0
         ? supabase
             .from('album_items')
             .select('bucket_id')
             .in('album_id', memberAlbumIds)
-        : Promise.resolve({ data: [] }),
+        : Promise.resolve({ data: [] as any[] }),
     ]);
 
-    const collabBuckets = sharedRes.data ?? [];
-    const albumBucketIds = (albumItemRes.data ?? []).map((ai: any) => ai.bucket_id);
+    const collabBuckets = (sharedRes as any).data ?? [];
+    const albumBucketIds = ((albumItemRes as any).data ?? []).map((ai: any) => ai.bucket_id as string)
+      .filter((id: string) => !ownIds.has(id) && !new Set(collabIds).has(id));
 
-    // 3. Fetch shared album buckets if any
+    // 3. Round-trip 3 (solo si hay IDs nuevos de álbumes compartidos)
     let albumTasks: any[] = [];
     if (albumBucketIds.length > 0) {
       const { data: sharedAlbumBuckets } = await supabase
@@ -89,8 +95,8 @@ export const bucketApi = {
       albumTasks = sharedAlbumBuckets ?? [];
     }
 
-    // Merge, dedup by id (own takes precedence, then direct collab, then album collab)
-    const existingIds = new Set(ownData.map((b: any) => b.id));
+    // Merge con dedup (propias > colaboración directa > álbum compartido)
+    const existingIds = new Set(ownIds);
     const merged = [...ownData];
 
     for (const b of collabBuckets) {

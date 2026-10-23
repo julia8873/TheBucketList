@@ -24,11 +24,20 @@ export function useBulkTaskOperations() {
     mutationFn: async ({
       taskIds,
       albumId,
+      updateVisibility,
     }: {
       taskIds: string[];
       albumId: string | null;
+      updateVisibility?: 'public' | 'followers' | 'private';
     }) => {
       if (!taskIds.length) return;
+
+      if (updateVisibility) {
+        await supabase
+          .from('buckets')
+          .update({ visibility: updateVisibility })
+          .in('id', taskIds);
+      }
 
       // Primero borrar de cualquier álbum anterior
       const { error: delErr } = await supabase

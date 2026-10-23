@@ -154,7 +154,11 @@ export function ConfirmDialog({
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   // Ancho explícito en píxeles: con `width: '100%'` dentro de un Modal el cuadro podía
   // colapsar a ~0 px y solo se veían sus dos bordes laterales ("dos rayas verticales").
-  const dialogWidth = Math.max(260, Math.min(380, windowWidth - 48));
+  // En pantallas muy pequeñas usamos el máximo espacio disponible menos un margen mínimo de 16px.
+  const hPadding = Math.max(16, Math.min(24, (windowWidth - 260) / 2));
+  const dialogWidth = Math.max(260, Math.min(380, windowWidth - hPadding * 2));
+  // Si el dialogo es estrecho, apilamos los botones verticalmente para que no se salgan.
+  const shouldStackButtons = dialogWidth < 300;
   const [text, setText] = useState('');
   const ok = !requireText || text.trim().toUpperCase() === requireText.toUpperCase();
 
@@ -183,7 +187,9 @@ export function ConfirmDialog({
           : null;
   const ToneIcon =
     tone === 'error' ? AlertCircle : tone === 'warning' ? ShieldAlert : tone === 'info' ? Info : Check;
-  const stacked = !!actions && actions.length > 2;
+  const stacked = !!actions && (actions.length > 2 || (actions.length === 2 && shouldStackButtons));
+  // Los botones confirmar/cancelar también se apilan en pantallas pequeñas
+  const stackDefaultButtons = !actions && shouldStackButtons;
 
   const body = (
       <Pressable
@@ -195,6 +201,7 @@ export function ConfirmDialog({
           // de Google el layout por flex/absolute podía quedar a 0 (botones arriba a la izquierda).
           inline ? { width: windowWidth, height: windowHeight } : null,
           { backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(26,20,16,0.45)' },
+          { paddingHorizontal: hPadding },
         ]}
         onPress={onCancel}
       >
@@ -260,7 +267,10 @@ export function ConfirmDialog({
                       styles.dialogBtn,
                       stacked ? styles.dialogBtnStacked : null,
                       isCancel
-                        ? { borderColor: theme.colors.border }
+                        ? {
+                            borderColor: theme.colors.border,
+                            backgroundColor: theme.colors.surfaceSunken,
+                          }
                         : {
                             backgroundColor: isDestructive ? theme.colors.error : theme.colors.primary,
                             borderColor: 'transparent',
@@ -280,6 +290,9 @@ export function ConfirmDialog({
                               : theme.colors.primaryForeground,
                         },
                       ]}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.8}
                     >
                       {action.label}
                     </Text>
@@ -288,56 +301,115 @@ export function ConfirmDialog({
               })}
             </View>
           ) : (
-            <View style={styles.dialogActions}>
-              <Pressable
-                onPress={() => {
-                  setText('');
-                  onCancel();
-                }}
-                style={[styles.dialogBtn, { borderColor: theme.colors.border }]}
-                accessibilityRole="button"
-                accessibilityLabel={cancelLabel}
-              >
-                <Text style={[styles.dialogBtnText, { color: theme.colors.foreground }]}>
-                  {cancelLabel}
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => {
-                  if (ok && !loading) onConfirm();
-                }}
-                disabled={!ok || loading}
-                style={[
-                  styles.dialogBtn,
-                  {
-                    backgroundColor: destructive ? theme.colors.error : theme.colors.primary,
-                    borderColor: 'transparent',
-                    opacity: ok ? 1 : 0.4,
-                  },
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel={confirmLabel}
-              >
-                {loading ? (
-                  <ActivityIndicator
-                    color={destructive ? theme.colors.errorForeground : theme.colors.primaryForeground}
-                  />
-                ) : (
-                  <Text
+            <View style={[styles.dialogActions, stackDefaultButtons && styles.dialogActionsStacked]}>
+              {/* En modo apilado el botón de confirmar va primero (más prominente) */}
+              {stackDefaultButtons ? (
+                <>
+                  <Pressable
+                    onPress={() => {
+                      if (ok && !loading) onConfirm();
+                    }}
+                    disabled={!ok || loading}
                     style={[
-                      styles.dialogBtnText,
+                      styles.dialogBtn,
+                      styles.dialogBtnStacked,
                       {
-                        color: destructive
-                          ? theme.colors.errorForeground
-                          : theme.colors.primaryForeground,
+                        backgroundColor: destructive ? theme.colors.error : theme.colors.primary,
+                        borderColor: 'transparent',
+                        opacity: ok ? 1 : 0.4,
                       },
                     ]}
+                    accessibilityRole="button"
+                    accessibilityLabel={confirmLabel}
                   >
-                    {confirmLabel}
-                  </Text>
-                )}
-              </Pressable>
+                    {loading ? (
+                      <ActivityIndicator
+                        color={destructive ? theme.colors.errorForeground : theme.colors.primaryForeground}
+                      />
+                    ) : (
+                      <Text
+                        style={[
+                          styles.dialogBtnText,
+                          {
+                            color: destructive
+                              ? theme.colors.errorForeground
+                              : theme.colors.primaryForeground,
+                          },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {confirmLabel}
+                      </Text>
+                    )}
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      setText('');
+                      onCancel();
+                    }}
+                    style={[styles.dialogBtn, styles.dialogBtnStacked, { borderColor: theme.colors.border, backgroundColor: theme.colors.surfaceSunken }]}
+                    accessibilityRole="button"
+                    accessibilityLabel={cancelLabel}
+                  >
+                    <Text style={[styles.dialogBtnText, { color: theme.colors.foreground }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                      {cancelLabel}
+                    </Text>
+                  </Pressable>
+                </>
+              ) : (
+                <>
+                  <Pressable
+                    onPress={() => {
+                      setText('');
+                      onCancel();
+                    }}
+                    style={[styles.dialogBtn, { borderColor: theme.colors.border, backgroundColor: theme.colors.surfaceSunken }]}
+                    accessibilityRole="button"
+                    accessibilityLabel={cancelLabel}
+                  >
+                    <Text style={[styles.dialogBtnText, { color: theme.colors.foreground }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                      {cancelLabel}
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => {
+                      if (ok && !loading) onConfirm();
+                    }}
+                    disabled={!ok || loading}
+                    style={[
+                      styles.dialogBtn,
+                      {
+                        backgroundColor: destructive ? theme.colors.error : theme.colors.primary,
+                        borderColor: 'transparent',
+                        opacity: ok ? 1 : 0.4,
+                      },
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityLabel={confirmLabel}
+                  >
+                    {loading ? (
+                      <ActivityIndicator
+                        color={destructive ? theme.colors.errorForeground : theme.colors.primaryForeground}
+                      />
+                    ) : (
+                      <Text
+                        style={[
+                          styles.dialogBtnText,
+                          {
+                            color: destructive
+                              ? theme.colors.errorForeground
+                              : theme.colors.primaryForeground,
+                          },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {confirmLabel}
+                      </Text>
+                    )}
+                  </Pressable>
+                </>
+              )}
             </View>
           )}
         </Pressable>
@@ -501,7 +573,9 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
+    paddingVertical: 24,
+    // paddingHorizontal se sobrescribe dinámicamente según el ancho de pantalla
+    paddingHorizontal: 24,
   },
   inlineHost: {
     position: 'absolute',
@@ -570,12 +644,13 @@ const styles = StyleSheet.create({
   },
   dialogBtn: {
     flex: 1,
+    minWidth: 80,
     height: 48,
     borderRadius: 24,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
   },
   dialogBtnStacked: {
     flex: 0,

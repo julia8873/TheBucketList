@@ -135,13 +135,7 @@ export function useAlbumDetailState() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!taskSearchOpen) return;
-    const t = setTimeout(() => {
-      scrollRef.current?.scrollTo({ y: Math.max(0, toolbarY.current - 12), animated: true });
-    }, 250);
-    return () => clearTimeout(t);
-  }, [taskSearchOpen, keyboardHeight]);
+
 
   const [sheetVisible, setSheetVisible] = useState(false);
   const [sheetMode, setSheetMode] = useState<'menu' | 'visibility' | 'priority' | 'status' | 'cover'>('menu');
@@ -1202,9 +1196,8 @@ export function useAlbumDetailState() {
         cancelLabel: 'Cancelar',
         destructive: true,
         onConfirm: () => {
-          deleteMutation.mutate(id || '1', {
-            onSuccess: () => router.back(),
-          });
+          router.back();
+          deleteMutation.mutate(id || '1');
         },
       });
     });

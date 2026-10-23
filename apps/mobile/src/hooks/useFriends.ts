@@ -28,7 +28,7 @@ export function useIncomingRequests(userId?: string) {
     queryKey: [...FRIENDS_QUERY_KEY, 'incoming', userId],
     queryFn: () => friendsApi.getIncomingRequests(userId!),
     enabled: !!userId,
-    staleTime: 0,
+    staleTime: 30_000,
   });
 }
 
@@ -37,7 +37,7 @@ export function useOutgoingRequests(userId?: string) {
     queryKey: [...FRIENDS_QUERY_KEY, 'outgoing', userId],
     queryFn: () => friendsApi.getOutgoingRequests(userId!),
     enabled: !!userId,
-    staleTime: 0,
+    staleTime: 30_000,
   });
 }
 
@@ -47,7 +47,7 @@ export function useIncomingRequestCount(userId?: string) {
     queryKey: [...FRIENDS_QUERY_KEY, 'incomingCount', userId],
     queryFn: () => friendsApi.getIncomingCount(userId!),
     enabled: !!userId,
-    staleTime: 0,
+    staleTime: 30_000,
     refetchInterval: 60_000,
   });
 }
@@ -61,7 +61,7 @@ export function useConnections(userId: string | undefined, kind: 'following' | '
         ? friendsApi.getFollowing(userId!, currentUserId ?? userId)
         : friendsApi.getFollowers(userId!, currentUserId ?? userId),
     enabled: !!userId,
-    staleTime: 0,
+    staleTime: 30_000,
   });
 }
 

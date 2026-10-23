@@ -147,6 +147,23 @@ export async function registerForPushNotificationsAsync(userId: string): Promise
       }
     }
 
+    // 3. Activar automáticamente las preferencias de notificación en la BD si el usuario dio permisos
+    try {
+      await supabase.from('notification_prefs').upsert(
+        {
+          user_id: userId,
+          reaction_push: true,
+          comment_push: true,
+          follow_push: true,
+          deadline_push: true,
+          friend_completed_push: true,
+        },
+        { onConflict: 'user_id' }
+      );
+    } catch (err) {
+      console.warn('Error activating notification_prefs:', err);
+    }
+
     if (token) {
       console.log('[notifications] Push token acquired successfully:', token);
 
@@ -183,6 +200,160 @@ export async function registerForPushNotificationsAsync(userId: string): Promise
   } catch (err) {
     console.warn('Error registering for push notifications:', err);
     return { granted: false };
+  }
+}
+
+/**
+ * Muestra una notificación del sistema (banner, sonido y vibración) cuando se
+ * inserta una nueva notificación en la base de datos para el usuario actual.
+ */
+export async function displayInAppNotification(record: any, currentUserId: string): Promise<void> {
+  if (!record || record.actor_id === currentUserId) return;
+
+  try {
+    await setupNotificationChannelAsync();
+
+    // 1. Comprobar si el usuario tiene desactivado este tipo de notificación en sus preferencias
+    const { data: prefs } = await supabase
+      .from('notification_prefs')
+      .select('*')
+      .eq('user_id', currentUserId)
+      .maybeSingle();
+
+    if (prefs) {
+      if (record.type === 'reaction' && prefs.reaction_push === false) return;
+      if (record.type === 'comment' && prefs.comment_push === false) return;
+      if ((record.type === 'follow' || record.type === 'follow_request') && prefs.follow_push === false) return;
+      if (record.type === 'deadline' && prefs.deadline_push === false) return;
+      if (record.type === 'friend_completed' && prefs.friend_completed_push === false) return;
+    }
+
+    // 2. Obtener nombre del actor
+    let actorName = record.actor?.display_name || record.actor?.username;
+    if (!actorName && record.actor_id) {
+      const { data: actorProfile } = await supabase
+        .from('profiles')
+        .select('display_name, username')
+        .eq('id', record.actor_id)
+        .maybeSingle();
+      actorName = actorProfile?.display_name || actorProfile?.username;
+    }
+    const who = actorName || 'Alguien';
+
+    // 3. Obtener título de la tarea o del álbum si aplica
+    let entityTitle = '';
+    if (record.bucket_id && ['reaction', 'comment', 'collaboration_request', 'collaborator_joined'].includes(record.type)) {
+      const { data: b } = await supabase
+        .from('buckets')
+        .select('title')
+        .eq('id', record.bucket_id)
+        .maybeSingle();
+      if (b?.title) entityTitle = b.title;
+    } else if (record.album_id && record.type === 'album_invite') {
+      const { data: a } = await supabase
+        .from('albums')
+        .select('title')
+        .eq('id', record.album_id)
+        .maybeSingle();
+      if (a?.title) entityTitle = a.title;
+    }
+
+    // 4. Formatear título y mensaje descriptivo
+    let title = 'The Bucket List 🎯';
+    let body = record.content || 'Tienes una nueva notificación.';
+
+    switch (record.type) {
+      case 'reaction':
+        title = 'Nueva reacción ❤️';
+        body = entityTitle ? `A ${who} le ha gustado tu tarea "${entityTitle}"` : `A ${who} le ha gustado tu tarea.`;
+        break;
+      case 'comment':
+        title = 'Nuevo comentario 💬';
+        body = entityTitle ? `${who} ha comentado en tu tarea "${entityTitle}"` : `${who} ha comentado en tu tarea.`;
+        break;
+      case 'follow':
+        title = 'Nuevo seguidor 👋';
+        body = `${who} ha empezado a seguirte.`;
+        break;
+      case 'follow_request':
+        title = 'Solicitud de seguimiento 👥';
+        body = `${who} quiere seguirte.`;
+        break;
+      case 'follow_accepted':
+        title = 'Solicitud aceptada ✨';
+        body = `${who} aceptó tu solicitud de seguimiento.`;
+        break;
+      case 'friend_completed':
+        title = '¡Objetivo cumplido! 🎉';
+        body = `¡${who} ha completado una tarea de su bucket list!`;
+        break;
+      case 'deadline':
+        title = 'Fecha límite próxima ⏳';
+        body = record.content || 'Tienes una tarea cuya fecha límite está cerca.';
+        break;
+      case 'collaboration_invite':
+        title = 'Invitación a colaborar 🤝';
+        body = record.content || `${who} te ha invitado a colaborar en una tarea.`;
+        break;
+      case 'collaboration_request':
+        title = 'Solicitud de colaboración 🤝';
+        body = record.content || `${who} ha solicitado colaborar en tu tarea.`;
+        break;
+      case 'collaborator_joined':
+        title = 'Nuevo colaborador 🎉';
+        body = record.content || `${who} se ha unido como colaborador a tu tarea.`;
+        break;
+      case 'collaboration_accepted':
+        title = 'Colaboración aceptada ✨';
+        body = record.content || `${who} ha aceptado tu solicitud de colaboración.`;
+        break;
+      case 'album_invite':
+        title = 'Invitación a álbum 📁';
+        body = record.content || (entityTitle ? `${who} te ha invitado al álbum "${entityTitle}"` : `${who} te ha invitado a un álbum.`);
+        break;
+      case 'notification_request':
+        title = 'Solicitud de notificaciones 🔔';
+        body = record.content || `${who} ha solicitado activar notificaciones.`;
+        break;
+      case 'notification_accepted':
+        title = 'Notificaciones activadas 🔔';
+        body = record.content || `${who} aceptó la solicitud de notificaciones.`;
+        break;
+      case 'bucket_update':
+        title = 'Actualización de tarea 🎯';
+        body = record.content || `${who} ha actualizado una tarea que sigues.`;
+        break;
+      case 'album_update':
+        title = 'Actualización de álbum 📁';
+        body = record.content || `${who} ha actualizado un álbum que sigues.`;
+        break;
+      case 'drive_access':
+        title = 'Acceso a Google Drive 📂';
+        body = record.content || `${who} ha accedido a tu enlace de Google Drive.`;
+        break;
+      default:
+        if (record.content) body = record.content;
+        break;
+    }
+
+    // 5. Mostrar la notificación nativa en el dispositivo
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        data: {
+          notificationId: record.id,
+          bucketId: record.bucket_id,
+          albumId: record.album_id,
+          type: record.type,
+        },
+        sound: 'default',
+        priority: Notifications.AndroidNotificationPriority.MAX,
+      },
+      trigger: Platform.OS === 'android' ? { channelId: 'default' } : null,
+    });
+  } catch (err) {
+    console.warn('[notifications] Error displaying in-app notification:', err);
   }
 }
 

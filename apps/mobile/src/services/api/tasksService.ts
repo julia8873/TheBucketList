@@ -9,6 +9,8 @@ export interface UnassignedTask {
   location?: string;
   /** true si la tarea ya está dentro del álbum que se está editando. */
   inAlbum?: boolean;
+  /** Visibilidad de la tarea: public, followers o private. */
+  visibility?: 'public' | 'followers' | 'private';
   /** Valor para `BucketCover` (foto elegida/última, portada o null = degradado automático). */
   imageValue?: string | null;
   categorySlug?: string | null;
@@ -61,7 +63,7 @@ export const tasksService = {
     const userId = userAuth.user.id;
 
     const select =
-      'id, title, location_text, created_at, cover_image, thumbnail_mode, thumbnail_photo_id, ' +
+      'id, title, location_text, created_at, cover_image, thumbnail_mode, thumbnail_photo_id, visibility, ' +
       'categories(name_es, slug), album_items(album_id), bucket_photos(id, storage_path, thumb_path, created_at, completed_at, title)';
 
     const { data: own, error } = await supabase
@@ -124,12 +126,24 @@ export const tasksService = {
         coverKey: 'aurora',
         imageValue: resolveTaskImage(b, { preferThumb: true }),
         categorySlug: (b.categories as any)?.slug ?? null,
+        visibility: (b.visibility as any) || 'public',
         inAlbum: !!albumId && (b.album_items ?? []).some((ai: any) => ai.album_id === albumId),
       }));
   },
 
-  async assignTasksToAlbum(albumId: string, taskIds: string[]): Promise<void> {
+  async assignTasksToAlbum(
+    albumId: string,
+    taskIds: string[],
+    updateVisibility?: 'public' | 'followers' | 'private'
+  ): Promise<void> {
     if (!taskIds.length) return;
+
+    if (updateVisibility) {
+      await supabase
+        .from('buckets')
+        .update({ visibility: updateVisibility })
+        .in('id', taskIds);
+    }
     
     // Las tareas nuevas van al final del orden manual del álbum.
     const { data: last } = await supabase
@@ -156,7 +170,10 @@ export const tasksService = {
     await applyAlbumTagsToTasks(albumId, taskIds);
   },
 
-  async createTasksFromDefaults(ids: string[]): Promise<string[]> {
+  async createTasksFromDefaults(
+    ids: string[],
+    visibility?: 'public' | 'followers' | 'private'
+  ): Promise<string[]> {
     const { data: userAuth, error: userError } = await supabase.auth.getUser();
     if (userError || !userAuth.user) throw new Error('Not authenticated');
 
@@ -191,7 +208,7 @@ export const tasksService = {
         location_text: null,
         category_id: categoryId,
         status: 'pending' as const,
-        visibility: 'public' as const,
+        visibility: visibility || ('public' as const),
       };
     });
 
@@ -216,7 +233,15 @@ export function useUnassignedTasks(albumId?: string) {
 export function useAssignTasks() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ albumId, taskIds }: { albumId: string, taskIds: string[] }) => tasksService.assignTasksToAlbum(albumId, taskIds),
+    mutationFn: ({
+      albumId,
+      taskIds,
+      updateVisibility,
+    }: {
+      albumId: string;
+      taskIds: string[];
+      updateVisibility?: 'public' | 'followers' | 'private';
+    }) => tasksService.assignTasksToAlbum(albumId, taskIds, updateVisibility),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['unassigned_tasks'] });
       queryClient.invalidateQueries({ queryKey: ['album'] });
@@ -229,7 +254,12 @@ export function useAssignTasks() {
 export function useCreateTasksFromDefaults() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (ids: string[]) => tasksService.createTasksFromDefaults(ids),
+    mutationFn: (args: string[] | { ids: string[]; visibility?: 'public' | 'followers' | 'private' }) => {
+      if (Array.isArray(args)) {
+        return tasksService.createTasksFromDefaults(args);
+      }
+      return tasksService.createTasksFromDefaults(args.ids, args.visibility);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['buckets'] });
       queryClient.invalidateQueries({ queryKey: ['unassigned_tasks'] });

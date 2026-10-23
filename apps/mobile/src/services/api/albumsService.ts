@@ -284,10 +284,30 @@ export function useDeleteAlbumDetail() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (albumId: string) => albumsService.deleteAlbum(albumId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['album'] });
-      queryClient.invalidateQueries({ queryKey: ['albums'] });
-      queryClient.invalidateQueries({ queryKey: ['buckets'] });
+    onMutate: async (albumId: string) => {
+      await queryClient.cancelQueries({ queryKey: ['albums'] });
+      const prevQueries = queryClient.getQueriesData<any[]>({ queryKey: ['albums'] });
+
+      // Eliminación optimista inmediata en la caché
+      queryClient.setQueriesData<any[]>({ queryKey: ['albums'] }, (old: any) => {
+        if (!Array.isArray(old)) return old;
+        return old.filter((a: any) => a.id !== albumId);
+      });
+      queryClient.removeQueries({ queryKey: ['album', albumId] });
+
+      return { prevQueries };
+    },
+    onError: (_err, _id, ctx) => {
+      if (ctx?.prevQueries) {
+        ctx.prevQueries.forEach(([qKey, qData]) => {
+          queryClient.setQueryData(qKey, qData);
+        });
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ['album'] });
+      void queryClient.invalidateQueries({ queryKey: ['albums'] });
+      void queryClient.invalidateQueries({ queryKey: ['buckets'] });
     },
   });
 }
