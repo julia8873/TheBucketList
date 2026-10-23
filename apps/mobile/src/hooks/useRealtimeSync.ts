@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import * as Notifications from 'expo-notifications';
 import { supabase } from '../services/supabase';
 import { displayInAppNotification } from '../services/notifications';
+import { isLocalEcho } from '../utils/optimisticCache';
 
 /**
  * Espera tras el último cambio antes de recargar. Evita una avalancha de recargas
@@ -40,6 +41,8 @@ export function useRealtimeSync(userId?: string) {
     };
 
     const refreshBucket = (bucketId?: string) => {
+      // Eco de un cambio nuestro: la caché ya está al día (actualización optimista + revalidación).
+      if (isLocalEcho()) return;
       if (bucketId) schedule(`bucket:${bucketId}`, () => invalidate('bucketDetail', bucketId));
       schedule('buckets', () => {
         invalidate('buckets');
@@ -50,7 +53,8 @@ export function useRealtimeSync(userId?: string) {
         invalidate('bucketAlbum');
       });
     };
-    const refreshAlbums = () =>
+    const refreshAlbums = () => {
+      if (isLocalEcho()) return;
       schedule('albums', () => {
         invalidate('albums');
         invalidate('album');
@@ -60,6 +64,7 @@ export function useRealtimeSync(userId?: string) {
         invalidate('bucketAlbum');
         invalidate('item_tags');
       });
+    };
 
     const channel = supabase
       .channel(`sync-${userId}-${Date.now()}`)

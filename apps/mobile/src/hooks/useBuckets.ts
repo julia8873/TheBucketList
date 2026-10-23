@@ -3,6 +3,13 @@ import { bucketApi } from '../services/api/bucket';
 import { useOfflineStore } from '../stores/offline.store';
 import { triggerTaskCompletedHaptic } from '../stores/haptics.store';
 import type { CreateBucketForm, UpdateBucketForm } from '@bucketlist/shared';
+import {
+  applyDeleteTasks,
+  beginOptimistic,
+  patchTasks,
+  rollbackOptimistic,
+  settleTaskCaches,
+} from '../utils/optimisticCache';
 
 export const BUCKETS_QUERY_KEY = ['buckets'];
 
@@ -58,6 +65,28 @@ export function useUpdateBucket() {
       }
       return bucketApi.updateBucket(id, data);
     },
+    onMutate: async ({ id, data }: { id: string; data: UpdateBucketForm }) => {
+      const snap = await beginOptimistic(queryClient);
+      const patch: Record<string, any> = {};
+      Object.entries(data as Record<string, any>).forEach(([k, v]) => {
+        if (v !== undefined) patch[k] = v instanceof Date ? v.toISOString() : v;
+      });
+      if (data.status === 'completed' && !(data as any).completed_at) {
+        patch.completed_at = new Date().toISOString();
+      }
+      patchTasks(queryClient, [id], {
+        bucket: patch,
+        task: {
+          ...(data.status !== undefined ? { isCompleted: data.status === 'completed' } : {}),
+          ...(data.title !== undefined ? { title: data.title } : {}),
+          ...((data as any).priority !== undefined ? { priority: (data as any).priority } : {}),
+        },
+      });
+      return { snap };
+    },
+    onError: (_e, _vars, ctx) => {
+      rollbackOptimistic(queryClient, ctx?.snap);
+    },
     onSuccess: (_updatedBucket, variables) => {
       // Refresh both the list queries and the detail screen. The detail
       // screen uses its own cache key, so invalidating only ['buckets']
@@ -85,11 +114,19 @@ export function useDeleteBucket() {
       }
       return bucketApi.deleteBucket(id);
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: BUCKETS_QUERY_KEY });
+    // Borrado optimista: la tarea desaparece al instante de listas y álbumes.
+    onMutate: async (id: string) => {
+      const snap = await beginOptimistic(queryClient);
+      applyDeleteTasks(queryClient, [id]);
+      return { snap };
+    },
+    onError: (_e, _id, ctx) => {
+      rollbackOptimistic(queryClient, ctx?.snap);
+    },
+    onSettled: () => {
+      settleTaskCaches(queryClient);
       void queryClient.invalidateQueries({ queryKey: ['feed'] });
       void queryClient.invalidateQueries({ queryKey: ['explore'] });
-      void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
     },
   });
 }

@@ -84,15 +84,17 @@ export function BulkTaskActionBar({
     const albumName = targetAlbum?.title;
 
     const executeMove = async (updateVis?: 'public' | 'followers' | 'private') => {
-      try {
-        await moveTasksToAlbum.mutateAsync({
+      // Actualización optimista: la UI cambia al instante; el servidor se sincroniza detrás.
+      const pending = moveTasksToAlbum.mutateAsync({
           taskIds: selectedIds,
           albumId,
           updateVisibility: updateVis,
         });
-        setShowMoveModal(false);
-        onClearSelection();
-        toast.success(albumId ? 'Tareas movidas al álbum' : 'Tareas sacadas del álbum');
+      setShowMoveModal(false);
+      onClearSelection();
+      toast.success(albumId ? 'Tareas movidas al álbum' : 'Tareas sacadas del álbum');
+      try {
+        await pending;
       } catch (e: any) {
         toast.error(e?.message || 'No se pudieron mover las tareas');
       }
@@ -143,15 +145,17 @@ export function BulkTaskActionBar({
       'Asignar',
     );
     if (!okTags) return;
+    // Optimista: las etiquetas se ven al instante; el servidor se sincroniza detrás.
+    const pending = assignTagsToTasks.mutateAsync({
+      taskIds: selectedIds,
+      tagIds: selectedTagIds,
+    });
+    setShowTagsModal(false);
+    setSelectedTagIds([]);
+    onClearSelection();
+    toast.success('Etiquetas asignadas');
     try {
-      await assignTagsToTasks.mutateAsync({
-        taskIds: selectedIds,
-        tagIds: selectedTagIds,
-      });
-      setShowTagsModal(false);
-      setSelectedTagIds([]);
-      onClearSelection();
-      toast.success('Etiquetas asignadas');
+      await pending;
     } catch (e: any) {
       toast.error(e?.message || 'No se pudieron asignar las etiquetas');
     }
@@ -187,10 +191,12 @@ export function BulkTaskActionBar({
       confirmLabel: 'Completar todas',
       cancelLabel: 'Cancelar',
       onConfirm: async () => {
+        // Actualización optimista: la UI cambia al instante; el servidor se sincroniza detrás.
+        const pending = completeAllTasks.mutateAsync(selectedIds);
+        onClearSelection();
+        toast.success(`${count} tareas completadas`);
         try {
-          await completeAllTasks.mutateAsync(selectedIds);
-          onClearSelection();
-          toast.success(`${count} tareas completadas`);
+          await pending;
         } catch (e: any) {
           toast.error(e?.message || 'Error al completar las tareas');
         }
@@ -207,10 +213,12 @@ export function BulkTaskActionBar({
       cancelLabel: 'Cancelar',
       destructive: true,
       onConfirm: async () => {
+        // Actualización optimista: la UI cambia al instante; el servidor se sincroniza detrás.
+        const pending = deleteAllTasks.mutateAsync(selectedIds);
+        onClearSelection();
+        toast.success(`${count} tareas eliminadas`);
         try {
-          await deleteAllTasks.mutateAsync(selectedIds);
-          onClearSelection();
-          toast.success(`${count} tareas eliminadas`);
+          await pending;
         } catch (e: any) {
           toast.error(e?.message || 'Error al eliminar las tareas');
         }
@@ -377,10 +385,12 @@ export function BulkTaskActionBar({
             'Marcar pendientes',
           );
           if (!okReopen) return;
+          // Actualización optimista: la UI cambia al instante; el servidor se sincroniza detrás.
+          const pending = reopenAllTasks.mutateAsync(selectedIds);
+          onClearSelection();
+          toast.success(`Se han marcado ${count} tareas como pendientes.`);
           try {
-            await reopenAllTasks.mutateAsync(selectedIds);
-            onClearSelection();
-            toast.success(`Se han marcado ${count} tareas como pendientes.`);
+            await pending;
           } catch (e: any) {
             toast.error(e?.message || 'Error al reabrir tareas');
           }
@@ -400,13 +410,15 @@ export function BulkTaskActionBar({
             'Cambiar',
           );
           if (!okPrio) return;
-          try {
-            await changePriorityForTasks.mutateAsync({
+          // Actualización optimista: la UI cambia al instante; el servidor se sincroniza detrás.
+          const pending = changePriorityForTasks.mutateAsync({
               taskIds: selectedIds,
               priority: p,
             });
-            onClearSelection();
-            toast.success('Prioridad actualizada');
+          onClearSelection();
+          toast.success('Prioridad actualizada');
+          try {
+            await pending;
           } catch (e: any) {
             toast.error(e?.message || 'Error al cambiar prioridad');
           }
@@ -425,13 +437,15 @@ export function BulkTaskActionBar({
             'Cambiar',
           );
           if (!okVis) return;
-          try {
-            await changeVisibilityForTasks.mutateAsync({
+          // Actualización optimista: la UI cambia al instante; el servidor se sincroniza detrás.
+          const pending = changeVisibilityForTasks.mutateAsync({
               taskIds: selectedIds,
               visibility: v,
             });
-            onClearSelection();
-            toast.success('Visibilidad actualizada');
+          onClearSelection();
+          toast.success('Visibilidad actualizada');
+          try {
+            await pending;
           } catch (e: any) {
             toast.error(e?.message || 'Error al cambiar visibilidad');
           }

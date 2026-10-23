@@ -24,6 +24,7 @@ import { TaskCollaboratorsSection } from '../../src/features/task-form/component
 import { TaskCoverPicker } from '../../src/features/task-form/components/TaskCoverPicker';
 import { processBucketImage } from '@bucketlist/shared';
 import { storageApi } from '../../src/services/api/storage';
+import { applyMoveTasks, settleTaskCaches } from '../../src/utils/optimisticCache';
 
 type Visibility = 'public' | 'followers' | 'private';
 
@@ -196,49 +197,55 @@ export default function EditBucketModal() {
     } as any;
 
     try {
-      await updateBucket.mutateAsync({ id, data });
-      await syncTags.mutateAsync({
-        bucketId: id,
-        selectedTagIds: selectedTags.map((t) => t.id),
-      });
-
-      const { data: existingCollabs } = await supabase
-        .from('bucket_collaborators')
-        .select('user_id')
-        .eq('bucket_id', id);
-      const existingIds = new Set((existingCollabs ?? []).map((c: any) => c.user_id));
-      const newIds = new Set(selectedCollaborators.map((c) => c.id));
-
-      const toAdd = selectedCollaborators.filter((c) => !existingIds.has(c.id));
-      if (toAdd.length > 0) {
-        await supabase
+      // Todo lo independiente se envía a la vez (antes eran 5-6 esperas seguidas).
+      const saveCollaborators = async () => {
+        const { data: existingCollabs } = await supabase
           .from('bucket_collaborators')
-          .insert(toAdd.map((c) => ({ bucket_id: id, user_id: c.id, status: 'pending' })));
-      }
+          .select('user_id')
+          .eq('bucket_id', id);
+        const existingIds = new Set((existingCollabs ?? []).map((c: any) => c.user_id));
+        const newIds = new Set(selectedCollaborators.map((c) => c.id));
 
-      const toRemoveIds = [...existingIds].filter((uid) => !newIds.has(uid));
-      if (toRemoveIds.length > 0) {
-        await supabase
-          .from('bucket_collaborators')
-          .delete()
-          .eq('bucket_id', id)
-          .in('user_id', toRemoveIds);
-      }
+        const toAdd = selectedCollaborators.filter((c) => !existingIds.has(c.id));
+        const toRemoveIds = [...existingIds].filter((uid) => !newIds.has(uid));
+        await Promise.all([
+          toAdd.length > 0
+            ? supabase
+                .from('bucket_collaborators')
+                .insert(toAdd.map((c) => ({ bucket_id: id, user_id: c.id, status: 'pending' })))
+            : null,
+          toRemoveIds.length > 0
+            ? supabase.from('bucket_collaborators').delete().eq('bucket_id', id).in('user_id', toRemoveIds)
+            : null,
+        ]);
+      };
 
-      if (albumId !== initialAlbumId.current) {
+      const saveAlbum = async () => {
+        if (albumId === initialAlbumId.current) return;
+        // Optimista: la tarea cambia de álbum al instante en listas y álbumes.
+        applyMoveTasks(queryClient, [id], albumId);
         await supabase.from('album_items').delete().eq('bucket_id', id);
         if (albumId) {
           await supabase
             .from('album_items')
             .insert({ bucket_id: id, album_id: albumId, position: 0 });
         }
-        void queryClient.invalidateQueries({ queryKey: ['bucketAlbum', id] });
-        void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
-        void queryClient.invalidateQueries({ queryKey: ['albums'] });
-      }
+        settleTaskCaches(queryClient);
+      };
+
+      await Promise.all([
+        updateBucket.mutateAsync({ id, data }),
+        syncTags.mutateAsync({
+          bucketId: id,
+          selectedTagIds: selectedTags.map((t) => t.id),
+        }),
+        saveCollaborators(),
+        saveAlbum(),
+      ]);
 
       router.back();
     } catch (error: any) {
+      settleTaskCaches(queryClient); // deshace lo optimista recargando el estado real
       Alert.alert('No se pudo guardar', error?.message ?? 'Inténtalo de nuevo.');
     }
   };

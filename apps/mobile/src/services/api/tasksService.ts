@@ -47,6 +47,12 @@ export const defaultTasks: UnassignedTask[] = DEFAULT_TASKS.map((t) => ({ ...t, 
 import { supabase } from '../supabase';
 import { resolveTaskImage } from '../../utils/taskImage';
 import { applyAlbumTagsToTasks } from '../../hooks/useAlbumTags';
+import {
+  applyAddToAlbum,
+  beginOptimistic,
+  rollbackOptimistic,
+  settleTaskCaches,
+} from '../../utils/optimisticCache';
 
 export const tasksService = {
   /**
@@ -242,12 +248,18 @@ export function useAssignTasks() {
       taskIds: string[];
       updateVisibility?: 'public' | 'followers' | 'private';
     }) => tasksService.assignTasksToAlbum(albumId, taskIds, updateVisibility),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['unassigned_tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['album'] });
-      queryClient.invalidateQueries({ queryKey: ['albums'] });
-      queryClient.invalidateQueries({ queryKey: ['buckets'] });
-    }
+    // Las tareas aparecen en el álbum al instante (si tenemos sus datos en caché).
+    onMutate: async ({ albumId, taskIds }: { albumId: string; taskIds: string[]; updateVisibility?: 'public' | 'followers' | 'private' }) => {
+      const snap = await beginOptimistic(queryClient);
+      applyAddToAlbum(queryClient, taskIds, albumId);
+      return { snap };
+    },
+    onError: (_e, _vars, ctx) => {
+      rollbackOptimistic(queryClient, ctx?.snap);
+    },
+    onSettled: () => {
+      settleTaskCaches(queryClient);
+    },
   });
 }
 

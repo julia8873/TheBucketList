@@ -129,12 +129,16 @@ export const albumsService = {
       };
     }
 
-    // Fetch album details
-    const { data: album, error: albumError } = await supabase
-      .from('albums')
-      .select('*, owner:profiles!albums_owner_id_fkey(id, username, display_name, avatar_url)')
-      .eq('id', id)
-      .single();
+    // Detalle del álbum y sus items en PARALELO (antes eran dos viajes seguidos al servidor).
+    const [albumRes, itemsRes] = await Promise.all([
+      supabase
+        .from('albums')
+        .select('*, owner:profiles!albums_owner_id_fkey(id, username, display_name, avatar_url)')
+        .eq('id', id)
+        .single(),
+      supabase.from('album_items').select('bucket_id, position').eq('album_id', id),
+    ]);
+    const { data: album, error: albumError } = albumRes;
 
     if (albumError) throw albumError;
 
@@ -148,11 +152,7 @@ export const albumsService = {
       }
     }
 
-    // Fetch album items
-    const { data: albumItems, error: itemsError } = await supabase
-      .from('album_items')
-      .select('bucket_id, position')
-      .eq('album_id', id);
+    const { data: albumItems, error: itemsError } = itemsRes;
 
     if (itemsError) throw itemsError;
     const positionByBucket = new Map<string, number | null>(
@@ -163,6 +163,16 @@ export const albumsService = {
 
     if (albumItems && albumItems.length > 0) {
       const bucketIds = albumItems.map(ai => ai.bucket_id);
+      // Etiquetas en paralelo con las tareas (antes se pedían una detrás de otra).
+      const tagsPromise: Promise<{ data: any[] | null }> = Promise.resolve(
+        supabase
+          .from('item_tags')
+          .select('item_id, tag:tags(id, name, color, emoji)')
+          .in('item_id', bucketIds),
+      ).then(
+        (r: any) => r,
+        () => ({ data: null }),
+      );
       const { data: buckets, error: bucketsError } = await supabase
         .from('buckets')
         .select(`
@@ -178,10 +188,7 @@ export const albumsService = {
 
       let tagsByTask = new Map<string, Array<{ id: string; name: string; color: string; emoji?: string | null }>>();
       try {
-        const { data: itemTags } = await supabase
-          .from('item_tags')
-          .select('item_id, tag:tags(id, name, color, emoji)')
-          .in('item_id', bucketIds);
+        const { data: itemTags } = await tagsPromise;
         if (itemTags) {
           for (const it of itemTags) {
             const t = (it as any).tag;

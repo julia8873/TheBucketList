@@ -9,6 +9,7 @@ import { useToast, confirm } from '@bucketlist/ui';
 
 import { useAlbumDetail, useDeleteAlbumDetail, TaskItem } from '@/services/api/albumsService';
 import { supabase } from '@/services/supabase';
+import { patchTasks, settleTaskCaches } from '@/utils/optimisticCache';
 import { useAuthStore } from '@/stores/auth.store';
 import { CollaboratorItem } from '@/components/CollaboratorPickerSheet';
 import { useUserFavorites, useToggleFavoriteAlbum } from '@/hooks/useFavorites';
@@ -119,6 +120,23 @@ export function useAlbumDetailState() {
   const [taskSearch, setTaskSearch] = useState('');
   const [dragging, setDragging] = useState(false);
   const [isReorderingTasks, setIsReorderingTasks] = useState(false);
+
+  // Modo selección (igual que en «Mi lista»): selecciona varias tareas y actúa sobre todas.
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
+  const toggleSelectTask = (taskId: string) => {
+    setSelectedTaskIds((prev) =>
+      prev.includes(taskId) ? prev.filter((x) => x !== taskId) : [...prev, taskId],
+    );
+  };
+  const startSelection = (taskId?: string) => {
+    setIsSelectionMode(true);
+    setSelectedTaskIds(taskId ? [taskId] : []);
+  };
+  const handleExitSelection = () => {
+    setIsSelectionMode(false);
+    setSelectedTaskIds([]);
+  };
 
   const scrollRef = useRef<ScrollView>(null);
   const toolbarY = useRef(0);
@@ -966,14 +984,10 @@ export function useAlbumDetailState() {
     const nextStatus = nextCompleted ? 'completed' : 'pending';
     const nextCompletedAt = nextCompleted ? new Date().toISOString() : null;
 
-    queryClient.setQueryData(['album', id, user?.id], (old: any) => {
-      if (!old) return old;
-      return {
-        ...old,
-        tasks: old.tasks.map((t: TaskItem) =>
-          t.id === task.id ? { ...t, isCompleted: nextCompleted, completedAt: nextCompletedAt } : t
-        ),
-      };
+    // Optimista: tarea + contador de progreso del álbum + listas, todo al instante.
+    patchTasks(queryClient, [task.id], {
+      bucket: { status: nextStatus, completed_at: nextCompletedAt },
+      task: { isCompleted: nextCompleted, completedAt: nextCompletedAt },
     });
 
     const { error } = await supabase
@@ -983,12 +997,14 @@ export function useAlbumDetailState() {
 
     if (error) {
       console.error('Error toggling task status:', error);
-      void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+      settleTaskCaches(queryClient);
       return;
     }
 
-    void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+    // La caché ya tiene el valor correcto: no recargamos el álbum entero (era lo que
+    // provocaba el parpadeo y la espera). Solo se marcan como obsoletas las demás vistas.
     void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+    void queryClient.invalidateQueries({ queryKey: ['albums'] });
     void queryClient.invalidateQueries({ queryKey: ['bucketDetail', task.id] });
   };
 
@@ -1011,12 +1027,9 @@ export function useAlbumDetailState() {
     });
     if (!confirmedToggle) return;
 
-    queryClient.setQueryData(['album', id, user?.id], (old: any) => {
-      if (!old) return old;
-      return {
-        ...old,
-        tasks: old.tasks.map((t: TaskItem) => ({ ...t, isCompleted: nextCompleted, completedAt: nextCompletedAt })),
-      };
+    patchTasks(queryClient, taskIds, {
+      bucket: { status: nextStatus, completed_at: nextCompletedAt },
+      task: { isCompleted: nextCompleted, completedAt: nextCompletedAt },
     });
 
     closeSheet();
@@ -1028,11 +1041,10 @@ export function useAlbumDetailState() {
 
     if (error) {
       toast.error('No se pudieron actualizar las tareas');
-      void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+      settleTaskCaches(queryClient);
       return;
     }
 
-    void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
     void queryClient.invalidateQueries({ queryKey: ['albums'] });
     void queryClient.invalidateQueries({ queryKey: ['buckets'] });
   };
@@ -1207,6 +1219,12 @@ export function useAlbumDetailState() {
     id,
     router,
     queryClient,
+    isSelectionMode,
+    selectedTaskIds,
+    setSelectedTaskIds,
+    toggleSelectTask,
+    startSelection,
+    handleExitSelection,
     user,
     currentUserId,
     isFav,

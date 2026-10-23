@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { GripVertical, Check, Plus } from 'lucide-react-native';
+import { GripVertical, Check, Plus, CheckCircle2 } from 'lucide-react-native';
 import type { TaskItem } from '@/services/api/albumsService';
 import { BucketCover } from '@/components/BucketCover';
 import { hexToRgba } from '@/constants/tagPresets';
@@ -42,6 +42,11 @@ interface AlbumTaskCardProps {
   drag?: { panHandlers: any; isActive: boolean };
   onToggleCompleted: (task: TaskItem, e: any) => void;
   onCopySingleTask: (task: TaskItem, e: any) => void;
+  /** Modo selección múltiple (acciones en lote). */
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (task: TaskItem) => void;
+  onLongPressTask?: (task: TaskItem) => void;
 }
 
 export function AlbumTaskCard({
@@ -51,6 +56,10 @@ export function AlbumTaskCard({
   drag,
   onToggleCompleted,
   onCopySingleTask,
+  isSelectionMode = false,
+  isSelected = false,
+  onToggleSelect,
+  onLongPressTask,
 }: AlbumTaskCardProps) {
   const router = useRouter();
   const isDone = task.isCompleted;
@@ -104,10 +113,25 @@ export function AlbumTaskCard({
 
   return (
     <Pressable
-      style={styles.taskCard}
-      onPress={() => router.push(`/bucket/${task.id}`)}
-      accessibilityRole="button"
+      style={[styles.taskCard, isSelectionMode && isSelected && { borderColor: '#D4B13A', borderWidth: 1 }]}
+      onPress={() => {
+        if (isSelectionMode) onToggleSelect?.(task);
+        else router.push(`/bucket/${task.id}`);
+      }}
+      onLongPress={canEdit && !isSelectionMode && !drag ? () => onLongPressTask?.(task) : undefined}
+      delayLongPress={350}
+      accessibilityRole={isSelectionMode ? 'checkbox' : 'button'}
+      accessibilityState={isSelectionMode ? { checked: isSelected } : undefined}
     >
+      {isSelectionMode && (
+        <View style={{ marginRight: 10 }}>
+          {isSelected ? (
+            <CheckCircle2 size={24} color="#D4B13A" fill="#D4B13A" />
+          ) : (
+            <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: '#555555' }} />
+          )}
+        </View>
+      )}
       <View style={[styles.taskThumbContainer, isDone && { opacity: 0.5 }]}>
         <BucketCover
           value={task.imageValue ?? null}
@@ -179,13 +203,13 @@ export function AlbumTaskCard({
           </View>
         )}
 
-        {drag && (
+        {drag && !isSelectionMode && (
           <View {...drag.panHandlers} hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }} accessibilityLabel="Arrastrar para reordenar">
             <GripVertical size={20} color="#8F8F8F" strokeWidth={1.8} />
           </View>
         )}
 
-        {canEdit ? (
+        {isSelectionMode ? null : canEdit ? (
           <Pressable
             hitSlop={8}
             onPress={(e) => onToggleCompleted(task, e)}

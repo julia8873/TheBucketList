@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   FolderPlus,
   UserPlus,
+  ListChecks,
 } from 'lucide-react-native';
 import { Skeleton, Avatar, useTheme } from '@bucketlist/ui';
 
@@ -27,6 +28,7 @@ import { supabase } from '@/services/supabase';
 import { normalizeStorageUrl } from '@/constants/urls';
 import { CollaboratorPickerSheet } from '@/components/CollaboratorPickerSheet';
 import { DraggableTaskList } from '@/components/DraggableTaskList';
+import { BulkTaskActionBar } from '@/components/BulkTaskActionBar';
 import { NotificationSubscribersModal } from '@/components/NotificationSubscribersModal';
 import { ImageLinkModal } from '@/components/ImageLinkModal';
 import { TagAssignSheet } from '@/components/TagAssignSheet';
@@ -188,6 +190,7 @@ export default function AlbumDetailScreen() {
 
   const manualDragEnabled =
     state.canEdit &&
+    !state.isSelectionMode &&
     state.id !== 'unassigned' &&
     state.taskSortField === 'manual' &&
     !isSearchingTasks &&
@@ -263,7 +266,7 @@ export default function AlbumDetailScreen() {
   if (coverPath) {
     try {
       parsedCover = JSON.parse(coverPath);
-    } catch {}
+    } catch { }
   }
 
   const gradientColors = GRADIENTS[coverKey as keyof typeof GRADIENTS] || GRADIENTS.aurora;
@@ -274,6 +277,10 @@ export default function AlbumDetailScreen() {
   ];
   const isAlbumClosed = Boolean(album.is_closed);
 
+  const visibleTaskIds = [...pendientes, ...completadas].map((t) => t.id);
+  const isAllSelected =
+    visibleTaskIds.length > 0 && visibleTaskIds.every((tid) => state.selectedTaskIds.includes(tid));
+
   const renderTaskCard = (task: TaskItem, drag?: { panHandlers: any; isActive: boolean }) => (
     <AlbumTaskCard
       key={task.id}
@@ -283,6 +290,10 @@ export default function AlbumDetailScreen() {
       drag={drag}
       onToggleCompleted={state.toggleTaskCompleted}
       onCopySingleTask={state.handleCopySingleTask}
+      isSelectionMode={state.isSelectionMode}
+      isSelected={state.selectedTaskIds.includes(task.id)}
+      onToggleSelect={(t) => state.toggleSelectTask(t.id)}
+      onLongPressTask={(t) => state.startSelection(t.id)}
     />
   );
 
@@ -294,7 +305,7 @@ export default function AlbumDetailScreen() {
         scrollEnabled={!state.dragging}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
-          paddingBottom: insets.bottom + (state.id === 'unassigned' ? 40 : 120),
+          paddingBottom: insets.bottom + (state.isSelectionMode ? 170 : state.id === 'unassigned' ? 40 : 120),
         }}
         refreshControl={
           manualDragEnabled || state.dragging ? undefined : (
@@ -684,10 +695,10 @@ export default function AlbumDetailScreen() {
                   {state.taskSortField === 'priority'
                     ? 'Prioridad'
                     : state.taskSortField === 'alphabetical'
-                    ? 'Nombre'
-                    : state.taskSortField === 'completed_at'
-                    ? 'Fecha de completado'
-                    : 'Manual'}
+                      ? 'Nombre'
+                      : state.taskSortField === 'completed_at'
+                        ? 'Fecha de completado'
+                        : 'Manual'}
                 </Text>
                 {state.taskSortField !== 'manual' &&
                   (state.taskSortDir === 'desc' ? (
@@ -698,6 +709,16 @@ export default function AlbumDetailScreen() {
               </Pressable>
 
               <View style={{ flex: 1 }} />
+
+              {state.canEdit && (
+                <Pressable
+                  style={styles.toolbarIconBtn}
+                  onPress={() => (state.isSelectionMode ? state.handleExitSelection() : state.startSelection())}
+                  accessibilityLabel={state.isSelectionMode ? 'Salir de la selección' : 'Seleccionar tareas'}
+                >
+                  <ListChecks size={16} color={state.isSelectionMode ? '#D4B13A' : '#8F8F8F'} />
+                </Pressable>
+              )}
 
               <Pressable
                 style={styles.toolbarIconBtn}
@@ -796,38 +817,53 @@ export default function AlbumDetailScreen() {
         )}
       </ScrollView>
 
+      {/* Selección múltiple: mismo menú inferior que en «Mi lista» */}
+      {state.isSelectionMode && state.canEdit && (
+        <BulkTaskActionBar
+          selectedIds={state.selectedTaskIds.filter((sid) => tasks.some((t) => t.id === sid))}
+          totalTasksCount={visibleTaskIds.length}
+          onClearSelection={state.handleExitSelection}
+          onSelectAll={() => {
+            state.setSelectedTaskIds(isAllSelected ? [] : visibleTaskIds);
+          }}
+          isAllSelected={isAllSelected}
+        />
+      )}
+
       {/* Barra inferior */}
-      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
-        {state.canEdit ? (
-          <>
-            {state.id !== 'unassigned' && (
+      {!state.isSelectionMode && (
+        <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
+          {state.canEdit ? (
+            <>
+              {state.id !== 'unassigned' && (
+                <Pressable
+                  style={styles.btnEdit}
+                  onPress={() => state.router.push(`/(modals)/create-album?id=${state.id}` as any)}
+                >
+                  <Text style={styles.btnEditText}>Editar</Text>
+                </Pressable>
+              )}
               <Pressable
-                style={styles.btnEdit}
-                onPress={() => state.router.push(`/(modals)/create-album?id=${state.id}` as any)}
+                style={styles.btnAdd}
+                onPress={() => state.router.push(state.id === 'unassigned' ? '/add-task' : `/add-task?albumId=${state.id}`)}
               >
-                <Text style={styles.btnEditText}>Editar</Text>
+                <Text style={styles.btnAddText}>Añadir tarea</Text>
               </Pressable>
-            )}
+            </>
+          ) : (
             <Pressable
-              style={styles.btnAdd}
-              onPress={() => state.router.push(state.id === 'unassigned' ? '/add-task' : `/add-task?albumId=${state.id}`)}
+              style={styles.btnCopyAlbum}
+              onPress={state.handleCopyEntireAlbum}
+              disabled={state.copyingAlbum}
             >
-              <Text style={styles.btnAddText}>Añadir tarea</Text>
+              <FolderPlus size={18} color="#0D0D0D" strokeWidth={2.4} />
+              <Text style={styles.btnCopyAlbumText}>
+                {state.copyingAlbum ? 'Copiando álbum…' : 'Copiar álbum a mi lista'}
+              </Text>
             </Pressable>
-          </>
-        ) : (
-          <Pressable
-            style={styles.btnCopyAlbum}
-            onPress={state.handleCopyEntireAlbum}
-            disabled={state.copyingAlbum}
-          >
-            <FolderPlus size={18} color="#0D0D0D" strokeWidth={2.4} />
-            <Text style={styles.btnCopyAlbumText}>
-              {state.copyingAlbum ? 'Copiando álbum…' : 'Copiar álbum a mi lista'}
-            </Text>
-          </Pressable>
-        )}
-      </View>
+          )}
+        </View>
+      )}
 
       {/* Sheet de opciones */}
       <AlbumOptionsSheet

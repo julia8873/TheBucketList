@@ -16,6 +16,15 @@ import { useAuthStore } from '@/stores/auth.store';
 import { usePullToRefresh } from '@/hooks/useAutoRefresh';
 import { useAddComment, useCopyBucket, useToggleReaction, useFollowUser, useSavedBucketIds, useToggleSaveBucket } from '@/hooks/useSocial';
 import { useDeleteBucket } from '@/hooks/useBuckets';
+import {
+  applyAddToAlbum,
+  applyMoveTasks,
+  applyRemoveFromAlbum,
+  beginOptimistic,
+  patchTasks,
+  rollbackOptimistic,
+  settleTaskCaches,
+} from '@/utils/optimisticCache';
 import { useAlbums } from '@/hooks/useAlbums';
 import { useUserFavorites, useToggleFavoriteBucket } from '@/hooks/useFavorites';
 import { useEntitySubscription } from '@/hooks/useEntityNotifications';
@@ -506,6 +515,11 @@ export function useBucketDetailState() {
       patch.completed_at = bucket?.completed_at || new Date().toISOString();
     }
     queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, ...patch } : oldData);
+    // Refleja el estado al instante también en las listas y en los álbumes.
+    patchTasks(queryClient, [id], {
+      bucket: patch,
+      task: { isCompleted: status === 'completed', completedAt: patch.completed_at ?? null },
+    });
     const { error } = await supabase
       .from('buckets')
       .update(patch)
@@ -514,6 +528,7 @@ export function useBucketDetailState() {
     if (error) {
       Alert.alert('No se pudo cambiar el estado', error.message);
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+      settleTaskCaches(queryClient);
       return;
     }
 
@@ -560,9 +575,7 @@ export function useBucketDetailState() {
   };
 
   const handleChangePriority = async (priority: 'low' | 'medium' | 'high') => {
-    queryClient.setQueryData(['bucketDetail', id], (oldData: any) =>
-      oldData ? { ...oldData, priority } : oldData
-    );
+    patchTasks(queryClient, [id], { bucket: { priority }, task: { priority } });
     const { error } = await supabase
       .from('buckets')
       .update({ priority })
@@ -571,6 +584,7 @@ export function useBucketDetailState() {
     if (error) {
       Alert.alert('No se pudo cambiar la prioridad', error.message);
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+      settleTaskCaches(queryClient);
       return;
     }
 
@@ -673,20 +687,25 @@ export function useBucketDetailState() {
     if (!user) return;
     const isCurrentlySelected = bucketAlbums?.some((a: any) => a.album_id === albumId);
 
+    // Optimista: el selector de álbumes y la lista del álbum cambian al instante.
+    const snap = await beginOptimistic(queryClient);
     if (isCurrentlySelected) {
-      const { error } = await supabase
-        .from('album_items')
-        .delete()
-        .eq('bucket_id', id)
-        .eq('album_id', albumId);
-      if (error) Alert.alert('Error', error.message);
+      applyRemoveFromAlbum(queryClient, [id], albumId);
     } else {
-      const { error } = await supabase
-        .from('album_items')
-        .insert({ album_id: albumId, bucket_id: id, position: 0 });
-      if (error) Alert.alert('Error', error.message);
+      queryClient.setQueryData(['bucketAlbum', id], (old: any) => [...(old ?? []), { album_id: albumId }]);
+      applyAddToAlbum(queryClient, [id], albumId);
     }
-    invalidateBucket();
+
+    const { error } = isCurrentlySelected
+      ? await supabase.from('album_items').delete().eq('bucket_id', id).eq('album_id', albumId)
+      : await supabase.from('album_items').insert({ album_id: albumId, bucket_id: id, position: 0 });
+
+    if (error) {
+      rollbackOptimistic(queryClient, snap);
+      Alert.alert('Error', error.message);
+      return;
+    }
+    settleTaskCaches(queryClient);
   };
 
   const removeAllAlbums = async () => {
@@ -698,13 +717,19 @@ export function useBucketDetailState() {
       cancelLabel: 'Cancelar',
     });
     if (!okRemove) return;
-    const { error } = await supabase
-      .from('album_items')
-      .delete()
-      .eq('bucket_id', id);
-    if (error) Alert.alert('Error', error.message);
-    invalidateBucket();
+
+    // Optimista: se vacía al instante y la hoja se cierra sin esperar a la red.
+    const snap = await beginOptimistic(queryClient);
+    applyMoveTasks(queryClient, [id], null);
     closeSheet();
+
+    const { error } = await supabase.from('album_items').delete().eq('bucket_id', id);
+    if (error) {
+      rollbackOptimistic(queryClient, snap);
+      Alert.alert('Error', error.message);
+      return;
+    }
+    settleTaskCaches(queryClient);
   };
 
   const addMention = async (task: MentionTask) => {

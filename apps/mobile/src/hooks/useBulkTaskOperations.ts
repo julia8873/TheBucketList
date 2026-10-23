@@ -2,6 +2,16 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../stores/auth.store';
 import { triggerTaskCompletedHaptic } from '../stores/haptics.store';
+import {
+  applyAddTagsToTasks,
+  applyDeleteTasks,
+  applyMoveTasks,
+  beginOptimistic,
+  patchTasks,
+  rollbackOptimistic,
+  settleTaskCaches,
+  type CacheSnapshot,
+} from '../utils/optimisticCache';
 
 export function useBulkTaskOperations() {
   const queryClient = useQueryClient();
@@ -17,6 +27,31 @@ export function useBulkTaskOperations() {
     void queryClient.invalidateQueries({ queryKey: ['feed'] });
     void queryClient.invalidateQueries({ queryKey: ['notifications'] });
     void queryClient.invalidateQueries({ queryKey: ['entity_subscribers'] });
+  };
+
+  /**
+   * Opciones optimistas comunes: la UI cambia al instante (onMutate), si el servidor falla se
+   * restaura (onError) y la revalidación va en segundo plano (onSettled, sin bloquear).
+   */
+  const optimistic = <V,>(apply: (vars: V) => void, extraSettle?: () => void) => ({
+    onMutate: async (vars: V) => {
+      const snap = await beginOptimistic(queryClient);
+      apply(vars);
+      return { snap };
+    },
+    onError: (_e: unknown, _v: V, ctx?: { snap: CacheSnapshot }) => {
+      rollbackOptimistic(queryClient, ctx?.snap);
+    },
+    onSettled: () => {
+      settleTaskCaches(queryClient);
+      extraSettle?.();
+    },
+  });
+
+  const settleExtras = () => {
+    void queryClient.invalidateQueries({ queryKey: ['tagUsage'] });
+    void queryClient.invalidateQueries({ queryKey: ['item_tags'] });
+    void queryClient.invalidateQueries({ queryKey: ['feed'] });
   };
 
   // 1. Mover de álbum (o poner Sin Álbum)
@@ -57,7 +92,15 @@ export function useBulkTaskOperations() {
         if (insErr) throw insErr;
       }
     },
-    onSuccess: invalidateAllTaskData,
+    ...optimistic<{ taskIds: string[]; albumId: string | null; updateVisibility?: 'public' | 'followers' | 'private' }>(
+      ({ taskIds, albumId, updateVisibility }) => {
+        applyMoveTasks(queryClient, taskIds, albumId);
+        if (updateVisibility) {
+          patchTasks(queryClient, taskIds, { bucket: { visibility: updateVisibility } });
+        }
+      },
+      settleExtras,
+    ),
   });
 
   // 2. Asignar etiquetas a múltiples tareas
@@ -83,7 +126,10 @@ export function useBulkTaskOperations() {
       });
       if (error) throw error;
     },
-    onSuccess: invalidateAllTaskData,
+    ...optimistic<{ taskIds: string[]; tagIds: string[] }>(
+      ({ taskIds, tagIds }) => applyAddTagsToTasks(queryClient, taskIds, tagIds),
+      settleExtras,
+    ),
   });
 
   // 3. Compartir con una persona (añadir colaborador a múltiples tareas)
@@ -125,7 +171,12 @@ export function useBulkTaskOperations() {
         .in('id', taskIds);
       if (error) throw error;
     },
-    onSuccess: invalidateAllTaskData,
+    ...optimistic<string[]>((taskIds) => {
+      patchTasks(queryClient, taskIds, {
+        bucket: { status: 'completed', completed_at: new Date().toISOString() },
+        task: { isCompleted: true, completedAt: new Date().toISOString() },
+      });
+    }),
   });
 
   // 5. Reabrir todas las tareas seleccionadas
@@ -141,7 +192,12 @@ export function useBulkTaskOperations() {
         .in('id', taskIds);
       if (error) throw error;
     },
-    onSuccess: invalidateAllTaskData,
+    ...optimistic<string[]>((taskIds) => {
+      patchTasks(queryClient, taskIds, {
+        bucket: { status: 'in_progress', completed_at: null },
+        task: { isCompleted: false, completedAt: null },
+      });
+    }),
   });
 
   // 6. Borrar todas las tareas seleccionadas
@@ -154,7 +210,7 @@ export function useBulkTaskOperations() {
         .in('id', taskIds);
       if (error) throw error;
     },
-    onSuccess: invalidateAllTaskData,
+    ...optimistic<string[]>((taskIds) => applyDeleteTasks(queryClient, taskIds), settleExtras),
   });
 
   // 7. Vaciar / limpiar notificaciones y suscriptores de las tareas seleccionadas
@@ -192,7 +248,9 @@ export function useBulkTaskOperations() {
         .in('id', taskIds);
       if (error) throw error;
     },
-    onSuccess: invalidateAllTaskData,
+    ...optimistic<{ taskIds: string[]; priority: 'low' | 'medium' | 'high' }>(({ taskIds, priority }) =>
+      patchTasks(queryClient, taskIds, { bucket: { priority }, task: { priority } }),
+    ),
   });
 
   // 9. Cambiar visibilidad en lote
@@ -211,7 +269,9 @@ export function useBulkTaskOperations() {
         .in('id', taskIds);
       if (error) throw error;
     },
-    onSuccess: invalidateAllTaskData,
+    ...optimistic<{ taskIds: string[]; visibility: 'public' | 'private' | 'followers' }>(
+      ({ taskIds, visibility }) => patchTasks(queryClient, taskIds, { bucket: { visibility } }),
+    ),
   });
 
   // 10. Marcar / Desmarcar como favoritas en lote
