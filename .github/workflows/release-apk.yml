@@ -42,6 +42,8 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      # El runner ubuntu-latest ya incluye el Android SDK. La acción setup-android@v3 falla con
+      # "Failed to find package 'tools'", así que solo configuramos las variables de entorno.
       - name: Configure Android SDK
         run: |
           echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> $GITHUB_ENV

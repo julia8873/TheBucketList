@@ -1,5 +1,5 @@
 import 'react-native-url-polyfill/auto';
-import '../src/utils/navigationGuard';
+import { resetNavigationGuard } from '../src/utils/navigationGuard';
 import React, { useEffect, useRef } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
@@ -32,6 +32,9 @@ import { BUCKETS_QUERY_KEY } from '../src/hooks/useBuckets';
 import { useRealtimeSync } from '../src/hooks/useRealtimeSync';
 import 'intl-pluralrules';
 import '../../../packages/shared/src/i18n'; // initialize i18n
+
+// Muestra el error en pantalla en lugar de una pantalla negra si falla un render
+export { ErrorBoundary } from 'expo-router';
 
 // Keep the splash screen visible while we fetch resources
 void SplashScreen.preventAutoHideAsync();
@@ -142,6 +145,19 @@ function RootNavigator() {
   const queryClient = useQueryClient();
   const userId = session?.user.id;
 
+  // Redirecciones de autenticación: limpian modales/stack (si no, un `replace` solo sustituye la
+  // pantalla superior y queda una pantalla (tabs) huérfana → pantalla negra al volver a entrar) y
+  // evitan que el navigationGuard descarte la navegación en silencio.
+  const goTo = (target: string) => {
+    resetNavigationGuard();
+    try {
+      if (router.canDismiss()) router.dismissAll();
+    } catch {
+      // sin nada que cerrar
+    }
+    router.replace(target as any);
+  };
+
   // Precarga de "Mi lista" EN PARALELO a la comprobación del onboarding: así cuando la
   // app navega a la pestaña, los datos ya están (o casi) y no se ve la pantalla vacía.
   useEffect(() => {
@@ -249,7 +265,7 @@ function RootNavigator() {
         if (authRedirectTarget) setAuthRedirectTarget(null);
         if (lastRoutedRef.current !== target) {
           lastRoutedRef.current = target;
-          router.replace(target as any);
+          goTo(target);
         }
       } else {
         lastRoutedRef.current = null;
@@ -264,7 +280,7 @@ function RootNavigator() {
       if (group !== '(onboarding)') {
         if (lastRoutedRef.current !== '/(onboarding)/username') {
           lastRoutedRef.current = '/(onboarding)/username';
-          router.replace('/(onboarding)/username');
+          goTo('/(onboarding)/username');
         }
       } else {
         lastRoutedRef.current = '/(onboarding)/username';
@@ -272,10 +288,12 @@ function RootNavigator() {
       return;
     }
 
-    if (group === '(auth)' || group === '(onboarding)') {
+    // `!group` = ruta `index` (arranque en frío con sesión guardada): index devuelve null, así que
+    // sin esta redirección se quedaba la pantalla negra.
+    if (!group || group === '(auth)' || group === '(onboarding)') {
       if (lastRoutedRef.current !== '/(tabs)/my-list') {
         lastRoutedRef.current = '/(tabs)/my-list';
-        router.replace('/(tabs)/my-list');
+        goTo('/(tabs)/my-list');
       }
     } else if (group === '(tabs)') {
       lastRoutedRef.current = null;

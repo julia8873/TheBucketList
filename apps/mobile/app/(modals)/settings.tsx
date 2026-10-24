@@ -168,7 +168,7 @@ export default function SettingsScreen() {
     await supabase.auth.signOut();
     signOut();
     queryClient.clear();
-    router.replace('/(auth)/welcome');
+    // La redirección a /(auth)/welcome la hace RootNavigator (app/_layout.tsx) al detectar que no hay sesión.
   };
 
   const deleteAccount = useMutation({
@@ -181,7 +181,7 @@ export default function SettingsScreen() {
       await supabase.auth.signOut().catch(() => undefined);
       signOut();
       queryClient.clear();
-      router.replace('/(auth)/welcome');
+      // La redirección a /(auth)/welcome la hace RootNavigator (app/_layout.tsx).
     },
     onError: (e: any) => setDeleteError(e?.message ?? t('errors.network')),
   });
