@@ -16,14 +16,7 @@ type PrefKey =
   | 'deadline_push'
   | 'friend_completed_push';
 
-type Prefs = Partial<Record<PrefKey, boolean | null>> & {
-  quiet_start?: string | null;
-  quiet_end?: string | null;
-};
-
-// Horario por defecto al activar las horas de silencio
-const DEFAULT_QUIET_START = '22:00:00';
-const DEFAULT_QUIET_END = '08:00:00';
+type Prefs = Partial<Record<PrefKey, boolean | null>>;
 
 export default function NotificationPrefsScreen() {
   const { theme } = useTheme();
@@ -66,7 +59,6 @@ export default function NotificationPrefsScreen() {
 
   // Por defecto todas las preferencias están activadas (null / undefined = activado)
   const isOn = (key: PrefKey) => prefs?.[key] !== false;
-  const quietOn = !!prefs?.quiet_start && !!prefs?.quiet_end;
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)/profile' as any));
 
@@ -120,23 +112,6 @@ export default function NotificationPrefsScreen() {
               title="Fechas límite de tareas"
               value={isOn('deadline_push')}
               onChange={(v) => updatePrefs.mutate({ deadline_push: v })}
-              last
-            />
-          </Card>
-
-          <SectionTitle gold="HORAS DE SILENCIO" />
-          <Card>
-            <ToggleRow
-              title="Activar horas de silencio"
-              subtitle="Pausar notificaciones de 22:00 a 08:00"
-              value={quietOn}
-              onChange={(v) =>
-                updatePrefs.mutate(
-                  v
-                    ? { quiet_start: DEFAULT_QUIET_START, quiet_end: DEFAULT_QUIET_END }
-                    : { quiet_start: null, quiet_end: null },
-                )
-              }
               last
             />
           </Card>
