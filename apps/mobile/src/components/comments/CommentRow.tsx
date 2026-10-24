@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
 import { Heart, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { Avatar, fontFamily, gold, useTheme } from '@bucketlist/ui';
 import { displayNameOf, initialsOf } from '../../utils/initials';
 import { timeAgo } from '../../utils/timeAgo';
@@ -37,6 +38,7 @@ interface CommentRowProps {
 /** Un comentario (o respuesta) con sus acciones: me gusta, responder, editar, eliminar, reportar. */
 export function CommentRow({ comment, ctrl, isReply = false }: CommentRowProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const { user, ownerId } = ctrl;
   const c = theme.colors;
   const muted = c.foregroundMuted;
@@ -46,6 +48,14 @@ export function CommentRow({ comment, ctrl, isReply = false }: CommentRowProps) 
   const isItemOwner = !!user && !!ownerId && user.id === ownerId;
   const isCreator = !!ownerId && comment.user_id === ownerId;
   const isEditing = ctrl.editingCommentId === comment.id;
+
+  const isEdited = Boolean(
+    comment.is_edited ||
+      (comment.updated_at &&
+        comment.created_at &&
+        Math.abs(new Date(comment.updated_at).getTime() - new Date(comment.created_at).getTime()) > 1000)
+  );
+  const editedLabel = t('common.edited', { defaultValue: 'editado' });
 
   const likes: Array<{ id?: string; user_id: string }> = comment.likes ?? [];
   const isLiked = !!user && likes.some((l) => l.user_id === user.id);
@@ -67,7 +77,10 @@ export function CommentRow({ comment, ctrl, isReply = false }: CommentRowProps) 
               <Text style={styles.creatorTagText}>Autor</Text>
             </View>
           )}
-          <Text style={[styles.timeText, { color: muted }]}>{timeAgo(comment.created_at)}</Text>
+          <Text style={[styles.timeText, { color: muted }]}>
+            {timeAgo(comment.created_at)}
+            {isEdited && ` · ${editedLabel}`}
+          </Text>
         </View>
 
         {isEditing ? (

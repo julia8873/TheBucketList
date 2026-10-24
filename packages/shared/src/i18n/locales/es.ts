@@ -19,6 +19,7 @@ const es = {
     share: 'Compartir',
     copy: 'Copiar',
     copied: '¡Copiado!',
+    edited: 'editado',
   },
 
   auth: {

@@ -261,13 +261,26 @@ export function useUpdateComment() {
   return useMutation({
     mutationFn: ({ commentId, body }: { commentId: string; bucketId?: string; albumId?: string; body: string }) =>
       socialApi.updateComment(commentId, body),
-    onSuccess: (_data, variables) => {
+    onSuccess: (data, variables) => {
+      const patchComments = (old: any) => {
+        if (!Array.isArray(old)) return old;
+        return old.map((c) =>
+          c.id === variables.commentId
+            ? { ...c, ...data, body: variables.body, updated_at: data?.updated_at || new Date().toISOString() }
+            : c
+        );
+      };
+
       if (variables.bucketId) {
+        queryClient.setQueriesData({ queryKey: [...COMMENTS_QUERY_KEY, 'bucket', variables.bucketId] }, patchComments);
+        queryClient.setQueriesData({ queryKey: [...COMMENTS_QUERY_KEY, variables.bucketId] }, patchComments);
         void queryClient.invalidateQueries({ queryKey: [...COMMENTS_QUERY_KEY, 'bucket', variables.bucketId] });
         void queryClient.invalidateQueries({ queryKey: [...COMMENTS_QUERY_KEY, variables.bucketId] });
         void queryClient.invalidateQueries({ queryKey: ['bucketComments', variables.bucketId] });
       }
       if (variables.albumId) {
+        queryClient.setQueriesData({ queryKey: [...COMMENTS_QUERY_KEY, 'album', variables.albumId] }, patchComments);
+        queryClient.setQueriesData({ queryKey: [...COMMENTS_QUERY_KEY, variables.albumId] }, patchComments);
         void queryClient.invalidateQueries({ queryKey: [...COMMENTS_QUERY_KEY, 'album', variables.albumId] });
         void queryClient.invalidateQueries({ queryKey: [...COMMENTS_QUERY_KEY, variables.albumId] });
         void queryClient.invalidateQueries({ queryKey: ['albumComments', variables.albumId] });

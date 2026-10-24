@@ -20,6 +20,7 @@ const en = {
     share: 'Share',
     copy: 'Copy',
     copied: 'Copied!',
+    edited: 'edited',
   },
 
   // ── Auth ──────────────────────────────────────────────────────────
