@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert, confirm, toast } from '@bucketlist/ui';
 import { useAuthStore } from '../../stores/auth.store';
+import { useCurrentUserProfile } from '../../hooks/useCurrentUserProfile';
 import {
   useComments,
   useAddComment,
@@ -32,6 +33,7 @@ interface Options {
  */
 export function useCommentsController({ targetId, targetType, ownerId, onReplyStart }: Options) {
   const { user } = useAuthStore();
+  const { data: profile } = useCurrentUserProfile();
   const { data: comments = [], isLoading } = useComments(targetId, targetType);
   const addComment = useAddComment();
   const updateComment = useUpdateComment();
@@ -188,6 +190,7 @@ export function useCommentsController({ targetId, targetType, ownerId, onReplySt
 
   return {
     user,
+    profile,
     ownerId,
     targetId,
     targetType,

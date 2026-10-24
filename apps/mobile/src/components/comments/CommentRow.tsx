@@ -41,8 +41,8 @@ export function CommentRow({ comment, ctrl, isReply = false }: CommentRowProps) 
   const c = theme.colors;
   const muted = c.foregroundMuted;
 
-  const author = comment.user;
   const isMine = !!user && comment.user_id === user.id;
+  const author = isMine && ctrl.profile ? { ...comment.user, ...ctrl.profile } : comment.user;
   const isItemOwner = !!user && !!ownerId && user.id === ownerId;
   const isCreator = !!ownerId && comment.user_id === ownerId;
   const isEditing = ctrl.editingCommentId === comment.id;

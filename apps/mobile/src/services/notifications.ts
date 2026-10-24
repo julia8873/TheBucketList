@@ -1,3 +1,4 @@
+import { getSpecificNotificationText } from '../utils/notificationRouting';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import * as Linking from 'expo-linking';
@@ -222,10 +223,24 @@ export async function displayInAppNotification(record: any, currentUserId: strin
 
     if (prefs) {
       if (record.type === 'reaction' && prefs.reaction_push === false) return;
-      if (record.type === 'comment' && prefs.comment_push === false) return;
+      if ((record.type === 'comment' || record.type === 'mention') && prefs.comment_push === false) return;
       if ((record.type === 'follow' || record.type === 'follow_request') && prefs.follow_push === false) return;
       if (record.type === 'deadline' && prefs.deadline_push === false) return;
       if (record.type === 'friend_completed' && prefs.friend_completed_push === false) return;
+
+      // Horas de silencio (hora local del dispositivo)
+      if (prefs.quiet_start && prefs.quiet_end) {
+        const toMinutes = (t: string) => {
+          const [h = '0', m = '0'] = t.split(':');
+          return parseInt(h, 10) * 60 + parseInt(m, 10);
+        };
+        const now = new Date();
+        const current = now.getHours() * 60 + now.getMinutes();
+        const start = toMinutes(prefs.quiet_start);
+        const end = toMinutes(prefs.quiet_end);
+        const inQuiet = start <= end ? current >= start && current < end : current >= start || current < end;
+        if (inQuiet) return;
+      }
     }
 
     // 2. Obtener nombre del actor
@@ -240,22 +255,27 @@ export async function displayInAppNotification(record: any, currentUserId: strin
     }
     const who = actorName || 'Alguien';
 
-    // 3. Obtener título de la tarea o del álbum si aplica
+    // 3. Obtener título (y dueño) de la tarea o del álbum si aplica
     let entityTitle = '';
-    if (record.bucket_id && ['reaction', 'comment', 'collaboration_request', 'collaborator_joined'].includes(record.type)) {
+    const entityInfo: { bucketTitle?: string | null; bucketOwnerId?: string | null; albumTitle?: string | null; albumOwnerId?: string | null } = {};
+    if (record.bucket_id && ['reaction', 'comment', 'mention', 'collaboration_request', 'collaborator_joined'].includes(record.type)) {
       const { data: b } = await supabase
         .from('buckets')
-        .select('title')
+        .select('title, user_id')
         .eq('id', record.bucket_id)
         .maybeSingle();
       if (b?.title) entityTitle = b.title;
-    } else if (record.album_id && record.type === 'album_invite') {
+      entityInfo.bucketTitle = b?.title ?? null;
+      entityInfo.bucketOwnerId = b?.user_id ?? null;
+    } else if (record.album_id && ['reaction', 'comment', 'mention', 'album_invite'].includes(record.type)) {
       const { data: a } = await supabase
         .from('albums')
-        .select('title')
+        .select('title, owner_id')
         .eq('id', record.album_id)
         .maybeSingle();
       if (a?.title) entityTitle = a.title;
+      entityInfo.albumTitle = a?.title ?? null;
+      entityInfo.albumOwnerId = a?.owner_id ?? null;
     }
 
     // 4. Formatear título y mensaje descriptivo
@@ -265,11 +285,15 @@ export async function displayInAppNotification(record: any, currentUserId: strin
     switch (record.type) {
       case 'reaction':
         title = 'Nueva reacción ❤️';
-        body = entityTitle ? `A ${who} le ha gustado tu tarea "${entityTitle}"` : `A ${who} le ha gustado tu tarea.`;
+        body = getSpecificNotificationText(record, who, entityInfo, currentUserId) ?? `${who} ha reaccionado a tu tarea.`;
         break;
       case 'comment':
         title = 'Nuevo comentario 💬';
-        body = entityTitle ? `${who} ha comentado en tu tarea "${entityTitle}"` : `${who} ha comentado en tu tarea.`;
+        body = getSpecificNotificationText(record, who, entityInfo, currentUserId) ?? `${who} ha dejado un comentario.`;
+        break;
+      case 'mention':
+        title = 'Nueva mención 🏷️';
+        body = getSpecificNotificationText(record, who, entityInfo, currentUserId) ?? `${who} te ha mencionado en un comentario.`;
         break;
       case 'follow':
         title = 'Nuevo seguidor 👋';
@@ -345,6 +369,8 @@ export async function displayInAppNotification(record: any, currentUserId: strin
           notificationId: record.id,
           bucketId: record.bucket_id,
           albumId: record.album_id,
+          commentId: record.comment_id,
+          actorId: record.actor_id,
           type: record.type,
         },
         sound: 'default',

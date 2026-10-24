@@ -21,7 +21,31 @@ export function useNotifications(userId?: string) {
         .limit(30);
       
       if (error) throw error;
-      return data;
+
+      // Títulos (y dueños) de las tareas / álbumes para poder escribir notificaciones específicas
+      const rows = data ?? [];
+      const bucketIds = [...new Set(rows.map((n: any) => n.bucket_id).filter(Boolean))] as string[];
+      const albumIds = [...new Set(rows.map((n: any) => n.album_id).filter(Boolean))] as string[];
+
+      const [bucketsRes, albumsRes] = await Promise.all([
+        bucketIds.length
+          ? supabase.from('buckets').select('id, title, user_id').in('id', bucketIds)
+          : Promise.resolve({ data: [] as any[] }),
+        albumIds.length
+          ? supabase.from('albums').select('id, title, owner_id').in('id', albumIds)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+
+      const bucketMap = new Map<string, any>((bucketsRes.data ?? []).map((b: any) => [b.id, b]));
+      const albumMap = new Map<string, any>((albumsRes.data ?? []).map((a: any) => [a.id, a]));
+
+      return rows.map((n: any) => ({
+        ...n,
+        bucketTitle: n.bucket_id ? bucketMap.get(n.bucket_id)?.title ?? null : null,
+        bucketOwnerId: n.bucket_id ? bucketMap.get(n.bucket_id)?.user_id ?? null : null,
+        albumTitle: n.album_id ? albumMap.get(n.album_id)?.title ?? null : null,
+        albumOwnerId: n.album_id ? albumMap.get(n.album_id)?.owner_id ?? null : null,
+      }));
     },
     enabled: !!userId,
   });

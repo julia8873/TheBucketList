@@ -267,8 +267,8 @@ export default function MyListScreen() {
     }, [isFromProfile, handleGoBackToProfile])
   );
 
-  return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
+  const renderTopHeader = (inListContent = true) => (
+    <View style={inListContent ? { marginHorizontal: -20 } : undefined}>
       {/* Header */}
       <View style={styles.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 10 }}>
@@ -339,73 +339,92 @@ export default function MyListScreen() {
           onChange={state.setActiveTab}
         />
       </View>
+    </View>
+  );
 
+  const taskListHeaderElement = (
+    <View style={{ marginBottom: 12 }}>
+      {renderTopHeader(true)}
+      <TaskListHeaderControls
+        filter={state.filter}
+        setFilter={state.setFilter}
+        priorityFilter={state.priorityFilter}
+        setPriorityFilter={state.setPriorityFilter}
+        onOpenTagFilterSheet={() => state.setTagSheetOpen(true)}
+        selectedTagIds={state.selectedTagIds}
+        selectedTags={state.selectedTags}
+        onRemoveTagFilter={(id) =>
+          state.setSelectedTagIds(state.selectedTagIds.filter((tid) => tid !== id))
+        }
+        isSelectionMode={state.isSelectionMode}
+        onToggleSelectionMode={() => {
+          if (state.isSelectionMode) state.handleExitSelection();
+          else state.setIsSelectionMode(true);
+        }}
+        taskViewMode={state.taskViewMode}
+        setTaskViewMode={state.setTaskViewMode}
+        tasksCount={state.filteredBuckets.length}
+        sortField={state.sortField}
+        sortDir={state.sortDir}
+        isReordering={state.isReordering}
+        setIsReordering={state.setIsReordering}
+        isSearching={state.isSearching}
+        sortTriggerRef={state.sortTriggerRef}
+        openSortMenu={state.openSortMenu}
+        onOpenCustomize={() => setCustomizeModalVisible(true)}
+        theme={theme}
+      />
+    </View>
+  );
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
       {/* Tab: Tareas */}
       {state.activeTab === 'list' && (
         <View style={{ flex: 1 }}>
-          <View style={{ paddingHorizontal: 20 }}>
-            <TaskListHeaderControls
-              filter={state.filter}
-              setFilter={state.setFilter}
-              priorityFilter={state.priorityFilter}
-              setPriorityFilter={state.setPriorityFilter}
-              onOpenTagFilterSheet={() => state.setTagSheetOpen(true)}
-              selectedTagIds={state.selectedTagIds}
-              selectedTags={state.selectedTags}
-              onRemoveTagFilter={(id) =>
-                state.setSelectedTagIds(state.selectedTagIds.filter((tid) => tid !== id))
-              }
-              isSelectionMode={state.isSelectionMode}
-              onToggleSelectionMode={() => {
-                if (state.isSelectionMode) state.handleExitSelection();
-                else state.setIsSelectionMode(true);
-              }}
-              taskViewMode={state.taskViewMode}
-              setTaskViewMode={state.setTaskViewMode}
-              tasksCount={state.filteredBuckets.length}
-              sortField={state.sortField}
-              sortDir={state.sortDir}
-              isReordering={state.isReordering}
-              setIsReordering={state.setIsReordering}
-              isSearching={state.isSearching}
-              sortTriggerRef={state.sortTriggerRef}
-              openSortMenu={state.openSortMenu}
-              onOpenCustomize={() => setCustomizeModalVisible(true)}
-              theme={theme}
-            />
-          </View>
-
           {state.isLoading ? (
-            <View style={{ paddingHorizontal: 20, paddingTop: 10 }}>
-              {state.taskViewMode === 'gallery' ? (
-                <View style={styles.galleryGrid}>
-                  <TaskGallerySkeleton />
-                  <TaskGallerySkeleton />
-                </View>
-              ) : state.taskViewMode === 'compact' ? (
-                <View style={{ gap: 8 }}>
-                  <TaskCompactSkeleton />
-                  <TaskCompactSkeleton />
-                  <TaskCompactSkeleton />
-                </View>
-              ) : (
-                <View style={{ gap: 12 }}>
-                  <TaskRowSkeleton />
-                  <TaskRowSkeleton />
-                </View>
-              )}
-            </View>
+            <ScrollView contentContainerStyle={styles.listContent}>
+              {taskListHeaderElement}
+              <View style={{ paddingTop: 10 }}>
+                {state.taskViewMode === 'gallery' ? (
+                  <View style={styles.galleryGrid}>
+                    <TaskGallerySkeleton />
+                    <TaskGallerySkeleton />
+                  </View>
+                ) : state.taskViewMode === 'compact' ? (
+                  <View style={{ gap: 8 }}>
+                    <TaskCompactSkeleton />
+                    <TaskCompactSkeleton />
+                    <TaskCompactSkeleton />
+                  </View>
+                ) : (
+                  <View style={{ gap: 12 }}>
+                    <TaskRowSkeleton />
+                    <TaskRowSkeleton />
+                  </View>
+                )}
+              </View>
+            </ScrollView>
           ) : state.filteredBuckets.length === 0 ? (
-            <View style={styles.empty}>
-              <Text style={{ color: theme.colors.foregroundMuted, fontSize: 14 }}>
-                {state.searchQuery ? 'No se encontraron tareas' : 'No tienes tareas en esta vista'}
-              </Text>
-            </View>
+            <ScrollView
+              contentContainerStyle={styles.listContent}
+              refreshControl={
+                <RefreshControl refreshing={state.refreshing} onRefresh={state.onRefresh} tintColor={gold[400]} />
+              }
+            >
+              {taskListHeaderElement}
+              <View style={styles.empty}>
+                <Text style={{ color: theme.colors.foregroundMuted, fontSize: 14 }}>
+                  {state.searchQuery ? 'No se encontraron tareas' : 'No tienes tareas en esta vista'}
+                </Text>
+              </View>
+            </ScrollView>
           ) : state.isReordering ? (
             <ScrollView
               contentContainerStyle={styles.listContent}
               scrollEnabled={!state.dragging}
             >
+              {taskListHeaderElement}
               {state.sortField === 'status' ? (
                 state.taskSections.map((sec) => {
                   if (sec.items.length === 0) return null;
@@ -447,6 +466,7 @@ export default function MyListScreen() {
                 <RefreshControl refreshing={state.refreshing} onRefresh={state.onRefresh} tintColor={gold[400]} />
               }
             >
+              {taskListHeaderElement}
               {state.sortField === 'status' ? (
                 state.taskSections.map((sec) => {
                   if (sec.items.length === 0) return null;
@@ -522,6 +542,7 @@ export default function MyListScreen() {
                 <RefreshControl refreshing={state.refreshing} onRefresh={state.onRefresh} tintColor={gold[400]} />
               }
             >
+              {taskListHeaderElement}
               {state.sortField === 'status' ? (
                 state.taskSections.map((sec) => {
                   if (sec.items.length === 0) return null;
@@ -548,6 +569,7 @@ export default function MyListScreen() {
               estimatedItemSize={89}
               ItemSeparatorComponent={TaskSeparator}
               contentContainerStyle={styles.listContent}
+              ListHeaderComponent={taskListHeaderElement}
               refreshControl={
                 <RefreshControl refreshing={state.refreshing} onRefresh={state.onRefresh} tintColor={gold[400]} />
               }
@@ -588,6 +610,7 @@ export default function MyListScreen() {
               <RefreshControl refreshing={state.refreshing} onRefresh={state.onRefresh} tintColor={gold[400]} />
             }
           >
+            {renderTopHeader(true)}
             <AlbumListHeaderControls
               albumFilter={state.albumFilter}
               setAlbumFilter={state.setAlbumFilter}
@@ -815,7 +838,7 @@ export default function MyListScreen() {
       )}
 
       {/* Tab: Calendario */}
-      {state.activeTab === 'calendar' && <CalendarTab />}
+      {state.activeTab === 'calendar' && <CalendarTab headerComponent={renderTopHeader(false)} />}
 
       {/* Sheets & Modales */}
       <TagFilterSheet

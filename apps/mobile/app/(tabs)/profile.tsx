@@ -178,8 +178,24 @@ export default function CurrentUserProfileScreen() {
 
   const taskCount = publicBuckets?.length ?? 0;
 
+  const headerTop = (
+    <View style={[styles.header, { paddingHorizontal: 0 }]}>
+      <PageTitle gold={t('profile.title_gold', { defaultValue: 'Mi' })} rest={t('profile.title_rest', { defaultValue: 'perfil' })} />
+      <Pressable
+        onPress={() => router.push('/(modals)/settings' as any)}
+        accessibilityRole="button"
+        accessibilityLabel={t('settings.title')}
+        style={[styles.roundBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+      >
+        <Settings size={22} color={theme.colors.foreground} />
+      </Pressable>
+    </View>
+  );
+
   const header = (
     <View>
+      {headerTop}
+
       {/* Identidad */}
       <View style={styles.identity}>
         <Avatar uri={profile?.avatar_url} initials={initialsOf(profile)} size="xl" goldRing />
@@ -294,21 +310,11 @@ export default function CurrentUserProfileScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Cabecera */}
-      <View style={styles.header}>
-        <PageTitle gold={t('profile.title_gold', { defaultValue: 'Mi' })} rest={t('profile.title_rest', { defaultValue: 'perfil' })} />
-        <Pressable
-          onPress={() => router.push('/(modals)/settings' as any)}
-          accessibilityRole="button"
-          accessibilityLabel={t('settings.title')}
-          style={[styles.roundBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
-        >
-          <Settings size={22} color={theme.colors.foreground} />
-        </Pressable>
-      </View>
-
       {profileLoading ? (
-        <ProfileSkeleton />
+        <View style={styles.listContent}>
+          {headerTop}
+          <ProfileSkeleton />
+        </View>
       ) : (
         <FlatList
           key={`${activeTab}-${activeTab === 'list' ? taskViewMode : albumViewMode}`}

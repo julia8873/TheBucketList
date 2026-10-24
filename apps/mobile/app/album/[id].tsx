@@ -1,5 +1,6 @@
 import { Alert } from '@bucketlist/ui';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 import { View, Text, Pressable, ScrollView, RefreshControl, Image, TextInput, StyleSheet } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -74,6 +75,17 @@ export default function AlbumDetailScreen() {
   const isAdmin = useIsAdmin();
   const promoteMutation = usePromoteAlbumToCollection();
   const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [commentsAutoFocus, setCommentsAutoFocus] = useState(false);
+
+  // Al llegar desde una notificación de comentario (?openComments=1) se abre la hoja de comentarios
+  const { openComments } = useLocalSearchParams<{ openComments?: string }>();
+  const openedFromNotificationRef = useRef(false);
+  useEffect(() => {
+    if (!openComments || openedFromNotificationRef.current) return;
+    openedFromNotificationRef.current = true;
+    const t = setTimeout(() => setShowCommentsModal(true), 350);
+    return () => clearTimeout(t);
+  }, [openComments]);
   const [reportVisible, setReportVisible] = useState(false);
   const reportContent = useReportContent();
 
@@ -809,7 +821,8 @@ export default function AlbumDetailScreen() {
               targetType="album"
               ownerId={album.ownerId}
               title={album.title}
-              onOpenModal={() => {
+              onOpenModal={(autoFocus) => {
+                setCommentsAutoFocus(!!autoFocus);
                 setShowCommentsModal(true);
               }}
             />
@@ -1007,11 +1020,15 @@ export default function AlbumDetailScreen() {
       {state.id !== 'unassigned' && (
         <TaskCommentsModal
           visible={showCommentsModal}
-          onClose={() => setShowCommentsModal(false)}
+          onClose={() => {
+            setShowCommentsModal(false);
+            setCommentsAutoFocus(false);
+          }}
           albumId={album.id}
           targetType="album"
           albumTitle={album.title}
           albumOwnerId={album.ownerId}
+          autoFocus={commentsAutoFocus}
         />
       )}
     </View>

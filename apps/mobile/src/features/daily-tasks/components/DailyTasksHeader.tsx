@@ -52,19 +52,19 @@ const DAILY_PRIORITY_SHORT_LABEL: Record<string, string> = {
 export interface DailyTasksTopBarProps {
   timeView: TimeView;
   setTimeView: (v: TimeView) => void;
+  style?: any;
 }
 
 /**
- * Barra superior fija con el título y las pestañas temporales (Hoy, Semana, Calendario, Todas).
- * Se eliminó el subtítulo para que todo esté más arriba y compacto.
+ * Barra superior con el título y las pestañas temporales (Hoy, Semana, Calendario, Todas).
  */
-export function DailyTasksTopBar({ timeView, setTimeView }: DailyTasksTopBarProps) {
+export function DailyTasksTopBar({ timeView, setTimeView, style }: DailyTasksTopBarProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const [goldDaily, ...restDaily] = t('nav.daily', { defaultValue: 'Día a día' }).split(' ');
 
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, style]}>
       <View style={styles.titleRow}>
         <PageTitle gold={goldDaily} rest={restDaily.join(' ')} />
       </View>
@@ -137,22 +137,23 @@ export interface DailyQuickAddBarProps {
   setNewTitle: (t: string) => void;
   handleQuickAddTask: () => void;
   inputRef: React.RefObject<TextInput>;
+  containerStyle?: any;
 }
 
 /**
- * Barra fija de añadir tarea rápida situada fuera del ScrollView para que no se
- * desplace ni suba hacia arriba al abrir el teclado en móvil.
+ * Barra de añadir tarea rápida para hoy.
  */
 export function DailyQuickAddBar({
   newTitle,
   setNewTitle,
   handleQuickAddTask,
   inputRef,
+  containerStyle,
 }: DailyQuickAddBarProps) {
   const { theme } = useTheme();
 
   return (
-    <View style={{ paddingHorizontal: 16, marginBottom: 2 }}>
+    <View style={[{ paddingHorizontal: 16, marginBottom: 2 }, containerStyle]}>
       <View style={[styles.inputCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, marginBottom: 2 }]}>
         <TextInput
           ref={inputRef}

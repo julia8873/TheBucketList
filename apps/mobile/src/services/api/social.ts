@@ -213,7 +213,7 @@ export const socialApi = {
         void sendPushNotification(
           ownerId,
           'Nuevo comentario 💬',
-          `${authorName} comentó en "${itemTitle}": "${body.slice(0, 50)}"`,
+          `${authorName} ha dejado un comentario en tu ${targetType === 'album' ? 'álbum' : 'tarea'} "${itemTitle}"`,
           targetType === 'album'
             ? { albumId: targetId, commentId: data.id, type: 'comment' }
             : { bucketId: targetId, commentId: data.id, type: 'comment' }

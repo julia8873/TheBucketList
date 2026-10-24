@@ -46,9 +46,9 @@ export function ItemCommentsSection({
     targetId,
     targetType,
     ownerId,
-    onReplyStart: () => setTimeout(() => inputRef.current?.focus(), 80),
+    onReplyStart: () => onOpenModal(true),
   });
-  const { user, comments, isLoading, threads, text, setText, replyingTo } = ctrl;
+  const { user, profile, comments, isLoading, threads, text, setText, replyingTo } = ctrl;
 
   // Los hilos con actividad más reciente, mostrados de más antiguo a más nuevo
   const { shownThreads, hiddenCount } = useMemo(() => {
@@ -145,14 +145,23 @@ export function ItemCommentsSection({
         </View>
       )}
 
-      {/* Barra de entrada para escribir comentario directamente */}
+      {/* Barra para abrir el modal y añadir comentario */}
       {user && (
-        <View style={styles.inputRow}>
+        <Pressable
+          style={styles.inputRow}
+          onPress={() => onOpenModal(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Añadir un comentario"
+        >
           <Avatar
-            uri={user.user_metadata?.avatar_url}
+            uri={profile?.avatar_url ?? user.user_metadata?.avatar_url}
             initials={initialsOf({
-              display_name: user.user_metadata?.display_name || user.user_metadata?.full_name,
-              username: user.user_metadata?.username,
+              display_name:
+                profile?.display_name ||
+                profile?.username ||
+                user.user_metadata?.display_name ||
+                user.user_metadata?.full_name,
+              username: profile?.username || user.user_metadata?.username,
             })}
             size="sm"
           />
@@ -166,32 +175,18 @@ export function ItemCommentsSection({
               },
             ]}
           >
-            <TextInput
-              ref={inputRef}
-              style={[styles.textInput, { color: theme.colors.foreground }]}
-              placeholder={replyingTo ? 'Escribe tu respuesta...' : 'Añade un comentario...'}
-              placeholderTextColor={theme.colors.foregroundMuted}
-              value={text}
-              onChangeText={setText}
-              maxLength={1000}
-            />
-
-            <Pressable
-              onPress={handleSend}
-              disabled={!text.trim() || ctrl.isSending}
-              style={[styles.sendBtn, text.trim().length > 0 && styles.sendBtnActive]}
-              hitSlop={6}
-              accessibilityRole="button"
-              accessibilityLabel="Enviar comentario"
+            <Text
+              style={[styles.placeholderText, { color: theme.colors.foregroundMuted }]}
+              numberOfLines={1}
             >
-              {ctrl.isSending ? (
-                <ActivityIndicator size="small" color="#000" />
-              ) : (
-                <Send size={14} color={text.trim().length > 0 ? '#000' : theme.colors.foregroundMuted} />
-              )}
-            </Pressable>
+              Añade un comentario...
+            </Text>
+
+            <View style={styles.sendBtn}>
+              <Send size={14} color={theme.colors.foregroundMuted} />
+            </View>
           </View>
-        </View>
+        </Pressable>
       )}
 
       <ReportModal
@@ -283,13 +278,12 @@ const styles = themedStyleSheet({
     borderRadius: 22,
     borderWidth: 1,
     paddingHorizontal: 14,
-    paddingVertical: Platform.OS === 'ios' ? 7 : 3,
+    paddingVertical: Platform.OS === 'ios' ? 9 : 8,
   },
-  textInput: {
+  placeholderText: {
     flex: 1,
     fontFamily: fontFamily.regular,
     fontSize: 13,
-    padding: 0,
     marginRight: 6,
   },
   sendBtn: {

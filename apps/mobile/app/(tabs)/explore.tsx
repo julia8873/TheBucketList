@@ -90,23 +90,6 @@ export default function DailyTasksScreen() {
   return (
     <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={{ flex: 1 }}>
-        {/* Top Bar fija con título y pestañas (sin subtítulo, compacta) */}
-        <DailyTasksTopBar
-          timeView={state.timeView}
-          setTimeView={state.setTimeView}
-        />
-
-        {/* Barra de tarea rápida fija: Solo en Hoy y Todas.
-            Al estar fuera del ScrollView, se queda exactamente en la misma altura al escribir con el teclado */}
-        {state.timeView !== 'calendar' && state.timeView !== 'week' && (
-          <DailyQuickAddBar
-            newTitle={state.newTitle}
-            setNewTitle={state.setNewTitle}
-            handleQuickAddTask={state.handleQuickAddTask}
-            inputRef={state.inputRef}
-          />
-        )}
-
         {/* Content Area */}
         <ScrollView
           style={styles.listScroll}
@@ -124,6 +107,24 @@ export default function DailyTasksScreen() {
           }
           keyboardShouldPersistTaps="handled"
         >
+          {/* Top Bar con título y pestañas */}
+          <DailyTasksTopBar
+            timeView={state.timeView}
+            setTimeView={state.setTimeView}
+            style={{ paddingHorizontal: 0 }}
+          />
+
+          {/* Barra de tarea rápida: Solo en Hoy y Todas */}
+          {state.timeView !== 'calendar' && state.timeView !== 'week' && (
+            <DailyQuickAddBar
+              newTitle={state.newTitle}
+              setNewTitle={state.setNewTitle}
+              handleQuickAddTask={state.handleQuickAddTask}
+              inputRef={state.inputRef}
+              containerStyle={{ paddingHorizontal: 0 }}
+            />
+          )}
+
           {/* Controles scrolleables: selector de semana y filtros de etiquetas/estado */}
           <DailyTasksScrollControls
             timeView={state.timeView}

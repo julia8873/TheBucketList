@@ -20,7 +20,7 @@ import { styles } from '../features/calendar/styles/calendar.styles';
 import { CalendarMonthGrid } from '../features/calendar/components/CalendarMonthGrid';
 import { CalendarTaskListSections } from '../features/calendar/components/CalendarTaskListSections';
 
-export function CalendarTab() {
+export function CalendarTab({ headerComponent }: { headerComponent?: React.ReactNode } = {}) {
   const { user } = useAuthStore();
   const { refreshing, onRefresh } = usePullToRefresh();
 
@@ -129,6 +129,7 @@ export function CalendarTab() {
         />
       }
     >
+      {headerComponent}
       <CalendarMonthGrid
         currentDate={currentDate}
         selectedDate={selectedDate}

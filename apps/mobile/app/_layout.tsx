@@ -30,6 +30,7 @@ import { useAutoRefresh } from '../src/hooks/useAutoRefresh';
 import { bucketApi } from '../src/services/api/bucket';
 import { BUCKETS_QUERY_KEY } from '../src/hooks/useBuckets';
 import { useRealtimeSync } from '../src/hooks/useRealtimeSync';
+import { useNotificationTapHandler } from '../src/hooks/useNotificationTapHandler';
 import 'intl-pluralrules';
 import '../../../packages/shared/src/i18n'; // initialize i18n
 
@@ -185,6 +186,9 @@ function RootNavigator() {
 
   // Cambios de otros colaboradores en tiempo real (tareas y álbumes compartidos)
   useRealtimeSync(userId);
+
+  // Pulsar una notificación del sistema (p. ej. de un comentario) abre la tarea / álbum / comentario
+  useNotificationTapHandler(appReady && !!session && onboardingCompleted === true);
 
   // Enlaces del correo (confirmar cuenta / restablecer contraseña):
   useEffect(() => {

@@ -982,14 +982,7 @@ export function useBucketDetailState() {
   };
 
   const confirmDeletePhoto = (photo: any) => {
-    confirm.show({
-      title: '¿Borrar foto?',
-      message: 'Se eliminará de esta tarea. Esta acción no se puede deshacer.',
-      confirmLabel: 'Borrar foto',
-      cancelLabel: 'Cancelar',
-      destructive: true,
-      onConfirm: () => void deletePhoto(photo),
-    });
+    void deletePhoto(photo);
   };
 
   const deletePhoto = async (photo: any) => {
@@ -1714,6 +1707,7 @@ export function useBucketDetailState() {
     showPhotoLinkModal,
     setShowPhotoLinkModal,
     persistPhotoOrder,
+    deletePhoto,
     confirmDeletePhoto,
     uploadPhotos,
     uploadCover,

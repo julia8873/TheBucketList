@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 import {
   View,
   StatusBar,
@@ -79,6 +80,16 @@ export default function BucketDetailScreen() {
   const state = useBucketDetailState();
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [commentsAutoFocus, setCommentsAutoFocus] = useState(false);
+
+  // Al llegar desde una notificación de comentario (?openComments=1) se abre la hoja de comentarios
+  const { openComments } = useLocalSearchParams<{ openComments?: string }>();
+  const openedFromNotificationRef = useRef(false);
+  useEffect(() => {
+    if (!openComments || openedFromNotificationRef.current) return;
+    openedFromNotificationRef.current = true;
+    const t = setTimeout(() => setShowCommentsModal(true), 350);
+    return () => clearTimeout(t);
+  }, [openComments]);
   const [isSquareCover, setIsSquareCover] = useState(false);
   const [reportVisible, setReportVisible] = useState(false);
   const reportContent = useReportContent();
@@ -557,11 +568,9 @@ export default function BucketDetailScreen() {
         viewingPhotoIndex={state.viewingPhotoIndex}
         setViewingPhotoIndex={state.setViewingPhotoIndex}
         isOwner={state.canEdit}
-        onDelete={state.confirmDeletePhoto}
+        onDelete={state.deletePhoto}
         onUpdateTitle={state.handleUpdatePhotoTitle}
         onUpdatePhotoDate={state.handleUpdatePhotoDate}
-        selectedThumbnailId={state.chosenPhotoId}
-        onSetAsThumbnail={(photoId) => void state.chooseThumbnail('photo', photoId)}
       />
 
       {/* Botón flotante inferior para cambiar estado */}

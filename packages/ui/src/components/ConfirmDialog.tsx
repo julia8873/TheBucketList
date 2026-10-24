@@ -220,41 +220,48 @@ export function ConfirmDialog({
   const stackDefaultButtons = !actions && shouldStackButtons;
 
   const body = (
+    <View
+      collapsable={false}
+      style={[
+        styles.backdrop,
+        inline ? styles.inlineBackdrop : null,
+        // Tamaño mínimo garantizado: el diálogo siempre se centra en el área visible.
+        { minWidth: availableWidth, minHeight: availableHeight },
+        { paddingHorizontal: hPadding },
+      ]}
+    >
+      {/* Fondo semitransparente como hermano independiente: captura toques fuera sin interferir con los botones interiores */}
       <Pressable
-        collapsable={false}
         style={[
-          styles.backdrop,
-          inline ? styles.inlineBackdrop : null,
-          // Tamaño mínimo garantizado: el diálogo siempre se centra en el área visible.
-          { minWidth: availableWidth, minHeight: availableHeight },
+          StyleSheet.absoluteFill,
           { backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(26,20,16,0.45)' },
-          { paddingHorizontal: hPadding },
         ]}
         onPress={onCancel}
+        accessibilityRole="button"
+        accessibilityLabel={cancelLabel}
+      />
+      <View
+        collapsable={false}
+        style={[
+          styles.dialog,
+          {
+            width: dialogWidth,
+            maxHeight: Math.max(160, availableHeight - 48),
+            backgroundColor: theme.colors.surfaceElevated,
+            borderColor: theme.colors.border,
+          },
+        ]}
       >
-        <Pressable
-          collapsable={false}
-          style={[
-            styles.dialog,
-            {
-              width: dialogWidth,
-              maxHeight: Math.max(160, availableHeight - 48),
-              backgroundColor: theme.colors.surfaceElevated,
-              borderColor: theme.colors.border,
-            },
-          ]}
-          onPress={(e) => e.stopPropagation()}
-        >
-          {toneColor ? (
-            <View
-              style={[
-                styles.toneBadge,
-                { borderColor: toneColor, backgroundColor: theme.colors.surfaceSunken },
-              ]}
-            >
-              <ToneIcon size={20} color={toneColor} strokeWidth={2.4} />
-            </View>
-          ) : null}
+        {toneColor ? (
+          <View
+            style={[
+              styles.toneBadge,
+              { borderColor: toneColor, backgroundColor: theme.colors.surfaceSunken },
+            ]}
+          >
+            <ToneIcon size={20} color={toneColor} strokeWidth={2.4} />
+          </View>
+        ) : null}
 
           <Text style={[styles.dialogTitle, { color: theme.colors.foreground }]}>{title}</Text>
           {message ? (
@@ -297,6 +304,8 @@ export function ConfirmDialog({
                 return (
                   <Pressable
                     key={`${action.label}-${idx}`}
+                    unstable_pressDelay={0}
+                    hitSlop={8}
                     onPress={() => (isCancel ? onCancel() : onAction?.(action))}
                     style={[
                       styles.dialogBtn,
@@ -341,6 +350,8 @@ export function ConfirmDialog({
               {stackDefaultButtons ? (
                 <>
                   <Pressable
+                    unstable_pressDelay={0}
+                    hitSlop={8}
                     onPress={() => {
                       if (ok && !loading) onConfirm();
                     }}
@@ -378,6 +389,8 @@ export function ConfirmDialog({
                     )}
                   </Pressable>
                   <Pressable
+                    unstable_pressDelay={0}
+                    hitSlop={8}
                     onPress={() => {
                       setText('');
                       onCancel();
@@ -394,6 +407,8 @@ export function ConfirmDialog({
               ) : (
                 <>
                   <Pressable
+                    unstable_pressDelay={0}
+                    hitSlop={8}
                     onPress={() => {
                       setText('');
                       onCancel();
@@ -408,6 +423,8 @@ export function ConfirmDialog({
                   </Pressable>
 
                   <Pressable
+                    unstable_pressDelay={0}
+                    hitSlop={8}
                     onPress={() => {
                       if (ok && !loading) onConfirm();
                     }}
@@ -447,8 +464,8 @@ export function ConfirmDialog({
               )}
             </View>
           )}
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
   );
 
   if (inline) return visible ? body : null;
@@ -518,15 +535,14 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   const present = useCallback((item: QueuedDialog | null) => {
     // Se "reserva" de inmediato para que otras llamadas a show()/ask() se encolen mientras esperamos.
     currentRef.current = item;
-    if (!item || Platform.OS === 'web' || !Keyboard.isVisible()) {
-      setCurrent(item);
+    if (!item) {
+      setCurrent(null);
       return;
     }
-    // Hay teclado abierto: lo cerramos y mostramos el diálogo cuando la ventana ya está estable.
-    setCurrent(null);
-    void waitForKeyboardHidden().then(() => {
-      if (currentRef.current === item) setCurrent(item);
-    });
+    if (Platform.OS !== 'web' && Keyboard.isVisible()) {
+      Keyboard.dismiss();
+    }
+    setCurrent(item);
   }, []);
 
   /** Cierra el diálogo actual y abre el siguiente de la cola (si lo hay). */

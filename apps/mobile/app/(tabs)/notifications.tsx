@@ -10,6 +10,7 @@ import { useAuthStore } from '../../src/stores/auth.store';
 import { usePullToRefresh } from '../../src/hooks/useAutoRefresh';
 import { supabase } from '../../src/services/supabase';
 import { bucketApi } from '../../src/services/api/bucket';
+import { getNotificationRoute, getSpecificNotificationText } from '../../src/utils/notificationRouting';
 import { useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -158,35 +159,9 @@ export default function NotificationsScreen() {
       markAsRead.mutate(notification.id);
     }
     
-    // Navigate based on type
-    if (notification.type === 'user_reported' || notification.type === 'content_reported') {
-      router.push('/(modals)/admin-reports' as any);
-    } else if (notification.type === 'follow' || notification.type === 'follow_accepted') {
-      router.push(`/profile/${notification.actor_id}` as any);
-    } else if (notification.type === 'follow_request') {
-      router.push('/friends?tab=requests' as any);
-    } else if (notification.type === 'album_invite' || notification.type === 'album_update') {
-      if (notification.album_id) {
-        router.push(`/album/${notification.album_id}` as any);
-      }
-    } else if (
-      notification.type === 'reaction' || 
-      notification.type === 'comment' || 
-      notification.type === 'friend_completed' || 
-      notification.type === 'deadline' ||
-      notification.type === 'bucket_update' ||
-      notification.type === 'notification_accepted' ||
-      notification.type === 'collaboration_request' ||
-      notification.type === 'collaborator_joined' ||
-      notification.type === 'collaboration_accepted' ||
-      notification.type === 'drive_access'
-    ) {
-      if (notification.bucket_id) {
-        router.push(`/bucket/${notification.bucket_id}` as any);
-      } else if (notification.album_id) {
-        router.push(`/album/${notification.album_id}` as any);
-      }
-    }
+    // Navegar según el tipo (los comentarios y menciones abren directamente la hoja de comentarios)
+    const route = getNotificationRoute(notification);
+    if (route) router.push(route as any);
   };
 
   const getIconForType = (type: string) => {
@@ -194,7 +169,9 @@ export default function NotificationsScreen() {
       case 'user_reported':
       case 'content_reported': return <ShieldAlert size={16} color={theme.colors.error} />;
       case 'reaction': return <Heart size={16} color={theme.colors.primary} />;
-      case 'comment': return <MessageCircle size={16} color={theme.colors.primary} />;
+      case 'comment':
+      case 'mention':
+      case 'comment_like': return <MessageCircle size={16} color={theme.colors.primary} />;
       case 'follow': 
       case 'follow_accepted':
       case 'follow_request': return <UserPlus size={16} color={theme.colors.success} />;
@@ -220,8 +197,15 @@ export default function NotificationsScreen() {
     switch (notification.type) {
       case 'user_reported': return notification.content || `${actorName} ha enviado un reporte de usuario.`;
       case 'content_reported': return notification.content || `${actorName} ha reportado un contenido.`;
-      case 'reaction': return `${actorName} ha reaccionado a tu tarea.`;
-      case 'comment': return `${actorName} ha comentado en tu tarea.`;
+      case 'reaction':
+      case 'comment':
+      case 'mention':
+      case 'comment_like':
+        return (
+          getSpecificNotificationText(notification, actorName, notification, user?.id) ??
+          notification.content ??
+          'Tienes una nueva notificación.'
+        );
       case 'follow': return `${actorName} ha empezado a seguirte.`;
       case 'follow_request': return `${actorName} quiere seguirte.`;
       case 'follow_accepted': return `${actorName} aceptó tu solicitud.`;
@@ -265,8 +249,8 @@ export default function NotificationsScreen() {
 
   const unreadCount = notifications?.filter(n => !n.is_read).length || 0;
 
-  return (
-    <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
+  const notificationsHeader = (
+    <View>
       <View style={[styles.header, { borderBottomColor: theme.dark ? '#222222' : '#cccccc' }]}>
         <PageTitle>Notificaciones</PageTitle>
         {unreadCount > 0 ? (
@@ -333,9 +317,14 @@ export default function NotificationsScreen() {
           </Pressable>
         </View>
       ) : null}
+    </View>
+  );
 
+  return (
+    <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <FlatList
         data={notifications || []}
+        ListHeaderComponent={notificationsHeader}
         refreshing={refreshing}
         onRefresh={() => void onRefresh()}
         keyExtractor={(item) => item.id}
@@ -449,6 +438,7 @@ const styles = themedStyleSheet({
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 16,
+    minHeight: 44 + 12 + 16, // misma altura de fila (44) que Ajustes / Perfil → el título queda a la misma altura
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#222222',
   },

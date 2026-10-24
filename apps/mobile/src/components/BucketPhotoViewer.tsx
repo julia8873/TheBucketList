@@ -20,7 +20,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { X, Download, Trash2, Calendar, CheckCircle2, Pencil, Image as ImageIcon, Check } from 'lucide-react-native';
-import { Typography, confirm, toast } from '@bucketlist/ui';
+import { Typography, confirm, toast, ConfirmDialog } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { storageApi } from '../services/api/storage';
 import * as FileSystem from 'expo-file-system';
@@ -293,15 +293,11 @@ export function BucketPhotoViewer({
     setDatePickerState(null);
   };
 
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
+  const [removeCompletedConfirmId, setRemoveCompletedConfirmId] = useState<string | null>(null);
+
   const handleRemoveCompletedAt = (photoId: string) => {
-    confirm.show({
-      title: 'Quitar fecha de completado',
-      message: '¿Deseas quitar la fecha de completado de esta foto?',
-      confirmLabel: 'Quitar',
-      cancelLabel: 'Cancelar',
-      destructive: true,
-      onConfirm: () => onUpdatePhotoDate?.(photoId, 'completed_at', null),
-    });
+    setRemoveCompletedConfirmId(photoId);
   };
 
   return (
@@ -498,38 +494,11 @@ export function BucketPhotoViewer({
               <Pressable
                 accessibilityLabel="Borrar foto"
                 style={[styles.deleteBtn]}
-                onPress={() => onDelete(currentPhoto)}
+                unstable_pressDelay={0}
+                hitSlop={8}
+                onPress={() => setDeleteConfirmVisible(true)}
               >
                 <Trash2 color="#F87171" size={20} strokeWidth={2} />
-              </Pressable>
-            )}
-            {isOwner && onSetAsThumbnail && (
-              <Pressable
-                accessibilityLabel="Fijar como portada"
-                style={[
-                  styles.actionBtn,
-                  currentPhoto.id === selectedThumbnailId
-                    ? { backgroundColor: gold[400], borderColor: gold[400] }
-                    : { backgroundColor: 'rgba(255,255,255,0.16)', borderColor: 'rgba(255,255,255,0.22)' },
-                  { borderWidth: 1 }
-                ]}
-                onPress={() => {
-                  onSetAsThumbnail(currentPhoto.id);
-                  toast.success('Esta foto se ha establecido como imagen principal de la tarea.');
-                }}
-              >
-                {currentPhoto.id === selectedThumbnailId ? (
-                  <Check color="#000" size={17} strokeWidth={2.5} />
-                ) : (
-                  <ImageIcon color="#FFF" size={17} strokeWidth={2} />
-                )}
-                <Typography
-                  variant="bodySemibold"
-                  color={currentPhoto.id === selectedThumbnailId ? '#000' : '#FFF'}
-                  style={{ marginLeft: 6, fontSize: 13 }}
-                >
-                  {currentPhoto.id === selectedThumbnailId ? 'Portada actual' : 'Usar de portada'}
-                </Typography>
               </Pressable>
             )}
             <Pressable
@@ -558,6 +527,43 @@ export function BucketPhotoViewer({
               </Typography>
             </Pressable>
           </View>
+        )}
+
+        {/* Diálogos de confirmación dibujados dentro del propio visor para respuesta táctil instantánea y sin conflicto de Modales en Android */}
+        {deleteConfirmVisible && currentPhoto && (
+          <ConfirmDialog
+            visible={true}
+            inline={true}
+            title="¿Borrar foto?"
+            message="Se eliminará de esta tarea. Esta acción no se puede deshacer."
+            confirmLabel="Borrar foto"
+            cancelLabel="Cancelar"
+            destructive={true}
+            onConfirm={() => {
+              const photoToDelete = currentPhoto;
+              setDeleteConfirmVisible(false);
+              onDelete?.(photoToDelete);
+            }}
+            onCancel={() => setDeleteConfirmVisible(false)}
+          />
+        )}
+
+        {removeCompletedConfirmId && (
+          <ConfirmDialog
+            visible={true}
+            inline={true}
+            title="Quitar fecha de completado"
+            message="¿Deseas quitar la fecha de completado de esta foto?"
+            confirmLabel="Quitar"
+            cancelLabel="Cancelar"
+            destructive={true}
+            onConfirm={() => {
+              const pid = removeCompletedConfirmId;
+              setRemoveCompletedConfirmId(null);
+              onUpdatePhotoDate?.(pid, 'completed_at', null);
+            }}
+            onCancel={() => setRemoveCompletedConfirmId(null)}
+          />
         )}
       </GestureHandlerRootView>
     </Modal>
