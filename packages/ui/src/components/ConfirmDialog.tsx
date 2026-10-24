@@ -167,6 +167,15 @@ export function ConfirmDialog({
   // Los botones siempre se apilan en vertical (uno encima de otro) y alineados abajo a la derecha:
   // así caben y se ven bien en cualquier tamaño de pantalla, con cualquier longitud de texto.
   const shouldStackButtons = true;
+  // Medida real de la ventana donde se dibuja el diálogo. Con el teclado abierto (o cerrándose)
+  // la ventana del Modal es MÁS PEQUEÑA que la pantalla: si forzáramos `windowHeight`, el cuadro
+  // se centraría en un área mayor que la visible y se vería arriba con los botones fuera de pantalla.
+  const [layoutBox, setLayoutBox] = useState<{ w: number; h: number } | null>(null);
+  // Solo si Android mide el Modal con 0 px (fallo ya conocido) recurrimos a dimensiones explícitas.
+  // Es "pegajoso" para evitar bucles de medición.
+  const [forceExplicitSize, setForceExplicitSize] = useState(false);
+  const availableHeight =
+    layoutBox && layoutBox.h > 0 && !forceExplicitSize ? layoutBox.h : windowHeight;
   const [text, setText] = useState('');
   const ok = !requireText || text.trim().toUpperCase() === requireText.toUpperCase();
 
@@ -205,12 +214,24 @@ export function ConfirmDialog({
         style={[
           styles.backdrop,
           inline ? styles.inlineBackdrop : null,
-          // Tamaño explícito SIEMPRE (también dentro del Modal): evita que Android lo mida a 0
-          // y deje el diálogo arriba a la izquierda, sin texto visible.
-          { width: windowWidth, height: windowHeight },
+          // Por defecto `flex: 1` rellena la ventana real del Modal (respeta el teclado).
+          // Solo si se detecta una medida de 0 px se fuerza el tamaño de pantalla.
+          forceExplicitSize ? { width: windowWidth, height: windowHeight } : null,
           { backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(26,20,16,0.45)' },
           { paddingHorizontal: hPadding },
         ]}
+        onLayout={(e) => {
+          const { width, height } = e.nativeEvent.layout;
+          if (width < 1 || height < 1) {
+            setForceExplicitSize(true);
+          } else {
+            setLayoutBox((prev) =>
+              prev && Math.abs(prev.w - width) < 1 && Math.abs(prev.h - height) < 1
+                ? prev
+                : { w: width, h: height },
+            );
+          }
+        }}
         onPress={onCancel}
       >
         <Pressable
@@ -219,7 +240,7 @@ export function ConfirmDialog({
             styles.dialog,
             {
               width: dialogWidth,
-              maxHeight: Math.max(240, windowHeight - 48),
+              maxHeight: Math.max(160, availableHeight - 48),
               backgroundColor: theme.colors.surfaceElevated,
               borderColor: theme.colors.border,
             },
@@ -463,14 +484,51 @@ interface QueuedDialog {
  */
 const USE_INLINE_LAYER = false;
 
+/**
+ * Si hay un teclado abierto, lo cierra y espera a que termine de ocultarse (máx. 600 ms).
+ * Un diálogo creado mientras el teclado redimensiona la ventana (p. ej. justo tras escribir la
+ * contraseña y entrar, o al volver del navegador de Google) se dibujaba arriba y con los botones
+ * fuera de la zona visible.
+ */
+function waitForKeyboardHidden(): Promise<void> {
+  return new Promise((resolve) => {
+    if (Platform.OS === 'web' || !Keyboard.isVisible()) {
+      resolve();
+      return;
+    }
+    let done = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const sub = Keyboard.addListener('keyboardDidHide', () => finish());
+    function finish() {
+      if (done) return;
+      done = true;
+      sub.remove();
+      if (timer) clearTimeout(timer);
+      // Pequeño margen para que Android termine de re-maquetar la ventana
+      setTimeout(resolve, 80);
+    }
+    timer = setTimeout(finish, 600);
+    Keyboard.dismiss();
+  });
+}
+
 export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   const [current, setCurrent] = useState<QueuedDialog | null>(null);
   const queueRef = useRef<QueuedDialog[]>([]);
   const currentRef = useRef<QueuedDialog | null>(null);
 
   const present = useCallback((item: QueuedDialog | null) => {
+    // Se "reserva" de inmediato para que otras llamadas a show()/ask() se encolen mientras esperamos.
     currentRef.current = item;
-    setCurrent(item);
+    if (!item || Platform.OS === 'web' || !Keyboard.isVisible()) {
+      setCurrent(item);
+      return;
+    }
+    // Hay teclado abierto: lo cerramos y mostramos el diálogo cuando la ventana ya está estable.
+    setCurrent(null);
+    void waitForKeyboardHidden().then(() => {
+      if (currentRef.current === item) setCurrent(item);
+    });
   }, []);
 
   /** Cierra el diálogo actual y abre el siguiente de la cola (si lo hay). */

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Text, StyleSheet, type TextInput } from 'react-native';
+import { Text, StyleSheet, Keyboard, type TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme, fontFamily, Alert } from '@bucketlist/ui';
@@ -251,6 +251,8 @@ export default function RegisterScreen() {
   };
 
   const handleGoogleRegister = async () => {
+    // Cerramos el teclado antes de abrir el navegador para que no reaparezca al volver
+    Keyboard.dismiss();
     const result = await signInWithGoogle();
     switch (result.type) {
       case 'account_exists':

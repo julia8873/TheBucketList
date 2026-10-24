@@ -1,5 +1,6 @@
 import { Alert } from '@bucketlist/ui';
 import React, { useEffect } from 'react';
+import { InteractionManager } from 'react-native';
 import { Tabs } from 'expo-router';
 import { useTheme } from '@bucketlist/ui';
 import { Home, ShoppingBag, ListTodo, User } from 'lucide-react-native';
@@ -29,37 +30,49 @@ export default function TabsLayout() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (user?.id) {
-      checkNotificationPermissionsAsync()
-        .then((perm) => {
-          if (!perm.granted && perm.canAskAgain) {
-            Alert.alert(
-              '¿Activar notificaciones?',
-              'Recibe avisos al instante en tu móvil cuando tus amigos reaccionen, comenten tus publicaciones o te inviten a colaborar.',
-              [
-                { text: 'Ahora no', style: 'cancel' },
-                {
-                  text: 'Activar',
-                  onPress: () => {
-                    registerForPushNotificationsAsync(user.id)
-                      .then(() => {
-                        void queryClient.invalidateQueries({ queryKey: ['notification_prefs', user.id] });
-                      })
-                      .catch(console.error);
-                  },
-                },
-              ]
-            );
-          } else if (perm.granted) {
-            registerForPushNotificationsAsync(user.id)
-              .then(() => {
-                void queryClient.invalidateQueries({ queryKey: ['notification_prefs', user.id] });
-              })
-              .catch(console.error);
-          }
+    if (!user?.id) return;
+    const userId = user.id;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const syncPushToken = () =>
+      registerForPushNotificationsAsync(userId)
+        .then(() => {
+          void queryClient.invalidateQueries({ queryKey: ['notification_prefs', userId] });
         })
         .catch(console.error);
-    }
+
+    // Esperamos a que termine la transición login → pestañas (y el cierre del teclado de la
+    // pantalla anterior) antes de mostrar el diálogo. Si se muestra mientras la pantalla aún se
+    // está montando, Android lo dibuja arriba y con los botones fuera de la zona visible.
+    const task = InteractionManager.runAfterInteractions(() => {
+      timer = setTimeout(() => {
+        if (cancelled) return;
+        checkNotificationPermissionsAsync()
+          .then((perm) => {
+            if (cancelled) return;
+            if (!perm.granted && perm.canAskAgain) {
+              Alert.alert(
+                '¿Activar notificaciones?',
+                'Recibe avisos al instante en tu móvil cuando tus amigos reaccionen, comenten tus publicaciones o te inviten a colaborar.',
+                [
+                  { text: 'Ahora no', style: 'cancel' },
+                  { text: 'Activar', onPress: () => void syncPushToken() },
+                ],
+              );
+            } else if (perm.granted) {
+              void syncPushToken();
+            }
+          })
+          .catch(console.error);
+      }, 700);
+    });
+
+    return () => {
+      cancelled = true;
+      task.cancel();
+      if (timer) clearTimeout(timer);
+    };
   }, [user?.id, queryClient]);
 
   return (
