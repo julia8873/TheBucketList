@@ -63,13 +63,13 @@ export function LocationAutocomplete({
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(text)}&limit=8&addressdetails=1`,
         {
           headers: {
-            'User-Agent': 'TheBucketListApp/1.0 (contact@thebucketlist.com)',
+            'User-Agent': 'TheBucketListApp/1.0 (thebucketlist898@gmail.com)',
           },
         }
       );
-      
+
       const rawData: any[] = await response.json();
-      
+
       // Filtrar provincias duplicadas que comparten nombre con su ciudad capital
       // y limpiar los nombres para que sean legibles y únicos (ej: "Granada, Andalucía, España")
       const processed: LocationResult[] = [];

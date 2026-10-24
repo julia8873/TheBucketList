@@ -6,19 +6,15 @@ import {
   Modal,
   Pressable,
   StyleSheet,
-  Share,
   Platform,
 } from 'react-native';
 import {
-  Share2,
   UserX,
   UserCheck,
   Flag,
   X,
-  Copy,
 } from 'lucide-react-native';
-import * as Clipboard from 'expo-clipboard';
-import { Avatar, useToast, fontFamily } from '@bucketlist/ui';
+import { Avatar, fontFamily } from '@bucketlist/ui';
 
 interface UserProfileOptionsSheetProps {
   visible: boolean;
@@ -44,43 +40,7 @@ export function UserProfileOptionsSheet({
   onConfirmUnblock,
   onOpenReport,
 }: UserProfileOptionsSheetProps) {
-  const toast = useToast();
-
   if (!visible) return null;
-
-  const profileUrl = `https://thebucketlist.app/profile/${user.username || user.id}`;
-
-  const handleShare = async () => {
-    onClose();
-    try {
-      await Share.share({
-        message: Platform.select({
-          ios: `¡Echa un vistazo al perfil de @${user.username} en The Bucket List!`,
-          default: `¡Echa un vistazo al perfil de @${user.username} en The Bucket List!\n${profileUrl}`,
-        }),
-        url: Platform.OS === 'ios' ? profileUrl : undefined,
-        title: `Perfil de @${user.username}`,
-      });
-    } catch {
-      // Fallback a portapapeles si falla la hoja nativa
-      await Clipboard.setStringAsync(profileUrl);
-      toast.show({
-        type: 'info',
-        title: 'Enlace copiado',
-        message: 'El enlace al perfil se ha copiado al portapapeles',
-      });
-    }
-  };
-
-  const handleCopyLink = async () => {
-    onClose();
-    await Clipboard.setStringAsync(profileUrl);
-    toast.show({
-      type: 'info',
-      title: 'Enlace copiado',
-      message: 'El enlace al perfil se ha copiado al portapapeles',
-    });
-  };
 
   return (
     <Modal
@@ -119,30 +79,6 @@ export function UserProfileOptionsSheet({
 
           {/* Opciones */}
           <View style={styles.optionsList}>
-            {/* Compartir perfil */}
-            <Pressable style={styles.optionRow} onPress={handleShare}>
-              <View style={[styles.iconBox, { backgroundColor: 'rgba(212, 175, 55, 0.12)' }]}>
-                <Share2 color="#D4B13A" size={20} />
-              </View>
-              <View style={styles.optionTexts}>
-                <Text style={styles.optionTitle}>Compartir perfil de usuario</Text>
-                <Text style={styles.optionSubtitle}>
-                  Envía el perfil mediante tus apps o redes sociales
-                </Text>
-              </View>
-            </Pressable>
-
-            {/* Copiar enlace directo */}
-            <Pressable style={styles.optionRow} onPress={handleCopyLink}>
-              <View style={styles.iconBox}>
-                <Copy color="#A0A0A0" size={20} />
-              </View>
-              <View style={styles.optionTexts}>
-                <Text style={styles.optionTitle}>Copiar enlace al perfil</Text>
-                <Text style={styles.optionSubtitle}>{profileUrl}</Text>
-              </View>
-            </Pressable>
-
             {/* Bloquear / Desbloquear */}
             <Pressable
               style={styles.optionRow}
