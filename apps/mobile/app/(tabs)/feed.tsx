@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react';
-import { useWindowDimensions } from 'react-native';
+import { InteractionManager, ScrollView, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter, useNavigation, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '@bucketlist/ui';
@@ -13,6 +13,7 @@ import { styles } from '../../src/features/feed/styles/feed.styles';
 import { FeedHeader, type ContentFilter } from '../../src/features/feed/components/FeedHeader';
 import { FriendsFeedTab } from '../../src/features/feed/components/FriendsFeedTab';
 import { ExploreFeedTab } from '../../src/features/feed/components/ExploreFeedTab';
+import { FeedCardSkeleton } from '../../src/components/FeedCardSkeleton';
 
 import { TaskViewMode } from '../../src/components/ViewModeSelector';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -74,6 +75,22 @@ export default function FeedScreen() {
       }
     }).catch(() => undefined);
   }, []);
+
+  // La lista (FlashList) se monta cuando la pantalla ya está visible y maquetada. Si se monta
+  // durante la transición de la pestaña puede medirse a 0 px y quedar en negro hasta salir y volver.
+  const [listReady, setListReady] = useState(false);
+  useFocusEffect(
+    useCallback(() => {
+      if (listReady) return;
+      const handle = InteractionManager.runAfterInteractions(() => setListReady(true));
+      // Red de seguridad: si por lo que sea no llega la señal, se muestra igualmente.
+      const timer = setTimeout(() => setListReady(true), 600);
+      return () => {
+        handle.cancel();
+        clearTimeout(timer);
+      };
+    }, [listReady]),
+  );
 
   const friendsListRef = useRef<any>(null);
   const exploreListRef = useRef<any>(null);
@@ -235,7 +252,14 @@ export default function FeedScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {homeTab === 'friends' ? (
+      {!listReady ? (
+        // Mientras tanto se ve la cabecera con esqueletos (nunca una pantalla en negro)
+        <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 72 }} showsVerticalScrollIndicator={false}>
+          {headerElement}
+          <FeedCardSkeleton />
+          <FeedCardSkeleton />
+        </ScrollView>
+      ) : homeTab === 'friends' ? (
         <FriendsFeedTab
           headerElement={headerElement}
           isLoading={isFriendsLoading}

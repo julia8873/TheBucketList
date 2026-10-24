@@ -20,6 +20,8 @@ import {
   BackHandler,
   Keyboard,
   Platform,
+  ScrollView,
+  Dimensions,
   useWindowDimensions,
 } from 'react-native';
 import { Check, AlertCircle, Info, ShieldAlert } from 'lucide-react-native';
@@ -151,14 +153,20 @@ export function ConfirmDialog({
   inline = false,
 }: DialogProps) {
   const { theme } = useTheme();
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const dims = useWindowDimensions();
+  // En Android un Modal recién montado puede medirse con 0 px; en ese caso usamos las
+  // dimensiones reales de la pantalla para que el diálogo nunca colapse arriba a la izquierda.
+  const screen = Dimensions.get('window');
+  const windowWidth = dims.width > 0 ? dims.width : screen.width;
+  const windowHeight = dims.height > 0 ? dims.height : screen.height;
   // Ancho explícito en píxeles: con `width: '100%'` dentro de un Modal el cuadro podía
   // colapsar a ~0 px y solo se veían sus dos bordes laterales ("dos rayas verticales").
   // En pantallas muy pequeñas usamos el máximo espacio disponible menos un margen mínimo de 16px.
   const hPadding = Math.max(16, Math.min(24, (windowWidth - 260) / 2));
   const dialogWidth = Math.max(260, Math.min(380, windowWidth - hPadding * 2));
-  // Si el dialogo es estrecho, apilamos los botones verticalmente para que no se salgan.
-  const shouldStackButtons = dialogWidth < 300;
+  // Los botones siempre se apilan en vertical (uno encima de otro) y alineados abajo a la derecha:
+  // así caben y se ven bien en cualquier tamaño de pantalla, con cualquier longitud de texto.
+  const shouldStackButtons = true;
   const [text, setText] = useState('');
   const ok = !requireText || text.trim().toUpperCase() === requireText.toUpperCase();
 
@@ -187,7 +195,7 @@ export function ConfirmDialog({
           : null;
   const ToneIcon =
     tone === 'error' ? AlertCircle : tone === 'warning' ? ShieldAlert : tone === 'info' ? Info : Check;
-  const stacked = !!actions && (actions.length > 2 || (actions.length === 2 && shouldStackButtons));
+  const stacked = !!actions && actions.length > 0 && shouldStackButtons;
   // Los botones confirmar/cancelar también se apilan en pantallas pequeñas
   const stackDefaultButtons = !actions && shouldStackButtons;
 
@@ -197,9 +205,9 @@ export function ConfirmDialog({
         style={[
           styles.backdrop,
           inline ? styles.inlineBackdrop : null,
-          // En Android el diálogo inline se mide con tamaño explícito: tras volver del navegador
-          // de Google el layout por flex/absolute podía quedar a 0 (botones arriba a la izquierda).
-          inline ? { width: windowWidth, height: windowHeight } : null,
+          // Tamaño explícito SIEMPRE (también dentro del Modal): evita que Android lo mida a 0
+          // y deje el diálogo arriba a la izquierda, sin texto visible.
+          { width: windowWidth, height: windowHeight },
           { backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(26,20,16,0.45)' },
           { paddingHorizontal: hPadding },
         ]}
@@ -211,6 +219,7 @@ export function ConfirmDialog({
             styles.dialog,
             {
               width: dialogWidth,
+              maxHeight: Math.max(240, windowHeight - 48),
               backgroundColor: theme.colors.surfaceElevated,
               borderColor: theme.colors.border,
             },
@@ -230,9 +239,15 @@ export function ConfirmDialog({
 
           <Text style={[styles.dialogTitle, { color: theme.colors.foreground }]}>{title}</Text>
           {message ? (
-            <Text style={[styles.dialogMsg, { color: theme.colors.foregroundMuted }]}>
-              {message}
-            </Text>
+            <ScrollView
+              style={{ flexGrow: 0, flexShrink: 1 }}
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+            >
+              <Text style={[styles.dialogMsg, { color: theme.colors.foregroundMuted }]}>
+                {message}
+              </Text>
+            </ScrollView>
           ) : null}
 
           {requireText ? (
@@ -256,7 +271,8 @@ export function ConfirmDialog({
 
           {actions && actions.length > 0 ? (
             <View style={[styles.dialogActions, stacked && styles.dialogActionsStacked]}>
-              {actions.map((action, idx) => {
+              {/* En vertical: primero las acciones principales y al final «Cancelar» */}
+              {[...actions.filter((a) => a.style !== 'cancel'), ...actions.filter((a) => a.style === 'cancel')].map((action, idx) => {
                 const isCancel = action.style === 'cancel';
                 const isDestructive = action.style === 'destructive';
                 return (
@@ -641,6 +657,7 @@ const styles = StyleSheet.create({
   },
   dialogActionsStacked: {
     flexDirection: 'column',
+    alignItems: 'flex-end', // esquina inferior derecha del diálogo
   },
   dialogBtn: {
     flex: 1,
@@ -654,7 +671,10 @@ const styles = StyleSheet.create({
   },
   dialogBtnStacked: {
     flex: 0,
-    width: '100%',
+    alignSelf: 'flex-end',
+    minWidth: 150,
+    maxWidth: '100%',
+    height: 46,
   },
   dialogBtnText: {
     fontFamily: fontFamily.semibold,

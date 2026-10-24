@@ -205,6 +205,7 @@ export function FriendsFeedTab({
     : 'Sigue a tus amigos para ver aquí los momentos que completan.';
 
   return (
+    <View style={{ flex: 1, minHeight: 1 }}>
     <FlashList
       ref={listRef}
       key={`${viewMode}-${contentFilter}`}
@@ -237,5 +238,6 @@ export function FriendsFeedTab({
         </View>
       }
     />
+    </View>
   );
 }

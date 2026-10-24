@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Dimensions, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
 import { fontFamily, useTheme } from '@bucketlist/ui';
 
@@ -123,11 +123,18 @@ interface OptionDialogProps<T extends string> {
 
 export function OptionDialog<T extends string>({ visible, title, options, selected, onSelect, onClose }: OptionDialogProps<T>) {
   const { theme } = useTheme();
+  // Tamaño explícito: en Android el Modal podía medirse a 0 y quedar arriba a la izquierda.
+  const dims = useWindowDimensions();
+  const win = Dimensions.get('window');
+  const w = dims.width > 0 ? dims.width : win.width;
+  const h = dims.height > 0 ? dims.height : win.height;
+  const dialogWidth = Math.max(260, Math.min(380, w - 48));
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={[styles.dialog, { backgroundColor: theme.colors.surfaceElevated, borderColor: theme.colors.border }]}>
+    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
+      <Pressable style={[styles.backdrop, { width: w, height: h }]} onPress={onClose}>
+        <Pressable style={[styles.dialog, { width: dialogWidth, maxHeight: Math.max(240, h - 48), backgroundColor: theme.colors.surfaceElevated, borderColor: theme.colors.border }]}>
           <Text style={[styles.dialogTitle, { color: theme.colors.foreground }]}>{title}</Text>
+          <ScrollView style={{ flexGrow: 0 }} contentContainerStyle={{ gap: 12 }} showsVerticalScrollIndicator={false}>
           {options.map((o) => {
             const on = o.key === selected;
             return (
@@ -141,6 +148,7 @@ export function OptionDialog<T extends string>({ visible, title, options, select
               </Pressable>
             );
           })}
+          </ScrollView>
         </Pressable>
       </Pressable>
     </Modal>

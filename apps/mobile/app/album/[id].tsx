@@ -266,7 +266,7 @@ export default function AlbumDetailScreen() {
   if (coverPath) {
     try {
       parsedCover = JSON.parse(coverPath);
-    } catch { }
+    } catch {}
   }
 
   const gradientColors = GRADIENTS[coverKey as keyof typeof GRADIENTS] || GRADIENTS.aurora;
@@ -695,10 +695,10 @@ export default function AlbumDetailScreen() {
                   {state.taskSortField === 'priority'
                     ? 'Prioridad'
                     : state.taskSortField === 'alphabetical'
-                      ? 'Nombre'
-                      : state.taskSortField === 'completed_at'
-                        ? 'Fecha de completado'
-                        : 'Manual'}
+                    ? 'Nombre'
+                    : state.taskSortField === 'completed_at'
+                    ? 'Fecha de completado'
+                    : 'Manual'}
                 </Text>
                 {state.taskSortField !== 'manual' &&
                   (state.taskSortDir === 'desc' ? (
@@ -832,37 +832,37 @@ export default function AlbumDetailScreen() {
 
       {/* Barra inferior */}
       {!state.isSelectionMode && (
-        <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
-          {state.canEdit ? (
-            <>
-              {state.id !== 'unassigned' && (
-                <Pressable
-                  style={styles.btnEdit}
-                  onPress={() => state.router.push(`/(modals)/create-album?id=${state.id}` as any)}
-                >
-                  <Text style={styles.btnEditText}>Editar</Text>
-                </Pressable>
-              )}
+      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
+        {state.canEdit ? (
+          <>
+            {state.id !== 'unassigned' && (
               <Pressable
-                style={styles.btnAdd}
-                onPress={() => state.router.push(state.id === 'unassigned' ? '/add-task' : `/add-task?albumId=${state.id}`)}
+                style={styles.btnEdit}
+                onPress={() => state.router.push(`/(modals)/create-album?id=${state.id}` as any)}
               >
-                <Text style={styles.btnAddText}>Añadir tarea</Text>
+                <Text style={styles.btnEditText}>Editar</Text>
               </Pressable>
-            </>
-          ) : (
+            )}
             <Pressable
-              style={styles.btnCopyAlbum}
-              onPress={state.handleCopyEntireAlbum}
-              disabled={state.copyingAlbum}
+              style={styles.btnAdd}
+              onPress={() => state.router.push(state.id === 'unassigned' ? '/add-task' : `/add-task?albumId=${state.id}`)}
             >
-              <FolderPlus size={18} color="#0D0D0D" strokeWidth={2.4} />
-              <Text style={styles.btnCopyAlbumText}>
-                {state.copyingAlbum ? 'Copiando álbum…' : 'Copiar álbum a mi lista'}
-              </Text>
+              <Text style={styles.btnAddText}>Añadir tarea</Text>
             </Pressable>
-          )}
-        </View>
+          </>
+        ) : (
+          <Pressable
+            style={styles.btnCopyAlbum}
+            onPress={state.handleCopyEntireAlbum}
+            disabled={state.copyingAlbum}
+          >
+            <FolderPlus size={18} color="#0D0D0D" strokeWidth={2.4} />
+            <Text style={styles.btnCopyAlbumText}>
+              {state.copyingAlbum ? 'Copiando álbum…' : 'Copiar álbum a mi lista'}
+            </Text>
+          </Pressable>
+        )}
+      </View>
       )}
 
       {/* Sheet de opciones */}

@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FAF8F5"
+      "backgroundColor": "#0F0F0F"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -23,7 +23,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#7E8B94"
+        "backgroundColor": "#0F0F0F"
       },
       "package": "com.bucketlist.app",
       "permissions": [
@@ -70,14 +70,14 @@
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#E8652A",
+          "color": "#D4B13A",
           "sounds": []
         }
       ],
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FAF8F5",
+          "backgroundColor": "#0F0F0F",
           "image": "./assets/splash.png",
           "resizeMode": "contain"
         }

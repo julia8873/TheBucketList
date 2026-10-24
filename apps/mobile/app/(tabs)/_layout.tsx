@@ -74,9 +74,10 @@ export default function TabsLayout() {
       }}
       screenOptions={{
         headerShown: false,
-        // Congela las pestañas que no se ven: dejan de re-renderizarse en segundo plano
-        // (mejora la fluidez) y se reactivan al volver a ellas.
-        freezeOnBlur: true,
+        // OJO: no activar `freezeOnBlur`. Con pestañas que se montan al visitarlas por primera
+        // vez (lazy), congelar/descongelar dejaba la pantalla en negro (p. ej. «Momentos» de
+        // Inicio) hasta cambiar de pestaña y volver.
+        freezeOnBlur: false,
         tabBarShowLabel: false,
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.foregroundSubtle,
