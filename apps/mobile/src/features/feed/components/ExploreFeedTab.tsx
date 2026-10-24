@@ -20,6 +20,7 @@ import {
   useBatchAlbumLikeCounts,
 } from '../../../hooks/useSocial';
 import { useAuthStore } from '../../../stores/auth.store';
+import { useTranslation } from '@bucketlist/shared';
 import { useCollections, useCloneCollection, useToggleCollectionLike } from '../../collections/hooks/useCollections';
 import { CollectionCard } from '../../collections/components/CollectionCard';
 import { CollectionDetailModal } from '../../collections/components/CollectionDetailModal';
@@ -73,6 +74,7 @@ export function ExploreFeedTab({
   viewMode = 'list',
 }: ExploreFeedTabProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user, session } = useAuthStore();
   const currentUserId = user?.id || session?.user?.id;
   const { data: likedAlbumIds } = useUserLikedAlbumIds(currentUserId);
@@ -224,7 +226,7 @@ export function ExploreFeedTab({
                 color="textSecondary"
                 style={{ textAlign: 'center', marginTop: 40 }}
               >
-                No se encontraron usuarios.
+                {t('feed.search_no_users')}
               </Typography>
             }
           />
@@ -266,15 +268,15 @@ export function ExploreFeedTab({
   const isFetchingNext = isFetchingNextPage || isFetchingNextAlbumsPage;
 
   const emptyTitle = contentFilter === 'colecciones'
-    ? 'No hay colecciones disponibles aún'
+    ? t('feed.empty_explore_collections_title')
     : contentFilter === 'albumes'
-    ? 'No hay álbumes públicos aún'
-    : 'No hay ideas públicas aún';
+    ? t('feed.empty_explore_albums_title')
+    : t('feed.empty_explore_tasks_title');
   const emptyMessage = contentFilter === 'colecciones'
-    ? 'Pronto añadiremos más colecciones prediseñadas para clonar.'
+    ? t('feed.empty_explore_collections_desc')
     : contentFilter === 'albumes'
-    ? 'Sé el primero en crear un álbum público para la comunidad.'
-    : 'Sé el primero en compartir un objetivo público con la comunidad.';
+    ? t('feed.empty_explore_albums_desc')
+    : t('feed.empty_explore_tasks_desc');
 
   return (
     <View style={{ flex: 1 }}>
@@ -301,10 +303,10 @@ export function ExploreFeedTab({
             {headerElement}
             <Typography variant="h3" style={styles.sectionTitle}>
               {contentFilter === 'colecciones'
-                ? 'Colecciones prediseñadas'
+                ? t('feed.section_collections')
                 : contentFilter === 'albumes'
-                ? 'Álbumes de la comunidad'
-                : 'Ideas para empezar'}
+                ? t('feed.section_albums')
+                : t('feed.section_ideas')}
             </Typography>
           </View>
         }

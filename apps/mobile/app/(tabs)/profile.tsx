@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Settings, Users } from 'lucide-react-native';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '@bucketlist/shared';
 import {
   Avatar,
   EmptyState,
@@ -250,7 +250,7 @@ export default function CurrentUserProfileScreen() {
         <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
         <Stat
           value={taskCount}
-          label="Públicas"
+          label={t('profile.stat_public')}
           onPress={() => {
             setActiveTab('list');
             setFilter('all');
@@ -271,8 +271,8 @@ export default function CurrentUserProfileScreen() {
       <View style={styles.tabsContainer}>
         <SegmentedControl
           options={[
-            { key: 'list', label: 'Lista' },
-            { key: 'albums', label: 'Álbumes' },
+            { key: 'list', label: t('profile.tab_list') },
+            { key: 'albums', label: t('profile.tab_albums') },
           ]}
           selected={activeTab}
           onChange={(val) => setActiveTab(val as 'list' | 'albums')}
@@ -282,7 +282,7 @@ export default function CurrentUserProfileScreen() {
       {activeTab === 'list' ? (
         <>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <SectionLabel highlight="Tareas" rest={`públicas · ${taskCount}`} style={styles.sectionLabel} />
+            <SectionLabel highlight={t('common.tasks')} rest={` ${t('common.public').toLowerCase()} · ${taskCount}`} style={styles.sectionLabel} />
             <ViewModeSelector mode={taskViewMode} onChange={setTaskViewMode} />
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14, marginBottom: 16 }}>

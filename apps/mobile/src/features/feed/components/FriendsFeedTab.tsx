@@ -19,6 +19,7 @@ import {
   useBatchAlbumSaveCounts,
   useBatchAlbumLikeCounts,
 } from '../../../hooks/useSocial';
+import { useTranslation } from '@bucketlist/shared';
 import { useAuthStore } from '../../../stores/auth.store';
 
 interface FriendsFeedTabProps {
@@ -67,6 +68,7 @@ export function FriendsFeedTab({
   viewMode = 'list',
 }: FriendsFeedTabProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user, session } = useAuthStore();
   const currentUserId = user?.id || session?.user?.id;
   const { data: likedAlbumIds } = useUserLikedAlbumIds(currentUserId);
@@ -196,13 +198,11 @@ export function FriendsFeedTab({
   const isFetchingNext = isFetchingNextPage || isFetchingNextAlbumsPage;
 
   const emptyTitle = contentFilter === 'albumes'
-    ? 'Tus amigos no tienen álbumes'
-    : contentFilter === 'tareas'
-      ? 'Tu feed está tranquilo'
-      : 'Tu feed está tranquilo';
+    ? t('saved.empty_albums_title')
+    : t('feed.empty_friends_title');
   const emptyMessage = contentFilter === 'albumes'
-    ? 'Cuando tus amigos creen álbumes públicos, aparecerán aquí.'
-    : 'Sigue a tus amigos para ver aquí los momentos que completan.';
+    ? t('saved.empty_albums_desc')
+    : t('feed.empty_friends_desc');
 
   return (
     <View style={{ flex: 1, minHeight: 1 }}>
@@ -232,7 +232,7 @@ export function FriendsFeedTab({
             title={emptyTitle}
             message={emptyMessage}
             icon={contentFilter === 'albumes' ? Images : Users}
-            actionLabel="Buscar personas"
+            actionLabel={t('feed.search_people')}
             onAction={onOpenFriends}
           />
         </View>

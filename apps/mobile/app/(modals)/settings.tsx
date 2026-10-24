@@ -233,16 +233,16 @@ export default function SettingsScreen() {
             onChange={(v) => updateProfile.mutate({ default_task_visibility: v ? 'public' : 'private' })}
           />
           <Row
-            title="Usuarios bloqueados"
-            subtitle="Gestiona los perfiles que tienes bloqueados"
+            title={t('settings.blocked_users')}
+            subtitle={t('settings.blocked_users_desc')}
             onPress={() => router.push('/(modals)/blocked-users' as any)}
           />
           <Row
-            title="Política de privacidad"
+            title={t('settings.privacy_policy')}
             onPress={() => void Linking.openURL(LEGAL_URLS.privacy).catch(() => {})}
           />
           <Row
-            title="Términos y condiciones"
+            title={t('settings.terms_conditions')}
             onPress={() => void Linking.openURL(LEGAL_URLS.terms).catch(() => {})}
             last
           />
@@ -251,11 +251,11 @@ export default function SettingsScreen() {
         <SectionTitle gold={t('settings.notifications')} />
         <Card>
           <Row
-            title="Permisos en el dispositivo"
+            title={t('settings.device_permissions')}
             subtitle={
               permStatus?.granted
-                ? 'Activadas · Tu móvil recibirá avisos y sonido'
-                : 'Desactivadas en los ajustes del sistema'
+                ? t('settings.permissions_enabled')
+                : t('settings.permissions_disabled')
             }
             onPress={permStatus?.granted ? undefined : handleEnablePermissions}
             right={
@@ -263,7 +263,7 @@ export default function SettingsScreen() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Check size={16} color={theme.colors.success} strokeWidth={2.5} />
                   <Text style={{ fontFamily: fontFamily.semibold, fontSize: 13, color: theme.colors.success }}>
-                    Activadas
+                    {t('settings.status_enabled')}
                   </Text>
                 </View>
               ) : (
@@ -278,7 +278,7 @@ export default function SettingsScreen() {
                   accessibilityRole="button"
                 >
                   <Text style={{ fontFamily: fontFamily.semibold, fontSize: 12, color: theme.colors.primaryForeground }}>
-                    {permStatus?.canAskAgain ? 'Activar' : 'Abrir Ajustes'}
+                    {permStatus?.canAskAgain ? t('common.activate') : t('common.open_settings')}
                   </Text>
                 </Pressable>
               )
@@ -303,27 +303,27 @@ export default function SettingsScreen() {
           />
         </Card>
 
-        <SectionTitle gold={t('settings.preferences', { defaultValue: 'PREFERENCIAS' })} />
+        <SectionTitle gold={t('settings.preferences')} />
         <Card>
           <ToggleRow
-            title={t('settings.vibration', { defaultValue: 'Vibración al completar tareas' })}
-            subtitle={t('settings.vibration_desc', { defaultValue: 'Vibración ligera al completar tareas diarias y del bucket list' })}
+            title={t('settings.vibration')}
+            subtitle={t('settings.vibration_desc')}
             value={hapticsEnabled}
             onChange={setHapticsEnabled}
             last
           />
         </Card>
 
-        <SectionTitle gold="ACTIVIDAD" />
+        <SectionTitle gold={t('settings.activity')} />
         <Card>
           <Row
-            title="Me gusta"
-            subtitle="Tareas y álbumes a los que has dado me gusta"
+            title={t('settings.liked_content')}
+            subtitle={t('settings.liked_content_desc')}
             onPress={() => router.push('/(modals)/liked-content' as any)}
           />
           <Row
-            title="Guardados"
-            subtitle="Tareas y álbumes de otras personas que has guardado"
+            title={t('settings.saved_content')}
+            subtitle={t('settings.saved_content_desc')}
             onPress={() => router.push('/(modals)/saved-albums' as any)}
             last
           />
@@ -333,7 +333,7 @@ export default function SettingsScreen() {
         <Card>
           <Row
             title={t('settings.language')}
-            subtitle={language === 'es' ? 'Español' : 'English'}
+            subtitle={language === 'es' ? t('settings.language_es') : t('settings.language_en')}
             right={
               <PillToggle<AppLanguage>
                 options={[
@@ -364,16 +364,16 @@ export default function SettingsScreen() {
 
         {isAdmin && (
           <>
-            <SectionTitle gold="ADMINISTRACIÓN" />
+            <SectionTitle gold={t('settings.admin_section')} />
             <Card>
               <Row
-                title="Gestionar colecciones"
-                subtitle="Crear, ver, editar y eliminar colecciones publicadas"
+                title={t('settings.manage_collections')}
+                subtitle={t('settings.manage_collections_desc')}
                 onPress={() => router.push('/(modals)/manage-collections' as any)}
               />
               <Row
-                title="Reportes de usuarios"
-                subtitle="Revisar denuncias de la comunidad y moderar cuentas"
+                title={t('settings.user_reports')}
+                subtitle={t('settings.user_reports_desc')}
                 onPress={() => router.push('/(modals)/admin-reports' as any)}
                 right={
                   pendingReportsCount > 0 ? (
@@ -393,8 +393,8 @@ export default function SettingsScreen() {
                 }
               />
               <Row
-                title="Gestionar administradores"
-                subtitle="Añadir o revocar permisos de administración a otros usuarios"
+                title={t('settings.manage_admins')}
+                subtitle={t('settings.manage_admins_desc')}
                 onPress={() => router.push('/(modals)/manage-admins' as any)}
                 last
               />

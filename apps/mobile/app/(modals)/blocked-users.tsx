@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, UserX, UserCheck } from 'lucide-react-native';
 import { Avatar, PageTitle, fontFamily, gold, confirm, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { useBlockedUsers, useUnblockUser } from '../../src/hooks/useBlockReport';
 import { BlockedUserItem } from '../../src/services/api/blockReport';
 
@@ -20,16 +21,17 @@ export default function BlockedUsersScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const { data: blockedUsers = [], isLoading } = useBlockedUsers();
   const unblockMutation = useUnblockUser();
 
   const handleUnblock = async (item: BlockedUserItem) => {
-    const username = item.profile?.username || 'este usuario';
+    const username = item.profile?.username || 'usuario';
     const confirmed = await confirm.ask({
       title: `¿Desbloquear a @${username}?`,
       message: 'Podrá volver a ver tus publicaciones públicas, buscarte y seguirte.',
-      confirmLabel: 'Desbloquear',
-      cancelLabel: 'Cancelar',
+      confirmLabel: t('blocked.unblock_btn'),
+      cancelLabel: t('common.cancel'),
     });
     if (confirmed) {
       unblockMutation.mutate(item.blocked_id);
@@ -60,11 +62,11 @@ export default function BlockedUsersScreen() {
                 >
                   <ChevronLeft color={theme.colors.foreground} size={24} />
                 </Pressable>
-                <PageTitle gold="Usuarios" rest=" bloqueados" />
+                <PageTitle gold={t('blocked.title_gold')} rest={t('blocked.title_rest')} />
               </View>
 
               <Text style={[styles.description, { color: theme.colors.foregroundMuted, paddingHorizontal: 0 }]}>
-                Los usuarios de esta lista no pueden ver tus objetivos, seguirte ni interactuar contigo.
+                {t('blocked.description')}
               </Text>
             </>
           }
@@ -97,7 +99,7 @@ export default function BlockedUsersScreen() {
                   disabled={unblockMutation.isPending}
                 >
                   <UserCheck size={14} color={theme.colors.foreground} />
-                  <Text style={[styles.unblockBtnText, { color: theme.colors.foreground }]}>Desbloquear</Text>
+                  <Text style={[styles.unblockBtnText, { color: theme.colors.foreground }]}>{t('blocked.unblock_btn')}</Text>
                 </Pressable>
               </View>
             );
@@ -107,9 +109,9 @@ export default function BlockedUsersScreen() {
               <View style={[styles.emptyIconBox, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderWidth: 1 }]}>
                 <UserX size={32} color={theme.colors.foregroundMuted} />
               </View>
-              <Text style={[styles.emptyTitle, { color: theme.colors.foreground }]}>Sin usuarios bloqueados</Text>
+              <Text style={[styles.emptyTitle, { color: theme.colors.foreground }]}>{t('blocked.empty_title')}</Text>
               <Text style={[styles.emptySubtitle, { color: theme.colors.foregroundMuted }]}>
-                No tienes a ningún usuario en tu lista de bloqueo.
+                {t('blocked.empty_desc')}
               </Text>
             </View>
           }

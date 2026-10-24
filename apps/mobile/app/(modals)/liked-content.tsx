@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Heart, Images, CheckCircle2 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { fontFamily, gold, useTheme } from '@bucketlist/ui';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useLikedContent } from '../../src/hooks/useSocial';
@@ -20,6 +21,7 @@ import { AlbumFeedCard } from '../../src/components/AlbumFeedCard';
 export default function LikedContentScreen() {
   const { theme } = useTheme();
   const router = useRouter();
+  const { t } = useTranslation();
   const { user, session } = useAuthStore();
   const userId = user?.id || session?.user?.id;
   const [activeTab, setActiveTab] = useState<'tasks' | 'albums'>('tasks');
@@ -38,11 +40,11 @@ export default function LikedContentScreen() {
           hitSlop={12}
           style={styles.backBtn}
           accessibilityRole="button"
-          accessibilityLabel="Volver"
+          accessibilityLabel={t('common.back')}
         >
           <ChevronLeft size={24} color={theme.colors.foreground} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: theme.colors.foreground }]}>Me gusta</Text>
+        <Text style={[styles.headerTitle, { color: theme.colors.foreground }]}>{t('liked.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -68,7 +70,7 @@ export default function LikedContentScreen() {
                 activeTab === 'tasks' && styles.segmentTextActive,
               ]}
             >
-              Tareas ({tasks.length})
+              {t('liked.tasks_tab')} ({tasks.length})
             </Text>
           </Pressable>
 
@@ -91,7 +93,7 @@ export default function LikedContentScreen() {
                 activeTab === 'albums' && styles.segmentTextActive,
               ]}
             >
-              Álbumes ({albums.length})
+              {t('liked.albums_tab')} ({albums.length})
             </Text>
           </Pressable>
         </View>
@@ -108,9 +110,9 @@ export default function LikedContentScreen() {
             <View style={[styles.emptyIconCircle, { backgroundColor: theme.dark ? '#1E1E1E' : '#F5F2EB' }]}>
               <Heart size={32} color={gold[400]} />
             </View>
-            <Text style={[styles.emptyTitle, { color: theme.colors.foreground }]}>Sin tareas con me gusta</Text>
+            <Text style={[styles.emptyTitle, { color: theme.colors.foreground }]}>{t('liked.empty_tasks_title')}</Text>
             <Text style={[styles.emptySub, { color: theme.colors.foregroundMuted }]}>
-              Cuando des me gusta a las tareas de amigos o en explorar, aparecerán aquí.
+              {t('liked.empty_tasks_desc')}
             </Text>
           </View>
         ) : (
@@ -134,9 +136,9 @@ export default function LikedContentScreen() {
           <View style={[styles.emptyIconCircle, { backgroundColor: theme.dark ? '#1E1E1E' : '#F5F2EB' }]}>
             <Images size={32} color={gold[400]} />
           </View>
-          <Text style={[styles.emptyTitle, { color: theme.colors.foreground }]}>Sin álbumes con me gusta</Text>
+          <Text style={[styles.emptyTitle, { color: theme.colors.foreground }]}>{t('liked.empty_albums_title')}</Text>
           <Text style={[styles.emptySub, { color: theme.colors.foregroundMuted }]}>
-            Los álbumes a los que des like en momentos de amigos o explorar aparecerán aquí.
+            {t('liked.empty_albums_desc')}
           </Text>
         </View>
       ) : (

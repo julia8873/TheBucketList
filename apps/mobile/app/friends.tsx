@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Search, X } from 'lucide-react-native';
 import { SegmentedControl, gold, useTheme, PageTitle, EmptyState } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../src/services/supabase';
 import { useAuthStore } from '../src/stores/auth.store';
@@ -38,6 +39,7 @@ function useDebounce<T>(value: T, delay: number): T {
 
 export default function FriendsScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const { user } = useAuthStore();
   const params = useLocalSearchParams<{ tab?: string; userId?: string; kind?: ConnectionKind }>();
@@ -154,8 +156,8 @@ export default function FriendsScreen() {
 
         {isOtherUser ? (
           <PageTitle
-            gold={kind === 'followers' ? 'Seguidores' : 'Siguiendo'}
-            rest={targetProfileQuery.data?.username ? `de @${targetProfileQuery.data.username}` : ''}
+            gold={kind === 'followers' ? t('profile.stat_followers') : t('social.following')}
+            rest={targetProfileQuery.data?.username ? ` de @${targetProfileQuery.data.username}` : ''}
           />
         ) : tab === 'accounts' ? (
           <View
@@ -171,7 +173,7 @@ export default function FriendsScreen() {
               onChangeText={setQuery}
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
-              placeholder="Buscar personas"
+              placeholder={t('friends.search_placeholder')}
               placeholderTextColor={theme.colors.foregroundMuted}
               autoFocus={false}
               autoCapitalize="none"
@@ -187,7 +189,7 @@ export default function FriendsScreen() {
             ) : null}
           </View>
         ) : (
-          <PageTitle gold="Mis" rest="amigos" />
+          <PageTitle gold={t('friends.title_gold')} rest={` ${t('friends.title_rest')}`} />
         )}
       </View>
 
@@ -195,8 +197,8 @@ export default function FriendsScreen() {
         <View style={styles.segment}>
           <SegmentedControl
             options={[
-              { key: 'accounts', label: 'Cuentas' },
-              { key: 'requests', label: requestsCount > 0 ? `Solicitudes · ${requestsCount}` : 'Solicitudes' },
+              { key: 'accounts', label: t('friends.tab_accounts') },
+              { key: 'requests', label: requestsCount > 0 ? t('friends.requests_with_count', { count: requestsCount }) : t('friends.tab_requests') },
             ]}
             selected={tab}
             onChange={(key) => setTab(key as Tab)}

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Lock } from 'lucide-react-native';
 import { Avatar, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { FollowButton } from '../../../components/FollowButton';
 import { displayNameOf, initialsOf } from '../../../utils/initials';
 import { OfficialBadge, isUserAdmin } from '../../../components/OfficialBadge';
@@ -88,6 +89,7 @@ export function ProfileBioAndStats({
   onPressFollowers,
 }: ProfileBioAndStatsProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const hideStats = isLocked || isBlocked;
 
   return (
@@ -119,7 +121,7 @@ export function ProfileBioAndStats({
             style={[styles.editButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
             accessibilityRole="button"
           >
-            <Text style={[styles.editText, { color: theme.colors.foreground }]}>Editar perfil</Text>
+            <Text style={[styles.editText, { color: theme.colors.foreground }]}>{t('profile.edit_profile')}</Text>
           </Pressable>
         ) : (
           <FollowButton
@@ -136,20 +138,20 @@ export function ProfileBioAndStats({
       <View style={[styles.stats, { borderColor: theme.colors.border }]}>
         <Stat
           value={hideStats ? '—' : completedCount}
-          label="Completadas"
+          label={t('profile.stat_completed')}
           onPress={onPressCompleted}
           disabled={hideStats}
         />
         <Stat
           value={hideStats ? '—' : taskCount}
-          label="Públicas"
+          label={t('profile.stat_public')}
           divider
           onPress={onPressPublic}
           disabled={hideStats}
         />
         <Stat
           value={hideStats ? '—' : followersCount}
-          label="Seguidores"
+          label={t('profile.stat_followers')}
           divider
           onPress={onPressFollowers}
           disabled={hideStats}

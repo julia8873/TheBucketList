@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, TextInput } from 'react-native';
 import { Bell, Search, Users, X, Map } from 'lucide-react-native';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '@bucketlist/shared';
 import { PageTitle, useTheme, gold, fontFamily } from '@bucketlist/ui';
 import { ViewModeSelector, TaskViewMode } from '../../../components/ViewModeSelector';
 import { styles } from '../styles/feed.styles';
@@ -47,15 +47,15 @@ export function FeedHeader({
       {/* Top Bar */}
       <View style={styles.topBar}>
         <PageTitle
-          gold={homeTab === 'friends' ? t('feed.friends_moments_gold', { defaultValue: 'Momentos' }) : t('feed.explore_ideas_gold', { defaultValue: 'Explorar' })}
-          rest={homeTab === 'friends' ? t('feed.friends_moments_rest', { defaultValue: 'de amigos' }) : t('feed.explore_ideas_rest', { defaultValue: 'ideas' })}
+          gold={homeTab === 'friends' ? (t('feed.friends_moments_gold', { defaultValue: 'Momentos' }) as string) : (t('feed.explore_ideas_gold', { defaultValue: 'Explorar' }) as string)}
+          rest={homeTab === 'friends' ? (t('feed.friends_moments_rest', { defaultValue: 'de amigos' }) as string) : (t('feed.explore_ideas_rest', { defaultValue: 'ideas' }) as string)}
         />
         <View style={styles.topActions}>
           <Pressable
             onPress={onOpenNotifications}
             hitSlop={10}
             accessibilityRole="button"
-            accessibilityLabel="Notificaciones"
+            accessibilityLabel={t('notifications.title')}
           >
             <Bell size={24} color={theme.colors.foreground} strokeWidth={1.8} />
             {unreadCount > 0 ? (
@@ -66,7 +66,7 @@ export function FeedHeader({
             onPress={() => onOpenFriends()}
             hitSlop={10}
             accessibilityRole="button"
-            accessibilityLabel="Buscar personas"
+            accessibilityLabel={t('feed.search_people')}
           >
             <Users size={24} color={theme.colors.foreground} strokeWidth={1.8} />
           </Pressable>
@@ -98,7 +98,7 @@ export function FeedHeader({
               { color: homeTab === 'friends' ? theme.colors.primaryForeground : theme.colors.foregroundMuted },
             ]}
           >
-            Amigos
+            {t('feed.tab_friends')}
           </Text>
         </Pressable>
         <Pressable
@@ -116,7 +116,7 @@ export function FeedHeader({
               { color: homeTab === 'explore' ? theme.colors.primaryForeground : theme.colors.foregroundMuted },
             ]}
           >
-            Explorar
+            {t('feed.tab_explore')}
           </Text>
         </Pressable>
       </View>
@@ -136,17 +136,17 @@ export function FeedHeader({
             onPress={() => onOpenFriends()}
             style={styles.searchTouch}
             accessibilityRole="search"
-            accessibilityLabel="Buscar personas"
+            accessibilityLabel={t('feed.search_people')}
           >
             <Search size={18} color={theme.colors.foregroundMuted} strokeWidth={1.8} />
             <Text style={[styles.searchPlaceholder, { color: theme.colors.foregroundMuted }]}>
-              Buscar personas
+              {t('feed.search_people')}
             </Text>
           </Pressable>
           {requestCount > 0 ? (
             <Pressable onPress={() => onOpenFriends('requests')} hitSlop={8} accessibilityRole="button">
               <Text style={[styles.requests, { color: theme.colors.primary }]}>
-                {requestCount} {requestCount === 1 ? 'solicitud' : 'solicitudes'}
+                {requestCount} {requestCount === 1 ? t('feed.friend_request_single') : t('feed.friend_request_plural')}
               </Text>
             </Pressable>
           ) : null}
@@ -163,7 +163,7 @@ export function FeedHeader({
         >
           <Search size={18} color={theme.colors.foregroundMuted} strokeWidth={1.8} />
           <TextInput
-            placeholder="Buscar personas e ideas..."
+            placeholder={t('feed.search_placeholder')}
             placeholderTextColor={theme.colors.foregroundMuted}
             value={exploreSearch}
             onChangeText={onChangeExploreSearch}
@@ -195,7 +195,7 @@ export function FeedHeader({
                 accessibilityLabel="Ver en mapa"
               >
                 <Map size={14} color={gold[400]} />
-                <Text style={[styles.mapTriggerBtnText, { color: theme.colors.foreground }]}>Mapa</Text>
+                <Text style={[styles.mapTriggerBtnText, { color: theme.colors.foreground }]}>{t('feed.map_btn')}</Text>
               </Pressable>
             ) : null}
             <ViewModeSelector mode={viewMode} onChange={onChangeViewMode} />
@@ -230,7 +230,13 @@ export function FeedHeader({
                   { color: contentFilter === f ? gold[400] : theme.colors.foregroundMuted },
                 ]}
               >
-                {f === 'todo' ? 'Todo' : f === 'tareas' ? 'Tareas' : f === 'albumes' ? 'Álbumes' : 'Colecciones'}
+                {f === 'todo'
+                  ? t('feed.filter_all')
+                  : f === 'tareas'
+                  ? t('feed.filter_tasks')
+                  : f === 'albumes'
+                  ? t('feed.filter_albums')
+                  : t('feed.filter_collections')}
               </Text>
             </Pressable>
           ))}

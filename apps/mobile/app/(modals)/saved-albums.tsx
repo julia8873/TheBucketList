@@ -8,9 +8,10 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { ChevronLeft, Bookmark, CheckCircle2, Images } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { fontFamily, gold, useTheme } from "@bucketlist/ui";
 import { useAuthStore } from "../../src/stores/auth.store";
 import {
@@ -29,6 +30,7 @@ type Tab = "tareas" | "albumes";
 export default function SavedScreen() {
   const { theme } = useTheme();
   const router = useRouter();
+  const { t } = useTranslation();
   const { user, session } = useAuthStore();
   const userId = user?.id || session?.user?.id;
   const [activeTab, setActiveTab] = useState<Tab>("tareas");
@@ -72,11 +74,11 @@ export default function SavedScreen() {
           hitSlop={12}
           style={styles.backBtn}
           accessibilityRole="button"
-          accessibilityLabel="Volver"
+          accessibilityLabel={t('common.back')}
         >
           <ChevronLeft size={24} color={theme.colors.foreground} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: theme.colors.foreground }]}>Guardados</Text>
+        <Text style={[styles.headerTitle, { color: theme.colors.foreground }]}>{t('saved.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -102,7 +104,7 @@ export default function SavedScreen() {
                 activeTab === "tareas" && styles.segmentTextActive,
               ]}
             >
-              Tareas ({buckets?.length ?? 0})
+              {t('saved.tasks_tab')} ({buckets?.length ?? 0})
             </Text>
           </Pressable>
 
@@ -125,7 +127,7 @@ export default function SavedScreen() {
                 activeTab === "albumes" && styles.segmentTextActive,
               ]}
             >
-              Álbumes ({albums?.length ?? 0})
+              {t('saved.albums_tab')} ({albums?.length ?? 0})
             </Text>
           </Pressable>
         </View>
@@ -142,12 +144,12 @@ export default function SavedScreen() {
             <Bookmark size={32} color={gold[400]} />
           </View>
           <Text style={[styles.emptyTitle, { color: theme.colors.foreground }]}>
-            {activeTab === "tareas" ? "No hay tareas guardadas" : "No hay álbumes guardados"}
+            {activeTab === "tareas" ? t('saved.empty_tasks_title') : t('saved.empty_albums_title')}
           </Text>
           <Text style={[styles.emptySub, { color: theme.colors.foregroundMuted }]}>
             {activeTab === "tareas"
-              ? "Guarda tareas de otras personas para tenerlas siempre a mano aquí."
-              : "Guarda álbumes de otras personas para tenerlos siempre a mano aquí."}
+              ? t('saved.empty_tasks_desc')
+              : t('saved.empty_albums_desc')}
           </Text>
         </View>
       ) : activeTab === "albumes" ? (

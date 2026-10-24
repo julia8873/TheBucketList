@@ -13,6 +13,7 @@ import {
   confirm,
   toast,
 } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { usePullToRefresh } from '../../src/hooks/useAutoRefresh';
 import { useProfileStats } from '../../src/hooks/useFriends';
@@ -49,6 +50,7 @@ type Filter = 'all' | 'active' | 'completed';
 export default function PublicProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const { user } = useAuthStore();
   const { refreshing, onRefresh } = usePullToRefresh();
@@ -395,8 +397,8 @@ export default function PublicProfileScreen() {
           <View style={styles.tabsContainer}>
             <SegmentedControl
               options={[
-                { key: 'list', label: 'Lista' },
-                { key: 'albums', label: 'Álbumes' },
+                { key: 'list', label: t('profile.tab_list') },
+                { key: 'albums', label: t('profile.tab_albums') },
               ]}
               selected={activeTab}
               onChange={(val) => setActiveTab(val as 'list' | 'albums')}
@@ -406,7 +408,7 @@ export default function PublicProfileScreen() {
           {activeTab === 'list' ? (
             <>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <SectionLabel highlight="Tareas" rest={`públicas · ${taskCount}`} style={styles.sectionLabel} />
+                <SectionLabel highlight={t('common.tasks')} rest={` ${t('common.public').toLowerCase()} · ${taskCount}`} style={styles.sectionLabel} />
                 <ViewModeSelector mode={taskViewMode} onChange={setTaskViewMode} />
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14, marginBottom: 16 }}>

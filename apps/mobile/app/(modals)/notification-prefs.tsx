@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'reac
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTheme, PageTitle } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
@@ -21,6 +22,7 @@ type Prefs = Partial<Record<PrefKey, boolean | null>>;
 export default function NotificationPrefsScreen() {
   const { theme } = useTheme();
   const router = useRouter();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const queryKey = ['notification_prefs', user?.id];
@@ -79,35 +81,35 @@ export default function NotificationPrefsScreen() {
             >
               <ChevronLeft size={22} color={theme.colors.foreground} />
             </Pressable>
-            <PageTitle>Notificaciones</PageTitle>
+            <PageTitle>{t('notifications.title')}</PageTitle>
           </View>
-          <SectionTitle gold="NOTIFICACIONES PUSH" />
+          <SectionTitle gold={t('settings.push')} />
           <Card>
             <ToggleRow
-              title="Reacciones"
-              subtitle="Cuando alguien reacciona a tus tareas o álbumes"
+              title={t('notifications.reaction_title', { defaultValue: 'Reacciones' })}
+              subtitle={t('notifications.reaction_desc', { defaultValue: 'Cuando alguien reacciona a tus tareas o álbumes' })}
               value={isOn('reaction_push')}
               onChange={(v) => updatePrefs.mutate({ reaction_push: v })}
             />
             <ToggleRow
-              title="Comentarios"
-              subtitle="Comentarios y menciones en tus tareas o álbumes"
+              title={t('notifications.comment_title', { defaultValue: 'Comentarios' })}
+              subtitle={t('notifications.comment_desc', { defaultValue: 'Comentarios y menciones en tus tareas o álbumes' })}
               value={isOn('comment_push')}
               onChange={(v) => updatePrefs.mutate({ comment_push: v })}
             />
             <ToggleRow
-              title="Seguidores y solicitudes"
-              subtitle="Nuevos seguidores y solicitudes de seguimiento"
+              title={t('notifications.follow_title', { defaultValue: 'Seguidores y solicitudes' })}
+              subtitle={t('notifications.follow_desc', { defaultValue: 'Nuevos seguidores y solicitudes de seguimiento' })}
               value={isOn('follow_push')}
               onChange={(v) => updatePrefs.mutate({ follow_push: v })}
             />
             <ToggleRow
-              title="Tareas completadas por amigos"
+              title={t('notifications.friend_completed_title', { defaultValue: 'Tareas completadas por amigos' })}
               value={isOn('friend_completed_push')}
               onChange={(v) => updatePrefs.mutate({ friend_completed_push: v })}
             />
             <ToggleRow
-              title="Fechas límite de tareas"
+              title={t('notifications.deadline_title', { defaultValue: 'Fechas límite de tareas' })}
               value={isOn('deadline_push')}
               onChange={(v) => updatePrefs.mutate({ deadline_push: v })}
               last

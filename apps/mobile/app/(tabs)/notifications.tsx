@@ -13,7 +13,8 @@ import { bucketApi } from '../../src/services/api/bucket';
 import { getNotificationRoute, getSpecificNotificationText } from '../../src/utils/notificationRouting';
 import { useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { es, enUS } from 'date-fns/locale';
+import { useTranslation } from '@bucketlist/shared';
 import {
   checkNotificationPermissionsAsync,
   requestNotificationPermissionsAsync,
@@ -24,6 +25,7 @@ import {
 
 export default function NotificationsScreen() {
   const { theme } = useTheme();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { user } = useAuthStore();
   const { refreshing, onRefresh } = usePullToRefresh();
@@ -192,11 +194,11 @@ export default function NotificationsScreen() {
   };
 
   const getMessageForType = (notification: any) => {
-    const actorName = notification.actor?.display_name || notification.actor?.username || 'Alguien';
+    const actorName = notification.actor?.display_name || notification.actor?.username || (i18n.language === 'en' ? 'Someone' : 'Alguien');
     
     switch (notification.type) {
-      case 'user_reported': return notification.content || `${actorName} ha enviado un reporte de usuario.`;
-      case 'content_reported': return notification.content || `${actorName} ha reportado un contenido.`;
+      case 'user_reported': return notification.content || `${actorName} ${t('notifications.type_user_reported')}`;
+      case 'content_reported': return notification.content || `${actorName} ${t('notifications.type_content_reported')}`;
       case 'reaction':
       case 'comment':
       case 'mention':
@@ -204,24 +206,24 @@ export default function NotificationsScreen() {
         return (
           getSpecificNotificationText(notification, actorName, notification, user?.id) ??
           notification.content ??
-          'Tienes una nueva notificación.'
+          t('notifications.type_default')
         );
-      case 'follow': return `${actorName} ha empezado a seguirte.`;
-      case 'follow_request': return `${actorName} quiere seguirte.`;
-      case 'follow_accepted': return `${actorName} aceptó tu solicitud.`;
-      case 'friend_completed': return `¡${actorName} completó una tarea!`;
-      case 'deadline': return `Una tarea tiene la fecha límite próxima.`;
-      case 'collaboration_invite': return notification.content || `${actorName} te ha invitado a colaborar.`;
-      case 'collaboration_request': return notification.content || `${actorName} ha solicitado colaborar en tu tarea.`;
-      case 'collaborator_joined': return notification.content || `${actorName} se ha unido como colaborador a tu tarea.`;
-      case 'collaboration_accepted': return notification.content || `${actorName} ha aceptado tu solicitud de colaboración.`;
-      case 'album_invite': return notification.content || `${actorName} te ha invitado a colaborar en un álbum.`;
-      case 'notification_request': return notification.content || `${actorName} ha solicitado activar notificaciones.`;
-      case 'notification_accepted': return notification.content || `${actorName} aceptó la solicitud de notificaciones.`;
-      case 'bucket_update': return notification.content || `${actorName} ha actualizado una tarea que sigues.`;
-      case 'album_update': return notification.content || `${actorName} ha actualizado un álbum que sigues.`;
-      case 'drive_access': return notification.content || `${actorName} ha accedido al enlace de Google Drive en tu tarea.`;
-      default: return notification.content || `Tienes una nueva notificación.`;
+      case 'follow': return `${actorName} ${t('notifications.type_follow')}`;
+      case 'follow_request': return `${actorName} ${t('notifications.type_follow_request')}`;
+      case 'follow_accepted': return `${actorName} ${t('notifications.type_follow_accepted')}`;
+      case 'friend_completed': return `${actorName} ${t('notifications.type_friend_completed')}`;
+      case 'deadline': return t('notifications.type_deadline');
+      case 'collaboration_invite': return notification.content || `${actorName} ${t('notifications.type_collaboration_invite')}`;
+      case 'collaboration_request': return notification.content || `${actorName} ${t('notifications.type_collaboration_request')}`;
+      case 'collaborator_joined': return notification.content || `${actorName} ${t('notifications.type_collaborator_joined')}`;
+      case 'collaboration_accepted': return notification.content || `${actorName} ${t('notifications.type_collaboration_accepted')}`;
+      case 'album_invite': return notification.content || `${actorName} ${t('notifications.type_album_invite')}`;
+      case 'notification_request': return notification.content || `${actorName} ${t('notifications.type_notification_request')}`;
+      case 'notification_accepted': return notification.content || `${actorName} ${t('notifications.type_notification_accepted')}`;
+      case 'bucket_update': return notification.content || `${actorName} ${t('notifications.type_bucket_update')}`;
+      case 'album_update': return notification.content || `${actorName} ${t('notifications.type_album_update')}`;
+      case 'drive_access': return notification.content || `${actorName} ${t('notifications.type_drive_access')}`;
+      default: return notification.content || t('notifications.type_default');
     }
   };
 
@@ -229,7 +231,7 @@ export default function NotificationsScreen() {
     return (
       <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={[styles.header, { borderBottomColor: theme.dark ? '#222222' : '#cccccc' }]}>
-          <PageTitle>Notificaciones</PageTitle>
+          <PageTitle>{t('notifications.title')}</PageTitle>
         </View>
         <View style={{ padding: 16, gap: 14 }}>
           {[1, 2, 3, 4, 5].map((i) => (
@@ -252,7 +254,7 @@ export default function NotificationsScreen() {
   const notificationsHeader = (
     <View>
       <View style={[styles.header, { borderBottomColor: theme.dark ? '#222222' : '#cccccc' }]}>
-        <PageTitle>Notificaciones</PageTitle>
+        <PageTitle>{t('notifications.title')}</PageTitle>
         {unreadCount > 0 ? (
           <Pressable
             onPress={() => user && markAllAsRead.mutate(user.id)}
@@ -263,10 +265,10 @@ export default function NotificationsScreen() {
             ]}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel="Leer todas las notificaciones"
+            accessibilityLabel={t('notifications.read_all')}
           >
             <CheckCheck size={16} color={gold[400]} />
-            <Text style={styles.markAllText}>Leer todas</Text>
+            <Text style={styles.markAllText}>{t('notifications.read_all')}</Text>
           </Pressable>
         ) : notifications && notifications.length > 0 ? (
           <Pressable
@@ -279,10 +281,10 @@ export default function NotificationsScreen() {
             ]}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel="Todas leídas"
+            accessibilityLabel={t('notifications.all_read')}
           >
             <Check size={14} color={theme.colors.foregroundMuted} />
-            <Text style={[styles.allReadText, { color: theme.colors.foregroundMuted }]}>Leídas</Text>
+            <Text style={[styles.allReadText, { color: theme.colors.foregroundMuted }]}>{t('notifications.all_read')}</Text>
           </Pressable>
         ) : null}
       </View>
@@ -300,10 +302,10 @@ export default function NotificationsScreen() {
           <Bell size={20} color="#F59E0B" style={{ marginTop: 2 }} />
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={[styles.permBannerTitle, { color: theme.dark ? '#FCD34D' : '#92400E' }]}>
-              Notificaciones desactivadas
+              {t('notifications.permission_title')}
             </Text>
             <Text style={[styles.permBannerText, { color: theme.dark ? '#FDE68A' : '#B45309' }]}>
-              Activa los permisos para recibir avisos y sonido en tu móvil cuando interactúen contigo.
+              {t('notifications.permission_desc')}
             </Text>
           </View>
           <Pressable
@@ -312,7 +314,7 @@ export default function NotificationsScreen() {
             accessibilityRole="button"
           >
             <Text style={styles.permBannerBtnText}>
-              {permStatus.canAskAgain ? 'Activar' : 'Ajustes'}
+              {permStatus.canAskAgain ? t('common.activate') : t('common.settings')}
             </Text>
           </Pressable>
         </View>
@@ -374,7 +376,7 @@ export default function NotificationsScreen() {
                 color={theme.dark ? '#FFFFFF' : theme.colors.foregroundMuted}
                 style={{ opacity: theme.dark ? 0.75 : 1 }}
               >
-                {formatDistanceToNow(new Date(item.created_at), { addSuffix: true, locale: es })}
+                {formatDistanceToNow(new Date(item.created_at), { addSuffix: true, locale: i18n.language === 'en' ? enUS : es })}
               </Typography>
               {(item.type === 'collaboration_invite' || item.type === 'album_invite' || item.type === 'notification_request' || item.type === 'collaboration_request') && !item.is_read && (
                 <View style={styles.inviteActions}>
@@ -384,7 +386,7 @@ export default function NotificationsScreen() {
                     onPress={() => handleCollaborationResponse(item, true)}
                   >
                     <Check size={14} color="#111" strokeWidth={3} />
-                    <Text style={styles.inviteBtnTextAccept}>Aceptar</Text>
+                    <Text style={styles.inviteBtnTextAccept}>{t('common.accept')}</Text>
                   </Pressable>
                   <Pressable
                     style={[
@@ -396,7 +398,7 @@ export default function NotificationsScreen() {
                     onPress={() => handleCollaborationResponse(item, false)}
                   >
                     <X size={14} color={theme.dark ? '#FFFFFF' : '#9A9A9A'} />
-                    <Text style={[styles.inviteBtnTextDecline, theme.dark && { color: '#FFFFFF' }]}>Rechazar</Text>
+                    <Text style={[styles.inviteBtnTextDecline, theme.dark && { color: '#FFFFFF' }]}>{t('common.reject')}</Text>
                   </Pressable>
                 </View>
               )}
@@ -414,7 +416,7 @@ export default function NotificationsScreen() {
               color={theme.dark ? '#FFFFFF' : theme.colors.foregroundMuted} 
               style={{ marginTop: spacing[10] }}
             >
-              No tienes notificaciones aún.
+              {t('notifications.empty')}
             </Typography>
           </View>
         }

@@ -20,7 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { PageTitle, useTheme, FilterChip } from '@bucketlist/ui';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/explore.styles';
 import { DailyTag, DailySortField, DailySortDirection, TimeView, StatusFilter } from '../types';
 import type { WeekBlockItem } from './DailyWeekView';
@@ -82,7 +82,7 @@ export function DailyTasksTopBar({ timeView, setTimeView, style }: DailyTasksTop
               timeView === 'today' && [styles.segmentedTabTextActive, { color: theme.colors.foreground }],
             ]}
           >
-            Hoy
+            {t('daily.tab_today')}
           </Text>
         </Pressable>
         <Pressable
@@ -96,7 +96,7 @@ export function DailyTasksTopBar({ timeView, setTimeView, style }: DailyTasksTop
               timeView === 'week' && [styles.segmentedTabTextActive, { color: theme.colors.foreground }],
             ]}
           >
-            Semana
+            {t('daily.tab_week')}
           </Text>
         </Pressable>
         <Pressable
@@ -110,7 +110,7 @@ export function DailyTasksTopBar({ timeView, setTimeView, style }: DailyTasksTop
               timeView === 'calendar' && [styles.segmentedTabTextActive, { color: theme.colors.foreground }],
             ]}
           >
-            Calendario
+            {t('daily.tab_calendar')}
           </Text>
         </Pressable>
         <Pressable
@@ -124,7 +124,7 @@ export function DailyTasksTopBar({ timeView, setTimeView, style }: DailyTasksTop
               timeView === 'all' && [styles.segmentedTabTextActive, { color: theme.colors.foreground }],
             ]}
           >
-            Todas
+            {t('daily.tab_all')}
           </Text>
         </Pressable>
       </View>
@@ -151,6 +151,7 @@ export function DailyQuickAddBar({
   containerStyle,
 }: DailyQuickAddBarProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <View style={[{ paddingHorizontal: 16, marginBottom: 2 }, containerStyle]}>
@@ -158,7 +159,7 @@ export function DailyQuickAddBar({
         <TextInput
           ref={inputRef}
           style={[styles.input, { color: theme.colors.foreground }]}
-          placeholder="Añadir tarea rápida para hoy..."
+          placeholder={t('daily.quick_add_placeholder')}
           placeholderTextColor={theme.colors.foregroundMuted}
           value={newTitle}
           onChangeText={setNewTitle}
@@ -170,7 +171,7 @@ export function DailyQuickAddBar({
           style={[styles.addBtn, !newTitle.trim() && styles.addBtnDisabled]}
           onPress={handleQuickAddTask}
           disabled={!newTitle.trim()}
-          accessibilityLabel="Añadir tarea rápida"
+          accessibilityLabel={t('daily.quick_add_placeholder')}
         >
           <Plus size={18} color="#0E0E0E" strokeWidth={2.4} />
         </Pressable>

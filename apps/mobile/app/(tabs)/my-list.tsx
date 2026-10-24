@@ -14,7 +14,7 @@ import {
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '@bucketlist/shared';
 import { Search, X, Plus, ChevronLeft, Sparkles, ChevronRight } from 'lucide-react-native';
 import { DraggableTaskList } from '@/components/DraggableTaskList';
 import { BulkTaskActionBar } from '@/components/BulkTaskActionBar';
@@ -287,7 +287,7 @@ export default function MyListScreen() {
                 borderColor: theme.colors.border,
               }}
               accessibilityRole="button"
-              accessibilityLabel="Volver al perfil"
+              accessibilityLabel={t('my_list.back_to_profile')}
             >
               <ChevronLeft size={22} color={theme.colors.foreground} strokeWidth={2} />
             </Pressable>
@@ -311,7 +311,7 @@ export default function MyListScreen() {
       {state.isSearching && (
         <View style={styles.searchBarContainer}>
           <Input
-            placeholder="Buscar por título o descripción..."
+            placeholder={t('my_list.search_placeholder')}
             value={state.searchQuery}
             onChangeText={state.setSearchQuery}
             autoFocus
@@ -331,9 +331,9 @@ export default function MyListScreen() {
       <View style={styles.tabsContainer}>
         <SegmentedControl
           options={[
-            { key: 'list', label: 'Tareas' },
-            { key: 'albums', label: 'Álbumes' },
-            { key: 'calendar', label: 'Calendario' },
+            { key: 'list', label: t('my_list.tab_tasks') },
+            { key: 'albums', label: t('my_list.tab_albums') },
+            { key: 'calendar', label: t('my_list.tab_calendar') },
           ]}
           selected={state.activeTab}
           onChange={state.setActiveTab}

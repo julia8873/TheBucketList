@@ -3,6 +3,7 @@ import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
 import { Check, UserX } from 'lucide-react-native';
 import { fontFamily, gold, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import type { FollowStatus } from '../services/api/friends';
 
 interface FollowButtonProps {
@@ -34,25 +35,26 @@ export function FollowButton({
   isBlocked = false,
 }: FollowButtonProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const block = size === 'block';
 
   let label: string;
   let variant: 'solid' | 'outline' | 'muted' | 'blocked';
 
   if (isBlocked) {
-    label = 'Bloqueado';
+    label = t('social.blocked');
     variant = 'blocked';
   } else if (status === 'accepted') {
-    label = 'Siguiendo';
+    label = t('social.following');
     variant = 'muted';
   } else if (status === 'pending') {
-    label = block ? 'Solicitud enviada' : 'Pendiente';
+    label = block ? t('social.request_sent') : t('social.request_pending');
     variant = 'muted';
   } else if (isPrivate) {
-    label = block ? 'Solicitar seguimiento' : 'Solicitar';
+    label = block ? t('social.request_follow_full') : t('social.request_follow');
     variant = 'outline';
   } else {
-    label = 'Seguir';
+    label = t('social.follow');
     variant = 'solid';
   }
 
