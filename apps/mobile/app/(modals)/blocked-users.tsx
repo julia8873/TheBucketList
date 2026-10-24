@@ -38,24 +38,6 @@ export default function BlockedUsersScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Pressable
-          style={[styles.backBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
-          onPress={() => router.back()}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Volver"
-        >
-          <ChevronLeft color={theme.colors.foreground} size={24} />
-        </Pressable>
-        <PageTitle gold="Usuarios" rest=" bloqueados" />
-      </View>
-
-      <Text style={[styles.description, { color: theme.colors.foregroundMuted }]}>
-        Los usuarios de esta lista no pueden ver tus objetivos, seguirte ni interactuar contigo.
-      </Text>
-
       {isLoading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#D4AF37" />
@@ -66,6 +48,26 @@ export default function BlockedUsersScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <>
+              <View style={[styles.header, { paddingHorizontal: 0 }]}>
+                <Pressable
+                  style={[styles.backBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+                  onPress={() => router.back()}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Volver"
+                >
+                  <ChevronLeft color={theme.colors.foreground} size={24} />
+                </Pressable>
+                <PageTitle gold="Usuarios" rest=" bloqueados" />
+              </View>
+
+              <Text style={[styles.description, { color: theme.colors.foregroundMuted, paddingHorizontal: 0 }]}>
+                Los usuarios de esta lista no pueden ver tus objetivos, seguirte ni interactuar contigo.
+              </Text>
+            </>
+          }
           renderItem={({ item }) => {
             const profile = item.profile;
             return (

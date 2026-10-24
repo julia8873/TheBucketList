@@ -64,25 +64,23 @@ export default function NotificationPrefsScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Misma cabecera que Ajustes para que el título quede a la misma altura */}
-      <View style={styles.header}>
-        <Pressable
-          onPress={goBack}
-          accessibilityRole="button"
-          accessibilityLabel="Volver"
-          style={[styles.back, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
-        >
-          <ChevronLeft size={22} color={theme.colors.foreground} />
-        </Pressable>
-        <PageTitle>Notificaciones</PageTitle>
-      </View>
-
       {isLoading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
+            <Pressable
+              onPress={goBack}
+              accessibilityRole="button"
+              accessibilityLabel="Volver"
+              style={[styles.back, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+            >
+              <ChevronLeft size={22} color={theme.colors.foreground} />
+            </Pressable>
+            <PageTitle>Notificaciones</PageTitle>
+          </View>
           <SectionTitle gold="NOTIFICACIONES PUSH" />
           <Card>
             <ToggleRow
@@ -124,7 +122,7 @@ export default function NotificationPrefsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 20, paddingTop: 12 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingTop: 12, paddingBottom: 6 },
   back: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   content: { paddingHorizontal: 20, paddingBottom: 48 },
 });

@@ -30,7 +30,7 @@ import { useUserFavorites, useToggleFavoriteBucket } from '@/hooks/useFavorites'
 import { useEntitySubscription } from '@/hooks/useEntityNotifications';
 import { MENTION_TASK_COLUMNS, MentionTask } from '@/components/TaskMentionPickerSheet';
 import { CollaboratorItem } from '@/components/CollaboratorPickerSheet';
-import { ThumbnailMode, resolveTaskImage } from '@/utils/taskImage';
+import { ThumbnailMode } from '@/utils/taskImage';
 import { PhotoSortField, PhotoSortDir } from '../components/PhotoSortModal';
 import { DatePickerConfig } from '../components/BucketDatePickerModal';
 import type { CollaborationMode, CollaborationAudience } from '../components/TaskCollaborationSettingsModal';
@@ -454,7 +454,7 @@ export function useBucketDetailState() {
     .filter((p: any) => !!p.storage_path)
     .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
   const hasCover = !!bucket?.cover_image;
-  const resolvedCover = resolveTaskImage(bucket);
+  const resolvedCover = bucket?.cover_image || null;
   const isCustomCover = !!resolvedCover && !resolvedCover.startsWith('preset:');
   const chosenPhotoId =
     bucket?.thumbnail_mode === 'photo' && thumbPhotos.some((p: any) => p.id === bucket?.thumbnail_photo_id)
