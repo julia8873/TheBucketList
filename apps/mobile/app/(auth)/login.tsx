@@ -2,11 +2,12 @@ import React, { useRef, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Keyboard, type TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useTheme, fontFamily, Alert } from '@bucketlist/ui';
+import { useTheme, fontFamily } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
 import { mapAuthError } from '../../src/utils/authErrors';
 import { useGoogleAuth } from '../../src/hooks/useGoogleAuth';
 import { afterBrowserReturn } from '../../src/utils/afterBrowserReturn';
+import { InlineDialog, type InlineDialogState } from '../../src/components/auth/InlineDialog';
 import {
   AuthScreen, AuthInput, PillButton, GoogleButton, OrDivider, SwitchLink,
 } from '../../src/components/auth/AuthParts';
@@ -21,6 +22,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dialog, setDialog] = useState<InlineDialogState | null>(null);
 
   const { signInWithGoogle, loading: googleLoading } = useGoogleAuth('login');
 
@@ -79,17 +81,17 @@ export default function LoginScreen() {
         // No existe cuenta con ese email de Google → preguntar si quiere crear una.
         // Esperamos a que Android termine de re-maquetar tras cerrar el navegador.
         await afterBrowserReturn();
-        Alert.alert(
-          t('auth.google_no_account_title'),
-          t('auth.google_no_account_body', { email: result.email ?? '' }),
-          [
-            { text: t('common.cancel'), style: 'cancel' },
+        setDialog({
+          title: t('auth.google_no_account_title'),
+          message: t('auth.google_no_account_body', { email: result.email ?? '' }),
+          actions: [
+            { label: t('common.cancel'), style: 'cancel' },
             {
-              text: t('auth.create_account_link'),
+              label: t('auth.create_account_link'),
               onPress: () => router.replace('/(auth)/register'),
             },
           ],
-        );
+        });
         break;
       case 'error':
         setError(result.errorMessage ?? t('auth.err_generic'));
@@ -102,6 +104,7 @@ export default function LoginScreen() {
   };
 
   return (
+    <>
     <AuthScreen
       title={t('auth.login_title')}
       subtitle={t('auth.login_subtitle')}
@@ -160,6 +163,8 @@ export default function LoginScreen() {
         </Pressable>
       </View>
     </AuthScreen>
+    <InlineDialog dialog={dialog} onClose={() => setDialog(null)} />
+    </>
   );
 }
 

@@ -2,12 +2,13 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Text, StyleSheet, Keyboard, type TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useTheme, fontFamily, Alert } from '@bucketlist/ui';
+import { useTheme, fontFamily } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
 import { useOnboardingStore } from '../../src/stores/onboarding.store';
 import { mapAuthError, EMAIL_RE, USERNAME_RE, sanitizeUsername } from '../../src/utils/authErrors';
 import { useGoogleAuth } from '../../src/hooks/useGoogleAuth';
 import { afterBrowserReturn } from '../../src/utils/afterBrowserReturn';
+import { InlineDialog, type InlineDialogState } from '../../src/components/auth/InlineDialog';
 import {
   AuthScreen, AuthInput, PillButton, GoogleButton, OrDivider, SwitchLink, LegalNote,
 } from '../../src/components/auth/AuthParts';
@@ -21,6 +22,7 @@ export default function RegisterScreen() {
   const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
 
+  const [dialog, setDialog] = useState<InlineDialogState | null>(null);
   const [username, setUsername] = useState('');
   const [usernameStatus, setUsernameStatus] = useState<Status>('idle');
   const [email, setEmail] = useState('');
@@ -142,17 +144,17 @@ export default function RegisterScreen() {
   /** Diálogo "ya existe una cuenta con este correo" con opción de ir al login. */
   const showAccountExistsDialog = () => {
     setEmailStatus('taken');
-    Alert.alert(
-      t('auth.google_account_exists_title'),
-      t('auth.google_account_exists_body', { email: cleanEmail }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
+    setDialog({
+      title: t('auth.google_account_exists_title'),
+      message: t('auth.google_account_exists_body', { email: cleanEmail }),
+      actions: [
+        { label: t('common.cancel'), style: 'cancel' },
         {
-          text: t('auth.sign_in'),
+          label: t('auth.sign_in'),
           onPress: () => router.replace('/(auth)/login'),
         },
       ],
-    );
+    });
   };
 
   const submit = async () => {
@@ -258,17 +260,17 @@ export default function RegisterScreen() {
       case 'account_exists':
         // Ya existe una cuenta con ese email → preguntar si quiere iniciar sesión
         await afterBrowserReturn();
-        Alert.alert(
-          t('auth.google_account_exists_title'),
-          t('auth.google_account_exists_body', { email: result.email ?? '' }),
-          [
-            { text: t('common.cancel'), style: 'cancel' },
+        setDialog({
+          title: t('auth.google_account_exists_title'),
+          message: t('auth.google_account_exists_body', { email: result.email ?? '' }),
+          actions: [
+            { label: t('common.cancel'), style: 'cancel' },
             {
-              text: t('auth.sign_in'),
+              label: t('auth.sign_in'),
               onPress: () => router.replace('/(auth)/login'),
             },
           ],
-        );
+        });
         break;
       case 'error':
         setError(result.errorMessage ?? t('auth.err_generic'));
@@ -282,6 +284,7 @@ export default function RegisterScreen() {
   };
 
   return (
+    <>
     <AuthScreen
       title={t('auth.register_title')}
       subtitle={t('auth.register_subtitle')}
@@ -352,6 +355,8 @@ export default function RegisterScreen() {
         error={error}
       />
     </AuthScreen>
+    <InlineDialog dialog={dialog} onClose={() => setDialog(null)} />
+    </>
   );
 }
 
