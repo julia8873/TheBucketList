@@ -9,6 +9,10 @@ concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
+# Necesario para que softprops/action-gh-release pueda crear la release y subir el APK/AAB
+permissions:
+  contents: write
+
 jobs:
   build-release:
     name: Build signed AAB (Play Store) + APK
