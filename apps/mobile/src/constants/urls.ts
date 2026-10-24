@@ -123,3 +123,11 @@ export function getAuthRedirectUrl(path = ''): string {
 
   return `bucketlist://${normalizedPath}`;
 }
+
+/** Documentos legales alojados en la web (apps/mobile/public → Cloudflare Pages). */
+const LEGAL_SITE_URL = (process.env['EXPO_PUBLIC_SITE_URL'] || 'https://bucketlist.pages.dev').replace(/\/$/, '');
+export const LEGAL_URLS = {
+  privacy: `${LEGAL_SITE_URL}/privacy.html`,
+  terms: `${LEGAL_SITE_URL}/terms.html`,
+  deleteAccount: `${LEGAL_SITE_URL}/delete-account.html`,
+} as const;

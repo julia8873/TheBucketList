@@ -4,6 +4,7 @@
  * Accessible at http://localhost:8081/design-system during development.
  */
 import React, { useState } from 'react';
+import { Redirect } from 'expo-router';
 import {
   ScrollView,
   View,
@@ -74,7 +75,7 @@ function Swatch({ color, label }: { color: string; label: string }) {
 
 // ─── Main screen ─────────────────────────────────────────────────────────────
 
-export default function DesignSystemScreen() {
+function DesignSystemScreenImpl() {
   const { theme, colorScheme, setColorScheme } = useTheme();
   const [inputValue, setInputValue] = useState('');
   const [loadingBtn, setLoadingBtn] = useState(false);
@@ -593,3 +594,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+/** Pantalla solo de desarrollo: en builds de producción redirige al inicio. */
+export default function DesignSystemScreen() {
+  if (!__DEV__) return <Redirect href="/" />;
+  return <DesignSystemScreenImpl />;
+}

@@ -9,7 +9,7 @@ import { mapAuthError, EMAIL_RE, USERNAME_RE, sanitizeUsername } from '../../src
 import { useGoogleAuth } from '../../src/hooks/useGoogleAuth';
 import { afterBrowserReturn } from '../../src/utils/afterBrowserReturn';
 import {
-  AuthScreen, AuthInput, PillButton, GoogleButton, OrDivider, SwitchLink,
+  AuthScreen, AuthInput, PillButton, GoogleButton, OrDivider, SwitchLink, LegalNote,
 } from '../../src/components/auth/AuthParts';
 
 type Status = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
@@ -301,6 +301,7 @@ export default function RegisterScreen() {
             action={t('auth.enter')}
             onPress={() => router.replace('/(auth)/login')}
           />
+          <LegalNote />
         </>
       }
     >

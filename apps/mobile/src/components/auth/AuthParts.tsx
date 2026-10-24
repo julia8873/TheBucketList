@@ -8,6 +8,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Linking,
   StyleSheet,
   type TextInputProps,
 } from 'react-native';
@@ -16,7 +17,7 @@ import { ChevronLeft } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import Svg, { Path } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
-import { normalizeStorageUrl } from '../../constants/urls';
+import { normalizeStorageUrl, LEGAL_URLS } from '../../constants/urls';
 import { Typography, Button, Icon, useTheme, spacing, radii, fontFamily, gold } from '@bucketlist/ui';
 
 // ─── Layout de pantalla ─────────────────────────────────────────────────────
@@ -288,6 +289,31 @@ export function SwitchLink({ prompt, action, onPress }: { prompt: string; action
       <Text onPress={onPress} accessibilityRole="link" style={{ color: theme.colors.primary, fontFamily: fontFamily.semibold }}>
         {action}
       </Text>
+    </Text>
+  );
+}
+
+/** «Al continuar confirmas que tienes 16 años o más y aceptas nuestros Términos y nuestra Política de privacidad.» */
+export function LegalNote() {
+  const { theme } = useTheme();
+  const { t } = useTranslation();
+  const open = (url: string) => { void Linking.openURL(url).catch(() => {}); };
+  const link = { color: theme.colors.primary, fontFamily: fontFamily.semibold } as const;
+  return (
+    <Text
+      style={{
+        color: theme.colors.foregroundSubtle,
+        fontFamily: fontFamily.regular,
+        fontSize: 12,
+        lineHeight: 17,
+        textAlign: 'center',
+        marginTop: 4,
+      }}
+    >
+      {t('auth.legal_prefix')}{' '}
+      <Text onPress={() => open(LEGAL_URLS.terms)} accessibilityRole="link" style={link}>{t('auth.legal_terms')}</Text>
+      {' '}{t('auth.legal_and')}{' '}
+      <Text onPress={() => open(LEGAL_URLS.privacy)} accessibilityRole="link" style={link}>{t('auth.legal_privacy')}</Text>.
     </Text>
   );
 }

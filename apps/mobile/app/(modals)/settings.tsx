@@ -1,6 +1,6 @@
 import { Alert } from '@bucketlist/ui';
 import React, { useState, useEffect } from 'react';
-import { AppState, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AppState, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,7 @@ import { Check, ChevronLeft, Heart, Bookmark } from 'lucide-react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fontFamily, useTheme, PageTitle } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
+import { LEGAL_URLS } from '../../src/constants/urls';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useThemeStore } from '../../src/stores/theme.store';
 import { useLanguageStore, type AppLanguage } from '../../src/stores/language.store';
@@ -235,6 +236,14 @@ export default function SettingsScreen() {
             title="Usuarios bloqueados"
             subtitle="Gestiona los perfiles que tienes bloqueados"
             onPress={() => router.push('/(modals)/blocked-users' as any)}
+          />
+          <Row
+            title="Política de privacidad"
+            onPress={() => void Linking.openURL(LEGAL_URLS.privacy).catch(() => {})}
+          />
+          <Row
+            title="Términos y condiciones"
+            onPress={() => void Linking.openURL(LEGAL_URLS.terms).catch(() => {})}
             last
           />
         </Card>

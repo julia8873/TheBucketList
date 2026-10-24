@@ -152,6 +152,22 @@ function TaskItemRowComponent({
     </View>
   ) : null;
 
+  /** Pregunta antes de marcar como completada (swipe a la derecha o toque en el botón verde). */
+  const askComplete = () => {
+    confirm.show({
+      title: '¿Marcar como completada?',
+      message: `¿Quieres marcar «${item.title}» como completada?`,
+      confirmLabel: 'Completar',
+      cancelLabel: 'Cancelar',
+      tone: 'success',
+      onConfirm: () => {
+        onComplete(item.id);
+        localSwipeableRef.current?.close();
+      },
+      onCancel: () => localSwipeableRef.current?.close(),
+    });
+  };
+
   const renderRightActions = (progress: any) => {
     if (!isItemOwner) return null;
     const opacity = progress.interpolate({
@@ -198,7 +214,7 @@ function TaskItemRowComponent({
             alignItems: 'center',
             justifyContent: 'center',
           }}
-          onPress={() => onComplete(item.id)}
+          onPress={askComplete}
         >
           <CheckCircle2 color="#FFFFFF" size={24} />
         </Pressable>
@@ -221,7 +237,7 @@ function TaskItemRowComponent({
       overshootLeft={false}
       onSwipeableOpen={(direction) => {
         if (direction === 'left' && item.status !== 'completed') {
-          onComplete(item.id);
+          askComplete();
         } else if (direction === 'right') {
           if (isItemOwner) {
             confirm.show({

@@ -90,3 +90,6 @@ eas-cli-log*
 *.bak
 *.dump
 *.gpg
+
+
+docs/
