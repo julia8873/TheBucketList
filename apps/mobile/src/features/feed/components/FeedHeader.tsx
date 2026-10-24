@@ -18,6 +18,8 @@ interface FeedHeaderProps {
   onOpenMap?: () => void;
   exploreSearch: string;
   onChangeExploreSearch: (text: string) => void;
+  friendsSearch?: string;
+  onChangeFriendsSearch?: (text: string) => void;
   viewMode: TaskViewMode;
   onChangeViewMode: (mode: TaskViewMode) => void;
   contentFilter: ContentFilter;
@@ -34,6 +36,8 @@ export function FeedHeader({
   onOpenMap,
   exploreSearch,
   onChangeExploreSearch,
+  friendsSearch = '',
+  onChangeFriendsSearch,
   viewMode,
   onChangeViewMode,
   contentFilter,
@@ -41,6 +45,10 @@ export function FeedHeader({
 }: FeedHeaderProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
+
+  const isSearching =
+    (homeTab === 'explore' && exploreSearch.trim().length >= 2) ||
+    (homeTab === 'friends' && friendsSearch.trim().length >= 2);
 
   return (
     <View style={styles.headerWrapper}>
@@ -95,7 +103,11 @@ export function FeedHeader({
           <Text
             style={[
               styles.toggleText,
-              { color: homeTab === 'friends' ? theme.colors.primaryForeground : theme.colors.foregroundMuted },
+              {
+                color: homeTab === 'friends' ? theme.colors.primaryForeground : theme.colors.foregroundMuted,
+                fontWeight: 'bold',
+                fontFamily: fontFamily.bold,
+              },
             ]}
           >
             {t('feed.tab_friends')}
@@ -113,7 +125,11 @@ export function FeedHeader({
           <Text
             style={[
               styles.toggleText,
-              { color: homeTab === 'explore' ? theme.colors.primaryForeground : theme.colors.foregroundMuted },
+              {
+                color: homeTab === 'explore' ? theme.colors.primaryForeground : theme.colors.foregroundMuted,
+                fontWeight: 'bold',
+                fontFamily: fontFamily.bold,
+              },
             ]}
           >
             {t('feed.tab_explore')}
@@ -125,25 +141,27 @@ export function FeedHeader({
       {homeTab === 'friends' ? (
         <View
           style={[
-            styles.searchBar,
+            styles.exploreSearchContainer,
             {
               backgroundColor: theme.colors.surface,
               borderColor: theme.colors.border,
             },
           ]}
         >
-          <Pressable
-            onPress={() => onOpenFriends()}
-            style={styles.searchTouch}
-            accessibilityRole="search"
-            accessibilityLabel={t('feed.search_people')}
-          >
-            <Search size={18} color={theme.colors.foregroundMuted} strokeWidth={1.8} />
-            <Text style={[styles.searchPlaceholder, { color: theme.colors.foregroundMuted }]}>
-              {t('feed.search_people')}
-            </Text>
-          </Pressable>
-          {requestCount > 0 ? (
+          <Search size={18} color={theme.colors.foregroundMuted} strokeWidth={1.8} />
+          <TextInput
+            placeholder={t('feed.search_placeholder')}
+            placeholderTextColor={theme.colors.foregroundMuted}
+            value={friendsSearch}
+            onChangeText={onChangeFriendsSearch}
+            style={[styles.exploreSearchInput, { color: theme.colors.foreground }]}
+            returnKeyType="search"
+          />
+          {friendsSearch.length > 0 ? (
+            <Pressable onPress={() => onChangeFriendsSearch?.('')} hitSlop={8}>
+              <X size={18} color={theme.colors.foregroundMuted} strokeWidth={2} />
+            </Pressable>
+          ) : requestCount > 0 ? (
             <Pressable onPress={() => onOpenFriends('requests')} hitSlop={8} accessibilityRole="button">
               <Text style={[styles.requests, { color: theme.colors.primary }]}>
                 {requestCount} {requestCount === 1 ? t('feed.friend_request_single') : t('feed.friend_request_plural')}
@@ -178,7 +196,7 @@ export function FeedHeader({
         </View>
       )}
 
-      {!(homeTab === 'explore' && exploreSearch.length >= 2) && (
+      {!isSearching && (
         <View style={styles.feedControlsRow}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             {onOpenMap ? (
@@ -204,7 +222,7 @@ export function FeedHeader({
       )}
 
       {/* Content filter: Todo / Tareas / Álbumes / Colecciones (Colecciones solo en Explorar) */}
-      {!(homeTab === 'explore' && exploreSearch.length >= 2) && (
+      {!isSearching && (
         <View style={styles.contentFilterRow}>
           {((homeTab === 'explore'
             ? ['todo', 'tareas', 'albumes', 'colecciones']

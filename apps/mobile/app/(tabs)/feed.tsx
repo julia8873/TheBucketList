@@ -3,8 +3,7 @@ import { InteractionManager, ScrollView, View, useWindowDimensions } from 'react
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter, useNavigation, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '@bucketlist/ui';
-import { useFeed, useExploreFeed, useFriendsAlbums, useExploreAlbums } from '../../src/hooks/useFeed';
-import { useSearchUsers } from '../../src/hooks/useSocial';
+import { useFeed, useExploreFeed, useFriendsAlbums, useExploreAlbums, useSearchFeed } from '../../src/hooks/useFeed';
 import { useIncomingRequestCount } from '../../src/hooks/useFriends';
 import { useUnreadCount } from '../../src/hooks/useNotifications';
 import { useAuthStore } from '../../src/stores/auth.store';
@@ -187,16 +186,26 @@ export default function FeedScreen() {
     return friendsAlbumsData?.pages.flatMap((page) => page.items) ?? [];
   }, [friendsAlbumsData]);
 
-  // ── Explorar Feed ────────────────────────────────────────────────────────────
+  // ── Búsqueda ───────────────────────────────────────────────────────────────
   const [exploreSearch, setExploreSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [debouncedExploreSearch, setDebouncedExploreSearch] = useState('');
+
+  const [friendsSearch, setFriendsSearch] = useState('');
+  const [debouncedFriendsSearch, setDebouncedFriendsSearch] = useState('');
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearch(exploreSearch);
-    }, 400);
+      setDebouncedExploreSearch(exploreSearch);
+    }, 350);
     return () => clearTimeout(timer);
   }, [exploreSearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedFriendsSearch(friendsSearch);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [friendsSearch]);
 
   const {
     data: exploreData,
@@ -217,7 +226,17 @@ export default function FeedScreen() {
     refetch: refetchExploreAlbums,
   } = exploreAlbumsFeed;
 
-  const { data: searchResults, isLoading: isSearchLoading } = useSearchUsers(debouncedSearch, user?.id);
+  const { data: exploreSearchResults, isLoading: isExploreSearchLoading } = useSearchFeed({
+    query: debouncedExploreSearch,
+    scope: 'explore',
+    userId: user?.id,
+  });
+
+  const { data: friendsSearchResults, isLoading: isFriendsSearchLoading } = useSearchFeed({
+    query: debouncedFriendsSearch,
+    scope: 'friends',
+    userId: user?.id,
+  });
 
   const exploreBuckets = useMemo(() => {
     return (exploreData?.pages.flatMap((page) => page.items) || []).filter(
@@ -243,6 +262,8 @@ export default function FeedScreen() {
       onOpenMap={() => router.push('/map' as any)}
       exploreSearch={exploreSearch}
       onChangeExploreSearch={setExploreSearch}
+      friendsSearch={friendsSearch}
+      onChangeFriendsSearch={setFriendsSearch}
       viewMode={viewMode}
       onChangeViewMode={setViewMode}
       contentFilter={contentFilter}
@@ -281,13 +302,16 @@ export default function FeedScreen() {
           onRetry={() => void refetchFriends()}
           listRef={friendsListRef}
           viewMode={viewMode}
+          debouncedSearch={debouncedFriendsSearch}
+          isSearchLoading={isFriendsSearchLoading}
+          searchResults={friendsSearchResults}
         />
       ) : (
         <ExploreFeedTab
           headerElement={headerElement}
-          debouncedSearch={debouncedSearch}
-          isSearchLoading={isSearchLoading}
-          searchResults={searchResults}
+          debouncedSearch={debouncedExploreSearch}
+          isSearchLoading={isExploreSearchLoading}
+          searchResults={exploreSearchResults}
           isExploreLoading={isExploreLoading}
           isAlbumsLoading={isExploreAlbumsLoading}
           exploreBuckets={exploreBuckets}

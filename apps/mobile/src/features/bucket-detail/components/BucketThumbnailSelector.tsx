@@ -89,7 +89,7 @@ export function BucketThumbnailSelector({
 }: BucketThumbnailSelectorProps) {
   return (
     <>
-      <View style={[styles.divider, { backgroundColor: dark[400], marginTop: 20 }]} />
+      <View style={[styles.divider, { backgroundColor: theme.colors.border, marginTop: 20 }]} />
       <View style={styles.photosSection}>
         <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
           IMAGEN DE LA TAREA

@@ -8,6 +8,7 @@ import { Check, Heart, MessageCircle, Bookmark } from 'lucide-react-native';
 import { Avatar, fontFamily, gold, useTheme, toast } from '@bucketlist/ui';
 import { BucketCover } from './BucketCover';
 import { TaskCommentsModal } from './TaskCommentsModal';
+import { ItemLikesModal } from './ItemLikesModal';
 import { resolveTaskImage } from '../utils/taskImage';
 import { useAuthStore } from '../stores/auth.store';
 import { useCopiedBucketIds, useCopyBucket, useToggleLike, useBatchBucketSaveCounts, useSavedBucketIds, useToggleSaveBucket } from '../hooks/useSocial';
@@ -37,6 +38,7 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
   const router = useRouter();
   const { user } = useAuthStore();
   const [showComments, setShowComments] = useState(false);
+  const [showLikes, setShowLikes] = useState(false);
   const toggleLike = useToggleLike();
   const copyBucket = useCopyBucket();
   const { data: copiedIds } = useCopiedBucketIds(user?.id);
@@ -155,10 +157,14 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
               ) : null}
 
               <View style={styles.galleryActions}>
-                <Pressable onPress={handleLike} hitSlop={6} style={styles.galleryActionItem}>
-                  <Heart size={14} color={liked ? gold[400] : '#F2EFE8'} fill={liked ? gold[400] : 'transparent'} strokeWidth={1.8} />
-                  <Text style={styles.galleryActionText}>{likeCount}</Text>
-                </Pressable>
+                <View style={styles.galleryActionItem}>
+                  <Pressable onPress={handleLike} hitSlop={6}>
+                    <Heart size={14} color={liked ? gold[400] : '#F2EFE8'} fill={liked ? gold[400] : 'transparent'} strokeWidth={1.8} />
+                  </Pressable>
+                  <Pressable onPress={() => setShowLikes(true)} hitSlop={6}>
+                    <Text style={styles.galleryActionText}>{likeCount}</Text>
+                  </Pressable>
+                </View>
                 <Pressable onPress={() => setShowComments(true)} hitSlop={6} style={styles.galleryActionItem}>
                   <MessageCircle size={14} color="#F2EFE8" strokeWidth={1.8} />
                   <Text style={styles.galleryActionText}>{commentCount}</Text>
@@ -184,6 +190,16 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
             bucketId={bucket.id}
             bucketTitle={bucket.title}
             bucketOwnerId={bucket.user_id}
+          />
+        )}
+
+        {showLikes && (
+          <ItemLikesModal
+            visible={showLikes}
+            onClose={() => setShowLikes(false)}
+            targetId={bucket.id}
+            targetType="bucket"
+            title={bucket.title}
           />
         )}
       </Animated.View>
@@ -233,10 +249,14 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
           </View>
 
           <View style={styles.compactActions}>
-            <Pressable onPress={handleLike} hitSlop={6} style={styles.compactActionBtn}>
-              <Heart size={16} color={liked ? theme.colors.primary : theme.colors.foregroundSubtle} fill={liked ? theme.colors.primary : 'transparent'} strokeWidth={1.8} />
-              <Text style={[styles.compactActionCount, { color: liked ? theme.colors.primary : theme.colors.foregroundSubtle }]}>{likeCount}</Text>
-            </Pressable>
+            <View style={styles.compactActionBtn}>
+              <Pressable onPress={handleLike} hitSlop={6}>
+                <Heart size={16} color={liked ? theme.colors.primary : theme.colors.foregroundSubtle} fill={liked ? theme.colors.primary : 'transparent'} strokeWidth={1.8} />
+              </Pressable>
+              <Pressable onPress={() => setShowLikes(true)} hitSlop={6}>
+                <Text style={[styles.compactActionCount, { color: liked ? theme.colors.primary : theme.colors.foregroundSubtle }]}>{likeCount}</Text>
+              </Pressable>
+            </View>
             <Pressable onPress={() => setShowComments(true)} hitSlop={6} style={styles.compactActionBtn}>
               <MessageCircle size={16} color={theme.colors.foregroundSubtle} strokeWidth={1.8} />
               <Text style={[styles.compactActionCount, { color: theme.colors.foregroundSubtle }]}>{commentCount}</Text>
@@ -252,6 +272,16 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
             bucketId={bucket.id}
             bucketTitle={bucket.title}
             bucketOwnerId={bucket.user_id}
+          />
+        )}
+
+        {showLikes && (
+          <ItemLikesModal
+            visible={showLikes}
+            onClose={() => setShowLikes(false)}
+            targetId={bucket.id}
+            targetType="bucket"
+            title={bucket.title}
           />
         )}
       </Animated.View>
@@ -313,17 +343,25 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
 
       {/* Acciones */}
       <View style={styles.actions}>
-        <Pressable
-          onPress={handleLike}
-          style={styles.action}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={liked ? 'Quitar me gusta' : 'Me gusta'}
-          accessibilityState={{ selected: liked }}
-        >
-          <Heart size={24} color={liked ? theme.colors.primary : theme.colors.foreground} fill={liked ? theme.colors.primary : 'transparent'} strokeWidth={1.8} />
-          <Text style={[styles.count, { color: theme.colors.foreground }]}>{likeCount}</Text>
-        </Pressable>
+        <View style={styles.action}>
+          <Pressable
+            onPress={handleLike}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={liked ? 'Quitar me gusta' : 'Me gusta'}
+            accessibilityState={{ selected: liked }}
+          >
+            <Heart size={24} color={liked ? theme.colors.primary : theme.colors.foreground} fill={liked ? theme.colors.primary : 'transparent'} strokeWidth={1.8} />
+          </Pressable>
+          <Pressable
+            onPress={() => setShowLikes(true)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Ver me gusta"
+          >
+            <Text style={[styles.count, { color: theme.colors.foreground }]}>{likeCount}</Text>
+          </Pressable>
+        </View>
 
         <Pressable
           onPress={() => setShowComments(true)}
@@ -385,6 +423,16 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
           bucketId={bucket.id}
           bucketTitle={bucket.title}
           bucketOwnerId={bucket.user_id}
+        />
+      )}
+
+      {showLikes && (
+        <ItemLikesModal
+          visible={showLikes}
+          onClose={() => setShowLikes(false)}
+          targetId={bucket.id}
+          targetType="bucket"
+          title={bucket.title}
         />
       )}
     </Animated.View>

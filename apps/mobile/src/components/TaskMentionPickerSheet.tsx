@@ -270,7 +270,9 @@ export function TaskMentionPickerSheet({ visible, currentBucketId, mentionedIds,
             <View style={{ paddingBottom: 10 }}>
               <TextInput
                 style={{
-                  backgroundColor: dark[400],
+                  backgroundColor: theme.colors.surface,
+                  borderWidth: 1,
+                  borderColor: theme.colors.border,
                   color: theme.colors.foreground,
                   padding: 12,
                   borderRadius: 12,

@@ -137,6 +137,7 @@ export function useToggleReaction() {
       void queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: EXPLORE_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ['bucketReactions', variables.bucketId] });
+      void queryClient.invalidateQueries({ queryKey: ['itemLikes', 'bucket', variables.bucketId] });
     },
   });
 }
@@ -173,6 +174,7 @@ export function useToggleLike() {
     },
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: ['bucketReactions', variables.bucketId] });
+      void queryClient.invalidateQueries({ queryKey: ['itemLikes', 'bucket', variables.bucketId] });
     },
   });
 }
@@ -547,7 +549,17 @@ export function useToggleAlbumLike() {
       void queryClient.invalidateQueries({ queryKey: ['liked-content', variables.userId] });
       void queryClient.invalidateQueries({ queryKey: ['friends-albums'] });
       void queryClient.invalidateQueries({ queryKey: ['explore-albums'] });
+      void queryClient.invalidateQueries({ queryKey: ['itemLikes', 'album', variables.albumId] });
     },
+  });
+}
+
+/** Hook para consultar la lista de personas que le han dado me gusta a una tarea o álbum */
+export function useItemLikes(targetId?: string, targetType: 'bucket' | 'album' = 'bucket') {
+  return useQuery({
+    queryKey: ['itemLikes', targetType, targetId],
+    queryFn: () => (targetId ? socialApi.getItemLikes(targetId, targetType) : Promise.resolve([])),
+    enabled: !!targetId,
   });
 }
 

@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert, confirm, toast } from '@bucketlist/ui';
+import { i18n } from '@bucketlist/shared';
 import { useAuthStore } from '../../stores/auth.store';
 import { useCurrentUserProfile } from '../../hooks/useCurrentUserProfile';
 import {
@@ -109,7 +110,7 @@ export function useCommentsController({ targetId, targetType, ownerId, onReplySt
       setReplyingTo(null);
       return true;
     } catch (err: any) {
-      Alert.alert('Error', err?.message || 'No se pudo enviar el comentario.');
+      Alert.alert(i18n.t('common.error', { defaultValue: 'Error' }), err?.message || i18n.t('comments.send_error'));
       return false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -129,7 +130,7 @@ export function useCommentsController({ targetId, targetType, ownerId, onReplySt
     async (commentId: string) => {
       const trimmed = editingText.trim();
       if (!trimmed) {
-        Alert.alert('Aviso', 'El comentario no puede estar vacío.');
+        Alert.alert(i18n.t('comments.notice'), i18n.t('comments.empty_comment_error'));
         return;
       }
       try {
@@ -137,7 +138,7 @@ export function useCommentsController({ targetId, targetType, ownerId, onReplySt
         setEditingCommentId(null);
         setEditingText('');
       } catch (err: any) {
-        Alert.alert('Error', err?.message || 'No se pudo editar el comentario.');
+        Alert.alert(i18n.t('common.error', { defaultValue: 'Error' }), err?.message || i18n.t('comments.edit_error'));
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -147,17 +148,17 @@ export function useCommentsController({ targetId, targetType, ownerId, onReplySt
   const remove = useCallback(
     (commentId: string) => {
       confirm.show({
-        title: '¿Eliminar comentario?',
-        message: '¿Estás seguro de que deseas eliminar este comentario? Esta acción no se puede deshacer.',
-        confirmLabel: 'Eliminar',
-        cancelLabel: 'Cancelar',
+        title: i18n.t('comments.delete_confirm_title'),
+        message: i18n.t('comments.delete_confirm_msg'),
+        confirmLabel: i18n.t('comments.delete'),
+        cancelLabel: i18n.t('comments.cancel'),
         destructive: true,
         onConfirm: () => {
           deleteComment.mutate(
             { commentId, ...targetIds },
             {
-              onSuccess: () => toast.success('Comentario eliminado'),
-              onError: (err: any) => toast.error(err?.message || 'No se pudo eliminar el comentario.'),
+              onSuccess: () => toast.success(i18n.t('comments.deleted_toast')),
+              onError: (err: any) => toast.error(err?.message || i18n.t('comments.delete_error')),
             },
           );
         },

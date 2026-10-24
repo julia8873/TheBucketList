@@ -25,12 +25,13 @@ import { useCollections, useCloneCollection, useToggleCollectionLike } from '../
 import { CollectionCard } from '../../collections/components/CollectionCard';
 import { CollectionDetailModal } from '../../collections/components/CollectionDetailModal';
 import type { CollectionItem } from '../../collections/types';
+import { FeedSearchResultsView } from './FeedSearchResultsView';
 
 interface ExploreFeedTabProps {
   headerElement: React.ReactElement;
   debouncedSearch: string;
   isSearchLoading: boolean;
-  searchResults?: any[];
+  searchResults?: { tasks: any[]; albums: any[]; users: any[] } | any;
   isExploreLoading: boolean;
   isAlbumsLoading: boolean;
   exploreBuckets: any[];
@@ -190,47 +191,21 @@ export function ExploreFeedTab({
   );
 
   if (debouncedSearch.length >= 2) {
+    const tasks = Array.isArray(searchResults) ? [] : (searchResults?.tasks ?? []);
+    const albums = Array.isArray(searchResults) ? [] : (searchResults?.albums ?? []);
+    const users = Array.isArray(searchResults) ? searchResults : (searchResults?.users ?? []);
+
     return (
       <View style={styles.container}>
         {headerElement}
-        {isSearchLoading ? (
-          <ActivityIndicator style={{ marginTop: 40 }} color={gold[400]} />
-        ) : (
-          <FlatList
-            data={searchResults || []}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 72 }}
-            renderItem={({ item }) => (
-              <Pressable
-                style={styles.userRow}
-                onPress={() => router.push(`/profile/${item.id}` as any)}
-              >
-                <Avatar
-                  source={item.avatar_url ? { uri: item.avatar_url } : undefined}
-                  fallback={item.display_name?.charAt(0) || item.username?.charAt(0) || '?'}
-                  size="md"
-                />
-                <View style={styles.userInfo}>
-                  <Typography variant="body" style={{ fontWeight: 'bold' }}>
-                    {item.display_name || item.username}
-                  </Typography>
-                  <Typography variant="caption" color="textSecondary">
-                    @{item.username}
-                  </Typography>
-                </View>
-              </Pressable>
-            )}
-            ListEmptyComponent={
-              <Typography
-                variant="body"
-                color="textSecondary"
-                style={{ textAlign: 'center', marginTop: 40 }}
-              >
-                {t('feed.search_no_users')}
-              </Typography>
-            }
-          />
-        )}
+        <FeedSearchResultsView
+          query={debouncedSearch}
+          isLoading={isSearchLoading}
+          tasks={tasks}
+          albums={albums}
+          users={users}
+          viewMode={viewMode}
+        />
       </View>
     );
   }

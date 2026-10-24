@@ -49,12 +49,14 @@ export const styles = themedStyleSheet({
     backgroundColor: '#D4B13A',
   },
   toggleText: {
-    fontFamily: fontFamily.medium,
+    fontFamily: fontFamily.bold,
+    fontWeight: 'bold',
     fontSize: 14,
     color: '#8A8A8A',
   },
   toggleTextActive: {
-    fontFamily: fontFamily.semibold,
+    fontFamily: fontFamily.bold,
+    fontWeight: 'bold',
     color: '#0E0E0E',
   },
   searchBar: {

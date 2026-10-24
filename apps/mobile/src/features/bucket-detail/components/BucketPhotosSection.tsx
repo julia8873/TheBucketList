@@ -49,7 +49,7 @@ export function BucketPhotosSection({
 
   return (
     <>
-      <View style={[styles.divider, { backgroundColor: dark[400], marginTop: 20 }]} />
+      <View style={[styles.divider, { backgroundColor: theme.colors.border, marginTop: 20 }]} />
       <View style={styles.photosSection}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
@@ -83,15 +83,17 @@ export function BucketPhotosSection({
         {bucket.bucket_photos?.length > 0 && (
           <TextInput
             placeholder="Buscar foto..."
-            placeholderTextColor="rgba(255,255,255,0.5)"
+            placeholderTextColor={theme.colors.foregroundMuted}
             value={photoSearchQuery}
             onChangeText={setPhotoSearchQuery}
             style={{
-              backgroundColor: dark[400],
+              backgroundColor: theme.colors.surface,
+              borderWidth: 1,
+              borderColor: theme.colors.border,
               borderRadius: 12,
               paddingHorizontal: 16,
               paddingVertical: 10,
-              color: '#FFF',
+              color: theme.colors.foreground,
               marginBottom: 16,
             }}
           />
@@ -122,7 +124,7 @@ export function BucketPhotosSection({
                 >
                   <Pressable
                     onPress={() => setViewingPhotoIndex(photos.findIndex((p: any) => p.id === photo.id))}
-                    style={{ width: 56, height: 56, borderRadius: 10, overflow: 'hidden', backgroundColor: theme.colors.surface }}
+                    style={{ width: 56, height: 56, borderRadius: 10, overflow: 'hidden', backgroundColor: theme.colors.surfaceSunken }}
                   >
                     <Image
                       source={{ uri: storageApi.getPublicUrl(photo.thumb_path || photo.storage_path) }}
@@ -131,7 +133,7 @@ export function BucketPhotosSection({
                     />
                   </Pressable>
                   <View style={{ flex: 1 }}>
-                    <Typography variant="bodySemibold" color="#fff" numberOfLines={1}>
+                    <Typography variant="bodySemibold" color={theme.colors.foreground} numberOfLines={1}>
                       {photo.title || 'Sin título'}
                     </Typography>
                     <Typography variant="caption" color={theme.colors.foregroundMuted}>

@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Search, Lock } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { useTranslation } from '@bucketlist/shared';
 import { EmptyState, SectionLabel, gold, useTheme } from '@bucketlist/ui';
 import { PersonRow } from '../../../components/PersonRow';
 import { FollowButton } from '../../../components/FollowButton';
 import { UserRowSkeleton } from '../../../components/TaskSkeletons';
+import { FeedCard } from '../../../components/FeedCard';
 import type { PersonResult } from '../../../services/api/friends';
 import { useAuthStore } from '../../../stores/auth.store';
 import { styles } from '../styles/friends.styles';
@@ -27,15 +30,8 @@ interface FriendsAccountsTabProps {
   onOpenProfile: (id: string) => void;
   onFollowPress: (person: PersonResult) => void;
   currentUserId?: string;
-}
-
-function subtitleFor(person: PersonResult): string {
-  const handle = `@${person.username}`;
-  if (person.visibility === 'private' && person.follow_status !== 'accepted') {
-    return `${handle} · Cuenta privada`;
-  }
-  const n = person.public_count ?? 0;
-  return `${handle} · ${n} ${n === 1 ? 'tarea pública' : 'tareas públicas'}`;
+  ideasData?: any[];
+  ideasLoading?: boolean;
 }
 
 export function FriendsAccountsTab({
@@ -54,10 +50,26 @@ export function FriendsAccountsTab({
   onOpenProfile,
   onFollowPress,
   currentUserId,
+  ideasData = [],
+  ideasLoading = false,
 }: FriendsAccountsTabProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
+  const router = useRouter();
   const authUser = useAuthStore((s) => s.user);
   const activeUserId = currentUserId ?? authUser?.id;
+
+  const [searchFilter, setSearchFilter] = useState<'accounts' | 'ideas'>('accounts');
+
+  const subtitleFor = (person: PersonResult): string => {
+    const handle = `@${person.username}`;
+    if (person.visibility === 'private' && person.follow_status !== 'accepted') {
+      return `${handle} · ${t('friends.private_account_label')}`;
+    }
+    const n = person.public_count ?? 0;
+    const taskUnit = n === 1 ? t('friends.public_task_single') : t('friends.public_task_plural');
+    return `${handle} · ${n} ${taskUnit}`;
+  };
 
   if (term.length < 2) {
     const list = kind === 'following' ? followingData : followersData;
@@ -67,8 +79,8 @@ export function FriendsAccountsTab({
       <View>
         <View style={styles.chips}>
           {([
-            ['following', `Siguiendo · ${followingData.length}`],
-            ['followers', `Seguidores · ${followersData.length}`],
+            ['following', t('friends.following_count', { count: followingData.length })],
+            ['followers', t('friends.followers_count', { count: followersData.length })],
           ] as const).map(([key, label]) => {
             const on = kind === key;
             return (
@@ -81,7 +93,9 @@ export function FriendsAccountsTab({
                   styles.chip,
                   {
                     backgroundColor: on
-                      ? (theme.dark ? '#2A2411' : '#FDF4DC')
+                      ? theme.dark
+                        ? '#2A2411'
+                        : '#FDF4DC'
                       : theme.colors.surface,
                     borderColor: on ? gold[400] : theme.colors.border,
                   },
@@ -105,11 +119,11 @@ export function FriendsAccountsTab({
         ) : list.length === 0 ? (
           <EmptyState
             icon={Search}
-            title={kind === 'following' ? 'Aún no sigues a nadie' : 'Aún no tienes seguidores'}
+            title={kind === 'following' ? t('feed.empty_friends_title') : t('friends.requests_empty_title')}
             message={
               kind === 'following'
-                ? 'Busca por nombre o por @usuario para seguir a tus amigos y ver sus momentos.'
-                : 'Cuando alguien te siga aparecerá aquí.'
+                ? t('feed.empty_friends_desc')
+                : t('friends.requests_empty_desc')
             }
           />
         ) : (
@@ -138,69 +152,158 @@ export function FriendsAccountsTab({
     );
   }
 
-  if (searchLoading || isDebouncing) {
-    return (
-      <View style={{ marginTop: 8 }}>
-        <UserRowSkeleton />
-        <UserRowSkeleton />
-        <UserRowSkeleton />
-      </View>
-    );
-  }
-
-  if (searchError) {
-    return (
-      <EmptyState
-        title="No se pudo buscar"
-        message="Inténtalo de nuevo en unos segundos."
-        actionLabel="Reintentar"
-        onAction={onRetrySearch}
-      />
-    );
-  }
-
   const results = searchData ?? [];
+  const isLoading = searchLoading || ideasLoading || isDebouncing;
+
   return (
     <View>
-      <SectionLabel highlight="Resultados" rest={`para «${term}»`} style={styles.sectionLabel} />
-      {results.length === 0 ? (
-        <Text
+      {/* Pills de búsqueda: Cuentas | Ideas */}
+      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
+        <Pressable
+          onPress={() => setSearchFilter('accounts')}
           style={[
-            styles.empty,
-            { color: theme.dark ? '#FFFFFF' : theme.colors.foreground },
+            styles.chip,
+            {
+              backgroundColor:
+                searchFilter === 'accounts'
+                  ? theme.dark
+                    ? '#2A2411'
+                    : '#FDF4DC'
+                  : theme.colors.surface,
+              borderColor: searchFilter === 'accounts' ? gold[400] : theme.colors.border,
+            },
           ]}
         >
-          Nadie coincide con «{term}».
-        </Text>
-      ) : (
-        results.map((person) => {
-          const isSelf = !!activeUserId && person.id === activeUserId;
-          return (
-            <PersonRow
-              key={person.id}
-              person={person}
-              subtitle={subtitleFor(person)}
-              onPress={() => onOpenProfile(person.id)}
-              right={
-                isSelf ? null : (
-                  <FollowButton
-                    status={person.follow_status}
-                    isPrivate={person.visibility === 'private'}
-                    onPress={() => onFollowPress(person)}
-                  />
-                )
-              }
-            />
-          );
-        })
-      )}
+          <Text
+            style={[
+              styles.chipText,
+              { color: searchFilter === 'accounts' ? gold[400] : theme.colors.foregroundMuted },
+            ]}
+          >
+            {t('friends.tab_accounts')} · {results.length}
+          </Text>
+        </Pressable>
 
-      <View style={[styles.note, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-        <Lock size={16} color={gold[400]} strokeWidth={1.8} />
-        <Text style={[styles.noteText, { color: theme.colors.foregroundMuted }]}>
-          De las cuentas privadas solo verás sus tareas cuando acepten tu solicitud.
-        </Text>
+        <Pressable
+          onPress={() => setSearchFilter('ideas')}
+          style={[
+            styles.chip,
+            {
+              backgroundColor:
+                searchFilter === 'ideas'
+                  ? theme.dark
+                    ? '#2A2411'
+                    : '#FDF4DC'
+                  : theme.colors.surface,
+              borderColor: searchFilter === 'ideas' ? gold[400] : theme.colors.border,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.chipText,
+              { color: searchFilter === 'ideas' ? gold[400] : theme.colors.foregroundMuted },
+            ]}
+          >
+            {t('friends.tab_ideas')} · {ideasData.length}
+          </Text>
+        </Pressable>
       </View>
+
+      {isLoading ? (
+        <View style={{ marginTop: 8 }}>
+          <UserRowSkeleton />
+          <UserRowSkeleton />
+          <UserRowSkeleton />
+        </View>
+      ) : searchError ? (
+        <EmptyState
+          title={t('friends.search_error_title')}
+          message={t('friends.search_error_msg')}
+          actionLabel={t('common.retry')}
+          onAction={onRetrySearch}
+        />
+      ) : searchFilter === 'accounts' ? (
+        <View>
+          <SectionLabel
+            highlight={t('friends.search_results_title')}
+            rest={` ${t('friends.search_results_for', { query: term })}`}
+            style={styles.sectionLabel}
+          />
+          {results.length === 0 ? (
+            <Text
+              style={[
+                styles.empty,
+                { color: theme.dark ? '#FFFFFF' : theme.colors.foreground },
+              ]}
+            >
+              {t('friends.search_no_match', { query: term })}
+            </Text>
+          ) : (
+            results.map((person) => {
+              const isSelf = !!activeUserId && person.id === activeUserId;
+              return (
+                <PersonRow
+                  key={person.id}
+                  person={person}
+                  subtitle={subtitleFor(person)}
+                  onPress={() => onOpenProfile(person.id)}
+                  right={
+                    isSelf ? null : (
+                      <FollowButton
+                        status={person.follow_status}
+                        isPrivate={person.visibility === 'private'}
+                        onPress={() => onFollowPress(person)}
+                      />
+                    )
+                  }
+                />
+              );
+            })
+          )}
+
+          <View style={[styles.note, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+            <Lock size={16} color={gold[400]} strokeWidth={1.8} />
+            <Text style={[styles.noteText, { color: theme.colors.foregroundMuted }]}>
+              {t('friends.private_note')}
+            </Text>
+          </View>
+        </View>
+      ) : (
+        <View>
+          <SectionLabel
+            highlight={t('feed.search_section_ideas')}
+            rest={` (${ideasData.length})`}
+            style={styles.sectionLabel}
+          />
+          {ideasData.length === 0 ? (
+            <Text
+              style={[
+                styles.empty,
+                { color: theme.dark ? '#FFFFFF' : theme.colors.foreground },
+              ]}
+            >
+              {t('friends.search_ideas_empty', { query: term })}
+            </Text>
+          ) : (
+            ideasData.map((task, index) => (
+              <FeedCard
+                key={`task-${task.id}-${index}`}
+                event={{
+                  id: task.id,
+                  actor: task.actor || task.user,
+                  bucket: task.bucket || task,
+                  type: task.type || (task.bucket?.status === 'completed' ? 'completed' : 'new_bucket'),
+                  created_at: task.created_at,
+                }}
+                index={index}
+                mode="list"
+                onPress={() => router.push(`/bucket/${task.id}` as any)}
+              />
+            ))
+          )}
+        </View>
+      )}
     </View>
   );
 }

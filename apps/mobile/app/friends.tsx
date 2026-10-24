@@ -19,6 +19,7 @@ import {
   useProfileStats,
 } from '../src/hooks/useFriends';
 import { useFollowUser, useUnfollowUser } from '../src/hooks/useSocial';
+import { useSearchFeed } from '../src/hooks/useFeed';
 import { displayNameOf } from '../src/utils/initials';
 import type { PersonResult } from '../src/services/api/friends';
 
@@ -78,6 +79,7 @@ export default function FriendsScreen() {
     isOtherUser && (!!targetStatsQuery.data?.is_locked || (targetIsPrivate && targetFollowStatus !== 'accepted'));
 
   const search = usePeopleSearch(debounced);
+  const ideasSearch = useSearchFeed({ query: debounced, scope: 'all', userId: user?.id });
   const following = useConnections(targetUserId, 'following', user?.id);
   const followers = useConnections(targetUserId, 'followers', user?.id);
   const incoming = useIncomingRequests(user?.id);
@@ -221,8 +223,8 @@ export default function FriendsScreen() {
         {targetIsLocked ? (
           <View style={{ paddingHorizontal: 20, paddingTop: 40, alignItems: 'center' }}>
             <EmptyState
-              title="Esta cuenta es privada"
-              message="Sigue a este usuario para ver sus seguidores."
+              title={t('friends.locked_account_title')}
+              message={t('friends.locked_account_desc')}
             />
           </View>
         ) : tab === 'accounts' || isOtherUser ? (
@@ -242,6 +244,8 @@ export default function FriendsScreen() {
             onRetrySearch={() => void search.refetch()}
             onOpenProfile={openProfile}
             onFollowPress={onFollowPress}
+            ideasData={ideasSearch.data?.tasks ?? []}
+            ideasLoading={ideasSearch.isLoading}
           />
         ) : (
           <FriendsRequestsTab

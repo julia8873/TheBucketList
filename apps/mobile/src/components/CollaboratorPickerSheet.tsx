@@ -1,4 +1,3 @@
-import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, Pressable, StyleSheet, ScrollView, Modal,
@@ -6,7 +5,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, Search, Check, Users, X } from 'lucide-react-native';
-import { Avatar, fontFamily } from '@bucketlist/ui';
+import { themedStyleSheet, Avatar, fontFamily, useTheme } from '@bucketlist/ui';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../stores/auth.store';
 import { blockReportApi } from '../services/api/blockReport';
@@ -30,6 +29,7 @@ interface CollaboratorPickerSheetProps {
 
 export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, readOnlyIds = [] }: CollaboratorPickerSheetProps) {
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
   const { user } = useAuthStore();
   const [query, setQuery] = useState('');
   const [draft, setDraft] = useState<CollaboratorItem[]>(selected);
@@ -124,7 +124,7 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
       presentationStyle="fullScreen"
       onRequestClose={onClose}
     >
-      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, 16) }]}>
+      <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, 16) }]}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -132,9 +132,9 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
           {/* Cabecera de la página */}
           <View style={styles.header}>
             <Pressable style={styles.backButton} onPress={onClose} hitSlop={10}>
-              <ChevronLeft color="#FFF" size={26} />
+              <ChevronLeft color={theme.colors.foreground} size={26} />
             </Pressable>
-            <Text style={styles.headerTitle}>Buscar colaboradores</Text>
+            <Text style={[styles.headerTitle, { color: theme.colors.foreground }]}>Buscar colaboradores</Text>
             <Pressable style={styles.doneButton} onPress={handleSave}>
               <Text style={styles.doneText}>
                 {draft.length > 0 ? `Listo (${draft.length})` : 'Listo'}
@@ -144,12 +144,12 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
 
           {/* Buscador */}
           <View style={styles.searchContainer}>
-            <View style={styles.searchBox}>
-              <Search color="#9A9A9A" size={18} />
+            <View style={[styles.searchBox, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+              <Search color={theme.colors.foregroundMuted} size={18} />
               <TextInput
-                style={styles.searchInput}
+                style={[styles.searchInput, { color: theme.colors.foreground }]}
                 placeholder="Buscar por nombre o @usuario..."
-                placeholderTextColor="#666"
+                placeholderTextColor={theme.colors.foregroundMuted}
                 value={query}
                 onChangeText={setQuery}
                 autoCorrect={false}
@@ -157,7 +157,7 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
               />
               {query.length > 0 && (
                 <Pressable onPress={() => setQuery('')} hitSlop={10}>
-                  <X color="#9A9A9A" size={18} />
+                  <X color={theme.colors.foregroundMuted} size={18} />
                 </Pressable>
               )}
             </View>
@@ -205,11 +205,11 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
             </View>
           ) : profiles.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Users color="#555" size={48} />
-              <Text style={styles.emptyTitle}>
+              <Users color={theme.colors.foregroundMuted} size={48} />
+              <Text style={[styles.emptyTitle, { color: theme.colors.foreground }]}>
                 {query.trim().length > 0 ? 'No se encontraron usuarios' : 'No hay usuarios disponibles'}
               </Text>
-              <Text style={styles.emptySubtitle}>
+              <Text style={[styles.emptySubtitle, { color: theme.colors.foregroundMuted }]}>
                 {query.trim().length > 0
                   ? `No hay coincidencias para «${query.trim()}»`
                   : 'Regístrate o invita a amigos para colaborar en tareas conjuntas'}

@@ -537,6 +537,56 @@ export const socialApi = {
     return (data || []).map((r: any) => r.album_id as string);
   },
 
+  /** Obtiene la lista de usuarios que dieron like a una tarea o a un álbum */
+  getItemLikes: async (targetId: string, targetType: 'bucket' | 'album' = 'bucket') => {
+    if (!targetId) return [];
+    const table = targetType === 'album' ? 'album_reactions' : 'reactions';
+    const foreignKey = targetType === 'album' ? 'album_id' : 'bucket_id';
+
+    const { data, error } = await supabase
+      .from(table)
+      .select('id, user_id, emoji, created_at, user:profiles(*)')
+      .eq(foreignKey, targetId)
+      .order('created_at', { ascending: false });
+
+    if (!error && data && data.length > 0 && (data[0] as any).user) {
+      return (data as any[]).map((row) => ({
+        id: row.id,
+        user_id: row.user_id,
+        emoji: row.emoji,
+        created_at: row.created_at,
+        user: row.user,
+      }));
+    }
+
+    // Fallback: si el join directo falla o no devuelve perfiles
+    const { data: reactionsData, error: rErr } = await supabase
+      .from(table)
+      .select('id, user_id, emoji, created_at')
+      .eq(foreignKey, targetId)
+      .order('created_at', { ascending: false });
+
+    if (rErr || !reactionsData || reactionsData.length === 0) return [];
+
+    const userIds = Array.from(new Set(reactionsData.map((r: any) => r.user_id).filter(Boolean)));
+    if (userIds.length === 0) return [];
+
+    const { data: profilesData } = await supabase
+      .from('profiles')
+      .select('*')
+      .in('id', userIds);
+
+    const profileMap = new Map((profilesData || []).map((p: any) => [p.id, p]));
+
+    return reactionsData.map((row: any) => ({
+      id: row.id,
+      user_id: row.user_id,
+      emoji: row.emoji,
+      created_at: row.created_at,
+      user: profileMap.get(row.user_id) || null,
+    }));
+  },
+
   // ─── Álbumes guardados (Bookmarking de álbumes ajenos) ────────────────────────
   getSavedAlbumIds: async (userId: string): Promise<string[]> => {
     let effectiveUserId = userId;

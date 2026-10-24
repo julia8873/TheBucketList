@@ -41,7 +41,7 @@ export function BucketCounterSection({
 
   return (
     <>
-      <View style={[styles.divider, { backgroundColor: dark[400] }]} />
+      <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
       <View style={{ marginBottom: 24 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 28 }}>
           <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
@@ -80,8 +80,8 @@ export function BucketCounterSection({
                 padding: 16,
                 borderRadius: 18,
                 borderWidth: 1,
-                borderColor: dark[400],
-                backgroundColor: dark[300],
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.surface,
                 flexDirection: 'row',
                 alignItems: 'center',
               }}
@@ -137,7 +137,8 @@ export function BucketCounterSection({
                       alignItems: 'center',
                       justifyContent: 'center',
                       borderWidth: 1,
-                      borderColor: dark[400],
+                      borderColor: theme.colors.border,
+                      backgroundColor: theme.colors.surface,
                     }}
                   >
                     <Minus color={theme.colors.foregroundMuted} size={20} strokeWidth={2} />
@@ -167,7 +168,7 @@ export function BucketCounterSection({
                     value={bucket.counter_count ?? 0}
                     total={bucket.counter_target}
                     color={gold[400]}
-                    track={dark[400]}
+                    track={theme.colors.border}
                   />
                 ) : null}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
@@ -190,7 +191,7 @@ export function BucketCounterSection({
                           borderRadius: 10,
                           borderWidth: 1,
                           borderColor: gold[400],
-                          backgroundColor: dark[400],
+                          backgroundColor: theme.colors.surface,
                           textAlign: 'center',
                           color: gold[400],
                           fontWeight: 'bold',

@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { feedApi } from '../services/api/feed';
 import { useAuthStore } from '../stores/auth.store';
 
@@ -50,3 +50,23 @@ export function useExploreAlbums(explicitUserId?: string) {
     getNextPageParam: (lastPage) => lastPage.nextCursor,
   });
 }
+
+export const FEED_SEARCH_QUERY_KEY = ['feed-search'];
+
+export function useSearchFeed({
+  query,
+  scope = 'all',
+  userId,
+}: {
+  query: string;
+  scope?: 'explore' | 'friends' | 'all';
+  userId?: string;
+}) {
+  const clean = query.trim();
+  return useQuery({
+    queryKey: [...FEED_SEARCH_QUERY_KEY, scope, clean, userId],
+    queryFn: () => feedApi.searchFeed({ query: clean, scope, userId }),
+    enabled: clean.length >= 2,
+  });
+}
+

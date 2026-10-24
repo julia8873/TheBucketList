@@ -10,7 +10,7 @@ import {
   Camera,
 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { toast } from '@bucketlist/ui';
+import { toast, useTheme } from '@bucketlist/ui';
 import { styles } from '../styles/album-form.styles';
 import { COVERS, SOLID_COVERS, type Cover, type CoverAspectRatio } from '../types';
 import { SectionTitle } from './SectionTitle';
@@ -27,6 +27,7 @@ export function CoverPickerSection({
   onSelectCover,
   albumTitle = '',
 }: CoverPickerSectionProps) {
+  const { theme } = useTheme();
   const [showLinkModal, setShowLinkModal] = useState(false);
   const currentRatio: CoverAspectRatio = selectedCover.aspectRatio || '16:9';
 
@@ -131,7 +132,7 @@ export function CoverPickerSection({
       {/* Botón para reajustar recorte si hay imagen seleccionada */}
       {selectedCover.type === 'image' && selectedCover.uri && (
         <Pressable
-          style={styles.recropBtn}
+          style={[styles.recropBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
           onPress={() => void pickImage()}
           accessibilityRole="button"
           accessibilityLabel="Reajustar recorte de la foto"
@@ -148,26 +149,26 @@ export function CoverPickerSection({
           style={[
             styles.coverOption,
             selectedCover.type === 'image' && !selectedCover.uri?.startsWith('http') && styles.coverOptionSelected,
-            { justifyContent: 'center', alignItems: 'center', backgroundColor: '#151515' },
+            { justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
           ]}
           onPress={() => void pickImage()}
           accessibilityRole="button"
           accessibilityLabel="Elegir foto de la galería y recortar"
         >
-          <ImageIcon color={selectedCover.type === 'image' && !selectedCover.uri?.startsWith('http') ? '#D4B13A' : '#8F8F8F'} size={24} />
+          <ImageIcon color={selectedCover.type === 'image' && !selectedCover.uri?.startsWith('http') ? '#D4B13A' : theme.colors.foregroundMuted} size={24} />
         </Pressable>
 
         {/* Cámara */}
         <Pressable
           style={[
             styles.coverOption,
-            { justifyContent: 'center', alignItems: 'center', backgroundColor: '#151515' },
+            { justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
           ]}
           onPress={() => void takeCameraPhoto()}
           accessibilityRole="button"
           accessibilityLabel="Hacer foto con la cámara"
         >
-          <Camera color="#8F8F8F" size={24} />
+          <Camera color={theme.colors.foregroundMuted} size={24} />
         </Pressable>
 
         {/* Pegar enlace / Google */}
@@ -175,13 +176,13 @@ export function CoverPickerSection({
           style={[
             styles.coverOption,
             selectedCover.type === 'image' && Boolean(selectedCover.uri?.startsWith('http')) && styles.coverOptionSelected,
-            { justifyContent: 'center', alignItems: 'center', backgroundColor: '#151515' },
+            { justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
           ]}
           onPress={() => setShowLinkModal(true)}
           accessibilityRole="button"
           accessibilityLabel="Pegar enlace o imagen web de Google"
         >
-          <Link2 color={selectedCover.type === 'image' && Boolean(selectedCover.uri?.startsWith('http')) ? '#D4B13A' : '#8F8F8F'} size={24} />
+          <Link2 color={selectedCover.type === 'image' && Boolean(selectedCover.uri?.startsWith('http')) ? '#D4B13A' : theme.colors.foregroundMuted} size={24} />
         </Pressable>
 
         {COVERS.map((cover) => {
@@ -209,7 +210,7 @@ export function CoverPickerSection({
           style={[
             styles.coverOption,
             selectedCover.id === 'custom-color' && styles.coverOptionSelected,
-            { justifyContent: 'center', alignItems: 'center', backgroundColor: '#151515' },
+            { justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
           ]}
           onPress={() =>
             onSelectCover({
@@ -220,7 +221,7 @@ export function CoverPickerSection({
             })
           }
         >
-          <Palette color={selectedCover.id === 'custom-color' ? '#D4B13A' : '#8F8F8F'} size={24} />
+          <Palette color={selectedCover.id === 'custom-color' ? '#D4B13A' : theme.colors.foregroundMuted} size={24} />
         </Pressable>
         {SOLID_COVERS.map((cover) => {
           const isSelected = selectedCover.id === cover.id;

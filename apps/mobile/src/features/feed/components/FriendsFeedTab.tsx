@@ -22,6 +22,8 @@ import {
 import { useTranslation } from '@bucketlist/shared';
 import { useAuthStore } from '../../../stores/auth.store';
 
+import { FeedSearchResultsView } from './FeedSearchResultsView';
+
 interface FriendsFeedTabProps {
   headerElement: React.ReactElement;
   isLoading: boolean;
@@ -43,6 +45,9 @@ interface FriendsFeedTabProps {
   onRetry: () => void;
   listRef?: React.RefObject<any>;
   viewMode?: TaskViewMode;
+  debouncedSearch?: string;
+  isSearchLoading?: boolean;
+  searchResults?: { tasks: any[]; albums: any[]; users: any[] };
 }
 
 export function FriendsFeedTab({
@@ -66,6 +71,9 @@ export function FriendsFeedTab({
   onRetry,
   listRef,
   viewMode = 'list',
+  debouncedSearch = '',
+  isSearchLoading = false,
+  searchResults,
 }: FriendsFeedTabProps) {
   const router = useRouter();
   const { t } = useTranslation();
@@ -150,6 +158,22 @@ export function FriendsFeedTab({
     },
     [viewMode, contentFilter, router, currentUserId, likedAlbumIds, savedAlbumIds, toggleAlbumLike, toggleSaveAlbum, albumSaveCounts, albumLikeCounts]
   );
+
+  if (debouncedSearch && debouncedSearch.trim().length >= 2) {
+    return (
+      <View style={styles.container}>
+        {headerElement}
+        <FeedSearchResultsView
+          query={debouncedSearch}
+          isLoading={isSearchLoading}
+          tasks={searchResults?.tasks ?? []}
+          albums={searchResults?.albums ?? []}
+          users={searchResults?.users ?? []}
+          viewMode={viewMode}
+        />
+      </View>
+    );
+  }
 
   const loading = isLoading || isAlbumsLoading;
 

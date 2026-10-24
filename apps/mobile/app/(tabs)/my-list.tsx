@@ -433,7 +433,7 @@ export default function MyListScreen() {
                       <Text style={styles.sectionHeader}>{sec.title}</Text>
                       <DraggableTaskList
                         items={sec.items}
-                        gap={10}
+                        gap={state.taskViewMode === 'compact' ? 6 : 10}
                         renderItem={(item, drag) =>
                           state.taskViewMode === 'compact'
                             ? renderCompactTask({ item, drag })
@@ -448,7 +448,7 @@ export default function MyListScreen() {
               ) : (
                 <DraggableTaskList
                   items={state.sortedFlatBuckets}
-                  gap={10}
+                  gap={state.taskViewMode === 'compact' ? 6 : 10}
                   renderItem={(item, drag) =>
                     state.taskViewMode === 'compact'
                       ? renderCompactTask({ item, drag })
@@ -672,7 +672,7 @@ export default function MyListScreen() {
                         <Text style={styles.sectionHeader}>{sec.title}</Text>
                         <DraggableTaskList
                           items={sec.items}
-                          gap={10}
+                          gap={state.albumViewMode === 'compact' ? 6 : 10}
                           renderItem={(item, drag) =>
                             state.albumViewMode === 'compact'
                               ? renderCompactAlbum({ item, drag })
@@ -687,7 +687,7 @@ export default function MyListScreen() {
                 ) : (
                   <DraggableTaskList
                     items={state.sortedAlbumsList}
-                    gap={10}
+                    gap={state.albumViewMode === 'compact' ? 6 : 10}
                     renderItem={(item, drag) =>
                       state.albumViewMode === 'compact'
                         ? renderCompactAlbum({ item, drag })

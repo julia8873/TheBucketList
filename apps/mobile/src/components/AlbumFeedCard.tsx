@@ -8,12 +8,13 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Images, Lock, Users, Heart, Bookmark, MessageCircle } from 'lucide-react-native';
 import { Avatar, useTheme, gold, fontFamily, fontSize, radii } from '@bucketlist/ui';
-import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { useRouter } from 'expo-router';
+import { useTranslation } from '@bucketlist/shared';
 import { TaskViewMode } from './ViewModeSelector';
 import { useComments } from '../hooks/useSocial';
+import { timeAgo as getTimeAgo } from '../utils/timeAgo';
 import { TaskCommentsModal } from './TaskCommentsModal';
+import { ItemLikesModal } from './ItemLikesModal';
 
 export interface AlbumFeedItem {
   _type: 'album';
@@ -72,9 +73,11 @@ export function AlbumFeedCard({
   index = 0,
 }: AlbumFeedCardProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const overlay = useCoverOverlay();
   const [showComments, setShowComments] = useState(false);
+  const [showLikes, setShowLikes] = useState(false);
   const { data: albumComments = [] } = useComments(album.id, 'album');
   const commentCount = propCommentCount !== undefined ? propCommentCount : albumComments.length;
 
@@ -123,9 +126,7 @@ export function AlbumFeedCard({
   }
 
   const ownerName = album.owner?.display_name || album.owner?.username || '';
-  const timeAgo = album.created_at
-    ? formatDistanceToNow(new Date(album.created_at), { addSuffix: true, locale: es })
-    : '';
+  const timeAgo = album.created_at ? getTimeAgo(album.created_at) : '';
 
   if (mode === 'gallery') {
     const isLeftColumn = index % 2 === 0;
@@ -192,15 +193,19 @@ export function AlbumFeedCard({
 
               <View style={styles.galleryActions}>
                 {onToggleLike && (
-                  <Pressable onPress={onToggleLike} hitSlop={6} style={styles.galleryActionItem}>
-                    <Heart
-                      size={14}
-                      color={isLiked ? '#EF4444' : '#F2EFE8'}
-                      fill={isLiked ? '#EF4444' : 'transparent'}
-                      strokeWidth={1.8}
-                    />
-                    {likeCount > 0 && <Text style={styles.galleryActionText}>{likeCount}</Text>}
-                  </Pressable>
+                  <View style={styles.galleryActionItem}>
+                    <Pressable onPress={onToggleLike} hitSlop={6}>
+                      <Heart
+                        size={14}
+                        color={isLiked ? '#EF4444' : '#F2EFE8'}
+                        fill={isLiked ? '#EF4444' : 'transparent'}
+                        strokeWidth={1.8}
+                      />
+                    </Pressable>
+                    <Pressable onPress={() => setShowLikes(true)} hitSlop={6}>
+                      <Text style={styles.galleryActionText}>{likeCount}</Text>
+                    </Pressable>
+                  </View>
                 )}
 
                 <Pressable onPress={() => setShowComments(true)} hitSlop={6} style={styles.galleryActionItem}>
@@ -241,6 +246,16 @@ export function AlbumFeedCard({
             targetType="album"
             albumTitle={album.title}
             albumOwnerId={album.owner?.id}
+          />
+        )}
+
+        {showLikes && (
+          <ItemLikesModal
+            visible={showLikes}
+            onClose={() => setShowLikes(false)}
+            targetId={album.id}
+            targetType="album"
+            title={album.title}
           />
         )}
       </View>
@@ -291,23 +306,26 @@ export function AlbumFeedCard({
           </View>
 
           <View style={styles.compactActions}>
-            <Pressable
-              onPress={onToggleLike}
-              hitSlop={6}
-              style={styles.compactActionBtn}
-              accessibilityRole="button"
-              accessibilityLabel={isLiked ? 'Quitar me gusta' : 'Me gusta'}
-            >
-              <Heart
-                size={16}
-                color={isLiked ? theme.colors.primary : theme.colors.foregroundSubtle}
-                fill={isLiked ? theme.colors.primary : 'transparent'}
-                strokeWidth={1.8}
-              />
-              <Text style={[styles.compactActionCount, { color: isLiked ? theme.colors.primary : theme.colors.foregroundSubtle }]}>
-                {likeCount}
-              </Text>
-            </Pressable>
+            <View style={styles.compactActionBtn}>
+              <Pressable
+                onPress={onToggleLike}
+                hitSlop={6}
+                accessibilityRole="button"
+                accessibilityLabel={isLiked ? 'Quitar me gusta' : 'Me gusta'}
+              >
+                <Heart
+                  size={16}
+                  color={isLiked ? theme.colors.primary : theme.colors.foregroundSubtle}
+                  fill={isLiked ? theme.colors.primary : 'transparent'}
+                  strokeWidth={1.8}
+                />
+              </Pressable>
+              <Pressable onPress={() => setShowLikes(true)} hitSlop={6}>
+                <Text style={[styles.compactActionCount, { color: isLiked ? theme.colors.primary : theme.colors.foregroundSubtle }]}>
+                  {likeCount}
+                </Text>
+              </Pressable>
+            </View>
             <Pressable
               onPress={() => setShowComments(true)}
               hitSlop={6}
@@ -345,6 +363,16 @@ export function AlbumFeedCard({
             targetType="album"
             albumTitle={album.title}
             albumOwnerId={album.owner?.id}
+          />
+        )}
+
+        {showLikes && (
+          <ItemLikesModal
+            visible={showLikes}
+            onClose={() => setShowLikes(false)}
+            targetId={album.id}
+            targetType="album"
+            title={album.title}
           />
         )}
       </View>
@@ -408,21 +436,26 @@ export function AlbumFeedCard({
         {/* Top Right Buttons: Like and/or Save */}
         <View style={styles.topActions} pointerEvents="box-none">
           {onToggleLike && (
-            <Pressable
-              onPress={onToggleLike}
-              hitSlop={10}
-              style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.7 }]}
-              accessibilityRole="button"
-              accessibilityLabel={isLiked ? 'Quitar me gusta' : 'Dar me gusta'}
-            >
-              <Heart
-                size={16}
-                color={isLiked ? '#EF4444' : 'rgba(255,255,255,0.85)'}
-                fill={isLiked ? '#EF4444' : 'transparent'}
-                strokeWidth={2}
-              />
-              {likeCount > 0 && <Text style={styles.actionCount}>{likeCount}</Text>}
-            </Pressable>
+            <View style={styles.actionBtn}>
+              <Pressable
+                onPress={onToggleLike}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={isLiked ? 'Quitar me gusta' : 'Dar me gusta'}
+              >
+                <Heart
+                  size={16}
+                  color={isLiked ? '#EF4444' : 'rgba(255,255,255,0.85)'}
+                  fill={isLiked ? '#EF4444' : 'transparent'}
+                  strokeWidth={2}
+                />
+              </Pressable>
+              {likeCount > 0 && (
+                <Pressable onPress={() => setShowLikes(true)} hitSlop={8}>
+                  <Text style={styles.actionCount}>{likeCount}</Text>
+                </Pressable>
+              )}
+            </View>
           )}
 
           <Pressable
@@ -514,7 +547,7 @@ export function AlbumFeedCard({
           </Pressable>
 
           <Text style={[styles.taskCount, { color: theme.colors.foregroundMuted }]}>
-            {album.completed_tasks}/{album.total_tasks} tareas
+            {album.completed_tasks}/{album.total_tasks} {t('feed.filter_tasks', { defaultValue: 'tareas' }).toLowerCase()}
           </Text>
         </View>
       </Pressable>
@@ -527,6 +560,16 @@ export function AlbumFeedCard({
           targetType="album"
           albumTitle={album.title}
           albumOwnerId={album.owner?.id}
+        />
+      )}
+
+      {showLikes && (
+        <ItemLikesModal
+          visible={showLikes}
+          onClose={() => setShowLikes(false)}
+          targetId={album.id}
+          targetType="album"
+          title={album.title}
         />
       )}
     </View>

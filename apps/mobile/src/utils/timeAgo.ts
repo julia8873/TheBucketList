@@ -1,20 +1,25 @@
-/** "ahora", "hace 5 min", "hace 2 h", "hace 3 d" o "12 oct". */
-export function timeAgo(input?: string | Date | null): string {
+import { i18n } from '@bucketlist/shared';
+
+/** Formatea tiempo relativo ("ahora"/"just now", "hace 5 min"/"5m ago", "hace 1 d"/"1d ago" o fecha). */
+export function timeAgo(input?: string | Date | null, explicitLang?: string): string {
   if (!input) return '';
   const date = typeof input === 'string' ? new Date(input) : input;
   if (Number.isNaN(date.getTime())) return '';
 
+  const lang = explicitLang || i18n.language || 'es';
+  const isEn = lang.toLowerCase().startsWith('en');
+
   const minutes = Math.floor(Math.max(0, Date.now() - date.getTime()) / 60000);
-  if (minutes < 1) return 'ahora';
-  if (minutes < 60) return `hace ${minutes} min`;
+  if (minutes < 1) return isEn ? 'just now' : 'ahora';
+  if (minutes < 60) return isEn ? `${minutes}m ago` : `hace ${minutes} min`;
 
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `hace ${hours} h`;
+  if (hours < 24) return isEn ? `${hours}h ago` : `hace ${hours} h`;
 
   const days = Math.floor(hours / 24);
-  if (days < 7) return `hace ${days} d`;
+  if (days < 7) return isEn ? `${days}d ago` : `hace ${days} d`;
 
-  return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+  return date.toLocaleDateString(isEn ? 'en-US' : 'es-ES', { day: 'numeric', month: 'short' });
 }
 
 /** Días naturales entre dos fechas (mínimo 0). */

@@ -91,7 +91,8 @@ function mapToLight(kind: Kind, value: string, keepWhite = false): string {
   // ── Texto ─────────────────────────────────────────────────────────────────
   if (kind === 'text') {
     if (sat > 40) return value; // acento de color
-    if (l >= 245) return keepWhite ? value : L.foreground; // blanco puro: solo se conserva en botones/imágenes
+    if (keepWhite) return value; // texto sobre imágenes, banners o botones de acento: se conserva
+    if (l >= 245) return L.foreground; // blanco puro
     if (l >= 200) return L.foreground; // texto principal claro
     if (l >= 110) return L.foregroundMuted; // grises de texto secundario
     return value;
@@ -126,7 +127,7 @@ const BORDER_PROPS = new Set([
 const TEXT_PROPS = new Set(['color']);
 
 /** Estilos cuyo texto blanco va sobre botones de color o imágenes (se respeta). */
-const KEEP_WHITE_KEY = /(deleteuserbtn|coverchange|coverremove|gallerycardtitle|onimage|overlay)/i;
+const KEEP_WHITE_KEY = /(deleteuserbtn|coverchange|coverremove|gallerycardtitle|onimage|overlay|preview)/i;
 
 function mapStyle(style: any, styleKey = ''): any {
   if (!style || typeof style !== 'object' || Array.isArray(style)) return style;

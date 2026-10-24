@@ -37,6 +37,8 @@ import { PhotoCropModal } from '@/components/PhotoCropModal';
 import { hexToRgba } from '@/constants/tagPresets';
 import { TaskCommentsModal } from '@/components/TaskCommentsModal';
 import { ItemCommentsSection } from '@/components/ItemCommentsSection';
+import { ItemLikesModal } from '@/components/ItemLikesModal';
+import { useItemLikes } from '@/hooks/useSocial';
 
 import { styles } from '@/features/album-detail/styles/album-detail.styles';
 import { AlbumTaskCard } from '@/features/album-detail/components/AlbumTaskCard';
@@ -76,6 +78,9 @@ export default function AlbumDetailScreen() {
   const promoteMutation = usePromoteAlbumToCollection();
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [commentsAutoFocus, setCommentsAutoFocus] = useState(false);
+  const [showLikesModal, setShowLikesModal] = useState(false);
+  const { data: albumLikes = [] } = useItemLikes(state.id !== 'unassigned' ? state.id : undefined, 'album');
+  const albumLikesCount = albumLikes.length;
 
   // Al llegar desde una notificación de comentario (?openComments=1) se abre la hoja de comentarios
   const { openComments } = useLocalSearchParams<{ openComments?: string }>();
@@ -372,24 +377,41 @@ export default function AlbumDetailScreen() {
             {state.id !== 'unassigned' && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 {state.canEdit && state.currentUserId && (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={state.isFav ? 'Quitar de favoritos' : 'Marcar como favorito'}
-                    style={styles.heroBtn}
-                    onPress={() =>
-                      state.toggleFavoriteAlbum.mutate({
-                        albumId: state.id,
-                        currentlyFavorite: state.isFav,
-                      })
-                    }
-                  >
-                    <Star
-                      size={20}
-                      color={state.isFav ? '#D4B13A' : '#F3EEE3'}
-                      fill={state.isFav ? '#D4B13A' : 'transparent'}
-                      strokeWidth={1.8}
-                    />
-                  </Pressable>
+                  <>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={state.isFav ? 'Quitar de favoritos' : 'Marcar como favorito'}
+                      style={styles.heroBtn}
+                      onPress={() =>
+                        state.toggleFavoriteAlbum.mutate({
+                          albumId: state.id,
+                          currentlyFavorite: state.isFav,
+                        })
+                      }
+                    >
+                      <Star
+                        size={20}
+                        color={state.isFav ? '#D4B13A' : '#F3EEE3'}
+                        fill={state.isFav ? '#D4B13A' : 'transparent'}
+                        strokeWidth={1.8}
+                      />
+                    </Pressable>
+                    {albumLikesCount > 0 && (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Ver me gusta"
+                        style={styles.heroBtn}
+                        onPress={() => setShowLikesModal(true)}
+                      >
+                        <Heart
+                          size={20}
+                          color="#EF4444"
+                          fill="#EF4444"
+                          strokeWidth={1.8}
+                        />
+                      </Pressable>
+                    )}
+                  </>
                 )}
                 {!state.canEdit && state.currentUserId && (
                   <>
@@ -398,6 +420,7 @@ export default function AlbumDetailScreen() {
                       accessibilityLabel={state.isLiked ? 'Quitar me gusta' : 'Dar me gusta'}
                       style={styles.heroBtn}
                       onPress={state.handleToggleLikeAlbum}
+                      onLongPress={() => setShowLikesModal(true)}
                     >
                       <Heart
                         size={20}
@@ -813,9 +836,29 @@ export default function AlbumDetailScreen() {
           <Text style={styles.noResultsText}>No se encontraron tareas con ese nombre</Text>
         )}
 
-        {/* Sección de comentarios del álbum al final */}
+        {/* Sección de comentarios y me gusta del álbum al final */}
         {state.id !== 'unassigned' && (
           <View style={{ paddingHorizontal: 20, marginTop: 24, marginBottom: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+              <Pressable
+                onPress={() => setShowLikesModal(true)}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4 }}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Ver me gusta"
+              >
+                <Heart
+                  size={16}
+                  color="#EF4444"
+                  fill={state.isLiked ? '#EF4444' : 'transparent'}
+                  strokeWidth={1.8}
+                />
+                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: theme.colors.foregroundMuted }}>
+                  {albumLikesCount} {albumLikesCount === 1 ? 'me gusta' : 'me gusta'}
+                </Text>
+              </Pressable>
+            </View>
+
             <ItemCommentsSection
               targetId={album.id}
               targetType="album"
@@ -1029,6 +1072,17 @@ export default function AlbumDetailScreen() {
           albumTitle={album.title}
           albumOwnerId={album.ownerId}
           autoFocus={commentsAutoFocus}
+        />
+      )}
+
+      {/* Modal de me gusta */}
+      {state.id !== 'unassigned' && (
+        <ItemLikesModal
+          visible={showLikesModal}
+          onClose={() => setShowLikesModal(false)}
+          targetId={album.id}
+          targetType="album"
+          title={album.title}
         />
       )}
     </View>

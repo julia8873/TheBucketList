@@ -120,7 +120,7 @@ function TaskCompactItemRowComponent({
           backgroundColor: 'rgba(212, 177, 58, 0.08)',
         },
         drag?.isActive && { borderColor: theme.colors.primary },
-        { marginBottom: drag ? 8 : 0 },
+        { marginBottom: drag ? 6 : 0 },
       ]}
       accessibilityRole="button"
       accessibilityLabel={item.title}

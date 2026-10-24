@@ -280,7 +280,7 @@ export function ProfileAlbumsTab({
           ))}
         </View>
       ) : albumViewMode === 'compact' ? (
-        <View style={{ gap: 8, marginTop: 4, marginBottom: 20 }}>
+        <View style={{ gap: 6, marginTop: 4, marginBottom: 20 }}>
           {filteredAlbums.map((item) => (
             <AlbumCompactItemRow
               key={item.id}

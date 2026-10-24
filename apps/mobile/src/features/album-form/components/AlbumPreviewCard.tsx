@@ -76,11 +76,11 @@ export function AlbumPreviewCard({
       <View style={styles.previewBadgesRow}>
         {isShared && (
           <View style={styles.previewSharedBadge}>
-            <Text style={styles.previewSharedText}>Compartido</Text>
+            <Text style={[styles.previewSharedText, { color: '#D4B13A' }]}>Compartido</Text>
           </View>
         )}
         <View style={styles.previewVisibilityBadge}>
-          <Text style={styles.previewVisibilityText}>
+          <Text style={[styles.previewVisibilityText, { color: '#E2DCCF' }]}>
             {visibility === 'public'
               ? 'Público'
               : visibility === 'followers'
@@ -91,15 +91,15 @@ export function AlbumPreviewCard({
       </View>
 
       <View style={styles.previewBottom}>
-        <Text style={styles.previewTitle} numberOfLines={1}>
+        <Text style={[styles.previewTitle, { color: '#F3EEE3' }]} numberOfLines={1}>
           {name.trim() ? name : 'Nuevo álbum'}
         </Text>
-        <Text style={styles.previewSubtitle}>
+        <Text style={[styles.previewSubtitle, { color: '#E2DCCF' }]}>
           {isShared && collaborators.length > 0
             ? `${collaborators.length} colaborador${collaborators.length > 1 ? 'es' : ''}`
             : '0 tareas · 0 completadas'}
         </Text>
-        <View style={styles.progressBarTrack} />
+        <View style={[styles.progressBarTrack, { backgroundColor: 'rgba(255, 255, 255, 0.25)' }]} />
       </View>
     </View>
   );

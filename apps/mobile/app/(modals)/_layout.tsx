@@ -1,8 +1,12 @@
 import { Stack } from 'expo-router';
+import { useTheme } from '@bucketlist/ui';
 
 export default function ModalsLayout() {
+  const { theme } = useTheme();
+
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background } }}>
+      <Stack.Screen name="create-album" options={{ presentation: 'modal' }} />
       <Stack.Screen name="create-bucket" options={{ presentation: 'modal' }} />
       <Stack.Screen name="complete-[id]" options={{ presentation: 'modal' }} />
       <Stack.Screen name="settings" options={{ presentation: 'modal' }} />

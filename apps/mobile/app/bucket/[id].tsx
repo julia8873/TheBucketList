@@ -45,6 +45,7 @@ import { TaskMentionList } from '@/components/TaskMentionList';
 import { CollaboratorPickerSheet } from '@/components/CollaboratorPickerSheet';
 import { NotificationSubscribersModal } from '@/components/NotificationSubscribersModal';
 import { TaskCommentsModal } from '@/components/TaskCommentsModal';
+import { ItemLikesModal } from '@/components/ItemLikesModal';
 import { ItemCommentsSection } from '@/components/ItemCommentsSection';
 import { ImageLinkModal } from '@/components/ImageLinkModal';
 import { GoogleDriveModal } from '@/components/GoogleDriveModal';
@@ -80,6 +81,7 @@ export default function BucketDetailScreen() {
   const state = useBucketDetailState();
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [commentsAutoFocus, setCommentsAutoFocus] = useState(false);
+  const [showLikesModal, setShowLikesModal] = useState(false);
 
   // Al llegar desde una notificación de comentario (?openComments=1) se abre la hoja de comentarios
   const { openComments } = useLocalSearchParams<{ openComments?: string }>();
@@ -413,23 +415,34 @@ export default function BucketDetailScreen() {
 
           {/* Estadísticas de reacciones y comentarios */}
           <View style={styles.statsRow}>
-            <Pressable
-              style={styles.statItem}
-              onPress={() =>
-                state.user &&
-                state.toggleReaction.mutate({ bucketId: state.id, userId: state.user.id, emoji: '❤️' })
-              }
-            >
-              <Heart
-                color={state.myReaction ? '#f97316' : theme.colors.foregroundMuted}
-                fill={state.myReaction ? '#f97316' : 'transparent'}
-                size={18}
-                strokeWidth={1.8}
-              />
-              <Typography variant="body" color={theme.colors.foregroundMuted} style={{ marginLeft: 6 }}>
-                {state.totalReactions}
-              </Typography>
-            </Pressable>
+            <View style={styles.statItem}>
+              <Pressable
+                onPress={() =>
+                  state.user &&
+                  state.toggleReaction.mutate({ bucketId: state.id, userId: state.user.id, emoji: '❤️' })
+                }
+                hitSlop={6}
+                accessibilityRole="button"
+                accessibilityLabel={state.myReaction ? 'Quitar me gusta' : 'Dar me gusta'}
+              >
+                <Heart
+                  color={state.myReaction ? '#f97316' : theme.colors.foregroundMuted}
+                  fill={state.myReaction ? '#f97316' : 'transparent'}
+                  size={18}
+                  strokeWidth={1.8}
+                />
+              </Pressable>
+              <Pressable
+                onPress={() => setShowLikesModal(true)}
+                hitSlop={6}
+                accessibilityRole="button"
+                accessibilityLabel="Ver me gusta"
+              >
+                <Typography variant="body" color={theme.colors.foregroundMuted} style={{ marginLeft: 6 }}>
+                  {state.totalReactions}
+                </Typography>
+              </Pressable>
+            </View>
             <Pressable
               onPress={() => setShowCommentsModal(true)}
               style={[styles.statItem, { marginLeft: 24 }]}
@@ -471,7 +484,7 @@ export default function BucketDetailScreen() {
                     value={state.subtasksDone}
                     total={state.subtasks.length}
                     color={gold[400]}
-                    track={dark[400]}
+                    track={theme.colors.border}
                   />
                 </View>
               )}
@@ -575,25 +588,34 @@ export default function BucketDetailScreen() {
 
       {/* Botón flotante inferior para cambiar estado */}
       {state.canEdit && (
-        <View style={[styles.actionBar, { borderTopColor: dark[400], backgroundColor: theme.colors.background }]}>
+        <View style={[styles.actionBar, { borderTopColor: theme.colors.border, backgroundColor: theme.colors.background }]}>
           <Pressable
             style={[
               styles.actionBtn,
               styles.actionBtnFilled,
-              { backgroundColor: bucket.status === 'completed' ? dark[300] : gold[400] },
+              {
+                backgroundColor:
+                  bucket.status === 'completed'
+                    ? theme.dark
+                      ? dark[300]
+                      : theme.colors.surfaceSunken
+                    : gold[400],
+                borderWidth: bucket.status === 'completed' ? 1 : 0,
+                borderColor: theme.colors.border,
+              },
             ]}
             onPress={() =>
               void state.handleChangeStatus(bucket.status === 'completed' ? 'pending' : 'completed')
             }
           >
             {bucket.status === 'completed' ? (
-              <X color="#fff" size={18} strokeWidth={2} />
+              <X color={theme.colors.foreground} size={18} strokeWidth={2} />
             ) : (
               <CheckCircle2 color="#000" size={18} strokeWidth={2} />
             )}
             <Typography
               variant="bodySemibold"
-              color={bucket.status === 'completed' ? '#fff' : '#000'}
+              color={bucket.status === 'completed' ? theme.colors.foreground : '#000'}
               style={{ marginLeft: 8 }}
             >
               {bucket.status === 'completed' ? 'Marcar como pendiente' : 'Marcar como completado'}
@@ -770,6 +792,14 @@ export default function BucketDetailScreen() {
         bucketTitle={bucket.title}
         bucketOwnerId={bucket.user_id}
         autoFocus={commentsAutoFocus}
+      />
+
+      <ItemLikesModal
+        visible={showLikesModal}
+        onClose={() => setShowLikesModal(false)}
+        targetId={Array.isArray(state.id) ? state.id[0]! : (state.id as string)}
+        targetType="bucket"
+        title={bucket.title}
       />
 
       <ImageLinkModal

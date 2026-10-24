@@ -79,7 +79,7 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
           borderColor: theme.colors.border,
         },
         drag?.isActive && { borderColor: theme.colors.primary },
-        { marginBottom: drag ? 8 : 0 },
+        { marginBottom: drag ? 6 : 0 },
       ]}
       accessibilityRole="button"
       accessibilityLabel={item.title}

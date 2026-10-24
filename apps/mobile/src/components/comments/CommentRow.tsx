@@ -74,7 +74,7 @@ export function CommentRow({ comment, ctrl, isReply = false }: CommentRowProps) 
           {isUserAdmin(author) && <OfficialBadge size="xs" />}
           {isCreator && (
             <View style={styles.creatorTag}>
-              <Text style={styles.creatorTagText}>Autor</Text>
+              <Text style={styles.creatorTagText}>{t('comments.author', { defaultValue: 'Autor' })}</Text>
             </View>
           )}
           <Text style={[styles.timeText, { color: muted }]}>
@@ -109,11 +109,11 @@ export function CommentRow({ comment, ctrl, isReply = false }: CommentRowProps) 
                 {ctrl.isSavingEdit ? (
                   <ActivityIndicator size="small" color="#000" />
                 ) : (
-                  <Text style={styles.editSaveText}>Guardar</Text>
+                  <Text style={styles.editSaveText}>{t('comments.save', { defaultValue: 'Guardar' })}</Text>
                 )}
               </Pressable>
               <Pressable onPress={ctrl.cancelEdit} disabled={ctrl.isSavingEdit} style={styles.editCancelBtn} hitSlop={4}>
-                <Text style={[styles.editCancelText, { color: muted }]}>Cancelar</Text>
+                <Text style={[styles.editCancelText, { color: muted }]}>{t('comments.cancel', { defaultValue: 'Cancelar' })}</Text>
               </Pressable>
             </View>
           </View>
@@ -129,7 +129,7 @@ export function CommentRow({ comment, ctrl, isReply = false }: CommentRowProps) 
               onPress={() => ctrl.toggleLike(comment.id)}
               style={styles.likeBtn}
               accessibilityRole="button"
-              accessibilityLabel={isLiked ? 'Quitar me gusta' : 'Dar me gusta'}
+              accessibilityLabel={isLiked ? t('comments.unlike_action') : t('comments.like_action')}
             >
               <Heart
                 size={15}
@@ -146,9 +146,9 @@ export function CommentRow({ comment, ctrl, isReply = false }: CommentRowProps) 
               hitSlop={6}
               onPress={() => ctrl.startReply(comment)}
               accessibilityRole="button"
-              accessibilityLabel="Responder comentario"
+              accessibilityLabel={t('comments.reply')}
             >
-              <Text style={[styles.actionText, { color: muted }]}>Responder</Text>
+              <Text style={[styles.actionText, { color: muted }]}>{t('comments.reply')}</Text>
             </Pressable>
 
             {isMine && (
@@ -156,9 +156,9 @@ export function CommentRow({ comment, ctrl, isReply = false }: CommentRowProps) 
                 hitSlop={6}
                 onPress={() => ctrl.startEdit(comment)}
                 accessibilityRole="button"
-                accessibilityLabel="Editar comentario"
+                accessibilityLabel={t('comments.edit')}
               >
-                <Text style={[styles.actionText, { color: muted }]}>Editar</Text>
+                <Text style={[styles.actionText, { color: muted }]}>{t('comments.edit')}</Text>
               </Pressable>
             )}
 
@@ -167,9 +167,9 @@ export function CommentRow({ comment, ctrl, isReply = false }: CommentRowProps) 
                 hitSlop={6}
                 onPress={() => ctrl.setReportingComment({ id: comment.id, author: displayNameOf(author) })}
                 accessibilityRole="button"
-                accessibilityLabel="Reportar comentario"
+                accessibilityLabel={t('comments.report')}
               >
-                <Text style={[styles.actionText, { color: muted }]}>Reportar</Text>
+                <Text style={[styles.actionText, { color: muted }]}>{t('comments.report')}</Text>
               </Pressable>
             )}
 
@@ -178,9 +178,9 @@ export function CommentRow({ comment, ctrl, isReply = false }: CommentRowProps) 
                 hitSlop={6}
                 onPress={() => ctrl.remove(comment.id)}
                 accessibilityRole="button"
-                accessibilityLabel="Eliminar comentario"
+                accessibilityLabel={t('comments.delete')}
               >
-                <Text style={[styles.actionText, styles.deleteText]}>Eliminar</Text>
+                <Text style={[styles.actionText, styles.deleteText]}>{t('comments.delete')}</Text>
               </Pressable>
             )}
           </View>
@@ -193,13 +193,20 @@ export function CommentRow({ comment, ctrl, isReply = false }: CommentRowProps) 
 /** Botón «Ver N respuestas» / «Ocultar respuestas». */
 function RepliesToggle({ count, expanded, onPress }: { count: number; expanded: boolean; onPress: () => void }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   return (
     <Pressable
       style={styles.toggleRow}
       onPress={onPress}
       hitSlop={6}
       accessibilityRole="button"
-      accessibilityLabel={expanded ? 'Ocultar respuestas' : 'Ver respuestas'}
+      accessibilityLabel={
+        expanded
+          ? t('comments.hide_replies')
+          : count === 1
+            ? t('comments.view_reply_single')
+            : t('comments.view_replies', { count })
+      }
     >
       <View style={[styles.toggleLine, { backgroundColor: theme.colors.border }]} />
       {expanded ? (
@@ -208,7 +215,11 @@ function RepliesToggle({ count, expanded, onPress }: { count: number; expanded: 
         <ChevronDown size={13} color={theme.colors.foregroundMuted} />
       )}
       <Text style={[styles.toggleText, { color: expanded ? gold[400] : theme.colors.foregroundMuted }]}>
-        {expanded ? 'Ocultar respuestas' : `Ver ${count} ${count === 1 ? 'respuesta' : 'respuestas'}`}
+        {expanded
+          ? t('comments.hide_replies')
+          : count === 1
+            ? t('comments.view_reply_single')
+            : t('comments.view_replies', { count })}
       </Text>
     </Pressable>
   );

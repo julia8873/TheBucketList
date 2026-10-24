@@ -11,6 +11,7 @@ import {
 import { Avatar, fontFamily, gold } from '@bucketlist/ui';
 import { useConnections, usePeopleSearch } from '../hooks/useFriends';
 import { displayNameOf, initialsOf } from '../utils/initials';
+import { useTranslation } from '@bucketlist/shared';
 import { ReportModal } from './ReportModal';
 import { CommentThreadView } from './comments/CommentRow';
 import { useCommentsController } from './comments/useCommentsController';
@@ -45,6 +46,7 @@ function TaskCommentsModalContent({
   albumOwnerId,
   autoFocus = false,
 }: TaskCommentsModalProps) {
+  const { t } = useTranslation();
   const effectiveTargetType: 'bucket' | 'album' = targetType || (albumId ? 'album' : 'bucket');
   const effectiveId = (effectiveTargetType === 'album' ? albumId : bucketId) || '';
   const effectiveTitle = (effectiveTargetType === 'album' ? (albumTitle || bucketTitle) : (bucketTitle || albumTitle)) || '';
@@ -208,7 +210,7 @@ function TaskCommentsModalContent({
               </View>
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={styles.headerTitle}>Comentarios</Text>
+                  <Text style={styles.headerTitle}>{t('comments.modal_title')}</Text>
                   {comments.length > 0 && (
                     <View style={styles.countBadge}>
                       <Text style={styles.countBadgeText}>{comments.length}</Text>
@@ -229,7 +231,7 @@ function TaskCommentsModalContent({
               }}
               hitSlop={10}
               style={styles.closeBtn}
-              accessibilityLabel="Cerrar comentarios"
+              accessibilityLabel={t('comments.close')}
             >
               <X size={20} color="#888" />
             </Pressable>
@@ -256,10 +258,10 @@ function TaskCommentsModalContent({
                   <MessageCircle size={28} color="rgba(255,255,255,0.25)" />
                 </View>
               )}
-              <Text style={styles.emptyTitle}>Aún no hay comentarios</Text>
+              <Text style={styles.emptyTitle}>{t('comments.empty_title')}</Text>
               {!isKeyboardVisible && (
                 <Text style={styles.emptySubtitle}>
-                  Sé el primero en compartir qué opinas o dar ánimos sobre esta meta.
+                  {t('comments.empty_subtitle')}
                 </Text>
               )}
             </ScrollView>
@@ -281,7 +283,7 @@ function TaskCommentsModalContent({
               <View style={styles.mentionPickerHeader}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <AtSign size={13} color={gold[400]} />
-                  <Text style={styles.mentionPickerTitle}>Mencionar a un amigo</Text>
+                  <Text style={styles.mentionPickerTitle}>{t('comments.mention_friend')}</Text>
                 </View>
                 <Pressable
                   hitSlop={6}
@@ -300,7 +302,7 @@ function TaskCommentsModalContent({
                 ListEmptyComponent={
                   <View style={styles.mentionEmpty}>
                     <Text style={styles.mentionEmptyText}>
-                      {mentionFilter ? 'No se encontraron personas' : 'No tienes amigos añadidos aún'}
+                      {mentionFilter ? t('comments.mention_empty_query') : t('comments.mention_empty_none')}
                     </Text>
                   </View>
                 }
@@ -339,7 +341,7 @@ function TaskCommentsModalContent({
               <View style={styles.replyBannerLeft}>
                 <CornerDownRight size={14} color={gold[400]} />
                 <Text style={styles.replyBannerText} numberOfLines={1}>
-                  Respondiendo a{' '}
+                  {t('comments.replying_to')}{' '}
                   <Text style={{ fontFamily: fontFamily.semibold, color: gold[400] }}>
                     {replyingTo.username ? `@${replyingTo.username}` : replyingTo.authorName}
                   </Text>
@@ -352,7 +354,7 @@ function TaskCommentsModalContent({
                   setText('');
                 }}
                 style={styles.replyCancelBtn}
-                accessibilityLabel="Cancelar respuesta"
+                accessibilityLabel={t('comments.cancel_reply')}
               >
                 <X size={15} color="rgba(255,255,255,0.6)" />
               </Pressable>
@@ -374,8 +376,8 @@ function TaskCommentsModalContent({
                 style={styles.input}
                 placeholder={
                   replyingTo
-                    ? `Responde a @${replyingTo.username || replyingTo.authorName}...`
-                    : 'Añade un comentario (usa @ para mencionar)...'
+                    ? t('comments.reply_placeholder', { username: replyingTo.username || replyingTo.authorName })
+                    : t('comments.input_placeholder_mentions')
                 }
                 placeholderTextColor="rgba(255,255,255,0.4)"
                 value={text}
@@ -391,7 +393,7 @@ function TaskCommentsModalContent({
                   text.trim() ? styles.sendBtnActive : styles.sendBtnDisabled,
                 ]}
                 hitSlop={6}
-                accessibilityLabel="Publicar comentario"
+                accessibilityLabel={t('comments.post_comment')}
               >
                 {ctrl.isSending ? (
                   <ActivityIndicator size="small" color="#000" />
@@ -408,7 +410,7 @@ function TaskCommentsModalContent({
         visible={!!ctrl.reportingComment}
         onClose={() => ctrl.setReportingComment(null)}
         kind="comment"
-        subject={ctrl.reportingComment ? `Comentario de ${ctrl.reportingComment.author}` : undefined}
+        subject={ctrl.reportingComment ? t('comments.comment_by_author', { author: ctrl.reportingComment.author }) : undefined}
         isLoading={ctrl.isReporting}
         onSubmit={ctrl.submitReport}
       />

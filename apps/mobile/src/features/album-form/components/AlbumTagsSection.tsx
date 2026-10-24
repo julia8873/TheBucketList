@@ -1,4 +1,4 @@
-import { themedStyleSheet } from '@bucketlist/ui';
+import { themedStyleSheet, useTheme } from '@bucketlist/ui';
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Tag as TagIcon, Plus, X } from 'lucide-react-native';
@@ -18,20 +18,31 @@ export function AlbumTagsSection({
   onOpenTagPicker,
   onRemoveTag,
 }: AlbumTagsSectionProps) {
+  const { theme } = useTheme();
+
   return (
     <View style={styles.section}>
       <SectionTitle highlight="ETIQUETAS" rest=" DEL ÁLBUM" />
-      <Text style={localStyles.helpText}>
+      <Text style={[localStyles.helpText, { color: theme.colors.foregroundMuted }]}>
         Las etiquetas seleccionadas se aplicarán automáticamente a todas las tareas de este álbum.
       </Text>
 
-      <View style={styles.card}>
+      <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
         <View style={localStyles.cardInner}>
-          <Pressable style={localStyles.addTagBtn} onPress={onOpenTagPicker}>
+          <Pressable
+            style={[
+              localStyles.addTagBtn,
+              {
+                backgroundColor: theme.dark ? '#1A1A1A' : theme.colors.surfaceSunken,
+                borderColor: theme.colors.border,
+              },
+            ]}
+            onPress={onOpenTagPicker}
+          >
             <View style={localStyles.iconCircle}>
               <TagIcon size={18} color="#D4B13A" strokeWidth={2} />
             </View>
-            <Text style={localStyles.addTagText}>
+            <Text style={[localStyles.addTagText, { color: theme.colors.foregroundMuted }]}>
               {selectedTags.length === 0
                 ? 'Asignar etiquetas al álbum...'
                 : `${selectedTags.length} etiqueta${selectedTags.length > 1 ? 's' : ''} asignada${selectedTags.length > 1 ? 's' : ''}`}

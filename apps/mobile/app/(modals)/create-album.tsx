@@ -12,7 +12,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
-import { PageTitle } from '@bucketlist/ui';
+import { PageTitle, useTheme } from '@bucketlist/ui';
 import { CollaboratorPickerSheet } from '../../src/components/CollaboratorPickerSheet';
 import { TagAssignSheet } from '../../src/components/TagAssignSheet';
 
@@ -29,6 +29,7 @@ export default function CreateAlbumScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
 
   const {
     isEditing,
@@ -62,23 +63,30 @@ export default function CreateAlbumScreen() {
 
   if (loadingInitial) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <View style={[styles.container, { backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color="#D4B13A" />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <KeyboardAvoidingView
-        style={styles.container}
+        style={[styles.container, { backgroundColor: theme.colors.background }]}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
           {/* Cabecera */}
           <View style={[styles.header, { paddingTop: Math.max(insets.top, 52) }]}>
-            <Pressable style={styles.backBtn} onPress={() => router.back()}>
-              <ChevronLeft color="#F3EEE3" size={22} strokeWidth={2} />
+            <Pressable
+              style={[
+                styles.backBtn,
+                { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+              ]}
+              onPress={() => router.back()}
+              accessibilityLabel="Volver"
+            >
+              <ChevronLeft color={theme.colors.foreground} size={22} strokeWidth={2} />
             </Pressable>
             <PageTitle gold={isEditing ? 'Editar' : 'Nuevo'} rest="álbum" />
           </View>
@@ -96,11 +104,18 @@ export default function CreateAlbumScreen() {
           <View style={styles.section}>
             <SectionTitle highlight="NOMBRE" rest=" DEL ÁLBUM" />
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  color: theme.colors.foreground,
+                },
+              ]}
               value={name}
               onChangeText={setName}
               placeholder="Ej. Viaje a Noruega"
-              placeholderTextColor="#8F8F8F"
+              placeholderTextColor={theme.colors.foregroundMuted}
               accessibilityLabel="Nombre del álbum"
             />
           </View>
@@ -125,12 +140,15 @@ export default function CreateAlbumScreen() {
                   fontFamily: 'Inter_400Regular',
                   paddingTop: 16,
                   paddingBottom: 16,
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  color: theme.colors.foreground,
                 },
               ]}
               value={description}
               onChangeText={setDescription}
               placeholder="Añade una descripción (opcional)"
-              placeholderTextColor="#8F8F8F"
+              placeholderTextColor={theme.colors.foregroundMuted}
               accessibilityLabel="Descripción del álbum"
               multiline
             />
@@ -182,7 +200,16 @@ export default function CreateAlbumScreen() {
       />
 
       {/* Barra inferior fija */}
-      <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+      <View
+        style={[
+          styles.bottomBar,
+          {
+            backgroundColor: theme.colors.surface,
+            borderTopColor: theme.colors.border,
+            paddingBottom: Math.max(insets.bottom, 24),
+          },
+        ]}
+      >
         <Pressable
           style={[styles.createBtn, (!name.trim() || isSaving) && styles.createBtnDisabled]}
           disabled={!name.trim() || isSaving}

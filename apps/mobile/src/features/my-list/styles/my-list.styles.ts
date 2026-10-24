@@ -114,7 +114,7 @@ export const styles = themedStyleSheet({
     marginBottom: 14,
   },
   compactList: {
-    gap: 12,
+    gap: 6,
   },
   expiredHeader: {
     fontFamily: 'PlayfairDisplay_700Bold',

@@ -9,6 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { Send, ChevronRight, CornerDownRight, X } from 'lucide-react-native';
+import { useTranslation } from '@bucketlist/shared';
 import { Avatar, Typography, useTheme, fontFamily } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { initialsOf } from '../utils/initials';
@@ -16,7 +17,7 @@ import { ReportModal } from './ReportModal';
 import { CommentThreadView } from './comments/CommentRow';
 import { useCommentsController } from './comments/useCommentsController';
 
-/** Cuántos hilos se muestran dentro de la tarea/álbum antes de «Ver más comentarios». */
+/** Cuántos hilos se muestran inline dentro de la tarea/álbum. */
 const INLINE_THREADS = 3;
 
 interface ItemCommentsSectionProps {
@@ -31,7 +32,7 @@ interface ItemCommentsSectionProps {
 /**
  * Comentarios dentro de la tarea o el álbum. Usa el mismo diseño en árbol que la hoja inferior
  * (comentario principal + respuestas plegables) y muestra solo los hilos más recientes; con
- * «Ver más comentarios» se abre la hoja inferior con todos.
+ * «Ver todos» se abre la hoja inferior con todos.
  */
 export function ItemCommentsSection({
   targetId,
@@ -39,6 +40,7 @@ export function ItemCommentsSection({
   ownerId,
   onOpenModal,
 }: ItemCommentsSectionProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const inputRef = useRef<TextInput>(null);
 
@@ -51,25 +53,19 @@ export function ItemCommentsSection({
   const { user, profile, comments, isLoading, threads, text, setText, replyingTo } = ctrl;
 
   // Los hilos con actividad más reciente, mostrados de más antiguo a más nuevo
-  const { shownThreads, hiddenCount } = useMemo(() => {
+  const shownThreads = useMemo(() => {
     const byActivity = [...threads].sort((a, b) => a.lastActivity - b.lastActivity);
     const shown = byActivity.slice(-INLINE_THREADS);
     const shownIds = new Set(shown.map((t) => t.root.id));
-    const ordered = threads.filter((t) => shownIds.has(t.root.id));
-    const shownCount = ordered.reduce((acc, t) => acc + 1 + t.replies.length, 0);
-    return { shownThreads: ordered, hiddenCount: Math.max(0, comments.length - shownCount) };
-  }, [threads, comments.length]);
-
-  const handleSend = async () => {
-    await ctrl.send();
-  };
+    return threads.filter((t) => shownIds.has(t.root.id));
+  }, [threads]);
 
   return (
     <View style={styles.container}>
       {/* Cabecera de la sección */}
       <View style={styles.headerRow}>
         <Typography variant="caption" color={gold[400]} style={styles.headerLabel}>
-          COMENTARIOS · {comments.length}
+          {t('comments.section_title')} · {comments.length}
         </Typography>
         {comments.length > 0 && (
           <Pressable
@@ -77,9 +73,11 @@ export function ItemCommentsSection({
             hitSlop={8}
             style={styles.viewAllBtn}
             accessibilityRole="button"
-            accessibilityLabel="Ver todos los comentarios"
+            accessibilityLabel={t('comments.view_all')}
           >
-            <Text style={[styles.viewAllText, { color: gold[400] }]}>Ver todos ({comments.length})</Text>
+            <Text style={[styles.viewAllText, { color: gold[400] }]}>
+              {t('comments.view_all_short')} ({comments.length})
+            </Text>
             <ChevronRight size={14} color={gold[400]} />
           </Pressable>
         )}
@@ -98,24 +96,11 @@ export function ItemCommentsSection({
           accessibilityRole="button"
         >
           <Text style={[styles.emptyPromptText, { color: theme.colors.foregroundMuted }]}>
-            Sé el primero en dejar un comentario...
+            {t('comments.empty_prompt')}
           </Text>
         </Pressable>
       ) : (
         <View style={styles.commentsList}>
-          {hiddenCount > 0 && (
-            <Pressable
-              onPress={() => onOpenModal(false)}
-              style={styles.moreCommentsBtn}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Ver más comentarios"
-            >
-              <Text style={[styles.moreCommentsText, { color: gold[400] }]}>
-                Ver más comentarios ({hiddenCount})
-              </Text>
-            </Pressable>
-          )}
           {shownThreads.map((thread) => (
             <CommentThreadView key={thread.root.id} thread={thread} ctrl={ctrl} />
           ))}
@@ -127,7 +112,7 @@ export function ItemCommentsSection({
         <View style={[styles.replyBanner, { borderColor: theme.colors.border }]}>
           <CornerDownRight size={14} color={gold[400]} />
           <Text style={[styles.replyBannerText, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
-            Respondiendo a{' '}
+            {t('comments.replying_to')}{' '}
             <Text style={{ fontFamily: fontFamily.semibold, color: gold[400] }}>
               {replyingTo.username ? `@${replyingTo.username}` : replyingTo.authorName}
             </Text>
@@ -138,7 +123,7 @@ export function ItemCommentsSection({
               setText('');
             }}
             hitSlop={8}
-            accessibilityLabel="Cancelar respuesta"
+            accessibilityLabel={t('comments.cancel_reply')}
           >
             <X size={15} color={theme.colors.foregroundMuted} />
           </Pressable>
@@ -151,7 +136,7 @@ export function ItemCommentsSection({
           style={styles.inputRow}
           onPress={() => onOpenModal(true)}
           accessibilityRole="button"
-          accessibilityLabel="Añadir un comentario"
+          accessibilityLabel={t('comments.input_placeholder')}
         >
           <Avatar
             uri={profile?.avatar_url ?? user.user_metadata?.avatar_url}
@@ -179,7 +164,7 @@ export function ItemCommentsSection({
               style={[styles.placeholderText, { color: theme.colors.foregroundMuted }]}
               numberOfLines={1}
             >
-              Añade un comentario...
+              {t('comments.input_placeholder')}
             </Text>
 
             <View style={styles.sendBtn}>
@@ -193,7 +178,7 @@ export function ItemCommentsSection({
         visible={!!ctrl.reportingComment}
         onClose={() => ctrl.setReportingComment(null)}
         kind="comment"
-        subject={ctrl.reportingComment ? `Comentario de ${ctrl.reportingComment.author}` : undefined}
+        subject={ctrl.reportingComment ? t('comments.comment_by_author', { author: ctrl.reportingComment.author }) : undefined}
         isLoading={ctrl.isReporting}
         onSubmit={ctrl.submitReport}
       />
