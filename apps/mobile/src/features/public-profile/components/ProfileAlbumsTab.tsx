@@ -21,8 +21,10 @@ interface ProfileAlbumsTabProps {
   onChangeViewMode?: (mode: TaskViewMode) => void;
   albumsLoading: boolean;
   filteredAlbums: AlbumWithProgress[];
-  isAlbumFavorite: (id: string) => boolean;
+  isAlbumFavorite?: (id: string) => boolean;
   onToggleFavoriteAlbum?: (id: string, isFav: boolean) => void;
+  isAlbumSaved?: (id: string) => boolean;
+  onToggleSaveAlbum?: (id: string, isSaved: boolean) => void;
   hasUser: boolean;
 }
 
@@ -43,6 +45,8 @@ export function ProfileAlbumsTab({
   filteredAlbums,
   isAlbumFavorite,
   onToggleFavoriteAlbum,
+  isAlbumSaved,
+  onToggleSaveAlbum,
   hasUser,
 }: ProfileAlbumsTabProps) {
   const router = useRouter();
@@ -256,10 +260,16 @@ export function ProfileAlbumsTab({
               completedTasks={item.completed_tasks ?? 0}
               coverUri={item.cover_path}
               isShared={item.is_shared}
-              isFavorite={isAlbumFavorite(item.id)}
+              isSaved={isAlbumSaved ? isAlbumSaved(item.id) : undefined}
+              onToggleSave={
+                hasUser && onToggleSaveAlbum
+                  ? () => onToggleSaveAlbum(item.id, isAlbumSaved ? isAlbumSaved(item.id) : false)
+                  : undefined
+              }
+              isFavorite={isAlbumFavorite ? isAlbumFavorite(item.id) : undefined}
               onToggleFavorite={
                 hasUser && onToggleFavoriteAlbum
-                  ? () => onToggleFavoriteAlbum(item.id, isAlbumFavorite(item.id))
+                  ? () => onToggleFavoriteAlbum(item.id, isAlbumFavorite ? isAlbumFavorite(item.id) : false)
                   : undefined
               }
               priority={item.priority}
@@ -275,7 +285,13 @@ export function ProfileAlbumsTab({
             <AlbumCompactItemRow
               key={item.id}
               item={item}
-              isFav={isAlbumFavorite(item.id)}
+              isSaved={isAlbumSaved ? isAlbumSaved(item.id) : undefined}
+              onToggleSave={
+                hasUser && onToggleSaveAlbum
+                  ? () => onToggleSaveAlbum(item.id, isAlbumSaved ? isAlbumSaved(item.id) : false)
+                  : undefined
+              }
+              isFav={isAlbumFavorite ? isAlbumFavorite(item.id) : false}
               onPress={() => router.push(`/album/${item.id}` as any)}
             />
           ))}
@@ -287,11 +303,17 @@ export function ProfileAlbumsTab({
               key={item.id}
               item={item}
               index={idx}
-              isFav={isAlbumFavorite(item.id)}
+              isSaved={isAlbumSaved ? isAlbumSaved(item.id) : undefined}
+              onToggleSave={
+                hasUser && onToggleSaveAlbum
+                  ? () => onToggleSaveAlbum(item.id, isAlbumSaved ? isAlbumSaved(item.id) : false)
+                  : undefined
+              }
+              isFav={isAlbumFavorite ? isAlbumFavorite(item.id) : false}
               onPress={() => router.push(`/album/${item.id}` as any)}
               onToggleFavorite={
                 hasUser && onToggleFavoriteAlbum
-                  ? () => onToggleFavoriteAlbum(item.id, isAlbumFavorite(item.id))
+                  ? () => onToggleFavoriteAlbum(item.id, isAlbumFavorite ? isAlbumFavorite(item.id) : false)
                   : undefined
               }
             />

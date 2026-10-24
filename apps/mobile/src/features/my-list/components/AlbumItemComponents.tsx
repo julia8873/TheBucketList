@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { GripVertical, Lock, Star, Users } from 'lucide-react-native';
+import { GripVertical, Lock, Star, Users, Bookmark } from 'lucide-react-native';
 import { useTheme, useCoverOverlay } from '@bucketlist/ui';
 import { styles } from '../styles/my-list.styles';
 import { DragHandle } from '@/components/DraggableTaskList';
@@ -47,13 +47,17 @@ export const AlbumCoverThumb = React.memo(function AlbumCoverThumb({
 export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
   item,
   drag,
-  isFav,
+  isFav = false,
+  isSaved = false,
+  onToggleSave,
   customization,
   onPress,
 }: {
   item: any;
   drag?: DragHandle;
-  isFav: boolean;
+  isFav?: boolean;
+  isSaved?: boolean;
+  onToggleSave?: () => void;
   customization?: AlbumViewCustomization;
   onPress: () => void;
 }) {
@@ -194,7 +198,19 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
             {new Date(item.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
           </Text>
         )}
-        {isFav && <Star size={13} color={theme.colors.primary} fill={theme.colors.primary} />}
+        {onToggleSave ? (
+          <Pressable hitSlop={8} onPress={onToggleSave}>
+            <Bookmark
+              size={14}
+              color={isSaved ? theme.colors.primary : theme.colors.foregroundMuted}
+              fill={isSaved ? theme.colors.primary : 'transparent'}
+            />
+          </Pressable>
+        ) : isSaved ? (
+          <Bookmark size={13} color={theme.colors.primary} fill={theme.colors.primary} />
+        ) : isFav ? (
+          <Star size={13} color={theme.colors.primary} fill={theme.colors.primary} />
+        ) : null}
       </View>
     </Pressable>
   );
@@ -204,18 +220,22 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
   item,
   drag,
   index = 0,
-  isFav,
+  isFav = false,
+  isSaved = false,
   customization,
   onPress,
   onToggleFavorite,
+  onToggleSave,
 }: {
   item: any;
   drag?: DragHandle;
   index?: number;
-  isFav: boolean;
+  isFav?: boolean;
+  isSaved?: boolean;
   customization?: AlbumViewCustomization;
   onPress: () => void;
   onToggleFavorite?: () => void;
+  onToggleSave?: () => void;
 }) {
   const { theme } = useTheme();
   const total = item.total_tasks ?? 0;
@@ -278,7 +298,21 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
             <Text style={[styles.listAlbumTitle, { color: theme.colors.foreground }]} numberOfLines={1}>
               {item.title}
             </Text>
-            {onToggleFavorite ? (
+            {onToggleSave ? (
+              <Pressable hitSlop={8} onPress={onToggleSave}>
+                <Bookmark
+                  size={16}
+                  color={isSaved ? theme.colors.primary : theme.colors.foregroundMuted}
+                  fill={isSaved ? theme.colors.primary : 'transparent'}
+                />
+              </Pressable>
+            ) : isSaved ? (
+              <Bookmark
+                size={16}
+                color={theme.colors.primary}
+                fill={theme.colors.primary}
+              />
+            ) : onToggleFavorite ? (
               <Pressable hitSlop={8} onPress={onToggleFavorite}>
                 <Star
                   size={16}

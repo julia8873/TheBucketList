@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Plus, FolderOpen, ChevronRight, Star, Lock, Check } from 'lucide-react-native';
+import { Plus, FolderOpen, ChevronRight, Star, Lock, Check, Bookmark } from 'lucide-react-native';
 
 import { useTheme } from '../theme/useTheme';
 import { useCoverOverlay } from '../theme/coverOverlay';
@@ -42,6 +42,8 @@ interface AlbumCardProps {
   isShared?: boolean;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
+  isSaved?: boolean;
+  onToggleSave?: () => void;
   priority?: 'low' | 'medium' | 'high' | 'urgent';
   isClosed?: boolean;
   colorIndex?: number;  // to pick a gradient when no cover
@@ -65,6 +67,8 @@ export function AlbumCard({
   isShared = false,
   isFavorite = false,
   onToggleFavorite,
+  isSaved = false,
+  onToggleSave,
   priority,
   isClosed = false,
   colorIndex = 0,
@@ -189,8 +193,39 @@ export function AlbumCard({
         </View>
       )}
 
-      {/* Favorite badge / button */}
-      {onToggleFavorite ? (
+      {/* Save or Favorite badge / button */}
+      {onToggleSave ? (
+        <Pressable
+          hitSlop={10}
+          onPress={(e) => {
+            e.stopPropagation();
+            onToggleSave();
+          }}
+          style={[
+            styles.favoriteBadge,
+            { backgroundColor: floatingBadgeBg },
+            !theme.dark && { borderWidth: 1, borderColor: gold[400] },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={isSaved ? 'Quitar de guardados' : 'Guardar álbum'}
+        >
+          <Bookmark
+            size={14}
+            color={isSaved ? gold[500] : (theme.dark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.45)')}
+            fill={isSaved ? gold[500] : 'transparent'}
+          />
+        </Pressable>
+      ) : isSaved ? (
+        <View
+          style={[
+            styles.favoriteBadge,
+            { backgroundColor: floatingBadgeBg },
+            !theme.dark && { borderWidth: 1, borderColor: gold[400] },
+          ]}
+        >
+          <Bookmark size={14} color={gold[500]} fill={gold[500]} />
+        </View>
+      ) : onToggleFavorite ? (
         <Pressable
           hitSlop={10}
           onPress={(e) => {

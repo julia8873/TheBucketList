@@ -16,8 +16,8 @@ import {
 import { useAuthStore } from '../../src/stores/auth.store';
 import { usePullToRefresh } from '../../src/hooks/useAutoRefresh';
 import { useProfileStats } from '../../src/hooks/useFriends';
-import { useFollowUser, useUnfollowUser } from '../../src/hooks/useSocial';
-import { useUserFavorites, useToggleFavoriteAlbum } from '../../src/hooks/useFavorites';
+import { useFollowUser, useUnfollowUser, useSavedAlbumIds, useToggleSaveAlbum } from '../../src/hooks/useSocial';
+import { useUserFavorites } from '../../src/hooks/useFavorites';
 import { ProfileSkeleton, TaskRowSkeleton } from '../../src/components/TaskSkeletons';
 import { PublicTaskRow } from '../../src/components/PublicTaskRow';
 import { ViewModeSelector, TaskViewMode } from '../../src/components/ViewModeSelector';
@@ -129,8 +129,14 @@ export default function PublicProfileScreen() {
   const followUser = useFollowUser();
   const unfollowUser = useUnfollowUser();
 
-  const { isAlbumFavorite, isBucketFavorite } = useUserFavorites(user?.id);
-  const toggleFavoriteAlbum = useToggleFavoriteAlbum();
+  const { isBucketFavorite } = useUserFavorites(user?.id);
+  const { data: savedAlbumIds } = useSavedAlbumIds(user?.id);
+  const toggleSaveAlbum = useToggleSaveAlbum();
+  const isAlbumSaved = (albumId: string) => !!savedAlbumIds?.includes(albumId);
+  const handleToggleSaveAlbum = (albumId: string, isSaved: boolean) => {
+    if (!user) return;
+    toggleSaveAlbum.mutate({ userId: user.id, albumId, currentlySaved: isSaved });
+  };
 
   const { data: isBlocked } = useIsUserBlocked(id);
   // ¿Me ha bloqueado este usuario? (los administradores nunca están bloqueados: ven el perfil siempre)
@@ -187,12 +193,12 @@ export default function PublicProfileScreen() {
       res = list.filter((a) => !a.is_closed && (a.total_tasks === 0 || a.completed_tasks < a.total_tasks));
     }
     return [...res].sort((a, b) => {
-      const favA = isAlbumFavorite(a.id) ? 1 : 0;
-      const favB = isAlbumFavorite(b.id) ? 1 : 0;
-      if (favA !== favB) return favB - favA;
+      const savedA = isAlbumSaved(a.id) ? 1 : 0;
+      const savedB = isAlbumSaved(b.id) ? 1 : 0;
+      if (savedA !== savedB) return savedB - savedA;
       return 0;
     });
-  }, [publicAlbums, albumFilter, isAlbumFavorite, isBlocked]);
+  }, [publicAlbums, albumFilter, savedAlbumIds, isBlocked]);
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed' as any));
 
@@ -416,10 +422,8 @@ export default function PublicProfileScreen() {
               onChangeViewMode={setAlbumViewMode}
               albumsLoading={albumsLoading}
               filteredAlbums={filteredAlbums}
-              isAlbumFavorite={isAlbumFavorite}
-              onToggleFavoriteAlbum={(albumId, isFav) =>
-                toggleFavoriteAlbum.mutate({ albumId, currentlyFavorite: isFav })
-              }
+              isAlbumSaved={isAlbumSaved}
+              onToggleSaveAlbum={handleToggleSaveAlbum}
               hasUser={!!user}
             />
           )}
