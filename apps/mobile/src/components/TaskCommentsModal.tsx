@@ -8,7 +8,7 @@ import {
   CornerDownRight,
   AtSign,
 } from 'lucide-react-native';
-import { Avatar, fontFamily, gold } from '@bucketlist/ui';
+import { Avatar, fontFamily, gold, useTheme } from '@bucketlist/ui';
 import { useConnections, usePeopleSearch } from '../hooks/useFriends';
 import { displayNameOf, initialsOf } from '../utils/initials';
 import { useTranslation } from '@bucketlist/shared';
@@ -46,6 +46,7 @@ function TaskCommentsModalContent({
   albumOwnerId,
   autoFocus = false,
 }: TaskCommentsModalProps) {
+  const { theme } = useTheme();
   const { t } = useTranslation();
   const effectiveTargetType: 'bucket' | 'album' = targetType || (albumId ? 'album' : 'bucket');
   const effectiveId = (effectiveTargetType === 'album' ? albumId : bucketId) || '';
@@ -201,16 +202,16 @@ function TaskCommentsModalContent({
             onClose();
           }}
         />
-        <View style={[styles.sheetContent, isKeyboardVisible && styles.sheetContentKeyboard]}>
+        <View style={[styles.sheetContent, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }, isKeyboardVisible && styles.sheetContentKeyboard]}>
           {/* Header */}
-          <View style={styles.header}>
+          <View style={[styles.header, { borderBottomColor: theme.colors.border }]}>
             <View style={styles.headerLeft}>
               <View style={styles.headerIconCircle}>
                 <MessageCircle size={18} color={gold[400]} />
               </View>
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={styles.headerTitle}>{t('comments.modal_title')}</Text>
+                  <Text style={[styles.headerTitle, { color: theme.colors.foreground }]}>{t('comments.modal_title')}</Text>
                   {comments.length > 0 && (
                     <View style={styles.countBadge}>
                       <Text style={styles.countBadgeText}>{comments.length}</Text>
@@ -218,7 +219,7 @@ function TaskCommentsModalContent({
                   )}
                 </View>
                 {effectiveTitle ? (
-                  <Text style={styles.headerSubtitle} numberOfLines={1}>
+                  <Text style={[styles.headerSubtitle, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
                     {effectiveTitle}
                   </Text>
                 ) : null}
@@ -230,10 +231,10 @@ function TaskCommentsModalContent({
                 onClose();
               }}
               hitSlop={10}
-              style={styles.closeBtn}
+              style={[styles.closeBtn, { backgroundColor: theme.colors.surface }]}
               accessibilityLabel={t('comments.close')}
             >
-              <X size={20} color="#888" />
+              <X size={18} color={theme.colors.foregroundMuted} />
             </Pressable>
           </View>
 
@@ -362,7 +363,16 @@ function TaskCommentsModalContent({
           )}
 
           {/* Barra inferior para escribir comentario */}
-          <View style={[styles.inputBar, isKeyboardVisible && { paddingBottom: 10 }]}>
+          <View
+            style={[
+              styles.inputBar,
+              {
+                backgroundColor: theme.colors.surface,
+                borderTopColor: theme.colors.border,
+              },
+              isKeyboardVisible && { paddingBottom: 10 },
+            ]}
+          >
             {user && (
               <Avatar
                 uri={currentUserProfile.avatar_url}
@@ -370,16 +380,24 @@ function TaskCommentsModalContent({
                 size="sm"
               />
             )}
-            <View style={styles.inputContainer}>
+            <View
+              style={[
+                styles.inputContainer,
+                {
+                  backgroundColor: theme.dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)',
+                  borderColor: theme.colors.border,
+                },
+              ]}
+            >
               <TextInput
                 ref={inputRef}
-                style={styles.input}
+                style={[styles.input, { color: theme.colors.foreground }]}
                 placeholder={
                   replyingTo
                     ? t('comments.reply_placeholder', { username: replyingTo.username || replyingTo.authorName })
                     : t('comments.input_placeholder_mentions')
                 }
-                placeholderTextColor="rgba(255,255,255,0.4)"
+                placeholderTextColor={theme.dark ? 'rgba(255,255,255,0.45)' : 'rgba(40,36,30,0.5)'}
                 value={text}
                 onChangeText={handleTextChange}
                 multiline
@@ -398,7 +416,7 @@ function TaskCommentsModalContent({
                 {ctrl.isSending ? (
                   <ActivityIndicator size="small" color="#000" />
                 ) : (
-                  <Send size={15} color={text.trim() ? '#000' : 'rgba(255,255,255,0.3)'} />
+                  <Send size={15} color={text.trim() ? '#000' : (theme.dark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)')} />
                 )}
               </Pressable>
             </View>

@@ -161,14 +161,17 @@ export function ItemCommentsSection({
             ]}
           >
             <Text
-              style={[styles.placeholderText, { color: theme.colors.foregroundMuted }]}
+              style={[
+                styles.placeholderText,
+                { color: theme.dark ? theme.colors.foregroundMuted : '#5C5549' },
+              ]}
               numberOfLines={1}
             >
               {t('comments.input_placeholder')}
             </Text>
 
             <View style={styles.sendBtn}>
-              <Send size={14} color={theme.colors.foregroundMuted} />
+              <Send size={14} color={theme.dark ? theme.colors.foregroundMuted : '#5C5549'} />
             </View>
           </View>
         </Pressable>

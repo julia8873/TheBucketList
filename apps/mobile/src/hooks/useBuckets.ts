@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from '@bucketlist/ui';
 import { bucketApi } from '../services/api/bucket';
 import { useOfflineStore } from '../stores/offline.store';
 import { triggerTaskCompletedHaptic } from '../stores/haptics.store';
@@ -36,6 +37,7 @@ export function useCreateBucket() {
       return bucketApi.createBucket(data);
     },
     onSuccess: () => {
+      toast.success('Tarea creada con éxito');
       void queryClient.invalidateQueries({ queryKey: BUCKETS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
       // Si se creó dentro de un álbum, que el álbum y la lista de «Añadir tareas» lo reflejen.
@@ -122,6 +124,9 @@ export function useDeleteBucket() {
     },
     onError: (_e, _id, ctx) => {
       rollbackOptimistic(queryClient, ctx?.snap);
+    },
+    onSuccess: () => {
+      toast.success('Tarea eliminada');
     },
     onSettled: () => {
       settleTaskCaches(queryClient);

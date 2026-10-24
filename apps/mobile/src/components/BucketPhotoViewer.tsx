@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   Modal,
   View,
@@ -19,8 +19,8 @@ import Animated, {
   withSpring,
   runOnJS,
 } from 'react-native-reanimated';
-import { X, Download, Trash2, Calendar, CheckCircle2, Pencil, Image as ImageIcon, Check } from 'lucide-react-native';
-import { Typography, confirm, toast, ConfirmDialog } from '@bucketlist/ui';
+import { X, Download, Trash2, Calendar, CheckCircle2, Pencil, Image as ImageIcon, Check, AlertCircle } from 'lucide-react-native';
+import { Typography, confirm, toast, ConfirmDialog, fontFamily } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { storageApi } from '../services/api/storage';
 import * as FileSystem from 'expo-file-system';
@@ -263,6 +263,7 @@ export function BucketPhotoViewer({
   const [isAnyPhotoZoomed, setIsAnyPhotoZoomed] = useState(false);
   const [datePickerState, setDatePickerState] = useState<{
     visible: boolean;
+    photoId: string;
     field: 'created_at' | 'completed_at';
     date: Date;
   } | null>(null);
@@ -275,26 +276,40 @@ export function BucketPhotoViewer({
     setViewingPhotoIndex(null);
   }, [setViewingPhotoIndex]);
 
-  const openDatePicker = (field: 'created_at' | 'completed_at', initialStr?: string | null) => {
+  const openDatePicker = (photoId: string, field: 'created_at' | 'completed_at', initialStr?: string | null) => {
     const initialDate = initialStr ? new Date(initialStr) : new Date();
     setPickerTempDate(initialDate);
     setDatePickerState({
       visible: true,
+      photoId,
       field,
       date: initialDate,
     });
   };
 
   const handleConfirmDate = () => {
-    if (!datePickerState || !currentPhoto) return;
+    if (!datePickerState) return;
     const safeDate = new Date(pickerTempDate);
     safeDate.setHours(12, 0, 0, 0);
-    onUpdatePhotoDate?.(currentPhoto.id, datePickerState.field, safeDate.toISOString());
+    const targetPhotoId = datePickerState.photoId || currentPhoto?.id;
+    if (targetPhotoId) {
+      onUpdatePhotoDate?.(targetPhotoId, datePickerState.field, safeDate.toISOString());
+    }
     setDatePickerState(null);
   };
 
   const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
   const [removeCompletedConfirmId, setRemoveCompletedConfirmId] = useState<string | null>(null);
+  const [downloadToast, setDownloadToast] = useState<{ message: string; isError?: boolean } | null>(null);
+  const downloadToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const triggerDownloadToast = (message: string, isError = false) => {
+    if (downloadToastTimer.current) clearTimeout(downloadToastTimer.current);
+    setDownloadToast({ message, isError });
+    downloadToastTimer.current = setTimeout(() => {
+      setDownloadToast(null);
+    }, 2800);
+  };
 
   const handleRemoveCompletedAt = (photoId: string) => {
     setRemoveCompletedConfirmId(photoId);
@@ -382,7 +397,7 @@ export function BucketPhotoViewer({
               <View style={styles.datesRow}>
                 {/* Chip Fecha de subida */}
                 <Pressable
-                  onPress={() => isOwner && openDatePicker('created_at', currentPhoto.created_at)}
+                  onPress={() => isOwner && openDatePicker(currentPhoto.id, 'created_at', currentPhoto.created_at)}
                   style={styles.dateChip}
                   disabled={!isOwner}
                   hitSlop={4}
@@ -398,7 +413,7 @@ export function BucketPhotoViewer({
                 {currentPhoto.completed_at ? (
                   <View style={styles.completedChip}>
                     <Pressable
-                      onPress={() => isOwner && openDatePicker('completed_at', currentPhoto.completed_at)}
+                      onPress={() => isOwner && openDatePicker(currentPhoto.id, 'completed_at', currentPhoto.completed_at)}
                       style={styles.completedChipInner}
                       disabled={!isOwner}
                       hitSlop={4}
@@ -423,7 +438,7 @@ export function BucketPhotoViewer({
                   </View>
                 ) : isOwner ? (
                   <Pressable
-                    onPress={() => openDatePicker('completed_at', null)}
+                    onPress={() => openDatePicker(currentPhoto.id, 'completed_at', null)}
                     style={styles.addCompletedChip}
                     hitSlop={4}
                   >
@@ -438,34 +453,33 @@ export function BucketPhotoViewer({
           </View>
         )}
 
-        {/* Modal de selección de fecha */}
+        {/* Selector de fecha (inline overlay en iOS para evitar conflictos de Modal anidado) */}
         {datePickerState && Platform.OS === 'ios' && (
-          <Modal transparent animationType="slide" visible={true} onRequestClose={() => setDatePickerState(null)}>
-            <View style={styles.dateModalBackdrop}>
-              <View style={styles.dateModalContent}>
-                <View style={styles.dateModalHeader}>
-                  <Pressable onPress={() => setDatePickerState(null)} hitSlop={10}>
-                    <Typography variant="body" color="#8E8E93">Cancelar</Typography>
-                  </Pressable>
-                  <Typography variant="bodySemibold" color="#FFF">
-                    {datePickerState.field === 'created_at' ? 'Fecha de subida' : 'Fecha completada'}
-                  </Typography>
-                  <Pressable onPress={handleConfirmDate} hitSlop={10}>
-                    <Typography variant="bodySemibold" color={gold[400]}>Guardar</Typography>
-                  </Pressable>
-                </View>
-                <DateTimePicker
-                  value={pickerTempDate}
-                  mode="date"
-                  display="spinner"
-                  themeVariant="dark"
-                  onChange={(_event, date) => {
-                    if (date) setPickerTempDate(date);
-                  }}
-                />
+          <View style={[StyleSheet.absoluteFillObject, styles.dateModalBackdrop, { zIndex: 9999 }]}>
+            <Pressable style={StyleSheet.absoluteFillObject} onPress={() => setDatePickerState(null)} />
+            <View style={styles.dateModalContent}>
+              <View style={styles.dateModalHeader}>
+                <Pressable onPress={() => setDatePickerState(null)} hitSlop={10}>
+                  <Typography variant="body" color="#8E8E93">Cancelar</Typography>
+                </Pressable>
+                <Typography variant="bodySemibold" color="#FFF">
+                  {datePickerState.field === 'created_at' ? 'Fecha de subida' : 'Fecha completada'}
+                </Typography>
+                <Pressable onPress={handleConfirmDate} hitSlop={10}>
+                  <Typography variant="bodySemibold" color={gold[400]}>Guardar</Typography>
+                </Pressable>
               </View>
+              <DateTimePicker
+                value={pickerTempDate}
+                mode="date"
+                display="spinner"
+                themeVariant="dark"
+                onChange={(_event, date) => {
+                  if (date) setPickerTempDate(date);
+                }}
+              />
             </View>
-          </Modal>
+          </View>
         )}
 
         {datePickerState && Platform.OS !== 'ios' && (
@@ -474,13 +488,14 @@ export function BucketPhotoViewer({
             mode="date"
             display="default"
             onChange={(event, date) => {
-              const field = datePickerState.field;
+              const { field, photoId } = datePickerState;
               setDatePickerState(null);
               if (event.type === 'set' && date) {
                 const safeDate = new Date(date);
                 safeDate.setHours(12, 0, 0, 0);
-                if (currentPhoto) {
-                  onUpdatePhotoDate?.(currentPhoto.id, field, safeDate.toISOString());
+                const targetPhotoId = photoId || currentPhoto?.id;
+                if (targetPhotoId) {
+                  onUpdatePhotoDate?.(targetPhotoId, field, safeDate.toISOString());
                 }
               }
             }}
@@ -505,9 +520,9 @@ export function BucketPhotoViewer({
               style={[styles.actionBtn, styles.actionBtnFilled, { backgroundColor: gold[400] }]}
               onPress={async () => {
                 try {
-                  const { status } = await MediaLibrary.requestPermissionsAsync();
+                  const { status } = await MediaLibrary.requestPermissionsAsync(true);
                   if (status !== 'granted') {
-                    toast.error('Activa el permiso de galería en los ajustes de tu dispositivo.');
+                    triggerDownloadToast('Activa el permiso de almacenamiento en ajustes', true);
                     return;
                   }
                   const url = storageApi.getPublicUrl(currentPhoto.storage_path);
@@ -515,9 +530,9 @@ export function BucketPhotoViewer({
                   const localUri = FileSystem.cacheDirectory + filename;
                   await FileSystem.downloadAsync(url, localUri);
                   await MediaLibrary.saveToLibraryAsync(localUri);
-                  toast.success('La foto se ha guardado en tu galería.');
+                  triggerDownloadToast('Foto guardada en tu galería');
                 } catch {
-                  toast.error('No se pudo descargar la foto.');
+                  triggerDownloadToast('No se pudo descargar la foto', true);
                 }
               }}
             >
@@ -526,6 +541,25 @@ export function BucketPhotoViewer({
                 Descargar
               </Typography>
             </Pressable>
+          </View>
+        )}
+
+        {/* Diálogo / Toast flotante dentro del visor (visible sin cerrar la foto) */}
+        {downloadToast && (
+          <View style={styles.viewerToastOverlay} pointerEvents="none">
+            <View
+              style={[
+                styles.viewerToastPill,
+                downloadToast.isError && { borderColor: 'rgba(248,113,113,0.5)' },
+              ]}
+            >
+              {downloadToast.isError ? (
+                <AlertCircle size={16} color="#F87171" strokeWidth={2.2} />
+              ) : (
+                <Check size={16} color={gold[400]} strokeWidth={2.5} />
+              )}
+              <Text style={styles.viewerToastText}>{downloadToast.message}</Text>
+            </View>
           </View>
         )}
 
@@ -748,5 +782,35 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
+  },
+  viewerToastOverlay: {
+    position: 'absolute',
+    bottom: 110,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 999,
+  },
+  viewerToastPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1E1E20',
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(212,175,55,0.4)',
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  viewerToastText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontFamily: fontFamily.semibold,
   },
 });

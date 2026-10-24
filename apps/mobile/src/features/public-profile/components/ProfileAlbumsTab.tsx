@@ -1,9 +1,10 @@
 import { themedStyleSheet } from '@bucketlist/ui';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, ActivityIndicator, Pressable, Modal, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SlidersHorizontal, ChevronDown, Check, X } from 'lucide-react-native';
+import { useTranslation } from '@bucketlist/shared';
 import { SectionLabel, AlbumCard, gold, useTheme, fontFamily } from '@bucketlist/ui';
 import { AlbumCardSkeleton } from '../../../components/TaskSkeletons';
 import type { AlbumWithProgress } from '../../../hooks/useAlbums';
@@ -28,13 +29,6 @@ interface ProfileAlbumsTabProps {
   hasUser: boolean;
 }
 
-const FILTER_OPTIONS: Array<{ key: AlbumFilter; label: string; description: string }> = [
-  { key: 'all', label: 'Todos', description: 'Todos los álbumes públicos' },
-  { key: 'active', label: 'En curso', description: 'Álbumes con tareas pendientes' },
-  { key: 'completed', label: 'Completados', description: 'Álbumes con todas sus tareas completadas' },
-  { key: 'closed', label: 'Cerrados', description: 'Álbumes cerrados o archivados' },
-];
-
 export function ProfileAlbumsTab({
   totalCount,
   albumFilter,
@@ -51,21 +45,28 @@ export function ProfileAlbumsTab({
 }: ProfileAlbumsTabProps) {
   const router = useRouter();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [filterModalVisible, setFilterModalVisible] = useState(false);
 
-  const activeOption = FILTER_OPTIONS.find((o) => o.key === albumFilter) || {
-    key: 'all' as AlbumFilter,
-    label: 'Todos',
-    description: 'Todos los álbumes públicos',
-  };
+  const filterOptions: Array<{ key: AlbumFilter; label: string; description: string }> = useMemo(
+    () => [
+      { key: 'all', label: t('common.all_m'), description: t('profile.all_public_albums') },
+      { key: 'active', label: t('common.active'), description: t('profile.active_albums_desc') },
+      { key: 'completed', label: t('common.completed'), description: t('profile.completed_albums_desc') },
+      { key: 'closed', label: t('common.closed'), description: t('profile.closed_albums_desc') },
+    ],
+    [t]
+  );
+
+  const activeOption = filterOptions.find((o) => o.key === albumFilter) || filterOptions[0]!;
 
   return (
     <>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <SectionLabel
-          highlight="Álbumes"
-          rest={`públicos · ${totalCount}`}
+          highlight={t('common.albums')}
+          rest={` ${t('common.public').toLowerCase()} · ${totalCount}`}
           style={styles.sectionLabel}
         />
         {onChangeViewMode && (
@@ -162,7 +163,7 @@ export function ProfileAlbumsTab({
 
             {/* Opciones */}
             <View style={tabStyles.optionsContainer}>
-              {FILTER_OPTIONS.map((option) => {
+              {filterOptions.map((option) => {
                 const isSelected = option.key === albumFilter;
                 return (
                   <Pressable
@@ -247,8 +248,8 @@ export function ProfileAlbumsTab({
       ) : filteredAlbums.length === 0 ? (
         <Text style={styles.empty}>
           {albumFilter === 'all'
-            ? 'Todavía no hay álbumes públicos que mostrar.'
-            : 'No hay álbumes en este filtro.'}
+            ? t('profile.albums_empty_title')
+            : t('profile.albums_filter_empty')}
         </Text>
       ) : albumViewMode === 'gallery' ? (
         <View style={styles.albumGrid}>

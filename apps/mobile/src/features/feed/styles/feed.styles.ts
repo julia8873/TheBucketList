@@ -124,16 +124,29 @@ export const styles = themedStyleSheet({
   feedControlsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingTop: 10,
-    paddingBottom: 2,
+    paddingBottom: 8,
   },
   feedSectionLabel: {
     fontFamily: fontFamily.semibold,
     fontSize: 12,
     color: '#8A8A8A',
     letterSpacing: 0.8,
+  },
+  filterDropdownBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  filterDropdownText: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 12,
   },
   mapTriggerBtn: {
     flexDirection: 'row',
@@ -148,12 +161,50 @@ export const styles = themedStyleSheet({
     fontFamily: fontFamily.semibold,
     fontSize: 12,
   },
-  contentFilterRow: {
-    flexDirection: 'row',
-    gap: 8,
+  sheetContent: {
     paddingHorizontal: 16,
-    paddingTop: 6,
-    paddingBottom: 10,
+    paddingTop: 8,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    paddingHorizontal: 4,
+  },
+  sheetTitle: {
+    fontFamily: fontFamily.bold,
+    fontSize: 18,
+    letterSpacing: -0.3,
+  },
+  sheetCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sheetOptionList: {
+    gap: 8,
+  },
+  sheetOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  sheetOptionTitle: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 15,
+    marginBottom: 2,
+  },
+  sheetOptionDesc: {
+    fontFamily: fontFamily.regular,
+    fontSize: 12,
+    lineHeight: 16,
   },
   contentFilterPill: {
     paddingHorizontal: 14,

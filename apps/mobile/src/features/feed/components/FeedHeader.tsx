@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Pressable, TextInput } from 'react-native';
-import { Bell, Search, Users, X, Map } from 'lucide-react-native';
+import { Bell, Search, Users, X, Map, ChevronDown, SlidersHorizontal, Check } from 'lucide-react-native';
 import { useTranslation } from '@bucketlist/shared';
 import { PageTitle, useTheme, gold, fontFamily } from '@bucketlist/ui';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ViewModeSelector, TaskViewMode } from '../../../components/ViewModeSelector';
+import { TagSheetShell } from '../../../components/TagSheetShell';
 import { styles } from '../styles/feed.styles';
 
 export type ContentFilter = 'todo' | 'tareas' | 'albumes' | 'colecciones';
@@ -45,6 +47,8 @@ export function FeedHeader({
 }: FeedHeaderProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+  const [filterSheetVisible, setFilterSheetVisible] = useState(false);
 
   const isSearching =
     (homeTab === 'explore' && exploreSearch.trim().length >= 2) ||
@@ -198,6 +202,48 @@ export function FeedHeader({
 
       {!isSearching && (
         <View style={styles.feedControlsRow}>
+          {/* Toggle desplegable a la izquierda (como los de mi lista) */}
+          <Pressable
+            onPress={() => setFilterSheetVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel={t('feed.filter_sheet_title')}
+            style={[
+              styles.filterDropdownBtn,
+              {
+                backgroundColor: contentFilter !== 'todo'
+                  ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.18)')
+                  : theme.colors.surface,
+                borderColor: contentFilter !== 'todo' ? gold[400] : theme.colors.border,
+              },
+            ]}
+          >
+            <SlidersHorizontal
+              size={13}
+              color={contentFilter !== 'todo' ? gold[400] : theme.colors.foregroundMuted}
+              strokeWidth={2}
+            />
+            <Text
+              style={[
+                styles.filterDropdownText,
+                { color: contentFilter !== 'todo' ? gold[400] : theme.colors.foreground },
+              ]}
+            >
+              {contentFilter === 'todo'
+                ? t('feed.filter_all')
+                : contentFilter === 'tareas'
+                ? t('feed.filter_tasks')
+                : contentFilter === 'albumes'
+                ? t('feed.filter_albums')
+                : t('feed.filter_collections')}
+            </Text>
+            <ChevronDown
+              size={13}
+              color={contentFilter !== 'todo' ? gold[400] : theme.colors.foregroundMuted}
+              strokeWidth={2}
+            />
+          </Pressable>
+
+          {/* Acciones a la derecha: Mapa y Selector de vista */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             {onOpenMap ? (
               <Pressable
@@ -221,45 +267,74 @@ export function FeedHeader({
         </View>
       )}
 
-      {/* Content filter: Todo / Tareas / Álbumes / Colecciones (Colecciones solo en Explorar) */}
-      {!isSearching && (
-        <View style={styles.contentFilterRow}>
-          {((homeTab === 'explore'
-            ? ['todo', 'tareas', 'albumes', 'colecciones']
-            : ['todo', 'tareas', 'albumes']) as ContentFilter[]).map((f) => (
+      {/* Bottom Sheet de selección de filtro de contenido (estilo mi lista) */}
+      <TagSheetShell visible={filterSheetVisible} onClose={() => setFilterSheetVisible(false)}>
+        <View style={[styles.sheetContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+          <View style={styles.sheetHeader}>
+            <Text style={[styles.sheetTitle, { color: theme.colors.foreground }]}>
+              {t('feed.filter_sheet_title')}
+            </Text>
             <Pressable
-              key={f}
-              onPress={() => onChangeContentFilter(f)}
-              style={[
-                styles.contentFilterPill,
-                contentFilter === f && {
-                  backgroundColor: theme.dark ? 'rgba(212,177,58,0.18)' : 'rgba(212,177,58,0.22)',
-                  borderColor: gold[400],
-                },
-                contentFilter !== f && {
-                  backgroundColor: theme.colors.surface,
-                  borderColor: theme.colors.border,
-                },
-              ]}
+              onPress={() => setFilterSheetVisible(false)}
+              hitSlop={8}
+              style={[styles.sheetCloseBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+              accessibilityRole="button"
+              accessibilityLabel="Cerrar filtro"
             >
-              <Text
-                style={[
-                  styles.contentFilterText,
-                  { color: contentFilter === f ? gold[400] : theme.colors.foregroundMuted },
-                ]}
-              >
-                {f === 'todo'
-                  ? t('feed.filter_all')
-                  : f === 'tareas'
-                  ? t('feed.filter_tasks')
-                  : f === 'albumes'
-                  ? t('feed.filter_albums')
-                  : t('feed.filter_collections')}
-              </Text>
+              <X size={16} color={theme.colors.foregroundMuted} />
             </Pressable>
-          ))}
+          </View>
+
+          <View style={styles.sheetOptionList}>
+            {([
+              { key: 'todo', label: t('feed.filter_all'), desc: t('feed.filter_all_desc') },
+              { key: 'tareas', label: t('feed.filter_tasks'), desc: t('feed.filter_tasks_desc') },
+              { key: 'albumes', label: t('feed.filter_albums'), desc: t('feed.filter_albums_desc') },
+              ...(homeTab === 'explore'
+                ? [{ key: 'colecciones' as ContentFilter, label: t('feed.filter_collections'), desc: t('feed.filter_collections_desc') }]
+                : []),
+            ] as Array<{ key: ContentFilter; label: string; desc: string }>).map((opt) => {
+              const isSelected = contentFilter === opt.key;
+              return (
+                <Pressable
+                  key={opt.key}
+                  onPress={() => {
+                    onChangeContentFilter(opt.key);
+                    setFilterSheetVisible(false);
+                  }}
+                  style={({ pressed }) => [
+                    styles.sheetOptionRow,
+                    {
+                      backgroundColor: isSelected
+                        ? (theme.dark ? 'rgba(212, 177, 58, 0.08)' : 'rgba(212, 177, 58, 0.12)')
+                        : theme.colors.surface,
+                      borderColor: isSelected ? gold[400] : theme.colors.border,
+                    },
+                    pressed && { opacity: 0.8 },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Filtrar por ${opt.label}`}
+                >
+                  <View style={{ flex: 1, marginRight: 12 }}>
+                    <Text
+                      style={[
+                        styles.sheetOptionTitle,
+                        { color: isSelected ? gold[400] : theme.colors.foreground },
+                      ]}
+                    >
+                      {opt.label}
+                    </Text>
+                    <Text style={[styles.sheetOptionDesc, { color: theme.colors.foregroundMuted }]}>
+                      {opt.desc}
+                    </Text>
+                  </View>
+                  {isSelected && <Check size={18} color={gold[400]} strokeWidth={2.5} />}
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
-      )}
+      </TagSheetShell>
     </View>
   );
 }

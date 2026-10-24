@@ -18,6 +18,7 @@ import * as Clipboard from 'expo-clipboard';
 import { X, Globe, Clipboard as ClipboardIcon, ExternalLink, Check, AlertCircle } from 'lucide-react-native';
 import { gold, useTheme, toast } from '@bucketlist/ui';
 import { resolveImageUrl, resolveImageUrlAsync, isValidImageUrl } from '../utils/imageUrlResolver';
+import { TagSheetShell } from './TagSheetShell';
 
 interface ImageLinkModalProps {
   visible: boolean;
@@ -149,20 +150,10 @@ export function ImageLinkModal({
   const canConfirm = Boolean(resolvedUrl && isValidImageUrl(resolvedUrl) && !imageError);
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.keyboardAvoid}
-        >
-          <View
-            style={[
-              styles.card,
-              { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
-            ]}
-          >
-            {/* Header */}
-            <View style={styles.header}>
+    <TagSheetShell visible={visible} onClose={onClose}>
+      <View style={styles.sheetBody}>
+        {/* Header */}
+        <View style={styles.header}>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.title, { color: theme.colors.foreground }]}>Foto por enlace</Text>
                 <Text style={[styles.subtitle, { color: theme.colors.foregroundMuted }]}>
@@ -360,31 +351,17 @@ export function ImageLinkModal({
                 </Text>
               </Pressable>
             </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
       </View>
-    </Modal>
+    </TagSheetShell>
   );
 }
 
 const styles = themedStyleSheet({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'flex-end',
-  },
-  keyboardAvoid: {
-    width: '100%',
-  },
-  card: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderWidth: 1,
-    borderBottomWidth: 0,
+  sheetBody: {
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 8,
     paddingBottom: Platform.OS === 'ios' ? 36 : 24,
-    maxHeight: '90%',
+    maxHeight: '92%',
   },
   header: {
     flexDirection: 'row',

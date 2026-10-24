@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, View, Pressable, Animated, ActivityIndicator, StyleSheet, TextInput, ScrollView } from 'react-native';
+import { useTranslation } from '@bucketlist/shared';
 import { Typography, toast } from '@bucketlist/ui';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { X, Camera, FolderPlus, ListPlus, Trash2, Circle, MoreHorizontal, CheckCircle2, Check, Eye, Users, Lock, ArrowLeft, FolderOpen, Image as ImageIcon, Tag, LogOut, Flag, Star, Crop, Link2, Bookmark } from 'lucide-react-native';
@@ -19,6 +20,7 @@ type BucketBottomSheetProps = {
   isSaved?: boolean;
   onToggleSave?: () => void;
   onLeaveCollaboration?: () => void;
+  onOpenCollaborationSettings?: () => void;
   /** Reportar la tarea al administrador (solo usuarios que no son su autor). */
   onReport?: () => void;
   uploadPhotos: () => void;
@@ -48,8 +50,9 @@ type BucketBottomSheetProps = {
 };
 
 export function BucketBottomSheet({
-  sheetVisible, sheetMode, sheetTranslateY, closeSheet, theme, isOwner, canEdit, isCollaborator, isFavorite, onToggleFavorite, isSaved, onToggleSave, onLeaveCollaboration, onReport, uploadPhotos, uploadCover, pickAndUploadCover, takePhotoAndUploadCover, openCoverLinkModal, recropCurrentCover, removeCover, loadAlbums, user, copyBucket, id, handleDelete, bucket, handleChangeStatus, handleChangeVisibility, handleChangeCategory, handleChangePriority, setSheetMode, albumsLoading, toggleAlbum, removeAllAlbums, albums, bucketAlbums, categories
+  sheetVisible, sheetMode, sheetTranslateY, closeSheet, theme, isOwner, canEdit, isCollaborator, isFavorite, onToggleFavorite, isSaved, onToggleSave, onLeaveCollaboration, onOpenCollaborationSettings, onReport, uploadPhotos, uploadCover, pickAndUploadCover, takePhotoAndUploadCover, openCoverLinkModal, recropCurrentCover, removeCover, loadAlbums, user, copyBucket, id, handleDelete, bucket, handleChangeStatus, handleChangeVisibility, handleChangeCategory, handleChangePriority, setSheetMode, albumsLoading, toggleAlbum, removeAllAlbums, albums, bucketAlbums, categories
 }: BucketBottomSheetProps) {
+  const { t } = useTranslation();
   const [albumSearchQuery, setAlbumSearchQuery] = useState('');
   const visibilityLabel = (v: string) => {
     switch (v) {
@@ -174,6 +177,21 @@ export function BucketBottomSheet({
                     <View style={styles.sheetOptionText}>
                       <Typography variant="bodySemibold">Mover a carpetas</Typography>
                       <Typography variant="caption" color={theme.colors.foregroundMuted}>Organiza esta tarea en un álbum</Typography>
+                    </View>
+                  </Pressable>
+                )}
+
+                {isOwner && onOpenCollaborationSettings && (
+                  <Pressable
+                    style={styles.sheetOption}
+                    onPress={() => closeSheet(onOpenCollaborationSettings)}
+                  >
+                    <View style={styles.sheetIcon}><Users color={gold[400]} size={21} /></View>
+                    <View style={styles.sheetOptionText}>
+                      <Typography variant="bodySemibold">{t('bucket.collaboration_settings')}</Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>
+                        {t('bucket.collaboration_settings_desc')}
+                      </Typography>
                     </View>
                   </Pressable>
                 )}

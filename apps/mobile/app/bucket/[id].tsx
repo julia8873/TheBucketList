@@ -641,6 +641,7 @@ export default function BucketDetailScreen() {
         isSaved={state.isSaved}
         onToggleSave={state.handleToggleSaveBucket}
         onLeaveCollaboration={state.handleLeaveCollaboration}
+        onOpenCollaborationSettings={() => state.setShowCollaborationSettingsModal(true)}
         onReport={() => setTimeout(() => setReportVisible(true), 250)}
         uploadPhotos={state.uploadPhotos}
         uploadCover={state.uploadCover}

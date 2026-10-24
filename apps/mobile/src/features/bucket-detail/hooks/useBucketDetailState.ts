@@ -39,8 +39,9 @@ import { toast, confirm } from '@bucketlist/ui';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export function useBucketDetailState() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const cleanId = Array.isArray(id) ? id[0] : (id ? String(id) : '');
+  const { id: rawId } = useLocalSearchParams<{ id: string }>();
+  const cleanId = Array.isArray(rawId) ? rawId[0] : (rawId ? String(rawId) : '');
+  const id = cleanId;
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
@@ -1038,7 +1039,7 @@ export function useBucketDetailState() {
 
   const handleUpdatePhotoDate = useCallback(
     async (photoId: string, field: 'created_at' | 'completed_at', date: string | null) => {
-      const targetId = Array.isArray(id) ? id[0] : id;
+      const targetId = cleanId;
       const previous = queryClient.getQueryData(['bucketDetail', targetId]);
 
       // 1. Actualización optimista inmediata en cache
@@ -1068,8 +1069,9 @@ export function useBucketDetailState() {
       // 3. Invalidación solo tras confirmación de la BD
       await queryClient.invalidateQueries({ queryKey: ['bucketDetail', targetId] });
       void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+      toast.success(date ? 'Fecha guardada' : 'Fecha eliminada');
     },
-    [id, queryClient]
+    [cleanId, queryClient]
   );
 
   const uploadPhotos = () => {
