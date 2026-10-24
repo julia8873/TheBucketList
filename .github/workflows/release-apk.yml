@@ -23,7 +23,7 @@ jobs:
       EXPO_PUBLIC_APP_ENV: prod
       EXPO_PUBLIC_SUPABASE_URL_PROD: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL_PROD }}
       EXPO_PUBLIC_SUPABASE_ANON_KEY_PROD: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY_PROD }}
-      EXPO_PUBLIC_SITE_URL: ${{ vars.EXPO_PUBLIC_SITE_URL || 'https://bucketlist.pages.dev' }}
+      EXPO_PUBLIC_SITE_URL: ${{ vars.EXPO_PUBLIC_SITE_URL || 'https://thebucketlist-8zk.pages.dev' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -114,7 +114,7 @@ jobs:
             - **APK**: descárgalo e instálalo en tu dispositivo Android (activa "Instalar apps desconocidas" si lo pide).
 
             ### PWA
-            Visit https://bucketlist.pages.dev and install from your browser.
+            Visit https://thebucketlist-8zk.pages.dev and install from your browser.
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
           files: |

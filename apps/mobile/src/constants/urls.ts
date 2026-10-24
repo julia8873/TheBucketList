@@ -125,7 +125,7 @@ export function getAuthRedirectUrl(path = ''): string {
 }
 
 /** Documentos legales alojados en la web (apps/mobile/public → Cloudflare Pages). */
-const LEGAL_SITE_URL = (process.env['EXPO_PUBLIC_SITE_URL'] || 'https://bucketlist.pages.dev').replace(/\/$/, '');
+const LEGAL_SITE_URL = (process.env['EXPO_PUBLIC_SITE_URL'] || 'https://thebucketlist-8zk.pages.dev').replace(/\/$/, '');
 export const LEGAL_URLS = {
   privacy: `${LEGAL_SITE_URL}/privacy.html`,
   terms: `${LEGAL_SITE_URL}/terms.html`,

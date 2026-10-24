@@ -21,7 +21,7 @@
         "APP_ENV": "prod",
         "EXPO_PUBLIC_SUPABASE_URL_PROD": "https://fazxqjznuehrwkungmjm.supabase.co",
         "EXPO_PUBLIC_SUPABASE_ANON_KEY_PROD": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhenhxanpudWVocndrdW5nbWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzE5NDEsImV4cCI6MjEwNzMwNzk0MX0.1i4vocM3OAet2tzm3hLJYy-RcV03XuIPbZDdlKNTtlM",
-        "EXPO_PUBLIC_SITE_URL": "https://bucketlist.pages.dev"
+        "EXPO_PUBLIC_SITE_URL": "https://thebucketlist-8zk.pages.dev"
       },
       "android": {
         "buildType": "apk"
@@ -34,7 +34,7 @@
         "APP_ENV": "prod",
         "EXPO_PUBLIC_SUPABASE_URL_PROD": "https://fazxqjznuehrwkungmjm.supabase.co",
         "EXPO_PUBLIC_SUPABASE_ANON_KEY_PROD": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhenhxanpudWVocndrdW5nbWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzE5NDEsImV4cCI6MjEwNzMwNzk0MX0.1i4vocM3OAet2tzm3hLJYy-RcV03XuIPbZDdlKNTtlM",
-        "EXPO_PUBLIC_SITE_URL": "https://bucketlist.pages.dev"
+        "EXPO_PUBLIC_SITE_URL": "https://thebucketlist-8zk.pages.dev"
       },
       "android": {
         "buildType": "app-bundle"
