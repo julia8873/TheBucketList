@@ -3,15 +3,12 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  Modal,
   Pressable,
   TextInput,
   StyleSheet,
   Linking,
   Platform,
-  KeyboardAvoidingView,
   ScrollView,
-  BackHandler,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import {
@@ -30,6 +27,7 @@ import {
   ChevronUp,
 } from 'lucide-react-native';
 import { gold, useTheme, toast } from '@bucketlist/ui';
+import { TagSheetShell } from './TagSheetShell';
 
 interface GoogleDriveModalProps {
   visible: boolean;
@@ -55,15 +53,6 @@ export function GoogleDriveModal({
       setUrl(currentUrl || '');
     }
   }, [visible, currentUrl]);
-
-  useEffect(() => {
-    if (!visible) return;
-    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      onClose();
-      return true;
-    });
-    return () => sub.remove();
-  }, [visible, onClose]);
 
   const handlePasteClipboard = async () => {
     try {
@@ -127,18 +116,10 @@ export function GoogleDriveModal({
   const isDriveLink = url.toLowerCase().includes('drive.google.com') || url.toLowerCase().includes('docs.google.com');
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.keyboardAvoid}
-        >
-          <View
-            style={[
-              styles.card,
-              { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
-            ]}
-          >
+    // Hoja inferior animada (asa, fondo que se atenúa, arrastrar hacia abajo para cerrar), igual que
+    // el resto de menús inferiores de la app. Antes era un Modal que deslizaba toda la pantalla.
+    <TagSheetShell visible={visible} onClose={onClose}>
+          <View style={styles.sheetBody}>
             {/* Header */}
             <View style={styles.header}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
@@ -392,30 +373,16 @@ export function GoogleDriveModal({
               )}
             </ScrollView>
           </View>
-        </KeyboardAvoidingView>
-      </View>
-    </Modal>
+    </TagSheetShell>
   );
 }
 
 const styles = themedStyleSheet({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'flex-end',
-  },
-  keyboardAvoid: {
-    width: '100%',
-  },
-  card: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderWidth: 1,
-    borderBottomWidth: 0,
+  sheetBody: {
+    flexShrink: 1,
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 4,
     paddingBottom: Platform.OS === 'ios' ? 36 : 24,
-    maxHeight: '92%',
   },
   header: {
     flexDirection: 'row',

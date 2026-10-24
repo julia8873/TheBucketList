@@ -1,4 +1,3 @@
-import { Alert } from '@bucketlist/ui';
 import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { View, Text, Modal, Pressable, FlatList, TextInput, KeyboardAvoidingView, Keyboard, ScrollView, Platform, ActivityIndicator, StyleSheet } from 'react-native';
@@ -6,27 +5,15 @@ import {
   MessageCircle,
   X,
   Send,
-  Heart,
   CornerDownRight,
   AtSign,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react-native';
-import { Avatar, fontFamily, gold, confirm, toast } from '@bucketlist/ui';
-import { useAuthStore } from '../stores/auth.store';
-import {
-  useComments,
-  useAddComment,
-  useUpdateComment,
-  useDeleteComment,
-  useToggleCommentLike,
-} from '../hooks/useSocial';
+import { Avatar, fontFamily, gold } from '@bucketlist/ui';
 import { useConnections, usePeopleSearch } from '../hooks/useFriends';
 import { displayNameOf, initialsOf } from '../utils/initials';
-import { timeAgo } from '../utils/timeAgo';
-import { OfficialBadge, isUserAdmin } from './OfficialBadge';
 import { ReportModal } from './ReportModal';
-import { useReportContent } from '../hooks/useBlockReport';
+import { CommentThreadView } from './comments/CommentRow';
+import { useCommentsController } from './comments/useCommentsController';
 
 interface TaskCommentsModalProps {
   visible: boolean;
@@ -39,12 +26,6 @@ interface TaskCommentsModalProps {
   bucketOwnerId?: string;
   albumOwnerId?: string;
   autoFocus?: boolean;
-}
-
-interface ReplyingToState {
-  id: string;
-  authorName: string;
-  username?: string | null;
 }
 
 export function TaskCommentsModal(props: TaskCommentsModalProps) {
@@ -69,23 +50,21 @@ function TaskCommentsModalContent({
   const effectiveTitle = (effectiveTargetType === 'album' ? (albumTitle || bucketTitle) : (bucketTitle || albumTitle)) || '';
   const effectiveOwnerId = effectiveTargetType === 'album' ? (albumOwnerId || bucketOwnerId) : (bucketOwnerId || albumOwnerId);
 
-  const { user } = useAuthStore();
-  const [text, setText] = useState('');
-  const [replyingTo, setReplyingTo] = useState<ReplyingToState | null>(null);
-  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
-  const [editingText, setEditingText] = useState('');
+  const inputRef = useRef<TextInput>(null);
+  const flatListRef = useRef<FlatList>(null);
 
-  // Set de IDs de comentarios cuyas respuestas están visibles (por defecto escondidas)
-  const [expandedCommentIds, setExpandedCommentIds] = useState<Set<string>>(new Set());
+  // Lógica compartida con la sección de comentarios de la tarea/álbum (mismo árbol y mismas acciones)
+  const ctrl = useCommentsController({
+    targetId: effectiveId,
+    targetType: effectiveTargetType,
+    ownerId: effectiveOwnerId,
+    onReplyStart: () => setTimeout(() => inputRef.current?.focus(), 100),
+  });
+  const { user, comments, isLoading, threads, text, setText, replyingTo } = ctrl;
 
   // Estado para autocompletar menciones con @
   const [showMentionPicker, setShowMentionPicker] = useState(false);
-  const [reportingComment, setReportingComment] = useState<{ id: string; author: string } | null>(null);
-  const reportContent = useReportContent();
   const [mentionFilter, setMentionFilter] = useState('');
-
-  const flatListRef = useRef<FlatList>(null);
-  const inputRef = useRef<TextInput>(null);
 
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -159,73 +138,6 @@ function TaskCommentsModalContent({
     avatar_url: (user?.user_metadata?.avatar_url) as string | undefined,
   };
 
-  const { data: comments = [], isLoading } = useComments(effectiveId, effectiveTargetType);
-  const addComment = useAddComment();
-  const updateComment = useUpdateComment();
-  const deleteComment = useDeleteComment();
-  const toggleCommentLike = useToggleCommentLike();
-
-  const toggleReplies = (commentId: string) => {
-    setExpandedCommentIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(commentId)) {
-        next.delete(commentId);
-      } else {
-        next.add(commentId);
-      }
-      return next;
-    });
-  };
-
-  // Construye la lista de elementos para el FlatList:
-  // - Comentarios principales (raíz)
-  // - Si el comentario tiene respuestas y está desplegado, añade las respuestas debajo tabuladas
-  // - Botón de alternar "Ver X respuestas" / "Ocultar respuestas" (por defecto escondidas)
-  const visibleItems = useMemo(() => {
-    const commentMap = new Map<string, any>();
-    comments.forEach((c) => {
-      commentMap.set(c.id, { ...c, replies: [] });
-    });
-
-    const roots: any[] = [];
-    comments.forEach((c) => {
-      const item = commentMap.get(c.id);
-      if (c.parent_id && commentMap.has(c.parent_id)) {
-        commentMap.get(c.parent_id).replies.push(item);
-      } else {
-        roots.push(item);
-      }
-    });
-
-    const list: Array<
-      | { type: 'comment'; key: string; comment: any; isReply: boolean; depth: number }
-      | { type: 'toggle_replies'; key: string; parentCommentId: string; replyCount: number; isExpanded: boolean }
-    > = [];
-
-    roots.forEach((root) => {
-      list.push({ type: 'comment', key: `comment-${root.id}`, comment: root, isReply: false, depth: 0 });
-
-      const replyCount = root.replies.length;
-      if (replyCount > 0) {
-        const isExpanded = expandedCommentIds.has(root.id);
-        if (isExpanded) {
-          root.replies.forEach((reply: any) => {
-            list.push({ type: 'comment', key: `comment-${reply.id}`, comment: reply, isReply: true, depth: 1 });
-          });
-        }
-        list.push({
-          type: 'toggle_replies',
-          key: `toggle-${root.id}`,
-          parentCommentId: root.id,
-          replyCount,
-          isExpanded,
-        });
-      }
-    });
-
-    return list;
-  }, [comments, expandedCommentIds]);
-
   const handleTextChange = (newText: string) => {
     setText(newText);
 
@@ -258,144 +170,14 @@ function TaskCommentsModalContent({
   };
 
   const handleSend = async () => {
-    const trimmed = text.trim();
-    if (!trimmed || !user || addComment.isPending) return;
-
-    try {
-      setText('');
-      setShowMentionPicker(false);
-      setMentionFilter('');
-      const parentId = replyingTo?.id || null;
-      setReplyingTo(null);
-
-      // Si es una respuesta, desplegamos automáticamente el hilo padre para ver la nueva respuesta
-      if (parentId) {
-        const parentComment = comments.find((c) => c.id === parentId);
-        const rootId = parentComment?.parent_id || parentId;
-        setExpandedCommentIds((prev) => new Set(prev).add(rootId));
-      }
-
-      await addComment.mutateAsync({
-        bucketId: effectiveTargetType === 'bucket' ? effectiveId : undefined,
-        albumId: effectiveTargetType === 'album' ? effectiveId : undefined,
-        targetType: effectiveTargetType,
-        userId: user.id,
-        body: trimmed,
-        parentId,
-      });
-
+    setShowMentionPicker(false);
+    setMentionFilter('');
+    const ok = await ctrl.send();
+    if (ok) {
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 150);
-    } catch (err: any) {
-      Alert.alert('Error', err?.message || 'No se pudo enviar el comentario.');
     }
-  };
-
-  const handleReply = (comment: any) => {
-    const author = comment.user;
-    const name = displayNameOf(author);
-    const username = author?.username;
-    const mentionTag = username ? `@${username}` : `@${name}`;
-
-    setReplyingTo({
-      id: comment.id,
-      authorName: name,
-      username,
-    });
-
-    setText((prev) => {
-      if (prev.startsWith(mentionTag)) return prev;
-      return `${mentionTag} ${prev}`.trimStart();
-    });
-
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 100);
-  };
-
-  const handleStartEdit = (comment: any) => {
-    setEditingCommentId(comment.id);
-    setEditingText(comment.body);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingCommentId(null);
-    setEditingText('');
-  };
-
-  const handleSaveEdit = async (commentId: string) => {
-    const trimmed = editingText.trim();
-    if (!trimmed) {
-      Alert.alert('Aviso', 'El comentario no puede estar vacío.');
-      return;
-    }
-
-    try {
-      await updateComment.mutateAsync({
-        commentId,
-        bucketId: effectiveTargetType === 'bucket' ? effectiveId : undefined,
-        albumId: effectiveTargetType === 'album' ? effectiveId : undefined,
-        body: trimmed,
-      });
-      setEditingCommentId(null);
-      setEditingText('');
-    } catch (err: any) {
-      Alert.alert('Error', err?.message || 'No se pudo editar el comentario.');
-    }
-  };
-
-  const handleDelete = (commentId: string) => {
-    confirm.show({
-      title: '¿Eliminar comentario?',
-      message: '¿Estás seguro de que deseas eliminar este comentario? Esta acción no se puede deshacer.',
-      confirmLabel: 'Eliminar',
-      cancelLabel: 'Cancelar',
-      destructive: true,
-      onConfirm: () => {
-        deleteComment.mutate(
-          {
-            commentId,
-            bucketId: effectiveTargetType === 'bucket' ? effectiveId : undefined,
-            albumId: effectiveTargetType === 'album' ? effectiveId : undefined,
-          },
-          {
-            onSuccess: () => {
-              toast.success('Comentario eliminado');
-            },
-            onError: (err: any) =>
-              toast.error(err?.message || 'No se pudo eliminar el comentario.'),
-          }
-        );
-      },
-    });
-  };
-
-  const handleToggleLike = (commentId: string) => {
-    if (!user) return;
-    toggleCommentLike.mutate({
-      commentId,
-      bucketId: effectiveTargetType === 'bucket' ? effectiveId : '',
-      userId: user.id,
-    });
-  };
-
-  const renderCommentBody = (body: string) => {
-    const parts = body.split(/(@[a-zA-Z0-9_.-]+)/g);
-    return (
-      <Text style={styles.commentText}>
-        {parts.map((part, i) => {
-          if (part.startsWith('@')) {
-            return (
-              <Text key={i} style={styles.mentionHighlight}>
-                {part}
-              </Text>
-            );
-          }
-          return part;
-        })}
-      </Text>
-    );
   };
 
   return (
@@ -484,231 +266,12 @@ function TaskCommentsModalContent({
           ) : (
             <FlatList
               ref={flatListRef}
-              data={visibleItems}
-              keyExtractor={(item) => item.key}
+              data={threads}
+              keyExtractor={(thread) => thread.root.id}
               contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
-              renderItem={({ item }) => {
-                if (item.type === 'toggle_replies') {
-                  return (
-                    <Pressable
-                      style={styles.toggleRepliesRow}
-                      onPress={() => toggleReplies(item.parentCommentId)}
-                      hitSlop={6}
-                    >
-                      <View style={styles.toggleRepliesLine} />
-                      {item.isExpanded ? (
-                        <ChevronUp size={13} color={gold[400]} />
-                      ) : (
-                        <ChevronDown size={13} color="rgba(255,255,255,0.5)" />
-                      )}
-                      <Text
-                        style={[
-                          styles.toggleRepliesText,
-                          item.isExpanded && styles.toggleRepliesTextActive,
-                        ]}
-                      >
-                        {item.isExpanded
-                          ? 'Ocultar respuestas'
-                          : `Ver ${item.replyCount} ${item.replyCount === 1 ? 'respuesta' : 'respuestas'}`}
-                      </Text>
-                    </Pressable>
-                  );
-                }
-
-                const { comment, isReply } = item;
-                const author = comment.user;
-                const isAuthorOfComment = !!user && comment.user_id === user.id;
-                const isItemOwner = !!user && user.id === effectiveOwnerId;
-                const isCreator = !!effectiveOwnerId && comment.user_id === effectiveOwnerId;
-                const isEditing = editingCommentId === comment.id;
-
-                const likes: Array<{ id?: string; user_id: string }> = comment.likes ?? [];
-                const likesCount = likes.length;
-                const isLikedByMe = !!user && likes.some((l) => l.user_id === user.id);
-
-                return (
-                  <View
-                    style={[
-                      styles.commentRow,
-                      isReply && styles.replyCommentRow,
-                    ]}
-                  >
-                    {/* Conector gráfico de hilo para respuestas tabuladas */}
-                    {isReply && (
-                      <View style={styles.replyThreadConnector} pointerEvents="none" />
-                    )}
-
-                    {/* Foto de perfil a la izquierda del usuario */}
-                    <Avatar
-                      uri={author?.avatar_url}
-                      initials={initialsOf(author)}
-                      size={isReply ? 'sm' : 'md'}
-                    />
-
-                    {/* Contenido sin caja exterior */}
-                    <View style={styles.commentContent}>
-                      {/* Cabecera del comentario */}
-                      <View style={styles.commentHeaderRow}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', flex: 1 }}>
-                          <Text style={styles.authorName} numberOfLines={1}>
-                            {displayNameOf(author)}
-                          </Text>
-                          {isUserAdmin(author) && <OfficialBadge size="xs" />}
-                          {isCreator && (
-                            <View style={styles.creatorTag}>
-                              <Text style={styles.creatorTagText}>Autor</Text>
-                            </View>
-                          )}
-                          <Text style={styles.timeText}>{timeAgo(comment.created_at)}</Text>
-                        </View>
-                      </View>
-
-                      {/* Cuerpo del comentario o modo edición */}
-                      {isEditing ? (
-                        <View style={styles.editContainer}>
-                          <TextInput
-                            style={styles.editInput}
-                            value={editingText}
-                            onChangeText={setEditingText}
-                            multiline
-                            maxLength={1000}
-                            autoFocus
-                          />
-                          <View style={styles.editActionsRow}>
-                            <Pressable
-                              onPress={() => handleSaveEdit(comment.id)}
-                              disabled={updateComment.isPending}
-                              style={styles.editSaveBtn}
-                              hitSlop={4}
-                            >
-                              {updateComment.isPending ? (
-                                <ActivityIndicator size="small" color="#000" />
-                              ) : (
-                                <Text style={styles.editSaveBtnText}>Guardar</Text>
-                              )}
-                            </Pressable>
-                            <Pressable
-                              onPress={handleCancelEdit}
-                              disabled={updateComment.isPending}
-                              style={styles.editCancelBtn}
-                              hitSlop={4}
-                            >
-                              <Text style={styles.editCancelBtnText}>Cancelar</Text>
-                            </Pressable>
-                          </View>
-                        </View>
-                      ) : (
-                        renderCommentBody(comment.body)
-                      )}
-
-                      {/* Acciones inferiores (Edit, Reply, Delete o Corazón + Reply) */}
-                      {!isEditing && (
-                        <View style={styles.commentActionsRow}>
-                          {isAuthorOfComment ? (
-                            <>
-                              <Pressable
-                                hitSlop={6}
-                                onPress={() => handleStartEdit(comment)}
-                                accessibilityRole="button"
-                                accessibilityLabel="Editar comentario"
-                              >
-                                <Text style={styles.actionTextBold}>Edit</Text>
-                              </Pressable>
-
-                              <Pressable
-                                hitSlop={6}
-                                onPress={() => handleReply(comment)}
-                                accessibilityRole="button"
-                                accessibilityLabel="Responder comentario"
-                              >
-                                <Text style={styles.actionTextBold}>Reply</Text>
-                              </Pressable>
-
-                              <Pressable
-                                hitSlop={6}
-                                onPress={() => handleDelete(comment.id)}
-                                accessibilityRole="button"
-                                accessibilityLabel="Eliminar comentario"
-                              >
-                                <Text style={[styles.actionTextBold, styles.actionTextDelete]}>
-                                  Delete
-                                </Text>
-                              </Pressable>
-                            </>
-                          ) : (
-                            <>
-                              {/* Corazón para usuarios externos funcional */}
-                              <Pressable
-                                hitSlop={6}
-                                onPress={() => handleToggleLike(comment.id)}
-                                style={styles.likeActionBtn}
-                                accessibilityRole="button"
-                                accessibilityLabel={isLikedByMe ? 'Quitar me gusta' : 'Dar me gusta'}
-                              >
-                                <Heart
-                                  size={15}
-                                  color={isLikedByMe ? '#F43F5E' : 'rgba(255,255,255,0.45)'}
-                                  fill={isLikedByMe ? '#F43F5E' : 'transparent'}
-                                  strokeWidth={2}
-                                />
-                                {likesCount > 0 && (
-                                  <Text
-                                    style={[
-                                      styles.likeCountText,
-                                      isLikedByMe && { color: '#F43F5E' },
-                                    ]}
-                                  >
-                                    {likesCount}
-                                  </Text>
-                                )}
-                              </Pressable>
-
-                              {/* Responder en negrita */}
-                              <Pressable
-                                hitSlop={6}
-                                onPress={() => handleReply(comment)}
-                                accessibilityRole="button"
-                                accessibilityLabel="Responder comentario"
-                              >
-                                <Text style={styles.actionTextBold}>Reply</Text>
-                              </Pressable>
-
-                              {/* Reportar comentario al administrador */}
-                              {!!user && (
-                                <Pressable
-                                  hitSlop={6}
-                                  onPress={() =>
-                                    setReportingComment({ id: comment.id, author: displayNameOf(author) })
-                                  }
-                                  accessibilityRole="button"
-                                  accessibilityLabel="Reportar comentario"
-                                >
-                                  <Text style={styles.actionTextBold}>Reportar</Text>
-                                </Pressable>
-                              )}
-
-                              {/* Si es dueño del elemento también puede moderar/borrar */}
-                              {isItemOwner && (
-                                <Pressable
-                                  hitSlop={6}
-                                  onPress={() => handleDelete(comment.id)}
-                                  accessibilityRole="button"
-                                  accessibilityLabel="Eliminar comentario"
-                                >
-                                  <Text style={[styles.actionTextBold, styles.actionTextDelete]}>
-                                    Delete
-                                  </Text>
-                                </Pressable>
-                              )}
-                            </>
-                          )}
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                );
-              }}
+              keyboardShouldPersistTaps="handled"
+              renderItem={({ item }) => <CommentThreadView thread={item} ctrl={ctrl} />}
             />
           )}
 
@@ -784,7 +347,10 @@ function TaskCommentsModalContent({
               </View>
               <Pressable
                 hitSlop={8}
-                onPress={() => setReplyingTo(null)}
+                onPress={() => {
+                  ctrl.cancelReply();
+                  setText('');
+                }}
                 style={styles.replyCancelBtn}
                 accessibilityLabel="Cancelar respuesta"
               >
@@ -819,7 +385,7 @@ function TaskCommentsModalContent({
               />
               <Pressable
                 onPress={handleSend}
-                disabled={!text.trim() || addComment.isPending}
+                disabled={!text.trim() || ctrl.isSending}
                 style={[
                   styles.sendBtn,
                   text.trim() ? styles.sendBtnActive : styles.sendBtnDisabled,
@@ -827,7 +393,7 @@ function TaskCommentsModalContent({
                 hitSlop={6}
                 accessibilityLabel="Publicar comentario"
               >
-                {addComment.isPending ? (
+                {ctrl.isSending ? (
                   <ActivityIndicator size="small" color="#000" />
                 ) : (
                   <Send size={15} color={text.trim() ? '#000' : 'rgba(255,255,255,0.3)'} />
@@ -839,20 +405,12 @@ function TaskCommentsModalContent({
       </KeyboardAvoidingView>
 
       <ReportModal
-        visible={!!reportingComment}
-        onClose={() => setReportingComment(null)}
+        visible={!!ctrl.reportingComment}
+        onClose={() => ctrl.setReportingComment(null)}
         kind="comment"
-        subject={reportingComment ? `Comentario de ${reportingComment.author}` : undefined}
-        isLoading={reportContent.isPending}
-        onSubmit={async (reason, details) => {
-          if (!reportingComment) return;
-          await reportContent.mutateAsync({
-            targetType: 'comment',
-            targetId: reportingComment.id,
-            reason,
-            details,
-          });
-        }}
+        subject={ctrl.reportingComment ? `Comentario de ${ctrl.reportingComment.author}` : undefined}
+        isLoading={ctrl.isReporting}
+        onSubmit={ctrl.submitReport}
       />
     </Modal>
   );

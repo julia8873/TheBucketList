@@ -813,8 +813,10 @@ export const styles = themedStyleSheet({
     fontSize: 11.5,
     color: '#888',
   },
+  // Botones del diálogo: ocupan todo el ancho, uno encima de otro (la acción principal arriba).
   modalFooterRow: {
-    flexDirection: 'row',
+    flexDirection: 'column-reverse',
+    alignItems: 'stretch',
     gap: 10,
     marginTop: 16,
     paddingTop: 10,
@@ -822,9 +824,10 @@ export const styles = themedStyleSheet({
     borderTopColor: '#262626',
   },
   modalCancelBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
+    flex: 0,
+    alignSelf: 'stretch',
+    paddingVertical: 13,
+    borderRadius: 12,
     alignItems: 'center',
   },
   modalCancelBtnText: {
@@ -832,9 +835,10 @@ export const styles = themedStyleSheet({
     fontSize: 13,
   },
   modalSubmitBtn: {
-    flex: 1.4,
-    paddingVertical: 10,
-    borderRadius: 10,
+    flex: 0,
+    alignSelf: 'stretch',
+    paddingVertical: 13,
+    borderRadius: 12,
     backgroundColor: gold[400],
     alignItems: 'center',
   },

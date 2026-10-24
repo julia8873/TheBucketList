@@ -300,25 +300,42 @@ export function useDeleteComment() {
   });
 }
 
+type ToggleLikeVars = {
+  commentId: string;
+  userId: string;
+  /** Id de la tarea o del álbum al que pertenece el comentario. */
+  targetId?: string;
+  targetType?: 'bucket' | 'album';
+  /** @deprecated usar targetId (se mantiene por compatibilidad). */
+  bucketId?: string;
+};
+
+function likeQueryKey(v: Pick<ToggleLikeVars, 'targetId' | 'targetType' | 'bucketId'>) {
+  // La clave debe coincidir con la de `useComments`: ['comments', tipo, id]. Antes faltaba el tipo,
+  // así que el "me gusta" optimista no se aplicaba y la lista no se refrescaba al instante.
+  return [...COMMENTS_QUERY_KEY, v.targetType ?? 'bucket', v.targetId ?? v.bucketId] as const;
+}
+
 export function useToggleCommentLike() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ commentId, userId }: { commentId: string; bucketId: string; userId: string }) =>
+    mutationFn: ({ commentId, userId }: ToggleLikeVars) =>
       socialApi.toggleCommentLike(commentId, userId),
-    onMutate: async ({ commentId, bucketId, userId }) => {
-      await queryClient.cancelQueries({ queryKey: [...COMMENTS_QUERY_KEY, bucketId] });
-      const previousComments = queryClient.getQueryData([...COMMENTS_QUERY_KEY, bucketId]);
+    onMutate: async (vars) => {
+      const key = likeQueryKey(vars);
+      await queryClient.cancelQueries({ queryKey: key });
+      const previousComments = queryClient.getQueryData(key);
 
-      queryClient.setQueryData([...COMMENTS_QUERY_KEY, bucketId], (old: any[] | undefined) => {
+      queryClient.setQueryData(key, (old: any[] | undefined) => {
         if (!old) return old;
         return old.map((c) => {
-          if (c.id !== commentId) return c;
+          if (c.id !== vars.commentId) return c;
           const currentLikes: Array<{ id?: string; user_id: string }> = c.likes ?? [];
-          const alreadyLiked = currentLikes.some((l) => l.user_id === userId);
+          const alreadyLiked = currentLikes.some((l) => l.user_id === vars.userId);
           const newLikes = alreadyLiked
-            ? currentLikes.filter((l) => l.user_id !== userId)
-            : [...currentLikes, { id: 'temp-' + Date.now(), user_id: userId }];
+            ? currentLikes.filter((l) => l.user_id !== vars.userId)
+            : [...currentLikes, { id: 'temp-' + Date.now(), user_id: vars.userId }];
           return {
             ...c,
             likes: newLikes,
@@ -330,11 +347,11 @@ export function useToggleCommentLike() {
     },
     onError: (_err, variables, context) => {
       if (context?.previousComments) {
-        queryClient.setQueryData([...COMMENTS_QUERY_KEY, variables.bucketId], context.previousComments);
+        queryClient.setQueryData(likeQueryKey(variables), context.previousComments);
       }
     },
     onSettled: (_data, _err, variables) => {
-      void queryClient.invalidateQueries({ queryKey: [...COMMENTS_QUERY_KEY, variables.bucketId] });
+      void queryClient.invalidateQueries({ queryKey: likeQueryKey(variables) });
     },
   });
 }

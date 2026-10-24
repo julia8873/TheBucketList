@@ -1,84 +1,67 @@
 import { themedStyleSheet } from '@bucketlist/ui';
-import React, { useState } from 'react';
+import React, { useMemo, useRef } from 'react';
 import {
   View,
   Text,
   TextInput,
   Pressable,
   ActivityIndicator,
-  StyleSheet,
   Platform,
 } from 'react-native';
-import { Send, MessageCircle, Heart, ChevronRight } from 'lucide-react-native';
+import { Send, ChevronRight, CornerDownRight, X } from 'lucide-react-native';
 import { Avatar, Typography, useTheme, fontFamily } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
-import { useComments, useAddComment, useToggleCommentLike } from '../hooks/useSocial';
-import { useAuthStore } from '../stores/auth.store';
-import { displayNameOf, initialsOf } from '../utils/initials';
-import { timeAgo } from '../utils/timeAgo';
-import { OfficialBadge, isUserAdmin } from './OfficialBadge';
+import { initialsOf } from '../utils/initials';
+import { ReportModal } from './ReportModal';
+import { CommentThreadView } from './comments/CommentRow';
+import { useCommentsController } from './comments/useCommentsController';
+
+/** Cuántos hilos se muestran dentro de la tarea/álbum antes de «Ver más comentarios». */
+const INLINE_THREADS = 3;
 
 interface ItemCommentsSectionProps {
   targetId: string;
   targetType: 'bucket' | 'album';
   ownerId?: string;
   title?: string;
+  /** Abre la hoja inferior con todos los comentarios. */
   onOpenModal: (autoFocus?: boolean) => void;
 }
 
+/**
+ * Comentarios dentro de la tarea o el álbum. Usa el mismo diseño en árbol que la hoja inferior
+ * (comentario principal + respuestas plegables) y muestra solo los hilos más recientes; con
+ * «Ver más comentarios» se abre la hoja inferior con todos.
+ */
 export function ItemCommentsSection({
   targetId,
   targetType,
   ownerId,
-  title,
   onOpenModal,
 }: ItemCommentsSectionProps) {
   const { theme } = useTheme();
-  const { user } = useAuthStore();
-  const [text, setText] = useState('');
+  const inputRef = useRef<TextInput>(null);
 
-  const { data: comments = [], isLoading } = useComments(targetId, targetType);
-  const addComment = useAddComment();
-  const toggleLike = useToggleCommentLike();
+  const ctrl = useCommentsController({
+    targetId,
+    targetType,
+    ownerId,
+    onReplyStart: () => setTimeout(() => inputRef.current?.focus(), 80),
+  });
+  const { user, comments, isLoading, threads, text, setText, replyingTo } = ctrl;
 
-  // Comentarios raíz (excluyendo respuestas anidadas para el preview)
-  const rootComments = comments.filter((c) => !c.parent_id);
-  // Mostrar los últimos 3 comentarios raíz
-  const recentComments = rootComments.slice(-3);
+  // Los hilos con actividad más reciente, mostrados de más antiguo a más nuevo
+  const { shownThreads, hiddenCount } = useMemo(() => {
+    const byActivity = [...threads].sort((a, b) => a.lastActivity - b.lastActivity);
+    const shown = byActivity.slice(-INLINE_THREADS);
+    const shownIds = new Set(shown.map((t) => t.root.id));
+    const ordered = threads.filter((t) => shownIds.has(t.root.id));
+    const shownCount = ordered.reduce((acc, t) => acc + 1 + t.replies.length, 0);
+    return { shownThreads: ordered, hiddenCount: Math.max(0, comments.length - shownCount) };
+  }, [threads, comments.length]);
 
   const handleSend = async () => {
-    const trimmed = text.trim();
-    if (!trimmed || !user || addComment.isPending) return;
-
-    try {
-      if (targetType === 'album') {
-        await addComment.mutateAsync({
-          albumId: targetId,
-          targetType: 'album',
-          userId: user.id,
-          body: trimmed,
-        });
-      } else {
-        await addComment.mutateAsync({
-          bucketId: targetId,
-          targetType: 'bucket',
-          userId: user.id,
-          body: trimmed,
-        });
-      }
-      setText('');
-    } catch (e) {
-      console.error('Error al enviar comentario:', e);
-    }
-  };
-
-  const handleToggleLike = (commentId: string) => {
-    if (!user) return;
-    toggleLike.mutate({
-      commentId,
-      bucketId: targetId,
-      userId: user.id,
-    });
+    await ctrl.send();
   };
 
   return (
@@ -88,28 +71,28 @@ export function ItemCommentsSection({
         <Typography variant="caption" color={gold[400]} style={styles.headerLabel}>
           COMENTARIOS · {comments.length}
         </Typography>
-        <Pressable
-          onPress={() => onOpenModal(false)}
-          hitSlop={8}
-          style={styles.viewAllBtn}
-          accessibilityRole="button"
-          accessibilityLabel="Ver todos los comentarios"
-        >
-          <Text style={[styles.viewAllText, { color: gold[400] }]}>
-            {comments.length > 0 ? `Ver todos (${comments.length})` : 'Comentar'}
-          </Text>
-          <ChevronRight size={14} color={gold[400]} />
-        </Pressable>
+        {comments.length > 0 && (
+          <Pressable
+            onPress={() => onOpenModal(false)}
+            hitSlop={8}
+            style={styles.viewAllBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Ver todos los comentarios"
+          >
+            <Text style={[styles.viewAllText, { color: gold[400] }]}>Ver todos ({comments.length})</Text>
+            <ChevronRight size={14} color={gold[400]} />
+          </Pressable>
+        )}
       </View>
 
-      {/* Lista de comentarios sin cajas ni marcos */}
+      {/* Lista de hilos */}
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="small" color={gold[400]} />
         </View>
       ) : comments.length === 0 ? (
         <Pressable
-          onPress={() => onOpenModal(true)}
+          onPress={() => inputRef.current?.focus()}
           style={styles.emptyPrompt}
           hitSlop={6}
           accessibilityRole="button"
@@ -120,123 +103,45 @@ export function ItemCommentsSection({
         </Pressable>
       ) : (
         <View style={styles.commentsList}>
-          {recentComments.map((comment) => {
-            const author = comment.user;
-            const isCreator = !!ownerId && comment.user_id === ownerId;
-            const isAuthorOfComment = !!user && comment.user_id === user.id;
-
-            const likes: Array<{ id?: string; user_id: string }> = comment.likes ?? [];
-            const likesCount = likes.length;
-            const isLiked = !!user && likes.some((l) => l.user_id === user.id);
-
-            const repliesCount = comments.filter((r) => r.parent_id === comment.id).length;
-
-            return (
-              <View key={comment.id} style={styles.commentRow}>
-                {/* Avatar a la izquierda */}
-                <Avatar
-                  uri={author?.avatar_url}
-                  initials={initialsOf(author)}
-                  size="sm"
-                />
-
-                {/* Contenido limpio (sin caja, sin borde, igual que al comentar) */}
-                <View style={styles.commentContent}>
-                  {/* Autor y fecha */}
-                  <View style={styles.authorRow}>
-                    <Text
-                      style={[styles.authorName, { color: theme.colors.foreground }]}
-                      numberOfLines={1}
-                    >
-                      {displayNameOf(author)}
-                    </Text>
-                    {isUserAdmin(author) && <OfficialBadge size="xs" />}
-                    {isCreator && (
-                      <View style={styles.creatorTag}>
-                        <Text style={styles.creatorTagText}>Autor</Text>
-                      </View>
-                    )}
-                    <Text style={[styles.timeText, { color: theme.colors.foregroundMuted }]}>
-                      {timeAgo(comment.created_at)}
-                    </Text>
-                  </View>
-
-                  {/* Cuerpo del comentario */}
-                  <Text
-                    style={[styles.commentBody, { color: theme.colors.foreground }]}
-                    numberOfLines={4}
-                  >
-                    {comment.body}
-                  </Text>
-
-                  {/* Acciones: responder, me gusta, ver respuestas */}
-                  <View style={styles.actionsRow}>
-                    <Pressable
-                      onPress={() => onOpenModal(true)}
-                      hitSlop={6}
-                      accessibilityRole="button"
-                      accessibilityLabel="Responder comentario"
-                    >
-                      <Text style={[styles.actionBtnText, { color: theme.colors.foregroundMuted }]}>
-                        Responder
-                      </Text>
-                    </Pressable>
-
-                    <Pressable
-                      onPress={() => handleToggleLike(comment.id)}
-                      hitSlop={6}
-                      style={styles.likeBtn}
-                      accessibilityRole="button"
-                      accessibilityLabel="Me gusta"
-                    >
-                      <Heart
-                        size={12}
-                        color={isLiked ? '#EF4444' : theme.colors.foregroundMuted}
-                        fill={isLiked ? '#EF4444' : 'transparent'}
-                        strokeWidth={1.8}
-                      />
-                      {likesCount > 0 && (
-                        <Text
-                          style={[
-                            styles.likeCountText,
-                            { color: isLiked ? '#EF4444' : theme.colors.foregroundMuted },
-                          ]}
-                        >
-                          {likesCount}
-                        </Text>
-                      )}
-                    </Pressable>
-
-                    {repliesCount > 0 && (
-                      <Pressable
-                        onPress={() => onOpenModal(false)}
-                        hitSlop={6}
-                        style={styles.repliesCountBtn}
-                        accessibilityRole="button"
-                      >
-                        <Text style={[styles.repliesCountText, { color: gold[400] }]}>
-                          Ver {repliesCount} {repliesCount === 1 ? 'respuesta' : 'respuestas'}
-                        </Text>
-                      </Pressable>
-                    )}
-                  </View>
-                </View>
-              </View>
-            );
-          })}
-
-          {/* Enlace para ver más comentarios si hay más de los mostrados */}
-          {rootComments.length > recentComments.length && (
+          {hiddenCount > 0 && (
             <Pressable
               onPress={() => onOpenModal(false)}
               style={styles.moreCommentsBtn}
               hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Ver más comentarios"
             >
               <Text style={[styles.moreCommentsText, { color: gold[400] }]}>
-                Ver los {rootComments.length - recentComments.length} comentarios anteriores...
+                Ver más comentarios ({hiddenCount})
               </Text>
             </Pressable>
           )}
+          {shownThreads.map((thread) => (
+            <CommentThreadView key={thread.root.id} thread={thread} ctrl={ctrl} />
+          ))}
+        </View>
+      )}
+
+      {/* Aviso de respuesta */}
+      {replyingTo && (
+        <View style={[styles.replyBanner, { borderColor: theme.colors.border }]}>
+          <CornerDownRight size={14} color={gold[400]} />
+          <Text style={[styles.replyBannerText, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
+            Respondiendo a{' '}
+            <Text style={{ fontFamily: fontFamily.semibold, color: gold[400] }}>
+              {replyingTo.username ? `@${replyingTo.username}` : replyingTo.authorName}
+            </Text>
+          </Text>
+          <Pressable
+            onPress={() => {
+              ctrl.cancelReply();
+              setText('');
+            }}
+            hitSlop={8}
+            accessibilityLabel="Cancelar respuesta"
+          >
+            <X size={15} color={theme.colors.foregroundMuted} />
+          </Pressable>
         </View>
       )}
 
@@ -262,8 +167,9 @@ export function ItemCommentsSection({
             ]}
           >
             <TextInput
+              ref={inputRef}
               style={[styles.textInput, { color: theme.colors.foreground }]}
-              placeholder="Añade un comentario..."
+              placeholder={replyingTo ? 'Escribe tu respuesta...' : 'Añade un comentario...'}
               placeholderTextColor={theme.colors.foregroundMuted}
               value={text}
               onChangeText={setText}
@@ -272,27 +178,30 @@ export function ItemCommentsSection({
 
             <Pressable
               onPress={handleSend}
-              disabled={!text.trim() || addComment.isPending}
-              style={[
-                styles.sendBtn,
-                text.trim().length > 0 && styles.sendBtnActive,
-              ]}
+              disabled={!text.trim() || ctrl.isSending}
+              style={[styles.sendBtn, text.trim().length > 0 && styles.sendBtnActive]}
               hitSlop={6}
               accessibilityRole="button"
               accessibilityLabel="Enviar comentario"
             >
-              {addComment.isPending ? (
+              {ctrl.isSending ? (
                 <ActivityIndicator size="small" color="#000" />
               ) : (
-                <Send
-                  size={14}
-                  color={text.trim().length > 0 ? '#000' : theme.colors.foregroundMuted}
-                />
+                <Send size={14} color={text.trim().length > 0 ? '#000' : theme.colors.foregroundMuted} />
               )}
             </Pressable>
           </View>
         </View>
       )}
+
+      <ReportModal
+        visible={!!ctrl.reportingComment}
+        onClose={() => ctrl.setReportingComment(null)}
+        kind="comment"
+        subject={ctrl.reportingComment ? `Comentario de ${ctrl.reportingComment.author}` : undefined}
+        isLoading={ctrl.isReporting}
+        onSubmit={ctrl.submitReport}
+      />
     </View>
   );
 }
@@ -336,82 +245,29 @@ const styles = themedStyleSheet({
     fontSize: 13,
   },
   commentsList: {
-    gap: 14,
+    gap: 16,
     marginBottom: 14,
   },
-  commentRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-  },
-  commentContent: {
-    flex: 1,
-  },
-  authorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    flexWrap: 'wrap',
-    marginBottom: 2,
-  },
-  authorName: {
-    fontFamily: fontFamily.semibold,
-    fontSize: 13,
-  },
-  creatorTag: {
-    backgroundColor: 'rgba(212, 175, 55, 0.15)',
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: 4,
-  },
-  creatorTagText: {
-    color: gold[400],
-    fontSize: 9,
-    fontFamily: fontFamily.semibold,
-    textTransform: 'uppercase',
-  },
-  timeText: {
-    fontSize: 11,
-    fontFamily: fontFamily.regular,
-  },
-  commentBody: {
-    fontFamily: fontFamily.regular,
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 1,
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    marginTop: 6,
-  },
-  actionBtnText: {
-    fontFamily: fontFamily.semibold,
-    fontSize: 11,
-  },
-  likeBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  likeCountText: {
-    fontFamily: fontFamily.medium,
-    fontSize: 11,
-  },
-  repliesCountBtn: {
-    marginLeft: 2,
-  },
-  repliesCountText: {
-    fontFamily: fontFamily.medium,
-    fontSize: 11,
-  },
   moreCommentsBtn: {
-    paddingVertical: 4,
-    marginTop: 2,
+    paddingVertical: 2,
   },
   moreCommentsText: {
-    fontFamily: fontFamily.medium,
+    fontFamily: fontFamily.semibold,
+    fontSize: 12,
+  },
+  replyBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  replyBannerText: {
+    flex: 1,
+    fontFamily: fontFamily.regular,
     fontSize: 12,
   },
   inputRow: {

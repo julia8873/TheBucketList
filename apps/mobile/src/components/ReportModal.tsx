@@ -291,9 +291,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   noticeText: { fontSize: 12, lineHeight: 17, fontFamily: fontFamily.regular },
-  actionsRow: { flexDirection: 'row', gap: 10, marginTop: 18 },
+  // Botones a todo el ancho, uno encima de otro (enviar arriba, cancelar abajo)
+  actionsRow: { flexDirection: 'column-reverse', alignItems: 'stretch', gap: 10, marginTop: 18 },
   cancelBtn: {
-    flex: 1,
+    flex: 0,
+    alignSelf: 'stretch',
     height: 48,
     borderRadius: 24,
     borderWidth: 1,
@@ -302,7 +304,8 @@ const styles = StyleSheet.create({
   },
   cancelBtnText: { fontSize: 15, fontFamily: fontFamily.semibold },
   submitBtn: {
-    flex: 1.3,
+    flex: 0,
+    alignSelf: 'stretch',
     height: 48,
     borderRadius: 24,
     flexDirection: 'row',

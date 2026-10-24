@@ -164,18 +164,29 @@ export function ConfirmDialog({
   // En pantallas muy pequeñas usamos el máximo espacio disponible menos un margen mínimo de 16px.
   const hPadding = Math.max(16, Math.min(24, (windowWidth - 260) / 2));
   const dialogWidth = Math.max(260, Math.min(380, windowWidth - hPadding * 2));
-  // Los botones siempre se apilan en vertical (uno encima de otro) y alineados abajo a la derecha:
+  // Los botones siempre se apilan en vertical (uno encima de otro) y ocupan todo el ancho del diálogo:
   // así caben y se ven bien en cualquier tamaño de pantalla, con cualquier longitud de texto.
   const shouldStackButtons = true;
-  // Medida real de la ventana donde se dibuja el diálogo. Con el teclado abierto (o cerrándose)
-  // la ventana del Modal es MÁS PEQUEÑA que la pantalla: si forzáramos `windowHeight`, el cuadro
-  // se centraría en un área mayor que la visible y se vería arriba con los botones fuera de pantalla.
-  const [layoutBox, setLayoutBox] = useState<{ w: number; h: number } | null>(null);
-  // Solo si Android mide el Modal con 0 px (fallo ya conocido) recurrimos a dimensiones explícitas.
-  // Es "pegajoso" para evitar bucles de medición.
-  const [forceExplicitSize, setForceExplicitSize] = useState(false);
-  const availableHeight =
-    layoutBox && layoutBox.h > 0 && !forceExplicitSize ? layoutBox.h : windowHeight;
+  // Altura del teclado (si lo hay). Con el teclado abierto la ventana del Modal es MÁS PEQUEÑA que
+  // la pantalla, así que centramos el diálogo en el área libre y no en la pantalla completa.
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  useEffect(() => {
+    if (!visible) return;
+    const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showSub = Keyboard.addListener(showEvt, (e) => setKeyboardHeight(e.endCoordinates?.height ?? 0));
+    const hideSub = Keyboard.addListener(hideEvt, () => setKeyboardHeight(0));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [visible]);
+  // Área sobre la que se centra el diálogo. Se usa SIEMPRE como tamaño mínimo de la capa de fondo:
+  // si Android mide el Modal recién montado con 0 px, la capa conserva igualmente el tamaño de la
+  // pantalla y el diálogo queda centrado (antes se quedaba arriba a la izquierda y con los botones
+  // fuera de su caja).
+  const availableWidth = windowWidth;
+  const availableHeight = Math.max(160, windowHeight - keyboardHeight);
   const [text, setText] = useState('');
   const ok = !requireText || text.trim().toUpperCase() === requireText.toUpperCase();
 
@@ -214,24 +225,11 @@ export function ConfirmDialog({
         style={[
           styles.backdrop,
           inline ? styles.inlineBackdrop : null,
-          // Por defecto `flex: 1` rellena la ventana real del Modal (respeta el teclado).
-          // Solo si se detecta una medida de 0 px se fuerza el tamaño de pantalla.
-          forceExplicitSize ? { width: windowWidth, height: windowHeight } : null,
+          // Tamaño mínimo garantizado: el diálogo siempre se centra en el área visible.
+          { minWidth: availableWidth, minHeight: availableHeight },
           { backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(26,20,16,0.45)' },
           { paddingHorizontal: hPadding },
         ]}
-        onLayout={(e) => {
-          const { width, height } = e.nativeEvent.layout;
-          if (width < 1 || height < 1) {
-            setForceExplicitSize(true);
-          } else {
-            setLayoutBox((prev) =>
-              prev && Math.abs(prev.w - width) < 1 && Math.abs(prev.h - height) < 1
-                ? prev
-                : { w: width, h: height },
-            );
-          }
-        }}
         onPress={onCancel}
       >
         <Pressable
@@ -644,7 +642,11 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
 
 const styles = StyleSheet.create({
   backdrop: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 24,
@@ -715,7 +717,8 @@ const styles = StyleSheet.create({
   },
   dialogActionsStacked: {
     flexDirection: 'column',
-    alignItems: 'flex-end', // esquina inferior derecha del diálogo
+    alignItems: 'stretch', // los botones ocupan todo el ancho del diálogo, uno encima de otro
+    alignSelf: 'stretch',
   },
   dialogBtn: {
     flex: 1,
@@ -729,10 +732,10 @@ const styles = StyleSheet.create({
   },
   dialogBtnStacked: {
     flex: 0,
-    alignSelf: 'flex-end',
-    minWidth: 150,
-    maxWidth: '100%',
-    height: 46,
+    alignSelf: 'stretch',
+    width: '100%',
+    minWidth: 0,
+    height: 48,
   },
   dialogBtnText: {
     fontFamily: fontFamily.semibold,
