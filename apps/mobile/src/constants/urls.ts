@@ -80,8 +80,16 @@ export function getSupabaseAnonKey(): string {
   if (APP_ENV === 'staging') {
     return process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY_STAGING'] || process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY'] || '';
   }
-  if (Platform.OS === 'web' && process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY']) {
-    return process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY'];
+  if (Platform.OS === 'web') {
+    if (process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY']) {
+      return process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY'];
+    }
+    if (process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY_PROD']) {
+      return process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY_PROD'];
+    }
+    if (typeof window !== 'undefined' && window.location?.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhenhxanpudWVocndrdW5nbWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzE5NDEsImV4cCI6MjEwNzMwNzk0MX0.1i4vocM3OAet2tzm3hLJYy-RcV03XuIPbZDdlKNTtlM';
+    }
   }
   const k = process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY'] ?? process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY_LOCAL'];
   if (k && !k.includes('CRFA0NiK')) {

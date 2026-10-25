@@ -197,12 +197,12 @@ function RootNavigator() {
   // pantalla superior y queda una pantalla (tabs) huérfana → pantalla negra al volver a entrar) y
   // evitan que el navigationGuard descarte la navegación en silencio.
   const goTo = (target: string) => {
-    resetNavigationGuard();
     try {
-      if (router.canDismiss()) router.dismissAll();
+      if (Platform.OS !== 'web' && router.canDismiss()) router.dismissAll();
     } catch {
       // sin nada que cerrar
     }
+    resetNavigationGuard();
     router.replace(target as any);
   };
 
@@ -253,10 +253,15 @@ function RootNavigator() {
           const access_token = params.get('access_token');
           const refresh_token = params.get('refresh_token');
           const isRecovery = params.get('type') === 'recovery';
-          if (access_token && refresh_token && isRecovery) {
-            setRecovering(true);
-            const { error } = await supabase.auth.setSession({ access_token, refresh_token });
-            if (error) setRecovering(false);
+          if (access_token && refresh_token) {
+            if (isRecovery) {
+              setRecovering(true);
+              const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+              if (error) setRecovering(false);
+              return;
+            }
+            // En web o deep link directo: establecer sesión al recibir tokens de OAuth
+            await supabase.auth.setSession({ access_token, refresh_token });
             return;
           }
         }

@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../stores/auth.store';
 import { getAuthRedirectUrl, getSupabaseUrl, getSupabaseAnonKey } from '../constants/urls';
+import { resetNavigationGuard } from '../utils/navigationGuard';
 
 export type GoogleAuthMode = 'login' | 'register';
 
@@ -185,14 +186,20 @@ export function useGoogleAuth(mode: GoogleAuthMode) {
           );
         }
 
-        // El RootNavigator detectará SIGNED_IN y redirigirá automáticamente a la app
+        // Navegar directamente a la app sin depender únicamente del listener
+        resetNavigationGuard();
+        if (onboardingCompleted) {
+          router.replace('/(tabs)/my-list');
+        } else {
+          router.replace('/(onboarding)/username');
+        }
       } catch (err: any) {
         console.error('Error handling web Google auth callback:', err);
         alert(err?.message ?? 'Error al iniciar sesión con Google');
       } finally {
+        useAuthStore.getState().setOauthInProgress(false);
         if (isMounted) {
           setLoading(false);
-          useAuthStore.getState().setOauthInProgress(false);
         }
       }
     };
