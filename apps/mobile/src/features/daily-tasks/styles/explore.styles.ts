@@ -419,6 +419,31 @@ export const styles = themedStyleSheet({
   },
   weekDaySection: {
     marginBottom: 10,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    padding: 2,
+  },
+  weekDaySectionDropTarget: {
+    borderColor: gold[400],
+    backgroundColor: 'rgba(212, 177, 58, 0.08)',
+  },
+  weekDropIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    marginVertical: 4,
+  },
+  weekDropIndicatorText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 12,
+    letterSpacing: 0.2,
   },
   weekDayHeader: {
     flexDirection: 'row',

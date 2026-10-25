@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   ScrollView,
-  RefreshControl,
   Platform,
   Pressable,
 } from 'react-native';
@@ -110,15 +109,7 @@ export default function DailyTasksScreen() {
           contentContainerStyle={[styles.listContent, { flexGrow: 1 }]}
           nestedScrollEnabled={true}
           automaticallyAdjustKeyboardInsets={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={state.dragging ? false : state.manualRefreshing}
-              onRefresh={state.handleRefresh}
-              tintColor={state.dragging ? 'transparent' : gold[400]}
-              colors={state.dragging ? ['transparent'] : [gold[400]]}
-              enabled={!state.dragging}
-            />
-          }
+          scrollEnabled={!state.dragging}
           keyboardShouldPersistTaps="handled"
         >
           {/* Top Bar con título y pestañas */}
@@ -305,6 +296,7 @@ export default function DailyTasksScreen() {
                   )}
                   renderTaskRow={renderTaskRow}
                   onReorder={state.handleReorder}
+                  onReschedule={state.handleRescheduleTask}
                   onDraggingChange={state.handleDraggingChange}
                   isWeekCompletedCollapsed={state.isWeekCompletedCollapsed}
                   onToggleAllWeekCompleted={state.toggleAllWeekCompleted}

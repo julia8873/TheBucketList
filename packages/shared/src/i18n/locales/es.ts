@@ -497,6 +497,7 @@ const es = {
     no_tasks_title: 'No hay tareas',
     no_tasks_desc: 'Crea una tarea con el botón + abajo o arriba para comenzar.',
     no_scheduled_tasks: 'Sin tareas programadas',
+    drop_to_reschedule: 'Soltar para mover a {{day}}',
     no_tasks_for_day: 'Sin tareas para este día. ¡Pulsa + Añadir para crear una!',
     completed_today_count: 'Completadas hoy ({{count}})',
     completed_count: 'Completadas ({{count}})',

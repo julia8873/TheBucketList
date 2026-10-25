@@ -497,6 +497,7 @@ const en = {
     no_tasks_title: 'No tasks',
     no_tasks_desc: 'Create a task with the + button above or below to get started.',
     no_scheduled_tasks: 'No scheduled tasks',
+    drop_to_reschedule: 'Drop to move to {{day}}',
     no_tasks_for_day: 'No tasks for this day. Tap + Add to create one!',
     completed_today_count: 'Completed today ({{count}})',
     completed_count: 'Completed ({{count}})',

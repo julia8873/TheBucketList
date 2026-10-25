@@ -9,7 +9,6 @@ import {
   Pin,
   Trash2,
   AlertCircle,
-  GripVertical,
 } from 'lucide-react-native';
 
 import { gold, useTheme } from '@bucketlist/ui';
@@ -67,26 +66,9 @@ export function DailyTaskCard({
         isCompleted && styles.compactRowCompleted,
         drag?.isActive && styles.compactRowDragging,
         isLast && { borderBottomWidth: 0 },
-        Platform.OS === 'web' && ({ userSelect: 'none', WebkitUserSelect: 'none' } as any),
+        Platform.OS === 'web' && ({ userSelect: 'none', WebkitUserSelect: 'none', cursor: drag?.isActive ? 'grabbing' : 'grab' } as any),
       ]}
     >
-      {/* Drag Handle */}
-      {drag && (
-        <View
-          {...drag.panHandlers}
-          style={[
-            styles.dragHandle,
-            Platform.OS === 'web' && ({ cursor: drag.isActive ? 'grabbing' : 'grab', userSelect: 'none' } as any),
-          ]}
-        >
-          <GripVertical
-            size={16}
-            color={drag.isActive ? gold[400] : theme.colors.foregroundMuted}
-            strokeWidth={1.8}
-          />
-        </View>
-      )}
-
       {/* Checkbox */}
       <Pressable
         hitSlop={8}
@@ -352,28 +334,11 @@ export function DailyOverdueTaskCard({
         isCompleted && styles.compactRowCompleted,
         drag?.isActive && styles.compactRowDragging,
         isLast && { borderBottomWidth: 0 },
-        Platform.OS === 'web' && ({ userSelect: 'none', WebkitUserSelect: 'none' } as any),
+        Platform.OS === 'web' && ({ userSelect: 'none', WebkitUserSelect: 'none', cursor: drag?.isActive ? 'grabbing' : 'grab' } as any),
       ]}
     >
       {/* Top line: drag handle, checkbox, content, actions */}
       <View style={styles.overdueMainLine}>
-        {/* Drag Handle */}
-        {drag && (
-          <View
-            {...drag.panHandlers}
-            style={[
-              styles.dragHandle,
-              Platform.OS === 'web' && ({ cursor: drag.isActive ? 'grabbing' : 'grab', userSelect: 'none' } as any),
-            ]}
-          >
-            <GripVertical
-              size={16}
-              color={drag.isActive ? gold[400] : theme.colors.foregroundMuted}
-              strokeWidth={1.8}
-            />
-          </View>
-        )}
-
         {/* Checkbox */}
         <Pressable
           hitSlop={8}
