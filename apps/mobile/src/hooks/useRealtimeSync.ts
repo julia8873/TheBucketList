@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import * as Notifications from 'expo-notifications';
 import { supabase } from '../services/supabase';
 import { displayInAppNotification } from '../services/notifications';
 import { isLocalEcho } from '../utils/optimisticCache';

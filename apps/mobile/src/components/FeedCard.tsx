@@ -1,6 +1,6 @@
 import { useCoverOverlay } from '@bucketlist/ui';
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
@@ -542,9 +542,14 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.medium,
     fontSize: 12,
     color: '#FFFFFF',
-    textShadowColor: 'rgba(0,0,0,0.85)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    ...Platform.select({
+      web: { textShadow: '0 1px 3px rgba(0,0,0,0.85)' } as any,
+      default: {
+        textShadowColor: 'rgba(0,0,0,0.85)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 3,
+      },
+    }),
   },
   galleryBottom: {
     position: 'absolute',
@@ -557,9 +562,14 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 19,
     color: '#FFFFFF',
-    textShadowColor: 'rgba(0,0,0,0.9)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    ...Platform.select({
+      web: { textShadow: '0 1px 4px rgba(0,0,0,0.9)' } as any,
+      default: {
+        textShadowColor: 'rgba(0,0,0,0.9)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 4,
+      },
+    }),
   },
   galleryLocation: {
     fontFamily: fontFamily.regular,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { View, Text, Pressable, StyleSheet, StyleProp, ViewStyle, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Copy, Heart, Layers } from 'lucide-react-native';
 import { useTheme, gold, fontFamily } from '@bucketlist/ui';
@@ -438,9 +438,14 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.serifBold,
     color: '#FFF',
     flex: 1,
-    textShadowColor: 'rgba(0,0,0,0.6)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    ...Platform.select({
+      web: { textShadow: '0 1px 3px rgba(0,0,0,0.6)' } as any,
+      default: {
+        textShadowColor: 'rgba(0,0,0,0.6)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 3,
+      },
+    }),
   },
   content: {
     padding: 14,
@@ -590,18 +595,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     color: '#FFFFFF',
-    textShadowColor: 'rgba(0,0,0,0.9)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    ...Platform.select({
+      web: { textShadow: '0 1px 4px rgba(0,0,0,0.9)' } as any,
+      default: {
+        textShadowColor: 'rgba(0,0,0,0.9)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 4,
+      },
+    }),
   },
   gallerySubtext: {
     fontFamily: fontFamily.medium,
     fontSize: 11,
     color: 'rgba(255,255,255,0.8)',
     marginTop: 2,
-    textShadowColor: 'rgba(0,0,0,0.8)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    ...Platform.select({
+      web: { textShadow: '0 1px 2px rgba(0,0,0,0.8)' } as any,
+      default: {
+        textShadowColor: 'rgba(0,0,0,0.8)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
+      },
+    }),
   },
   galleryActions: {
     flexDirection: 'row',

@@ -34,6 +34,23 @@ import { useRealtimeSync } from '../src/hooks/useRealtimeSync';
 import { useNotificationTapHandler } from '../src/hooks/useNotificationTapHandler';
 import 'intl-pluralrules';
 import '../../../packages/shared/src/i18n'; // initialize i18n
+import { LogBox, Platform, View, StyleSheet } from 'react-native';
+
+LogBox.ignoreLogs([
+  'findDOMNode is deprecated',
+  'validateDOMNesting',
+]);
+
+if (Platform.OS === 'web' && typeof window !== 'undefined') {
+  const origError = console.error;
+  console.error = (...args: any[]) => {
+    const msg = typeof args[0] === 'string' ? args[0] : '';
+    if (msg.includes('findDOMNode is deprecated') || msg.includes('validateDOMNesting')) {
+      return;
+    }
+    origError(...args);
+  };
+}
 
 // Muestra el error en pantalla en lugar de una pantalla negra si falla un render
 export { ErrorBoundary } from 'expo-router';
@@ -320,17 +337,53 @@ function RootNavigator() {
   ]);
 
   return (
-    <>
-      <StatusBar style={theme.dark ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background } }}>
-        <Stack.Screen name="index" options={{ title: "TheBucketList" }} />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(onboarding)" />
-        <Stack.Screen name="(modals)" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="map" options={{ animation: 'fade' }} />
-        <Stack.Screen name="design-system" />
-      </Stack>
-    </>
+    <View style={[webLayoutStyles.outerContainer, { backgroundColor: theme.dark ? '#0B0D12' : '#F1F3F5' }]}>
+      <View style={[webLayoutStyles.innerContainer, { backgroundColor: theme.colors.background }]}>
+        <StatusBar style={theme.dark ? 'light' : 'dark'} />
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background } }}>
+          <Stack.Screen name="index" options={{ title: "TheBucketList" }} />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(onboarding)" />
+          <Stack.Screen name="(modals)" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="map" options={{ animation: 'fade' }} />
+          <Stack.Screen name="design-system" />
+        </Stack>
+      </View>
+    </View>
   );
 }
+
+const webLayoutStyles = StyleSheet.create({
+  outerContainer: {
+    flex: 1,
+    ...Platform.select({
+      web: {
+        width: '100%',
+        height: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+      },
+      default: {
+        flex: 1,
+      },
+    }),
+  },
+  innerContainer: {
+    flex: 1,
+    width: '100%',
+    ...Platform.select({
+      web: {
+        maxWidth: 620,
+        height: '100%',
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.07)',
+        boxShadow: '0 0 40px rgba(0, 0, 0, 0.35)',
+      } as any,
+      default: {
+        flex: 1,
+      },
+    }),
+  },
+});

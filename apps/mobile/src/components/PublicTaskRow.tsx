@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { differenceInCalendarDays } from 'date-fns';
 import { Pill, ProgressBar, UrgencyChip, fontFamily, gold, useTheme, useCoverOverlay, toast } from '@bucketlist/ui';
@@ -297,9 +297,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     color: '#FFFFFF',
-    textShadowColor: 'rgba(0,0,0,0.85)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    ...Platform.select({
+      web: { textShadow: '0 1px 3px rgba(0,0,0,0.85)' } as any,
+      default: {
+        textShadowColor: 'rgba(0,0,0,0.85)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 3,
+      },
+    }),
   },
   galleryMeta: {
     fontFamily: fontFamily.regular,

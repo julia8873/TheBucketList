@@ -7,6 +7,7 @@ import {
   Pressable,
   StyleSheet,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { X, Copy, Heart, Check, Sparkles, Layers, ArrowRight } from 'lucide-react-native';
@@ -324,9 +325,14 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.serifBold,
     fontWeight: '700',
     color: '#FFF',
-    textShadowColor: 'rgba(0,0,0,0.6)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    ...Platform.select({
+      web: { textShadow: '0 1px 3px rgba(0,0,0,0.6)' } as any,
+      default: {
+        textShadowColor: 'rgba(0,0,0,0.6)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 3,
+      },
+    }),
   },
   headerMetaRow: {
     flexDirection: 'row',

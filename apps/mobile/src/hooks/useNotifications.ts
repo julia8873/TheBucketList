@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import * as Notifications from 'expo-notifications';
 import { supabase } from '../services/supabase';
 
 export const NOTIFICATIONS_QUERY_KEY = ['notifications'];

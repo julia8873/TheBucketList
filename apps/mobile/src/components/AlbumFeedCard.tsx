@@ -3,7 +3,7 @@ import { useCoverOverlay } from '@bucketlist/ui';
  * AlbumFeedCard — wide card for albums shown in the friends/explore feed.
  */
 import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Images, Lock, Users, Heart, Bookmark, MessageCircle } from 'lucide-react-native';
@@ -682,9 +682,14 @@ const styles = StyleSheet.create({
     color: '#FFF',
     lineHeight: 25,
     marginBottom: 8,
-    textShadowColor: 'rgba(0,0,0,0.4)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    ...Platform.select({
+      web: { textShadow: '0 1px 3px rgba(0,0,0,0.4)' } as any,
+      default: {
+        textShadowColor: 'rgba(0,0,0,0.4)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 3,
+      },
+    }),
   },
   progressTrack: {
     height: 3,
@@ -773,9 +778,14 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.medium,
     fontSize: 12,
     color: '#FFFFFF',
-    textShadowColor: 'rgba(0,0,0,0.85)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    ...Platform.select({
+      web: { textShadow: '0 1px 3px rgba(0,0,0,0.85)' } as any,
+      default: {
+        textShadowColor: 'rgba(0,0,0,0.85)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 3,
+      },
+    }),
   },
   galleryAlbumBadge: {
     flexDirection: 'row',
@@ -805,18 +815,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     color: '#FFFFFF',
-    textShadowColor: 'rgba(0,0,0,0.9)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    ...Platform.select({
+      web: { textShadow: '0 1px 4px rgba(0,0,0,0.9)' } as any,
+      default: {
+        textShadowColor: 'rgba(0,0,0,0.9)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 4,
+      },
+    }),
   },
   gallerySubtext: {
     fontFamily: fontFamily.medium,
     fontSize: 11,
     color: 'rgba(255,255,255,0.8)',
     marginTop: 2,
-    textShadowColor: 'rgba(0,0,0,0.8)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    ...Platform.select({
+      web: { textShadow: '0 1px 2px rgba(0,0,0,0.8)' } as any,
+      default: {
+        textShadowColor: 'rgba(0,0,0,0.8)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
+      },
+    }),
   },
   galleryActions: {
     flexDirection: 'row',
