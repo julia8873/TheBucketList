@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import { setAvatarUriResolver } from '@bucketlist/ui';
 import { getSupabaseUrl, getSupabaseAnonKey, normalizeStorageUrl } from '../constants/urls';
 
@@ -18,10 +19,10 @@ const dummyStorage = {
  */
 export const supabase = createClient(getSupabaseUrl(), getSupabaseAnonKey(), {
   auth: {
-    storage: isServer ? dummyStorage as any : AsyncStorage,
+    storage: isServer ? (dummyStorage as any) : AsyncStorage,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false,
+    detectSessionInUrl: Platform.OS === 'web',
   },
   realtime: {
     params: {

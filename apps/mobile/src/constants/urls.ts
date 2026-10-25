@@ -51,6 +51,7 @@ export function getSupabaseUrl(): string {
     if (typeof window !== 'undefined' && window.location?.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
       return 'https://fazxqjznuehrwkungmjm.supabase.co';
     }
+    return 'http://127.0.0.1:54321';
   }
 
   // local
