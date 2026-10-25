@@ -107,7 +107,7 @@ export default function ChangeCredentialScreen() {
                 autoCorrect={false}
                 secureTextEntry={!isEmail}
                 keyboardType={isEmail ? 'email-address' : 'default'}
-                placeholder={isEmail ? 'tu@correo.com' : t('settings.min_chars')}
+                placeholder={isEmail ? t('settings.email_placeholder', { defaultValue: 'tu@correo.com' }) : t('settings.min_chars')}
                 placeholderTextColor={theme.colors.foregroundSubtle}
                 style={inputStyle}
               />

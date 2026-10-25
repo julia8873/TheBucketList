@@ -162,6 +162,11 @@ const styles = themedStyleSheet({
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.65)',
     justifyContent: 'flex-end',
+    ...Platform.select({
+      web: {
+        alignItems: 'center',
+      },
+    }),
   },
   sheetContainer: {
     backgroundColor: '#141414',
@@ -170,6 +175,15 @@ const styles = themedStyleSheet({
     borderWidth: 1,
     borderColor: '#262626',
     paddingBottom: Platform.OS === 'ios' ? 36 : 24,
+    width: '100%',
+    ...Platform.select({
+      web: {
+        maxWidth: 620,
+        alignSelf: 'center',
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+      },
+    }),
   },
   handle: {
     width: 40,

@@ -208,19 +208,22 @@ export default function EditProfileScreen() {
   return (
     <SafeAreaView edges={['top', 'bottom']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={styles.header}>
-          <Pressable
-            onPress={() => router.back()}
-            accessibilityRole="button"
-            accessibilityLabel={t('common.back', { defaultValue: 'Volver' })}
-            style={[styles.back, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
-          >
-            <ChevronLeft size={22} color={theme.colors.foreground} />
-          </Pressable>
-          <PageTitle gold="Editar" rest="perfil" />
-        </View>
-
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
+            <Pressable
+              onPress={() => router.back()}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.back', { defaultValue: 'Volver' })}
+              style={[styles.back, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+            >
+              <ChevronLeft size={22} color={theme.colors.foreground} />
+            </Pressable>
+            <PageTitle
+              gold={t('profile.edit_gold', { defaultValue: 'Editar' })}
+              rest={t('profile.edit_rest', { defaultValue: 'perfil' })}
+            />
+          </View>
+
           <View style={styles.avatarSection}>
             <Pressable onPress={() => setPhotoMenu(true)} accessibilityRole="button" accessibilityLabel={t('profile.change_photo')}>
               <Avatar
@@ -287,13 +290,13 @@ export default function EditProfileScreen() {
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="email-address"
-            placeholder="correo@ejemplo.com"
+            placeholder={t('profile.email_placeholder', { defaultValue: 'tu@correo.com' })}
             placeholderTextColor={theme.colors.foregroundSubtle}
             style={[fieldStyle, styles.input, { color: theme.colors.foreground }]}
           />
           {emailClean.length > 0 && !emailValid ? (
             <Text style={[styles.hint, { color: theme.colors.error }]}>
-              Formato de correo electrónico no válido
+              {t('profile.invalid_email', { defaultValue: 'Formato de correo electrónico no válido' })}
             </Text>
           ) : null}
 
@@ -332,11 +335,11 @@ export default function EditProfileScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { alignItems: 'center', justifyContent: 'center' },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 20, paddingTop: 12 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingTop: 12, marginBottom: 8 },
   back: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   title: { fontFamily: fontFamily.serifBold, fontSize: 30 },
   content: { paddingHorizontal: 20, paddingBottom: 24 },
-  avatarSection: { alignItems: 'center', marginTop: 24, gap: 10 },
+  avatarSection: { alignItems: 'center', marginTop: 16, gap: 10 },
   camera: { position: 'absolute', right: -2, bottom: -2, width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
   changePhoto: { fontFamily: fontFamily.semibold, fontSize: 15, padding: 6 },
   label: { fontFamily: fontFamily.serifBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase', marginTop: 22, marginBottom: 8 },

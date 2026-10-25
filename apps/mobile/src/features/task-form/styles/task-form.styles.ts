@@ -1,5 +1,5 @@
 import { themedStyleSheet } from '@bucketlist/ui';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 export const styles = themedStyleSheet({
   container: { flex: 1 },
@@ -294,6 +294,11 @@ export const styles = themedStyleSheet({
     flex: 1,
     justifyContent: 'flex-end',
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    ...Platform.select({
+      web: {
+        alignItems: 'center',
+      },
+    }),
   },
   visibilityModalBackdrop: {
     ...StyleSheet.absoluteFillObject,
@@ -305,6 +310,15 @@ export const styles = themedStyleSheet({
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 36,
+    width: '100%',
+    ...Platform.select({
+      web: {
+        maxWidth: 620,
+        alignSelf: 'center',
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+      },
+    }),
   },
   visibilitySheetHandle: {
     width: 36,

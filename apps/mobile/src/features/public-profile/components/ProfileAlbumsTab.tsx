@@ -1,6 +1,6 @@
 import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState, useMemo } from 'react';
-import { View, Text, ActivityIndicator, Pressable, Modal, StyleSheet } from 'react-native';
+import { View, Text, ActivityIndicator, Pressable, Modal, StyleSheet, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SlidersHorizontal, ChevronDown, Check, X } from 'lucide-react-native';
@@ -343,13 +343,27 @@ const tabStyles = themedStyleSheet({
     flex: 1,
     justifyContent: 'flex-end',
     backgroundColor: 'rgba(0,0,0,0.65)',
+    ...Platform.select({
+      web: {
+        alignItems: 'center',
+      },
+    }),
   },
   bottomSheet: {
+    width: '100%',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderTopWidth: 1,
     paddingHorizontal: 20,
     paddingTop: 10,
+    ...Platform.select({
+      web: {
+        maxWidth: 620,
+        alignSelf: 'center',
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+      },
+    }),
   },
   dragHandle: {
     width: 36,

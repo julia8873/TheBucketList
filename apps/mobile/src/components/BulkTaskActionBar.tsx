@@ -111,15 +111,21 @@ export function BulkTaskActionBar({
       const visLabel = visLabels[targetAlbum.visibility] || targetAlbum.visibility;
 
       confirm.show({
-        title: count === 1 ? '¿Cambiar privacidad de la tarea?' : '¿Cambiar privacidad de las tareas?',
-        message: `El álbum «${albumName || 'Álbum'}» es ${visLabel}. ¿Quieres poner la visibilidad de ${plural} en ${visLabel} para que coincida con el álbum?`,
+        title: count === 1
+          ? t('bulk_actions.confirm_change_vis_title_single')
+          : t('bulk_actions.confirm_change_vis_title_plural'),
+        message: t('bulk_actions.confirm_change_vis_msg', {
+          albumName: albumName || t('common.albums'),
+          visLabel,
+          plural,
+        }),
         actions: [
           {
-            label: `Poner en ${visLabel}`,
+            label: t('bulk_actions.set_to_vis', { visLabel }),
             onPress: () => void executeMove(targetAlbum.visibility as any),
           },
           {
-            label: 'Mantener actual',
+            label: t('bulk_actions.keep_current'),
             style: 'cancel',
             onPress: () => void executeMove(undefined),
           },
@@ -131,8 +137,8 @@ export function BulkTaskActionBar({
     const okMove = await askBulk(
       t('bulk_actions.confirm_move_title'),
       albumId
-        ? `Se moverán ${plural} al álbum${albumName ? ` «${albumName}»` : ''}.`
-        : `Se sacarán de su álbum ${plural} (quedarán sin álbum).`,
+        ? t('bulk_actions.move_to_album_msg', { plural, albumName: albumName || '' })
+        : t('bulk_actions.remove_from_album_msg', { plural }),
       t('bulk_actions.action_move'),
     );
     if (!okMove) return;

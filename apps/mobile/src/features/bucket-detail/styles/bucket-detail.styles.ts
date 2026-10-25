@@ -227,19 +227,40 @@ export const styles = themedStyleSheet({
     flex: 1,
     justifyContent: 'flex-end',
     backgroundColor: 'rgba(0,0,0,0.52)',
+    ...Platform.select({
+      web: {
+        alignItems: 'center',
+      },
+    }),
   },
   bottomSheet: {
+    width: '100%',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingTop: 10,
     paddingBottom: Platform.OS === 'ios' ? 28 : 18,
     paddingHorizontal: 20,
-    maxHeight: '82%',
+    maxHeight: '85%',
     shadowColor: '#000',
     shadowOpacity: 0.22,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: -8 },
     elevation: 18,
+    ...Platform.select({
+      web: {
+        maxWidth: 620,
+        alignSelf: 'center',
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+        borderColor: 'rgba(128,128,128,0.2)',
+      },
+    }),
+  },
+  sheetScroll: {
+    flexGrow: 0,
+  },
+  sheetScrollContent: {
+    paddingBottom: 24,
   },
   sheetHandle: {
     alignSelf: 'center',

@@ -98,152 +98,159 @@ export function BucketBottomSheet({
                 </Pressable>
               </View>
 
-              <View style={styles.sheetOptions}>
-                {canEdit && user && onToggleFavorite && (
-                  <Pressable style={styles.sheetOption} onPress={onToggleFavorite}>
-                    <View style={styles.sheetIcon}>
-                      <Star
-                        color={gold[400]}
-                        fill={isFavorite ? gold[400] : 'transparent'}
-                        size={21}
-                      />
-                    </View>
-                    <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold">
-                        {isFavorite ? t('bucket.unfavorite') : t('bucket.favorite')}
-                      </Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>
-                        {isFavorite ? t('bucket.unfavorite_desc') : t('bucket.favorite_desc')}
-                      </Typography>
-                    </View>
-                  </Pressable>
-                )}
+              <ScrollView
+                style={styles.sheetScroll}
+                contentContainerStyle={styles.sheetScrollContent}
+                showsVerticalScrollIndicator={false}
+                bounces={false}
+              >
+                <View style={styles.sheetOptions}>
+                  {canEdit && user && onToggleFavorite && (
+                    <Pressable style={styles.sheetOption} onPress={onToggleFavorite}>
+                      <View style={styles.sheetIcon}>
+                        <Star
+                          color={gold[400]}
+                          fill={isFavorite ? gold[400] : 'transparent'}
+                          size={21}
+                        />
+                      </View>
+                      <View style={styles.sheetOptionText}>
+                        <Typography variant="bodySemibold">
+                          {isFavorite ? t('bucket.unfavorite') : t('bucket.favorite')}
+                        </Typography>
+                        <Typography variant="caption" color={theme.colors.foregroundMuted}>
+                          {isFavorite ? t('bucket.unfavorite_desc') : t('bucket.favorite_desc')}
+                        </Typography>
+                      </View>
+                    </Pressable>
+                  )}
 
-                {!canEdit && user && onToggleSave && (
-                  <Pressable style={styles.sheetOption} onPress={onToggleSave}>
-                    <View style={styles.sheetIcon}>
-                      <Bookmark
-                        color={gold[400]}
-                        fill={isSaved ? gold[400] : 'transparent'}
-                        size={21}
-                      />
-                    </View>
-                    <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold">
-                        {isSaved ? t('bucket.unsave') : t('bucket.save_task')}
-                      </Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>
-                        {isSaved ? t('bucket.unsave_desc') : t('bucket.save_desc')}
-                      </Typography>
-                    </View>
-                  </Pressable>
-                )}
+                  {!canEdit && user && onToggleSave && (
+                    <Pressable style={styles.sheetOption} onPress={onToggleSave}>
+                      <View style={styles.sheetIcon}>
+                        <Bookmark
+                          color={gold[400]}
+                          fill={isSaved ? gold[400] : 'transparent'}
+                          size={21}
+                        />
+                      </View>
+                      <View style={styles.sheetOptionText}>
+                        <Typography variant="bodySemibold">
+                          {isSaved ? t('bucket.unsave') : t('bucket.save_task')}
+                        </Typography>
+                        <Typography variant="caption" color={theme.colors.foregroundMuted}>
+                          {isSaved ? t('bucket.unsave_desc') : t('bucket.save_desc')}
+                        </Typography>
+                      </View>
+                    </Pressable>
+                  )}
 
-                {canEdit && (
-                  <Pressable style={styles.sheetOption} onPress={() => void uploadPhotos()}>
-                    <View style={styles.sheetIcon}><Camera color={gold[400]} size={21} /></View>
-                    <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold">{t('bucket.upload_photos')}</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.upload_photos_desc')}</Typography>
-                    </View>
-                  </Pressable>
-                )}
+                  {canEdit && (
+                    <Pressable style={styles.sheetOption} onPress={() => void uploadPhotos()}>
+                      <View style={styles.sheetIcon}><Camera color={gold[400]} size={21} /></View>
+                      <View style={styles.sheetOptionText}>
+                        <Typography variant="bodySemibold">{t('bucket.upload_photos')}</Typography>
+                        <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.upload_photos_desc')}</Typography>
+                      </View>
+                    </Pressable>
+                  )}
 
-                {canEdit && (
-                  <Pressable style={styles.sheetOption} onPress={() => setSheetMode('cover')}>
-                    <View style={styles.sheetIcon}><ImageIcon color={gold[400]} size={21} /></View>
-                    <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold">{t('bucket.change_cover')}</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.change_cover_desc')}</Typography>
-                    </View>
-                  </Pressable>
-                )}
+                  {canEdit && (
+                    <Pressable style={styles.sheetOption} onPress={() => setSheetMode('cover')}>
+                      <View style={styles.sheetIcon}><ImageIcon color={gold[400]} size={21} /></View>
+                      <View style={styles.sheetOptionText}>
+                        <Typography variant="bodySemibold">{t('bucket.change_cover')}</Typography>
+                        <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.change_cover_desc')}</Typography>
+                      </View>
+                    </Pressable>
+                  )}
 
-                {canEdit && (
-                  <Pressable style={styles.sheetOption} onPress={() => setSheetMode('priority')}>
-                    <View style={styles.sheetIcon}><Flag color={gold[400]} size={21} /></View>
-                    <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold">{t('bucket.change_priority')}</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>
-                        {t('bucket.priority_current', { priority: priorityLabel(bucket.priority) })}
-                      </Typography>
-                    </View>
-                  </Pressable>
-                )}
+                  {canEdit && (
+                    <Pressable style={styles.sheetOption} onPress={() => setSheetMode('priority')}>
+                      <View style={styles.sheetIcon}><Flag color={gold[400]} size={21} /></View>
+                      <View style={styles.sheetOptionText}>
+                        <Typography variant="bodySemibold">{t('bucket.change_priority')}</Typography>
+                        <Typography variant="caption" color={theme.colors.foregroundMuted}>
+                          {t('bucket.priority_current', { priority: priorityLabel(bucket.priority) })}
+                        </Typography>
+                      </View>
+                    </Pressable>
+                  )}
 
-                {canEdit && (
-                  <Pressable style={styles.sheetOption} onPress={() => void loadAlbums()}>
-                    <View style={styles.sheetIcon}><FolderPlus color={gold[400]} size={21} /></View>
-                    <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold">{t('bucket.move_folders')}</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.move_folders_desc')}</Typography>
-                    </View>
-                  </Pressable>
-                )}
+                  {canEdit && (
+                    <Pressable style={styles.sheetOption} onPress={() => void loadAlbums()}>
+                      <View style={styles.sheetIcon}><FolderPlus color={gold[400]} size={21} /></View>
+                      <View style={styles.sheetOptionText}>
+                        <Typography variant="bodySemibold">{t('bucket.move_folders')}</Typography>
+                        <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.move_folders_desc')}</Typography>
+                      </View>
+                    </Pressable>
+                  )}
 
-                {isOwner && onOpenCollaborationSettings && (
-                  <Pressable
-                    style={styles.sheetOption}
-                    onPress={() => closeSheet(onOpenCollaborationSettings)}
-                  >
-                    <View style={styles.sheetIcon}><Users color={gold[400]} size={21} /></View>
-                    <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold">{t('bucket.collaboration_settings')}</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>
-                        {t('bucket.collaboration_settings_desc')}
-                      </Typography>
-                    </View>
-                  </Pressable>
-                )}
+                  {isOwner && onOpenCollaborationSettings && (
+                    <Pressable
+                      style={styles.sheetOption}
+                      onPress={() => closeSheet(onOpenCollaborationSettings)}
+                    >
+                      <View style={styles.sheetIcon}><Users color={gold[400]} size={21} /></View>
+                      <View style={styles.sheetOptionText}>
+                        <Typography variant="bodySemibold">{t('bucket.collaboration_settings')}</Typography>
+                        <Typography variant="caption" color={theme.colors.foregroundMuted}>
+                          {t('bucket.collaboration_settings_desc')}
+                        </Typography>
+                      </View>
+                    </Pressable>
+                  )}
 
-                {!canEdit && user && (
-                  <Pressable
-                    style={styles.sheetOption}
-                    onPress={() => {
-                      closeSheet(() => copyBucket.mutate({ bucketId: id, userId: user.id }, {
-                        onSuccess: () => toast.success('La tarea se ha copiado a tu lista.'),
-                        onError: (error: any) => toast.error(error?.message || 'No se pudo copiar la tarea'),
-                      }));
-                    }}
-                  >
-                    <View style={styles.sheetIcon}><ListPlus color={gold[400]} size={21} /></View>
-                    <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold">{t('bucket.clone_task')}</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.clone_task_desc')}</Typography>
-                    </View>
-                  </Pressable>
-                )}
+                  {!canEdit && user && (
+                    <Pressable
+                      style={styles.sheetOption}
+                      onPress={() => {
+                        closeSheet(() => copyBucket.mutate({ bucketId: id, userId: user.id }, {
+                          onSuccess: () => toast.success('La tarea se ha copiado a tu lista.'),
+                          onError: (error: any) => toast.error(error?.message || 'No se pudo copiar la tarea'),
+                        }));
+                      }}
+                    >
+                      <View style={styles.sheetIcon}><ListPlus color={gold[400]} size={21} /></View>
+                      <View style={styles.sheetOptionText}>
+                        <Typography variant="bodySemibold">{t('bucket.clone_task')}</Typography>
+                        <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.clone_task_desc')}</Typography>
+                      </View>
+                    </Pressable>
+                  )}
 
-                {!isOwner && user && onReport && (
-                  <Pressable style={[styles.sheetOption, styles.dangerOption]} onPress={() => closeSheet(onReport)}>
-                    <View style={styles.sheetIcon}><Flag color={theme.colors.error} size={21} /></View>
-                    <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold" color={theme.colors.error}>{t('bucket.report_task')}</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.report_task_desc')}</Typography>
-                    </View>
-                  </Pressable>
-                )}
+                  {!isOwner && user && onReport && (
+                    <Pressable style={[styles.sheetOption, styles.dangerOption]} onPress={() => closeSheet(onReport)}>
+                      <View style={styles.sheetIcon}><Flag color={theme.colors.error} size={21} /></View>
+                      <View style={styles.sheetOptionText}>
+                        <Typography variant="bodySemibold" color={theme.colors.error}>{t('bucket.report_task')}</Typography>
+                        <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.report_task_desc')}</Typography>
+                      </View>
+                    </Pressable>
+                  )}
 
-                {isCollaborator && (
-                  <Pressable style={[styles.sheetOption, styles.dangerOption]} onPress={onLeaveCollaboration}>
-                    <View style={styles.sheetIcon}><LogOut color={theme.colors.error} size={21} /></View>
-                    <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold" color={theme.colors.error}>{t('bucket.leave_collaboration')}</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.leave_collaboration_desc')}</Typography>
-                    </View>
-                  </Pressable>
-                )}
+                  {isCollaborator && (
+                    <Pressable style={[styles.sheetOption, styles.dangerOption]} onPress={onLeaveCollaboration}>
+                      <View style={styles.sheetIcon}><LogOut color={theme.colors.error} size={21} /></View>
+                      <View style={styles.sheetOptionText}>
+                        <Typography variant="bodySemibold" color={theme.colors.error}>{t('bucket.leave_collaboration')}</Typography>
+                        <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.leave_collaboration_desc')}</Typography>
+                      </View>
+                    </Pressable>
+                  )}
 
-                {isOwner && (
-                  <Pressable style={[styles.sheetOption, styles.dangerOption]} onPress={handleDelete}>
-                    <View style={styles.sheetIcon}><Trash2 color={theme.colors.error} size={21} /></View>
-                    <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold" color={theme.colors.error}>{t('common.delete')}</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.delete_desc')}</Typography>
-                    </View>
-                  </Pressable>
-                )}
-              </View>
+                  {isOwner && (
+                    <Pressable style={[styles.sheetOption, styles.dangerOption]} onPress={handleDelete}>
+                      <View style={styles.sheetIcon}><Trash2 color={theme.colors.error} size={21} /></View>
+                      <View style={styles.sheetOptionText}>
+                        <Typography variant="bodySemibold" color={theme.colors.error}>{t('common.delete')}</Typography>
+                        <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.delete_desc')}</Typography>
+                      </View>
+                    </Pressable>
+                  )}
+                </View>
+              </ScrollView>
             </>
           )}
 
@@ -349,49 +356,57 @@ export function BucketBottomSheet({
               {albumsLoading ? (
                 <View style={styles.sheetLoading}><ActivityIndicator color={gold[400]} /></View>
               ) : (
-                <View style={styles.sheetOptions}>
-                  <View style={{ paddingHorizontal: 20, paddingBottom: 10 }}>
-                    <TextInput
-                      style={{
-                        backgroundColor: theme.colors.background,
-                        color: theme.colors.foreground,
-                        padding: 12,
-                        borderRadius: 12,
-                        fontSize: 16,
-                      }}
-                      placeholder={t('bucket.search_folder_placeholder')}
-                      placeholderTextColor={theme.colors.foregroundMuted}
-                      value={albumSearchQuery}
-                      onChangeText={setAlbumSearchQuery}
-                    />
-                  </View>
-                  <Pressable style={styles.sheetOption} onPress={() => void removeAllAlbums()}>
-                    <View style={styles.sheetIcon}><FolderOpen color={gold[400]} size={21} /></View>
-                    <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold">{t('bucket.no_folder')}</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.no_folder_desc')}</Typography>
+                <ScrollView
+                  style={styles.sheetScroll}
+                  contentContainerStyle={styles.sheetScrollContent}
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                  bounces={false}
+                >
+                  <View style={styles.sheetOptions}>
+                    <View style={{ paddingHorizontal: 20, paddingBottom: 10 }}>
+                      <TextInput
+                        style={{
+                          backgroundColor: theme.colors.background,
+                          color: theme.colors.foreground,
+                          padding: 12,
+                          borderRadius: 12,
+                          fontSize: 16,
+                        }}
+                        placeholder={t('bucket.search_folder_placeholder')}
+                        placeholderTextColor={theme.colors.foregroundMuted}
+                        value={albumSearchQuery}
+                        onChangeText={setAlbumSearchQuery}
+                      />
                     </View>
-                    {bucketAlbums.length === 0 && <Check color={gold[400]} size={21} />}
-                  </Pressable>
-                  {albums.filter((a) => a.title?.toLowerCase().includes(albumSearchQuery.toLowerCase())).map((album) => {
-                    const isSelected = bucketAlbums.some(ba => ba.album_id === album.id);
-                    return (
-                      <Pressable key={album.id} style={styles.sheetOption} onPress={() => void toggleAlbum(album.id)}>
-                        <View style={styles.sheetIcon}><FolderOpen color={gold[400]} size={21} /></View>
-                        <View style={styles.sheetOptionText}>
-                          <Typography variant="bodySemibold">{album.title}</Typography>
-                          <Typography variant="caption" color={theme.colors.foregroundMuted}>
-                            {album.visibility ? visibilityLabel(album.visibility) : ''}
-                          </Typography>
-                        </View>
-                        {isSelected && <Check color={gold[400]} size={21} />}
-                      </Pressable>
-                    );
-                  })}
-                  {albums.length === 0 && (
-                    <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.emptySheetText}>{t('bucket.no_folders_yet')}</Typography>
-                  )}
-                </View>
+                    <Pressable style={styles.sheetOption} onPress={() => void removeAllAlbums()}>
+                      <View style={styles.sheetIcon}><FolderOpen color={gold[400]} size={21} /></View>
+                      <View style={styles.sheetOptionText}>
+                        <Typography variant="bodySemibold">{t('bucket.no_folder')}</Typography>
+                        <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.no_folder_desc')}</Typography>
+                      </View>
+                      {bucketAlbums.length === 0 && <Check color={gold[400]} size={21} />}
+                    </Pressable>
+                    {albums.filter((a) => a.title?.toLowerCase().includes(albumSearchQuery.toLowerCase())).map((album) => {
+                      const isSelected = bucketAlbums.some(ba => ba.album_id === album.id);
+                      return (
+                        <Pressable key={album.id} style={styles.sheetOption} onPress={() => void toggleAlbum(album.id)}>
+                          <View style={styles.sheetIcon}><FolderOpen color={gold[400]} size={21} /></View>
+                          <View style={styles.sheetOptionText}>
+                            <Typography variant="bodySemibold">{album.title}</Typography>
+                            <Typography variant="caption" color={theme.colors.foregroundMuted}>
+                              {album.visibility ? visibilityLabel(album.visibility) : ''}
+                            </Typography>
+                          </View>
+                          {isSelected && <Check color={gold[400]} size={21} />}
+                        </Pressable>
+                      );
+                    })}
+                    {albums.length === 0 && (
+                      <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.emptySheetText}>{t('bucket.no_folders_yet')}</Typography>
+                    )}
+                  </View>
+                </ScrollView>
               )}
             </>
           )}
@@ -404,76 +419,83 @@ export function BucketBottomSheet({
                 <Typography variant="h3" color={theme.colors.foreground}>{t('bucket.cover_title')}</Typography>
                 <View style={{ width: 36 }} />
               </View>
-              <View style={styles.sheetOptions}>
-                <Pressable
-                  style={styles.sheetOption}
-                  onPress={() => {
-                    closeSheet(() => void (pickAndUploadCover ? pickAndUploadCover() : uploadCover()));
-                  }}
-                >
-                  <View style={styles.sheetIcon}><ImageIcon color={gold[400]} size={21} /></View>
-                  <View style={styles.sheetOptionText}>
-                    <Typography variant="bodySemibold">{t('bucket.cover_gallery')}</Typography>
-                    <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.cover_gallery_desc')}</Typography>
-                  </View>
-                </Pressable>
-
-                <Pressable
-                  style={styles.sheetOption}
-                  onPress={() => {
-                    closeSheet(() => void (takePhotoAndUploadCover ? takePhotoAndUploadCover() : uploadCover()));
-                  }}
-                >
-                  <View style={styles.sheetIcon}><Camera color={gold[400]} size={21} /></View>
-                  <View style={styles.sheetOptionText}>
-                    <Typography variant="bodySemibold">{t('bucket.cover_camera')}</Typography>
-                    <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.cover_camera_desc')}</Typography>
-                  </View>
-                </Pressable>
-
-                <Pressable
-                  style={styles.sheetOption}
-                  onPress={() => {
-                    closeSheet(() => openCoverLinkModal?.());
-                  }}
-                >
-                  <View style={styles.sheetIcon}><Link2 color={gold[400]} size={21} /></View>
-                  <View style={styles.sheetOptionText}>
-                    <Typography variant="bodySemibold">{t('bucket.cover_link')}</Typography>
-                    <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.cover_link_desc')}</Typography>
-                  </View>
-                </Pressable>
-
-                {bucket?.cover_image && !bucket.cover_image.startsWith('preset:') && (
+              <ScrollView
+                style={styles.sheetScroll}
+                contentContainerStyle={styles.sheetScrollContent}
+                showsVerticalScrollIndicator={false}
+                bounces={false}
+              >
+                <View style={styles.sheetOptions}>
                   <Pressable
                     style={styles.sheetOption}
                     onPress={() => {
-                      closeSheet(() => void recropCurrentCover?.());
+                      closeSheet(() => void (pickAndUploadCover ? pickAndUploadCover() : uploadCover()));
                     }}
                   >
-                    <View style={styles.sheetIcon}><Crop color={gold[400]} size={21} /></View>
+                    <View style={styles.sheetIcon}><ImageIcon color={gold[400]} size={21} /></View>
                     <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold">{t('bucket.cover_recrop')}</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.cover_recrop_desc')}</Typography>
+                      <Typography variant="bodySemibold">{t('bucket.cover_gallery')}</Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.cover_gallery_desc')}</Typography>
                     </View>
                   </Pressable>
-                )}
 
-                {bucket?.cover_image && (
                   <Pressable
-                    style={[styles.sheetOption, styles.dangerOption]}
+                    style={styles.sheetOption}
                     onPress={() => {
-                      closeSheet(() => void removeCover?.());
+                      closeSheet(() => void (takePhotoAndUploadCover ? takePhotoAndUploadCover() : uploadCover()));
                     }}
                   >
-                    <View style={styles.sheetIcon}><Trash2 color={theme.colors.error} size={21} /></View>
+                    <View style={styles.sheetIcon}><Camera color={gold[400]} size={21} /></View>
                     <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold" color={theme.colors.error}>{t('bucket.cover_remove')}</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.cover_remove_desc')}</Typography>
+                      <Typography variant="bodySemibold">{t('bucket.cover_camera')}</Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.cover_camera_desc')}</Typography>
                     </View>
                   </Pressable>
-                )}
-              </View>
+
+                  <Pressable
+                    style={styles.sheetOption}
+                    onPress={() => {
+                      closeSheet(() => openCoverLinkModal?.());
+                    }}
+                  >
+                    <View style={styles.sheetIcon}><Link2 color={gold[400]} size={21} /></View>
+                    <View style={styles.sheetOptionText}>
+                      <Typography variant="bodySemibold">{t('bucket.cover_link')}</Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.cover_link_desc')}</Typography>
+                    </View>
+                  </Pressable>
+
+                  {bucket?.cover_image && !bucket.cover_image.startsWith('preset:') && (
+                    <Pressable
+                      style={styles.sheetOption}
+                      onPress={() => {
+                        closeSheet(() => void recropCurrentCover?.());
+                      }}
+                    >
+                      <View style={styles.sheetIcon}><Crop color={gold[400]} size={21} /></View>
+                      <View style={styles.sheetOptionText}>
+                        <Typography variant="bodySemibold">{t('bucket.cover_recrop')}</Typography>
+                        <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.cover_recrop_desc')}</Typography>
+                      </View>
+                    </Pressable>
+                  )}
+
+                  {bucket?.cover_image && (
+                    <Pressable
+                      style={[styles.sheetOption, styles.dangerOption]}
+                      onPress={() => {
+                        closeSheet(() => void removeCover?.());
+                      }}
+                    >
+                      <View style={styles.sheetIcon}><Trash2 color={theme.colors.error} size={21} /></View>
+                      <View style={styles.sheetOptionText}>
+                        <Typography variant="bodySemibold" color={theme.colors.error}>{t('bucket.cover_remove')}</Typography>
+                        <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.cover_remove_desc')}</Typography>
+                      </View>
+                    </Pressable>
+                  )}
+                </View>
+              </ScrollView>
             </>
           )}
         </Animated.View>

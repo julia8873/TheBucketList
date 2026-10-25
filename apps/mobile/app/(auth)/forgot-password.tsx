@@ -50,7 +50,7 @@ export default function ForgotPasswordScreen() {
       ) : (
         <AuthInput
           label={t('auth.email_label')}
-          placeholder="tu@correo.com"
+          placeholder={t('auth.email_placeholder', { defaultValue: 'tu@correo.com' })}
           value={email}
           onChangeText={(v) => { setEmail(v); setError(null); }}
           keyboardType="email-address"

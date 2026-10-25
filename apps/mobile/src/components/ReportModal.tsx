@@ -217,13 +217,37 @@ export function ReportModal({
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, justifyContent: 'center', padding: 20 },
-  keyboardView: { width: '100%', justifyContent: 'center' },
+  backdrop: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+    ...Platform.select({
+      web: {
+        alignItems: 'center',
+      },
+    }),
+  },
+  keyboardView: {
+    width: '100%',
+    justifyContent: 'center',
+    ...Platform.select({
+      web: {
+        alignItems: 'center',
+      },
+    }),
+  },
   card: {
     borderRadius: 24,
     borderWidth: 1,
     padding: 20,
     maxHeight: '88%',
+    width: '100%',
+    ...Platform.select({
+      web: {
+        maxWidth: 520,
+        alignSelf: 'center',
+      },
+    }),
   },
   header: {
     flexDirection: 'row',

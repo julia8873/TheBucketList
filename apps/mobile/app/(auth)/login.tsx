@@ -129,7 +129,7 @@ export default function LoginScreen() {
     >
       <AuthInput
         label={t('auth.identifier_label')}
-        placeholder="tu@correo.com"
+        placeholder={t('auth.email_placeholder', { defaultValue: 'tu@correo.com' })}
         defaultValue=""
         onChangeText={(v) => { setIdentifier(v); setError(null); }}
         keyboardType="email-address"

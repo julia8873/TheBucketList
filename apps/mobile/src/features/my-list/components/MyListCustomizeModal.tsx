@@ -8,6 +8,7 @@ import {
   Switch,
   StyleSheet,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -465,6 +466,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.65)',
     justifyContent: 'flex-end',
+    ...Platform.select({
+      web: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 20,
+      },
+    }),
   },
   sheet: {
     borderTopLeftRadius: 24,
@@ -473,6 +481,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0,
     maxHeight: Dimensions.get('window').height * 0.88,
     paddingTop: 16,
+    ...Platform.select({
+      web: {
+        width: '100%',
+        maxWidth: 480,
+        borderRadius: 24,
+        borderBottomWidth: 1,
+        maxHeight: '90vh' as any,
+      },
+    }),
   },
   header: {
     flexDirection: 'row',

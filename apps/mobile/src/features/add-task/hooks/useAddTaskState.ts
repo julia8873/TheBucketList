@@ -3,6 +3,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from '@bucketlist/shared';
 import { supabase } from '../../../services/supabase';
 import {
   useUnassignedTasks,
@@ -14,6 +15,7 @@ import {
 import { useTags, useTagUsage, type Tag } from '../../../hooks/useTags';
 
 export function useAddTaskState(albumId?: string) {
+  const { t } = useTranslation();
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -219,29 +221,31 @@ export function useAddTaskState(albumId?: string) {
       // Si hay tareas existentes o por defecto con distinta privacidad que el álbum
       if (tasksWithDifferentVis.length > 0 || (defaultSelected.length > 0 && albumVisibility !== 'public')) {
         const visLabels: Record<string, string> = {
-          private: 'privada',
-          followers: 'solo para seguidores',
-          public: 'pública',
+          private: t('albums.visibility_private').toLowerCase(),
+          followers: t('albums.visibility_followers').toLowerCase(),
+          public: t('albums.visibility_public').toLowerCase(),
         };
         const visLabel = visLabels[albumVisibility] || albumVisibility;
         const count = tasksWithDifferentVis.length + (albumVisibility !== 'public' ? defaultSelected.length : 0);
         const isPlural = count > 1;
 
-        const title = isPlural ? '¿Cambiar privacidad de las tareas?' : '¿Cambiar privacidad de la tarea?';
+        const title = isPlural
+          ? t('add_task.change_vis_title_plural')
+          : t('add_task.change_vis_title_single');
         const message = isPlural
-          ? `El álbum es ${visLabel}. ¿Quieres poner la visibilidad de las ${count} tareas añadidas en ${visLabel} para que coincida con el álbum?`
-          : `El álbum es ${visLabel}. ¿Quieres poner la visibilidad de la tarea añadida en ${visLabel} para que coincida con el álbum?`;
+          ? t('add_task.change_vis_msg_plural', { count, visLabel })
+          : t('add_task.change_vis_msg_single', { visLabel });
 
         confirm.show({
           title,
           message,
           actions: [
             {
-              label: `Poner en ${visLabel}`,
+              label: t('add_task.set_to_vis', { visLabel }),
               onPress: () => void executeAdd(albumVisibility),
             },
             {
-              label: 'Mantener actual',
+              label: t('add_task.keep_current'),
               style: 'cancel',
               onPress: () => void executeAdd(undefined),
             },

@@ -178,16 +178,22 @@ export function BucketPhotosSection({
                 onPress={() => setViewingPhotoIndex(index)}
                 style={[
                   styles.photoThumb,
-                  photos.length === 1
+                  photos.length === 1 && !canEdit
                     ? {
                         width: '100%',
                         height: Math.min(Math.round(containerWidth * 0.65), 300),
                         marginBottom: 12,
                       }
-                    : {
-                        width: thumbWidth,
-                        height: thumbHeight,
-                      },
+                    : Platform.select({
+                        web: {
+                          width: 'calc(50% - 6px)',
+                          aspectRatio: 1 / 1.25,
+                        } as any,
+                        default: {
+                          width: thumbWidth,
+                          height: thumbHeight,
+                        },
+                      }),
                 ]}
               >
                 <ExpoImage
@@ -215,14 +221,21 @@ export function BucketPhotosSection({
                   styles.photoAddThumb,
                   photos.length === 0
                     ? { width: '100%', height: 72, flexDirection: 'row' }
-                    : photos.length === 1
-                    ? { width: '100%', height: 56, flexDirection: 'row' }
-                    : { width: thumbWidth, height: thumbHeight },
+                    : Platform.select({
+                        web: {
+                          width: 'calc(50% - 6px)',
+                          aspectRatio: 1 / 1.25,
+                        } as any,
+                        default: {
+                          width: thumbWidth,
+                          height: thumbHeight,
+                        },
+                      }),
                 ]}
                 onPress={() => onOpenAddPhotoSheet ? onOpenAddPhotoSheet() : void pickAndUploadPhotos()}
               >
-                <Camera color={gold[400]} size={photos.length === 1 ? 20 : 24} strokeWidth={1.8} />
-                {(photos.length === 0 || photos.length === 1) && (
+                <Camera color={gold[400]} size={24} strokeWidth={1.8} />
+                {photos.length === 0 && (
                   <Typography variant="bodySemibold" color={gold[400]} style={{ marginLeft: 10 }}>
                     {t('bucket.add_photo')}
                   </Typography>

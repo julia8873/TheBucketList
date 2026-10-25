@@ -224,12 +224,24 @@ const styles = themedStyleSheet({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.65)',
     justifyContent: 'flex-end',
+    ...Platform.select({
+      web: {
+        alignItems: 'center',
+      },
+    }),
   },
   backdropPressable: {
     flex: 1,
+    width: '100%',
   },
   sheetContainer: {
     justifyContent: 'flex-end',
+    width: '100%',
+    ...Platform.select({
+      web: {
+        alignItems: 'center',
+      },
+    }),
   },
   sheet: {
     backgroundColor: '#121212',
@@ -240,6 +252,15 @@ const styles = themedStyleSheet({
     minHeight: 300,
     borderTopWidth: 1,
     borderColor: '#262626',
+    width: '100%',
+    ...Platform.select({
+      web: {
+        maxWidth: 620,
+        alignSelf: 'center',
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+      },
+    }),
   },
   dragIndicator: {
     width: 36,

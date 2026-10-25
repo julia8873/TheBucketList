@@ -168,8 +168,8 @@ export function BulkAlbumActionBar({
   const handleReopenAlbums = () => {
     setShowMoreMenuModal(false);
     confirm.show({
-      title: t('bulk_album_actions.confirm_reopen_title', { defaultValue: '¿Reabrir álbumes?' }),
-      message: t('bulk_album_actions.confirm_reopen_msg', { count, defaultValue: `Se reabrirán ${plural}.` }),
+      title: t('bulk_album_actions.confirm_reopen_title'),
+      message: t('bulk_album_actions.confirm_reopen_msg', { count }),
       confirmLabel: t('bulk_album_actions.reopen_albums'),
       cancelLabel: t('common.cancel'),
       onConfirm: async () => {

@@ -20,7 +20,7 @@ import { getDateFnsLocale } from '@/utils/dateLocale';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { gold } from '@bucketlist/ui/src/tokens/colors';
-import { PageTitle, useTheme, FilterChip } from '@bucketlist/ui';
+import { PageTitle, useTheme, FilterChip, SegmentedControl } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/explore.styles';
 import { DailyTag, DailySortField, DailySortDirection, TimeView, StatusFilter } from '../types';
@@ -49,64 +49,17 @@ export function DailyTasksTopBar({ timeView, setTimeView, style }: DailyTasksTop
       </View>
 
       {/* Time View Switcher: Hoy | Semana | Calendario | Todas */}
-      <View style={[styles.segmentedContainer, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-        <Pressable
-          style={[styles.segmentedTab, timeView === 'today' && [styles.segmentedTabActive, { backgroundColor: theme.dark ? '#242424' : '#E8E3D8', borderColor: theme.colors.border }]]}
-          onPress={() => setTimeView('today')}
-        >
-          <Text
-            style={[
-              styles.segmentedTabText,
-              { color: theme.colors.foregroundMuted },
-              timeView === 'today' && [styles.segmentedTabTextActive, { color: theme.colors.foreground }],
-            ]}
-          >
-            {t('daily.tab_today')}
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.segmentedTab, timeView === 'week' && [styles.segmentedTabActive, { backgroundColor: theme.dark ? '#242424' : '#E8E3D8', borderColor: theme.colors.border }]]}
-          onPress={() => setTimeView('week')}
-        >
-          <Text
-            style={[
-              styles.segmentedTabText,
-              { color: theme.colors.foregroundMuted },
-              timeView === 'week' && [styles.segmentedTabTextActive, { color: theme.colors.foreground }],
-            ]}
-          >
-            {t('daily.tab_week')}
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.segmentedTab, timeView === 'calendar' && [styles.segmentedTabActive, { backgroundColor: theme.dark ? '#242424' : '#E8E3D8', borderColor: theme.colors.border }]]}
-          onPress={() => setTimeView('calendar')}
-        >
-          <Text
-            style={[
-              styles.segmentedTabText,
-              { color: theme.colors.foregroundMuted },
-              timeView === 'calendar' && [styles.segmentedTabTextActive, { color: theme.colors.foreground }],
-            ]}
-          >
-            {t('daily.tab_calendar')}
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.segmentedTab, timeView === 'all' && [styles.segmentedTabActive, { backgroundColor: theme.dark ? '#242424' : '#E8E3D8', borderColor: theme.colors.border }]]}
-          onPress={() => setTimeView('all')}
-        >
-          <Text
-            style={[
-              styles.segmentedTabText,
-              { color: theme.colors.foregroundMuted },
-              timeView === 'all' && [styles.segmentedTabTextActive, { color: theme.colors.foreground }],
-            ]}
-          >
-            {t('daily.tab_all')}
-          </Text>
-        </Pressable>
-      </View>
+      <SegmentedControl
+        options={[
+          { key: 'today', label: t('daily.tab_today') },
+          { key: 'week', label: t('daily.tab_week') },
+          { key: 'calendar', label: t('daily.tab_calendar') },
+          { key: 'all', label: t('daily.tab_all') },
+        ]}
+        selected={timeView}
+        onChange={(val) => setTimeView(val as TimeView)}
+        style={{ marginBottom: 8 }}
+      />
     </View>
   );
 }

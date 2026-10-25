@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, Modal, Pressable, ScrollView } from 'react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { confirm, toast } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { Bell, X } from 'lucide-react-native';
 import {
   useEntitySubscription,
@@ -35,6 +36,7 @@ export function NotificationSubscribersModal({
   ownerId,
   currentUserId,
 }: NotificationSubscribersModalProps) {
+  const { t } = useTranslation();
   const { user: authUser } = useAuthStore();
   const effectiveUserId = currentUserId || authUser?.id;
   const effectiveOwnerId = ownerId || effectiveUserId || '';
@@ -66,7 +68,7 @@ export function NotificationSubscribersModal({
       {
         onError: (err: any) => {
           console.error('Error activating notifications:', err);
-          Alert.alert('Error', err?.message || 'No se pudieron activar las notificaciones.');
+          Alert.alert(t('common.error'), err?.message || t('notification_subscribers.error_activate'));
         },
       }
     );
@@ -75,12 +77,14 @@ export function NotificationSubscribersModal({
   const handleCancelSubscription = () => {
     if (!effectiveUserId) return;
     Alert.alert(
-      'Desactivar notificaciones',
-      '¿Deseas dejar de recibir notificaciones de este ' + (targetType === 'bucket' ? 'tarea' : 'álbum') + '?',
+      t('notification_subscribers.deactivate_confirm_title'),
+      targetType === 'bucket'
+        ? t('notification_subscribers.deactivate_confirm_msg_bucket')
+        : t('notification_subscribers.deactivate_confirm_msg_album'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Desactivar',
+          text: t('notification_subscribers.deactivate_btn'),
           style: 'destructive',
           onPress: () => {
             removeMutation.mutate(
@@ -92,7 +96,7 @@ export function NotificationSubscribersModal({
               {
                 onError: (err: any) => {
                   console.error('Error deactivating notifications:', err);
-                  Alert.alert('Error', err?.message || 'No se pudieron desactivar las notificaciones.');
+                  Alert.alert(t('common.error'), err?.message || t('notification_subscribers.error_deactivate'));
                 },
               }
             );
@@ -104,10 +108,13 @@ export function NotificationSubscribersModal({
 
   const handleRemoveSubscriber = (subscriberId: string, name: string) => {
     confirm.show({
-      title: 'Eliminar suscriptor',
-      message: `¿Deseas eliminar a ${name} de las notificaciones de este ${targetType === 'bucket' ? 'tarea' : 'álbum'}?`,
-      confirmLabel: 'Eliminar',
-      cancelLabel: 'Cancelar',
+      title: t('notification_subscribers.remove_subscriber_title'),
+      message:
+        targetType === 'bucket'
+          ? t('notification_subscribers.remove_subscriber_msg_bucket', { name })
+          : t('notification_subscribers.remove_subscriber_msg_album', { name }),
+      confirmLabel: t('common.delete'),
+      cancelLabel: t('common.cancel'),
       destructive: true,
       onConfirm: () => {
         removeMutation.mutate(
@@ -118,11 +125,11 @@ export function NotificationSubscribersModal({
           },
           {
             onSuccess: () => {
-              toast.success(`${name} eliminado de las notificaciones`);
+              toast.success(t('notification_subscribers.remove_subscriber_success', { name }));
             },
             onError: (err: any) => {
               console.error('Error removing subscriber:', err);
-              toast.error(err?.message || 'No se pudo eliminar al suscriptor.');
+              toast.error(err?.message || t('notification_subscribers.error_remove'));
             },
           }
         );
@@ -149,7 +156,9 @@ export function NotificationSubscribersModal({
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.headerTitle} numberOfLines={1}>
-                  Notificaciones de {targetType === 'bucket' ? 'la tarea' : 'el álbum'}
+                  {targetType === 'bucket'
+                    ? t('notification_subscribers.modal_title_bucket')
+                    : t('notification_subscribers.modal_title_album')}
                 </Text>
                 <Text style={styles.headerSubtitle} numberOfLines={1}>
                   {targetTitle}

@@ -459,7 +459,15 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
 }
 
 const styles = themedStyleSheet({
-    overlay: { flex: 1, justifyContent: 'flex-end' },
+    overlay: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        ...Platform.select({
+            web: {
+                alignItems: 'center',
+            },
+        }),
+    },
     backdrop: { backgroundColor: 'rgba(0,0,0,0.6)' },
     sheet: {
         backgroundColor: '#161616',
@@ -469,6 +477,15 @@ const styles = themedStyleSheet({
         borderBottomWidth: 0,
         borderColor: '#2A2A2A',
         overflow: 'hidden',
+        width: '100%',
+        ...Platform.select({
+            web: {
+                maxWidth: 620,
+                alignSelf: 'center',
+                borderLeftWidth: 1,
+                borderRightWidth: 1,
+            },
+        }),
     },
     handleArea: { paddingTop: 12, paddingBottom: 14, alignItems: 'center' },
     handle: { width: 44, height: 4, borderRadius: 2, backgroundColor: '#444' },

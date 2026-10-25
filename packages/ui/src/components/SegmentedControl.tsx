@@ -10,7 +10,9 @@ import {
   Pressable,
   Animated,
   StyleSheet,
+  type StyleProp,
   type ViewStyle,
+  type TextStyle,
 } from 'react-native';
 import { fontFamily, fontSize } from '../tokens/typography';
 import { gold, dark } from '../tokens/colors';
@@ -27,7 +29,8 @@ interface SegmentedControlProps {
   options: SegmentOption[];
   selected: string;
   onChange: (key: string) => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
+  labelStyle?: StyleProp<TextStyle>;
 }
 
 export function SegmentedControl({
@@ -35,6 +38,7 @@ export function SegmentedControl({
   selected,
   onChange,
   style,
+  labelStyle,
 }: SegmentedControlProps) {
   const { theme } = useTheme();
 
@@ -66,12 +70,15 @@ export function SegmentedControl({
             accessibilityLabel={opt.label}
           >
             <Text
+              numberOfLines={1}
               style={[
                 styles.label,
                 {
                   color: isActive ? theme.colors.primaryForeground : theme.colors.foregroundMuted,
                   fontFamily: fontFamily.semibold,
                 },
+                options.length >= 4 && { fontSize: 13 },
+                labelStyle,
               ]}
             >
               {opt.label}

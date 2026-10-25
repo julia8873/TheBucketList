@@ -3,6 +3,7 @@ import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { Avatar } from '@bucketlist/ui';
 import { Clock, Check, Trash2, Users } from 'lucide-react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
+import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/notification-subscribers.styles';
 
 interface SubscriberItem {
@@ -29,14 +30,18 @@ export function OwnerSubscribersSection({
   isRemovePending,
   onRemoveSubscriber,
 }: OwnerSubscribersSectionProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.subscribersSection}>
       <View style={styles.subscribersSectionHeader}>
-        <Text style={styles.sectionHeaderTitle}>Usuarios suscritos</Text>
+        <Text style={styles.sectionHeaderTitle}>{t('notification_subscribers.owner_section_title')}</Text>
         <Text style={styles.subscribersCountSubtitle}>
           {subscribers.length === 0
-            ? 'Nadie suscrito todavía'
-            : `${subscribers.length} ${subscribers.length === 1 ? 'usuario recibe' : 'usuarios reciben'} avisos`}
+            ? t('notification_subscribers.owner_empty_count')
+            : subscribers.length === 1
+            ? t('notification_subscribers.owner_count_single')
+            : t('notification_subscribers.owner_count_plural', { count: subscribers.length })}
         </Text>
       </View>
 
@@ -45,15 +50,15 @@ export function OwnerSubscribersSection({
       ) : subscribers.length === 0 ? (
         <View style={styles.emptySubscribers}>
           <Users size={32} color="#555" strokeWidth={1.5} />
-          <Text style={styles.emptySubscribersTitle}>Nadie suscrito todavía</Text>
+          <Text style={styles.emptySubscribersTitle}>{t('notification_subscribers.owner_empty_title')}</Text>
           <Text style={styles.emptySubscribersSubtitle}>
-            Los usuarios que lo deseen solicitarán activar las notificaciones.
+            {t('notification_subscribers.owner_empty_sub')}
           </Text>
         </View>
       ) : (
         <View style={styles.subscribersList}>
           {subscribers.map((item) => {
-            const name = item.profile?.display_name || item.profile?.username || 'Usuario';
+            const name = item.profile?.display_name || item.profile?.username || t('notification_subscribers.default_user');
             const isPending = item.status === 'pending';
 
             return (
@@ -71,12 +76,12 @@ export function OwnerSubscribersSection({
                     {isPending ? (
                       <>
                         <Clock size={11} color={gold[400]} />
-                        <Text style={styles.statusBadgePending}>Pendiente</Text>
+                        <Text style={styles.statusBadgePending}>{t('common.status_pending')}</Text>
                       </>
                     ) : (
                       <>
                         <Check size={11} color="#34C759" />
-                        <Text style={styles.statusBadgeActive}>Activo</Text>
+                        <Text style={styles.statusBadgeActive}>{t('common.active')}</Text>
                       </>
                     )}
                   </View>
@@ -87,7 +92,7 @@ export function OwnerSubscribersSection({
                   hitSlop={8}
                   onPress={() => onRemoveSubscriber(item.subscriber_id, name)}
                   disabled={isRemovePending}
-                  accessibilityLabel={`Borrar a ${name} de las notificaciones`}
+                  accessibilityLabel={t('notification_subscribers.remove_subscriber_title')}
                 >
                   <Trash2 size={16} color="#FF453A" strokeWidth={1.8} />
                 </Pressable>

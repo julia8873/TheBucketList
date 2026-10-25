@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { RotateCcw, RotateCw } from 'lucide-react-native';
+import { useTranslation } from '@bucketlist/shared';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 
 /**
@@ -64,6 +65,7 @@ function fitRatio(dw: number, dh: number, ratio: number): Rect {
 }
 
 export function PhotoCropModal({ visible, uri, width, height, index, total, onCancel, onDone }: Props) {
+  const { t } = useTranslation();
   const [current, setCurrent] = useState<{ uri: string; width: number; height: number } | null>(null);
   const [busy, setBusy] = useState(false);
   const [ratioKey, setRatioKey] = useState('free');
@@ -239,12 +241,12 @@ export function PhotoCropModal({ visible, uri, width, height, index, total, onCa
         {/* Cabecera */}
         <View style={styles.header}>
           <Pressable onPress={onCancel} hitSlop={10} disabled={busy}>
-            <Text style={styles.headerCancel}>Cancelar</Text>
+            <Text style={styles.headerCancel}>{t('common.cancel')}</Text>
           </Pressable>
-          <Text style={styles.headerTitle}>{total > 1 ? `Foto ${index + 1} de ${total}` : 'Editar foto'}</Text>
+          <Text style={styles.headerTitle}>{total > 1 ? t('photo_crop.photo_count', { current: index + 1, total }) : t('photo_crop.edit_photo')}</Text>
           <Pressable onPress={() => void apply()} hitSlop={10} disabled={busy}>
             <Text style={[styles.headerDone, busy && { opacity: 0.4 }]}>
-              {index + 1 < total ? 'Siguiente' : 'Listo'}
+              {index + 1 < total ? t('photo_crop.next') : t('photo_crop.done')}
             </Text>
           </Pressable>
         </View>
@@ -331,24 +333,25 @@ export function PhotoCropModal({ visible, uri, width, height, index, total, onCa
           <View style={styles.rotateRow}>
             <Pressable style={styles.rotateBtn} onPress={() => void rotate(-90)} disabled={busy}>
               <RotateCcw color="#fff" size={20} strokeWidth={2} />
-              <Text style={styles.rotateText}>Girar</Text>
+              <Text style={styles.rotateText}>{t('photo_crop.rotate')}</Text>
             </Pressable>
             <Pressable style={styles.rotateBtn} onPress={() => void rotate(90)} disabled={busy}>
               <RotateCw color="#fff" size={20} strokeWidth={2} />
-              <Text style={styles.rotateText}>Girar</Text>
+              <Text style={styles.rotateText}>{t('photo_crop.rotate')}</Text>
             </Pressable>
           </View>
 
           <View style={styles.ratioRow}>
             {RATIOS.map((r) => {
               const active = r.key === ratioKey;
+              const label = r.key === 'free' ? t('photo_crop.ratio_free') : r.label;
               return (
                 <Pressable
                   key={r.key}
                   onPress={() => selectRatio(r.key)}
                   style={[styles.ratioChip, active && styles.ratioChipActive]}
                 >
-                  <Text style={[styles.ratioText, active && { color: '#000' }]}>{r.label}</Text>
+                  <Text style={[styles.ratioText, active && { color: '#000' }]}>{label}</Text>
                 </Pressable>
               );
             })}
@@ -364,7 +367,7 @@ export function PhotoCropModal({ visible, uri, width, height, index, total, onCa
               disabled={busy}
               hitSlop={8}
             >
-              <Text style={styles.reset}>Restablecer</Text>
+              <Text style={styles.reset}>{t('photo_crop.reset')}</Text>
             </Pressable>
           )}
         </View>

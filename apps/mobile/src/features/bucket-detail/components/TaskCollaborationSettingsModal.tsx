@@ -8,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -375,6 +376,11 @@ const styles = themedStyleSheet({
     flex: 1,
     justifyContent: 'flex-end',
     backgroundColor: 'rgba(0,0,0,0.65)',
+    ...Platform.select({
+      web: {
+        alignItems: 'center',
+      },
+    }),
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
@@ -386,6 +392,15 @@ const styles = themedStyleSheet({
     maxHeight: '85%',
     borderWidth: 1,
     borderColor: '#262626',
+    width: '100%',
+    ...Platform.select({
+      web: {
+        maxWidth: 620,
+        alignSelf: 'center',
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+      },
+    }),
   },
   dragHandle: {
     width: 36,

@@ -536,12 +536,12 @@ export function useDailyTasksState() {
 
   const handleConvertToBucket = (task: DailyTask) => {
     Alert.alert(
-      'Convertir en Bucket List',
-      `¿Deseas convertir "${task.title}" en un objetivo de tu Bucket List?`,
+      t('daily.convert_dialog_title'),
+      t('daily.convert_dialog_msg', { title: task.title }),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Convertir y mover',
+          text: t('daily.convert_and_move'),
           style: 'default',
           onPress: async () => {
             try {
@@ -549,14 +549,14 @@ export function useDailyTasksState() {
               if (editingTask?.id === task.id) {
                 setEditingTask(null);
               }
-              Alert.alert('¡Convertida con éxito!', 'La tarea se ha añadido a tu Bucket List.');
+              Alert.alert(t('daily.convert_success_title'), t('daily.convert_success_msg'));
             } catch (err: any) {
-              Alert.alert('Error al convertir', err?.message || 'No se pudo convertir la tarea.');
+              Alert.alert(t('daily.convert_error_title'), err?.message || t('daily.convert_error_msg'));
             }
           },
         },
         {
-          text: 'Mantener también aquí',
+          text: t('daily.convert_keep_both'),
           style: 'default',
           onPress: async () => {
             try {
@@ -564,9 +564,9 @@ export function useDailyTasksState() {
               if (editingTask?.id === task.id) {
                 setEditingTask(null);
               }
-              Alert.alert('¡Copiada con éxito!', 'La tarea se ha duplicado en tu Bucket List.');
+              Alert.alert(t('daily.copy_success_title'), t('daily.copy_success_msg'));
             } catch (err: any) {
-              Alert.alert('Error al copiar', err?.message || 'No se pudo copiar la tarea.');
+              Alert.alert(t('daily.copy_error_title'), err?.message || t('daily.copy_error_msg'));
             }
           },
         },
@@ -673,10 +673,10 @@ export function useDailyTasksState() {
 
       if (isExpired) {
         confirm.show({
-          title: '¿Desfijar tarea?',
-          message: 'Esta tarea ya está completada y caducó hace más de un día. Si la desfijas, se eliminará para siempre.',
-          confirmLabel: 'Eliminar para siempre',
-          cancelLabel: 'Cancelar',
+          title: t('daily.unpin_confirm_title'),
+          message: t('daily.unpin_confirm_msg'),
+          confirmLabel: t('daily.delete_forever'),
+          cancelLabel: t('common.cancel'),
           destructive: true,
           onConfirm: () => {
             deleteMutation.mutate(task.id);
@@ -811,10 +811,10 @@ export function useDailyTasksState() {
 
       if (isExpired) {
         confirm.show({
-          title: '¿Desfijar tarea?',
-          message: 'Esta tarea ya está completada y caducó hace más de un día. Si la desfijas, se eliminará para siempre.',
-          confirmLabel: 'Eliminar para siempre',
-          cancelLabel: 'Cancelar',
+          title: t('daily.unpin_confirm_title'),
+          message: t('daily.unpin_confirm_msg'),
+          confirmLabel: t('daily.delete_forever'),
+          cancelLabel: t('common.cancel'),
           destructive: true,
           onConfirm: () => {
             deleteMutation.mutate(editingTask.id);
@@ -1012,16 +1012,16 @@ export function useDailyTasksState() {
       setShowTagModal(false);
     } catch (err: any) {
       console.warn('Error saving tag:', err);
-      Alert.alert('Error al guardar etiqueta', err?.message || 'No se pudo guardar la etiqueta');
+      Alert.alert(t('daily.save_tag_error_title'), err?.message || t('daily.save_tag_error_msg'));
     }
   };
 
   const handleDeleteTag = (tag: DailyTag) => {
     confirm.show({
-      title: '¿Eliminar etiqueta?',
-      message: `¿Seguro que deseas eliminar la etiqueta «${tag.name}»? Se quitará de tus tareas.`,
-      confirmLabel: 'Eliminar etiqueta',
-      cancelLabel: 'Cancelar',
+      title: t('daily.delete_tag_confirm_title'),
+      message: t('daily.delete_tag_confirm_msg', { name: tag.name }),
+      confirmLabel: t('common.delete'),
+      cancelLabel: t('common.cancel'),
       destructive: true,
       onConfirm: async () => {
         await deleteDailyTagMutation.mutateAsync(tag.id);
@@ -1058,10 +1058,10 @@ export function useDailyTasksState() {
 
   const handleDelete = (task: DailyTask) => {
     confirm.show({
-      title: '¿Eliminar tarea?',
-      message: `¿Estás seguro de que deseas eliminar «${task.title}»?`,
-      confirmLabel: 'Eliminar',
-      cancelLabel: 'Cancelar',
+      title: t('daily.delete_task_confirm_title'),
+      message: t('daily.delete_task_confirm_msg', { title: task.title }),
+      confirmLabel: t('common.delete'),
+      cancelLabel: t('common.cancel'),
       destructive: true,
       onConfirm: () => deleteMutation.mutate(task.id),
     });
@@ -1098,10 +1098,10 @@ export function useDailyTasksState() {
   const handleDeleteAllOverdue = () => {
     if (overdueTasks.length === 0) return;
     confirm.show({
-      title: '¿Borrar tareas atrasadas?',
-      message: `¿Estás seguro de que quieres eliminar las ${overdueTasks.length} tareas atrasadas? Esta acción no se puede deshacer.`,
-      confirmLabel: `Eliminar todas (${overdueTasks.length})`,
-      cancelLabel: 'Cancelar',
+      title: t('daily.delete_overdue_confirm_title'),
+      message: t('daily.delete_overdue_confirm_msg', { count: overdueTasks.length }),
+      confirmLabel: t('daily.delete_all_overdue_btn', { count: overdueTasks.length }),
+      cancelLabel: t('common.cancel'),
       destructive: true,
       onConfirm: () => {
         deleteMultipleMutation.mutate(overdueTasks.map((t) => t.id));

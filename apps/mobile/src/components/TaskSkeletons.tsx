@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, useWindowDimensions, Platform } from 'react-native';
 import { Skeleton, useTheme, getAlbumCardDimensions } from '@bucketlist/ui';
 
 /**
@@ -64,7 +64,14 @@ export function TaskGallerySkeleton() {
     <View
       style={[
         styles.taskGalleryCard,
-        { width: cardWidth, backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+        {
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.border,
+          ...Platform.select({
+            web: { width: 'calc(50% - 7px)' } as any,
+            default: { width: cardWidth },
+          }),
+        },
       ]}
     >
       <Skeleton width="100%" height={150} borderRadius={16} />
@@ -84,7 +91,15 @@ export function AlbumCardSkeleton() {
   const { cardWidth, cardHeight } = getAlbumCardDimensions(width);
 
   return (
-    <View style={[styles.albumCard, { width: cardWidth }]}>
+    <View
+      style={[
+        styles.albumCard,
+        Platform.select({
+          web: { width: 'calc(50% - 7px)' } as any,
+          default: { width: cardWidth },
+        }),
+      ]}
+    >
       <Skeleton width="100%" height={cardHeight} borderRadius={20} />
       <View style={{ paddingHorizontal: 4, paddingTop: 8 }}>
         <Skeleton width="75%" height={14} borderRadius={5} style={{ marginBottom: 6 }} />

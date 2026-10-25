@@ -27,6 +27,7 @@ import {
   ChevronUp,
 } from 'lucide-react-native';
 import { gold, useTheme, toast } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { TagSheetShell } from './TagSheetShell';
 
 interface GoogleDriveModalProps {
@@ -44,6 +45,7 @@ export function GoogleDriveModal({
   onSave,
   canEdit = true,
 }: GoogleDriveModalProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const [url, setUrl] = useState('');
   const [showSecurityGuide, setShowSecurityGuide] = useState(true);
@@ -59,12 +61,12 @@ export function GoogleDriveModal({
       const text = await Clipboard.getStringAsync();
       if (text && text.trim().length > 0) {
         setUrl(text.trim());
-        toast.success('Enlace pegado');
+        toast.success(t('google_drive_modal.toast_pasted'));
       } else {
-        toast.info('El portapapeles está vacío');
+        toast.info(t('google_drive_modal.toast_empty'));
       }
     } catch {
-      toast.error('No se pudo leer el portapapeles');
+      toast.error(t('google_drive_modal.toast_read_error'));
     }
   };
 
@@ -84,10 +86,10 @@ export function GoogleDriveModal({
       if (canOpen) {
         await Linking.openURL(finalUrl);
       } else {
-        toast.error('No se puede abrir este enlace');
+        toast.error(t('google_drive_modal.toast_cant_open'));
       }
     } catch (e) {
-      toast.error('Error al abrir Google Drive');
+      toast.error(t('google_drive_modal.toast_open_error'));
     }
   };
 
@@ -128,10 +130,10 @@ export function GoogleDriveModal({
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.title, { color: theme.colors.foreground }]}>
-                    Google Drive
+                    {t('google_drive_modal.title')}
                   </Text>
                   <Text style={[styles.subtitle, { color: theme.colors.foregroundMuted }]}>
-                    Carpeta o archivo vinculado a la tarea
+                    {t('google_drive_modal.subtitle')}
                   </Text>
                 </View>
               </View>
@@ -140,7 +142,7 @@ export function GoogleDriveModal({
                 hitSlop={10}
                 style={styles.closeBtn}
                 accessibilityRole="button"
-                accessibilityLabel="Cerrar modal"
+                accessibilityLabel={t('google_drive_modal.close_label')}
               >
                 <X size={20} color={theme.colors.foregroundMuted} />
               </Pressable>
@@ -155,7 +157,7 @@ export function GoogleDriveModal({
               {canEdit ? (
                 <>
                   <Text style={[styles.inputLabel, { color: theme.colors.foreground }]}>
-                    Enlace de Google Drive
+                    {t('google_drive_modal.input_label')}
                   </Text>
                   <View style={styles.inputSection}>
                     <View
@@ -189,16 +191,16 @@ export function GoogleDriveModal({
                       onPress={handlePasteClipboard}
                       style={styles.pasteBtn}
                       accessibilityRole="button"
-                      accessibilityLabel="Pegar enlace"
+                      accessibilityLabel={t('google_drive_modal.paste_label')}
                     >
                       <ClipboardIcon size={16} color="#0E0E0E" strokeWidth={2.2} />
-                      <Text style={styles.pasteBtnText}>Pegar</Text>
+                      <Text style={styles.pasteBtnText}>{t('google_drive_modal.paste')}</Text>
                     </Pressable>
                   </View>
 
                   {url.length > 0 && !isDriveLink && (
                     <Text style={styles.warningNote}>
-                      Nota: Este enlace no parece ser de Google Drive, pero puedes guardarlo igualmente.
+                      {t('google_drive_modal.warning_not_drive')}
                     </Text>
                   )}
                 </>
@@ -216,7 +218,7 @@ export function GoogleDriveModal({
                     style={[styles.readOnlyUrl, { color: theme.colors.foreground }]}
                     numberOfLines={2}
                   >
-                    {url || 'Sin enlace'}
+                    {url || t('google_drive_modal.no_link')}
                   </Text>
                 </View>
               )}
@@ -229,7 +231,7 @@ export function GoogleDriveModal({
                 >
                   <HardDrive size={18} color={gold[400]} />
                   <Text style={[styles.openLinkText, { color: gold[400] }]}>
-                    Abrir en Google Drive
+                    {t('google_drive_modal.open_drive')}
                   </Text>
                   <ExternalLink size={16} color={gold[400]} />
                 </Pressable>
@@ -252,7 +254,7 @@ export function GoogleDriveModal({
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
                     <ShieldCheck size={18} color={gold[400]} />
                     <Text style={[styles.guideTitle, { color: theme.colors.foreground }]}>
-                      Cómo compartir y proteger tu carpeta
+                      {t('google_drive_modal.guide_title')}
                     </Text>
                   </View>
                   {showSecurityGuide ? (
@@ -271,14 +273,10 @@ export function GoogleDriveModal({
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={[styles.stepTitle, { color: theme.colors.foreground }]}>
-                          Obtener el enlace en Google Drive
+                          {t('google_drive_modal.step1_title')}
                         </Text>
                         <Text style={[styles.stepDesc, { color: theme.colors.foregroundMuted }]}>
-                          En Google Drive, haz clic derecho (o toca los tres puntos ⋮) en la carpeta o archivo y selecciona{' '}
-                          <Text style={{ fontFamily: 'Inter_600SemiBold', color: theme.colors.foreground }}>
-                            Compartir
-                          </Text>
-                          .
+                          {t('google_drive_modal.step1_desc')}
                         </Text>
                       </View>
                     </View>
@@ -290,14 +288,10 @@ export function GoogleDriveModal({
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={[styles.stepTitle, { color: theme.colors.foreground }]}>
-                          Configurar el acceso
+                          {t('google_drive_modal.step2_title')}
                         </Text>
                         <Text style={[styles.stepDesc, { color: theme.colors.foregroundMuted }]}>
-                          En <Text style={{ fontFamily: 'Inter_600SemiBold', color: theme.colors.foreground }}>Acceso general</Text>, cambia de «Restringido» a{' '}
-                          <Text style={{ fontFamily: 'Inter_600SemiBold', color: theme.colors.foreground }}>
-                            «Cualquier persona con el enlace»
-                          </Text>{' '}
-                          o añade directamente los correos de tus colaboradores.
+                          {t('google_drive_modal.step2_desc')}
                         </Text>
                       </View>
                     </View>
@@ -306,9 +300,9 @@ export function GoogleDriveModal({
                     <View style={styles.alertBox}>
                       <ShieldAlert size={18} color="#EAB308" style={{ marginTop: 2 }} />
                       <View style={{ flex: 1 }}>
-                        <Text style={styles.alertTitle}>¡Atención con la visibilidad!</Text>
+                        <Text style={styles.alertTitle}>{t('google_drive_modal.alert_visibility_title')}</Text>
                         <Text style={styles.alertDesc}>
-                          Si eliges «Cualquier persona con el enlace», cualquier usuario que reciba o tenga el enlace podrá ver los archivos sin necesidad de pedir permiso. Ten precaución si compartes información privada.
+                          {t('google_drive_modal.alert_visibility_desc')}
                         </Text>
                       </View>
                     </View>
@@ -318,17 +312,17 @@ export function GoogleDriveModal({
                       <Lock size={18} color={gold[400]} style={{ marginTop: 2 }} />
                       <View style={{ flex: 1 }}>
                         <Text style={[styles.protectionTitle, { color: theme.colors.foreground }]}>
-                          Cómo proteger tu contenido si el enlace circula
+                          {t('google_drive_modal.protection_title')}
                         </Text>
                         <View style={{ gap: 6, marginTop: 4 }}>
                           <Text style={[styles.bulletItem, { color: theme.colors.foregroundMuted }]}>
-                            • <Text style={{ fontFamily: 'Inter_600SemiBold', color: theme.colors.foreground }}>Rol Lector únicamente:</Text> Mantén siempre el permiso en «Lector» para que nadie pueda modificar ni borrar tus archivos.
+                            • <Text style={{ fontFamily: 'Inter_600SemiBold', color: theme.colors.foreground }}>{t('google_drive_modal.protection_reader_role')}</Text> {t('google_drive_modal.protection_reader_desc')}
                           </Text>
                           <Text style={[styles.bulletItem, { color: theme.colors.foregroundMuted }]}>
-                            • <Text style={{ fontFamily: 'Inter_600SemiBold', color: theme.colors.foreground }}>Impedir descargas y copias:</Text> En Drive (versión web), toca el engranaje ⚙️ de la ventana de compartir y desmarca la opción «Los lectores pueden ver la opción de descargar, imprimir y copiar».
+                            • <Text style={{ fontFamily: 'Inter_600SemiBold', color: theme.colors.foreground }}>{t('google_drive_modal.protection_prevent_downloads')}</Text> {t('google_drive_modal.protection_prevent_desc')}
                           </Text>
                           <Text style={[styles.bulletItem, { color: theme.colors.foregroundMuted }]}>
-                            • <Text style={{ fontFamily: 'Inter_600SemiBold', color: theme.colors.foreground }}>Acceso restringido selectivo:</Text> Para máxima seguridad, mantén «Restringido» e introduce solo los correos de Google específicos de las personas autorizadas.
+                            • <Text style={{ fontFamily: 'Inter_600SemiBold', color: theme.colors.foreground }}>{t('google_drive_modal.protection_selective_access')}</Text> {t('google_drive_modal.protection_selective_desc')}
                           </Text>
                         </View>
                       </View>
@@ -338,7 +332,7 @@ export function GoogleDriveModal({
                     <View style={[styles.infoBanner, { backgroundColor: 'rgba(212, 177, 58, 0.08)' }]}>
                       <Eye size={16} color={gold[400]} />
                       <Text style={[styles.infoBannerText, { color: theme.colors.foreground }]}>
-                        Recibirás una notificación en la app cada vez que alguien abra este enlace.
+                        {t('google_drive_modal.notify_banner')}
                       </Text>
                     </View>
                   </View>
@@ -353,10 +347,10 @@ export function GoogleDriveModal({
                       onPress={handleRemove}
                       style={[styles.removeBtn, { borderColor: theme.colors.border }]}
                       accessibilityRole="button"
-                      accessibilityLabel="Eliminar enlace"
+                      accessibilityLabel={t('google_drive_modal.remove_label')}
                     >
                       <Trash2 size={16} color="#EF4444" />
-                      <Text style={styles.removeBtnText}>Quitar enlace</Text>
+                      <Text style={styles.removeBtnText}>{t('google_drive_modal.remove_btn')}</Text>
                     </Pressable>
                   )}
 
@@ -364,10 +358,10 @@ export function GoogleDriveModal({
                     onPress={handleSave}
                     style={[styles.saveBtn, { backgroundColor: gold[400] }]}
                     accessibilityRole="button"
-                    accessibilityLabel="Guardar enlace"
+                    accessibilityLabel={t('google_drive_modal.save_label')}
                   >
                     <Check size={18} color="#0E0E0E" strokeWidth={2.4} />
-                    <Text style={styles.saveBtnText}>Guardar</Text>
+                    <Text style={styles.saveBtnText}>{t('google_drive_modal.save')}</Text>
                   </Pressable>
                 </View>
               )}

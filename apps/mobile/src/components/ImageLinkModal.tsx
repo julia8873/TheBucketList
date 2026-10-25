@@ -16,6 +16,7 @@ import {
 import { Image as ExpoImage } from 'expo-image';
 import * as Clipboard from 'expo-clipboard';
 import { X, Globe, Clipboard as ClipboardIcon, ExternalLink, Check, AlertCircle } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { gold, useTheme, toast } from '@bucketlist/ui';
 import { resolveImageUrl, resolveImageUrlAsync, isValidImageUrl } from '../utils/imageUrlResolver';
 import { TagSheetShell } from './TagSheetShell';
@@ -33,6 +34,7 @@ export function ImageLinkModal({
   onApplyImage,
   initialQuery = '',
 }: ImageLinkModalProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const [inputUrl, setInputUrl] = useState('');
   const [resolvedUrl, setResolvedUrl] = useState('');
@@ -97,7 +99,7 @@ export function ImageLinkModal({
           const base64Uri = imgData.data.startsWith('data:')
             ? imgData.data
             : `data:image/jpeg;base64,${imgData.data}`;
-          setInputUrl('Foto pegada desde el portapapeles');
+          setInputUrl(t('image_link_modal.pasted_from_clipboard'));
           setResolvedUrl(base64Uri);
           setImageLoading(false);
           setImageLoaded(true);
@@ -111,11 +113,11 @@ export function ImageLinkModal({
       if (text && text.trim().length > 0) {
         processInputText(text.trim());
       } else {
-        toast.info('El portapapeles está vacío. Copia una foto o enlace primero.');
+        toast.info(t('image_link_modal.toast_empty'));
       }
     } catch (e) {
       console.warn('Error reading clipboard:', e);
-      toast.error('No se pudo leer el portapapeles');
+      toast.error(t('image_link_modal.toast_error'));
     }
   };
 
@@ -128,7 +130,7 @@ export function ImageLinkModal({
   };
 
   const handleOpenGoogleSearch = async () => {
-    const query = initialQuery.trim() || 'paisajes hermosos';
+    const query = initialQuery.trim() || t('image_link_modal.default_query');
     const googleUrl = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(query)}`;
     try {
       const canOpen = await Linking.canOpenURL(googleUrl);
@@ -155,9 +157,9 @@ export function ImageLinkModal({
         {/* Header */}
         <View style={styles.header}>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.title, { color: theme.colors.foreground }]}>Foto por enlace</Text>
+                <Text style={[styles.title, { color: theme.colors.foreground }]}>{t('image_link_modal.title')}</Text>
                 <Text style={[styles.subtitle, { color: theme.colors.foregroundMuted }]}>
-                  Copia una foto o enlace en Google y pulsa el botón «Pegar»
+                  {t('image_link_modal.subtitle')}
                 </Text>
               </View>
               <Pressable
@@ -165,7 +167,7 @@ export function ImageLinkModal({
                 hitSlop={10}
                 style={styles.closeBtn}
                 accessibilityRole="button"
-                accessibilityLabel="Cerrar modal"
+                accessibilityLabel={t('common.close')}
               >
                 <X size={20} color={theme.colors.foregroundMuted} />
               </Pressable>
@@ -181,15 +183,15 @@ export function ImageLinkModal({
                 onPress={handleOpenGoogleSearch}
                 style={[styles.googleSearchBtn, { borderColor: theme.colors.border }]}
                 accessibilityRole="button"
-                accessibilityLabel="Abrir Google Imágenes en el navegador"
+                accessibilityLabel={t('image_link_modal.open_google_label')}
               >
                 <Globe size={18} color={gold[400]} />
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.googleSearchText, { color: theme.colors.foreground }]}>
-                    Buscar en Google Imágenes
+                    {t('image_link_modal.search_google')}
                   </Text>
                   <Text style={[styles.googleSearchHint, { color: theme.colors.foregroundMuted }]}>
-                    Copia la foto o el enlace y pulsa «Pegar» aquí abajo
+                    {t('image_link_modal.search_google_hint')}
                   </Text>
                 </View>
                 <ExternalLink size={16} color={theme.colors.foregroundMuted} />
@@ -207,7 +209,7 @@ export function ImageLinkModal({
                     },
                   ]}
                   accessibilityRole={inputUrl ? 'none' : 'button'}
-                  accessibilityLabel={inputUrl ? 'Foto o enlace preparado' : 'Pulsa el botón Pegar para insertar'}
+                  accessibilityLabel={inputUrl ? t('image_link_modal.title') : t('image_link_modal.paste_placeholder')}
                 >
                   <View style={styles.displayContent}>
                     {inputUrl ? (
@@ -220,7 +222,7 @@ export function ImageLinkModal({
                       </Text>
                     ) : (
                       <Text style={[styles.placeholderText, { color: theme.colors.foregroundMuted }]}>
-                        Pulsa aquí o en el botón Pegar
+                        {t('image_link_modal.paste_placeholder')}
                       </Text>
                     )}
                   </View>
@@ -230,7 +232,7 @@ export function ImageLinkModal({
                       onPress={handleClear}
                       hitSlop={10}
                       style={styles.clearBtn}
-                      accessibilityLabel="Borrar enlace"
+                      accessibilityLabel={t('image_link_modal.clear_label')}
                     >
                       <X size={16} color={theme.colors.foregroundMuted} />
                     </Pressable>
@@ -241,15 +243,15 @@ export function ImageLinkModal({
                   onPress={handlePasteClipboard}
                   style={styles.pasteBtn}
                   accessibilityRole="button"
-                  accessibilityLabel="Pegar desde el portapapeles"
+                  accessibilityLabel={t('image_link_modal.paste_label')}
                 >
                   <ClipboardIcon size={16} color="#0E0E0E" strokeWidth={2.4} />
-                  <Text style={styles.pasteBtnText}>Pegar</Text>
+                  <Text style={styles.pasteBtnText}>{t('image_link_modal.paste_button')}</Text>
                 </Pressable>
               </View>
 
               <Text style={[styles.pasteHintText, { color: theme.colors.foregroundMuted }]}>
-                Copia la imagen o enlace web y pulsa «Pegar» para cargarla
+                {t('image_link_modal.paste_hint')}
               </Text>
 
               {/* Vista previa de la imagen */}
@@ -292,24 +294,23 @@ export function ImageLinkModal({
                       <View style={styles.previewLoader}>
                         <ActivityIndicator color={gold[400]} size="small" />
                         <Text style={[styles.previewStatusText, { color: '#FFF' }]}>
-                          Cargando imagen...
+                          {t('image_link_modal.loading')}
                         </Text>
                       </View>
                     )}
                     {imageError && (
                       <View style={styles.previewErrorWrap}>
                         <AlertCircle size={24} color="#EF4444" />
-                        <Text style={styles.previewErrorTitle}>No se pudo cargar la imagen</Text>
+                        <Text style={styles.previewErrorTitle}>{t('image_link_modal.error_title')}</Text>
                         <Text style={styles.previewErrorDesc}>
-                          Comprueba que la foto sea pública o mantén pulsada la imagen en Google y elige
-                          «Copiar enlace de imagen» o «Copiar imagen».
+                          {t('image_link_modal.error_desc')}
                         </Text>
                       </View>
                     )}
                     {imageLoaded && !imageError && (
                       <View style={styles.previewBadgeSuccess}>
                         <Check size={14} color="#FFF" strokeWidth={2.5} />
-                        <Text style={styles.previewBadgeSuccessText}>Imagen válida</Text>
+                        <Text style={styles.previewBadgeSuccessText}>{t('image_link_modal.valid_image')}</Text>
                       </View>
                     )}
                   </>
@@ -317,7 +318,7 @@ export function ImageLinkModal({
                   <View style={styles.previewEmpty}>
                     <Globe size={28} color={theme.colors.foregroundMuted} />
                     <Text style={[styles.previewEmptyText, { color: theme.colors.foregroundMuted }]}>
-                      La vista previa aparecerá aquí al pegar un enlace o imagen
+                      {t('image_link_modal.empty_preview')}
                     </Text>
                   </View>
                 )}
@@ -334,7 +335,7 @@ export function ImageLinkModal({
                     : { backgroundColor: theme.dark ? '#222' : '#DDD', opacity: 0.6 },
                 ]}
                 accessibilityRole="button"
-                accessibilityLabel="Usar como foto de portada"
+                accessibilityLabel={t('image_link_modal.use_cover_label')}
               >
                 <Check
                   size={18}
@@ -347,7 +348,7 @@ export function ImageLinkModal({
                     { color: canConfirm ? '#0E0E0E' : theme.colors.foregroundMuted },
                   ]}
                 >
-                  Usar como portada
+                  {t('image_link_modal.use_cover')}
                 </Text>
               </Pressable>
             </ScrollView>

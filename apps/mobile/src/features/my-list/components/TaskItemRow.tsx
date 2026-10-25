@@ -261,10 +261,10 @@ function TaskItemRowComponent({
         } else if (direction === 'right') {
           if (isItemOwner) {
             confirm.show({
-              title: '¿Eliminar tarea?',
-              message: `¿Estás seguro de que quieres eliminar «${item.title}»? Esta acción no se puede deshacer.`,
-              confirmLabel: 'Eliminar',
-              cancelLabel: 'Cancelar',
+              title: t('bucket.delete_task_title'),
+              message: t('bucket.delete_task_confirm', { title: item.title }),
+              confirmLabel: t('common.delete'),
+              cancelLabel: t('common.cancel'),
               destructive: true,
               onConfirm: () => onDelete(item.id),
               onCancel: () => localSwipeableRef.current?.close(),

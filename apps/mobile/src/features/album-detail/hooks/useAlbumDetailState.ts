@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useToast, confirm } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 
 import { useAlbumDetail, useDeleteAlbumDetail, TaskItem } from '@/services/api/albumsService';
 import { supabase } from '@/services/supabase';
@@ -29,6 +30,7 @@ import type { TagItem } from '@/components/TagAssignSheet';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export function useAlbumDetailState() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const cleanId = Array.isArray(id) ? id[0] : (id ? String(id) : '');
   const router = useRouter();
@@ -353,10 +355,10 @@ export function useAlbumDetailState() {
   const confirmLeaveAlbum = () => {
     closeSheet(() => {
       confirm.show({
-        title: 'Dejar de colaborar',
-        message: '¿Quieres salir de este álbum compartido? Dejará de aparecer en tu lista.',
-        confirmLabel: 'Salir del álbum',
-        cancelLabel: 'Cancelar',
+        title: t('albums.leave_collab_title'),
+        message: t('albums.leave_collab_msg'),
+        confirmLabel: t('albums.leave_collab_confirm'),
+        cancelLabel: t('common.cancel'),
         destructive: true,
         onConfirm: async () => {
           const { error } = await supabase
@@ -1018,12 +1020,12 @@ export function useAlbumDetailState() {
 
     closeSheet();
     const confirmedToggle = await confirm.ask({
-      title: nextCompleted ? '¿Completar todas las tareas?' : '¿Marcar todas como pendientes?',
+      title: nextCompleted ? t('albums.toggle_complete_all_title') : t('albums.toggle_pending_all_title'),
       message: nextCompleted
-        ? `Se marcarán como completadas las ${taskIds.length} tareas de este álbum.`
-        : `Se marcarán como pendientes las ${taskIds.length} tareas de este álbum.`,
-      confirmLabel: nextCompleted ? 'Completar todas' : 'Marcar pendientes',
-      cancelLabel: 'Cancelar',
+        ? t('albums.toggle_complete_all_msg', { count: taskIds.length })
+        : t('albums.toggle_pending_all_msg', { count: taskIds.length }),
+      confirmLabel: nextCompleted ? t('albums.complete_all_btn') : t('albums.mark_pending_btn'),
+      cancelLabel: t('common.cancel'),
     });
     if (!confirmedToggle) return;
 
@@ -1166,10 +1168,10 @@ export function useAlbumDetailState() {
       void queryClient.invalidateQueries({ queryKey: ['copiedBuckets'] });
 
       confirm.show({
-        title: '¡Álbum copiado!',
-        message: 'El álbum y todas sus tareas se han añadido a tu perfil.',
-        confirmLabel: 'Ver mi nuevo álbum',
-        cancelLabel: 'Seguir aquí',
+        title: t('albums.copy_success_title'),
+        message: t('albums.copy_success_msg'),
+        confirmLabel: t('albums.view_new_album'),
+        cancelLabel: t('albums.stay_here'),
         onConfirm: () => router.push(`/album/${newAlbum.id}` as any),
       });
     } catch (err: any) {
@@ -1182,14 +1184,14 @@ export function useAlbumDetailState() {
 
   const handleCopyEntireAlbum = () => {
     if (!currentUserId) {
-      toast.info('Debes iniciar sesión para copiar este álbum.');
+      toast.info(t('albums.login_to_copy'));
       return;
     }
     confirm.show({
-      title: '¿Copiar álbum entero?',
-      message: `Se creará una copia de «${album?.title}» y sus ${album?.tasks?.length ?? 0} tareas en tu perfil.`,
-      confirmLabel: 'Copiar álbum',
-      cancelLabel: 'Cancelar',
+      title: t('albums.copy_entire_confirm_title'),
+      message: t('albums.copy_entire_confirm_msg', { title: album?.title, count: album?.tasks?.length ?? 0 }),
+      confirmLabel: t('albums.copy_album_btn'),
+      cancelLabel: t('common.cancel'),
       onConfirm: () => void executeCopyEntireAlbum(),
     });
   };
@@ -1202,10 +1204,10 @@ export function useAlbumDetailState() {
   const confirmDeleteAlbum = () => {
     closeSheet(() => {
       confirm.show({
-        title: '¿Eliminar este álbum?',
-        message: 'Las tareas pasarán a Sin álbum. Esta acción no se puede deshacer.',
-        confirmLabel: 'Eliminar álbum',
-        cancelLabel: 'Cancelar',
+        title: t('albums.delete_confirm_title'),
+        message: t('albums.delete_confirm_desc'),
+        confirmLabel: t('albums.delete_album_btn'),
+        cancelLabel: t('common.cancel'),
         destructive: true,
         onConfirm: () => {
           router.back();

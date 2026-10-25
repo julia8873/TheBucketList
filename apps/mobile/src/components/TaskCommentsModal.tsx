@@ -440,6 +440,11 @@ const styles = themedStyleSheet({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
+    ...Platform.select({
+      web: {
+        alignItems: 'center',
+      },
+    }),
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
@@ -454,6 +459,15 @@ const styles = themedStyleSheet({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
     overflow: 'hidden',
+    width: '100%',
+    ...Platform.select({
+      web: {
+        maxWidth: 620,
+        alignSelf: 'center',
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+      },
+    }),
   },
   sheetContentKeyboard: {
     minHeight: 0,

@@ -168,11 +168,11 @@ export function TaskCoverPicker({
             style={styles.coverRemoveBadge}
             onPress={handleRemoveCover}
             accessibilityRole="button"
-            accessibilityLabel={t('bucket.cover_remove', { defaultValue: 'Borrar foto de portada' })}
+            accessibilityLabel={t('bucket.cover_remove')}
             hitSlop={10}
           >
             <X color="#FFF" size={14} strokeWidth={2.5} />
-            <Text style={styles.coverRemoveBadgeText}>{t('common.delete', { defaultValue: 'Borrar foto' })}</Text>
+            <Text style={styles.coverRemoveBadgeText}>{t('bucket.remove_photo')}</Text>
           </Pressable>
 
           {/* Botones inferiores: Recortar (edita la foto actual) y Cuadrada/Panorámica */}
@@ -181,10 +181,10 @@ export function TaskCoverPicker({
               style={styles.coverChangeBtn}
               onPress={handleRecropCurrent}
               accessibilityRole="button"
-              accessibilityLabel={t('bucket.cover_recrop', { defaultValue: 'Recortar y reajustar foto actual' })}
+              accessibilityLabel={t('bucket.cover_recrop')}
             >
               <Crop color="#FFF" size={13} strokeWidth={2} />
-              <Text style={styles.coverChangeBtnText}>{t('common.edit', { defaultValue: 'Recortar' })}</Text>
+              <Text style={styles.coverChangeBtnText}>{t('bucket.crop_action')}</Text>
             </Pressable>
 
             <Pressable

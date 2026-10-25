@@ -1,5 +1,5 @@
 import { themedStyleSheet } from '@bucketlist/ui';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 
 export const styles = themedStyleSheet({
@@ -7,6 +7,11 @@ export const styles = themedStyleSheet({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.65)',
     justifyContent: 'flex-end',
+    ...Platform.select({
+      web: {
+        alignItems: 'center',
+      },
+    }),
   },
   sheetContent: {
     backgroundColor: '#161616',
@@ -18,6 +23,15 @@ export const styles = themedStyleSheet({
     maxHeight: '80%',
     borderWidth: 1,
     borderColor: '#262626',
+    width: '100%',
+    ...Platform.select({
+      web: {
+        maxWidth: 620,
+        alignSelf: 'center',
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+      },
+    }),
   },
   header: {
     flexDirection: 'row',

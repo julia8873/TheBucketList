@@ -179,7 +179,7 @@ export function AlbumCard({
         {
           ...Platform.select({
             web: {
-              width: 'calc(50% - 6px)',
+              width: 'calc(50% - 7px)',
               aspectRatio: 1 / 1.45,
             } as any,
             default: {
@@ -400,7 +400,7 @@ export function NewAlbumCard({ onPress, style }: { onPress?: () => void; style?:
         {
           ...Platform.select({
             web: {
-              width: 'calc(50% - 6px)',
+              width: 'calc(50% - 7px)',
               aspectRatio: 1 / 1.45,
             } as any,
             default: {
@@ -476,7 +476,7 @@ export function NoAlbumCard({ count, onPress, style }: NoAlbumCardProps) {
         {
           ...Platform.select({
             web: {
-              width: 'calc(50% - 6px)',
+              width: 'calc(50% - 7px)',
               aspectRatio: 1 / 1.45,
             } as any,
             default: {

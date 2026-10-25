@@ -35,10 +35,12 @@ import { PhotoSortField, PhotoSortDir } from '../components/PhotoSortModal';
 import { DatePickerConfig } from '../components/BucketDatePickerModal';
 import type { CollaborationMode, CollaborationAudience } from '../components/TaskCollaborationSettingsModal';
 import { toast, confirm } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export function useBucketDetailState() {
+  const { t } = useTranslation();
   const { id: rawId } = useLocalSearchParams<{ id: string }>();
   const cleanId = Array.isArray(rawId) ? rawId[0] : (rawId ? String(rawId) : '');
   const id = cleanId;
@@ -649,12 +651,12 @@ export function useBucketDetailState() {
 
   const handleRemoveCompletedAt = async () => {
     Alert.alert(
-      'Fecha de completado',
-      '¿Deseas quitar la fecha o también marcar la tarea como pendiente?',
+      t('bucket.remove_completed_date_title'),
+      t('bucket.remove_completed_date_msg'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Solo quitar fecha',
+          text: t('bucket.only_remove_date'),
           onPress: async () => {
             queryClient.setQueryData(['bucketDetail', id], (old: any) =>
               old ? { ...old, completed_at: null } : old
@@ -666,7 +668,7 @@ export function useBucketDetailState() {
           },
         },
         {
-          text: 'Marcar como pendiente',
+          text: t('bucket.remove_and_mark_pending'),
           style: 'destructive',
           onPress: async () => {
             queryClient.setQueryData(['bucketDetail', id], (old: any) =>
@@ -714,10 +716,10 @@ export function useBucketDetailState() {
   const removeAllAlbums = async () => {
     if (!user) return;
     const okRemove = await confirm.ask({
-      title: '¿Quitar de todos los álbumes?',
-      message: 'La tarea dejará de pertenecer a cualquiera de sus álbumes.',
-      confirmLabel: 'Quitar',
-      cancelLabel: 'Cancelar',
+      title: t('bucket.remove_from_all_albums_title'),
+      message: t('bucket.remove_from_all_albums_msg'),
+      confirmLabel: t('common.delete'),
+      cancelLabel: t('common.cancel'),
     });
     if (!okRemove) return;
 
@@ -1374,10 +1376,10 @@ export function useBucketDetailState() {
   const handleDelete = () => {
     closeSheet(() => {
       confirm.show({
-        title: '¿Eliminar tarea?',
-        message: '¿Seguro que quieres eliminar esta tarea? Esta acción no se puede deshacer.',
-        confirmLabel: 'Eliminar tarea',
-        cancelLabel: 'Cancelar',
+        title: t('bucket.delete_task_title'),
+        message: t('bucket.delete_task_confirm', { title: bucket?.title || '' }),
+        confirmLabel: t('common.delete'),
+        cancelLabel: t('common.cancel'),
         destructive: true,
         onConfirm: () => deleteBucket.mutate(id, { onSuccess: () => router.back() }),
       });
@@ -1387,10 +1389,10 @@ export function useBucketDetailState() {
   const handleLeaveCollaboration = () => {
     closeSheet(() => {
       confirm.show({
-        title: 'Dejar de colaborar',
-        message: '¿Quieres salir de esta tarea colaborativa? Dejará de aparecer en tu lista.',
-        confirmLabel: 'Salir de la tarea',
-        cancelLabel: 'Cancelar',
+        title: t('bucket.leave_collab_title'),
+        message: t('bucket.leave_collab_msg'),
+        confirmLabel: t('bucket.leave_collab_confirm'),
+        cancelLabel: t('common.cancel'),
         destructive: true,
         onConfirm: async () => {
           const { error } = await supabase

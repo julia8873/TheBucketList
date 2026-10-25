@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { BellRing, BellPlus, BellOff, Clock } from 'lucide-react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
+import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/notification-subscribers.styles';
 
 interface MySubscriptionSectionProps {
@@ -25,11 +26,15 @@ export function MySubscriptionSection({
   onRequestSubscription,
   onCancelSubscription,
 }: MySubscriptionSectionProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={[styles.notificationToggleSection, isOwner && { marginBottom: 22 }]}>
-      <Text style={styles.sectionHeaderTitle}>Tus notificaciones</Text>
+      <Text style={styles.sectionHeaderTitle}>{t('notification_subscribers.my_section_title')}</Text>
       <Text style={styles.sectionDesc}>
-        Recibe avisos al instante en tu móvil y en la app cuando se añadan, editen o borren tareas, o haya cambios en este {targetType === 'bucket' ? 'tarea' : 'álbum'}.
+        {targetType === 'bucket'
+          ? t('notification_subscribers.my_section_desc_bucket')
+          : t('notification_subscribers.my_section_desc_album')}
       </Text>
 
       {loadingSub ? (
@@ -39,9 +44,9 @@ export function MySubscriptionSection({
           <View style={styles.activeCardLeft}>
             <BellRing size={20} color="#34C759" />
             <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={styles.activeTitle}>Notificaciones activadas</Text>
+              <Text style={styles.activeTitle}>{t('notification_subscribers.active_title')}</Text>
               <Text style={styles.activeSubtitle}>
-                Recibirás avisos de cualquier cambio.
+                {t('notification_subscribers.active_sub')}
               </Text>
             </View>
           </View>
@@ -51,7 +56,7 @@ export function MySubscriptionSection({
             disabled={isRemovePending}
           >
             <BellOff size={15} color="#FF453A" />
-            <Text style={styles.deactivateText}>Desactivar</Text>
+            <Text style={styles.deactivateText}>{t('notification_subscribers.deactivate_btn')}</Text>
           </Pressable>
         </View>
       ) : subscription?.status === 'pending' ? (
@@ -59,9 +64,9 @@ export function MySubscriptionSection({
           <View style={styles.pendingCardLeft}>
             <Clock size={18} color={gold[400]} />
             <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={styles.pendingTitle}>Solicitud pendiente</Text>
+              <Text style={styles.pendingTitle}>{t('notification_subscribers.pending_title')}</Text>
               <Text style={styles.pendingSubtitle}>
-                Esperando a que el creador acepte tu solicitud.
+                {t('notification_subscribers.pending_sub')}
               </Text>
             </View>
           </View>
@@ -70,7 +75,7 @@ export function MySubscriptionSection({
             onPress={onCancelSubscription}
             disabled={isRemovePending}
           >
-            <Text style={styles.cancelRequestText}>Cancelar</Text>
+            <Text style={styles.cancelRequestText}>{t('common.cancel')}</Text>
           </Pressable>
         </View>
       ) : (
@@ -85,7 +90,7 @@ export function MySubscriptionSection({
             <BellPlus size={18} color="#0E0E0E" strokeWidth={2.4} />
           )}
           <Text style={styles.requestBtnText}>
-            {isRequestPending ? 'Activando...' : 'Activar notificaciones'}
+            {isRequestPending ? t('common.loading') : t('notification_subscribers.activate_title')}
           </Text>
         </Pressable>
       )}

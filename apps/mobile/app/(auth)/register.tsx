@@ -325,7 +325,7 @@ export default function RegisterScreen() {
       <AuthInput
         ref={emailRef}
         label={t('auth.email_label')}
-        placeholder="tu@correo.com"
+        placeholder={t('auth.email_placeholder', { defaultValue: 'tu@correo.com' })}
         value={email}
         onChangeText={(v) => { setEmail(v.replace(/\s/g, '')); setError(null); }}
         keyboardType="email-address"
