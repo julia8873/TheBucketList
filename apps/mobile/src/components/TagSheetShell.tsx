@@ -102,7 +102,15 @@ export function TagSheetShell({ visible, onClose, fixedHeight, children }: TagSh
 }
 
 const styles = themedStyleSheet({
-  overlay: { flex: 1, justifyContent: 'flex-end' },
+  overlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    ...Platform.select({
+      web: {
+        alignItems: 'center',
+      },
+    }),
+  },
   backdrop: { backgroundColor: 'rgba(0,0,0,0.7)' },
   sheet: {
     backgroundColor: '#141414',
@@ -112,6 +120,15 @@ const styles = themedStyleSheet({
     borderBottomWidth: 0,
     borderColor: '#2A2A2A',
     overflow: 'hidden',
+    width: '100%',
+    ...Platform.select({
+      web: {
+        maxWidth: 620,
+        alignSelf: 'center',
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+      },
+    }),
   },
   handleArea: { paddingTop: 10, paddingBottom: 14, alignItems: 'center' },
   handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#444444' },

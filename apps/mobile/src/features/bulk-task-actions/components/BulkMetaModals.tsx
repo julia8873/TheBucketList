@@ -3,6 +3,7 @@ import { View, Text, Pressable, Modal } from 'react-native';
 import { X, Flag, Lock } from 'lucide-react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { styles } from '../styles/bulk-actions.styles';
+import { useTranslation } from '@bucketlist/shared';
 
 interface BulkPriorityModalProps {
   visible: boolean;
@@ -17,6 +18,7 @@ export function BulkPriorityModal({
   onClose,
   onSelectPriority,
 }: BulkPriorityModalProps) {
+  const { t } = useTranslation();
   if (!visible) return null;
 
   return (
@@ -29,14 +31,14 @@ export function BulkPriorityModal({
       <Pressable style={styles.modalOverlay} onPress={onClose}>
         <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Prioridad para {count} tareas</Text>
+            <Text style={styles.modalTitle}>{t('bulk_actions.priority_modal_title', { count })}</Text>
             <Pressable onPress={onClose} hitSlop={10}>
               <X size={20} color="#888" />
             </Pressable>
           </View>
 
           {(['high', 'medium', 'low'] as const).map((p) => {
-            const label = p === 'high' ? 'Alta' : p === 'medium' ? 'Media' : 'Baja';
+            const label = p === 'high' ? t('common.high') : p === 'medium' ? t('common.medium') : t('common.low');
             const col = p === 'high' ? '#EF4444' : p === 'medium' ? '#D4B13A' : '#10B981';
             return (
               <Pressable
@@ -46,7 +48,7 @@ export function BulkPriorityModal({
               >
                 <View style={styles.albumOptionLeft}>
                   <Flag size={18} color={col} />
-                  <Text style={styles.albumOptionTitle}>Prioridad {label}</Text>
+                  <Text style={styles.albumOptionTitle}>{t('bulk_actions.change_priority')}: {label}</Text>
                 </View>
               </Pressable>
             );
@@ -70,6 +72,7 @@ export function BulkVisibilityModal({
   onClose,
   onSelectVisibility,
 }: BulkVisibilityModalProps) {
+  const { t } = useTranslation();
   if (!visible) return null;
 
   return (
@@ -82,14 +85,19 @@ export function BulkVisibilityModal({
       <Pressable style={styles.modalOverlay} onPress={onClose}>
         <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Visibilidad para {count} tareas</Text>
+            <Text style={styles.modalTitle}>{t('bulk_actions.visibility_modal_title', { count })}</Text>
             <Pressable onPress={onClose} hitSlop={10}>
               <X size={20} color="#888" />
             </Pressable>
           </View>
 
           {(['public', 'followers', 'private'] as const).map((v) => {
-            const label = v === 'public' ? 'Pública' : v === 'followers' ? 'Solo seguidores' : 'Privada';
+            const label =
+              v === 'public'
+                ? t('albums.visibility_public')
+                : v === 'followers'
+                ? t('albums.visibility_followers')
+                : t('albums.visibility_private');
             return (
               <Pressable
                 key={v}

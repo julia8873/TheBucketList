@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../../services/supabase';
 import { CollectionItem } from '../types';
-import { DEFAULT_COLLECTIONS } from '../data/defaultCollections';
+import { DEFAULT_COLLECTIONS, getDefaultCollections } from '../data/defaultCollections';
 import { getAlbumTagsStorageKey } from '../../../hooks/useAlbumTags';
 
 const STORAGE_CUSTOM_COLLECTIONS = '@bucketlist_custom_collections';
@@ -13,12 +13,12 @@ export const collectionsService = {
   /**
    * Obtiene la lista completa de colecciones con métricas reales de likes y clones.
    * Diseñado para combinar:
-   * 1. Colecciones por defecto precargadas
+   * 1. Colecciones por defecto precargadas (según idioma)
    * 2. Colecciones en Supabase si la tabla existe o álbumes destacados
    * 3. Colecciones creadas/ofrecidas por usuarios
    * 4. Métricas reales de clones y likes del usuario
    */
-  getCollections: async (userId?: string): Promise<CollectionItem[]> => {
+  getCollections: async (userId?: string, lang: string = 'es'): Promise<CollectionItem[]> => {
     let customList: CollectionItem[] = [];
     try {
       const raw = await AsyncStorage.getItem(STORAGE_CUSTOM_COLLECTIONS);
@@ -104,7 +104,7 @@ export const collectionsService = {
     }
 
     const map = new Map<string, CollectionItem>();
-    DEFAULT_COLLECTIONS.forEach((c) => {
+    getDefaultCollections(lang).forEach((c) => {
       if (!deletedRemoteSet.has(c.id) && !deletedLocalSet.has(c.id)) {
         map.set(c.id, { ...c });
       }

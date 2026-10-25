@@ -3,6 +3,7 @@ import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Sparkles, Layers, Heart, Copy, ChevronRight } from 'lucide-react-native';
 import { useTheme, gold, fontFamily } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { CollectionItem } from '../types';
 
 interface FeaturedCollectionsRowProps {
@@ -17,10 +18,14 @@ export function FeaturedCollectionsRow({
   collections,
   onSelectCollection,
   onViewAll,
-  title = 'Colecciones destacadas',
-  subtitle = 'Álbumes prediseñados para clonar en tu lista',
+  title,
+  subtitle,
 }: FeaturedCollectionsRowProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
+
+  const resolvedTitle = title ?? t('collections.featured_title', { defaultValue: 'Colecciones destacadas' });
+  const resolvedSubtitle = subtitle ?? t('collections.featured_subtitle', { defaultValue: 'Álbumes prediseñados para clonar en tu lista' });
 
   if (!collections || collections.length === 0) return null;
 
@@ -31,11 +36,11 @@ export function FeaturedCollectionsRow({
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Sparkles size={16} color={gold[400]} />
-            <Text style={[styles.title, { color: theme.colors.foreground }]}>{title}</Text>
+            <Text style={[styles.title, { color: theme.colors.foreground }]}>{resolvedTitle}</Text>
           </View>
-          {subtitle ? (
+          {resolvedSubtitle ? (
             <Text style={[styles.subtitle, { color: theme.colors.foregroundMuted }]}>
-              {subtitle}
+              {resolvedSubtitle}
             </Text>
           ) : null}
         </View>
@@ -46,9 +51,9 @@ export function FeaturedCollectionsRow({
             hitSlop={6}
             style={styles.viewAllBtn}
             accessibilityRole="button"
-            accessibilityLabel="Ver todas las colecciones"
+            accessibilityLabel={t('collections.view_all', { defaultValue: 'Ver todas' })}
           >
-            <Text style={styles.viewAllText}>Ver todas</Text>
+            <Text style={styles.viewAllText}>{t('collections.view_all', { defaultValue: 'Ver todas' })}</Text>
             <ChevronRight size={14} color={gold[400]} />
           </Pressable>
         ) : null}
@@ -134,7 +139,9 @@ export function FeaturedCollectionsRow({
                   </View>
                 ) : null}
                 <View style={{ flex: 1 }} />
-                <Text style={styles.clonePrompt}>Clonar</Text>
+                <Text style={styles.clonePrompt}>
+                  {t('collections.clone', { defaultValue: 'Clonar' })}
+                </Text>
               </View>
             </View>
           </Pressable>

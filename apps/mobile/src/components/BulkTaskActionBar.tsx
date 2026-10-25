@@ -27,6 +27,7 @@ import { BulkMoveModal } from '../features/bulk-task-actions/components/BulkMove
 import { BulkTagsModal } from '../features/bulk-task-actions/components/BulkTagsModal';
 import { BulkMoreMenuModal } from '../features/bulk-task-actions/components/BulkMoreMenuModal';
 import { BulkPriorityModal, BulkVisibilityModal } from '../features/bulk-task-actions/components/BulkMetaModals';
+import { useTranslation } from '@bucketlist/shared';
 
 interface BulkTaskActionBarProps {
   selectedIds: string[];
@@ -45,6 +46,7 @@ export function BulkTaskActionBar({
 }: BulkTaskActionBarProps) {
   const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const count = selectedIds.length;
 
   const {
@@ -75,9 +77,9 @@ export function BulkTaskActionBar({
 
   if (count === 0) return null;
 
-  const plural = count === 1 ? '1 tarea seleccionada' : `${count} tareas seleccionadas`;
+  const plural = count === 1 ? t('bulk_actions.selected_single') : t('bulk_actions.selected_plural', { count });
   const askBulk = (title: string, message: string, confirmLabel: string) =>
-    confirm.ask({ title, message, confirmLabel, cancelLabel: 'Cancelar' });
+    confirm.ask({ title, message, confirmLabel, cancelLabel: t('common.cancel') });
 
   const handleMoveToAlbum = async (albumId: string | null) => {
     const targetAlbum = albumId ? albums.find((a: any) => a.id === albumId) : null;
@@ -92,7 +94,7 @@ export function BulkTaskActionBar({
         });
       setShowMoveModal(false);
       onClearSelection();
-      toast.success(albumId ? 'Tareas movidas al álbum' : 'Tareas sacadas del álbum');
+      toast.success(albumId ? t('bulk_actions.toast_moved_album') : t('bulk_actions.toast_removed_album'));
       try {
         await pending;
       } catch (e: any) {
@@ -102,9 +104,9 @@ export function BulkTaskActionBar({
 
     if (albumId && targetAlbum?.visibility) {
       const visLabels: Record<string, string> = {
-        private: 'privada',
-        followers: 'solo para seguidores',
-        public: 'pública',
+        private: t('albums.visibility_private').toLowerCase(),
+        followers: t('albums.visibility_followers').toLowerCase(),
+        public: t('albums.visibility_public').toLowerCase(),
       };
       const visLabel = visLabels[targetAlbum.visibility] || targetAlbum.visibility;
 
@@ -127,11 +129,11 @@ export function BulkTaskActionBar({
     }
 
     const okMove = await askBulk(
-      '¿Mover tareas?',
+      t('bulk_actions.confirm_move_title'),
       albumId
         ? `Se moverán ${plural} al álbum${albumName ? ` «${albumName}»` : ''}.`
         : `Se sacarán de su álbum ${plural} (quedarán sin álbum).`,
-      'Mover',
+      t('bulk_actions.action_move'),
     );
     if (!okMove) return;
     await executeMove(undefined);
@@ -140,9 +142,9 @@ export function BulkTaskActionBar({
   const handleAssignTags = async () => {
     if (!selectedTagIds.length) return;
     const okTags = await askBulk(
-      '¿Asignar etiquetas?',
+      t('bulk_actions.confirm_tags_title'),
       `Se asignarán ${selectedTagIds.length === 1 ? 'la etiqueta elegida' : `las ${selectedTagIds.length} etiquetas elegidas`} a ${plural}.`,
-      'Asignar',
+      t('bulk_actions.action_tags'),
     );
     if (!okTags) return;
     // Optimista: las etiquetas se ven al instante; el servidor se sincroniza detrás.
@@ -153,7 +155,7 @@ export function BulkTaskActionBar({
     setShowTagsModal(false);
     setSelectedTagIds([]);
     onClearSelection();
-    toast.success('Etiquetas asignadas');
+    toast.success(t('bulk_actions.toast_tags_assigned'));
     try {
       await pending;
     } catch (e: any) {
@@ -167,9 +169,9 @@ export function BulkTaskActionBar({
     const friend = collabs[collabs.length - 1];
     if (!friend) return;
     const okShare = await askBulk(
-      '¿Compartir tareas?',
+      t('bulk_actions.confirm_share_title'),
       `Se invitará a ${friend.display_name || friend.username} a colaborar en ${plural}.`,
-      'Compartir',
+      t('bulk_actions.action_share'),
     );
     if (!okShare) return;
     try {
@@ -178,7 +180,7 @@ export function BulkTaskActionBar({
         collaboratorId: friend.id,
       });
       onClearSelection();
-      toast.success(`Se ha añadido a ${friend.display_name || friend.username} a las ${count} tareas.`);
+      toast.success(t('bulk_actions.toast_shared', { name: friend.display_name || friend.username, count }));
     } catch (e: any) {
       toast.error(e?.message || 'No se pudieron compartir las tareas');
     }
@@ -186,15 +188,15 @@ export function BulkTaskActionBar({
 
   const handleCompleteAll = () => {
     confirm.show({
-      title: '¿Completar tareas?',
-      message: `Se marcarán como completadas las ${count} tareas seleccionadas.`,
-      confirmLabel: 'Completar todas',
-      cancelLabel: 'Cancelar',
+      title: t('bulk_actions.confirm_complete_title'),
+      message: t('bulk_actions.confirm_complete_msg', { count }),
+      confirmLabel: t('bulk_actions.action_complete'),
+      cancelLabel: t('common.cancel'),
       onConfirm: async () => {
         // Actualización optimista: la UI cambia al instante; el servidor se sincroniza detrás.
         const pending = completeAllTasks.mutateAsync(selectedIds);
         onClearSelection();
-        toast.success(`${count} tareas completadas`);
+        toast.success(t('bulk_actions.toast_completed', { count }));
         try {
           await pending;
         } catch (e: any) {
@@ -207,16 +209,16 @@ export function BulkTaskActionBar({
   const handleDeleteAll = () => {
     setShowMoreMenuModal(false);
     confirm.show({
-      title: '¿Eliminar tareas?',
-      message: `¿Estás seguro de que quieres eliminar ${count} tareas seleccionadas? Esta acción no se puede deshacer.`,
-      confirmLabel: `Eliminar todas (${count})`,
-      cancelLabel: 'Cancelar',
+      title: t('bulk_actions.confirm_delete_title'),
+      message: t('bulk_actions.confirm_delete_msg', { count }),
+      confirmLabel: t('bulk_actions.delete_all', { count }),
+      cancelLabel: t('common.cancel'),
       destructive: true,
       onConfirm: async () => {
         // Actualización optimista: la UI cambia al instante; el servidor se sincroniza detrás.
         const pending = deleteAllTasks.mutateAsync(selectedIds);
         onClearSelection();
-        toast.success(`${count} tareas eliminadas`);
+        toast.success(t('bulk_actions.toast_deleted', { count }));
         try {
           await pending;
         } catch (e: any) {
@@ -229,16 +231,16 @@ export function BulkTaskActionBar({
   const handleClearNotifications = () => {
     setShowMoreMenuModal(false);
     confirm.show({
-      title: 'Vaciar notificaciones',
-      message: `¿Deseas vaciar y desactivar las notificaciones de las ${count} tareas seleccionadas?`,
-      confirmLabel: 'Vaciar notificaciones',
-      cancelLabel: 'Cancelar',
+      title: t('bulk_actions.confirm_clear_notifications_title'),
+      message: t('bulk_actions.confirm_clear_notifications_msg', { count }),
+      confirmLabel: t('bulk_actions.clear_notifications'),
+      cancelLabel: t('common.cancel'),
       destructive: true,
       onConfirm: async () => {
         try {
           await clearNotificationsForTasks.mutateAsync(selectedIds);
           onClearSelection();
-          toast.success('Notificaciones vaciadas de las tareas seleccionadas');
+          toast.success(t('bulk_actions.toast_notifications_cleared'));
         } catch (e: any) {
           toast.error(e?.message || 'Error al vaciar notificaciones');
         }
@@ -259,14 +261,14 @@ export function BulkTaskActionBar({
             <Text style={styles.badgeCountText}>{count}</Text>
           </View>
           <Text style={styles.infoTitle}>
-            {count === 1 ? '1 tarea seleccionada' : `${count} tareas seleccionadas`}
+            {count === 1 ? t('bulk_actions.selected_single') : t('bulk_actions.selected_plural', { count })}
           </Text>
 
           <View style={styles.infoRight}>
             {onSelectAll && (
               <Pressable style={styles.selectAllBtn} onPress={onSelectAll} hitSlop={6}>
                 <Text style={styles.selectAllText}>
-                  {isAllSelected ? 'Deseleccionar' : 'Todas'}
+                  {isAllSelected ? t('bulk_actions.deselect_all') : t('bulk_actions.select_all')}
                 </Text>
               </Pressable>
             )}
@@ -281,35 +283,35 @@ export function BulkTaskActionBar({
             <View style={styles.actionIconBox}>
               <FolderInput size={18} color={gold[400]} />
             </View>
-            <Text style={styles.actionLabel}>Mover</Text>
+            <Text style={styles.actionLabel}>{t('bulk_actions.action_move')}</Text>
           </Pressable>
 
           <Pressable style={styles.actionBtn} onPress={() => setShowTagsModal(true)}>
             <View style={styles.actionIconBox}>
               <TagIcon size={18} color={gold[400]} />
             </View>
-            <Text style={styles.actionLabel}>Etiquetas</Text>
+            <Text style={styles.actionLabel}>{t('bulk_actions.action_tags')}</Text>
           </Pressable>
 
           <Pressable style={styles.actionBtn} onPress={() => setShowCollaboratorSheet(true)}>
             <View style={styles.actionIconBox}>
               <UserPlus size={18} color={gold[400]} />
             </View>
-            <Text style={styles.actionLabel}>Compartir</Text>
+            <Text style={styles.actionLabel}>{t('bulk_actions.action_share')}</Text>
           </Pressable>
 
           <Pressable style={styles.actionBtn} onPress={handleCompleteAll}>
             <View style={[styles.actionIconBox, { backgroundColor: '#13281A', borderColor: '#1F472B' }]}>
               <CheckCircle2 size={18} color="#34C759" />
             </View>
-            <Text style={styles.actionLabel}>Completar</Text>
+            <Text style={styles.actionLabel}>{t('bulk_actions.action_complete')}</Text>
           </Pressable>
 
           <Pressable style={styles.actionBtn} onPress={() => setShowMoreMenuModal(true)}>
             <View style={styles.actionIconBox}>
               <MoreHorizontal size={18} color="#FFF" />
             </View>
-            <Text style={styles.actionLabel}>Más</Text>
+            <Text style={styles.actionLabel}>{t('bulk_actions.action_more')}</Text>
           </Pressable>
         </View>
       </View>
@@ -361,9 +363,9 @@ export function BulkTaskActionBar({
         onAddFavorites={async () => {
           setShowMoreMenuModal(false);
           const okFav = await askBulk(
-            '¿Añadir a favoritas?',
+            t('bulk_actions.add_favorites'),
             `Se marcarán como favoritas ${plural}.`,
-            'Añadir',
+            t('common.add'),
           );
           if (!okFav) return;
           try {
@@ -372,7 +374,7 @@ export function BulkTaskActionBar({
               favorite: true,
             });
             onClearSelection();
-            toast.success(`Añadidas ${count} tareas a tus favoritas.`);
+            toast.success(t('bulk_actions.toast_favorites_added', { count }));
           } catch (e: any) {
             toast.error(e?.message || 'Error al marcar como favoritas');
           }
@@ -380,15 +382,15 @@ export function BulkTaskActionBar({
         onReopenTasks={async () => {
           setShowMoreMenuModal(false);
           const okReopen = await askBulk(
-            '¿Marcar como pendientes?',
+            t('bulk_actions.reopen_tasks'),
             `Se volverán a marcar como pendientes ${plural}.`,
-            'Marcar pendientes',
+            t('bulk_actions.reopen_tasks'),
           );
           if (!okReopen) return;
           // Actualización optimista: la UI cambia al instante; el servidor se sincroniza detrás.
           const pending = reopenAllTasks.mutateAsync(selectedIds);
           onClearSelection();
-          toast.success(`Se han marcado ${count} tareas como pendientes.`);
+          toast.success(t('bulk_actions.toast_reopened', { count }));
           try {
             await pending;
           } catch (e: any) {
@@ -405,9 +407,9 @@ export function BulkTaskActionBar({
         onSelectPriority={async (p) => {
           setShowPriorityModal(false);
           const okPrio = await askBulk(
-            '¿Cambiar prioridad?',
+            t('bulk_actions.change_priority'),
             `Se cambiará la prioridad de ${plural}.`,
-            'Cambiar',
+            t('common.save'),
           );
           if (!okPrio) return;
           // Actualización optimista: la UI cambia al instante; el servidor se sincroniza detrás.
@@ -416,7 +418,7 @@ export function BulkTaskActionBar({
               priority: p,
             });
           onClearSelection();
-          toast.success('Prioridad actualizada');
+          toast.success(t('bulk_actions.toast_priority_updated'));
           try {
             await pending;
           } catch (e: any) {
@@ -432,9 +434,9 @@ export function BulkTaskActionBar({
         onSelectVisibility={async (v) => {
           setShowVisibilityModal(false);
           const okVis = await askBulk(
-            '¿Cambiar visibilidad?',
+            t('bulk_actions.change_visibility'),
             `Se cambiará la visibilidad de ${plural}.`,
-            'Cambiar',
+            t('common.save'),
           );
           if (!okVis) return;
           // Actualización optimista: la UI cambia al instante; el servidor se sincroniza detrás.
@@ -443,7 +445,7 @@ export function BulkTaskActionBar({
               visibility: v,
             });
           onClearSelection();
-          toast.success('Visibilidad actualizada');
+          toast.success(t('bulk_actions.toast_visibility_updated'));
           try {
             await pending;
           } catch (e: any) {

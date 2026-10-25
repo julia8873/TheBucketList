@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, Modal, StyleSheet } from 'react-native';
 import { ArrowDown, ArrowUp, Check, GripVertical } from 'lucide-react-native';
 import { useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/album-detail.styles';
 
 export type TaskSortField = 'manual' | 'priority' | 'alphabetical' | 'completed_at';
@@ -31,6 +32,7 @@ export function AlbumSortModal({
   onSelectOption,
 }: AlbumSortModalProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   if (!visible) return null;
 
   return (
@@ -50,11 +52,11 @@ export function AlbumSortModal({
           {(
             [
               ...(canEdit && albumId !== 'unassigned'
-                ? [{ field: 'manual' as const, label: 'Reordenar manualmente' }]
+                ? [{ field: 'manual' as const, label: t('albums.drag_reorder', { defaultValue: 'Reordenar manualmente' }) }]
                 : []),
-              { field: 'priority' as const, label: 'Prioridad' },
-              { field: 'alphabetical' as const, label: 'Nombre' },
-              { field: 'completed_at' as const, label: 'Fecha de completado' },
+              { field: 'priority' as const, label: t('albums.sort_priority', { defaultValue: 'Prioridad' }) },
+              { field: 'alphabetical' as const, label: t('albums.sort_name', { defaultValue: 'Nombre' }) },
+              { field: 'completed_at' as const, label: t('albums.sort_completed_date', { defaultValue: 'Fecha de completado' }) },
             ] as const
           ).map((opt, i) => {
             const selected =

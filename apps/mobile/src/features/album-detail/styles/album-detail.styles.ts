@@ -190,6 +190,18 @@ export const styles = themedStyleSheet({
     position: 'absolute', bottom: 0, left: 0, right: 0,
     backgroundColor: '#0D0D0D', borderTopWidth: 1, borderTopColor: '#262626',
     paddingTop: 14, paddingHorizontal: 20, flexDirection: 'row', gap: 12,
+    ...Platform.select({
+      web: {
+        maxWidth: 620,
+        marginHorizontal: 'auto',
+        alignSelf: 'center',
+        left: 0,
+        right: 0,
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.07)',
+      } as any,
+    }),
   },
   btnEdit: {
     height: 56, borderRadius: 999, borderWidth: 1, borderColor: '#D4B13A',
@@ -222,11 +234,30 @@ export const styles = themedStyleSheet({
   },
   taskAddBtnText: { fontFamily: 'Inter_700Bold', fontSize: 12, color: '#0D0D0D' },
   // Bottom Sheet
-  sheetBackdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.65)' },
+  sheetBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    ...Platform.select({
+      web: {
+        alignItems: 'center',
+      },
+    }),
+  },
   bottomSheet: {
     maxHeight: '85%', borderTopLeftRadius: 28, borderTopRightRadius: 28,
     paddingTop: 10, paddingBottom: Platform.OS === 'ios' ? 34 : 20, paddingHorizontal: 20,
     backgroundColor: '#151515', borderWidth: 1, borderColor: '#262626',
+    width: '100%',
+    ...Platform.select({
+      web: {
+        maxWidth: 620,
+        alignSelf: 'center',
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.07)',
+      } as any,
+    }),
   },
   sheetScroll: { flexGrow: 0 },
   sheetScrollContent: { paddingBottom: 24 },

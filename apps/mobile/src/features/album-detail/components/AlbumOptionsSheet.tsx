@@ -34,6 +34,7 @@ import {
   Sparkles,
 } from 'lucide-react-native';
 import { styles } from '../styles/album-detail.styles';
+import { useTranslation } from '@bucketlist/shared';
 
 type SheetMode = 'menu' | 'visibility' | 'priority' | 'status' | 'cover';
 
@@ -125,6 +126,8 @@ export function AlbumOptionsSheet({
   onConfirmLeave,
   onReport,
 }: AlbumOptionsSheetProps) {
+  const { t } = useTranslation();
+
   useEffect(() => {
     if (!visible) return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -150,7 +153,9 @@ export function AlbumOptionsSheet({
           {sheetMode === 'menu' && (
             <>
               <View style={styles.sheetHeader}>
-                <Text style={styles.sheetHeaderText}>Opciones del álbum</Text>
+                <Text style={styles.sheetHeaderText}>
+                  {t('albums.options_title', { defaultValue: 'Opciones del álbum' })}
+                </Text>
                 <Pressable style={styles.sheetCloseBtn} onPress={onClose}>
                   <X color="#8F8F8F" size={20} />
                 </Pressable>
@@ -165,16 +170,16 @@ export function AlbumOptionsSheet({
                   {currentUserId && albumId !== 'unassigned' && canEdit && (
                     <SheetOption
                       icon={<Star color="#D4B13A" fill={isFav ? '#D4B13A' : 'transparent'} size={20} />}
-                      title={isFav ? 'Quitar de favoritos' : 'Marcar como favorito'}
-                      subtitle={isFav ? 'Elimina este álbum de tu lista de favoritos' : 'Guarda este álbum en tus favoritos'}
+                      title={isFav ? t('albums.options_unfav', { defaultValue: 'Quitar de favoritos' }) : t('albums.options_fav', { defaultValue: 'Marcar como favorito' })}
+                      subtitle={isFav ? t('albums.options_unfav_sub', { defaultValue: 'Elimina este álbum de tu lista de favoritos' }) : t('albums.options_fav_sub', { defaultValue: 'Guarda este álbum en tus favoritos' })}
                       onPress={onToggleFavorite}
                     />
                   )}
                   {currentUserId && albumId !== 'unassigned' && !canEdit && onToggleSave && (
                     <SheetOption
                       icon={<Bookmark color="#D4B13A" fill={isSaved ? '#D4B13A' : 'transparent'} size={20} />}
-                      title={isSaved ? 'Quitar de guardados' : 'Guardar álbum'}
-                      subtitle={isSaved ? 'Elimina este álbum de tus álbumes guardados' : 'Guarda este álbum en tu sección de álbumes guardados'}
+                      title={isSaved ? t('albums.options_unsave', { defaultValue: 'Quitar de guardados' }) : t('albums.options_save', { defaultValue: 'Guardar álbum' })}
+                      subtitle={isSaved ? t('albums.options_unsave_sub', { defaultValue: 'Elimina este álbum de tus álbumes guardados' }) : t('albums.options_save_sub', { defaultValue: 'Guarda este álbum en tu sección de álbumes guardados' })}
                       onPress={() => {
                         onClose();
                         onToggleSave();
@@ -184,8 +189,8 @@ export function AlbumOptionsSheet({
                   {canEdit && tasksLength > 0 && (
                     <SheetOption
                       icon={areAllCompleted ? <RotateCcw color="#D4B13A" size={20} /> : <CheckCircle2 color="#D4B13A" size={20} />}
-                      title={areAllCompleted ? 'Marcar todas como pendientes' : 'Marcar todas como completadas'}
-                      subtitle={areAllCompleted ? 'Revertir estado de todas las tareas' : 'Completa todas las tareas del álbum'}
+                      title={areAllCompleted ? t('albums.options_mark_all_pending', { defaultValue: 'Marcar todas como pendientes' }) : t('albums.options_mark_all_completed', { defaultValue: 'Marcar todas como completadas' })}
+                      subtitle={areAllCompleted ? t('albums.options_mark_all_pending_sub', { defaultValue: 'Revertir estado de todas las tareas' }) : t('albums.options_mark_all_completed_sub', { defaultValue: 'Completa todas las tareas del álbum' })}
                       onPress={onToggleAllTasks}
                     />
                   )}
@@ -193,14 +198,14 @@ export function AlbumOptionsSheet({
                     <>
                       <SheetOption
                         icon={<FolderPlus color="#D4B13A" size={20} />}
-                        title="Copiar álbum a mi perfil"
-                        subtitle="Crea una copia de este álbum y sus tareas en tu lista"
+                        title={t('albums.options_copy_profile', { defaultValue: 'Copiar álbum a mi perfil' })}
+                        subtitle={t('albums.options_copy_profile_sub', { defaultValue: 'Crea una copia de este álbum y sus tareas en tu lista' })}
                         onPress={onCopyAlbum}
                       />
                       <SheetOption
                         icon={<ShareIcon color="#D4B13A" size={20} />}
-                        title="Compartir álbum"
-                        subtitle="Envía este álbum a tus amigos"
+                        title={t('albums.options_share', { defaultValue: 'Compartir álbum' })}
+                        subtitle={t('albums.options_share_sub', { defaultValue: 'Envía este álbum a tus amigos' })}
                         onPress={onShare}
                       />
                     </>
@@ -208,8 +213,8 @@ export function AlbumOptionsSheet({
                   {!isOwner && currentUserId && albumId !== 'unassigned' && onReport && (
                     <SheetOption
                       icon={<Flag color="#EF4444" size={20} />}
-                      title="Reportar álbum"
-                      subtitle="Avisa al administrador de contenido inapropiado"
+                      title={t('albums.options_report', { defaultValue: 'Reportar álbum' })}
+                      subtitle={t('albums.options_report_sub', { defaultValue: 'Avisa al administrador de contenido inapropiado' })}
                       titleStyle={{ color: '#EF4444' }}
                       iconStyle={{ backgroundColor: 'rgba(239, 68, 68, 0.12)' }}
                       onPress={() => {
@@ -222,46 +227,46 @@ export function AlbumOptionsSheet({
                     <>
                       <SheetOption
                         icon={<Camera color="#D4B13A" size={20} />}
-                        title="Cambiar portada"
-                        subtitle="Elige foto de la galería, cámara o enlace web"
+                        title={t('albums.options_change_cover', { defaultValue: 'Cambiar portada' })}
+                        subtitle={t('albums.options_change_cover_sub', { defaultValue: 'Elige foto de la galería, cámara o enlace web' })}
                         onPress={() => onSetSheetMode('cover')}
                       />
                       <SheetOption
                         icon={<Lock color="#D4B13A" size={20} />}
-                        title={isAlbumClosed ? 'Reabrir álbum' : 'Cerrar álbum para siempre'}
-                        subtitle={isAlbumClosed ? 'Permite volver a añadir tareas al álbum' : 'Marca el álbum como cerrado y completado definitivamente'}
+                        title={isAlbumClosed ? t('albums.options_reopen', { defaultValue: 'Reabrir álbum' }) : t('albums.options_close', { defaultValue: 'Cerrar álbum para siempre' })}
+                        subtitle={isAlbumClosed ? t('albums.options_reopen_sub', { defaultValue: 'Permite volver a añadir tareas al álbum' }) : t('albums.options_close_sub', { defaultValue: 'Marca el álbum como cerrado y completado definitivamente' })}
                         onPress={() => onToggleClose(!isAlbumClosed)}
                       />
                       <SheetOption
                         icon={<Flag color="#D4B13A" size={20} />}
-                        title="Cambiar prioridad"
-                        subtitle={albumPriority === 'high' || albumPriority === 'urgent' ? 'Prioridad Alta' : albumPriority === 'low' ? 'Prioridad Baja' : 'Prioridad Media'}
+                        title={t('albums.options_change_priority', { defaultValue: 'Cambiar prioridad' })}
+                        subtitle={albumPriority === 'high' || albumPriority === 'urgent' ? t('common.high', { defaultValue: 'Prioridad Alta' }) : albumPriority === 'low' ? t('common.low', { defaultValue: 'Prioridad Baja' }) : t('common.medium', { defaultValue: 'Prioridad Media' })}
                         onPress={() => onSetSheetMode('priority')}
                       />
                       <SheetOption
                         icon={<Eye color="#D4B13A" size={20} />}
-                        title="Cambiar visibilidad"
-                        subtitle={albumVisibility === 'public' ? 'Público actualmente' : albumVisibility === 'followers' ? 'Solo amigos actualmente' : 'Privado actualmente'}
+                        title={t('albums.options_change_visibility', { defaultValue: 'Cambiar visibilidad' })}
+                        subtitle={albumVisibility === 'public' ? t('albums.visibility_public', { defaultValue: 'Público actualmente' }) : albumVisibility === 'followers' ? t('albums.visibility_followers', { defaultValue: 'Solo amigos actualmente' }) : t('albums.visibility_private', { defaultValue: 'Privado actualmente' })}
                         onPress={() => onSetSheetMode('visibility')}
                       />
                       <SheetOption
                         icon={<Users color="#D4B13A" size={20} />}
-                        title="Gestionar colaboradores"
-                        subtitle="Invita o quita personas de este álbum"
+                        title={t('albums.options_collaborators', { defaultValue: 'Gestionar colaboradores' })}
+                        subtitle={t('albums.options_collaborators_sub', { defaultValue: 'Invita o quita personas de este álbum' })}
                         onPress={onOpenCollaborators}
                       />
                       {onOpenTags && (
                         <SheetOption
                           icon={<TagIcon color="#D4B13A" size={20} />}
-                          title="Gestionar etiquetas"
-                          subtitle="Añade o quita etiquetas del álbum y sus tareas"
+                          title={t('albums.options_tags', { defaultValue: 'Gestionar etiquetas' })}
+                          subtitle={t('albums.options_tags_sub', { defaultValue: 'Añade o quita etiquetas del álbum y sus tareas' })}
                           onPress={onOpenTags}
                         />
                       )}
                       <SheetOption
                         icon={<Pencil color="#D4B13A" size={20} />}
-                        title="Editar detalles completos"
-                        subtitle="Nombre, portada, privacidad y más"
+                        title={t('albums.options_edit_full', { defaultValue: 'Editar detalles completos' })}
+                        subtitle={t('albums.options_edit_full_sub', { defaultValue: 'Nombre, portada, privacidad y más' })}
                         onPress={onClose}
                       />
                     </>
@@ -280,8 +285,8 @@ export function AlbumOptionsSheet({
                   {isOwner && (
                     <SheetOption
                       icon={<Trash2 color="#EF4444" size={20} />}
-                      title="Eliminar álbum"
-                      subtitle="Las tareas se moverán a Sin álbum"
+                      title={t('albums.options_delete', { defaultValue: 'Eliminar álbum' })}
+                      subtitle={t('albums.options_delete_sub', { defaultValue: 'Las tareas se moverán a Sin álbum' })}
                       titleStyle={{ color: '#EF4444' }}
                       iconStyle={{ backgroundColor: 'rgba(239, 68, 68, 0.12)' }}
                       onPress={onConfirmDelete}
@@ -291,8 +296,8 @@ export function AlbumOptionsSheet({
                   {isCollaborator && (
                     <SheetOption
                       icon={<Trash2 color="#EF4444" size={20} />}
-                      title="Dejar de colaborar"
-                      subtitle="El álbum dejará de aparecer en tu lista"
+                      title={t('albums.options_leave', { defaultValue: 'Dejar de colaborar' })}
+                      subtitle={t('albums.options_leave_sub', { defaultValue: 'El álbum dejará de aparecer en tu lista' })}
                       titleStyle={{ color: '#EF4444' }}
                       iconStyle={{ backgroundColor: 'rgba(239, 68, 68, 0.12)' }}
                       onPress={onConfirmLeave}
@@ -307,16 +312,18 @@ export function AlbumOptionsSheet({
           {sheetMode === 'priority' && (
             <>
               <View style={styles.sheetHeader}>
-                <Text style={styles.sheetHeaderText}>Prioridad del álbum</Text>
+                <Text style={styles.sheetHeaderText}>
+                  {t('albums.options_change_priority', { defaultValue: 'Prioridad del álbum' })}
+                </Text>
                 <Pressable style={styles.sheetCloseBtn} onPress={() => onSetSheetMode('menu')}>
                   <X color="#8F8F8F" size={20} />
                 </Pressable>
               </View>
               <View style={styles.sheetOptions}>
                 {[
-                  { key: 'high', label: 'Prioridad Alta', color: '#EF4444' },
-                  { key: 'medium', label: 'Prioridad Media', color: '#D4B13A' },
-                  { key: 'low', label: 'Prioridad Baja', color: '#10B981' },
+                  { key: 'high', label: t('common.high', { defaultValue: 'Prioridad Alta' }), color: '#EF4444' },
+                  { key: 'medium', label: t('common.medium', { defaultValue: 'Prioridad Media' }), color: '#D4B13A' },
+                  { key: 'low', label: t('common.low', { defaultValue: 'Prioridad Baja' }), color: '#10B981' },
                 ].map((opt) => (
                   <Pressable
                     key={opt.key}
@@ -339,16 +346,18 @@ export function AlbumOptionsSheet({
           {sheetMode === 'visibility' && (
             <>
               <View style={styles.sheetHeader}>
-                <Text style={styles.sheetHeaderText}>Visibilidad del álbum</Text>
+                <Text style={styles.sheetHeaderText}>
+                  {t('albums.options_change_visibility', { defaultValue: 'Visibilidad del álbum' })}
+                </Text>
                 <Pressable style={styles.sheetCloseBtn} onPress={() => onSetSheetMode('menu')}>
                   <X color="#8F8F8F" size={20} />
                 </Pressable>
               </View>
               <View style={styles.sheetOptions}>
                 {[
-                  { key: 'public', label: 'Público', sub: 'Cualquier persona puede ver este álbum', icon: <Eye color="#D4B13A" size={20} /> },
-                  { key: 'followers', label: 'Seguidores', sub: 'Solo tus seguidores pueden verlo', icon: <Users color="#D4B13A" size={20} /> },
-                  { key: 'private', label: 'Privado', sub: 'Solo tú y los colaboradores podéis verlo', icon: <Lock color="#D4B13A" size={20} /> },
+                  { key: 'public', label: t('albums.visibility_public', { defaultValue: 'Público' }), sub: t('albums.visibility_public_sub', { defaultValue: 'Cualquier persona puede ver este álbum' }), icon: <Eye color="#D4B13A" size={20} /> },
+                  { key: 'followers', label: t('albums.visibility_followers', { defaultValue: 'Seguidores' }), sub: t('albums.visibility_followers_sub', { defaultValue: 'Solo tus seguidores pueden verlo' }), icon: <Users color="#D4B13A" size={20} /> },
+                  { key: 'private', label: t('albums.visibility_private', { defaultValue: 'Privado' }), sub: t('albums.visibility_private_sub', { defaultValue: 'Solo tú y los colaboradores podéis verlo' }), icon: <Lock color="#D4B13A" size={20} /> },
                 ].map((opt) => (
                   <Pressable
                     key={opt.key}
@@ -376,7 +385,9 @@ export function AlbumOptionsSheet({
                   hitSlop={8}
                 >
                   <ChevronLeft color="#D4B13A" size={22} />
-                  <Text style={styles.sheetHeaderText}>Foto de portada</Text>
+                  <Text style={styles.sheetHeaderText}>
+                    {t('albums.options_cover_title', { defaultValue: 'Foto de portada' })}
+                  </Text>
                 </Pressable>
                 <Pressable style={styles.sheetCloseBtn} onPress={onClose}>
                   <X color="#8F8F8F" size={20} />
@@ -392,8 +403,8 @@ export function AlbumOptionsSheet({
                 <View style={styles.sheetOptions}>
                   <SheetOption
                     icon={<ImageIcon color="#D4B13A" size={20} />}
-                    title="Elegir de la galería"
-                    subtitle="Selecciona una foto y recórtala a tu gusto"
+                    title={t('albums.options_cover_gallery', { defaultValue: 'Elegir de la galería' })}
+                    subtitle={t('albums.options_cover_gallery_sub', { defaultValue: 'Selecciona una foto y recórtala a tu gusto' })}
                     onPress={() => {
                       onClose();
                       onPickGallery?.();
@@ -402,8 +413,8 @@ export function AlbumOptionsSheet({
 
                   <SheetOption
                     icon={<Camera color="#D4B13A" size={20} />}
-                    title="Hacer foto con la cámara"
-                    subtitle="Toma una foto al instante con la cámara"
+                    title={t('albums.options_cover_camera', { defaultValue: 'Hacer foto con la cámara' })}
+                    subtitle={t('albums.options_cover_camera_sub', { defaultValue: 'Toma una foto al instante con la cámara' })}
                     onPress={() => {
                       onClose();
                       onTakePhoto?.();
@@ -412,8 +423,8 @@ export function AlbumOptionsSheet({
 
                   <SheetOption
                     icon={<Link2 color="#D4B13A" size={20} />}
-                    title="Añadir con enlace de Google / Web"
-                    subtitle="Pega un enlace o foto copiada de internet"
+                    title={t('albums.options_cover_link', { defaultValue: 'Añadir con enlace de Google / Web' })}
+                    subtitle={t('albums.options_cover_link_sub', { defaultValue: 'Pega un enlace o foto copiada de internet' })}
                     onPress={() => {
                       onClose();
                       onOpenCoverLink?.();
@@ -424,8 +435,8 @@ export function AlbumOptionsSheet({
                     <>
                       <SheetOption
                         icon={<Crop color="#D4B13A" size={20} />}
-                        title="Reajustar recorte actual"
-                        subtitle="Ajusta o reencuadra la foto actual"
+                        title={t('albums.options_cover_recrop', { defaultValue: 'Reajustar recorte actual' })}
+                        subtitle={t('albums.options_cover_recrop_sub', { defaultValue: 'Ajusta o reencuadra la foto actual' })}
                         onPress={() => {
                           onClose();
                           onRecropCover?.();
@@ -443,8 +454,8 @@ export function AlbumOptionsSheet({
 
                       <SheetOption
                         icon={<Trash2 color="#EF4444" size={20} />}
-                        title="Quitar foto de portada"
-                        subtitle="Volver al degradado predeterminado"
+                        title={t('albums.options_cover_remove', { defaultValue: 'Quitar foto de portada' })}
+                        subtitle={t('albums.options_cover_remove_sub', { defaultValue: 'Volver al degradado predeterminado' })}
                         titleStyle={{ color: '#EF4444' }}
                         iconStyle={{ backgroundColor: 'rgba(239, 68, 68, 0.12)' }}
                         onPress={() => {
@@ -468,7 +479,9 @@ export function AlbumOptionsSheet({
                   hitSlop={8}
                 >
                   <ChevronLeft color="#D4B13A" size={22} />
-                  <Text style={styles.sheetHeaderText}>Estado del álbum</Text>
+                  <Text style={styles.sheetHeaderText}>
+                    {t('albums.options_status_title', { defaultValue: 'Estado del álbum' })}
+                  </Text>
                 </Pressable>
                 <Pressable style={styles.sheetCloseBtn} onPress={onClose}>
                   <X color="#8F8F8F" size={20} />
@@ -477,11 +490,11 @@ export function AlbumOptionsSheet({
               <View style={styles.sheetOptions}>
                 <SheetOption
                   icon={<Lock color="#D4B13A" size={20} />}
-                  title={isAlbumClosed ? 'Reabrir álbum' : 'Cerrar álbum'}
+                  title={isAlbumClosed ? t('albums.options_reopen', { defaultValue: 'Reabrir álbum' }) : t('albums.options_close', { defaultValue: 'Cerrar álbum' })}
                   subtitle={
                     isAlbumClosed
-                      ? 'Permite volver a añadir tareas al álbum'
-                      : 'Marca el álbum como cerrado y completado definitivamente'
+                      ? t('albums.options_reopen_sub', { defaultValue: 'Permite volver a añadir tareas al álbum' })
+                      : t('albums.options_close_sub', { defaultValue: 'Marca el álbum como cerrado y completado definitivamente' })
                   }
                   onPress={() => onToggleClose(!isAlbumClosed)}
                   noBorder

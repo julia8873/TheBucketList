@@ -380,6 +380,7 @@ const webLayoutStyles = StyleSheet.create({
         borderRightWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.07)',
         boxShadow: '0 0 40px rgba(0, 0, 0, 0.35)',
+        position: 'relative',
       } as any,
       default: {
         flex: 1,

@@ -14,6 +14,7 @@ import { X, Copy, Heart, Check, Sparkles, Layers, ArrowRight } from 'lucide-reac
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, gold, fontFamily } from '@bucketlist/ui';
 import { useRouter } from 'expo-router';
+import { useTranslation } from '@bucketlist/shared';
 import { CollectionItem } from '../types';
 import { useCloneCollection, useToggleCollectionLike } from '../hooks/useCollections';
 
@@ -31,6 +32,7 @@ export function CollectionDetailModal({
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { t } = useTranslation();
   const cloneMutation = useCloneCollection();
   const toggleLikeMutation = useToggleCollectionLike();
   const [createdAlbumId, setCreatedAlbumId] = useState<string | null>(null);
@@ -55,10 +57,15 @@ export function CollectionDetailModal({
     <Modal
       visible={visible}
       animationType="slide"
-      presentationStyle="pageSheet"
+      presentationStyle={Platform.OS === 'web' ? 'overFullScreen' : 'pageSheet'}
       onRequestClose={onClose}
+      transparent={Platform.OS === 'web'}
     >
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View style={styles.modalBackdrop}>
+        {Platform.OS === 'web' && (
+          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        )}
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
         {/* Header Cover con degradado temático */}
         <View style={styles.headerCover}>
           <LinearGradient
@@ -85,7 +92,11 @@ export function CollectionDetailModal({
                   collection.isLiked && { backgroundColor: 'rgba(239, 68, 68, 0.25)', borderColor: '#EF4444' },
                 ]}
                 accessibilityRole="button"
-                accessibilityLabel={collection.isLiked ? 'Quitar me gusta' : 'Dar me gusta'}
+                accessibilityLabel={
+                  collection.isLiked
+                    ? t('collections.unlike', { defaultValue: 'Quitar me gusta' })
+                    : t('collections.like', { defaultValue: 'Dar me gusta' })
+                }
               >
                 <Heart
                   size={17}
@@ -103,7 +114,7 @@ export function CollectionDetailModal({
                 hitSlop={8}
                 style={styles.closeBtn}
                 accessibilityRole="button"
-                accessibilityLabel="Cerrar detalle"
+                accessibilityLabel={t('collections.close_detail', { defaultValue: 'Cerrar detalle' })}
               >
                 <X size={18} color="#FFF" />
               </Pressable>
@@ -114,12 +125,19 @@ export function CollectionDetailModal({
             <Text style={styles.headerEmoji}>{collection.emoji}</Text>
             <Text style={styles.headerTitle}>{collection.title}</Text>
             <View style={styles.headerMetaRow}>
-              <Text style={styles.authorBadge}>Por {collection.author.name}</Text>
+              <Text style={styles.authorBadge}>
+                {t('collections.by_author', {
+                  name: collection.author?.name || t('collections.community', { defaultValue: 'Comunidad' }),
+                  defaultValue: `Por ${collection.author?.name || 'Comunidad'}`,
+                })}
+              </Text>
               {collection.clonesCount !== undefined && collection.clonesCount > 0 ? (
                 <>
                   <Text style={styles.metaDot}>·</Text>
                   <Text style={styles.clonesCountText}>
-                    Clonado {collection.clonesCount} {collection.clonesCount === 1 ? 'vez' : 'veces'}
+                    {collection.clonesCount === 1
+                      ? t('collections.cloned_times_single', { count: 1, defaultValue: 'Clonado 1 vez' })
+                      : t('collections.cloned_times_plural', { count: collection.clonesCount, defaultValue: `Clonado ${collection.clonesCount} veces` })}
                   </Text>
                 </>
               ) : null}
@@ -127,7 +145,9 @@ export function CollectionDetailModal({
                 <>
                   <Text style={styles.metaDot}>·</Text>
                   <Text style={styles.clonesCountText}>
-                    {collection.likesCount} {collection.likesCount === 1 ? 'like' : 'likes'}
+                    {collection.likesCount === 1
+                      ? t('collections.likes_count_single', { count: 1, defaultValue: '1 like' })
+                      : t('collections.likes_count_plural', { count: collection.likesCount, defaultValue: `${collection.likesCount} likes` })}
                   </Text>
                 </>
               ) : null}
@@ -151,11 +171,14 @@ export function CollectionDetailModal({
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Layers size={16} color={gold[400]} />
               <Text style={[styles.tasksSectionTitle, { color: theme.colors.foreground }]}>
-                Tareas incluidas ({collection.tasks.length})
+                {t('collections.included_tasks', {
+                  count: collection.tasks.length,
+                  defaultValue: `Tareas incluidas (${collection.tasks.length})`,
+                })}
               </Text>
             </View>
             <Text style={[styles.clonableHint, { color: theme.colors.foregroundSubtle }]}>
-              Se añadirán a tu cuenta
+              {t('collections.will_be_added', { defaultValue: 'Se añadirán a tu cuenta' })}
             </Text>
           </View>
 
@@ -215,11 +238,11 @@ export function CollectionDetailModal({
               onPress={handleGoToAlbum}
               style={[styles.cloneMainBtn, { backgroundColor: '#10B981' }]}
               accessibilityRole="button"
-              accessibilityLabel="Ver nuevo álbum"
+              accessibilityLabel={t('collections.cloned_success_go', { defaultValue: '¡Clonada con éxito! Ir al álbum' })}
             >
               <Check size={18} color="#FFF" strokeWidth={2.5} />
               <Text style={[styles.cloneMainBtnText, { color: '#FFF' }]}>
-                ¡Clonada con éxito! Ir al álbum
+                {t('collections.cloned_success_go', { defaultValue: '¡Clonada con éxito! Ir al álbum' })}
               </Text>
               <ArrowRight size={16} color="#FFF" />
             </Pressable>
@@ -232,18 +255,26 @@ export function CollectionDetailModal({
                 { opacity: pressed || cloneMutation.isPending ? 0.8 : 1 },
               ]}
               accessibilityRole="button"
-              accessibilityLabel={`Clonar colección con ${collection.tasks.length} tareas`}
+              accessibilityLabel={t('collections.clone_collection_btn', {
+                count: collection.tasks.length,
+                defaultValue: `Clonar colección con ${collection.tasks.length} tareas`,
+              })}
             >
               {cloneMutation.isPending ? (
                 <>
                   <ActivityIndicator size="small" color="#0E0E0E" />
-                  <Text style={styles.cloneMainBtnText}>Clonando en tu cuenta...</Text>
+                  <Text style={styles.cloneMainBtnText}>
+                    {t('collections.cloning_account', { defaultValue: 'Clonando en tu cuenta...' })}
+                  </Text>
                 </>
               ) : (
                 <>
                   <Sparkles size={18} color="#0E0E0E" strokeWidth={2.2} />
                   <Text style={styles.cloneMainBtnText}>
-                    Clonar colección (+{collection.tasks.length} tareas)
+                    {t('collections.clone_collection_btn', {
+                      count: collection.tasks.length,
+                      defaultValue: `Clonar colección (+${collection.tasks.length} tareas)`,
+                    })}
                   </Text>
                 </>
               )}
@@ -251,13 +282,42 @@ export function CollectionDetailModal({
           )}
         </View>
       </View>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  modalBackdrop: {
+    flex: 1,
+    ...Platform.select({
+      web: {
+        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        height: '100%',
+      },
+      default: {
+        flex: 1,
+      },
+    }),
+  },
   container: {
     flex: 1,
+    width: '100%',
+    position: 'relative',
+    ...Platform.select({
+      web: {
+        maxWidth: 620,
+        height: '100%',
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.07)',
+        boxShadow: '0 0 40px rgba(0, 0, 0, 0.45)',
+        overflow: 'hidden',
+      } as any,
+    }),
   },
   headerCover: {
     height: 220,
@@ -420,6 +480,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 14,
     borderTopWidth: 1,
+    ...Platform.select({
+      web: {
+        maxWidth: 620,
+        marginHorizontal: 'auto',
+      },
+    }),
   },
   cloneMainBtn: {
     flexDirection: 'row',

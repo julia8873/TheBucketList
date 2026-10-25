@@ -4,6 +4,7 @@ import { X, Check } from 'lucide-react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { styles } from '../styles/bulk-actions.styles';
 import type { Tag } from '../../../hooks/useTags';
+import { useTranslation } from '@bucketlist/shared';
 
 interface BulkTagsModalProps {
   visible: boolean;
@@ -24,6 +25,7 @@ export function BulkTagsModal({
   onClose,
   onApply,
 }: BulkTagsModalProps) {
+  const { t } = useTranslation();
   if (!visible) return null;
 
   return (
@@ -36,7 +38,7 @@ export function BulkTagsModal({
       <Pressable style={styles.modalOverlay} onPress={onClose}>
         <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Etiquetas para {count} tareas</Text>
+            <Text style={styles.modalTitle}>{t('bulk_actions.tags_modal_title', { count })}</Text>
             <Pressable onPress={onClose} hitSlop={10}>
               <X size={20} color="#888" />
             </Pressable>
@@ -80,7 +82,7 @@ export function BulkTagsModal({
             disabled={!selectedTagIds.length}
             onPress={onApply}
           >
-            <Text style={styles.applyBtnText}>Asignar etiquetas ({selectedTagIds.length})</Text>
+            <Text style={styles.applyBtnText}>{t('bulk_actions.assign_tags_btn', { count: selectedTagIds.length })}</Text>
           </Pressable>
         </Pressable>
       </Pressable>

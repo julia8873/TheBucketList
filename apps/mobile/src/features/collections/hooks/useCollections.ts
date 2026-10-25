@@ -4,14 +4,18 @@ import { CollectionItem } from '../types';
 import { useAuthStore } from '../../../stores/auth.store';
 import { ALBUMS_QUERY_KEY } from '../../../hooks/useAlbums';
 import { useToast } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 
 export const COLLECTIONS_QUERY_KEY = ['collections'];
 
 export function useCollections() {
   const { user } = useAuthStore();
+  const { i18n } = useTranslation();
+  const lang = i18n.language?.toLowerCase().startsWith('en') ? 'en' : 'es';
+
   return useQuery({
-    queryKey: [...COLLECTIONS_QUERY_KEY, user?.id ?? 'anon'],
-    queryFn: () => collectionsService.getCollections(user?.id),
+    queryKey: [...COLLECTIONS_QUERY_KEY, user?.id ?? 'anon', lang],
+    queryFn: () => collectionsService.getCollections(user?.id, lang),
     staleTime: 1000 * 60 * 5, // 5 min
   });
 }
@@ -19,13 +23,15 @@ export function useCollections() {
 export function useToggleCollectionLike() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const { i18n } = useTranslation();
+  const lang = i18n.language?.toLowerCase().startsWith('en') ? 'en' : 'es';
 
   return useMutation({
     mutationFn: async (collectionId: string) => {
       return collectionsService.toggleLikeCollection(collectionId, user?.id);
     },
     onMutate: async (collectionId: string) => {
-      const qKey = [...COLLECTIONS_QUERY_KEY, user?.id ?? 'anon'];
+      const qKey = [...COLLECTIONS_QUERY_KEY, user?.id ?? 'anon', lang];
       await queryClient.cancelQueries({ queryKey: qKey });
       const prev = queryClient.getQueryData<CollectionItem[]>(qKey);
 
@@ -67,11 +73,18 @@ export function useToggleCollectionLike() {
 export function useCloneCollection() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const toast = useToast();
 
   return useMutation({
     mutationFn: async (collection: CollectionItem) => {
-      if (!user?.id) throw new Error('Inicia sesión para clonar colecciones');
+      if (!user?.id) {
+        throw new Error(
+          t('collections.login_to_clone', {
+            defaultValue: 'Inicia sesión para clonar colecciones',
+          })
+        );
+      }
       return collectionsService.cloneCollection(user.id, collection);
     },
     onSuccess: (data, collection) => {
@@ -83,15 +96,23 @@ export function useCloneCollection() {
       queryClient.invalidateQueries({ queryKey: COLLECTIONS_QUERY_KEY });
 
       toast.show({
-        title: '¡Colección añadida!',
-        message: `"${collection.title}" se ha clonado en tus álbumes con ${data.tasksCount} tareas.`,
+        title: t('collections.cloned_success_go', { defaultValue: '¡Colección añadida!' }),
+        message: t('collections.cloned_toast', {
+          title: collection.title,
+          count: data.tasksCount,
+          defaultValue: `"${collection.title}" se ha clonado en tus álbumes con ${data.tasksCount} tareas.`,
+        }),
         type: 'success',
       });
     },
     onError: (err: any) => {
       toast.show({
-        title: 'Error al clonar',
-        message: err.message || 'No se pudo clonar la colección. Inténtalo de nuevo.',
+        title: t('collections.clone_error_title', { defaultValue: 'Error al clonar' }),
+        message:
+          err.message ||
+          t('collections.clone_error_msg', {
+            defaultValue: 'No se pudo clonar la colección. Inténtalo de nuevo.',
+          }),
         type: 'error',
       });
     },

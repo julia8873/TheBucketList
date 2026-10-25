@@ -3,6 +3,7 @@ import { View, Text, Pressable, Modal, ScrollView } from 'react-native';
 import { X, FolderOpen, FolderInput } from 'lucide-react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { styles } from '../styles/bulk-actions.styles';
+import { useTranslation } from '@bucketlist/shared';
 
 interface AlbumItem {
   id: string;
@@ -24,6 +25,7 @@ export function BulkMoveModal({
   onClose,
   onSelectAlbum,
 }: BulkMoveModalProps) {
+  const { t } = useTranslation();
   if (!visible) return null;
 
   return (
@@ -36,7 +38,7 @@ export function BulkMoveModal({
       <Pressable style={styles.modalOverlay} onPress={onClose}>
         <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Mover {count} tareas a un álbum</Text>
+            <Text style={styles.modalTitle}>{t('bulk_actions.move_modal_title', { count })}</Text>
             <Pressable onPress={onClose} hitSlop={10}>
               <X size={20} color="#888" />
             </Pressable>
@@ -50,7 +52,7 @@ export function BulkMoveModal({
             >
               <View style={styles.albumOptionLeft}>
                 <FolderOpen size={18} color="#888" />
-                <Text style={styles.albumOptionTitle}>Sin álbum</Text>
+                <Text style={styles.albumOptionTitle}>{t('bulk_actions.no_album')}</Text>
               </View>
             </Pressable>
 

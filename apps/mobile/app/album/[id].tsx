@@ -23,6 +23,7 @@ import {
   ListChecks,
 } from 'lucide-react-native';
 import { Skeleton, Avatar, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 
 import { TaskRowSkeleton } from '@/components/TaskSkeletons';
 import { TaskItem } from '@/services/api/albumsService';
@@ -74,6 +75,7 @@ export function getInitials(name?: string | null): string {
 export default function AlbumDetailScreen() {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const state = useAlbumDetailState();
   const isAdmin = useIsAdmin();
   const promoteMutation = usePromoteAlbumToCollection();
@@ -507,7 +509,7 @@ export default function AlbumDetailScreen() {
             defaultValue={title}
             onChangeText={state.handleTitleChange}
             onBlur={state.flushTitleChange}
-            placeholder="Nombre del álbum"
+            placeholder={t('albums.album_name_placeholder', { defaultValue: 'Nombre del álbum' })}
             placeholderTextColor="#8F8F8F"
             style={styles.titleInput}
             multiline
@@ -522,7 +524,7 @@ export default function AlbumDetailScreen() {
             defaultValue={album.description || ''}
             onChangeText={state.handleDescriptionChange}
             onBlur={state.flushDescriptionChange}
-            placeholder="Añade una descripción..."
+            placeholder={t('albums.add_description_placeholder', { defaultValue: 'Añade una descripción...' })}
             placeholderTextColor="#666666"
             style={styles.albumDescriptionInput}
             multiline
@@ -600,7 +602,9 @@ export default function AlbumDetailScreen() {
                       )}
                       {isPending && (
                         <View style={styles.pendingCenterOverlay}>
-                          <Text style={styles.pendingCenterText}>Pendiente</Text>
+                          <Text style={styles.pendingCenterText}>
+                            {t('albums.collaborator_pending', { defaultValue: 'Pendiente' })}
+                          </Text>
                         </View>
                       )}
                     </Pressable>
@@ -614,7 +618,7 @@ export default function AlbumDetailScreen() {
                   onPress={() => state.setShowCollaboratorPicker(true)}
                   hitSlop={8}
                   accessibilityRole="button"
-                  accessibilityLabel="Añadir colaborador"
+                  accessibilityLabel={t('albums.add_collaborator', { defaultValue: 'Añadir colaborador' })}
                 >
                   <UserPlus size={22} color="#D4B13A" strokeWidth={1.8} />
                 </Pressable>
@@ -627,9 +631,9 @@ export default function AlbumDetailScreen() {
         {(state.albumTags.length > 0 || (state.canEdit && state.id !== 'unassigned')) && (
           <View style={{ paddingHorizontal: 20, marginTop: 10, marginBottom: 10 }}>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-              {state.albumTags.map((t) => (
+              {state.albumTags.map((tItem) => (
                 <Pressable
-                  key={t.id}
+                  key={tItem.id}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
@@ -638,8 +642,8 @@ export default function AlbumDetailScreen() {
                     paddingVertical: 5,
                     borderRadius: 20,
                     borderWidth: 1,
-                    borderColor: t.color || '#D4B13A',
-                    backgroundColor: hexToRgba(t.color || '#D4B13A', 0.15),
+                    borderColor: tItem.color || '#D4B13A',
+                    backgroundColor: hexToRgba(tItem.color || '#D4B13A', 0.15),
                   }}
                   onPress={() => {
                     if (state.canEdit) {
@@ -647,11 +651,11 @@ export default function AlbumDetailScreen() {
                     }
                   }}
                   accessibilityRole="button"
-                  accessibilityLabel={`Etiqueta ${t.name}`}
+                  accessibilityLabel={`Etiqueta ${tItem.name}`}
                 >
-                  {t.emoji ? <Text style={{ fontSize: 13 }}>{t.emoji}</Text> : null}
-                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: t.color || '#D4B13A' }}>
-                    {t.name}
+                  {tItem.emoji ? <Text style={{ fontSize: 13 }}>{tItem.emoji}</Text> : null}
+                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: tItem.color || '#D4B13A' }}>
+                    {tItem.name}
                   </Text>
                 </Pressable>
               ))}
@@ -672,11 +676,13 @@ export default function AlbumDetailScreen() {
                   }}
                   onPress={() => state.setShowTagAssignSheet(true)}
                   accessibilityRole="button"
-                  accessibilityLabel="Gestionar etiquetas del álbum"
+                  accessibilityLabel={t('albums.tags', { defaultValue: 'Etiquetas' })}
                 >
                   <Plus size={14} color="#8F8F8F" strokeWidth={2} />
                   <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: '#8F8F8F' }}>
-                    {state.albumTags.length === 0 ? 'Añadir etiqueta' : 'Etiquetas'}
+                    {state.albumTags.length === 0
+                      ? t('albums.add_tag', { defaultValue: 'Añadir etiqueta' })
+                      : t('albums.tags', { defaultValue: 'Etiquetas' })}
                   </Text>
                 </Pressable>
               )}
@@ -689,13 +695,21 @@ export default function AlbumDetailScreen() {
           <Text style={styles.progressPercent}>{progressPercent}%</Text>
           <View style={styles.progressRight}>
             <Text style={styles.progressTitle}>
-              {completedCount} de {total} completadas
+              {t('albums.progress_completed_of', {
+                completed: completedCount,
+                total,
+                defaultValue: `${completedCount} de ${total} completadas`,
+              })}
             </Text>
             <View style={styles.progressBarTrack}>
               <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
             </View>
             <Text style={styles.progressSub}>
-              {total === 0 ? 'Sin tareas en este álbum' : areAllCompleted ? '¡Álbum completado!' : 'Sigue sumando momentos'}
+              {total === 0
+                ? t('albums.progress_empty', { defaultValue: 'Sin tareas en este álbum' })
+                : areAllCompleted
+                ? t('albums.progress_all_done', { defaultValue: '¡Álbum completado!' })
+                : t('albums.progress_keep_going', { defaultValue: 'Sigue sumando momentos' })}
             </Text>
           </View>
         </View>
@@ -709,12 +723,16 @@ export default function AlbumDetailScreen() {
             {areAllCompleted ? (
               <>
                 <RotateCcw size={16} color="#D4B13A" />
-                <Text style={styles.toggleAllBtnText}>Marcar todas como pendientes</Text>
+                <Text style={styles.toggleAllBtnText}>
+                  {t('albums.mark_all_pending', { defaultValue: 'Marcar todas como pendientes' })}
+                </Text>
               </>
             ) : (
               <>
                 <CheckCircle2 size={16} color="#D4B13A" />
-                <Text style={styles.toggleAllBtnText}>Marcar todas como completadas</Text>
+                <Text style={styles.toggleAllBtnText}>
+                  {t('albums.mark_all_completed', { defaultValue: 'Marcar todas como completadas' })}
+                </Text>
               </>
             )}
           </Pressable>
@@ -724,7 +742,9 @@ export default function AlbumDetailScreen() {
         {total > 0 && (
           <View style={styles.tasksToolbarWrap}>
             <View style={styles.tasksToolbar}>
-              <Text style={styles.toolbarLabel}>Ordenar por:</Text>
+              <Text style={styles.toolbarLabel}>
+                {t('albums.sort_by', { defaultValue: 'Ordenar por:' })}
+              </Text>
               <Pressable
                 ref={state.taskSortTriggerRef}
                 collapsable={false}
@@ -733,12 +753,12 @@ export default function AlbumDetailScreen() {
               >
                 <Text style={styles.toolbarSortText}>
                   {state.taskSortField === 'priority'
-                    ? 'Prioridad'
+                    ? t('albums.sort_priority', { defaultValue: 'Prioridad' })
                     : state.taskSortField === 'alphabetical'
-                    ? 'Nombre'
+                    ? t('albums.sort_name', { defaultValue: 'Nombre' })
                     : state.taskSortField === 'completed_at'
-                    ? 'Fecha de completado'
-                    : 'Manual'}
+                    ? t('albums.sort_completed_date', { defaultValue: 'Fecha de completado' })
+                    : t('albums.sort_manual', { defaultValue: 'Manual' })}
                 </Text>
                 {state.taskSortField !== 'manual' &&
                   (state.taskSortDir === 'desc' ? (
@@ -775,7 +795,7 @@ export default function AlbumDetailScreen() {
               <View style={styles.taskSearchBox}>
                 <Search size={16} color="#8F8F8F" />
                 <TextInput
-                  placeholder="Buscar en el álbum..."
+                  placeholder={t('albums.search_placeholder', { defaultValue: 'Buscar en el álbum...' })}
                   placeholderTextColor="#8F8F8F"
                   value={state.taskSearch}
                   onChangeText={state.setTaskSearch}
@@ -792,7 +812,10 @@ export default function AlbumDetailScreen() {
           <View style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitleLeft, { color: '#D4B13A' }]}>
-                PENDIENTES · {pendientes.length}
+                {t('albums.pending_section', {
+                  count: pendientes.length,
+                  defaultValue: `PENDIENTES · ${pendientes.length}`,
+                })}
               </Text>
             </View>
             {manualDragEnabled ? (
@@ -817,7 +840,10 @@ export default function AlbumDetailScreen() {
           <View style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitleLeft, { color: '#22C55E' }]}>
-                COMPLETADAS · {completadas.length}
+                {t('albums.completed_section', {
+                  count: completadas.length,
+                  defaultValue: `COMPLETADAS · ${completadas.length}`,
+                })}
               </Text>
             </View>
             {manualDragEnabled ? (
@@ -838,7 +864,9 @@ export default function AlbumDetailScreen() {
         )}
 
         {isSearchingTasks && pendientes.length === 0 && completadas.length === 0 && (
-          <Text style={styles.noResultsText}>No se encontraron tareas con ese nombre</Text>
+          <Text style={styles.noResultsText}>
+            {t('albums.no_tasks_search', { defaultValue: 'No se encontraron tareas con ese nombre' })}
+          </Text>
         )}
 
         {/* Sección de comentarios y me gusta del álbum al final */}
@@ -859,7 +887,10 @@ export default function AlbumDetailScreen() {
                   strokeWidth={1.8}
                 />
                 <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: theme.colors.foregroundMuted }}>
-                  {albumLikesCount} {albumLikesCount === 1 ? 'me gusta' : 'me gusta'}
+                  {albumLikesCount}{' '}
+                  {albumLikesCount === 1
+                    ? t('collections.likes_count_single', { count: 1, defaultValue: 'me gusta' })
+                    : t('collections.likes_count_plural', { count: albumLikesCount, defaultValue: 'me gusta' })}
                 </Text>
               </Pressable>
             </View>
@@ -901,14 +932,18 @@ export default function AlbumDetailScreen() {
                 style={styles.btnEdit}
                 onPress={() => state.router.push(`/(modals)/create-album?id=${state.id}` as any)}
               >
-                <Text style={styles.btnEditText}>Editar</Text>
+                <Text style={styles.btnEditText}>
+                  {t('albums.edit_album', { defaultValue: 'Editar' })}
+                </Text>
               </Pressable>
             )}
             <Pressable
               style={styles.btnAdd}
               onPress={() => state.router.push(state.id === 'unassigned' ? '/add-task' : `/add-task?albumId=${state.id}`)}
             >
-              <Text style={styles.btnAddText}>Añadir tarea</Text>
+              <Text style={styles.btnAddText}>
+                {t('albums.add_task', { defaultValue: 'Añadir tarea' })}
+              </Text>
             </Pressable>
           </>
         ) : (
@@ -919,7 +954,9 @@ export default function AlbumDetailScreen() {
           >
             <FolderPlus size={18} color="#0D0D0D" strokeWidth={2.4} />
             <Text style={styles.btnCopyAlbumText}>
-              {state.copyingAlbum ? 'Copiando álbum…' : 'Copiar álbum a mi lista'}
+              {state.copyingAlbum
+                ? t('albums.copying_album', { defaultValue: 'Copiando álbum…' })
+                : t('albums.copy_album_to_list', { defaultValue: 'Copiar álbum a mi lista' })}
             </Text>
           </Pressable>
         )}

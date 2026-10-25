@@ -121,10 +121,15 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
     <Modal
       visible={visible}
       animationType="slide"
-      presentationStyle="fullScreen"
+      presentationStyle={Platform.OS === 'web' ? 'overFullScreen' : 'fullScreen'}
       onRequestClose={onClose}
+      transparent={Platform.OS === 'web'}
     >
-      <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, 16) }]}>
+      <View style={styles.modalBackdrop}>
+        {Platform.OS === 'web' && (
+          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        )}
+        <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, 16) }]}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -268,15 +273,44 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
             </Pressable>
           </View>
         </KeyboardAvoidingView>
+        </View>
       </View>
     </Modal>
   );
 }
 
 const styles = themedStyleSheet({
+  modalBackdrop: {
+    flex: 1,
+    ...Platform.select({
+      web: {
+        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        height: '100%',
+      },
+      default: {
+        flex: 1,
+      },
+    }),
+  },
   container: {
     flex: 1,
     backgroundColor: '#121212',
+    width: '100%',
+    position: 'relative',
+    ...Platform.select({
+      web: {
+        maxWidth: 620,
+        height: '100%',
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.07)',
+        boxShadow: '0 0 40px rgba(0, 0, 0, 0.45)',
+        overflow: 'hidden',
+      } as any,
+    }),
   },
   header: {
     flexDirection: 'row',

@@ -847,7 +847,7 @@ export default function MyListScreen() {
                 } as any);
               }}
               accessibilityRole="button"
-              accessibilityLabel="Explorar colecciones prediseñadas"
+              accessibilityLabel={t('albums.explore_collections_a11y', { defaultValue: 'Explorar colecciones prediseñadas' })}
             >
               <View
                 style={[
@@ -864,7 +864,7 @@ export default function MyListScreen() {
                     { color: theme.colors.foreground },
                   ]}
                 >
-                  Colecciones prediseñadas
+                  {t('albums.featured_collections_title', { defaultValue: 'Colecciones prediseñadas' })}
                 </Text>
                 <Text
                   style={[
@@ -872,7 +872,7 @@ export default function MyListScreen() {
                     { color: theme.colors.foregroundMuted },
                   ]}
                 >
-                  Descubre ideas y clona álbumes temáticos
+                  {t('albums.featured_collections_subtitle', { defaultValue: 'Descubre ideas y clona álbumes temáticos' })}
                 </Text>
               </View>
               <ChevronRight size={18} color={gold[400]} />
