@@ -68,6 +68,8 @@ function Row(props: RowProps) {
   const scale = useRef(new Animated.Value(1)).current;
 
   const isLongPressing = useRef(false);
+  const didDragRef = useRef(false);
+  const lastDragEndTime = useRef(0);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const touchStartPos = useRef({ x: 0, y: 0 });
 
@@ -113,6 +115,11 @@ function Row(props: RowProps) {
       clearTimer();
       if (isLongPressing.current || latest.current.isActive) {
         isLongPressing.current = false;
+        lastDragEndTime.current = Date.now();
+        // Mantenemos didDragRef activo durante 350ms para bloquear cualquier evento de clic sintetizado por el navegador al soltar
+        setTimeout(() => {
+          didDragRef.current = false;
+        }, 350);
         latest.current.onDragEnd(coords || { pageY: 0, clientY: 0 });
       }
     },
@@ -147,6 +154,8 @@ function Row(props: RowProps) {
 
         longPressTimer.current = setTimeout(() => {
           isLongPressing.current = true;
+          didDragRef.current = true;
+          lastDragEndTime.current = Date.now();
           try {
             void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           } catch {
@@ -203,6 +212,16 @@ function Row(props: RowProps) {
       {...rowPan.panHandlers}
       onTouchEnd={clearTimer}
       onTouchCancel={clearTimer}
+      {...(Platform.OS === 'web'
+        ? ({
+            onClickCapture: (e: any) => {
+              if (didDragRef.current || Date.now() - lastDragEndTime.current < 350) {
+                e?.stopPropagation?.();
+                e?.preventDefault?.();
+              }
+            },
+          } as any)
+        : {})}
       onLayout={(e) => props.onMeasure(item.id, e.nativeEvent.layout.height)}
       style={{
         position: 'absolute',
@@ -225,7 +244,10 @@ function Row(props: RowProps) {
           : {}),
       }}
     >
-      {props.renderItem(item, { panHandlers: rowPan.panHandlers, isActive })}
+      {props.renderItem(item, {
+        panHandlers: rowPan.panHandlers,
+        isActive: isActive || Date.now() - lastDragEndTime.current < 350,
+      })}
     </Animated.View>
   );
 }

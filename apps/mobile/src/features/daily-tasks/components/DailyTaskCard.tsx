@@ -72,7 +72,10 @@ export function DailyTaskCard({
       {/* Checkbox */}
       <Pressable
         hitSlop={8}
-        onPress={() => onToggle(item)}
+        onPress={() => {
+          if (drag?.isActive) return;
+          onToggle(item);
+        }}
         style={styles.compactCheckBtn}
         accessibilityRole="checkbox"
         accessibilityState={{ checked: isCompleted }}
@@ -257,7 +260,10 @@ export function DailyTaskCard({
       {/* Pin quick toggle */}
       <Pressable
         hitSlop={8}
-        onPress={() => onToggleFavorite(item)}
+        onPress={() => {
+          if (drag?.isActive) return;
+          onToggleFavorite(item);
+        }}
         style={styles.favQuickBtn}
         accessibilityLabel={item.is_favorite ? 'Desfijar tarea' : 'Fijar tarea'}
       >
@@ -272,7 +278,10 @@ export function DailyTaskCard({
       {/* Delete icon button */}
       <Pressable
         hitSlop={8}
-        onPress={() => onDelete(item)}
+        onPress={() => {
+          if (drag?.isActive) return;
+          onDelete(item);
+        }}
         style={styles.deleteBtn}
         accessibilityLabel="Eliminar tarea"
       >
@@ -342,7 +351,10 @@ export function DailyOverdueTaskCard({
         {/* Checkbox */}
         <Pressable
           hitSlop={8}
-          onPress={() => onToggle(item)}
+          onPress={() => {
+            if (drag?.isActive) return;
+            onToggle(item);
+          }}
           style={styles.compactCheckBtn}
           accessibilityRole="checkbox"
           accessibilityState={{ checked: isCompleted }}
@@ -491,7 +503,10 @@ export function DailyOverdueTaskCard({
         {/* Pin quick toggle */}
         <Pressable
           hitSlop={8}
-          onPress={() => onToggleFavorite(item)}
+          onPress={() => {
+            if (drag?.isActive) return;
+            onToggleFavorite(item);
+          }}
           style={styles.favQuickBtn}
           accessibilityLabel={item.is_favorite ? t('daily.unpin_task', 'Desfijar tarea') : t('daily.pin_task', 'Fijar tarea')}
         >
@@ -506,7 +521,10 @@ export function DailyOverdueTaskCard({
         {/* Delete action */}
         <Pressable
           hitSlop={8}
-          onPress={() => onDelete(item)}
+          onPress={() => {
+            if (drag?.isActive) return;
+            onDelete(item);
+          }}
           style={styles.deleteBtn}
           accessibilityLabel={t('daily.delete_task', 'Eliminar tarea')}
         >
