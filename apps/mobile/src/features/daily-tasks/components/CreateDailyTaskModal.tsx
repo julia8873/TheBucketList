@@ -68,6 +68,7 @@ interface CreateDailyTaskModalProps {
   onAddSubtask: () => void;
   onToggleSubtask: (id: string) => void;
   onDeleteSubtask: (id: string) => void;
+  onUpdateSubtask?: (id: string, newTitle: string) => void;
   onSubmit: () => void;
   renderTagModal?: React.ReactNode;
 }
@@ -105,6 +106,7 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
   onAddSubtask,
   onToggleSubtask,
   onDeleteSubtask,
+  onUpdateSubtask,
   onSubmit,
   renderTagModal,
 }) => {
@@ -462,16 +464,22 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
                         <View style={[styles.subtaskUncheckedCircle, { borderColor: theme.colors.foregroundMuted }]} />
                       )}
                     </Pressable>
-                    <Text
+                    <TextInput
                       style={[
                         styles.subtaskItemTitle,
-                        { color: theme.colors.foreground },
+                        {
+                          color: theme.colors.foreground,
+                          paddingVertical: Platform.OS === 'ios' ? 4 : 2,
+                          paddingHorizontal: 0,
+                        },
                         st.is_completed && styles.subtaskItemTitleCompleted,
                       ]}
-                      numberOfLines={2}
-                    >
-                      {st.title}
-                    </Text>
+                      value={st.title}
+                      onChangeText={(text) => onUpdateSubtask?.(st.id, text)}
+                      placeholder={t('daily.subtask_title_placeholder', 'Título de la subtarea')}
+                      placeholderTextColor={theme.colors.foregroundMuted}
+                      returnKeyType="done"
+                    />
                     <Pressable
                       hitSlop={8}
                       onPress={() => onDeleteSubtask(st.id)}

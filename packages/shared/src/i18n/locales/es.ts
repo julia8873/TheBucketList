@@ -574,6 +574,7 @@ const es = {
     priority_label_urgent: 'Urgente',
     tags_label: 'Etiquetas',
     subtasks_label: 'Subtareas',
+    subtask_title_placeholder: 'Título de la subtarea',
     add_subtask_placeholder: 'Añadir una subtarea...',
     notes_optional: 'Notas (opcional)',
     notes_placeholder: 'Detalles, enlaces, apuntes...',

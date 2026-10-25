@@ -574,6 +574,7 @@ const en = {
     priority_label_urgent: 'Urgent',
     tags_label: 'Tags',
     subtasks_label: 'Subtasks',
+    subtask_title_placeholder: 'Subtask title',
     add_subtask_placeholder: 'Add a subtask...',
     notes_optional: 'Notes (optional)',
     notes_placeholder: 'Details, links, notes...',

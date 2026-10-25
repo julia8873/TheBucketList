@@ -658,6 +658,12 @@ export function useDailyTasksState() {
     setCreateSubtasks((prev) => prev.filter((st) => st.id !== subtaskId));
   };
 
+  const handleUpdateCreateSubtask = (subtaskId: string, newTitle: string) => {
+    setCreateSubtasks((prev) =>
+      prev.map((st) => (st.id === subtaskId ? { ...st, title: newTitle } : st))
+    );
+  };
+
   const handleToggleFavorite = (task: DailyTask) => {
     if (task.is_favorite) {
       const compDate = task.completed_at ? format(new Date(task.completed_at), 'yyyy-MM-dd') : null;
@@ -688,9 +694,11 @@ export function useDailyTasksState() {
 
   const saveTitleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const saveDescTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveSubtasksTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const editingTaskIdRef = useRef<string | null>(null);
   const editTitleRef = useRef(editTitle);
   const editDescriptionRef = useRef(editDescription);
+  const editSubtasksRef = useRef(editSubtasks);
 
   useEffect(() => {
     editingTaskIdRef.current = editingTask?.id || null;
@@ -703,6 +711,10 @@ export function useDailyTasksState() {
   useEffect(() => {
     editDescriptionRef.current = editDescription;
   }, [editDescription]);
+
+  useEffect(() => {
+    editSubtasksRef.current = editSubtasks;
+  }, [editSubtasks]);
 
   const autoSaveTask = useCallback(
     (updates: Partial<DailyTask>) => {
@@ -725,6 +737,10 @@ export function useDailyTasksState() {
     if (saveDescTimeoutRef.current) {
       clearTimeout(saveDescTimeoutRef.current);
       saveDescTimeoutRef.current = null;
+    }
+    if (saveSubtasksTimeoutRef.current) {
+      clearTimeout(saveSubtasksTimeoutRef.current);
+      saveSubtasksTimeoutRef.current = null;
     }
 
     const currentId = editingTaskIdRef.current;
@@ -871,6 +887,7 @@ export function useDailyTasksState() {
   const openEditTask = (task: DailyTask) => {
     if (saveTitleTimeoutRef.current) clearTimeout(saveTitleTimeoutRef.current);
     if (saveDescTimeoutRef.current) clearTimeout(saveDescTimeoutRef.current);
+    if (saveSubtasksTimeoutRef.current) clearTimeout(saveSubtasksTimeoutRef.current);
     editingTaskIdRef.current = task.id;
     editTitleRef.current = task.title;
     editDescriptionRef.current = task.description || '';
@@ -916,6 +933,28 @@ export function useDailyTasksState() {
     const nextSubtasks = editSubtasks.filter((st) => st.id !== subtaskId);
     setEditSubtasks(nextSubtasks);
     autoSaveTask({ subtasks: nextSubtasks });
+  };
+
+  const handleUpdateEditSubtask = (subtaskId: string, newTitle: string) => {
+    const nextSubtasks = editSubtasks.map((st) =>
+      st.id === subtaskId ? { ...st, title: newTitle } : st
+    );
+    setEditSubtasks(nextSubtasks);
+    editSubtasksRef.current = nextSubtasks;
+    if (saveSubtasksTimeoutRef.current) clearTimeout(saveSubtasksTimeoutRef.current);
+    const currentId = editingTaskIdRef.current;
+    if (!currentId || currentId.startsWith('temp-')) return;
+    saveSubtasksTimeoutRef.current = setTimeout(() => {
+      autoSaveTask({ subtasks: nextSubtasks });
+    }, 400);
+  };
+
+  const handleBlurEditSubtask = () => {
+    if (saveSubtasksTimeoutRef.current) {
+      clearTimeout(saveSubtasksTimeoutRef.current);
+      saveSubtasksTimeoutRef.current = null;
+    }
+    autoSaveTask({ subtasks: editSubtasksRef.current });
   };
 
   // Tag Form handlers
@@ -1134,6 +1173,7 @@ export function useDailyTasksState() {
     handleAddCreateSubtask,
     handleToggleCreateSubtask,
     handleDeleteCreateSubtask,
+    handleUpdateCreateSubtask,
     // Edit Task Modal
     editingTask,
     setEditingTask,
@@ -1169,6 +1209,8 @@ export function useDailyTasksState() {
     handleAddEditSubtask,
     handleToggleEditSubtask,
     handleDeleteEditSubtask,
+    handleUpdateEditSubtask,
+    handleBlurEditSubtask,
     autoSaveTask,
     // Tag Form Modal
     showTagModal,

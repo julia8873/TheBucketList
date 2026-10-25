@@ -80,6 +80,8 @@ interface EditDailyTaskModalProps {
   editSubtasks: DailySubtask[];
   onToggleSubtask: (subtaskId: string) => void;
   onDeleteSubtask: (subtaskId: string) => void;
+  onUpdateSubtask?: (subtaskId: string, newTitle: string) => void;
+  onBlurSubtask?: () => void;
   editSubtaskTitle: string;
   onChangeSubtaskTitle: (text: string) => void;
   onAddSubtask: () => void;
@@ -125,6 +127,8 @@ export function EditDailyTaskModal({
   editSubtasks,
   onToggleSubtask,
   onDeleteSubtask,
+  onUpdateSubtask,
+  onBlurSubtask,
   editSubtaskTitle,
   onChangeSubtaskTitle,
   onAddSubtask,
@@ -473,16 +477,23 @@ export function EditDailyTaskModal({
                           <View style={[styles.subtaskUncheckedCircle, { borderColor: theme.colors.foregroundMuted }]} />
                         )}
                       </Pressable>
-                      <Text
+                      <TextInput
                         style={[
                           styles.subtaskItemTitle,
-                          { color: theme.colors.foreground },
+                          {
+                            color: theme.colors.foreground,
+                            paddingVertical: Platform.OS === 'ios' ? 4 : 2,
+                            paddingHorizontal: 0,
+                          },
                           st.is_completed && styles.subtaskItemTitleCompleted,
                         ]}
-                        numberOfLines={2}
-                      >
-                        {st.title}
-                      </Text>
+                        value={st.title}
+                        onChangeText={(text) => onUpdateSubtask?.(st.id, text)}
+                        onBlur={onBlurSubtask}
+                        placeholder={t('daily.subtask_title_placeholder', 'Título de la subtarea')}
+                        placeholderTextColor={theme.colors.foregroundMuted}
+                        returnKeyType="done"
+                      />
                       <Pressable
                         hitSlop={8}
                         onPress={() => onDeleteSubtask(st.id)}

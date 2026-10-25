@@ -412,6 +412,7 @@ export default function DailyTasksScreen() {
           onAddSubtask={state.handleAddCreateSubtask}
           onToggleSubtask={state.handleToggleCreateSubtask}
           onDeleteSubtask={state.handleDeleteCreateSubtask}
+          onUpdateSubtask={state.handleUpdateCreateSubtask}
           onSubmit={state.handleCreateFromModal}
         />
 
@@ -474,6 +475,8 @@ export default function DailyTasksScreen() {
           editSubtasks={state.editSubtasks}
           onToggleSubtask={state.handleToggleEditSubtask}
           onDeleteSubtask={state.handleDeleteEditSubtask}
+          onUpdateSubtask={state.handleUpdateEditSubtask}
+          onBlurSubtask={state.handleBlurEditSubtask}
           editSubtaskTitle={state.editSubtaskTitle}
           onChangeSubtaskTitle={state.setEditSubtaskTitle}
           onAddSubtask={state.handleAddEditSubtask}
