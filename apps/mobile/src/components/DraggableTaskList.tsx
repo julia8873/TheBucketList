@@ -117,7 +117,6 @@ function Row(props: RowProps) {
       if (isLongPressing.current || latest.current.isActive) {
         isLongPressing.current = false;
         lastDragEndTime.current = Date.now();
-        // Mantenemos didDragRef activo durante 350ms para bloquear cualquier evento de clic sintetizado por el navegador al soltar
         setTimeout(() => {
           didDragRef.current = false;
         }, 350);
@@ -128,8 +127,8 @@ function Row(props: RowProps) {
   );
 
   // Mecánica exacta de los 3 puntos activada al aguantar en la tarea:
-  // - Pulsar y aguantar ~280ms activa el modo de arrastre idéntico al asa de los 3 puntos (con vibración/háptica).
-  // - Si el usuario mueve el dedo antes de los ~280ms o pulsa para hacer scroll, se cancela y no se arrastra nada.
+  // - Pulsar y aguantar ~240ms activa el modo de arrastre idéntico al asa de los 3 puntos (con vibración/háptica).
+  // - Si el usuario mueve el dedo antes de los ~240ms o pulsa para hacer scroll, se cancela y no se arrastra nada.
   // - Las demás tareas se apartan de forma 100% fluida dejando el hueco sin montarse nunca.
   const rowPan = useRef(
     PanResponder.create({
@@ -137,17 +136,22 @@ function Row(props: RowProps) {
       onStartShouldSetPanResponderCapture: (evt) => {
         clearTimer();
         isLongPressing.current = false;
-        touchStartPos.current = {
-          x: evt.nativeEvent.pageX,
-          y: evt.nativeEvent.pageY,
-        };
+        didDragRef.current = false;
+        const pageX = (evt.nativeEvent as any)?.pageX ?? (evt.nativeEvent as any)?.clientX ?? 0;
+        const pageY = (evt.nativeEvent as any)?.pageY ?? (evt as any)?.pageY ?? (evt.nativeEvent as any)?.clientY ?? 0;
+        touchStartPos.current = { x: pageX, y: pageY };
 
-        // Si se suelta el puntero en la web, cancelamos el temporizador de inmediato
+        // Si se suelta el puntero en la web, finalizamos arrastre si estaba activo o cancelamos timer
         if (Platform.OS === 'web' && typeof window !== 'undefined') {
-          const onGlobalPointerUp = () => {
+          const onGlobalPointerUp = (e: any) => {
             clearTimer();
             window.removeEventListener('pointerup', onGlobalPointerUp);
             window.removeEventListener('mouseup', onGlobalPointerUp);
+            if (isLongPressing.current || latest.current.isActive) {
+              const pY = e?.pageY ?? e?.clientY ?? 0;
+              const cY = e?.clientY ?? e?.pageY ?? 0;
+              endDrag({ pageY: pY, clientY: cY });
+            }
           };
           window.addEventListener('pointerup', onGlobalPointerUp, { once: true });
           window.addEventListener('mouseup', onGlobalPointerUp, { once: true });
@@ -156,13 +160,13 @@ function Row(props: RowProps) {
         longPressTimer.current = setTimeout(() => {
           isLongPressing.current = true;
           didDragRef.current = true;
-          lastDragEndTime.current = Date.now();
           try {
             void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           } catch {
             // ignore
           }
           const p = latest.current;
+          y.stopAnimation();
           y.setValue(p.top);
           p.onDragStart(p.item.id, p.index);
         }, Platform.OS === 'web' ? 240 : 300);
@@ -174,24 +178,27 @@ function Row(props: RowProps) {
         if (isLongPressing.current) {
           return true;
         }
-        const dx = Math.abs(evt.nativeEvent.pageX - touchStartPos.current.x);
-        const dy = Math.abs(evt.nativeEvent.pageY - touchStartPos.current.y);
-        const maxDelta = Platform.OS === 'web' ? 12 : 8;
+        const pageX = (evt.nativeEvent as any)?.pageX ?? (evt.nativeEvent as any)?.clientX ?? 0;
+        const pageY = (evt.nativeEvent as any)?.pageY ?? (evt as any)?.pageY ?? (evt.nativeEvent as any)?.clientY ?? 0;
+        const dx = Math.abs(pageX - touchStartPos.current.x);
+        const dy = Math.abs(pageY - touchStartPos.current.y);
+        const maxDelta = Platform.OS === 'web' ? 20 : 16;
         if (dx > maxDelta || dy > maxDelta) {
           clearTimer();
           return false;
         }
         return false;
       },
-      onPanResponderTerminationRequest: () => false,
+      onPanResponderTerminationRequest: () => true,
       onPanResponderGrant: () => {
         const p = latest.current;
+        y.stopAnimation();
         y.setValue(p.top);
       },
       onPanResponderMove: (evt, g) => {
         if (!isLongPressing.current && !latest.current.isActive) return;
         const p = latest.current;
-        const next = Math.max(0, Math.min(p.top + g.dy, p.maxTop));
+        const next = p.unclampedDrag ? p.top + g.dy : Math.max(0, Math.min(p.top + g.dy, p.maxTop));
         y.setValue(next);
         const pageY = (evt.nativeEvent as any)?.pageY ?? (evt as any)?.pageY ?? g.moveY ?? 0;
         const clientY = (evt.nativeEvent as any)?.clientY ?? (evt as any)?.clientY ?? g.moveY ?? 0;
@@ -219,6 +226,18 @@ function Row(props: RowProps) {
       onTouchCancel={clearTimer}
       {...(Platform.OS === 'web'
         ? ({
+            onPointerUp: () => {
+              if (isLongPressing.current || latest.current.isActive) {
+                endDrag();
+              } else {
+                clearTimer();
+              }
+            },
+            onDragStart: (e: any) => {
+              e?.preventDefault?.();
+              return false;
+            },
+            draggable: false,
             onClickCapture: (e: any) => {
               if (justDropped()) {
                 e?.stopPropagation?.();
@@ -338,7 +357,9 @@ export function DraggableTaskList<T extends { id: string }>({
 
   const onDragStart = useCallback((id: string, index: number) => {
     setInteracted(true);
-    setActive({ id, from: index, over: index });
+    const newActive = { id, from: index, over: index };
+    activeRef.current = newActive;
+    setActive(newActive);
     handlers.current.onDraggingChange?.(true);
     const item = orderedRef.current.find((i) => i.id === id);
     if (item && handlers.current.onDragStartGlobal) {
@@ -367,7 +388,11 @@ export function DraggableTaskList<T extends { id: string }>({
       }
       acc += hj + gap;
     }
-    if (over !== current.over) setActive({ ...current, over });
+    if (over !== current.over) {
+      const updated = { ...current, over };
+      activeRef.current = updated;
+      setActive(updated);
+    }
   }, [gap, fallbackHeight]);
 
   useEffect(() => {
@@ -378,6 +403,7 @@ export function DraggableTaskList<T extends { id: string }>({
 
   const onDragEnd = useCallback((coords: { pageY: number; clientY: number }) => {
     const current = activeRef.current;
+    activeRef.current = null;
     let handledExternally = false;
     if (current && handlers.current.onDragEndGlobal) {
       const activeItem = orderedRef.current.find((i) => i.id === current.id);
