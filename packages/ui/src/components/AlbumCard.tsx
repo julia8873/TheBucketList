@@ -102,7 +102,15 @@ export function AlbumCard({
   let backgroundContent;
   if (parsedCover) {
     if (parsedCover.type === 'image' && parsedCover.uri) {
-      backgroundContent = <Image source={{ uri: parsedCover.uri }} style={StyleSheet.absoluteFill} contentFit="cover" />;
+      backgroundContent = (
+        <Image
+          source={{ uri: parsedCover.uri }}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          transition={150}
+        />
+      );
     } else if ((parsedCover.type === 'gradient' || parsedCover.type === 'solid') && parsedCover.colors) {
       backgroundContent = (
         <LinearGradient
@@ -118,7 +126,15 @@ export function AlbumCard({
       );
     }
   } else if (coverUri) {
-    backgroundContent = <Image source={{ uri: coverUri }} style={StyleSheet.absoluteFill} contentFit="cover" />;
+    backgroundContent = (
+      <Image
+        source={{ uri: coverUri }}
+        style={StyleSheet.absoluteFill}
+        contentFit="cover"
+        cachePolicy="memory-disk"
+        transition={150}
+      />
+    );
   } else {
     backgroundContent = (
       <LinearGradient colors={[g1, g2]} start={{ x: 0.3, y: 0 }} end={{ x: 0.7, y: 1 }} style={StyleSheet.absoluteFill} />

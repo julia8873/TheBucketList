@@ -29,6 +29,7 @@ import { supabase } from '../src/services/supabase';
 import { useAutoRefresh } from '../src/hooks/useAutoRefresh';
 import { bucketApi } from '../src/services/api/bucket';
 import { BUCKETS_QUERY_KEY } from '../src/hooks/useBuckets';
+import { ALBUMS_QUERY_KEY, fetchAlbums } from '../src/hooks/useAlbums';
 import { useRealtimeSync } from '../src/hooks/useRealtimeSync';
 import { useNotificationTapHandler } from '../src/hooks/useNotificationTapHandler';
 import 'intl-pluralrules';
@@ -159,13 +160,17 @@ function RootNavigator() {
     router.replace(target as any);
   };
 
-  // Precarga de "Mi lista" EN PARALELO a la comprobación del onboarding: así cuando la
-  // app navega a la pestaña, los datos ya están (o casi) y no se ve la pantalla vacía.
+  // Precarga de "Mi lista" (tareas y álbumes) EN PARALELO a la comprobación del onboarding:
+  // así cuando la app navega a la pestaña, los datos ya están (o casi) y no se ve la pantalla vacía.
   useEffect(() => {
     if (!userId) return;
     void queryClient.prefetchQuery({
       queryKey: [...BUCKETS_QUERY_KEY, userId],
       queryFn: () => bucketApi.getBuckets(userId),
+    });
+    void queryClient.prefetchQuery({
+      queryKey: [...ALBUMS_QUERY_KEY, userId],
+      queryFn: () => fetchAlbums(userId),
     });
   }, [userId, queryClient]);
 

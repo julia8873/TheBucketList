@@ -20,108 +20,117 @@ export interface AlbumWithProgress {
   tags?: string[];
 }
 
+export async function fetchAlbums(userId: string): Promise<AlbumWithProgress[]> {
+  if (!userId) return [];
+
+  // 1. Fetch own albums and shared memberships in parallel
+  const [ownResult, memberRowsResult] = await Promise.all([
+    supabase
+      .from('albums')
+      .select('id, title, description, cover_path, visibility, is_shared, priority, is_closed, closed_at, created_at, owner_id')
+      .eq('owner_id', userId)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('album_members')
+      .select('album_id')
+      .eq('user_id', userId)
+      .eq('status', 'accepted'),
+  ]);
+
+  if (ownResult.error) throw ownResult.error;
+
+  const ownAlbums = ownResult.data ?? [];
+  const ownIds = new Set(ownAlbums.map((a: any) => a.id));
+
+  // 2. Fetch member albums only if there are shared albums not owned
+  const sharedAlbumIds = (memberRowsResult.data ?? [])
+    .map((m: any) => m.album_id)
+    .filter((id: string) => !ownIds.has(id));
+
+  let sharedAlbums: any[] = [];
+  if (sharedAlbumIds.length > 0) {
+    try {
+      const { data: memberAlbums } = await supabase
+        .from('albums')
+        .select('id, title, description, cover_path, visibility, is_shared, priority, is_closed, closed_at, created_at, owner_id')
+        .in('id', sharedAlbumIds)
+        .order('created_at', { ascending: false });
+      sharedAlbums = memberAlbums ?? [];
+    } catch {
+      // Ignored
+    }
+  }
+
+  const allAlbums = [...ownAlbums, ...sharedAlbums];
+  if (allAlbums.length === 0) return [];
+
+  const allAlbumIds = allAlbums.map((a) => a.id);
+
+  // 3. Fetch progress and tags in parallel
+  const [progressResult, atRowsResult] = await Promise.all([
+    supabase
+      .from('album_progress')
+      .select('album_id, total_tasks, completed_tasks')
+      .in('album_id', allAlbumIds),
+    supabase
+      .from('album_tags')
+      .select('album_id, tag_id')
+      .in('album_id', allAlbumIds),
+  ]);
+
+  const progressData = progressResult.data ?? [];
+  const atRows = atRowsResult.data ?? [];
+
+  const albumTagsMap: Record<string, string[]> = {};
+  for (const row of atRows) {
+    if (row?.album_id && row?.tag_id) {
+      const list = albumTagsMap[row.album_id] || [];
+      list.push(row.tag_id);
+      albumTagsMap[row.album_id] = list;
+    }
+  }
+
+  allAlbums.forEach((album) => {
+    if (album.cover_path && typeof album.cover_path === 'string' && album.cover_path.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(album.cover_path);
+        if (Array.isArray(parsed?.tag_ids) && parsed.tag_ids.length > 0) {
+          const existing = albumTagsMap[album.id] || [];
+          albumTagsMap[album.id] = Array.from(new Set([...existing, ...parsed.tag_ids]));
+        }
+      } catch {}
+    }
+  });
+
+  return allAlbums.map((album) => {
+    const prog = progressData.find((p) => p.album_id === album.id);
+
+    return {
+      id: album.id,
+      title: album.title,
+      description: album.description,
+      cover_path: album.cover_path,
+      visibility: album.visibility,
+      is_shared: album.is_shared,
+      priority: (album.priority || 'medium') as 'low' | 'medium' | 'high' | 'urgent',
+      is_closed: Boolean(album.is_closed),
+      closed_at: album.closed_at || null,
+      created_at: album.created_at || undefined,
+      total_tasks: prog?.total_tasks || 0,
+      completed_tasks: prog?.completed_tasks || 0,
+      tags: albumTagsMap[album.id] || [],
+    };
+  });
+}
+
 export function useAlbums(userId?: string) {
   return useQuery({
     queryKey: [...ALBUMS_QUERY_KEY, userId],
-    queryFn: async (): Promise<AlbumWithProgress[]> => {
-      if (!userId) return [];
-
-      // 1. Albums owned by user
-      const { data: ownAlbums, error: ownErr } = await supabase
-        .from('albums')
-        .select('*')
-        .eq('owner_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (ownErr) throw ownErr;
-
-      // 2. Shared albums where user is an accepted member
-      let sharedAlbums: any[] = [];
-      try {
-        const { data: memberRows } = await supabase
-          .from('album_members')
-          .select('album_id')
-          .eq('user_id', userId)
-          .eq('status', 'accepted');
-
-        const sharedAlbumIds = (memberRows ?? []).map((m: any) => m.album_id);
-        if (sharedAlbumIds.length > 0) {
-          const { data: memberAlbums } = await supabase
-            .from('albums')
-            .select('*')
-            .in('id', sharedAlbumIds)
-            .order('created_at', { ascending: false });
-          sharedAlbums = memberAlbums ?? [];
-        }
-      } catch {
-        // Ignored
-      }
-
-      const ownIds = new Set((ownAlbums ?? []).map((a: any) => a.id));
-      const allAlbums = [
-        ...(ownAlbums ?? []),
-        ...sharedAlbums.filter((a: any) => !ownIds.has(a.id)),
-      ];
-
-      if (allAlbums.length === 0) return [];
-
-      const { data: progressData } = await supabase
-        .from('album_progress')
-        .select('*')
-        .in('album_id', allAlbums.map(a => a.id));
-
-      const albumTagsMap: Record<string, string[]> = {};
-      try {
-        const { data: atRows } = await supabase
-          .from('album_tags')
-          .select('album_id, tag_id')
-          .in('album_id', allAlbums.map(a => a.id));
-        if (atRows) {
-          for (const row of atRows) {
-            if (row?.album_id && row?.tag_id) {
-              const list = albumTagsMap[row.album_id] || [];
-              list.push(row.tag_id);
-              albumTagsMap[row.album_id] = list;
-            }
-          }
-        }
-      } catch {
-        // Ignored
-      }
-
-      allAlbums.forEach(album => {
-        if (album.cover_path && typeof album.cover_path === 'string' && album.cover_path.startsWith('{')) {
-          try {
-            const parsed = JSON.parse(album.cover_path);
-            if (Array.isArray(parsed?.tag_ids) && parsed.tag_ids.length > 0) {
-              const existing = albumTagsMap[album.id] || [];
-              albumTagsMap[album.id] = Array.from(new Set([...existing, ...parsed.tag_ids]));
-            }
-          } catch {}
-        }
-      });
-
-      return allAlbums.map(album => {
-        const prog = progressData?.find(p => p.album_id === album.id);
-
-        return {
-          id: album.id,
-          title: album.title,
-          description: album.description,
-          cover_path: album.cover_path,
-          visibility: album.visibility,
-          is_shared: album.is_shared,
-          priority: (album.priority || 'medium') as 'low' | 'medium' | 'high' | 'urgent',
-          is_closed: Boolean(album.is_closed),
-          closed_at: album.closed_at || null,
-          created_at: album.created_at || undefined,
-          total_tasks: prog?.total_tasks || 0,
-          completed_tasks: prog?.completed_tasks || 0,
-          tags: albumTagsMap[album.id] || [],
-        };
-      });
-    },
+    queryFn: () => (userId ? fetchAlbums(userId) : Promise.resolve([])),
     enabled: !!userId,
+    staleTime: 1000 * 60 * 5, // 5 minutos de caché fresca
+    gcTime: 1000 * 60 * 30, // 30 minutos en memoria
+    placeholderData: (prev) => prev,
   });
 }
 

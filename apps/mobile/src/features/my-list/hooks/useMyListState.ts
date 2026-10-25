@@ -455,6 +455,9 @@ export function useMyListState() {
       return data || [];
     },
     enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
+    placeholderData: (prev) => prev,
   });
 
   const unassignedCount = useMemo(() => {

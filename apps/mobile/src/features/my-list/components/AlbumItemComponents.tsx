@@ -28,11 +28,27 @@ export const AlbumCoverThumb = React.memo(function AlbumCoverThumb({
 
   let inner;
   if (parsedCover?.type === 'image' && parsedCover.uri) {
-    inner = <ExpoImage source={{ uri: parsedCover.uri }} style={StyleSheet.absoluteFill} contentFit="cover" />;
+    inner = (
+      <ExpoImage
+        source={{ uri: parsedCover.uri }}
+        style={StyleSheet.absoluteFill}
+        contentFit="cover"
+        cachePolicy="memory-disk"
+        transition={150}
+      />
+    );
   } else if ((parsedCover?.type === 'gradient' || parsedCover?.type === 'solid') && parsedCover.colors) {
     inner = <LinearGradient colors={parsedCover.colors} style={StyleSheet.absoluteFill} />;
   } else if (coverUri && !parsedCover) {
-    inner = <ExpoImage source={{ uri: coverUri }} style={StyleSheet.absoluteFill} contentFit="cover" />;
+    inner = (
+      <ExpoImage
+        source={{ uri: coverUri }}
+        style={StyleSheet.absoluteFill}
+        contentFit="cover"
+        cachePolicy="memory-disk"
+        transition={150}
+      />
+    );
   } else {
     inner = <LinearGradient colors={[g1, g2]} style={StyleSheet.absoluteFill} />;
   }
