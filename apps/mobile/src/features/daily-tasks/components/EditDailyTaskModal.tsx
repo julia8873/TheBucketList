@@ -11,7 +11,7 @@ import {
   StyleSheet,
   useWindowDimensions,
 } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { UniversalDatePicker } from '@/components/UniversalDatePicker';
 import {
   X,
   Plus,
@@ -603,18 +603,17 @@ export function EditDailyTaskModal({
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* DateTimePicker for Edit Modal */}
+      {/* UniversalDatePicker for Edit Modal */}
       {showDatePicker && (
-        <DateTimePicker
+        <UniversalDatePicker
           value={parseLocalDate(editDueDate)}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={(event, selectedDate) => {
+          onChange={(selectedDate) => {
             setShowDatePicker(false);
             if (selectedDate) {
               onSelectDueDate(toDateString(selectedDate));
             }
           }}
+          onClose={() => setShowDatePicker(false)}
         />
       )}
     </>

@@ -408,7 +408,11 @@ export default function PublicProfileScreen() {
           {activeTab === 'list' ? (
             <>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <SectionLabel highlight={t('common.tasks')} rest={` ${t('common.public').toLowerCase()} · ${taskCount}`} style={styles.sectionLabel} />
+                <SectionLabel
+                  highlight={t('profile.public_tasks_gold')}
+                  rest={`${t('profile.public_tasks_rest')} · ${taskCount}`}
+                  style={styles.sectionLabel}
+                />
                 <ViewModeSelector mode={taskViewMode} onChange={setTaskViewMode} />
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14, marginBottom: 16 }}>

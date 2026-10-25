@@ -125,16 +125,11 @@ export function getAuthRedirectUrl(path = ''): string {
 
   if (Platform.OS === 'web') {
     if (typeof window !== 'undefined' && window.location?.origin) {
-      if (__DEV__ || !process.env['EXPO_PUBLIC_SITE_URL']) {
-        return normalizedPath ? `${window.location.origin}/${normalizedPath}` : window.location.origin;
-      }
+      return normalizedPath ? `${window.location.origin}/${normalizedPath}` : window.location.origin;
     }
     const site = process.env['EXPO_PUBLIC_SITE_URL'];
     if (site) {
       return normalizedPath ? `${site.replace(/\/$/, '')}/${normalizedPath}` : site.replace(/\/$/, '');
-    }
-    if (typeof window !== 'undefined' && window.location?.origin) {
-      return normalizedPath ? `${window.location.origin}/${normalizedPath}` : window.location.origin;
     }
   }
 

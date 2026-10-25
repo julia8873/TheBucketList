@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, Modal, StyleSheet } from 'react-native';
 import { MapPin, Calendar, Folder, Eye, Users, Lock, Check, ChevronLeft, X, HardDrive } from 'lucide-react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { UniversalDatePicker } from '../../../components/UniversalDatePicker';
 import { format } from 'date-fns';
 import { gold, useTheme } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
@@ -152,11 +152,10 @@ export function TaskSettingsCard({
         </View>
       </Pressable>
       {showDatePicker && (
-        <DateTimePicker
+        <UniversalDatePicker
           value={deadline ? new Date(deadline) : new Date()}
-          mode="date"
-          display="default"
-          onChange={(_event, date) => onDateChange(date)}
+          onChange={(date) => onDateChange(date)}
+          onClose={() => onDateChange(undefined)}
         />
       )}
 

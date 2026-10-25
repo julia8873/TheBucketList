@@ -43,6 +43,7 @@ export function FilterChip({ label, active = false, onPress, style, accessibilit
       accessibilityLabel={accessibilityLabel ?? label}
     >
       <Text
+        numberOfLines={1}
         style={[
           styles.label,
           {

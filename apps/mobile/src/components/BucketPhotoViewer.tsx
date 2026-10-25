@@ -38,6 +38,7 @@ import { storageApi } from '../services/api/storage';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { UniversalDatePicker } from './UniversalDatePicker';
 import { format } from 'date-fns';
 import { getDateFnsLocale } from '@/utils/dateLocale';
 
@@ -585,14 +586,12 @@ export function BucketPhotoViewer({
         )}
 
         {datePickerState && Platform.OS !== 'ios' && (
-          <DateTimePicker
+          <UniversalDatePicker
             value={pickerTempDate}
-            mode="date"
-            display="default"
-            onChange={(event, date) => {
+            onChange={(date) => {
               const { field, photoId } = datePickerState;
               setDatePickerState(null);
-              if (event.type === 'set' && date) {
+              if (date) {
                 const safeDate = new Date(date);
                 safeDate.setHours(12, 0, 0, 0);
                 const targetPhotoId = photoId || currentPhoto?.id;
@@ -601,6 +600,7 @@ export function BucketPhotoViewer({
                 }
               }
             }}
+            onClose={() => setDatePickerState(null)}
           />
         )}
 

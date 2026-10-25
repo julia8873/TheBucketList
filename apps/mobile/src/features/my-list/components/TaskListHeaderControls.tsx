@@ -116,13 +116,14 @@ export function TaskListHeaderControls({
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+        contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexGrow: 1 }}
         style={{ marginBottom: 16 }}
       >
         {/* Todas */}
         <FilterChip
           label={t('my_list.filter_all')}
           active={filter === 'all' && priorityFilter === 'all'}
+          style={{ flexGrow: 1, flexShrink: 0, paddingHorizontal: 10 }}
           onPress={() => {
             setFilter('all');
             setPriorityFilter('all');
@@ -137,6 +138,10 @@ export function TaskListHeaderControls({
           style={[
             styles.tagFilterBtn,
             {
+              flexGrow: 1,
+              flexShrink: 0,
+              justifyContent: 'center',
+              paddingHorizontal: 10,
               backgroundColor: filter !== 'all'
                 ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
                 : theme.colors.surface,
@@ -144,7 +149,10 @@ export function TaskListHeaderControls({
             },
           ]}
         >
-          <Text style={[styles.tagFilterText, { color: filter !== 'all' ? gold[400] : theme.colors.foregroundMuted }]}>
+          <Text
+            numberOfLines={1}
+            style={[styles.tagFilterText, { color: filter !== 'all' ? gold[400] : theme.colors.foregroundMuted }]}
+          >
             {statusShortLabel[filter]}
           </Text>
           <ChevronDown size={14} color={filter !== 'all' ? gold[400] : theme.colors.foregroundMuted} />
@@ -158,6 +166,10 @@ export function TaskListHeaderControls({
           style={[
             styles.tagFilterBtn,
             {
+              flexGrow: 1,
+              flexShrink: 0,
+              justifyContent: 'center',
+              paddingHorizontal: 10,
               backgroundColor: priorityFilter !== 'all'
                 ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
                 : theme.colors.surface,
@@ -165,7 +177,10 @@ export function TaskListHeaderControls({
             },
           ]}
         >
-          <Text style={[styles.tagFilterText, { color: priorityFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted }]}>
+          <Text
+            numberOfLines={1}
+            style={[styles.tagFilterText, { color: priorityFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted }]}
+          >
             {priorityShortLabel[priorityFilter]}
           </Text>
           <ChevronDown size={14} color={priorityFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted} />
@@ -179,6 +194,10 @@ export function TaskListHeaderControls({
           style={[
             styles.tagFilterBtn,
             {
+              flexGrow: 1,
+              flexShrink: 0,
+              justifyContent: 'center',
+              paddingHorizontal: 10,
               backgroundColor: selectedTagIds.length > 0
                 ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
                 : theme.colors.surface,
@@ -187,7 +206,10 @@ export function TaskListHeaderControls({
           ]}
         >
           <TagIcon size={14} color={selectedTagIds.length > 0 ? gold[400] : theme.colors.foregroundMuted} strokeWidth={2} />
-          <Text style={[styles.tagFilterText, { color: selectedTagIds.length > 0 ? gold[400] : theme.colors.foregroundMuted }]}>
+          <Text
+            numberOfLines={1}
+            style={[styles.tagFilterText, { color: selectedTagIds.length > 0 ? gold[400] : theme.colors.foregroundMuted }]}
+          >
             {selectedTagIds.length === 0
               ? t('my_list.filter_tags_short')
               : selectedTagIds.length === 1
@@ -203,7 +225,7 @@ export function TaskListHeaderControls({
             onPress={() => onRemoveTagFilter(tItem.id)}
             accessibilityRole="button"
             accessibilityLabel={t('my_list.remove_tag_label', { name: tItem.name })}
-            style={[styles.activeTagChip, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+            style={[styles.activeTagChip, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, flexShrink: 0 }]}
           >
             {tItem.emoji ? (
               <View style={[styles.activeTagEmoji, { backgroundColor: hexToRgba(tItem.color, 0.3) }]}>

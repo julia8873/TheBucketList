@@ -65,8 +65,8 @@ export function ProfileAlbumsTab({
     <>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <SectionLabel
-          highlight={t('common.albums')}
-          rest={` ${t('common.public').toLowerCase()} · ${totalCount}`}
+          highlight={t('profile.public_albums_gold')}
+          rest={`${t('profile.public_albums_rest')} · ${totalCount}`}
           style={styles.sectionLabel}
         />
         {onChangeViewMode && (

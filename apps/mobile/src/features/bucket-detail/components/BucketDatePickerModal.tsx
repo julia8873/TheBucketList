@@ -3,6 +3,7 @@ import { View, Modal, Pressable, Platform } from 'react-native';
 import { Typography, useTheme } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { UniversalDatePicker } from '@/components/UniversalDatePicker';
 
 export interface DatePickerConfig {
   visible: boolean;
@@ -83,18 +84,17 @@ function BucketDatePickerModalInner({
   }
 
   return (
-    <DateTimePicker
+    <UniversalDatePicker
       value={config.date || new Date()}
-      mode="date"
-      display="default"
       maximumDate={config.type === 'completed_at' ? new Date() : undefined}
-      onChange={async (event, date) => {
+      onChange={async (date) => {
         const type = config.type;
         onClose();
-        if (event.type === 'set' && date) {
+        if (date) {
           await onChangeDate(date, type);
         }
       }}
+      onClose={onClose}
     />
   );
 }

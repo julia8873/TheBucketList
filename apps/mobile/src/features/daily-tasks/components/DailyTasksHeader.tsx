@@ -299,7 +299,7 @@ export function DailyTasksScrollControls({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={[
           styles.tagsFilterScroll,
-          { paddingLeft: 16, paddingRight: 32, gap: 10 },
+          { paddingLeft: 16, paddingRight: 16, gap: 8, flexGrow: 1 },
         ]}
         style={{ marginHorizontal: -16 }}
       >
@@ -307,6 +307,7 @@ export function DailyTasksScrollControls({
         <FilterChip
           label={t('daily.filter_all')}
           active={statusFilter === 'all' && !onlyFavorites && priorityFilter === 'all'}
+          style={{ flexGrow: 1, flexShrink: 0, paddingHorizontal: 10 }}
           onPress={() => {
             setStatusFilter('all');
             setOnlyFavorites(false);
@@ -319,6 +320,10 @@ export function DailyTasksScrollControls({
           style={[
             styles.tagFilterPill,
             {
+              flexGrow: 1,
+              flexShrink: 0,
+              justifyContent: 'center',
+              paddingHorizontal: 10,
               backgroundColor: isStatusActive
                 ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.14)')
                 : theme.colors.surface,
@@ -330,6 +335,7 @@ export function DailyTasksScrollControls({
           accessibilityLabel={t('daily.filter_status_title')}
         >
           <Text
+            numberOfLines={1}
             style={[
               styles.tagFilterText,
               { color: isStatusActive ? gold[400] : theme.colors.foregroundMuted },
@@ -351,6 +357,10 @@ export function DailyTasksScrollControls({
           style={[
             styles.tagFilterPill,
             {
+              flexGrow: 1,
+              flexShrink: 0,
+              justifyContent: 'center',
+              paddingHorizontal: 10,
               backgroundColor: isPriorityActive
                 ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.14)')
                 : theme.colors.surface,
@@ -362,6 +372,7 @@ export function DailyTasksScrollControls({
           accessibilityLabel={t('daily.filter_priority_title')}
         >
           <Text
+            numberOfLines={1}
             style={[
               styles.tagFilterText,
               { color: isPriorityActive ? gold[400] : theme.colors.foregroundMuted },
@@ -377,6 +388,10 @@ export function DailyTasksScrollControls({
           style={[
             styles.tagFilterPill,
             {
+              flexGrow: 1,
+              flexShrink: 0,
+              justifyContent: 'center',
+              paddingHorizontal: 10,
               backgroundColor: selectedTagFilters.length > 0
                 ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.14)')
                 : theme.colors.surface,
@@ -393,6 +408,7 @@ export function DailyTasksScrollControls({
             strokeWidth={2.2}
           />
           <Text
+            numberOfLines={1}
             style={[
               styles.tagFilterText,
               { color: selectedTagFilters.length > 0 ? gold[400] : theme.colors.foregroundMuted },

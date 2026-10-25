@@ -36,6 +36,12 @@ export default function Root({ children }: PropsWithChildren) {
                 scrollbar-width: none !important;
                 -ms-overflow-style: none !important;
                 overflow-x: hidden;
+                overscroll-behavior-y: none !important;
+                overscroll-behavior: none !important;
+              }
+              #root, #__next, [data-reactroot] {
+                overscroll-behavior-y: none !important;
+                overscroll-behavior: none !important;
               }
             `,
           }}

@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from 'expo-router';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { UniversalDatePicker } from '@/components/UniversalDatePicker';
 import { ListTodo, CheckCircle2, ChevronDown, ChevronRight } from 'lucide-react-native';
 
 import { useTheme, Typography, FAB } from '@bucketlist/ui';
@@ -61,6 +61,20 @@ export default function DailyTasksScreen() {
     return unsubscribe;
   }, [navigation]);
 
+  // En modo web desde un móvil, deshabilitar el pull-to-refresh nativo del navegador
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      const prevHtml = document.documentElement.style.overscrollBehaviorY;
+      const prevBody = document.body.style.overscrollBehaviorY;
+      document.documentElement.style.overscrollBehaviorY = 'none';
+      document.body.style.overscrollBehaviorY = 'none';
+      return () => {
+        document.documentElement.style.overscrollBehaviorY = prevHtml;
+        document.body.style.overscrollBehaviorY = prevBody;
+      };
+    }
+  }, []);
+
   const renderTaskRow = (item: DailyTask, drag?: any, isLast?: boolean) => (
     <DailyTaskCard
       key={item.id}
@@ -107,7 +121,13 @@ export default function DailyTasksScreen() {
         {/* Content Area */}
         <ScrollView
           ref={scrollRef}
-          style={styles.listScroll}
+          style={[
+            styles.listScroll,
+            Platform.OS === 'web' && ({
+              overscrollBehavior: 'none',
+              overscrollBehaviorY: 'none',
+            } as any),
+          ]}
           contentContainerStyle={[styles.listContent, { flexGrow: 1 }]}
           nestedScrollEnabled={true}
           automaticallyAdjustKeyboardInsets={false}
@@ -417,16 +437,15 @@ export default function DailyTasksScreen() {
         />
 
         {showCreateDatePicker && (
-          <DateTimePicker
+          <UniversalDatePicker
             value={parseLocalDate(state.createDueDate)}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={(event, selectedDate) => {
+            onChange={(selectedDate) => {
               setShowCreateDatePicker(false);
               if (selectedDate) {
                 state.setCreateDueDate(toDateString(selectedDate));
               }
             }}
+            onClose={() => setShowCreateDatePicker(false)}
           />
         )}
 
@@ -535,17 +554,19 @@ export default function DailyTasksScreen() {
           onClose={() => setCustomizeModalVisible(false)}
         />
 
-        {/* DateTimePicker for Overdue Reschedule */}
+        {/* UniversalDatePicker for Overdue Reschedule */}
         {state.showRescheduleDatePicker && state.rescheduleTask && (
-          <DateTimePicker
+          <UniversalDatePicker
             value={parseLocalDate(state.rescheduleTask.due_date || state.todayStr)}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={(event, selectedDate) => {
+            onChange={(selectedDate) => {
               state.setShowRescheduleDatePicker(false);
               if (selectedDate && state.rescheduleTask) {
                 state.handleRescheduleTask(state.rescheduleTask, toDateString(selectedDate));
               }
+              state.setRescheduleTask(null);
+            }}
+            onClose={() => {
+              state.setShowRescheduleDatePicker(false);
               state.setRescheduleTask(null);
             }}
           />

@@ -74,7 +74,7 @@ export function DailyTaskCard({
         isCompleted && styles.compactRowCompleted,
         drag?.isActive && styles.compactRowDragging,
         isLast && { borderBottomWidth: 0 },
-        Platform.OS === 'web' && ({ userSelect: 'none', WebkitUserSelect: 'none', cursor: drag?.isActive ? 'grabbing' : 'default' } as any),
+        Platform.OS === 'web' && ({ userSelect: 'none', WebkitUserSelect: 'none', cursor: drag?.isActive ? 'grabbing' : 'default', touchAction: drag?.isActive ? 'none' : 'pan-y' } as any),
       ]}
     >
       {/* Checkbox */}

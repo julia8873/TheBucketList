@@ -264,6 +264,7 @@ function Row(props: RowProps) {
               userSelect: 'none',
               WebkitUserSelect: 'none',
               cursor: isActive ? 'grabbing' : 'default',
+              touchAction: isActive ? 'none' : 'pan-y',
             } as any)
           : {}),
       }}

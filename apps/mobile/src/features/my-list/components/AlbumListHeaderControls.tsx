@@ -112,13 +112,14 @@ export function AlbumListHeaderControls({
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+        contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexGrow: 1 }}
         style={{ marginBottom: 16 }}
       >
         {/* Todas */}
         <FilterChip
           label={t('my_list.filter_all')}
           active={albumFilter === 'all' && albumPriorityFilter === 'all'}
+          style={{ flexGrow: 1, flexShrink: 0, paddingHorizontal: 10 }}
           onPress={() => {
             setAlbumFilter('all');
             setAlbumPriorityFilter('all');
@@ -133,6 +134,10 @@ export function AlbumListHeaderControls({
           style={[
             styles.tagFilterBtn,
             {
+              flexGrow: 1,
+              flexShrink: 0,
+              justifyContent: 'center',
+              paddingHorizontal: 10,
               backgroundColor: albumFilter !== 'all'
                 ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
                 : theme.colors.surface,
@@ -140,7 +145,10 @@ export function AlbumListHeaderControls({
             },
           ]}
         >
-          <Text style={[styles.tagFilterText, { color: albumFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted }]}>
+          <Text
+            numberOfLines={1}
+            style={[styles.tagFilterText, { color: albumFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted }]}
+          >
             {albumStatusShortLabel[albumFilter]}
           </Text>
           <ChevronDown size={14} color={albumFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted} />
@@ -154,6 +162,10 @@ export function AlbumListHeaderControls({
           style={[
             styles.tagFilterBtn,
             {
+              flexGrow: 1,
+              flexShrink: 0,
+              justifyContent: 'center',
+              paddingHorizontal: 10,
               backgroundColor: albumPriorityFilter !== 'all'
                 ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
                 : theme.colors.surface,
@@ -161,7 +173,10 @@ export function AlbumListHeaderControls({
             },
           ]}
         >
-          <Text style={[styles.tagFilterText, { color: albumPriorityFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted }]}>
+          <Text
+            numberOfLines={1}
+            style={[styles.tagFilterText, { color: albumPriorityFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted }]}
+          >
             {priorityShortLabel[albumPriorityFilter]}
           </Text>
           <ChevronDown size={14} color={albumPriorityFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted} />
@@ -175,6 +190,10 @@ export function AlbumListHeaderControls({
           style={[
             styles.tagFilterBtn,
             {
+              flexGrow: 1,
+              flexShrink: 0,
+              justifyContent: 'center',
+              paddingHorizontal: 10,
               backgroundColor: selectedTagIds.length > 0
                 ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
                 : theme.colors.surface,
@@ -183,7 +202,10 @@ export function AlbumListHeaderControls({
           ]}
         >
           <TagIcon size={14} color={selectedTagIds.length > 0 ? gold[400] : theme.colors.foregroundMuted} strokeWidth={2} />
-          <Text style={[styles.tagFilterText, { color: selectedTagIds.length > 0 ? gold[400] : theme.colors.foregroundMuted }]}>
+          <Text
+            numberOfLines={1}
+            style={[styles.tagFilterText, { color: selectedTagIds.length > 0 ? gold[400] : theme.colors.foregroundMuted }]}
+          >
             {selectedTagIds.length === 0
               ? t('my_list.filter_tags_short')
               : selectedTagIds.length === 1
@@ -199,7 +221,7 @@ export function AlbumListHeaderControls({
             onPress={() => onRemoveTagFilter(tTag.id)}
             accessibilityRole="button"
             accessibilityLabel={t('my_list.remove_tag_label', { name: tTag.name })}
-            style={[styles.activeTagChip, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+            style={[styles.activeTagChip, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, flexShrink: 0 }]}
           >
             {tTag.emoji ? (
               <View style={[styles.activeTagEmoji, { backgroundColor: hexToRgba(tTag.color, 0.3) }]}>
