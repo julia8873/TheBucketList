@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
+import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/add-task.styles';
 
 interface AddTaskSegmentedControlProps {
@@ -15,6 +16,8 @@ export function AddTaskSegmentedControl({
   userSelectedCount,
   defaultSelectedCount,
 }: AddTaskSegmentedControlProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.segmentedControl}>
       <Pressable
@@ -24,7 +27,7 @@ export function AddTaskSegmentedControl({
         onPress={() => onChangeTab('user')}
       >
         <Text style={[styles.segmentText, activeTab === 'user' && styles.segmentTextActive]}>
-          Tus tareas
+          {t('add_task.tab_user', { defaultValue: 'Tus tareas' })}
         </Text>
         {userSelectedCount > 0 && (
           <View style={[styles.badge, activeTab === 'user' ? styles.badgeActive : styles.badgeInactive]}>
@@ -42,7 +45,7 @@ export function AddTaskSegmentedControl({
         onPress={() => onChangeTab('default')}
       >
         <Text style={[styles.segmentText, activeTab === 'default' && styles.segmentTextActive]}>
-          Por defecto
+          {t('add_task.tab_default', { defaultValue: 'Por defecto' })}
         </Text>
         {defaultSelectedCount > 0 && (
           <View style={[styles.badge, activeTab === 'default' ? styles.badgeActive : styles.badgeInactive]}>

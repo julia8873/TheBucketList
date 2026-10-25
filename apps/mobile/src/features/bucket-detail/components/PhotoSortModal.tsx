@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Modal, Pressable, StyleSheet } from 'react-native';
 import { Typography } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { ArrowUp, ArrowDown } from 'lucide-react-native';
 
@@ -28,6 +29,7 @@ export function PhotoSortModal({
   onClose,
   onSelectSort,
 }: PhotoSortModalProps) {
+  const { t } = useTranslation();
   return (
     <Modal
       visible={visible}
@@ -56,9 +58,9 @@ export function PhotoSortModal({
           }}
         >
           {([
-            { field: 'date', label: 'Fecha' },
-            { field: 'title', label: 'Nombre' },
-            ...(canEdit ? [{ field: 'manual', label: 'Manual' } as const] : []),
+            { field: 'date', label: t('bucket.sort_date') },
+            { field: 'title', label: t('bucket.sort_title') },
+            ...(canEdit ? [{ field: 'manual', label: t('bucket.sort_manual') } as const] : []),
           ] as const).map((option, i) => {
             const selected = photoSortField === option.field;
             return (

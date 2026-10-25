@@ -1,14 +1,14 @@
 import React from 'react';
-import { View, Pressable, TextInput, Image, Dimensions } from 'react-native';
+import { View, Pressable, TextInput, useWindowDimensions, Platform } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { Typography } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { Camera, ArrowDown, ArrowUp, GripVertical } from 'lucide-react-native';
 import { DraggableTaskList } from '@/components/DraggableTaskList';
 import { storageApi } from '@/services/api/storage';
 import { styles } from '../styles/bucket-detail.styles';
 import type { PhotoSortField, PhotoSortDir } from './PhotoSortModal';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface BucketPhotosSectionProps {
   bucket: any;
@@ -45,6 +45,12 @@ export function BucketPhotosSection({
   pickAndUploadPhotos,
   onOpenAddPhotoSheet,
 }: BucketPhotosSectionProps) {
+  const { t, i18n } = useTranslation();
+  const { width: windowWidth } = useWindowDimensions();
+  const containerWidth = Platform.OS === 'web' ? Math.min(windowWidth, 620) - 40 : windowWidth - 40;
+  const thumbWidth = Math.max(120, Math.floor((containerWidth - 10) / 2));
+  const thumbHeight = Math.floor(thumbWidth * 1.25);
+
   if (!bucket.bucket_photos?.length && !canEdit) return null;
 
   return (
@@ -53,12 +59,12 @@ export function BucketPhotosSection({
       <View style={styles.photosSection}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
-            FOTOS{bucket.bucket_photos?.length > 0 ? ` · ${bucket.bucket_photos?.length}` : ''}
+            {t('bucket.photos_title')}{bucket.bucket_photos?.length > 0 ? ` · ${bucket.bucket_photos?.length}` : ''}
           </Typography>
           {bucket.bucket_photos?.length > 0 && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Typography variant="caption" color={theme.colors.foregroundMuted}>
-                Ordenar por:
+                {t('bucket.sort_by')}
               </Typography>
               <Pressable
                 ref={sortTriggerRef}
@@ -68,7 +74,7 @@ export function BucketPhotosSection({
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
               >
                 <Typography variant="caption" color={gold[400]}>
-                  {photoSortField === 'date' ? 'Fecha' : photoSortField === 'title' ? 'Nombre' : 'Manual'}
+                  {photoSortField === 'date' ? t('bucket.sort_date') : photoSortField === 'title' ? t('bucket.sort_title') : t('bucket.sort_manual')}
                 </Typography>
                 {photoSortField === 'manual' ? null : photoSortDir === 'desc' ? (
                   <ArrowDown color={gold[400]} size={14} />
@@ -82,7 +88,7 @@ export function BucketPhotosSection({
 
         {bucket.bucket_photos?.length > 0 && (
           <TextInput
-            placeholder="Buscar foto..."
+            placeholder={t('bucket.search_photos')}
             placeholderTextColor={theme.colors.foregroundMuted}
             value={photoSearchQuery}
             onChangeText={setPhotoSearchQuery}
@@ -102,7 +108,7 @@ export function BucketPhotosSection({
         {photoSortField === 'manual' && canEdit && photos.length > 1 && !photoSearchQuery.trim() ? (
           <>
             <Typography variant="caption" color={theme.colors.foregroundMuted} style={{ marginBottom: 10 }}>
-              Arrastra el asa para cambiar el orden de las fotos.
+              {t('bucket.drag_photos_hint')}
             </Typography>
             <DraggableTaskList
               items={photos}
@@ -126,19 +132,21 @@ export function BucketPhotosSection({
                     onPress={() => setViewingPhotoIndex(photos.findIndex((p: any) => p.id === photo.id))}
                     style={{ width: 56, height: 56, borderRadius: 10, overflow: 'hidden', backgroundColor: theme.colors.surfaceSunken }}
                   >
-                    <Image
+                    <ExpoImage
                       source={{ uri: storageApi.getPublicUrl(photo.thumb_path || photo.storage_path) }}
                       style={{ width: '100%', height: '100%' }}
-                      resizeMode="cover"
+                      contentFit="cover"
+                      transition={150}
+                      cachePolicy="memory-disk"
                     />
                   </Pressable>
                   <View style={{ flex: 1 }}>
                     <Typography variant="bodySemibold" color={theme.colors.foreground} numberOfLines={1}>
-                      {photo.title || 'Sin título'}
+                      {photo.title || t('bucket.photo_untitled')}
                     </Typography>
                     <Typography variant="caption" color={theme.colors.foregroundMuted}>
-                      Subida: {photo.created_at ? new Date(photo.created_at).toLocaleDateString() : ''}
-                      {photo.completed_at ? ` · Completada: ${new Date(photo.completed_at).toLocaleDateString()}` : ''}
+                      {photo.created_at ? t('bucket.photo_uploaded', { date: new Date(photo.created_at).toLocaleDateString(i18n.language) }) : ''}
+                      {photo.completed_at ? ` · ${t('bucket.photo_completed', { date: new Date(photo.completed_at).toLocaleDateString(i18n.language) })}` : ''}
                     </Typography>
                   </View>
                   <View
@@ -153,12 +161,12 @@ export function BucketPhotosSection({
             />
             <View style={{ height: 14 }} />
             <Pressable
-              style={[styles.photoAddThumb, { width: '100%', height: 64, flexDirection: 'row' }]}
+              style={[styles.photoAddThumb, { width: '100%', height: 60, flexDirection: 'row' }]}
               onPress={() => onOpenAddPhotoSheet ? onOpenAddPhotoSheet() : void pickAndUploadPhotos()}
             >
               <Camera color={gold[400]} size={22} strokeWidth={1.8} />
               <Typography variant="bodySemibold" color={gold[400]} style={{ marginLeft: 10 }}>
-                Añadir foto
+                {t('bucket.add_photo')}
               </Typography>
             </Pressable>
           </>
@@ -170,22 +178,33 @@ export function BucketPhotosSection({
                 onPress={() => setViewingPhotoIndex(index)}
                 style={[
                   styles.photoThumb,
-                  photos.length === 1 && { width: '100%', height: (SCREEN_WIDTH - 40) * 1.25, marginBottom: 40 },
+                  photos.length === 1
+                    ? {
+                        width: '100%',
+                        height: Math.min(Math.round(containerWidth * 0.65), 300),
+                        marginBottom: 12,
+                      }
+                    : {
+                        width: thumbWidth,
+                        height: thumbHeight,
+                      },
                 ]}
               >
-                <Image
-                  source={{ uri: storageApi.getPublicUrl(photo.storage_path) }}
+                <ExpoImage
+                  source={{ uri: storageApi.getPublicUrl(photo.thumb_path || photo.storage_path) }}
                   style={styles.photoThumbImage}
-                  resizeMode="cover"
+                  contentFit="cover"
+                  transition={200}
+                  cachePolicy="memory-disk"
                 />
                 <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)', padding: 6 }}>
                   <Typography variant="caption" color="#fff" numberOfLines={1}>
-                    {photo.title || 'Sin título'}
+                    {photo.title || t('bucket.photo_untitled')}
                   </Typography>
                   <Typography variant="caption" color="rgba(255,255,255,0.7)">
                     {photo.completed_at
-                      ? `Completada: ${new Date(photo.completed_at).toLocaleDateString()}`
-                      : (photo.created_at ? `Subida: ${new Date(photo.created_at).toLocaleDateString()}` : '')}
+                      ? t('bucket.photo_completed', { date: new Date(photo.completed_at).toLocaleDateString(i18n.language) })
+                      : (photo.created_at ? t('bucket.photo_uploaded', { date: new Date(photo.created_at).toLocaleDateString(i18n.language) }) : '')}
                   </Typography>
                 </View>
               </Pressable>
@@ -194,14 +213,18 @@ export function BucketPhotosSection({
               <Pressable
                 style={[
                   styles.photoAddThumb,
-                  photos.length === 0 && { width: '100%', height: 72, flexDirection: 'row' },
+                  photos.length === 0
+                    ? { width: '100%', height: 72, flexDirection: 'row' }
+                    : photos.length === 1
+                    ? { width: '100%', height: 56, flexDirection: 'row' }
+                    : { width: thumbWidth, height: thumbHeight },
                 ]}
                 onPress={() => onOpenAddPhotoSheet ? onOpenAddPhotoSheet() : void pickAndUploadPhotos()}
               >
-                <Camera color={gold[400]} size={24} strokeWidth={1.8} />
-                {photos.length === 0 && (
+                <Camera color={gold[400]} size={photos.length === 1 ? 20 : 24} strokeWidth={1.8} />
+                {(photos.length === 0 || photos.length === 1) && (
                   <Typography variant="bodySemibold" color={gold[400]} style={{ marginLeft: 10 }}>
-                    Añadir foto
+                    {t('bucket.add_photo')}
                   </Typography>
                 )}
               </Pressable>

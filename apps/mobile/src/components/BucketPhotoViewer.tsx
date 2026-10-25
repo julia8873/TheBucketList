@@ -4,14 +4,14 @@ import {
   View,
   Pressable,
   FlatList,
-  Image,
-  Dimensions,
   Platform,
-  Alert,
   StyleSheet,
   TextInput,
   Text,
+  ActivityIndicator,
+  useWindowDimensions,
 } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -19,34 +19,49 @@ import Animated, {
   withSpring,
   runOnJS,
 } from 'react-native-reanimated';
-import { X, Download, Trash2, Calendar, CheckCircle2, Pencil, Image as ImageIcon, Check, AlertCircle } from 'lucide-react-native';
-import { Typography, confirm, toast, ConfirmDialog, fontFamily } from '@bucketlist/ui';
+import {
+  X,
+  Download,
+  Trash2,
+  Calendar,
+  CheckCircle2,
+  Pencil,
+  Check,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react-native';
+import { Typography, ConfirmDialog, fontFamily } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { storageApi } from '../services/api/storage';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { getDateFnsLocale } from '@/utils/dateLocale';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-function formatPhotoDate(dateStr?: string | null): string {
+function formatPhotoDate(dateStr?: string | null, language?: string): string {
   if (!dateStr) return '';
   try {
-    return format(new Date(dateStr), "d 'de' MMM yyyy", { locale: es });
+    const locale = getDateFnsLocale(language);
+    const pattern = language?.startsWith('en') ? "MMM d, yyyy" : "d 'de' MMM yyyy";
+    return format(new Date(dateStr), pattern, { locale });
   } catch {
-    return new Date(dateStr).toLocaleDateString();
+    return new Date(dateStr).toLocaleDateString(language);
   }
 }
 
 interface ZoomablePhotoItemProps {
   photo: any;
+  viewerWidth: number;
+  viewerHeight: number;
   onZoomChange: (zoomed: boolean) => void;
 }
 
-function ZoomablePhotoItem({ photo, onZoomChange }: ZoomablePhotoItemProps) {
+function ZoomablePhotoItem({ photo, viewerWidth, viewerHeight, onZoomChange }: ZoomablePhotoItemProps) {
   const [isZoomed, setIsZoomed] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const scale = useSharedValue(1);
   const savedScale = useSharedValue(1);
@@ -95,8 +110,8 @@ function ZoomablePhotoItem({ photo, onZoomChange }: ZoomablePhotoItemProps) {
           savedScale.value = scale.value;
         }
 
-        const maxTransX = Math.max(0, ((scale.value - 1) * SCREEN_WIDTH) / 2);
-        const maxTransY = Math.max(0, ((scale.value - 1) * SCREEN_HEIGHT) / 2);
+        const maxTransX = Math.max(0, ((scale.value - 1) * viewerWidth) / 2);
+        const maxTransY = Math.max(0, ((scale.value - 1) * viewerHeight) / 2);
 
         let targetX = translateX.value;
         let targetY = translateY.value;
@@ -123,8 +138,8 @@ function ZoomablePhotoItem({ photo, onZoomChange }: ZoomablePhotoItemProps) {
       savedTranslateY.value = translateY.value;
     })
     .onUpdate((e) => {
-      const maxTransX = Math.max(0, ((scale.value - 1) * SCREEN_WIDTH) / 2);
-      const maxTransY = Math.max(0, ((scale.value - 1) * SCREEN_HEIGHT) / 2);
+      const maxTransX = Math.max(0, ((scale.value - 1) * viewerWidth) / 2);
+      const maxTransY = Math.max(0, ((scale.value - 1) * viewerHeight) / 2);
 
       const nextX = savedTranslateX.value + e.translationX;
       const nextY = savedTranslateY.value + e.translationY;
@@ -146,8 +161,8 @@ function ZoomablePhotoItem({ photo, onZoomChange }: ZoomablePhotoItemProps) {
       }
     })
     .onEnd(() => {
-      const maxTransX = Math.max(0, ((scale.value - 1) * SCREEN_WIDTH) / 2);
-      const maxTransY = Math.max(0, ((scale.value - 1) * SCREEN_HEIGHT) / 2);
+      const maxTransX = Math.max(0, ((scale.value - 1) * viewerWidth) / 2);
+      const maxTransY = Math.max(0, ((scale.value - 1) * viewerHeight) / 2);
 
       let targetX = translateX.value;
       let targetY = translateY.value;
@@ -203,34 +218,67 @@ function ZoomablePhotoItem({ photo, onZoomChange }: ZoomablePhotoItemProps) {
     ],
   }));
 
+  const fullUrl = storageApi.getPublicUrl(photo.storage_path);
+  const thumbUrl = storageApi.getPublicUrl(photo.thumb_path || photo.storage_path);
+
   return (
     <GestureDetector gesture={composedGestures}>
       <View
         style={{
-          width: SCREEN_WIDTH,
-          height: '100%',
+          width: viewerWidth,
+          height: viewerHeight,
           justifyContent: 'center',
           alignItems: 'center',
           overflow: 'hidden',
+          backgroundColor: '#000',
         }}
       >
         <Animated.View
           style={[
             {
-              width: SCREEN_WIDTH,
-              height: '100%',
+              width: viewerWidth,
+              height: viewerHeight,
               justifyContent: 'center',
               alignItems: 'center',
             },
             animatedStyle,
           ]}
         >
-          <Image
-            source={{ uri: storageApi.getPublicUrl(photo.storage_path) }}
-            style={{ width: SCREEN_WIDTH, height: '100%' }}
-            resizeMode="contain"
+          <ExpoImage
+            source={{ uri: fullUrl }}
+            placeholder={{ uri: thumbUrl }}
+            placeholderContentFit="contain"
+            style={{
+              width: viewerWidth,
+              height: viewerHeight,
+            }}
+            contentFit="contain"
+            cachePolicy="memory-disk"
+            priority="high"
+            transition={200}
+            onLoadStart={() => setLoading(true)}
+            onLoad={() => setLoading(false)}
+            onError={() => setLoading(false)}
           />
         </Animated.View>
+
+        {loading && (
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10,
+            }}
+          >
+            <ActivityIndicator size="large" color={gold[400]} />
+          </View>
+        )}
       </View>
     </GestureDetector>
   );
@@ -260,6 +308,9 @@ export function BucketPhotoViewer({
   selectedThumbnailId,
   onSetAsThumbnail,
 }: BucketPhotoViewerProps) {
+  const { t, i18n } = useTranslation();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const flatListRef = useRef<FlatList>(null);
   const [isAnyPhotoZoomed, setIsAnyPhotoZoomed] = useState(false);
   const [datePickerState, setDatePickerState] = useState<{
     visible: boolean;
@@ -328,6 +379,7 @@ export function BucketPhotoViewer({
         {/* Carousel de fotos */}
         {viewingPhotoIndex !== null && (
           <FlatList
+            ref={flatListRef}
             data={photos}
             horizontal
             pagingEnabled
@@ -335,18 +387,68 @@ export function BucketPhotoViewer({
             showsHorizontalScrollIndicator={false}
             keyExtractor={(item) => item.id}
             initialScrollIndex={viewingPhotoIndex}
-            getItemLayout={(_data, index) => ({ length: SCREEN_WIDTH, offset: SCREEN_WIDTH * index, index })}
+            getItemLayout={(_data, index) => ({
+              length: windowWidth,
+              offset: windowWidth * index,
+              index,
+            })}
+            onScrollToIndexFailed={(info) => {
+              setTimeout(() => {
+                flatListRef.current?.scrollToIndex({ index: info.index, animated: false });
+              }, 60);
+            }}
             onMomentumScrollEnd={(e) => {
-              const newIndex = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-              setViewingPhotoIndex(newIndex);
+              const newIndex = Math.round(e.nativeEvent.contentOffset.x / windowWidth);
+              if (newIndex >= 0 && newIndex < photos.length) {
+                setViewingPhotoIndex(newIndex);
+              }
             }}
             renderItem={({ item }) => (
               <ZoomablePhotoItem
                 photo={item}
+                viewerWidth={windowWidth}
+                viewerHeight={windowHeight}
                 onZoomChange={setIsAnyPhotoZoomed}
               />
             )}
+            style={{ width: windowWidth, height: windowHeight }}
           />
+        )}
+
+        {/* Flechas de navegación para pantallas grandes / web o acceso rápido */}
+        {photos && photos.length > 1 && (
+          <>
+            {viewingPhotoIndex !== null && viewingPhotoIndex > 0 && (
+              <Pressable
+                style={styles.arrowLeft}
+                onPress={() => {
+                  const prev = viewingPhotoIndex - 1;
+                  flatListRef.current?.scrollToIndex({ index: prev, animated: true });
+                  setViewingPhotoIndex(prev);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={t('bucket.photo_prev')}
+                hitSlop={12}
+              >
+                <ChevronLeft color="#FFFFFF" size={26} strokeWidth={2.4} />
+              </Pressable>
+            )}
+            {viewingPhotoIndex !== null && viewingPhotoIndex < photos.length - 1 && (
+              <Pressable
+                style={styles.arrowRight}
+                onPress={() => {
+                  const next = viewingPhotoIndex + 1;
+                  flatListRef.current?.scrollToIndex({ index: next, animated: true });
+                  setViewingPhotoIndex(next);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={t('bucket.photo_next')}
+                hitSlop={12}
+              >
+                <ChevronRight color="#FFFFFF" size={26} strokeWidth={2.4} />
+              </Pressable>
+            )}
+          </>
         )}
 
         {/* Cabecera superior unificada: Título de foto, X de cerrar y Fechas */}
@@ -359,7 +461,7 @@ export function BucketPhotoViewer({
                   {isOwner ? (
                     <TextInput
                       key={currentPhoto.id}
-                      placeholder="Añadir título..."
+                      placeholder={t('bucket.photo_add_title')}
                       placeholderTextColor="rgba(255, 255, 255, 0.4)"
                       defaultValue={currentPhoto.title || ''}
                       onChangeText={(text) => onUpdateTitle?.(currentPhoto.id, text)}
@@ -368,7 +470,7 @@ export function BucketPhotoViewer({
                     />
                   ) : (
                     <Text style={styles.titleStaticText} numberOfLines={1}>
-                      {currentPhoto.title || 'Sin título'}
+                      {currentPhoto.title || t('bucket.photo_untitled')}
                     </Text>
                   )}
                 </View>
@@ -386,7 +488,7 @@ export function BucketPhotoViewer({
                     onPress={handleClose}
                     hitSlop={8}
                     accessibilityRole="button"
-                    accessibilityLabel="Cerrar visor"
+                    accessibilityLabel={t('bucket.photo_close_viewer')}
                   >
                     <X color="#FFFFFF" size={17} strokeWidth={2.4} />
                   </Pressable>
@@ -404,7 +506,7 @@ export function BucketPhotoViewer({
                 >
                   <Calendar size={11} color="#A0A0A0" strokeWidth={2} />
                   <Text style={styles.dateChipText}>
-                    Subida: {formatPhotoDate(currentPhoto.created_at)}
+                    {t('bucket.photo_uploaded', { date: formatPhotoDate(currentPhoto.created_at, i18n.language) })}
                   </Text>
                   {isOwner && <Pencil size={9} color="rgba(255,255,255,0.35)" style={{ marginLeft: 2 }} />}
                 </Pressable>
@@ -420,7 +522,7 @@ export function BucketPhotoViewer({
                     >
                       <CheckCircle2 size={11} color="#34C759" strokeWidth={2.2} />
                       <Text style={[styles.dateChipText, { color: '#34C759' }]}>
-                        Completada: {formatPhotoDate(currentPhoto.completed_at)}
+                        {t('bucket.photo_completed', { date: formatPhotoDate(currentPhoto.completed_at, i18n.language) })}
                       </Text>
                       {isOwner && <Pencil size={9} color="rgba(52, 199, 89, 0.5)" style={{ marginLeft: 2 }} />}
                     </Pressable>
@@ -430,7 +532,7 @@ export function BucketPhotoViewer({
                         onPress={() => handleRemoveCompletedAt(currentPhoto.id)}
                         style={styles.removeDateXBtn}
                         accessibilityRole="button"
-                        accessibilityLabel="Quitar fecha de completado"
+                        accessibilityLabel={t('bucket.photo_remove_completed')}
                       >
                         <X size={10} color="rgba(255,255,255,0.7)" strokeWidth={2.4} />
                       </Pressable>
@@ -444,7 +546,7 @@ export function BucketPhotoViewer({
                   >
                     <CheckCircle2 size={11} color={gold[400]} strokeWidth={2} />
                     <Text style={[styles.dateChipText, { color: gold[400], fontWeight: '600' }]}>
-                      + Fecha completada
+                      {t('bucket.photo_add_completed')}
                     </Text>
                   </Pressable>
                 ) : null}
@@ -460,13 +562,13 @@ export function BucketPhotoViewer({
             <View style={styles.dateModalContent}>
               <View style={styles.dateModalHeader}>
                 <Pressable onPress={() => setDatePickerState(null)} hitSlop={10}>
-                  <Typography variant="body" color="#8E8E93">Cancelar</Typography>
+                  <Typography variant="body" color="#8E8E93">{t('common.cancel')}</Typography>
                 </Pressable>
                 <Typography variant="bodySemibold" color="#FFF">
-                  {datePickerState.field === 'created_at' ? 'Fecha de subida' : 'Fecha completada'}
+                  {datePickerState.field === 'created_at' ? t('bucket.photo_upload_date') : t('bucket.photo_completed_date')}
                 </Typography>
                 <Pressable onPress={handleConfirmDate} hitSlop={10}>
-                  <Typography variant="bodySemibold" color={gold[400]}>Guardar</Typography>
+                  <Typography variant="bodySemibold" color={gold[400]}>{t('common.save')}</Typography>
                 </Pressable>
               </View>
               <DateTimePicker
@@ -504,43 +606,45 @@ export function BucketPhotoViewer({
 
         {/* Barra de acciones inferior: Borrar y Descargar */}
         {currentPhoto && (
-          <View style={[styles.actionBar, { borderTopColor: 'transparent', position: 'absolute', bottom: 40, width: '100%', paddingHorizontal: 20, gap: 12 }]}>
-            {isOwner && onDelete && (
+          <View style={styles.actionBarWrapper}>
+            <View style={styles.actionBarInner}>
+              {isOwner && onDelete && (
+                <Pressable
+                  accessibilityLabel={t('bucket.photo_delete_label')}
+                  style={styles.deleteBtn}
+                  unstable_pressDelay={0}
+                  hitSlop={8}
+                  onPress={() => setDeleteConfirmVisible(true)}
+                >
+                  <Trash2 color="#F87171" size={20} strokeWidth={2} />
+                </Pressable>
+              )}
               <Pressable
-                accessibilityLabel="Borrar foto"
-                style={[styles.deleteBtn]}
-                unstable_pressDelay={0}
-                hitSlop={8}
-                onPress={() => setDeleteConfirmVisible(true)}
-              >
-                <Trash2 color="#F87171" size={20} strokeWidth={2} />
-              </Pressable>
-            )}
-            <Pressable
-              style={[styles.actionBtn, styles.actionBtnFilled, { backgroundColor: gold[400] }]}
-              onPress={async () => {
-                try {
-                  const { status } = await MediaLibrary.requestPermissionsAsync(true);
-                  if (status !== 'granted') {
-                    triggerDownloadToast('Activa el permiso de almacenamiento en ajustes', true);
-                    return;
+                style={[styles.actionBtn, styles.actionBtnFilled, { backgroundColor: gold[400] }]}
+                onPress={async () => {
+                  try {
+                    const { status } = await MediaLibrary.requestPermissionsAsync(true);
+                    if (status !== 'granted') {
+                      triggerDownloadToast(t('bucket.photo_download_permission'), true);
+                      return;
+                    }
+                    const url = storageApi.getPublicUrl(currentPhoto.storage_path);
+                    const filename = url.split('/').pop() ?? 'foto.jpg';
+                    const localUri = FileSystem.cacheDirectory + filename;
+                    await FileSystem.downloadAsync(url, localUri);
+                    await MediaLibrary.saveToLibraryAsync(localUri);
+                    triggerDownloadToast(t('bucket.photo_download_saved'));
+                  } catch {
+                    triggerDownloadToast(t('bucket.photo_download_error'), true);
                   }
-                  const url = storageApi.getPublicUrl(currentPhoto.storage_path);
-                  const filename = url.split('/').pop() ?? 'foto.jpg';
-                  const localUri = FileSystem.cacheDirectory + filename;
-                  await FileSystem.downloadAsync(url, localUri);
-                  await MediaLibrary.saveToLibraryAsync(localUri);
-                  triggerDownloadToast('Foto guardada en tu galería');
-                } catch {
-                  triggerDownloadToast('No se pudo descargar la foto', true);
-                }
-              }}
-            >
-              <Download color="#000" size={18} strokeWidth={2} />
-              <Typography variant="bodySemibold" color="#000" style={{ marginLeft: 8 }}>
-                Descargar
-              </Typography>
-            </Pressable>
+                }}
+              >
+                <Download color="#000" size={18} strokeWidth={2} />
+                <Typography variant="bodySemibold" color="#000" style={{ marginLeft: 8 }}>
+                  {t('bucket.photo_download')}
+                </Typography>
+              </Pressable>
+            </View>
           </View>
         )}
 
@@ -563,15 +667,15 @@ export function BucketPhotoViewer({
           </View>
         )}
 
-        {/* Diálogos de confirmación dibujados dentro del propio visor para respuesta táctil instantánea y sin conflicto de Modales en Android */}
+        {/* Diálogos de confirmación */}
         {deleteConfirmVisible && currentPhoto && (
           <ConfirmDialog
             visible={true}
             inline={true}
-            title="¿Borrar foto?"
-            message="Se eliminará de esta tarea. Esta acción no se puede deshacer."
-            confirmLabel="Borrar foto"
-            cancelLabel="Cancelar"
+            title={t('bucket.photo_delete_confirm_title')}
+            message={t('bucket.photo_delete_confirm_desc')}
+            confirmLabel={t('bucket.photo_delete_label')}
+            cancelLabel={t('common.cancel')}
             destructive={true}
             onConfirm={() => {
               const photoToDelete = currentPhoto;
@@ -586,10 +690,10 @@ export function BucketPhotoViewer({
           <ConfirmDialog
             visible={true}
             inline={true}
-            title="Quitar fecha de completado"
-            message="¿Deseas quitar la fecha de completado de esta foto?"
-            confirmLabel="Quitar"
-            cancelLabel="Cancelar"
+            title={t('bucket.photo_remove_completed_confirm_title')}
+            message={t('bucket.photo_remove_completed_confirm_desc')}
+            confirmLabel={t('common.delete', 'Eliminar')}
+            cancelLabel={t('common.cancel')}
             destructive={true}
             onConfirm={() => {
               const pid = removeCompletedConfirmId;
@@ -614,11 +718,15 @@ const styles = StyleSheet.create({
   topHeaderWrapper: {
     position: 'absolute',
     top: Platform.OS === 'ios' ? 52 : 30,
-    left: 16,
-    right: 16,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingHorizontal: 16,
     zIndex: 20,
   },
   topHeaderCard: {
+    width: '100%',
+    maxWidth: 580,
     backgroundColor: 'rgba(18, 18, 18, 0.88)',
     borderRadius: 18,
     borderWidth: 1,
@@ -744,8 +852,50 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(212, 177, 58, 0.25)',
   },
-  actionBar: {
+  arrowLeft: {
+    position: 'absolute',
+    left: 16,
+    top: '50%',
+    marginTop: -22,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 25,
+  },
+  arrowRight: {
+    position: 'absolute',
+    right: 16,
+    top: '50%',
+    marginTop: -22,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 25,
+  },
+  actionBarWrapper: {
+    position: 'absolute',
+    bottom: 36,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    zIndex: 20,
+  },
+  actionBarInner: {
+    width: '100%',
+    maxWidth: 580,
     flexDirection: 'row',
+    gap: 12,
   },
   actionBtn: {
     flex: 1,

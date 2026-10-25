@@ -9,6 +9,7 @@ import { useCreateBucket } from '../../src/hooks/useBuckets';
 import { supabase } from '../../src/services/supabase';
 import { storageApi } from '../../src/services/api/storage';
 import { PageTitle, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { LocationPickerModal } from '../../src/components/LocationPickerModal';
 import type { TagItem } from '../../src/components/TagPickerSheet';
 import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
@@ -28,6 +29,7 @@ import { TaskCollaboratorsSection } from '../../src/features/task-form/component
 
 export default function CreateBucketModal() {
   const router = useRouter();
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{ albumId?: string; title?: string }>();
   const createBucket = useCreateBucket();
   const insets = useSafeAreaInsets();
@@ -146,19 +148,28 @@ export default function CreateBucketModal() {
         },
         onError: (error) => {
           console.error('Failed to create bucket:', error);
-          Alert.alert('No se pudo crear la tarea', (error as Error)?.message ?? 'Inténtalo de nuevo.');
+          Alert.alert(
+            t('task_form.alert_create_error_title', { defaultValue: 'No se pudo crear la tarea' }),
+            (error as Error)?.message ?? t('common.retry', { defaultValue: 'Inténtalo de nuevo.' })
+          );
         },
       });
     } catch (err: any) {
       setIsUploadingCover(false);
-      Alert.alert('Error al preparar la tarea', err?.message || 'Inténtalo de nuevo.');
+      Alert.alert(
+        t('task_form.alert_prepare_error_title', { defaultValue: 'Error al preparar la tarea' }),
+        err?.message || t('common.retry', { defaultValue: 'Inténtalo de nuevo.' })
+      );
     }
   };
 
   const onInvalid = (errs: Record<string, any>) => {
     console.warn('Formulario inválido:', errs);
     const first = Object.values(errs)[0] as any;
-    Alert.alert('Revisa la tarea', first?.message ?? 'Faltan datos por completar.');
+    Alert.alert(
+      t('task_form.alert_invalid_title', { defaultValue: 'Revisa la tarea' }),
+      first?.message ?? t('task_form.alert_invalid_msg', { defaultValue: 'Faltan datos por completar.' })
+    );
   };
 
   const selectedAlbumTitle = albumId
@@ -180,15 +191,20 @@ export default function CreateBucketModal() {
                 { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
               ]}
               onPress={() => router.back()}
+              accessibilityLabel={t('common.back', { defaultValue: 'Volver' })}
             >
               <ChevronLeft color={theme.colors.foreground} size={28} />
             </Pressable>
-            <PageTitle gold="Nueva" rest="tarea" />
+            <PageTitle
+              gold={t('task_form.new_task_gold', { defaultValue: 'Nueva' })}
+              rest={t('task_form.new_task_rest', { defaultValue: 'tarea' })}
+            />
           </View>
 
           {/* QUÉ QUIERES LOGRAR */}
           <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
-            <Text style={{ color: '#D4B13A' }}>QUÉ</Text> QUIERES LOGRAR
+            <Text style={{ color: '#D4B13A' }}>{t('task_form.section_what_gold', { defaultValue: 'QUÉ' })}</Text>
+            {t('task_form.section_what_rest', { defaultValue: ' QUIERES LOGRAR' })}
           </Text>
           <Controller
             control={control}
@@ -204,7 +220,7 @@ export default function CreateBucketModal() {
                   },
                   isTitleFocused && { borderColor: '#D4B13A' },
                 ]}
-                placeholder="Ej. Ver auroras boreales"
+                placeholder={t('task_form.title_placeholder', { defaultValue: 'Ej. Ver auroras boreales' })}
                 placeholderTextColor={theme.colors.foregroundMuted}
                 value={value}
                 onChangeText={onChange}
@@ -216,13 +232,14 @@ export default function CreateBucketModal() {
 
           {/* PORTADA */}
           <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
-            <Text style={{ color: '#D4B13A' }}>TU</Text> PORTADA
+            <Text style={{ color: '#D4B13A' }}>{t('task_form.section_cover_gold', { defaultValue: 'TU' })}</Text>
+            {t('task_form.section_cover_rest', { defaultValue: ' PORTADA' })}
           </Text>
           <TaskCoverPicker coverImage={coverImage} onChangeCover={setCoverImage} taskTitle={titleValue} />
 
           {/* PRIORIDAD */}
           <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
-            <Text style={{ color: '#D4B13A' }}>PRIORIDAD</Text>
+            <Text style={{ color: '#D4B13A' }}>{t('task_form.section_priority', { defaultValue: 'PRIORIDAD' })}</Text>
           </Text>
           <Controller
             control={control}
@@ -261,7 +278,7 @@ export default function CreateBucketModal() {
 
           {/* PASOS */}
           <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
-            <Text style={{ color: '#D4B13A' }}>PASOS</Text> · {steps.length}
+            <Text style={{ color: '#D4B13A' }}>{t('task_form.section_steps', { defaultValue: 'PASOS' })}</Text> · {steps.length}
           </Text>
           <TaskStepsSection
             steps={steps}
@@ -274,7 +291,7 @@ export default function CreateBucketModal() {
 
           {/* COLABORADORES */}
           <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
-            <Text style={{ color: '#D4B13A' }}>COLABORADORES</Text>
+            <Text style={{ color: '#D4B13A' }}>{t('task_form.section_collaborators', { defaultValue: 'COLABORADORES' })}</Text>
             {selectedCollaborators.length > 0 ? ` · ${selectedCollaborators.length}` : ''}
           </Text>
           <TaskCollaboratorsSection
@@ -345,7 +362,7 @@ export default function CreateBucketModal() {
             {createBucket.isPending || isUploadingCover ? (
               <ActivityIndicator color="#111" />
             ) : (
-              <Text style={styles.submitText}>Añadir a mi lista</Text>
+              <Text style={styles.submitText}>{t('task_form.btn_add_to_list', { defaultValue: 'Añadir a mi lista' })}</Text>
             )}
           </Pressable>
         </View>

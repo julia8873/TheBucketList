@@ -5,6 +5,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { PageTitle, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import type { UpdateBucketForm } from '@bucketlist/shared';
 import { supabase } from '../../src/services/supabase';
 import { useUpdateBucket } from '../../src/hooks/useBuckets';
@@ -31,6 +32,7 @@ type Visibility = 'public' | 'followers' | 'private';
 export default function EditBucketModal() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const updateBucket = useUpdateBucket();
@@ -246,7 +248,10 @@ export default function EditBucketModal() {
       router.back();
     } catch (error: any) {
       settleTaskCaches(queryClient); // deshace lo optimista recargando el estado real
-      Alert.alert('No se pudo guardar', error?.message ?? 'Inténtalo de nuevo.');
+      Alert.alert(
+        t('task_form.alert_save_error_title', { defaultValue: 'No se pudo guardar la tarea' }),
+        error?.message ?? t('common.retry', { defaultValue: 'Inténtalo de nuevo.' })
+      );
     }
   };
 
@@ -277,16 +282,20 @@ export default function EditBucketModal() {
                 { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
               ]}
               onPress={() => router.back()}
-              accessibilityLabel="Volver"
+              accessibilityLabel={t('common.back', { defaultValue: 'Volver' })}
             >
               <ChevronLeft color={theme.colors.foreground} size={28} />
             </Pressable>
-            <PageTitle gold="Editar" rest="tarea" />
+            <PageTitle
+              gold={t('task_form.edit_task_gold', { defaultValue: 'Editar' })}
+              rest={t('task_form.edit_task_rest', { defaultValue: 'tarea' })}
+            />
           </View>
 
           {/* QUÉ QUIERES LOGRAR */}
           <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
-            <Text style={{ color: '#D4B13A' }}>QUÉ</Text> QUIERES LOGRAR
+            <Text style={{ color: '#D4B13A' }}>{t('task_form.section_what_gold', { defaultValue: 'QUÉ' })}</Text>
+            {t('task_form.section_what_rest', { defaultValue: ' QUIERES LOGRAR' })}
           </Text>
           <TextInput
             style={[
@@ -298,7 +307,7 @@ export default function EditBucketModal() {
               },
               isTitleFocused && { borderColor: '#D4B13A' },
             ]}
-            placeholder="Ej. Ver auroras boreales"
+            placeholder={t('task_form.title_placeholder', { defaultValue: 'Ej. Ver auroras boreales' })}
             placeholderTextColor={theme.colors.foregroundMuted}
             value={title}
             onChangeText={setTitle}
@@ -308,7 +317,7 @@ export default function EditBucketModal() {
 
           {/* DESCRIPCIÓN */}
           <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
-            <Text style={{ color: '#D4B13A' }}>DESCRIPCIÓN</Text>
+            <Text style={{ color: '#D4B13A' }}>{t('task_form.section_desc_gold', { defaultValue: 'DESCRIPCIÓN' })}</Text>
           </Text>
           <TextInput
             style={[
@@ -319,7 +328,7 @@ export default function EditBucketModal() {
                 color: theme.colors.foreground,
               },
             ]}
-            placeholder="Cuéntanos más…"
+            placeholder={t('task_form.desc_placeholder', { defaultValue: 'Cuéntanos más…' })}
             placeholderTextColor={theme.colors.foregroundMuted}
             value={description}
             onChangeText={setDescription}
@@ -328,7 +337,8 @@ export default function EditBucketModal() {
 
           {/* PORTADA */}
           <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
-            <Text style={{ color: '#D4B13A' }}>FOTO</Text> DE PORTADA
+            <Text style={{ color: '#D4B13A' }}>{t('task_form.section_cover_photo_gold', { defaultValue: 'FOTO' })}</Text>
+            {t('task_form.section_cover_photo_rest', { defaultValue: ' DE PORTADA' })}
           </Text>
           <TaskCoverPicker
             coverImage={coverImage}
@@ -367,7 +377,7 @@ export default function EditBucketModal() {
 
           {/* COLABORADORES */}
           <Text style={styles.sectionLabel}>
-            <Text style={{ color: '#D4B13A' }}>COLABORADORES</Text>
+            <Text style={{ color: '#D4B13A' }}>{t('task_form.section_collaborators', { defaultValue: 'COLABORADORES' })}</Text>
             {selectedCollaborators.length > 0 ? ` · ${selectedCollaborators.length}` : ''}
           </Text>
           <TaskCollaboratorsSection
@@ -435,7 +445,7 @@ export default function EditBucketModal() {
             {isSaving ? (
               <ActivityIndicator color="#111" />
             ) : (
-              <Text style={styles.submitText}>Guardar cambios</Text>
+              <Text style={styles.submitText}>{t('task_form.btn_save_changes', { defaultValue: 'Guardar cambios' })}</Text>
             )}
           </Pressable>
         </View>

@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Users, Plus, X, Lock, UserCheck, Zap, Globe } from 'lucide-react-native';
 import { useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { styles as formStyles } from '../styles/task-form.styles';
 import type { CollaboratorItem } from '../../../components/CollaboratorPickerSheet';
 
@@ -29,6 +30,7 @@ export function TaskCollaboratorsSection({
   onChangeCollaborationAudience,
 }: TaskCollaboratorsSectionProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <View style={formStyles.collaboratorsContainer}>
@@ -39,6 +41,14 @@ export function TaskCollaboratorsSection({
           { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
         ]}
         onPress={onOpenPicker}
+        accessibilityRole="button"
+        accessibilityLabel={
+          selectedCollaborators.length === 0
+            ? t('task_form.add_collaborators_placeholder', { defaultValue: 'Añadir colaboradores a esta tarea...' })
+            : selectedCollaborators.length === 1
+              ? t('task_form.collaborator_count_single', { defaultValue: '1 colaborador añadido' })
+              : t('task_form.collaborator_count_plural', { count: selectedCollaborators.length, defaultValue: `${selectedCollaborators.length} colaboradores añadidos` })
+        }
       >
         <Users color="#D4B13A" size={22} />
         <Text
@@ -46,8 +56,10 @@ export function TaskCollaboratorsSection({
           numberOfLines={1}
         >
           {selectedCollaborators.length === 0
-            ? 'Añadir colaboradores a esta tarea...'
-            : `${selectedCollaborators.length} colaborador${selectedCollaborators.length > 1 ? 'es' : ''} añadido${selectedCollaborators.length > 1 ? 's' : ''}`}
+            ? t('task_form.add_collaborators_placeholder', { defaultValue: 'Añadir colaboradores a esta tarea...' })
+            : selectedCollaborators.length === 1
+              ? t('task_form.collaborator_count_single', { defaultValue: '1 colaborador añadido' })
+              : t('task_form.collaborator_count_plural', { count: selectedCollaborators.length, defaultValue: `${selectedCollaborators.length} colaboradores añadidos` })}
         </Text>
         <Plus color="#D4B13A" size={20} />
       </Pressable>
@@ -59,6 +71,8 @@ export function TaskCollaboratorsSection({
               key={c.id}
               style={formStyles.collaboratorChip}
               onPress={() => onRemoveCollaborator(c.id)}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.delete', { defaultValue: 'Eliminar' })}
             >
               <Text style={formStyles.collaboratorChipText}>
                 {c.display_name || `@${c.username}`}
@@ -73,7 +87,7 @@ export function TaskCollaboratorsSection({
       {onChangeCollaborationMode && (
         <View style={[localStyles.settingsBlock, { borderTopColor: theme.colors.border }]}>
           <Text style={[localStyles.blockLabel, { color: theme.colors.foregroundMuted }]}>
-            ¿CÓMO PUEDEN COLABORAR OTROS USUARIOS?
+            {t('task_form.collab_how_title', { defaultValue: '¿CÓMO PUEDEN COLABORAR OTROS USUARIOS?' })}
           </Text>
           <View
             style={[
@@ -104,7 +118,7 @@ export function TaskCollaboratorsSection({
                   collaborationMode === 'invite_only' && localStyles.segmentBtnTextActive,
                 ]}
               >
-                Solo invitación
+                {t('task_form.collab_mode_invite', { defaultValue: 'Solo invitación' })}
               </Text>
             </Pressable>
 
@@ -128,7 +142,7 @@ export function TaskCollaboratorsSection({
                   collaborationMode === 'request' && localStyles.segmentBtnTextActive,
                 ]}
               >
-                Con solicitud
+                {t('task_form.collab_mode_request', { defaultValue: 'Con solicitud' })}
               </Text>
             </Pressable>
 
@@ -152,7 +166,7 @@ export function TaskCollaboratorsSection({
                   collaborationMode === 'open' && localStyles.segmentBtnTextActive,
                 ]}
               >
-                Sin permiso
+                {t('task_form.collab_mode_open', { defaultValue: 'Sin permiso' })}
               </Text>
             </Pressable>
           </View>
@@ -161,7 +175,7 @@ export function TaskCollaboratorsSection({
           {collaborationMode !== 'invite_only' && onChangeCollaborationAudience && (
             <View style={{ marginTop: 12 }}>
               <Text style={[localStyles.blockLabel, { color: theme.colors.foregroundMuted }]}>
-                ¿QUIÉN TIENE PERMITIDO UNIRSE O SOLICITAR?
+                {t('task_form.collab_who_title', { defaultValue: '¿QUIÉN TIENE PERMITIDO UNIRSE O SOLICITAR?' })}
               </Text>
               <View style={localStyles.audienceRow}>
                 <Pressable
@@ -186,7 +200,7 @@ export function TaskCollaboratorsSection({
                       collaborationAudience === 'followers' && localStyles.audienceBtnTextActive,
                     ]}
                   >
-                    Solo seguidores
+                    {t('task_form.collab_audience_followers', { defaultValue: 'Solo seguidores' })}
                   </Text>
                 </Pressable>
 
@@ -212,7 +226,7 @@ export function TaskCollaboratorsSection({
                       collaborationAudience === 'anyone' && localStyles.audienceBtnTextActive,
                     ]}
                   >
-                    Todos los usuarios
+                    {t('task_form.collab_audience_anyone', { defaultValue: 'Todos los usuarios' })}
                   </Text>
                 </Pressable>
               </View>

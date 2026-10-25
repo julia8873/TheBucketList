@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Pressable } from 'react-native';
 import { Typography, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { CheckCircle2, Circle, Flag, Eye, Users, Lock, FolderOpen } from 'lucide-react-native';
 import { styles } from '../styles/bucket-detail.styles';
@@ -26,24 +27,25 @@ export function BucketHeaderBadges({
   onOpenVisibilitySheet,
   onOpenAlbumsSheet,
 }: BucketHeaderBadgesProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const isDark = theme.dark;
 
   const statusLabel = (s: string) => {
     switch (s) {
-      case 'completed': return 'Completada';
-      case 'in_progress': return 'En progreso';
-      case 'pending': return 'Pendiente';
-      case 'expired': return 'Caducada';
+      case 'completed': return t('bucket.status_completed');
+      case 'in_progress': return t('bucket.status_in_progress');
+      case 'pending': return t('bucket.status_pending');
+      case 'expired': return t('bucket.status_expired');
       default: return s;
     }
   };
 
   const visibilityLabel = (v: string) => {
     switch (v) {
-      case 'public': return 'Pública';
-      case 'private': return 'Privada';
-      case 'followers': return 'Seguidores';
+      case 'public': return t('bucket.visibility_public');
+      case 'private': return t('bucket.visibility_private');
+      case 'followers': return t('bucket.visibility_followers');
       default: return v;
     }
   };
@@ -59,10 +61,10 @@ export function BucketHeaderBadges({
 
   const priorityLabel = (p?: string) => {
     switch (p) {
-      case 'high': return 'Alta';
-      case 'low': return 'Baja';
+      case 'high': return t('bucket.priority_high');
+      case 'low': return t('bucket.priority_low');
       case 'medium':
-      default: return 'Media';
+      default: return t('bucket.priority_medium');
     }
   };
 
@@ -167,9 +169,9 @@ export function BucketHeaderBadges({
             <Typography variant="caption" color={mutedTextColor} style={{ fontWeight: '600' }}>
               {bucketAlbums && bucketAlbums.length > 0
                 ? (bucketAlbums.length === 1
-                  ? (albumsData?.find((a: any) => a.id === bucketAlbums[0]?.album_id)?.title || 'Sin álbum')
-                  : `${bucketAlbums.length} álbumes`)
-                : 'Sin álbum'}
+                  ? (albumsData?.find((a: any) => a.id === bucketAlbums[0]?.album_id)?.title || t('bucket.no_album'))
+                  : t('bucket.albums_count', { count: bucketAlbums.length }))
+                : t('bucket.no_album')}
             </Typography>
           </Pressable>
         </View>

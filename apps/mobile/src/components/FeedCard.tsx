@@ -15,6 +15,7 @@ import { useCopiedBucketIds, useCopyBucket, useToggleLike, useBatchBucketSaveCou
 import { daysBetween, timeAgo } from '../utils/timeAgo';
 import { displayNameOf, initialsOf } from '../utils/initials';
 import { OfficialBadge, isUserAdmin } from './OfficialBadge';
+import { useTranslation } from '@bucketlist/shared';
 
 import { TaskViewMode } from './ViewModeSelector';
 
@@ -29,11 +30,12 @@ interface FeedCardProps {
 /**
  * Momento de un amigo: cabecera (avatar, nombre, @usuario, hace X h),
  * portada con título y lugar, acciones (me gusta, comentarios, "Yo también")
- * y pie con los días que tardó en completarla.
+ * y pie con la descripción.
  * Soporta modos: 'list' (por defecto), 'gallery' y 'compact'.
  */
 function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const overlay = useCoverOverlay();
   const router = useRouter();
   const { user } = useAuthStore();
@@ -70,15 +72,7 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
 
   const alreadyCopied = !!copiedIds?.includes(bucket.id);
 
-  const isCompleted = (event.type ?? 'completed') === 'completed' && bucket.status === 'completed';
-  const days = isCompleted ? daysBetween(bucket.created_at, bucket.completed_at ?? event.created_at) : null;
-  const durationText =
-    days === null
-      ? null
-      : days === 0
-        ? 'Completada el mismo día.'
-        : `Completada en ${days} ${days === 1 ? 'día' : 'días'}.`;
-  const caption = [durationText, bucket.description?.trim()].filter(Boolean).join(' ');
+  const caption = bucket.description?.trim() || null;
 
   const openProfile = () => {
     if (isOwn) {
@@ -97,7 +91,7 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
     if (!user || alreadyCopied || copyBucket.isPending) return;
     copyBucket.mutate(
       { bucketId: bucket.id, userId: user.id },
-      { onError: (error: any) => toast.error(error?.message ?? 'No se pudo añadir. Inténtalo de nuevo.') }
+      { onError: (error: any) => toast.error(error?.message ?? t('feed.copy_error', { defaultValue: 'No se pudo añadir. Inténtalo de nuevo.' })) }
     );
   };
 
@@ -348,7 +342,7 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
             onPress={handleLike}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel={liked ? 'Quitar me gusta' : 'Me gusta'}
+            accessibilityLabel={liked ? t('feed.unlike', { defaultValue: 'Quitar me gusta' }) : t('feed.like', { defaultValue: 'Me gusta' })}
             accessibilityState={{ selected: liked }}
           >
             <Heart size={24} color={liked ? theme.colors.primary : theme.colors.foreground} fill={liked ? theme.colors.primary : 'transparent'} strokeWidth={1.8} />
@@ -357,7 +351,7 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
             onPress={() => setShowLikes(true)}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel="Ver me gusta"
+            accessibilityLabel={t('feed.view_likes', { defaultValue: 'Ver me gusta' })}
           >
             <Text style={[styles.count, { color: theme.colors.foreground }]}>{likeCount}</Text>
           </Pressable>
@@ -368,7 +362,7 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
           style={styles.action}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="Comentarios"
+          accessibilityLabel={t('feed.comments', { defaultValue: 'Comentarios' })}
         >
           <MessageCircle size={24} color={theme.colors.foreground} strokeWidth={1.8} />
           <Text style={[styles.count, { color: theme.colors.foreground }]}>{commentCount}</Text>
@@ -379,7 +373,7 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
           style={styles.action}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel={isBucketSaved ? 'Quitar de guardados' : 'Guardar tarea'}
+          accessibilityLabel={isBucketSaved ? t('feed.unsave_task', { defaultValue: 'Quitar de guardados' }) : t('feed.save_task', { defaultValue: 'Guardar tarea' })}
           disabled={isOwn}
         >
           <Bookmark
@@ -404,11 +398,11 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
               { opacity: pressed ? 0.75 : 1 },
             ]}
             accessibilityRole="button"
-            accessibilityLabel={alreadyCopied ? 'Ya está en tu lista' : 'Yo también'}
+            accessibilityLabel={alreadyCopied ? t('feed.already_in_list', { defaultValue: 'Ya está en tu lista' }) : t('feed.me_too', { defaultValue: 'Yo también' })}
           >
             {alreadyCopied ? <Check size={16} color={theme.colors.foregroundSubtle} style={styles.copyIcon} /> : null}
             <Text style={[styles.copyText, { color: alreadyCopied ? theme.colors.foregroundSubtle : theme.colors.primary }]}>
-              {alreadyCopied ? 'En tu lista' : 'Yo también'}
+              {alreadyCopied ? t('feed.in_your_list', { defaultValue: 'En tu lista' }) : t('feed.me_too', { defaultValue: 'Yo también' })}
             </Text>
           </Pressable>
         )}

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Camera, Image as ImageIcon, Globe, X } from 'lucide-react-native';
 import { gold, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { TagSheetShell } from '@/components/TagSheetShell';
 
 interface AddPhotoSheetProps {
@@ -20,15 +21,16 @@ export function AddPhotoSheet({
   onPickGooglePhotos,
 }: AddPhotoSheetProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <TagSheetShell visible={visible} onClose={onClose}>
       <View style={styles.container}>
         <View style={styles.header}>
           <View>
-            <Text style={[styles.title, { color: theme.colors.foreground }]}>Añadir foto</Text>
+            <Text style={[styles.title, { color: theme.colors.foreground }]}>{t('bucket.add_photo_sheet_title')}</Text>
             <Text style={[styles.subtitle, { color: theme.colors.foregroundMuted }]}>
-              Elige el origen de tu foto
+              {t('bucket.add_photo_sheet_subtitle')}
             </Text>
           </View>
           <Pressable
@@ -42,7 +44,7 @@ export function AddPhotoSheet({
               },
             ]}
             accessibilityRole="button"
-            accessibilityLabel="Cerrar selector de foto"
+            accessibilityLabel={t('common.close')}
           >
             <X size={16} color={theme.colors.foregroundMuted} />
           </Pressable>
@@ -64,17 +66,17 @@ export function AddPhotoSheet({
               setTimeout(() => onPickCamera(), 200);
             }}
             accessibilityRole="button"
-            accessibilityLabel="Hacer foto con la cámara"
+            accessibilityLabel={t('bucket.camera_desc')}
           >
             <View style={[styles.iconCircle, { backgroundColor: 'rgba(212, 177, 58, 0.12)' }]}>
               <Camera size={22} color={gold[400]} strokeWidth={2} />
             </View>
             <View style={styles.textWrap}>
               <Text style={[styles.optionTitle, { color: theme.colors.foreground }]}>
-                Cámara
+                {t('bucket.camera_option')}
               </Text>
               <Text style={[styles.optionDesc, { color: theme.colors.foregroundMuted }]}>
-                Hacer foto al instante
+                {t('bucket.camera_desc')}
               </Text>
             </View>
           </Pressable>
@@ -94,17 +96,17 @@ export function AddPhotoSheet({
               setTimeout(() => onPickGallery(), 200);
             }}
             accessibilityRole="button"
-            accessibilityLabel="Elegir foto de la galería"
+            accessibilityLabel={t('bucket.gallery_desc')}
           >
             <View style={[styles.iconCircle, { backgroundColor: 'rgba(212, 177, 58, 0.12)' }]}>
               <ImageIcon size={22} color={gold[400]} strokeWidth={2} />
             </View>
             <View style={styles.textWrap}>
               <Text style={[styles.optionTitle, { color: theme.colors.foreground }]}>
-                Galería de fotos
+                {t('bucket.gallery_option')}
               </Text>
               <Text style={[styles.optionDesc, { color: theme.colors.foregroundMuted }]}>
-                Elegir fotos desde tu dispositivo
+                {t('bucket.gallery_desc')}
               </Text>
             </View>
           </Pressable>
@@ -124,17 +126,17 @@ export function AddPhotoSheet({
               setTimeout(() => onPickGooglePhotos(), 200);
             }}
             accessibilityRole="button"
-            accessibilityLabel="Añadir desde Google Fotos o enlace web"
+            accessibilityLabel={t('bucket.web_link_desc')}
           >
             <View style={[styles.iconCircle, { backgroundColor: 'rgba(212, 177, 58, 0.12)' }]}>
               <Globe size={22} color={gold[400]} strokeWidth={2} />
             </View>
             <View style={styles.textWrap}>
               <Text style={[styles.optionTitle, { color: theme.colors.foreground }]}>
-                Google Fotos / Enlace Web
+                {t('bucket.web_link_option')}
               </Text>
               <Text style={[styles.optionDesc, { color: theme.colors.foregroundMuted }]}>
-                Pega un enlace de Google Fotos, Imágenes o web
+                {t('bucket.web_link_desc')}
               </Text>
             </View>
           </Pressable>

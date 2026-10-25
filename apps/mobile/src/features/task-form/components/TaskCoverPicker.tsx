@@ -8,6 +8,7 @@ import { Camera, ImagePlus, X, Check, Link2, Crop, Maximize2 } from 'lucide-reac
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { gold, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/task-form.styles';
 import { TASK_COVER_GRADIENTS } from '../constants';
 import { ImageLinkModal } from '@/components/ImageLinkModal';
@@ -26,6 +27,7 @@ export function TaskCoverPicker({
   taskTitle = '',
 }: TaskCoverPickerProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [isSquare, setIsSquare] = useState(false);
   const [cropTarget, setCropTarget] = useState<{ uri: string; width: number; height: number } | null>(null);
@@ -112,7 +114,10 @@ export function TaskCoverPicker({
     try {
       const permission = await ImagePicker.requestCameraPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert('Permiso necesario', 'Se necesita permiso para acceder a la cámara.');
+        Alert.alert(
+          t('common.error', { defaultValue: 'Permiso necesario' }),
+          t('albums.error_camera_permission', { defaultValue: 'Se necesita permiso para acceder a la cámara.' })
+        );
         return;
       }
       const result = await ImagePicker.launchCameraAsync({
@@ -163,11 +168,11 @@ export function TaskCoverPicker({
             style={styles.coverRemoveBadge}
             onPress={handleRemoveCover}
             accessibilityRole="button"
-            accessibilityLabel="Borrar foto de portada"
+            accessibilityLabel={t('bucket.cover_remove', { defaultValue: 'Borrar foto de portada' })}
             hitSlop={10}
           >
             <X color="#FFF" size={14} strokeWidth={2.5} />
-            <Text style={styles.coverRemoveBadgeText}>Borrar foto</Text>
+            <Text style={styles.coverRemoveBadgeText}>{t('common.delete', { defaultValue: 'Borrar foto' })}</Text>
           </Pressable>
 
           {/* Botones inferiores: Recortar (edita la foto actual) y Cuadrada/Panorámica */}
@@ -176,21 +181,21 @@ export function TaskCoverPicker({
               style={styles.coverChangeBtn}
               onPress={handleRecropCurrent}
               accessibilityRole="button"
-              accessibilityLabel="Recortar y reajustar foto actual"
+              accessibilityLabel={t('bucket.cover_recrop', { defaultValue: 'Recortar y reajustar foto actual' })}
             >
               <Crop color="#FFF" size={13} strokeWidth={2} />
-              <Text style={styles.coverChangeBtnText}>Recortar</Text>
+              <Text style={styles.coverChangeBtnText}>{t('common.edit', { defaultValue: 'Recortar' })}</Text>
             </Pressable>
 
             <Pressable
               style={[styles.coverChangeBtn, isSquare && styles.coverChangeBtnActive]}
               onPress={() => setIsSquare(!isSquare)}
               accessibilityRole="button"
-              accessibilityLabel={isSquare ? 'Cambiar a formato panorámico' : 'Cambiar a formato cuadrado 1:1'}
+              accessibilityLabel={isSquare ? '16:9' : '1:1'}
             >
               <Maximize2 color={isSquare ? gold[400] : '#FFF'} size={13} strokeWidth={2} />
               <Text style={[styles.coverChangeBtnText, isSquare && { color: gold[400] }]}>
-                {isSquare ? '1:1 Cuadrada' : 'Panorámica'}
+                {isSquare ? '1:1' : '16:9'}
               </Text>
             </Pressable>
           </View>
@@ -210,14 +215,14 @@ export function TaskCoverPicker({
               ]}
               onPress={() => void pickFromGallery()}
               accessibilityRole="button"
-              accessibilityLabel="Subir foto desde la galería"
+              accessibilityLabel={t('task_form.cover_gallery', { defaultValue: 'Galería' })}
             >
               <View style={styles.uploadCoverIconCircle}>
                 <ImagePlus size={20} color="#D4B13A" strokeWidth={2.2} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.uploadCoverTitle, { color: theme.colors.foreground }]}>Galería</Text>
-                <Text style={[styles.uploadCoverSubtitle, { color: theme.colors.foregroundMuted }]}>Elegir y recortar</Text>
+                <Text style={[styles.uploadCoverTitle, { color: theme.colors.foreground }]}>{t('task_form.cover_gallery', { defaultValue: 'Galería' })}</Text>
+                <Text style={[styles.uploadCoverSubtitle, { color: theme.colors.foregroundMuted }]}>{t('task_form.cover_gallery_sub', { defaultValue: 'Elegir y recortar' })}</Text>
               </View>
             </Pressable>
 
@@ -232,14 +237,14 @@ export function TaskCoverPicker({
               ]}
               onPress={() => void takePhoto()}
               accessibilityRole="button"
-              accessibilityLabel="Hacer foto con la cámara"
+              accessibilityLabel={t('task_form.cover_camera', { defaultValue: 'Cámara' })}
             >
               <View style={styles.uploadCoverIconCircle}>
                 <Camera size={20} color="#D4B13A" strokeWidth={2.2} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.uploadCoverTitle, { color: theme.colors.foreground }]}>Cámara</Text>
-                <Text style={[styles.uploadCoverSubtitle, { color: theme.colors.foregroundMuted }]}>Hacer foto</Text>
+                <Text style={[styles.uploadCoverTitle, { color: theme.colors.foreground }]}>{t('task_form.cover_camera', { defaultValue: 'Cámara' })}</Text>
+                <Text style={[styles.uploadCoverSubtitle, { color: theme.colors.foregroundMuted }]}>{t('task_form.cover_camera_sub', { defaultValue: 'Hacer foto' })}</Text>
               </View>
             </Pressable>
           </View>
@@ -254,17 +259,17 @@ export function TaskCoverPicker({
             ]}
             onPress={() => setShowLinkModal(true)}
             accessibilityRole="button"
-            accessibilityLabel="Añadir foto con enlace de Google o Web"
+            accessibilityLabel={t('task_form.cover_link', { defaultValue: 'Añadir con enlace de Google / Web' })}
           >
             <View style={[styles.uploadCoverIconCircle, { borderColor: gold[400] }]}>
               <Link2 size={20} color={gold[400]} strokeWidth={2.2} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.uploadCoverTitle, { color: gold[400] }]}>
-                Añadir con enlace de Google / Web
+                {t('task_form.cover_link', { defaultValue: 'Añadir con enlace de Google / Web' })}
               </Text>
               <Text style={[styles.uploadCoverSubtitle, { color: theme.colors.foregroundMuted }]}>
-                Pega el enlace sin descargar la foto en tu móvil
+                {t('task_form.cover_link_sub', { defaultValue: 'Pega el enlace sin descargar la foto en tu móvil' })}
               </Text>
             </View>
           </Pressable>
@@ -274,7 +279,9 @@ export function TaskCoverPicker({
       {/* Degradados de color predeterminados */}
       <View style={styles.coverPresetsSection}>
         <Text style={[styles.coverSubLabel, { color: theme.colors.foregroundMuted }]}>
-          {hasCustomImage ? 'O cambia a un degradado' : 'O elige un color predeterminado'}
+          {hasCustomImage
+            ? t('task_form.cover_presets_gradient', { defaultValue: 'O cambia a un degradado' })
+            : t('task_form.cover_presets_default', { defaultValue: 'O elige un color predeterminado' })}
         </Text>
         <View style={styles.coverPresetsRow}>
           {TASK_COVER_GRADIENTS.map((g) => {

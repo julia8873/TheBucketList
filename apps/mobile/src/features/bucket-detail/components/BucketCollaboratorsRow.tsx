@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { Image } from 'expo-image';
+import { useTranslation } from '@bucketlist/shared';
 import { UserPlus, SlidersHorizontal, Clock } from 'lucide-react-native';
 import { normalizeStorageUrl } from '@/constants/urls';
 import { useRouter } from 'expo-router';
@@ -38,6 +39,7 @@ export function BucketCollaboratorsRow({
   onOpenSettings,
   pendingCount = 0,
 }: BucketCollaboratorsRowProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
   const isOwnerUser = bucket.user_id === user?.id;
@@ -105,7 +107,7 @@ export function BucketCollaboratorsRow({
                 }
               }}
               accessibilityRole="button"
-              accessibilityLabel={`Perfil de ${c.display_name || c.username || 'usuario'}`}
+              accessibilityLabel={t('bucket.profile_of', { name: c.display_name || c.username || 'user' })}
               style={[
                 styles.collaboratorCircle,
                 isPending && styles.collaboratorCirclePending,
@@ -127,7 +129,7 @@ export function BucketCollaboratorsRow({
               )}
               {isPending && (
                 <View style={styles.pendingCenterOverlay}>
-                  <Text style={styles.pendingCenterText}>Pendiente</Text>
+                  <Text style={styles.pendingCenterText}>{t('bucket.collaborator_pending')}</Text>
                 </View>
               )}
             </Pressable>
@@ -141,7 +143,7 @@ export function BucketCollaboratorsRow({
               onPress={onOpenPicker}
               hitSlop={8}
               accessibilityRole="button"
-              accessibilityLabel="Añadir colaborador"
+              accessibilityLabel={t('bucket.add_collaborator')}
             >
               <UserPlus size={22} color="#D4B13A" strokeWidth={1.8} />
             </Pressable>
@@ -156,7 +158,7 @@ export function BucketCollaboratorsRow({
                 onPress={onOpenSettings}
                 hitSlop={8}
                 accessibilityRole="button"
-                accessibilityLabel="Ajustes de colaboración"
+                accessibilityLabel={t('bucket.collaboration_settings')}
               >
                 {pendingCount > 0 ? (
                   <View style={{ alignItems: 'center', justifyContent: 'center' }}>

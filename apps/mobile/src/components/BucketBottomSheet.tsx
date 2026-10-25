@@ -56,19 +56,19 @@ export function BucketBottomSheet({
   const [albumSearchQuery, setAlbumSearchQuery] = useState('');
   const visibilityLabel = (v: string) => {
     switch (v) {
-      case 'public': return 'Pública';
-      case 'private': return 'Privada';
-      case 'followers': return 'Seguidores';
+      case 'public': return t('bucket.visibility_public');
+      case 'private': return t('bucket.visibility_private');
+      case 'followers': return t('bucket.visibility_followers');
       default: return v;
     }
   };
 
   const priorityLabel = (p: string) => {
     switch (p) {
-      case 'high': return 'Alta';
-      case 'low': return 'Baja';
+      case 'high': return t('bucket.priority_high');
+      case 'low': return t('bucket.priority_low');
       case 'medium':
-      default: return 'Media';
+      default: return t('bucket.priority_medium');
     }
   };
 
@@ -92,7 +92,7 @@ export function BucketBottomSheet({
           {sheetMode === 'menu' && (
             <>
               <View style={styles.sheetHeader}>
-                <Typography variant="h3" color={theme.colors.foreground}>Opciones</Typography>
+                <Typography variant="h3" color={theme.colors.foreground}>{t('bucket.sheet_options_title')}</Typography>
                 <Pressable style={styles.sheetClose} onPress={() => closeSheet()}>
                   <X color={theme.colors.foregroundMuted} size={20} />
                 </Pressable>
@@ -110,10 +110,10 @@ export function BucketBottomSheet({
                     </View>
                     <View style={styles.sheetOptionText}>
                       <Typography variant="bodySemibold">
-                        {isFavorite ? 'Quitar de favoritas' : 'Marcar como favorita'}
+                        {isFavorite ? t('bucket.unfavorite') : t('bucket.favorite')}
                       </Typography>
                       <Typography variant="caption" color={theme.colors.foregroundMuted}>
-                        {isFavorite ? 'Elimina la tarea de tus favoritas' : 'Añade la tarea a tus favoritas'}
+                        {isFavorite ? t('bucket.unfavorite_desc') : t('bucket.favorite_desc')}
                       </Typography>
                     </View>
                   </Pressable>
@@ -130,10 +130,10 @@ export function BucketBottomSheet({
                     </View>
                     <View style={styles.sheetOptionText}>
                       <Typography variant="bodySemibold">
-                        {isSaved ? 'Quitar de guardados' : 'Guardar tarea'}
+                        {isSaved ? t('bucket.unsave') : t('bucket.save_task')}
                       </Typography>
                       <Typography variant="caption" color={theme.colors.foregroundMuted}>
-                        {isSaved ? 'Elimina la tarea de tus guardados' : 'Guarda esta tarea para consultarla más tarde'}
+                        {isSaved ? t('bucket.unsave_desc') : t('bucket.save_desc')}
                       </Typography>
                     </View>
                   </Pressable>
@@ -143,8 +143,8 @@ export function BucketBottomSheet({
                   <Pressable style={styles.sheetOption} onPress={() => void uploadPhotos()}>
                     <View style={styles.sheetIcon}><Camera color={gold[400]} size={21} /></View>
                     <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold">Subir fotos</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>Añade recuerdos a este momento</Typography>
+                      <Typography variant="bodySemibold">{t('bucket.upload_photos')}</Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.upload_photos_desc')}</Typography>
                     </View>
                   </Pressable>
                 )}
@@ -153,8 +153,8 @@ export function BucketBottomSheet({
                   <Pressable style={styles.sheetOption} onPress={() => setSheetMode('cover')}>
                     <View style={styles.sheetIcon}><ImageIcon color={gold[400]} size={21} /></View>
                     <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold">Cambiar portada</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>Sube o reajusta una imagen para la cabecera</Typography>
+                      <Typography variant="bodySemibold">{t('bucket.change_cover')}</Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.change_cover_desc')}</Typography>
                     </View>
                   </Pressable>
                 )}
@@ -163,9 +163,9 @@ export function BucketBottomSheet({
                   <Pressable style={styles.sheetOption} onPress={() => setSheetMode('priority')}>
                     <View style={styles.sheetIcon}><Flag color={gold[400]} size={21} /></View>
                     <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold">Cambiar prioridad</Typography>
+                      <Typography variant="bodySemibold">{t('bucket.change_priority')}</Typography>
                       <Typography variant="caption" color={theme.colors.foregroundMuted}>
-                        Prioridad {priorityLabel(bucket.priority)}
+                        {t('bucket.priority_current', { priority: priorityLabel(bucket.priority) })}
                       </Typography>
                     </View>
                   </Pressable>
@@ -175,8 +175,8 @@ export function BucketBottomSheet({
                   <Pressable style={styles.sheetOption} onPress={() => void loadAlbums()}>
                     <View style={styles.sheetIcon}><FolderPlus color={gold[400]} size={21} /></View>
                     <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold">Mover a carpetas</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>Organiza esta tarea en un álbum</Typography>
+                      <Typography variant="bodySemibold">{t('bucket.move_folders')}</Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.move_folders_desc')}</Typography>
                     </View>
                   </Pressable>
                 )}
@@ -208,8 +208,8 @@ export function BucketBottomSheet({
                   >
                     <View style={styles.sheetIcon}><ListPlus color={gold[400]} size={21} /></View>
                     <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold">Yo también quiero hacerlo</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>Añádelo a tu lista</Typography>
+                      <Typography variant="bodySemibold">{t('bucket.clone_task')}</Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.clone_task_desc')}</Typography>
                     </View>
                   </Pressable>
                 )}
@@ -218,8 +218,8 @@ export function BucketBottomSheet({
                   <Pressable style={[styles.sheetOption, styles.dangerOption]} onPress={() => closeSheet(onReport)}>
                     <View style={styles.sheetIcon}><Flag color={theme.colors.error} size={21} /></View>
                     <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold" color={theme.colors.error}>Reportar tarea</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>Avisa al administrador de contenido inapropiado</Typography>
+                      <Typography variant="bodySemibold" color={theme.colors.error}>{t('bucket.report_task')}</Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.report_task_desc')}</Typography>
                     </View>
                   </Pressable>
                 )}
@@ -228,8 +228,8 @@ export function BucketBottomSheet({
                   <Pressable style={[styles.sheetOption, styles.dangerOption]} onPress={onLeaveCollaboration}>
                     <View style={styles.sheetIcon}><LogOut color={theme.colors.error} size={21} /></View>
                     <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold" color={theme.colors.error}>Dejar de colaborar</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>Sale de la colaboración en esta tarea</Typography>
+                      <Typography variant="bodySemibold" color={theme.colors.error}>{t('bucket.leave_collaboration')}</Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.leave_collaboration_desc')}</Typography>
                     </View>
                   </Pressable>
                 )}
@@ -238,8 +238,8 @@ export function BucketBottomSheet({
                   <Pressable style={[styles.sheetOption, styles.dangerOption]} onPress={handleDelete}>
                     <View style={styles.sheetIcon}><Trash2 color={theme.colors.error} size={21} /></View>
                     <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold" color={theme.colors.error}>Eliminar</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>Esta acción no se puede deshacer</Typography>
+                      <Typography variant="bodySemibold" color={theme.colors.error}>{t('common.delete')}</Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.delete_desc')}</Typography>
                     </View>
                   </Pressable>
                 )}
@@ -250,14 +250,14 @@ export function BucketBottomSheet({
           {sheetMode === 'status' && (
             <>
               <View style={[styles.sheetHeader, { justifyContent: 'center' }]}>
-                <Typography variant="h3" color={theme.colors.foreground}>Estado</Typography>
+                <Typography variant="h3" color={theme.colors.foreground}>{t('bucket.status_title')}</Typography>
               </View>
               <View style={styles.sheetOptions}>
                 {([
-                  { value: 'pending', title: 'Pendiente', subtitle: 'La tarea está por hacer', icon: Circle },
-                  { value: 'in_progress', title: 'En progreso', subtitle: 'La tarea está en curso', icon: MoreHorizontal },
-                  { value: 'completed', title: 'Completada', subtitle: 'La tarea ya se ha realizado', icon: CheckCircle2 },
-                  { value: 'expired', title: 'Cancelada', subtitle: 'La tarea ha sido cancelada o caducada', icon: X },
+                  { value: 'pending', title: t('bucket.status_pending'), subtitle: t('bucket.status_pending_desc'), icon: Circle },
+                  { value: 'in_progress', title: t('bucket.status_in_progress'), subtitle: t('bucket.status_in_progress_desc'), icon: MoreHorizontal },
+                  { value: 'completed', title: t('bucket.status_completed'), subtitle: t('bucket.status_completed_desc'), icon: CheckCircle2 },
+                  { value: 'expired', title: t('bucket.status_expired'), subtitle: t('bucket.status_expired_desc'), icon: X },
                 ] as const).map((item) => {
                   const IconComponent = item.icon;
                   return (
@@ -278,13 +278,13 @@ export function BucketBottomSheet({
           {sheetMode === 'visibility' && (
             <>
               <View style={[styles.sheetHeader, { justifyContent: 'center' }]}>
-                <Typography variant="h3" color={theme.colors.foreground}>Visibilidad</Typography>
+                <Typography variant="h3" color={theme.colors.foreground}>{t('bucket.visibility_title')}</Typography>
               </View>
               <View style={styles.sheetOptions}>
                 {([
-                  { value: 'public', title: 'Pública', subtitle: 'Cualquiera puede ver este momento', icon: Eye },
-                  { value: 'followers', title: 'Seguidores', subtitle: 'Solo tus seguidores pueden verlo', icon: Users },
-                  { value: 'private', title: 'Privada', subtitle: 'Solo tú puedes verlo', icon: Lock },
+                  { value: 'public', title: t('bucket.visibility_public'), subtitle: t('bucket.visibility_public_desc'), icon: Eye },
+                  { value: 'followers', title: t('bucket.visibility_followers'), subtitle: t('bucket.visibility_followers_desc'), icon: Users },
+                  { value: 'private', title: t('bucket.visibility_private'), subtitle: t('bucket.visibility_private_desc'), icon: Lock },
                 ] as const).map((item) => {
                   const IconComponent = item.icon;
                   return (
@@ -308,14 +308,14 @@ export function BucketBottomSheet({
                 <Pressable style={styles.backSheetButton} onPress={() => setSheetMode('menu')}>
                   <ArrowLeft color={theme.colors.foreground} size={20} />
                 </Pressable>
-                <Typography variant="h3" color={theme.colors.foreground}>Prioridad</Typography>
+                <Typography variant="h3" color={theme.colors.foreground}>{t('bucket.priority_title')}</Typography>
                 <View style={{ width: 36 }} />
               </View>
               <View style={styles.sheetOptions}>
                 {([
-                  { value: 'high' as const, title: 'Alta', subtitle: 'Requiere atención prioritaria', color: '#EF4444' },
-                  { value: 'medium' as const, title: 'Media', subtitle: 'Importancia habitual', color: '#D4B13A' },
-                  { value: 'low' as const, title: 'Baja', subtitle: 'Puede esperar o hacerse con calma', color: '#10B981' },
+                  { value: 'high' as const, title: t('bucket.priority_high'), subtitle: t('bucket.priority_high_desc'), color: '#EF4444' },
+                  { value: 'medium' as const, title: t('bucket.priority_medium'), subtitle: t('bucket.priority_medium_desc'), color: '#D4B13A' },
+                  { value: 'low' as const, title: t('bucket.priority_low'), subtitle: t('bucket.priority_low_desc'), color: '#10B981' },
                 ]).map((item) => {
                   const isSelected = (bucket.priority || 'medium') === item.value;
                   return (
@@ -343,7 +343,7 @@ export function BucketBottomSheet({
                 <Pressable style={styles.backSheetButton} onPress={() => setSheetMode('menu')}>
                   <ArrowLeft color={theme.colors.foreground} size={20} />
                 </Pressable>
-                <Typography variant="h3" color={theme.colors.foreground}>Seleccionar carpetas</Typography>
+                <Typography variant="h3" color={theme.colors.foreground}>{t('bucket.select_folders_title')}</Typography>
                 <View style={{ width: 36 }} />
               </View>
               {albumsLoading ? (
@@ -359,7 +359,7 @@ export function BucketBottomSheet({
                         borderRadius: 12,
                         fontSize: 16,
                       }}
-                      placeholder="Buscar carpeta..."
+                      placeholder={t('bucket.search_folder_placeholder')}
                       placeholderTextColor={theme.colors.foregroundMuted}
                       value={albumSearchQuery}
                       onChangeText={setAlbumSearchQuery}
@@ -368,8 +368,8 @@ export function BucketBottomSheet({
                   <Pressable style={styles.sheetOption} onPress={() => void removeAllAlbums()}>
                     <View style={styles.sheetIcon}><FolderOpen color={gold[400]} size={21} /></View>
                     <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold">Sin carpeta</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>Dejar la tarea fuera de álbumes</Typography>
+                      <Typography variant="bodySemibold">{t('bucket.no_folder')}</Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.no_folder_desc')}</Typography>
                     </View>
                     {bucketAlbums.length === 0 && <Check color={gold[400]} size={21} />}
                   </Pressable>
@@ -389,7 +389,7 @@ export function BucketBottomSheet({
                     );
                   })}
                   {albums.length === 0 && (
-                    <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.emptySheetText}>No tienes carpetas creadas todavía.</Typography>
+                    <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.emptySheetText}>{t('bucket.no_folders_yet')}</Typography>
                   )}
                 </View>
               )}
@@ -401,7 +401,7 @@ export function BucketBottomSheet({
                 <Pressable style={styles.backSheetButton} onPress={() => setSheetMode('menu')}>
                   <ArrowLeft color={theme.colors.foreground} size={20} />
                 </Pressable>
-                <Typography variant="h3" color={theme.colors.foreground}>Foto de portada</Typography>
+                <Typography variant="h3" color={theme.colors.foreground}>{t('bucket.cover_title')}</Typography>
                 <View style={{ width: 36 }} />
               </View>
               <View style={styles.sheetOptions}>
@@ -413,8 +413,8 @@ export function BucketBottomSheet({
                 >
                   <View style={styles.sheetIcon}><ImageIcon color={gold[400]} size={21} /></View>
                   <View style={styles.sheetOptionText}>
-                    <Typography variant="bodySemibold">Elegir de la galería</Typography>
-                    <Typography variant="caption" color={theme.colors.foregroundMuted}>Selecciona y recorta a tu gusto</Typography>
+                    <Typography variant="bodySemibold">{t('bucket.cover_gallery')}</Typography>
+                    <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.cover_gallery_desc')}</Typography>
                   </View>
                 </Pressable>
 
@@ -426,8 +426,8 @@ export function BucketBottomSheet({
                 >
                   <View style={styles.sheetIcon}><Camera color={gold[400]} size={21} /></View>
                   <View style={styles.sheetOptionText}>
-                    <Typography variant="bodySemibold">Hacer foto con la cámara</Typography>
-                    <Typography variant="caption" color={theme.colors.foregroundMuted}>Toma una foto al instante</Typography>
+                    <Typography variant="bodySemibold">{t('bucket.cover_camera')}</Typography>
+                    <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.cover_camera_desc')}</Typography>
                   </View>
                 </Pressable>
 
@@ -439,8 +439,8 @@ export function BucketBottomSheet({
                 >
                   <View style={styles.sheetIcon}><Link2 color={gold[400]} size={21} /></View>
                   <View style={styles.sheetOptionText}>
-                    <Typography variant="bodySemibold">Añadir con enlace de Google / Web</Typography>
-                    <Typography variant="caption" color={theme.colors.foregroundMuted}>Pega un enlace sin descargar la foto</Typography>
+                    <Typography variant="bodySemibold">{t('bucket.cover_link')}</Typography>
+                    <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.cover_link_desc')}</Typography>
                   </View>
                 </Pressable>
 
@@ -453,8 +453,8 @@ export function BucketBottomSheet({
                   >
                     <View style={styles.sheetIcon}><Crop color={gold[400]} size={21} /></View>
                     <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold">Reajustar recorte actual</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>Ajusta o rota la foto existente</Typography>
+                      <Typography variant="bodySemibold">{t('bucket.cover_recrop')}</Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.cover_recrop_desc')}</Typography>
                     </View>
                   </Pressable>
                 )}
@@ -468,8 +468,8 @@ export function BucketBottomSheet({
                   >
                     <View style={styles.sheetIcon}><Trash2 color={theme.colors.error} size={21} /></View>
                     <View style={styles.sheetOptionText}>
-                      <Typography variant="bodySemibold" color={theme.colors.error}>Quitar foto de portada</Typography>
-                      <Typography variant="caption" color={theme.colors.foregroundMuted}>Volver al degradado predeterminado</Typography>
+                      <Typography variant="bodySemibold" color={theme.colors.error}>{t('bucket.cover_remove')}</Typography>
+                      <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.cover_remove_desc')}</Typography>
                     </View>
                   </Pressable>
                 )}

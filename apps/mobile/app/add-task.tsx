@@ -13,6 +13,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, Folder, Search, Plus } from 'lucide-react-native';
 import { PageTitle } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { TagFilterSheet } from '../src/components/TagFilterSheet';
 
 import { styles } from '../src/features/add-task/styles/add-task.styles';
@@ -25,6 +26,7 @@ export default function AddTaskScreen() {
   const { albumId, albumName } = useLocalSearchParams<{ albumId: string; albumName: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
 
   const {
     activeTab,
@@ -52,9 +54,12 @@ export default function AddTaskScreen() {
     scrollViewRef,
   } = useAddTaskState(albumId);
 
-  let btnText = 'Añadir tareas';
-  if (selectedIds.size === 1) btnText = 'Añadir 1 tarea';
-  else if (selectedIds.size > 1) btnText = `Añadir ${selectedIds.size} tareas`;
+  let btnText = t('add_task.btn_add_tasks', { defaultValue: 'Añadir tareas' });
+  if (selectedIds.size === 1) {
+    btnText = t('add_task.btn_add_1_task', { defaultValue: 'Añadir 1 tarea' });
+  } else if (selectedIds.size > 1) {
+    btnText = t('add_task.btn_add_n_tasks', { count: selectedIds.size, defaultValue: `Añadir ${selectedIds.size} tareas` });
+  }
 
   return (
     <KeyboardAvoidingView
@@ -65,12 +70,16 @@ export default function AddTaskScreen() {
       <View style={[styles.header, { paddingTop: Math.max(52, insets.top + 10) }]}>
         <Pressable
           accessibilityRole="button"
+          accessibilityLabel={t('common.back', { defaultValue: 'Volver' })}
           style={styles.backBtn}
           onPress={handleBack}
         >
           <ChevronLeft size={22} color="#F3EEE3" strokeWidth={1.8} />
         </Pressable>
-        <PageTitle gold="Añadir" rest="tareas" />
+        <PageTitle
+          gold={t('add_task.title_gold', { defaultValue: 'Añadir' })}
+          rest={t('add_task.title_rest', { defaultValue: 'tareas' })}
+        />
       </View>
 
       {/* Target Album Pill */}
@@ -88,7 +97,11 @@ export default function AddTaskScreen() {
         <Search size={22} color="#8F8F8F" strokeWidth={1.8} />
         <TextInput
           style={styles.searchInput}
-          placeholder={activeTab === 'user' ? 'Buscar en tus tareas' : 'Buscar ideas por defecto'}
+          placeholder={
+            activeTab === 'user'
+              ? t('add_task.search_user_placeholder', { defaultValue: 'Buscar en tus tareas' })
+              : t('add_task.search_default_placeholder', { defaultValue: 'Buscar ideas por defecto' })
+          }
           placeholderTextColor="#8F8F8F"
           value={search}
           onChangeText={setSearch}
@@ -98,13 +111,15 @@ export default function AddTaskScreen() {
       {/* Crear tarea nueva */}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Crear una tarea nueva"
+        accessibilityLabel={t('add_task.create_new', { defaultValue: 'Crear una tarea nueva' })}
         style={styles.createTaskBtn}
         onPress={handleCreateTask}
       >
         <Plus size={18} color="#D4B13A" strokeWidth={2.2} />
         <Text style={styles.createTaskBtnText}>
-          {search.trim() ? `Crear «${search.trim()}»` : 'Crear una tarea nueva'}
+          {search.trim()
+            ? t('add_task.create_named', { name: search.trim(), defaultValue: `Crear «${search.trim()}»` })
+            : t('add_task.create_new', { defaultValue: 'Crear una tarea nueva' })}
         </Text>
       </Pressable>
 
@@ -128,12 +143,14 @@ export default function AddTaskScreen() {
       <View style={styles.countRow}>
         <Text style={styles.countText}>
           {activeTab === 'user'
-            ? `${currentTotal} tareas disponibles`
-            : `${currentTotal} ideas por defecto`}
+            ? t('add_task.tasks_available', { count: currentTotal, defaultValue: `${currentTotal} tareas disponibles` })
+            : t('add_task.ideas_available', { count: currentTotal, defaultValue: `${currentTotal} ideas por defecto` })}
         </Text>
         <Pressable onPress={toggleSelectAll}>
           <Text style={styles.selectAllText}>
-            {allVisibleSelected ? 'Quitar selección' : 'Seleccionar todo'}
+            {allVisibleSelected
+              ? t('add_task.deselect_all', { defaultValue: 'Quitar selección' })
+              : t('add_task.select_all', { defaultValue: 'Seleccionar todo' })}
           </Text>
         </Pressable>
       </View>
@@ -149,7 +166,10 @@ export default function AddTaskScreen() {
         ) : currentVisibleTasks.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>
-              No hay más tareas disponibles (o todas se encuentran en el álbum). Puedes crear una tarea nueva con el botón de arriba.
+              {t('add_task.empty_text', {
+                defaultValue:
+                  'No hay más tareas disponibles (o todas se encuentran en el álbum). Puedes crear una tarea nueva con el botón de arriba.',
+              })}
             </Text>
           </View>
         ) : (

@@ -2,10 +2,11 @@ import React from 'react';
 import { View, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Typography } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { MapPin, CheckCircle2, Calendar, X, Map, HardDrive, ExternalLink, HelpCircle } from 'lucide-react-native';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { getDateFnsLocale } from '@/utils/dateLocale';
 import { styles } from '../styles/bucket-detail.styles';
 
 interface BucketMetaSectionProps {
@@ -36,6 +37,8 @@ export function BucketMetaSection({
   onRemoveDriveUrl,
 }: BucketMetaSectionProps) {
   const router = useRouter();
+  const { t, i18n } = useTranslation();
+  const dateFnsLocale = getDateFnsLocale(i18n.language);
 
   return (
     <View style={styles.meta}>
@@ -56,7 +59,7 @@ export function BucketMetaSection({
               onPress={() => router.push(`/map?initialTaskId=${bucket.id}` as any)}
               hitSlop={8}
               style={{ padding: 4, marginRight: canEdit ? 6 : 0 }}
-              accessibilityLabel="Ver en el mapa"
+              accessibilityLabel={t('bucket.view_on_map')}
             >
               <Map color={gold[400]} size={16} strokeWidth={1.8} />
             </Pressable>
@@ -78,7 +81,7 @@ export function BucketMetaSection({
         >
           <MapPin color={gold[400]} size={16} strokeWidth={1.8} />
           <Typography variant="body" color={gold[400]} style={styles.metaText}>
-            + Añadir ubicación
+            {t('bucket.add_location')}
           </Typography>
         </Pressable>
       ) : null}
@@ -100,7 +103,9 @@ export function BucketMetaSection({
           >
             <CheckCircle2 color={gold[400]} size={16} strokeWidth={1.8} />
             <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText}>
-              Completada el {format(new Date(bucket.completed_at || bucket.updated_at || new Date()), "d 'de' MMMM 'de' yyyy", { locale: es })}
+              {t('bucket.completed_on', {
+                date: format(new Date(bucket.completed_at || bucket.updated_at || new Date()), t('bucket.date_format_long'), { locale: dateFnsLocale }),
+              })}
             </Typography>
           </Pressable>
           {canEdit && (
@@ -126,7 +131,7 @@ export function BucketMetaSection({
         >
           <CheckCircle2 color={gold[400]} size={16} strokeWidth={1.8} />
           <Typography variant="body" color={gold[400]} style={styles.metaText}>
-            + Añadir fecha de completado
+            {t('bucket.add_completed_date')}
           </Typography>
         </Pressable>
       ) : null}
@@ -149,8 +154,12 @@ export function BucketMetaSection({
             <Calendar color={gold[400]} size={16} strokeWidth={1.8} />
             <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText}>
               {bucket.status === 'completed'
-                ? `Programada para el ${format(new Date(bucket.deadline), "d 'de' MMMM 'de' yyyy", { locale: es })}`
-                : `Vence el ${format(new Date(bucket.deadline), "d 'de' MMMM 'de' yyyy", { locale: es })}`
+                ? t('bucket.scheduled_for', {
+                    date: format(new Date(bucket.deadline), t('bucket.date_format_long'), { locale: dateFnsLocale }),
+                  })
+                : t('bucket.due_on', {
+                    date: format(new Date(bucket.deadline), t('bucket.date_format_long'), { locale: dateFnsLocale }),
+                  })
               }
             </Typography>
           </Pressable>
@@ -177,7 +186,7 @@ export function BucketMetaSection({
         >
           <Calendar color={gold[400]} size={16} strokeWidth={1.8} />
           <Typography variant="body" color={gold[400]} style={styles.metaText}>
-            + Añadir fecha límite
+            {t('bucket.add_deadline')}
           </Typography>
         </Pressable>
       ) : null}
@@ -191,7 +200,7 @@ export function BucketMetaSection({
           >
             <HardDrive color={gold[400]} size={16} strokeWidth={1.8} />
             <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText} numberOfLines={1}>
-              Abrir carpeta en Google Drive
+              {t('bucket.open_drive_folder')}
             </Typography>
             <ExternalLink color={gold[400]} size={14} style={{ marginLeft: 4 }} />
           </Pressable>
@@ -201,7 +210,7 @@ export function BucketMetaSection({
                 onPress={onOpenDriveModal}
                 hitSlop={8}
                 style={{ padding: 4, marginRight: 6 }}
-                accessibilityLabel="Editar enlace o ver ayuda de seguridad"
+                accessibilityLabel={t('bucket.edit_drive_link')}
               >
                 <HelpCircle color={gold[400]} size={16} strokeWidth={1.8} />
               </Pressable>
@@ -211,7 +220,7 @@ export function BucketMetaSection({
                 onPress={onRemoveDriveUrl}
                 hitSlop={8}
                 style={styles.metaRemoveBtn}
-                accessibilityLabel="Quitar enlace de Drive"
+                accessibilityLabel={t('bucket.remove_drive_link')}
               >
                 <X color={theme.colors.foregroundMuted} size={14} />
               </Pressable>
@@ -225,7 +234,7 @@ export function BucketMetaSection({
         >
           <HardDrive color={gold[400]} size={16} strokeWidth={1.8} />
           <Typography variant="body" color={gold[400]} style={styles.metaText}>
-            + Añadir enlace a Google Drive
+            {t('bucket.add_drive_folder')}
           </Typography>
         </Pressable>
       ) : null}

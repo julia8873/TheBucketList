@@ -687,7 +687,11 @@ export default function MyListScreen() {
           )}
 
           {!state.isSelectionMode && (
-            <FAB onPress={() => router.push('/(modals)/create-bucket')} bottomOffset={24} />
+            <FAB
+              onPress={() => router.push('/(modals)/create-bucket')}
+              bottomOffset={24}
+              accessibilityLabel={t('bucket.new', { defaultValue: 'Nueva tarea' })}
+            />
           )}
 
           {state.isSelectionMode && (

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Flag } from 'lucide-react-native';
 import { useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/task-form.styles';
 
 interface TaskPriorityPickerProps {
@@ -9,21 +10,40 @@ interface TaskPriorityPickerProps {
   onChange: (priority: 'low' | 'medium' | 'high') => void;
 }
 
-const PRIORITIES = [
-  { id: 'low' as const, label: 'Baja', color: '#10B981', bgActive: 'rgba(16, 185, 129, 0.14)', borderActive: '#10B981' },
-  { id: 'medium' as const, label: 'Media', color: '#D4B13A', bgActive: 'rgba(212, 177, 58, 0.14)', borderActive: '#D4B13A' },
-  { id: 'high' as const, label: 'Alta', color: '#EF4444', bgActive: 'rgba(239, 68, 68, 0.14)', borderActive: '#EF4444' },
-];
-
 export function TaskPriorityPicker({
   value = 'medium',
   onChange,
 }: TaskPriorityPickerProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
+
+  const priorities = [
+    {
+      id: 'low' as const,
+      label: t('task_form.priority_low', { defaultValue: 'Baja' }),
+      color: '#10B981',
+      bgActive: 'rgba(16, 185, 129, 0.14)',
+      borderActive: '#10B981',
+    },
+    {
+      id: 'medium' as const,
+      label: t('task_form.priority_medium', { defaultValue: 'Media' }),
+      color: '#D4B13A',
+      bgActive: 'rgba(212, 177, 58, 0.14)',
+      borderActive: '#D4B13A',
+    },
+    {
+      id: 'high' as const,
+      label: t('task_form.priority_high', { defaultValue: 'Alta' }),
+      color: '#EF4444',
+      bgActive: 'rgba(239, 68, 68, 0.14)',
+      borderActive: '#EF4444',
+    },
+  ];
 
   return (
     <View style={styles.priorityRow}>
-      {PRIORITIES.map((p) => {
+      {priorities.map((p) => {
         const active = (value || 'medium') === p.id;
         return (
           <Pressable

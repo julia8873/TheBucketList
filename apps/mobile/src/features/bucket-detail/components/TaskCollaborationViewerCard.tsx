@@ -1,6 +1,7 @@
 import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
+import { useTranslation } from '@bucketlist/shared';
 import { Zap, Clock, UserPlus, Users, X, Check, Heart } from 'lucide-react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import type { CollaborationMode, CollaborationAudience } from './TaskCollaborationSettingsModal';
@@ -30,6 +31,7 @@ export function TaskCollaborationViewerCard({
   onCancelRequest,
   onFollowOwner,
 }: TaskCollaborationViewerCardProps) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
 
   // Si es el creador o ya es colaborador aceptado, no mostrar esta tarjeta
@@ -64,9 +66,9 @@ export function TaskCollaborationViewerCard({
             <Clock size={18} color="#D4B13A" strokeWidth={2.2} />
           </View>
           <View style={styles.cardTexts}>
-            <Text style={styles.cardTitle}>Solicitud de colaboración enviada</Text>
+            <Text style={styles.cardTitle}>{t('bucket.collab_req_sent')}</Text>
             <Text style={styles.cardSubtitle}>
-              Esperando a que @{ownerUsername} acepte tu solicitud.
+              {t('bucket.collab_waiting_accept', { username: ownerUsername })}
             </Text>
           </View>
         </View>
@@ -81,7 +83,7 @@ export function TaskCollaborationViewerCard({
           ) : (
             <>
               <X size={15} color="#9E9E9E" />
-              <Text style={styles.cancelBtnText}>Cancelar solicitud</Text>
+              <Text style={styles.cancelBtnText}>{t('bucket.collab_cancel_req')}</Text>
             </>
           )}
         </Pressable>
@@ -106,15 +108,15 @@ export function TaskCollaborationViewerCard({
           <View style={styles.cardTexts}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Text style={styles.cardTitle}>
-                {isOpen ? '¡Colaboración abierta!' : '¿Quieres colaborar en esta tarea?'}
+                {isOpen ? t('bucket.collab_open_title') : t('bucket.collab_ask_title')}
               </Text>
             </View>
             <Text style={styles.cardSubtitle}>
               {isOpen
-                ? 'Puedes unirte como colaborador a esta tarea inmediatamente sin pedir permiso.'
+                ? t('bucket.collab_open_desc')
                 : collaborationAudience === 'followers'
-                ? `Como seguidor de @${ownerUsername}, puedes solicitar unirte a esta tarea.`
-                : 'Puedes enviar una solicitud para colaborar con el creador.'}
+                ? t('bucket.collab_followers_desc', { username: ownerUsername })
+                : t('bucket.collab_anyone_desc')}
             </Text>
           </View>
         </View>
@@ -134,7 +136,7 @@ export function TaskCollaborationViewerCard({
                 <UserPlus size={16} color="#0D0D0D" strokeWidth={2.4} />
               )}
               <Text style={styles.btnText}>
-                {isOpen ? 'Unirme como colaborador' : 'Solicitar colaborar'}
+                {isOpen ? t('bucket.collab_join_btn') : t('bucket.collab_request_btn')}
               </Text>
             </>
           )}
@@ -152,10 +154,12 @@ export function TaskCollaborationViewerCard({
             <Users size={18} color="#8E8E8E" strokeWidth={2} />
           </View>
           <View style={styles.cardTexts}>
-            <Text style={styles.cardTitle}>Colaboración para seguidores</Text>
+            <Text style={styles.cardTitle}>{t('bucket.collab_locked_title')}</Text>
             <Text style={styles.cardSubtitle}>
-              Sigue a @{ownerUsername} para poder{' '}
-              {collaborationMode === 'open' ? 'unirte libremente' : 'solicitar colaborar'}.
+              {t('bucket.collab_locked_desc', {
+                username: ownerUsername,
+                action: collaborationMode === 'open' ? t('bucket.collab_join_freely') : t('bucket.collab_request_to_join'),
+              })}
             </Text>
           </View>
         </View>
@@ -165,7 +169,7 @@ export function TaskCollaborationViewerCard({
           onPress={onFollowOwner}
         >
           <Heart size={15} color="#D4B13A" />
-          <Text style={styles.followBtnText}>Seguir a @{ownerUsername}</Text>
+          <Text style={styles.followBtnText}>{`${t('profile.follow')} @${ownerUsername}`}</Text>
         </Pressable>
       </View>
     );

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView, Image, StyleSheet } from 'react-native';
 import { Typography, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { Check } from 'lucide-react-native';
 import { BucketCover } from '@/components/BucketCover';
@@ -87,15 +88,16 @@ export function BucketThumbnailSelector({
   theme,
   onChooseThumbnail,
 }: BucketThumbnailSelectorProps) {
+  const { t } = useTranslation();
   return (
     <>
       <View style={[styles.divider, { backgroundColor: theme.colors.border, marginTop: 20 }]} />
       <View style={styles.photosSection}>
         <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
-          IMAGEN DE LA TAREA
+          {t('bucket.thumbnail_title')}
         </Typography>
         <Typography variant="caption" color={theme.colors.foregroundMuted} style={{ marginTop: 4, marginBottom: 12 }}>
-          Es la que verán los demás en el feed y en explorar.
+          {t('bucket.thumbnail_desc')}
         </Typography>
         <ScrollView
           horizontal
@@ -103,7 +105,7 @@ export function BucketThumbnailSelector({
           contentContainerStyle={{ gap: 10, paddingRight: 8 }}
         >
           <ThumbOption
-            label="Automática"
+            label={t('bucket.thumbnail_auto')}
             selected={thumbSelection === 'auto'}
             onPress={() => onChooseThumbnail('auto')}
           >
@@ -118,7 +120,7 @@ export function BucketThumbnailSelector({
           </ThumbOption>
           {hasCover && (
             <ThumbOption
-              label="Portada"
+              label={t('bucket.thumbnail_cover')}
               selected={thumbSelection === 'cover'}
               onPress={() => onChooseThumbnail('cover')}
             >
@@ -135,7 +137,7 @@ export function BucketThumbnailSelector({
           {thumbPhotos.map((photo: any, index: number) => (
             <ThumbOption
               key={photo.id}
-              label={`Foto ${thumbPhotos.length - index}`}
+              label={t('bucket.thumbnail_photo', { number: thumbPhotos.length - index })}
               selected={thumbSelection === 'photo' && chosenPhotoId === photo.id}
               onPress={() => onChooseThumbnail('photo', photo.id)}
             >

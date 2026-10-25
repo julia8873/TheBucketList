@@ -11,10 +11,13 @@ import {
   StyleSheet,
   Text,
   Image as RNImage,
+  Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Typography, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import {
   ArrowLeft,
@@ -76,6 +79,7 @@ import { BucketHeaderBadges } from '@/features/bucket-detail/components/BucketHe
 import { storageApi } from '@/services/api/storage';
 
 export default function BucketDetailScreen() {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const state = useBucketDetailState();
@@ -121,7 +125,9 @@ export default function BucketDetailScreen() {
     }
   }, [state.resolvedCover]);
 
-  const coverHeight = isSquareCover ? Math.min(SCREEN_WIDTH, 340) : COVER_HEIGHT;
+  const { width: windowWidth } = useWindowDimensions();
+  const screenWidth = Platform.OS === 'web' ? Math.min(windowWidth, 620) : windowWidth;
+  const coverHeight = isSquareCover ? Math.min(screenWidth, 340) : COVER_HEIGHT;
   const coverTotalHeight = coverHeight + insets.top;
 
   if (state.isLoading) {
@@ -167,7 +173,7 @@ export default function BucketDetailScreen() {
           title={bucket.title}
           categorySlug={bucket.category?.slug}
           seed={bucket.id}
-          style={{ width: SCREEN_WIDTH, height: coverTotalHeight }}
+          style={{ width: '100%', height: coverTotalHeight }}
         >
           {state.isCustomCover ? null : (
             <LinearGradient
@@ -359,7 +365,7 @@ export default function BucketDetailScreen() {
               style={[styles.description, { color: theme.colors.foregroundMuted, padding: 0 }]}
               defaultValue={bucket.description || ''}
               onChangeText={state.handleDescriptionChange}
-              placeholder="Añadir descripción..."
+              placeholder={t('bucket.add_description_placeholder')}
               placeholderTextColor={theme.colors.foregroundMuted}
               multiline
             />
@@ -376,12 +382,12 @@ export default function BucketDetailScreen() {
                 <>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
-                      MENCIONES · {state.mentionsData?.length}
+                      {t('bucket.mentions_title')} · {state.mentionsData?.length}
                     </Typography>
                     {state.canEdit && (
                       <Pressable onPress={() => state.setShowMentionPicker(true)} hitSlop={10}>
                         <Typography variant="caption" color={gold[400]} style={{ fontWeight: '600' }}>
-                          Editar
+                          {t('bucket.edit_mentions')}
                         </Typography>
                       </Pressable>
                     )}
@@ -406,7 +412,7 @@ export default function BucketDetailScreen() {
                 >
                   <Link2 color={gold[400]} size={16} strokeWidth={1.8} />
                   <Typography variant="body" color={gold[400]}>
-                    + Mencionar tarea
+                    {t('bucket.mention_task')}
                   </Typography>
                 </Pressable>
               )}
@@ -423,7 +429,7 @@ export default function BucketDetailScreen() {
                 }
                 hitSlop={6}
                 accessibilityRole="button"
-                accessibilityLabel={state.myReaction ? 'Quitar me gusta' : 'Dar me gusta'}
+                accessibilityLabel={state.myReaction ? t('common.unlike') : t('common.give_like')}
               >
                 <Heart
                   color={state.myReaction ? '#f97316' : theme.colors.foregroundMuted}
@@ -436,7 +442,7 @@ export default function BucketDetailScreen() {
                 onPress={() => setShowLikesModal(true)}
                 hitSlop={6}
                 accessibilityRole="button"
-                accessibilityLabel="Ver me gusta"
+                accessibilityLabel={t('bucket.view_likes')}
               >
                 <Typography variant="body" color={theme.colors.foregroundMuted} style={{ marginLeft: 6 }}>
                   {state.totalReactions}
@@ -448,11 +454,11 @@ export default function BucketDetailScreen() {
               style={[styles.statItem, { marginLeft: 24 }]}
               hitSlop={8}
               accessibilityRole="button"
-              accessibilityLabel="Ver comentarios"
+              accessibilityLabel={t('bucket.view_comments')}
             >
               <MessageCircle color={theme.colors.foregroundMuted} size={18} strokeWidth={1.8} />
               <Typography variant="body" color={theme.colors.foregroundMuted} style={{ marginLeft: 6 }}>
-                {state.comments.length} {state.comments.length === 1 ? 'comentario' : 'comentarios'}
+                {state.comments.length} {state.comments.length === 1 ? t('bucket.comment_single') : t('bucket.comment_plural')}
               </Typography>
             </Pressable>
           </View>
@@ -475,7 +481,7 @@ export default function BucketDetailScreen() {
             <View style={styles.subtasksSection}>
               <View style={styles.subtasksHeader}>
                 <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
-                  PASOS · {state.subtasksDone} DE {state.subtasks.length}
+                  {t('bucket.steps_progress', { done: state.subtasksDone, total: state.subtasks.length })}
                 </Typography>
               </View>
               {state.subtasks.length > 0 && (
@@ -505,7 +511,7 @@ export default function BucketDetailScreen() {
                     <Plus color={theme.colors.foregroundMuted} size={22} strokeWidth={1.8} />
                   </Pressable>
                   <TextInput
-                    placeholder="Añadir paso..."
+                    placeholder={t('bucket.add_step_placeholder')}
                     placeholderTextColor={theme.colors.foregroundMuted}
                     style={[styles.subtaskText, { flex: 1, padding: 0, color: theme.colors.foreground }]}
                     value={state.newSubtaskText}
@@ -618,7 +624,7 @@ export default function BucketDetailScreen() {
               color={bucket.status === 'completed' ? theme.colors.foreground : '#000'}
               style={{ marginLeft: 8 }}
             >
-              {bucket.status === 'completed' ? 'Marcar como pendiente' : 'Marcar como completado'}
+              {bucket.status === 'completed' ? t('bucket.mark_as_pending') : t('bucket.mark_as_completed')}
             </Typography>
           </Pressable>
         </View>

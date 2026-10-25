@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { TagChip } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { useItemTags, useSyncItemTags } from '../hooks/useTags';
 import { TagAssignSheet, type TagItem } from './TagAssignSheet';
 
@@ -14,6 +15,7 @@ interface ItemTagsRowProps {
  * El dueño puede tocar cualquier chip para abrir el menú flotante y editarlas.
  */
 export function ItemTagsRow({ bucketId, isOwner }: ItemTagsRowProps) {
+    const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const { data: itemTags } = useItemTags(bucketId);
     const syncTags = useSyncItemTags();
@@ -44,7 +46,7 @@ export function ItemTagsRow({ bucketId, isOwner }: ItemTagsRowProps) {
 
             {isOwner && tags.length === 0 && (
                 <TagChip
-                    label="+ Añadir etiqueta"
+                    label={`+ ${t('tags.add_tag')}`}
                     variant="create"
                     onPress={() => setOpen(true)}
                 />

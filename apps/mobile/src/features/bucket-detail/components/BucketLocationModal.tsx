@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Modal, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
 import { Typography } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { MapPin, X, Trash2 } from 'lucide-react-native';
 import { LocationAutocomplete } from '@/components/LocationAutocomplete';
@@ -22,6 +23,7 @@ export function BucketLocationModal({
   onSaveLocation,
   onRemoveLocation,
 }: BucketLocationModalProps) {
+  const { t } = useTranslation();
   return (
     <Modal
       visible={visible}
@@ -59,7 +61,7 @@ export function BucketLocationModal({
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <MapPin color={gold[400]} size={20} />
-                <Typography variant="h3" color={theme.colors.foreground}>Ubicación</Typography>
+                <Typography variant="h3" color={theme.colors.foreground}>{t('bucket.location_title')}</Typography>
               </View>
               <Pressable hitSlop={10} onPress={onClose}>
                 <X color={theme.colors.foregroundMuted} size={20} />
@@ -93,7 +95,7 @@ export function BucketLocationModal({
               >
                 <Trash2 color={theme.colors.error} size={16} />
                 <Typography variant="bodySemibold" color={theme.colors.error}>
-                  Quitar ubicación
+                  {t('bucket.remove_location')}
                 </Typography>
               </Pressable>
             ) : null}

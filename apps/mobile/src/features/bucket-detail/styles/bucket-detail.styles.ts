@@ -14,11 +14,11 @@ export const styles = themedStyleSheet({
 
   // ── Cover ──────────────────────────────────────────────────────────────────
   coverContainer: {
-    width: SCREEN_WIDTH,
+    width: '100%',
     height: COVER_HEIGHT,
   },
   coverImage: {
-    width: SCREEN_WIDTH,
+    width: '100%',
     height: COVER_HEIGHT,
   },
   coverGradient: {
@@ -204,8 +204,6 @@ export const styles = themedStyleSheet({
     marginTop: 14,
   },
   photoThumb: {
-    width: (SCREEN_WIDTH - 40 - 10) / 2,
-    height: ((SCREEN_WIDTH - 40 - 10) / 2) * 1.3,
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: dark[300],
@@ -215,8 +213,6 @@ export const styles = themedStyleSheet({
     height: '100%',
   },
   photoAddThumb: {
-    width: (SCREEN_WIDTH - 40 - 10) / 2,
-    height: ((SCREEN_WIDTH - 40 - 10) / 2) * 1.3,
     borderRadius: 12,
     borderWidth: 2,
     borderStyle: 'dashed',

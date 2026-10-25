@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Pressable, TextInput } from 'react-native';
 import { Typography } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { Trash2, Minus, Plus } from 'lucide-react-native';
 import { styles } from '../styles/bucket-detail.styles';
@@ -37,6 +38,7 @@ export function BucketCounterSection({
   handleCounterTargetChange,
   updateCounter,
 }: BucketCounterSectionProps) {
+  const { t } = useTranslation();
   if (!bucket.counter_enabled && !canEdit) return null;
 
   return (
@@ -45,13 +47,13 @@ export function BucketCounterSection({
       <View style={{ marginBottom: 24 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 28 }}>
           <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
-            CONTADOR
+            {t('bucket.counter_title')}
           </Typography>
           {bucket.counter_enabled && canEdit && (
             <Pressable
               onPress={removeCounter}
               hitSlop={8}
-              accessibilityLabel="Quitar contador"
+              accessibilityLabel={t('bucket.counter_remove_a11y')}
               style={({ pressed }) => ({
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -66,7 +68,7 @@ export function BucketCounterSection({
             >
               <Trash2 color="#F87171" size={13} strokeWidth={2.2} />
               <Typography variant="caption" color="#F87171" style={{ fontWeight: '600' }}>
-                Quitar
+                {t('bucket.counter_remove')}
               </Typography>
             </Pressable>
           )}
@@ -91,7 +93,7 @@ export function BucketCounterSection({
                   <TextInput
                     defaultValue={bucket.counter_label || ''}
                     onChangeText={handleCounterLabelChange}
-                    placeholder="¿Qué cuentas?"
+                    placeholder={t('bucket.counter_what')}
                     placeholderTextColor={theme.colors.foregroundMuted}
                     style={{ padding: 0, color: theme.colors.foregroundMuted, marginBottom: 4 }}
                   />
@@ -173,11 +175,13 @@ export function BucketCounterSection({
                 ) : null}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
                   <Typography variant="bodySemibold" color={theme.colors.foregroundMuted}>
-                    {bucket.counter_target ? `${bucket.counter_count ?? 0} de ${bucket.counter_target}` : 'Sin objetivo'}
+                    {bucket.counter_target
+                      ? t('bucket.counter_progress', { count: bucket.counter_count ?? 0, target: bucket.counter_target })
+                      : t('bucket.counter_no_target')}
                   </Typography>
                   {canEdit && (
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <Typography variant="body" color={theme.colors.foreground}>Objetivo</Typography>
+                      <Typography variant="body" color={theme.colors.foreground}>{t('bucket.counter_target')}</Typography>
                       <TextInput
                         defaultValue={bucket.counter_target ? String(bucket.counter_target) : ''}
                         onChangeText={handleCounterTargetChange}
@@ -233,10 +237,10 @@ export function BucketCounterSection({
               </View>
               <View style={{ flex: 1 }}>
                 <Typography variant="bodySemibold" color={gold[400]}>
-                  Añadir contador
+                  {t('bucket.counter_add')}
                 </Typography>
                 <Typography variant="caption" color={theme.colors.foregroundMuted}>
-                  Cuenta repeticiones, kilómetros, libros…
+                  {t('bucket.counter_desc')}
                 </Typography>
               </View>
             </Pressable>

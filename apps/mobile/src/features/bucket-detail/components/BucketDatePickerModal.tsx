@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Modal, Pressable, Platform } from 'react-native';
 import { Typography, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 export interface DatePickerConfig {
@@ -41,6 +42,7 @@ function BucketDatePickerModalInner({
   onClose: () => void;
   onChangeDate: (date: Date, type: 'deadline' | 'completed_at') => Promise<void> | void;
 }) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const [selectedDate, setSelectedDate] = useState<Date>(config.date || new Date());
 
@@ -56,10 +58,10 @@ function BucketDatePickerModalInner({
           <View style={{ backgroundColor: theme.colors.surface, padding: 20, borderTopLeftRadius: 16, borderTopRightRadius: 16, borderTopWidth: 1, borderColor: theme.colors.border }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
               <Pressable onPress={onClose} hitSlop={10}>
-                <Typography variant="body" color={theme.colors.foregroundMuted}>Cancelar</Typography>
+                <Typography variant="body" color={theme.colors.foregroundMuted}>{t('common.cancel')}</Typography>
               </Pressable>
               <Pressable onPress={handleConfirm} hitSlop={10}>
-                <Typography variant="bodySemibold" color="#D4B13A">Guardar</Typography>
+                <Typography variant="bodySemibold" color="#D4B13A">{t('common.save')}</Typography>
               </Pressable>
             </View>
             <DateTimePicker
