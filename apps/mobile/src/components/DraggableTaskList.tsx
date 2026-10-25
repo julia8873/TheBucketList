@@ -15,6 +15,7 @@ export type DragHandle = {
   /** Se esparcen sobre la vista que hace de asa: <View {...drag.panHandlers}> */
   panHandlers: any;
   isActive: boolean;
+  justDropped?: () => boolean;
 };
 
 type Props<T extends { id: string }> = {
@@ -207,6 +208,10 @@ function Row(props: RowProps) {
     }),
   ).current;
 
+  const justDropped = useCallback(() => {
+    return didDragRef.current || Date.now() - lastDragEndTime.current < 400;
+  }, []);
+
   return (
     <Animated.View
       {...rowPan.panHandlers}
@@ -215,7 +220,7 @@ function Row(props: RowProps) {
       {...(Platform.OS === 'web'
         ? ({
             onClickCapture: (e: any) => {
-              if (didDragRef.current || Date.now() - lastDragEndTime.current < 350) {
+              if (justDropped()) {
                 e?.stopPropagation?.();
                 e?.preventDefault?.();
               }
@@ -246,7 +251,8 @@ function Row(props: RowProps) {
     >
       {props.renderItem(item, {
         panHandlers: rowPan.panHandlers,
-        isActive: isActive || Date.now() - lastDragEndTime.current < 350,
+        isActive,
+        justDropped,
       })}
     </Animated.View>
   );

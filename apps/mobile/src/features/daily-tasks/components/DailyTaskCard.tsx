@@ -66,14 +66,14 @@ export function DailyTaskCard({
         isCompleted && styles.compactRowCompleted,
         drag?.isActive && styles.compactRowDragging,
         isLast && { borderBottomWidth: 0 },
-        Platform.OS === 'web' && ({ userSelect: 'none', WebkitUserSelect: 'none', cursor: drag?.isActive ? 'grabbing' : 'grab' } as any),
+        Platform.OS === 'web' && ({ userSelect: 'none', WebkitUserSelect: 'none', cursor: drag?.isActive ? 'grabbing' : 'default' } as any),
       ]}
     >
       {/* Checkbox */}
       <Pressable
         hitSlop={8}
         onPress={() => {
-          if (drag?.isActive) return;
+          if (drag?.isActive || drag?.justDropped?.()) return;
           onToggle(item);
         }}
         style={styles.compactCheckBtn}
@@ -91,7 +91,7 @@ export function DailyTaskCard({
       <Pressable
         style={styles.rowMain}
         onPress={() => {
-          if (drag?.isActive) return;
+          if (drag?.isActive || drag?.justDropped?.()) return;
           onOpenEdit(item);
         }}
         accessibilityLabel={`Editar tarea ${item.title}`}
@@ -261,7 +261,7 @@ export function DailyTaskCard({
       <Pressable
         hitSlop={8}
         onPress={() => {
-          if (drag?.isActive) return;
+          if (drag?.isActive || drag?.justDropped?.()) return;
           onToggleFavorite(item);
         }}
         style={styles.favQuickBtn}
@@ -279,7 +279,7 @@ export function DailyTaskCard({
       <Pressable
         hitSlop={8}
         onPress={() => {
-          if (drag?.isActive) return;
+          if (drag?.isActive || drag?.justDropped?.()) return;
           onDelete(item);
         }}
         style={styles.deleteBtn}
@@ -343,7 +343,7 @@ export function DailyOverdueTaskCard({
         isCompleted && styles.compactRowCompleted,
         drag?.isActive && styles.compactRowDragging,
         isLast && { borderBottomWidth: 0 },
-        Platform.OS === 'web' && ({ userSelect: 'none', WebkitUserSelect: 'none', cursor: drag?.isActive ? 'grabbing' : 'grab' } as any),
+        Platform.OS === 'web' && ({ userSelect: 'none', WebkitUserSelect: 'none', cursor: drag?.isActive ? 'grabbing' : 'default' } as any),
       ]}
     >
       {/* Top line: drag handle, checkbox, content, actions */}
@@ -352,7 +352,7 @@ export function DailyOverdueTaskCard({
         <Pressable
           hitSlop={8}
           onPress={() => {
-            if (drag?.isActive) return;
+            if (drag?.isActive || drag?.justDropped?.()) return;
             onToggle(item);
           }}
           style={styles.compactCheckBtn}
@@ -370,7 +370,7 @@ export function DailyOverdueTaskCard({
         <Pressable
           style={styles.rowMain}
           onPress={() => {
-            if (drag?.isActive) return;
+            if (drag?.isActive || drag?.justDropped?.()) return;
             onOpenEdit(item);
           }}
           accessibilityLabel={`Editar tarea ${item.title}`}
@@ -504,7 +504,7 @@ export function DailyOverdueTaskCard({
         <Pressable
           hitSlop={8}
           onPress={() => {
-            if (drag?.isActive) return;
+            if (drag?.isActive || drag?.justDropped?.()) return;
             onToggleFavorite(item);
           }}
           style={styles.favQuickBtn}
@@ -522,7 +522,7 @@ export function DailyOverdueTaskCard({
         <Pressable
           hitSlop={8}
           onPress={() => {
-            if (drag?.isActive) return;
+            if (drag?.isActive || drag?.justDropped?.()) return;
             onDelete(item);
           }}
           style={styles.deleteBtn}
