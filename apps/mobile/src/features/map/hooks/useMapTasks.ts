@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from '@bucketlist/shared';
 import { supabase } from '../../../services/supabase';
 import { useAuthStore } from '../../../stores/auth.store';
 import type { MapTaskItem, MapFilterType } from '../types';
@@ -11,6 +12,7 @@ export function useMapTasks({
   searchQuery?: string;
 } = {}) {
   const { user } = useAuthStore();
+  const { i18n } = useTranslation();
   const currentUserId = user?.id;
 
   const {
@@ -19,7 +21,7 @@ export function useMapTasks({
     isRefetching,
     refetch,
   } = useQuery({
-    queryKey: ['map-tasks', currentUserId],
+    queryKey: ['map-tasks', currentUserId, i18n.language],
     queryFn: async (): Promise<MapTaskItem[]> => {
       // 1. Fetch friend IDs (both accounts I follow and accounts that follow me with accepted status)
       let friendIds: string[] = [];
@@ -97,10 +99,15 @@ export function useMapTasks({
         if (lat === null || lng === null) continue;
 
         const catData = Array.isArray(item.category) ? item.category[0] : item.category;
+        const categoryName = i18n.language?.startsWith('en')
+          ? (catData?.name_en || catData?.name_es || (catData as any)?.name || '')
+          : (catData?.name_es || catData?.name_en || (catData as any)?.name || '');
         const category = catData
           ? {
               slug: String(catData.slug || ''),
-              name: String((catData as any).name || catData.name_es || catData.name_en || ''),
+              name: String(categoryName),
+              name_es: catData.name_es,
+              name_en: catData.name_en,
             }
           : null;
 

@@ -8,7 +8,7 @@ export interface MapTaskItem {
   status?: string | null; // 'completed' | 'in_progress' | 'pending'
   visibility?: string | null;
   category_id?: string | null;
-  category?: { slug: string; name?: string } | null;
+  category?: { slug: string; name?: string; name_es?: string; name_en?: string } | null;
   user_id: string;
   user?: {
     id: string;

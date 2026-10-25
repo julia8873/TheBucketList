@@ -27,6 +27,7 @@ import {
   Minimize2,
 } from 'lucide-react-native';
 import { gold, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { BucketCover } from '../../../components/BucketCover';
 import { resolveTaskImage } from '../../../utils/taskImage';
 import type { MapTaskItem } from '../types';
@@ -51,6 +52,7 @@ export function TaskMapPreviewCard({
 }: TaskMapPreviewCardProps) {
   const router = useRouter();
   const { theme } = useTheme();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
 
   const flatListRef = useRef<FlatList<MapTaskItem> | null>(null);
@@ -190,7 +192,7 @@ export function TaskMapPreviewCard({
                 </Text>
               </View>
               <Text style={[styles.expandedSubtitle, { color: theme.colors.foregroundMuted }]}>
-                {items.length} {items.length === 1 ? 'tarea' : 'tareas en esta zona'}
+                {items.length} {items.length === 1 ? t('map.task_single') : t('map.tasks_in_zone')}
               </Text>
             </View>
 
@@ -207,7 +209,7 @@ export function TaskMapPreviewCard({
                   onPress={() => setViewMode('card')}
                   style={[styles.viewModeBtn, viewMode === 'card' && styles.viewModeBtnActive]}
                   hitSlop={4}
-                  accessibilityLabel="Vista deslizar tarjeta"
+                  accessibilityLabel={t('map.view_card')}
                 >
                   <LayoutList
                     size={14}
@@ -218,7 +220,7 @@ export function TaskMapPreviewCard({
                   onPress={() => setViewMode('gallery')}
                   style={[styles.viewModeBtn, viewMode === 'gallery' && styles.viewModeBtnActive]}
                   hitSlop={4}
-                  accessibilityLabel="Vista galería (2 columnas)"
+                  accessibilityLabel={t('map.view_gallery')}
                 >
                   <LayoutGrid
                     size={14}
@@ -229,7 +231,7 @@ export function TaskMapPreviewCard({
                   onPress={() => setViewMode('compact')}
                   style={[styles.viewModeBtn, viewMode === 'compact' && styles.viewModeBtnActive]}
                   hitSlop={4}
-                  accessibilityLabel="Vista compacta"
+                  accessibilityLabel={t('map.view_compact')}
                 >
                   <AlignJustify
                     size={14}
@@ -246,7 +248,7 @@ export function TaskMapPreviewCard({
                   styles.iconActionBtn,
                   { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.border },
                 ]}
-                accessibilityLabel="Minimizar a tarjeta"
+                accessibilityLabel={t('map.minimize_card')}
               >
                 <Minimize2 size={16} color={theme.colors.foreground} />
               </Pressable>
@@ -259,7 +261,7 @@ export function TaskMapPreviewCard({
                   styles.iconActionBtn,
                   { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.border },
                 ]}
-                accessibilityLabel="Cerrar vista"
+                accessibilityLabel={t('map.close_view')}
               >
                 <X size={16} color={theme.colors.foregroundMuted} />
               </Pressable>
@@ -279,7 +281,7 @@ export function TaskMapPreviewCard({
                   {row.map((item) => {
                     const isSelected = item.id === task?.id;
                     const isDone = item.status === 'completed';
-                    const authorName = item.user?.display_name || item.user?.username || 'Usuario';
+                    const authorName = item.user?.display_name || item.user?.username || t('map.default_user');
 
                     return (
                       <Pressable
@@ -338,10 +340,10 @@ export function TaskMapPreviewCard({
               {items.map((item) => {
                 const isSelected = item.id === task?.id;
                 const isDone = item.status === 'completed';
-                const authorName = item.user?.display_name || item.user?.username || 'Usuario';
+                const authorName = item.user?.display_name || item.user?.username || t('map.default_user');
                 const locationPart = item.location_text
                   ? item.location_text.split(',')[0]?.trim()
-                  : 'Ubicación';
+                  : t('map.default_location');
 
                 return (
                   <Pressable
@@ -395,7 +397,7 @@ export function TaskMapPreviewCard({
                     <View style={styles.compactRight}>
                       {isDone ? (
                         <View style={styles.compactStatusDone}>
-                          <Text style={styles.compactStatusDoneText}>Hecha</Text>
+                          <Text style={styles.compactStatusDoneText}>{t('map.status_done')}</Text>
                         </View>
                       ) : (
                         <View
@@ -409,7 +411,7 @@ export function TaskMapPreviewCard({
                           ]}
                         >
                           <Text style={[styles.compactStatusPendingText, { color: gold[500] }]}>
-                            Por hacer
+                            {t('map.status_pending')}
                           </Text>
                         </View>
                       )}
@@ -430,7 +432,7 @@ export function TaskMapPreviewCard({
             >
               {items.map((item, idx) => {
                 const isCompleted = item.status === 'completed';
-                const authorName = item.user?.display_name || item.user?.username || 'Usuario';
+                const authorName = item.user?.display_name || item.user?.username || t('map.default_user');
                 const authorAvatar = item.user?.avatar_url;
 
                 return (
@@ -504,7 +506,7 @@ export function TaskMapPreviewCard({
                       style={[styles.actionBtn, { backgroundColor: gold[400] }]}
                       onPress={() => handleOpenTask(item)}
                     >
-                      <Text style={styles.actionBtnText}>Ver detalles de la tarea</Text>
+                      <Text style={styles.actionBtnText}>{t('map.view_task_details')}</Text>
                       <ArrowUpRight size={17} color="#000000" strokeWidth={2.5} />
                     </Pressable>
                   </View>
@@ -546,8 +548,8 @@ export function TaskMapPreviewCard({
             <Layers size={13} color={gold[400]} />
             <Text style={[styles.multiHeaderText, { color: theme.colors.foreground }]}>
               {viewMode === 'card'
-                ? `${currentIndex + 1} de ${items.length} tareas`
-                : `${items.length} tareas en esta zona`}
+                ? t('map.tasks_count_of', { current: currentIndex + 1, total: items.length })
+                : `${items.length} ${t('map.tasks_in_zone')}`}
             </Text>
           </Pressable>
 
@@ -560,7 +562,7 @@ export function TaskMapPreviewCard({
                   onPress={handlePrev}
                   disabled={currentIndex === 0}
                   style={[styles.arrowBtn, currentIndex === 0 && { opacity: 0.3 }]}
-                  accessibilityLabel="Tarea anterior"
+                  accessibilityLabel={t('map.prev_task')}
                 >
                   <ChevronLeft size={16} color={theme.colors.foreground} />
                 </Pressable>
@@ -569,7 +571,7 @@ export function TaskMapPreviewCard({
                   onPress={handleNext}
                   disabled={currentIndex === items.length - 1}
                   style={[styles.arrowBtn, currentIndex === items.length - 1 && { opacity: 0.3 }]}
-                  accessibilityLabel="Siguiente tarea"
+                  accessibilityLabel={t('map.next_task')}
                 >
                   <ChevronRight size={16} color={theme.colors.foreground} />
                 </Pressable>
@@ -587,7 +589,7 @@ export function TaskMapPreviewCard({
                 onPress={() => setViewMode('card')}
                 style={[styles.viewModeBtn, viewMode === 'card' && styles.viewModeBtnActive]}
                 hitSlop={4}
-                accessibilityLabel="Vista deslizar tarjeta"
+                accessibilityLabel={t('map.view_card')}
               >
                 <LayoutList
                   size={14}
@@ -598,7 +600,7 @@ export function TaskMapPreviewCard({
                 onPress={() => setViewMode('gallery')}
                 style={[styles.viewModeBtn, viewMode === 'gallery' && styles.viewModeBtnActive]}
                 hitSlop={4}
-                accessibilityLabel="Vista galería (2 columnas)"
+                accessibilityLabel={t('map.view_gallery')}
               >
                 <LayoutGrid
                   size={14}
@@ -609,7 +611,7 @@ export function TaskMapPreviewCard({
                 onPress={() => setViewMode('compact')}
                 style={[styles.viewModeBtn, viewMode === 'compact' && styles.viewModeBtnActive]}
                 hitSlop={4}
-                accessibilityLabel="Vista compacta"
+                accessibilityLabel={t('map.view_compact')}
               >
                 <AlignJustify
                   size={14}
@@ -626,7 +628,7 @@ export function TaskMapPreviewCard({
                 styles.arrowBtn,
                 { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.border, borderRadius: 6, padding: 4 },
               ]}
-              accessibilityLabel="Ver en pantalla completa"
+              accessibilityLabel={t('map.view_fullscreen')}
             >
               <Maximize2 size={13} color={theme.colors.foreground} />
             </Pressable>
@@ -669,7 +671,7 @@ export function TaskMapPreviewCard({
             }}
             renderItem={({ item }) => {
               const isCompleted = item.status === 'completed';
-              const authorName = item.user?.display_name || item.user?.username || 'Usuario';
+              const authorName = item.user?.display_name || item.user?.username || t('map.default_user');
               const authorHandle = item.user?.username ? `@${item.user.username}` : '';
               const authorAvatar = item.user?.avatar_url;
 
@@ -730,7 +732,7 @@ export function TaskMapPreviewCard({
                               backgroundColor: theme.colors.surfaceElevated ?? theme.colors.border,
                             },
                           ]}
-                          accessibilityLabel="Pantalla completa"
+                          accessibilityLabel={t('map.fullscreen')}
                         >
                           <Maximize2 size={13} color={theme.colors.foregroundMuted} />
                         </Pressable>
@@ -744,7 +746,7 @@ export function TaskMapPreviewCard({
                             backgroundColor: theme.colors.surfaceElevated ?? theme.colors.border,
                           },
                         ]}
-                        accessibilityLabel="Cerrar vista previa"
+                        accessibilityLabel={t('map.close_preview')}
                       >
                         <X size={15} color={theme.colors.foregroundMuted} />
                       </Pressable>
@@ -790,7 +792,7 @@ export function TaskMapPreviewCard({
                         {isCompleted ? (
                           <View style={styles.completedBadge}>
                             <Check size={11} color="#FFFFFF" strokeWidth={3} />
-                            <Text style={styles.completedBadgeText}>Completada</Text>
+                            <Text style={styles.completedBadgeText}>{t('map.completed')}</Text>
                           </View>
                         ) : (
                           <View
@@ -804,12 +806,12 @@ export function TaskMapPreviewCard({
                             ]}
                           >
                             <Text style={[styles.pendingBadgeText, { color: gold[500] }]}>
-                              Por cumplir
+                              {t('map.pending_fulfill')}
                             </Text>
                           </View>
                         )}
 
-                        {item.category?.name ? (
+                        {item.category ? (
                           <View
                             style={[
                               styles.categoryBadge,
@@ -819,7 +821,9 @@ export function TaskMapPreviewCard({
                             <Text
                               style={[styles.categoryBadgeText, { color: theme.colors.foregroundMuted }]}
                             >
-                              {item.category.name}
+                              {i18n.language?.startsWith('en')
+                                ? (item.category.name_en || item.category.name)
+                                : (item.category.name_es || item.category.name)}
                             </Text>
                           </View>
                         ) : null}
@@ -832,7 +836,7 @@ export function TaskMapPreviewCard({
                     style={[styles.actionBtn, { backgroundColor: gold[400] }]}
                     onPress={() => handleOpenTask(item)}
                   >
-                    <Text style={styles.actionBtnText}>Ver detalles de la tarea</Text>
+                    <Text style={styles.actionBtnText}>{t('map.view_task_details')}</Text>
                     <ArrowUpRight size={17} color="#000000" strokeWidth={2.5} />
                   </Pressable>
                 </View>
@@ -876,7 +880,7 @@ export function TaskMapPreviewCard({
             <View style={styles.multiViewHeaderLeft}>
               <LayoutGrid size={15} color={gold[400]} />
               <Text style={[styles.multiViewTitle, { color: theme.colors.foreground }]}>
-                Galería de tareas ({items.length})
+                {t('map.gallery_title', { count: items.length })}
               </Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -887,7 +891,7 @@ export function TaskMapPreviewCard({
                   styles.closeBtn,
                   { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.border },
                 ]}
-                accessibilityLabel="Pantalla completa"
+                accessibilityLabel={t('map.fullscreen')}
               >
                 <Maximize2 size={13} color={theme.colors.foregroundMuted} />
               </Pressable>
@@ -898,7 +902,7 @@ export function TaskMapPreviewCard({
                   styles.closeBtn,
                   { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.border },
                 ]}
-                accessibilityLabel="Cerrar vista previa"
+                accessibilityLabel={t('map.close_preview')}
               >
                 <X size={15} color={theme.colors.foregroundMuted} />
               </Pressable>
@@ -916,7 +920,7 @@ export function TaskMapPreviewCard({
                 {row.map((item) => {
                   const isSelected = item.id === task?.id;
                   const isDone = item.status === 'completed';
-                  const authorName = item.user?.display_name || item.user?.username || 'Usuario';
+                  const authorName = item.user?.display_name || item.user?.username || t('map.default_user');
 
                   return (
                     <Pressable
@@ -985,7 +989,7 @@ export function TaskMapPreviewCard({
             <View style={styles.multiViewHeaderLeft}>
               <AlignJustify size={15} color={gold[400]} />
               <Text style={[styles.multiViewTitle, { color: theme.colors.foreground }]}>
-                Todas las tareas ({items.length})
+                {t('map.all_tasks_title', { count: items.length })}
               </Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -996,7 +1000,7 @@ export function TaskMapPreviewCard({
                   styles.closeBtn,
                   { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.border },
                 ]}
-                accessibilityLabel="Pantalla completa"
+                accessibilityLabel={t('map.fullscreen')}
               >
                 <Maximize2 size={13} color={theme.colors.foregroundMuted} />
               </Pressable>
@@ -1007,7 +1011,7 @@ export function TaskMapPreviewCard({
                   styles.closeBtn,
                   { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.border },
                 ]}
-                accessibilityLabel="Cerrar vista previa"
+                accessibilityLabel={t('map.close_preview')}
               >
                 <X size={15} color={theme.colors.foregroundMuted} />
               </Pressable>
@@ -1023,10 +1027,10 @@ export function TaskMapPreviewCard({
             {items.map((item) => {
               const isSelected = item.id === task?.id;
               const isDone = item.status === 'completed';
-              const authorName = item.user?.display_name || item.user?.username || 'Usuario';
+              const authorName = item.user?.display_name || item.user?.username || t('map.default_user');
               const locationPart = item.location_text
                 ? item.location_text.split(',')[0]?.trim()
-                : 'Ubicación';
+                : t('map.default_location');
 
               return (
                 <Pressable
@@ -1083,7 +1087,7 @@ export function TaskMapPreviewCard({
                   <View style={styles.compactRight}>
                     {isDone ? (
                       <View style={styles.compactStatusDone}>
-                        <Text style={styles.compactStatusDoneText}>Hecha</Text>
+                        <Text style={styles.compactStatusDoneText}>{t('map.status_done')}</Text>
                       </View>
                     ) : (
                       <View
@@ -1097,7 +1101,7 @@ export function TaskMapPreviewCard({
                         ]}
                       >
                         <Text style={[styles.compactStatusPendingText, { color: gold[500] }]}>
-                          Por hacer
+                          {t('map.status_pending')}
                         </Text>
                       </View>
                     )}

@@ -10,6 +10,7 @@ import React, {
 import { View, StyleSheet, Platform, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useTheme, gold } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { storageApi } from '../../../services/api/storage';
 import { resolveTaskImage } from '../../../utils/taskImage';
 import type { MapTaskItem } from '../types';
@@ -38,6 +39,8 @@ interface RealisticLeafletMapProps {
 export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletMapProps>(
   ({ tasks, selectedTask, onSelectTask, mapType = 'streets', isSearching = false }, ref) => {
     const { theme } = useTheme();
+    const { i18n } = useTranslation();
+    const mapLang = i18n.language?.startsWith('en') ? 'en' : 'es';
     const webViewRef = useRef<WebView | null>(null);
     const iframeRef = useRef<HTMLIFrameElement | null>(null);
     const [isMapLoaded, setIsMapLoaded] = useState(false);
@@ -641,19 +644,19 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
 
       // 1. Capas hiper-rápidas de Google Maps con fallback a Carto/OSM
       googleStreets = createResilientTileLayer(
-        'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+        'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=${mapLang}',
         'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
         '0123'
       );
 
       googleSatellite = createResilientTileLayer(
-        'https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+        'https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}&hl=${mapLang}',
         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
         '0123'
       );
 
       googleTerrain = createResilientTileLayer(
-        'https://mt{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}',
+        'https://mt{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}&hl=${mapLang}',
         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
         '0123'
       );
@@ -919,7 +922,7 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
                        thumbWrapHtml +
                        '<div class="hub-info">' +
                          '<div class="hub-title-row">' +
-                           '<div class="hub-title">' + escapeHtml(activeTask.title || 'Tarea') + '</div>' +
+                           '<div class="hub-title">' + escapeHtml(activeTask.title || '${mapLang === 'en' ? 'Task' : 'Tarea'}') + '</div>' +
                            badgeText +
                          '</div>' +
                          subText +
@@ -1008,7 +1011,7 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
 </body>
 </html>
       `,
-      [theme.dark]
+      [theme.dark, mapLang]
     );
 
     // En plataforma Web, renderizamos un Iframe directo para compatibilidad al 100%

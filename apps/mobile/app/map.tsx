@@ -22,6 +22,7 @@ import {
   Layers,
 } from 'lucide-react-native';
 import { gold, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMapTasks } from '../src/features/map/hooks/useMapTasks';
 import {
@@ -32,24 +33,25 @@ import {
 import { TaskMapPreviewCard } from '../src/features/map/components/TaskMapPreviewCard';
 import type { MapFilterType, MapTaskItem } from '../src/features/map/types';
 
-const FILTER_OPTIONS: { id: MapFilterType; label: string; emoji: string }[] = [
-  { id: 'all', label: 'Todas', emoji: '🌍' },
-  { id: 'mine', label: 'Mis tareas', emoji: '📍' },
-  { id: 'friends', label: 'Amigos', emoji: '👥' },
-  { id: 'completed', label: 'Completadas', emoji: '✅' },
-  { id: 'pending', label: 'Por hacer', emoji: '🎯' },
-];
-
-const LAYER_MODES: { id: MapLayerMode; label: string; desc: string; icon: string }[] = [
-  { id: 'streets', label: 'Plano', desc: 'Calles y ciudades con alto detalle', icon: '🗺️' },
-  { id: 'satellite', label: 'Satélite', desc: 'Foto satelital de alta resolución', icon: '🛰️' },
-  { id: 'terrain', label: 'Relieve', desc: 'Topografía y relieve montañoso', icon: '🏔️' },
-];
-
 export default function MapScreen() {
   const router = useRouter();
   const { theme } = useTheme();
+  const { t, i18n } = useTranslation();
   const params = useLocalSearchParams<{ initialTaskId?: string }>();
+
+  const filterOptions: { id: MapFilterType; label: string; emoji: string }[] = React.useMemo(() => [
+    { id: 'all', label: t('map.filter_all'), emoji: '🌍' },
+    { id: 'mine', label: t('map.filter_mine'), emoji: '📍' },
+    { id: 'friends', label: t('map.filter_friends'), emoji: '👥' },
+    { id: 'completed', label: t('map.filter_completed'), emoji: '✅' },
+    { id: 'pending', label: t('map.filter_pending'), emoji: '🎯' },
+  ], [t]);
+
+  const layerModes: { id: MapLayerMode; label: string; desc: string; icon: string }[] = React.useMemo(() => [
+    { id: 'streets', label: t('map.layer_streets'), desc: t('map.layer_streets_desc'), icon: '🗺️' },
+    { id: 'satellite', label: t('map.layer_satellite'), desc: t('map.layer_satellite_desc'), icon: '🛰️' },
+    { id: 'terrain', label: t('map.layer_terrain'), desc: t('map.layer_terrain_desc'), icon: '🏔️' },
+  ], [t]);
 
   const mapRef = useRef<RealisticMapRef | null>(null);
 
@@ -142,8 +144,9 @@ export default function MapScreen() {
 
     // 2. Si no hay tareas en ese lugar, buscar y hacer zoom a la ciudad / país globalmente
     try {
+      const lang = i18n.language?.startsWith('en') ? 'en' : 'es';
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`,
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&accept-language=${lang}`,
         { headers: { 'User-Agent': 'TheBucketListApp/1.0' } }
       );
       const data: any[] = await res.json();
@@ -229,7 +232,7 @@ export default function MapScreen() {
             hitSlop={10}
             onPress={() => router.back()}
             style={styles.backButton}
-            accessibilityLabel="Volver"
+            accessibilityLabel={t('common.back')}
           >
             <ChevronLeft size={24} color={theme.colors.foreground} />
           </Pressable>
@@ -238,7 +241,7 @@ export default function MapScreen() {
 
           <TextInput
             style={[styles.searchInput, { color: theme.colors.foreground }]}
-            placeholder="Buscar ciudad, país o tarea..."
+            placeholder={t('map.search_placeholder')}
             placeholderTextColor={theme.colors.foregroundMuted}
             value={searchQuery}
             onChangeText={setQuery => {
@@ -274,7 +277,7 @@ export default function MapScreen() {
           style={styles.filterScrollWrapper}
           pointerEvents="auto"
         >
-          {FILTER_OPTIONS.map((opt) => {
+          {filterOptions.map((opt) => {
             const isActive = activeFilter === opt.id;
             return (
               <Pressable
@@ -319,7 +322,7 @@ export default function MapScreen() {
       {isLoading ? (
         <View style={styles.loadingToast}>
           <ActivityIndicator size="small" color={gold[400]} />
-          <Text style={styles.loadingText}>Cargando ubicaciones...</Text>
+          <Text style={styles.loadingText}>{t('map.loading_locations')}</Text>
         </View>
       ) : null}
 
@@ -337,8 +340,8 @@ export default function MapScreen() {
           <Compass size={18} color={gold[400]} />
           <Text style={[styles.emptyToastText, { color: theme.colors.foreground }]}>
             {searchQuery.trim()
-              ? 'No se encontraron tareas con esa búsqueda'
-              : 'Aún no hay tareas con ubicación en esta vista'}
+              ? t('map.no_results_search')
+              : t('map.no_tasks_location')}
           </Text>
         </View>
       ) : null}
@@ -354,9 +357,9 @@ export default function MapScreen() {
             ]}
           >
             <Text style={[styles.layerMenuTitle, { color: theme.colors.foregroundMuted }]}>
-              TIPO DE MAPA
+              {t('map.map_type_title')}
             </Text>
-            {LAYER_MODES.map((mode) => {
+            {layerModes.map((mode) => {
               const isSelected = mapType === mode.id;
               return (
                 <Pressable
@@ -406,7 +409,7 @@ export default function MapScreen() {
             showLayerMenu && { borderColor: gold[400] },
           ]}
           onPress={() => setShowLayerMenu((prev) => !prev)}
-          accessibilityLabel="Cambiar tipo de mapa (Plano, Satélite, Relieve)"
+          accessibilityLabel={t('map.change_map_type')}
         >
           <Layers
             size={20}
@@ -428,7 +431,7 @@ export default function MapScreen() {
               mapRef.current?.resetView();
             }
           }}
-          accessibilityLabel="Centrar tareas"
+          accessibilityLabel={t('map.center_tasks')}
         >
           <LocateFixed size={20} color={theme.colors.foreground} />
         </Pressable>
@@ -439,7 +442,7 @@ export default function MapScreen() {
             { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
           ]}
           onPress={() => mapRef.current?.zoomIn()}
-          accessibilityLabel="Acercar mapa"
+          accessibilityLabel={t('map.zoom_in')}
         >
           <Plus size={22} color={theme.colors.foreground} />
         </Pressable>
@@ -450,7 +453,7 @@ export default function MapScreen() {
             { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
           ]}
           onPress={() => mapRef.current?.zoomOut()}
-          accessibilityLabel="Alejar mapa"
+          accessibilityLabel={t('map.zoom_out')}
         >
           <Minus size={22} color={theme.colors.foreground} />
         </Pressable>
