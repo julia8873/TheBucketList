@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Tag as TagIcon, X, Plus, Check, Pencil } from 'lucide-react-native';
 import { gold, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/explore.styles';
 import type { DailyTag, DailyTask } from '../types';
 
@@ -36,6 +37,7 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
   renderTagModal,
 }) => {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   if (!visible) return null;
 
   return (
@@ -55,7 +57,7 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
           <View style={styles.sheetHeader}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <TagIcon size={18} color={gold[400]} />
-              <Text style={[styles.sheetTitle, { color: theme.colors.foreground }]}>Filtrar por etiquetas</Text>
+              <Text style={[styles.sheetTitle, { color: theme.colors.foreground }]}>{t('tags.filter_by_tags')}</Text>
               {selectedTagFilters.length > 0 && (
                 <View style={styles.sheetCountBadge}>
                   <Text style={styles.sheetCountBadgeText}>{selectedTagFilters.length}</Text>
@@ -87,7 +89,7 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
                   selectedTagFilters.length === 0 && styles.sheetActionPillTextActive,
                 ]}
               >
-                Todas (sin filtrar)
+                {t('tags.all_unfiltered')}
               </Text>
             </Pressable>
 
@@ -102,7 +104,7 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
               onPress={openCreateTag}
             >
               <Plus size={13} color={gold[400]} strokeWidth={2.4} />
-              <Text style={styles.sheetCreatePillText}>Crear etiqueta</Text>
+              <Text style={styles.sheetCreatePillText}>{t('tags.create_tag')}</Text>
             </Pressable>
           </View>
 
@@ -110,13 +112,13 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
           <ScrollView style={styles.sheetTagsList} showsVerticalScrollIndicator={false}>
             {userTags.length === 0 ? (
               <View style={styles.sheetEmptyTags}>
-                <Text style={[styles.sheetEmptyTagsText, { color: theme.colors.foregroundMuted }]}>No tienes etiquetas creadas todavía.</Text>
+                <Text style={[styles.sheetEmptyTagsText, { color: theme.colors.foregroundMuted }]}>{t('tags.empty_tags')}</Text>
                 <Pressable
                   style={styles.sheetCreateFirstBtn}
                   onPress={openCreateTag}
                 >
                   <Plus size={14} color="#0E0E0E" strokeWidth={2.4} />
-                  <Text style={styles.sheetCreateFirstBtnText}>Crear mi primera etiqueta</Text>
+                  <Text style={styles.sheetCreateFirstBtnText}>{t('tags.create_first_tag')}</Text>
                 </Pressable>
               </View>
             ) : (
@@ -171,7 +173,7 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
                       </View>
 
                       <Text style={[styles.sheetTaskCountText, { color: theme.colors.foregroundMuted }]}>
-                        {taskCount} {taskCount === 1 ? 'tarea' : 'tareas'}
+                        {taskCount} {taskCount === 1 ? t('albums.task_single') : t('albums.task_plural')}
                       </Text>
                     </Pressable>
 
@@ -187,7 +189,7 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
                       ]}
                       onPress={() => openEditTag(tag)}
                       hitSlop={8}
-                      accessibilityLabel={`Editar etiqueta ${tag.name}`}
+                      accessibilityLabel={`${t('tags.edit_tag')} ${tag.name}`}
                     >
                       <Pencil size={15} color={theme.colors.foregroundMuted} />
                     </Pressable>
@@ -205,8 +207,10 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
             >
               <Text style={styles.sheetApplyBtnText}>
                 {selectedTagFilters.length === 0
-                  ? 'Mostrar todas las tareas'
-                  : `Aplicar filtro (${selectedTagFilters.length} etiqueta${selectedTagFilters.length > 1 ? 's' : ''})`}
+                  ? t('tags.show_all_tasks')
+                  : selectedTagFilters.length === 1
+                  ? t('tags.apply_filter_single')
+                  : t('tags.apply_filter', { count: selectedTagFilters.length })}
               </Text>
             </Pressable>
           </View>

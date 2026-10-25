@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { styles } from '../styles/album-form.styles';
+import { useTranslation } from '@bucketlist/shared';
 import type { Cover, AlbumVisibility } from '../types';
 import type { CollaboratorItem } from '../../../components/CollaboratorPickerSheet';
 
@@ -21,6 +22,7 @@ export function AlbumPreviewCard({
   visibility,
   collaborators,
 }: AlbumPreviewCardProps) {
+  const { t } = useTranslation();
   const gradientColors = (
     selectedCover.colors && selectedCover.colors.length >= 2
       ? selectedCover.colors
@@ -76,28 +78,28 @@ export function AlbumPreviewCard({
       <View style={styles.previewBadgesRow}>
         {isShared && (
           <View style={styles.previewSharedBadge}>
-            <Text style={[styles.previewSharedText, { color: '#D4B13A' }]}>Compartido</Text>
+            <Text style={[styles.previewSharedText, { color: '#D4B13A' }]}>{t('albums.shared')}</Text>
           </View>
         )}
         <View style={styles.previewVisibilityBadge}>
           <Text style={[styles.previewVisibilityText, { color: '#E2DCCF' }]}>
             {visibility === 'public'
-              ? 'Público'
+              ? t('common.public')
               : visibility === 'followers'
-              ? 'Solo amigos'
-              : 'Privado'}
+              ? t('bucket.followers')
+              : t('common.private')}
           </Text>
         </View>
       </View>
 
       <View style={styles.previewBottom}>
         <Text style={[styles.previewTitle, { color: '#F3EEE3' }]} numberOfLines={1}>
-          {name.trim() ? name : 'Nuevo álbum'}
+          {name.trim() ? name : t('albums.new_album')}
         </Text>
         <Text style={[styles.previewSubtitle, { color: '#E2DCCF' }]}>
           {isShared && collaborators.length > 0
-            ? `${collaborators.length} colaborador${collaborators.length > 1 ? 'es' : ''}`
-            : '0 tareas · 0 completadas'}
+            ? `${collaborators.length} ${collaborators.length > 1 ? t('albums.collaborators_plural') : t('albums.collaborator_single')}`
+            : `0 ${t('albums.tasks')} · 0 ${t('albums.completed_plural')}`}
         </Text>
         <View style={[styles.progressBarTrack, { backgroundColor: 'rgba(255, 255, 255, 0.25)' }]} />
       </View>

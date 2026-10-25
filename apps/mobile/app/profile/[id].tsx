@@ -214,10 +214,10 @@ export default function PublicProfileScreen() {
   const handleConfirmUnblock = async () => {
     if (!profile) return;
     const confirmed = await confirm.ask({
-      title: `¿Desbloquear a @${profile.username}?`,
-      message: 'Podrá volver a ver tus publicaciones públicas y seguirte.',
-      confirmLabel: 'Desbloquear',
-      cancelLabel: 'Cancelar',
+      title: t('profile.unblock_title', { username: profile.username }),
+      message: t('profile.unblock_confirm_msg'),
+      confirmLabel: t('common.unblock'),
+      cancelLabel: t('common.cancel'),
     });
     if (confirmed) {
       unblockMutation.mutate(id);
@@ -227,10 +227,10 @@ export default function PublicProfileScreen() {
   const handleConfirmBlock = async () => {
     if (!profile) return;
     const confirmed = await confirm.ask({
-      title: `¿Bloquear a @${profile.username}?`,
-      message: 'Ya no podrá ver tus publicaciones, seguirte ni enviarte mensajes, y sus contenidos se ocultarán.',
-      confirmLabel: 'Bloquear',
-      cancelLabel: 'Cancelar',
+      title: t('profile.block_title', { username: profile.username }),
+      message: t('profile.block_confirm_msg'),
+      confirmLabel: t('profile.block'),
+      cancelLabel: t('common.cancel'),
       destructive: true,
     });
     if (confirmed) {
@@ -246,13 +246,13 @@ export default function PublicProfileScreen() {
     }
 
     const vars = { followerId: user.id, followingId: id, targetIsPrivate: isPrivate };
-    const fail = (error: any) => Alert.alert('No se pudo completar', error?.message ?? 'Inténtalo de nuevo.');
+    const fail = (error: any) => Alert.alert(t('common.error'), error?.message ?? t('common.retry'));
 
     if (followStatus === 'accepted') {
       const confirmed = await confirm.ask({
-        title: `¿Dejar de seguir a ${displayNameOf(profile)}?`,
-        confirmLabel: 'Dejar de seguir',
-        cancelLabel: 'Cancelar',
+        title: t('profile.unfollow_title', { name: displayNameOf(profile) }),
+        confirmLabel: t('social.unfollow'),
+        cancelLabel: t('common.cancel'),
         destructive: true,
       });
       if (confirmed) {
@@ -308,7 +308,7 @@ export default function PublicProfileScreen() {
             onPress={goBack}
             style={[styles.circleButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
             accessibilityRole="button"
-            accessibilityLabel="Volver"
+            accessibilityLabel={t('common.back')}
           >
             <ChevronLeft size={22} color={theme.colors.foreground} strokeWidth={2} />
           </Pressable>
@@ -326,12 +326,12 @@ export default function PublicProfileScreen() {
             onPress={goBack}
             style={[styles.circleButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
             accessibilityRole="button"
-            accessibilityLabel="Volver"
+            accessibilityLabel={t('common.back')}
           >
             <ChevronLeft size={22} color={theme.colors.foreground} strokeWidth={2} />
           </Pressable>
         </View>
-        <EmptyState title="Usuario no encontrado" message="Puede que este perfil ya no exista." />
+        <EmptyState title={t('profile.user_not_found')} message={t('profile.user_not_found_desc')} />
       </SafeAreaView>
     );
   }
@@ -384,10 +384,10 @@ export default function PublicProfileScreen() {
             <UserX size={26} color={theme.colors.error} strokeWidth={2} />
           </View>
           <Text style={[styles.blockedNoticeTitle, { color: theme.colors.foreground }]}>
-            Has bloqueado a este usuario
+            {t('profile.block_notice_title')}
           </Text>
           <Text style={[styles.blockedNoticeText, { color: theme.colors.foregroundMuted }]}>
-            Sus tareas y álbumes están ocultos. Pulsa en "Bloqueado" si deseas desbloquear a este perfil.
+            {t('profile.block_notice_desc')}
           </Text>
         </View>
       ) : isLocked ? (
@@ -442,7 +442,7 @@ export default function PublicProfileScreen() {
           style={[styles.circleButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="Volver"
+          accessibilityLabel={t('common.back')}
         >
           <ChevronLeft size={22} color={theme.colors.foreground} strokeWidth={2} />
         </Pressable>
@@ -452,7 +452,7 @@ export default function PublicProfileScreen() {
             style={[styles.circleButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel="Más opciones"
+            accessibilityLabel={t('common.more_options')}
           >
             <MoreHorizontal size={22} color={theme.colors.foreground} strokeWidth={2} />
           </Pressable>

@@ -7,6 +7,8 @@ import { SectionTitle } from './SectionTitle';
 import type { TagItem } from '../../../components/TagAssignSheet';
 import { hexToRgba } from '../../../constants/tagPresets';
 
+import { useTranslation } from '@bucketlist/shared';
+
 interface AlbumTagsSectionProps {
   selectedTags: TagItem[];
   onOpenTagPicker: () => void;
@@ -19,12 +21,13 @@ export function AlbumTagsSection({
   onRemoveTag,
 }: AlbumTagsSectionProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <View style={styles.section}>
-      <SectionTitle highlight="ETIQUETAS" rest=" DEL ÁLBUM" />
+      <SectionTitle highlight={t('albums.section_tags_highlight')} rest={t('albums.section_tags_rest')} />
       <Text style={[localStyles.helpText, { color: theme.colors.foregroundMuted }]}>
-        Las etiquetas seleccionadas se aplicarán automáticamente a todas las tareas de este álbum.
+        {t('albums.tags_help_text')}
       </Text>
 
       <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
@@ -44,8 +47,8 @@ export function AlbumTagsSection({
             </View>
             <Text style={[localStyles.addTagText, { color: theme.colors.foregroundMuted }]}>
               {selectedTags.length === 0
-                ? 'Asignar etiquetas al álbum...'
-                : `${selectedTags.length} etiqueta${selectedTags.length > 1 ? 's' : ''} asignada${selectedTags.length > 1 ? 's' : ''}`}
+                ? t('albums.assign_tags_placeholder')
+                : t('albums.tags_assigned_count', { count: selectedTags.length })}
             </Text>
             <Plus color="#D4B13A" size={18} strokeWidth={2.5} />
           </Pressable>
@@ -79,7 +82,7 @@ export function AlbumTagsSection({
                     onPress={() => onRemoveTag(tag)}
                     style={localStyles.removeBtn}
                     accessibilityRole="button"
-                    accessibilityLabel={`Eliminar etiqueta ${tag.name}`}
+                    accessibilityLabel={`${t('common.delete')} ${tag.name}`}
                   >
                     <X size={14} color={tag.color || '#D4B13A'} strokeWidth={2.2} />
                   </Pressable>

@@ -91,6 +91,7 @@ export default function TabsLayout() {
         // vez (lazy), congelar/descongelar dejaba la pantalla en negro (p. ej. «Momentos» de
         // Inicio) hasta cambiar de pestaña y volver.
         freezeOnBlur: false,
+        tabBarHideOnKeyboard: true,
         tabBarShowLabel: false,
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.foregroundSubtle,

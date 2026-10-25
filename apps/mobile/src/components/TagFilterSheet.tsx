@@ -4,6 +4,7 @@ import { View, Text, Pressable, ScrollView, TextInput, StyleSheet, type NativeSc
 import { Check, Plus, Search, Tag as TagIcon, X } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FilterChip, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { TagSheetShell, TAG_SHEET_H } from './TagSheetShell';
 import { sortTags, useTags, useTagUsage, type TagSort } from '../hooks/useTags';
 import { hexToRgba } from '../constants/tagPresets';
@@ -37,12 +38,6 @@ interface TagFilterSheetProps {
   overlay?: React.ReactNode;
 }
 
-const SORTS: Array<{ key: TagSort; label: string }> = [
-  { key: 'popular', label: 'Más usadas' },
-  { key: 'az', label: 'A–Z' },
-  { key: 'recent', label: 'Recientes' },
-];
-
 const VISIBLE_ROWS = 6;
 
 export function TagFilterSheet({
@@ -60,6 +55,7 @@ export function TagFilterSheet({
   overlay,
 }: TagFilterSheetProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const assign = mode === 'assign';
   const insets = useSafeAreaInsets();
   const { data: tags = [], isLoading, isError, refetch } = useTags();
@@ -69,6 +65,15 @@ export function TagFilterSheet({
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<TagSort>('popular');
   const [atEnd, setAtEnd] = useState(false);
+
+  const sorts: Array<{ key: TagSort; label: string }> = useMemo(
+    () => [
+      { key: 'popular', label: t('tags.sort_popular') },
+      { key: 'az', label: t('tags.sort_az') },
+      { key: 'recent', label: t('tags.sort_recent') },
+    ],
+    [t]
+  );
 
   useEffect(() => {
     if (visible) {
@@ -98,27 +103,29 @@ export function TagFilterSheet({
   const ctaLabel =
     ctaLabelProp ??
     (assign
-      ? 'Guardar etiquetas'
+      ? t('tags.save_tags')
       : selectedIds.length > 0
-        ? `Ver ${n} ${n === 1 ? (isAlbum ? 'álbum' : 'tarea') : (isAlbum ? 'álbumes' : 'tareas')}`
+        ? isAlbum
+          ? n === 1 ? t('tags.view_count_albums_single') : t('tags.view_count_albums_plural', { count: n })
+          : n === 1 ? t('tags.view_count_tasks_single') : t('tags.view_count_tasks_plural', { count: n })
         : isAlbum
-          ? 'Ver todos los álbumes'
-          : 'Ver todas las tareas');
+          ? t('tags.view_all_albums')
+          : t('tags.view_all_tasks'));
 
   return (
     <TagSheetShell visible={visible} onClose={onClose} fixedHeight={TAG_SHEET_H}>
       {/* Cabecera */}
       <View style={styles.headerRow}>
-        <Text style={[styles.title, { color: theme.colors.foreground }]}>Etiquetas</Text>
+        <Text style={[styles.title, { color: theme.colors.foreground }]}>{t('my_list.filter_tags_short', { defaultValue: 'Etiquetas' })}</Text>
         <Pressable
           onPress={() => onChange([])}
           hitSlop={10}
           accessibilityRole="button"
-          accessibilityLabel="Limpiar filtros"
+          accessibilityLabel={t('common.clear', { defaultValue: 'Limpiar' })}
           disabled={selectedIds.length === 0}
           style={selectedIds.length === 0 && { opacity: 0.5 }}
         >
-          <Text style={styles.clear}>Limpiar</Text>
+          <Text style={styles.clear}>{t('common.clear', { defaultValue: 'Limpiar' })}</Text>
         </Pressable>
       </View>
 
@@ -135,7 +142,7 @@ export function TagFilterSheet({
         <Search color={theme.colors.foregroundMuted} size={20} />
         <TextInput
           style={[styles.searchInput, { color: theme.colors.foreground }]}
-          placeholder="Buscar etiqueta"
+          placeholder={t('tags.search_placeholder', { defaultValue: 'Buscar etiqueta' })}
           placeholderTextColor={theme.colors.foregroundMuted}
           value={query}
           onChangeText={setQuery}
@@ -143,7 +150,7 @@ export function TagFilterSheet({
           returnKeyType="search"
         />
         {query.length > 0 && (
-          <Pressable onPress={() => setQuery('')} hitSlop={10} accessibilityLabel="Borrar búsqueda">
+          <Pressable onPress={() => setQuery('')} hitSlop={10} accessibilityLabel={t('common.clear', { defaultValue: 'Borrar búsqueda' })}>
             <X color={theme.colors.foregroundMuted} size={18} />
           </Pressable>
         )}
@@ -151,7 +158,7 @@ export function TagFilterSheet({
 
       {/* Orden */}
       <View style={styles.sortRow}>
-        {SORTS.map((s) => (
+        {sorts.map((s) => (
           <FilterChip key={s.key} label={s.label} active={sort === s.key} onPress={() => setSort(s.key)} />
         ))}
       </View>
@@ -166,21 +173,19 @@ export function TagFilterSheet({
         scrollEventThrottle={64}
       >
         {isLoading ? (
-          <Text style={[styles.stateText, { color: theme.colors.foregroundMuted }]}>Cargando etiquetas…</Text>
+          <Text style={[styles.stateText, { color: theme.colors.foregroundMuted }]}>{t('tags.loading')}</Text>
         ) : isError ? (
           <View style={styles.stateBox}>
-            <Text style={styles.errorText}>No se pudieron cargar tus etiquetas.</Text>
+            <Text style={styles.errorText}>{t('tags.error_load')}</Text>
             <Pressable onPress={() => void refetch()} hitSlop={8}>
-              <Text style={styles.retry}>Reintentar</Text>
+              <Text style={styles.retry}>{t('common.retry')}</Text>
             </Pressable>
           </View>
         ) : list.length === 0 ? (
           <Text style={[styles.stateText, { color: theme.colors.foregroundMuted }]}>
             {tags.length === 0
-              ? assign
-                ? 'Aún no tienes etiquetas. Crea la primera con «Nueva etiqueta».'
-                : 'Aún no tienes etiquetas. Crea la primera desde «Gestionar etiquetas».'
-              : `Ninguna etiqueta coincide con «${query.trim()}».`}
+              ? t('tags.empty_tags')
+              : t('tags.no_match', { query: query.trim() })}
           </Text>
         ) : (
           list.map((t) => {
@@ -223,7 +228,7 @@ export function TagFilterSheet({
 
         {hidden > 0 && !atEnd && (
           <Text style={[styles.more, { color: theme.colors.foregroundMuted }]}>
-            y {hidden} más · desliza para ver todas
+            {t('tags.more_tags', { count: hidden })}
           </Text>
         )}
       </ScrollView>
@@ -245,12 +250,12 @@ export function TagFilterSheet({
         {assign && onCreate ? (
           <Pressable style={styles.manage} onPress={onCreate} hitSlop={8} accessibilityRole="button">
             <Plus size={18} color={GOLD} strokeWidth={2.2} />
-            <Text style={styles.manageText}>Nueva etiqueta</Text>
+            <Text style={styles.manageText}>{t('tags.new_tag')}</Text>
           </Pressable>
         ) : onManage ? (
           <Pressable style={styles.manage} onPress={onManage} hitSlop={8} accessibilityRole="button">
             <TagIcon size={18} color={GOLD} strokeWidth={2} />
-            <Text style={styles.manageText}>Gestionar etiquetas</Text>
+            <Text style={styles.manageText}>{t('tags.manage_tags')}</Text>
           </Pressable>
         ) : null}
       </View>

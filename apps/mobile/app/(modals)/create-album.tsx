@@ -13,6 +13,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
 import { PageTitle, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { CollaboratorPickerSheet } from '../../src/components/CollaboratorPickerSheet';
 import { TagAssignSheet } from '../../src/components/TagAssignSheet';
 
@@ -30,6 +31,7 @@ export default function CreateAlbumScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
+  const { t } = useTranslation();
 
   const {
     isEditing,
@@ -84,11 +86,11 @@ export default function CreateAlbumScreen() {
                 { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
               ]}
               onPress={() => router.back()}
-              accessibilityLabel="Volver"
+              accessibilityLabel={t('common.back', { defaultValue: 'Volver' })}
             >
               <ChevronLeft color={theme.colors.foreground} size={22} strokeWidth={2} />
             </Pressable>
-            <PageTitle gold={isEditing ? 'Editar' : 'Nuevo'} rest="álbum" />
+            <PageTitle gold={isEditing ? t('common.edit') : t('albums.new')} rest={t('albums.album')} />
           </View>
 
           {/* Vista previa en vivo */}
@@ -102,7 +104,7 @@ export default function CreateAlbumScreen() {
 
           {/* Sección Nombre */}
           <View style={styles.section}>
-            <SectionTitle highlight="NOMBRE" rest=" DEL ÁLBUM" />
+            <SectionTitle highlight={t('albums.section_name_highlight')} rest={t('albums.section_name_rest')} />
             <TextInput
               style={[
                 styles.input,
@@ -114,9 +116,9 @@ export default function CreateAlbumScreen() {
               ]}
               value={name}
               onChangeText={setName}
-              placeholder="Ej. Viaje a Noruega"
+              placeholder={t('albums.name_placeholder')}
               placeholderTextColor={theme.colors.foregroundMuted}
-              accessibilityLabel="Nombre del álbum"
+              accessibilityLabel={t('albums.name_label')}
             />
           </View>
 
@@ -129,7 +131,7 @@ export default function CreateAlbumScreen() {
 
           {/* Sección Descripción */}
           <View style={[styles.section, { marginBottom: 4 }]}>
-            <SectionTitle highlight="DESCRIPCIÓN" rest=" DEL ÁLBUM" />
+            <SectionTitle highlight={t('albums.section_desc_highlight')} rest={t('albums.section_desc_rest')} />
             <TextInput
               style={[
                 styles.input,
@@ -147,9 +149,9 @@ export default function CreateAlbumScreen() {
               ]}
               value={description}
               onChangeText={setDescription}
-              placeholder="Añade una descripción (opcional)"
+              placeholder={t('albums.description_placeholder')}
               placeholderTextColor={theme.colors.foregroundMuted}
-              accessibilityLabel="Descripción del álbum"
+              accessibilityLabel={t('albums.description_label')}
               multiline
             />
           </View>
@@ -219,7 +221,7 @@ export default function CreateAlbumScreen() {
             <ActivityIndicator color="#0D0D0D" />
           ) : (
             <Text style={styles.createBtnText}>
-              {isEditing ? 'Guardar cambios' : 'Crear álbum'}
+              {isEditing ? t('common.save_changes') : t('albums.create_album')}
             </Text>
           )}
         </Pressable>

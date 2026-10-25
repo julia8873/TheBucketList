@@ -16,6 +16,8 @@ import {
 } from 'lucide-react-native';
 import { Avatar, fontFamily } from '@bucketlist/ui';
 
+import { useTranslation } from '@bucketlist/shared';
+
 interface UserProfileOptionsSheetProps {
   visible: boolean;
   onClose: () => void;
@@ -40,6 +42,8 @@ export function UserProfileOptionsSheet({
   onConfirmUnblock,
   onOpenReport,
 }: UserProfileOptionsSheetProps) {
+  const { t } = useTranslation();
+
   if (!visible) return null;
 
   return (
@@ -111,12 +115,12 @@ export function UserProfileOptionsSheet({
                     { color: isBlocked ? '#10B981' : '#EF4444' },
                   ]}
                 >
-                  {isBlocked ? 'Desbloquear a este usuario' : `Bloquear a @${user.username}`}
+                  {isBlocked ? t('profile.unblock_user') : t('profile.block_username', { username: user.username })}
                 </Text>
                 <Text style={styles.optionSubtitle}>
                   {isBlocked
-                    ? 'Podrá volver a interactuar contigo y ver tu contenido'
-                    : 'No podrá ver tus publicaciones, seguirte ni contactarte'}
+                    ? t('profile.unblock_desc')
+                    : t('profile.block_desc')}
                 </Text>
               </View>
             </Pressable>
@@ -139,10 +143,10 @@ export function UserProfileOptionsSheet({
               </View>
               <View style={styles.optionTexts}>
                 <Text style={[styles.optionTitle, { color: '#EF4444' }]}>
-                  Reportar a este usuario
+                  {t('profile.report_user')}
                 </Text>
                 <Text style={styles.optionSubtitle}>
-                  Avisar al administrador por contenido o comportamiento inadecuado
+                  {t('profile.report_user_desc')}
                 </Text>
               </View>
             </Pressable>

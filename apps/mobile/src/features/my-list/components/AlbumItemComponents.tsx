@@ -4,6 +4,7 @@ import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GripVertical, Lock, Star, Users, Bookmark } from 'lucide-react-native';
 import { useTheme, useCoverOverlay } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/my-list.styles';
 import { DragHandle } from '@/components/DraggableTaskList';
 import { AlbumViewCustomization } from '@/stores/myListCustomization.store';
@@ -78,6 +79,7 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
   onPress: () => void;
 }) {
   const { theme } = useTheme();
+  const { t, i18n } = useTranslation();
   const total = item.total_tasks ?? 0;
   const completed = item.completed_tasks ?? 0;
   const isCompleted = total > 0 && completed === total;
@@ -178,7 +180,11 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
                     : theme.colors.primary,
               }}
             >
-              {item.priority === 'high' || item.priority === 'urgent' ? 'Alta' : item.priority === 'low' ? 'Baja' : 'Media'}
+              {item.priority === 'high' || item.priority === 'urgent'
+                ? t('common.high')
+                : item.priority === 'low'
+                ? t('common.low')
+                : t('common.medium')}
             </Text>
           </View>
         )}
@@ -211,7 +217,7 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
         )}
         {customization?.showDate && item.created_at && (
           <Text style={{ fontSize: 11, color: theme.colors.foregroundMuted }}>
-            {new Date(item.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+            {new Date(item.created_at).toLocaleDateString(i18n.language?.startsWith('en') ? 'en-US' : 'es-ES', { day: 'numeric', month: 'short' })}
           </Text>
         )}
         {onToggleSave ? (
@@ -254,6 +260,7 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
   onToggleSave?: () => void;
 }) {
   const { theme } = useTheme();
+  const { t, i18n } = useTranslation();
   const total = item.total_tasks ?? 0;
   const completed = item.completed_tasks ?? 0;
   const progress = total > 0 ? completed / total : 0;
@@ -265,7 +272,11 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
       ? '#10B981'
       : theme.colors.primary;
   const priorityLabel =
-    priority === 'high' || priority === 'urgent' ? 'Alta' : priority === 'low' ? 'Baja' : 'Media';
+    priority === 'high' || priority === 'urgent'
+      ? t('common.high')
+      : priority === 'low'
+      ? t('common.low')
+      : t('common.medium');
 
   const showPriority = customization?.showPriority ?? true;
   const showTaskCount = customization?.showTaskCount ?? true;
@@ -286,7 +297,7 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
           {...drag.panHandlers}
           hitSlop={{ top: 14, bottom: 14, left: 10, right: 10 }}
           style={{ width: 28, height: 68, alignItems: 'center', justifyContent: 'center' }}
-          accessibilityLabel="Arrastrar para reordenar"
+          accessibilityLabel={t('my_list.drag_to_reorder', { defaultValue: 'Arrastrar para reordenar' })}
         >
           <GripVertical size={20} color={drag.isActive ? theme.colors.primary : theme.colors.foregroundMuted} strokeWidth={2} />
         </View>
@@ -348,13 +359,13 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
             {showTaskCount && (
               <Text style={[styles.listAlbumMeta, { color: theme.colors.foregroundMuted }]}>
-                {total} {total === 1 ? 'tarea' : 'tareas'} · {completed} {completed === 1 ? 'completada' : 'completadas'}
+                {total} {total === 1 ? t('albums.task_single') : t('albums.task_plural')} · {completed} {completed === 1 ? t('albums.completed_single') : t('albums.completed_plural')}
               </Text>
             )}
 
             {showDate && item.created_at && (
               <Text style={[styles.listAlbumMeta, { color: theme.colors.foregroundMuted }]}>
-                {new Date(item.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
+                {new Date(item.created_at).toLocaleDateString(i18n.language?.startsWith('en') ? 'en-US' : 'es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
               </Text>
             )}
 
@@ -364,14 +375,14 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
                 borderColor: theme.dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)',
               }]}>
                 <Users size={10} color={theme.colors.foregroundMuted} />
-                <Text style={[styles.listAlbumBadgeText, { color: theme.colors.foregroundMuted }]}>Compartido</Text>
+                <Text style={[styles.listAlbumBadgeText, { color: theme.colors.foregroundMuted }]}>{t('albums.shared')}</Text>
               </View>
             )}
 
             {showBadges && item.is_closed && (
               <View style={[styles.listAlbumBadge, { backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: '#EF4444' }]}>
                 <Lock size={10} color="#EF4444" />
-                <Text style={[styles.listAlbumBadgeText, { color: '#EF4444' }]}>Cerrado</Text>
+                <Text style={[styles.listAlbumBadgeText, { color: '#EF4444' }]}>{t('common.closed')}</Text>
               </View>
             )}
 

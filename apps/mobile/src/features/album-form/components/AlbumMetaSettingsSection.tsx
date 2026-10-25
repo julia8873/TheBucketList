@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Flag, Eye, Users, Lock, Check } from 'lucide-react-native';
 import { useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/album-form.styles';
 import { SectionTitle } from './SectionTitle';
 import type { AlbumPriority, AlbumVisibility } from '../types';
@@ -13,12 +14,6 @@ interface AlbumMetaSettingsSectionProps {
   onChangeVisibility: (visibility: AlbumVisibility) => void;
 }
 
-const PRIORITIES = [
-  { id: 'low' as const, label: 'Baja', color: '#10B981', bgActive: 'rgba(16, 185, 129, 0.14)', borderActive: '#10B981' },
-  { id: 'medium' as const, label: 'Media', color: '#D4B13A', bgActive: 'rgba(212, 177, 58, 0.14)', borderActive: '#D4B13A' },
-  { id: 'high' as const, label: 'Alta', color: '#EF4444', bgActive: 'rgba(239, 68, 68, 0.14)', borderActive: '#EF4444' },
-];
-
 export function AlbumMetaSettingsSection({
   priority,
   onChangePriority,
@@ -26,14 +21,21 @@ export function AlbumMetaSettingsSection({
   onChangeVisibility,
 }: AlbumMetaSettingsSectionProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
+
+  const priorities = [
+    { id: 'low' as const, label: t('common.low'), color: '#10B981', bgActive: 'rgba(16, 185, 129, 0.14)', borderActive: '#10B981' },
+    { id: 'medium' as const, label: t('common.medium'), color: '#D4B13A', bgActive: 'rgba(212, 177, 58, 0.14)', borderActive: '#D4B13A' },
+    { id: 'high' as const, label: t('common.high'), color: '#EF4444', bgActive: 'rgba(239, 68, 68, 0.14)', borderActive: '#EF4444' },
+  ];
 
   return (
     <>
       {/* Sección Prioridad */}
       <View style={styles.section}>
-        <SectionTitle highlight="PRIORIDAD" rest=" DEL ÁLBUM" />
+        <SectionTitle highlight={t('albums.section_priority_highlight')} rest={t('albums.section_priority_rest')} />
         <View style={styles.priorityRow}>
-          {PRIORITIES.map((p) => {
+          {priorities.map((p) => {
             const active = priority === p.id;
             return (
               <Pressable
@@ -57,7 +59,7 @@ export function AlbumMetaSettingsSection({
 
       {/* Sección Visibilidad */}
       <View style={styles.section}>
-        <SectionTitle highlight="VISIBILIDAD" rest=" DEL ÁLBUM" />
+        <SectionTitle highlight={t('albums.section_visibility_highlight')} rest={t('albums.section_visibility_rest')} />
         <View style={styles.visibilityContainer}>
           <Pressable
             style={[
@@ -72,9 +74,11 @@ export function AlbumMetaSettingsSection({
             </View>
             <View style={styles.visibilityTexts}>
               <Text style={[styles.visibilityTitle, { color: theme.colors.foreground }, visibility === 'public' && styles.visibilityTitleActive]}>
-                Público
+                {t('albums.visibility_public')}
               </Text>
-              <Text style={[styles.visibilitySubtitle, { color: theme.colors.foregroundMuted }]}>Visible para toda la comunidad</Text>
+              <Text style={[styles.visibilitySubtitle, { color: theme.colors.foregroundMuted }]}>
+                {t('albums.visibility_public_desc')}
+              </Text>
             </View>
             {visibility === 'public' && <Check color="#D4B13A" size={18} strokeWidth={2.5} />}
           </Pressable>
@@ -92,9 +96,11 @@ export function AlbumMetaSettingsSection({
             </View>
             <View style={styles.visibilityTexts}>
               <Text style={[styles.visibilityTitle, { color: theme.colors.foreground }, visibility === 'followers' && styles.visibilityTitleActive]}>
-                Seguidores
+                {t('albums.visibility_followers')}
               </Text>
-              <Text style={[styles.visibilitySubtitle, { color: theme.colors.foregroundMuted }]}>Visible solo para tus seguidores</Text>
+              <Text style={[styles.visibilitySubtitle, { color: theme.colors.foregroundMuted }]}>
+                {t('albums.visibility_followers_desc')}
+              </Text>
             </View>
             {visibility === 'followers' && <Check color="#D4B13A" size={18} strokeWidth={2.5} />}
           </Pressable>
@@ -112,9 +118,11 @@ export function AlbumMetaSettingsSection({
             </View>
             <View style={styles.visibilityTexts}>
               <Text style={[styles.visibilityTitle, { color: theme.colors.foreground }, visibility === 'private' && styles.visibilityTitleActive]}>
-                Privado
+                {t('albums.visibility_private')}
               </Text>
-              <Text style={[styles.visibilitySubtitle, { color: theme.colors.foregroundMuted }]}>Solo tú y los colaboradores que invites</Text>
+              <Text style={[styles.visibilitySubtitle, { color: theme.colors.foregroundMuted }]}>
+                {t('albums.visibility_private_desc')}
+              </Text>
             </View>
             {visibility === 'private' && <Check color="#D4B13A" size={18} strokeWidth={2.5} />}
           </Pressable>

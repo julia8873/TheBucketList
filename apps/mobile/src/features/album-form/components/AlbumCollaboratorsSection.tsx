@@ -6,6 +6,8 @@ import { styles } from '../styles/album-form.styles';
 import { SectionTitle } from './SectionTitle';
 import type { CollaboratorItem } from '../../../components/CollaboratorPickerSheet';
 
+import { useTranslation } from '@bucketlist/shared';
+
 interface AlbumCollaboratorsSectionProps {
   isShared: boolean;
   isOwner: boolean;
@@ -26,16 +28,17 @@ export function AlbumCollaboratorsSection({
   onRemoveCollaborator,
 }: AlbumCollaboratorsSectionProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <View style={styles.section}>
-      <SectionTitle highlight="COLABORADORES" rest=" DEL ÁLBUM" />
+      <SectionTitle highlight={t('albums.section_collabs_highlight')} rest={t('albums.section_collabs_rest')} />
       <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
         <View style={[styles.cardRow, isShared && styles.cardRowBorder, isShared && { borderBottomColor: theme.colors.border }]}>
           <Users color="#D4B13A" size={22} strokeWidth={2} />
           <View style={styles.cardTexts}>
-            <Text style={[styles.cardTitle, { color: theme.colors.foreground }]}>Álbum compartido</Text>
-            <Text style={[styles.cardSubtitle, { color: theme.colors.foregroundMuted }]}>Comparte las tareas y completadlas juntos</Text>
+            <Text style={[styles.cardTitle, { color: theme.colors.foreground }]}>{t('albums.shared_album')}</Text>
+            <Text style={[styles.cardSubtitle, { color: theme.colors.foregroundMuted }]}>{t('albums.shared_album_desc')}</Text>
           </View>
           <Pressable
             style={[
@@ -74,8 +77,8 @@ export function AlbumCollaboratorsSection({
               </View>
               <Text style={[styles.addCollabText, { color: theme.colors.foregroundMuted }]}>
                 {selectedCollaborators.length === 0
-                  ? 'Añadir colaboradores al álbum...'
-                  : `${selectedCollaborators.length} colaborador${selectedCollaborators.length > 1 ? 'es' : ''} seleccionado${selectedCollaborators.length > 1 ? 's' : ''}`}
+                  ? t('albums.add_collaborators_placeholder')
+                  : t('albums.collaborators_selected_count', { count: selectedCollaborators.length })}
               </Text>
               <Plus color="#D4B13A" size={18} strokeWidth={2.5} />
             </Pressable>

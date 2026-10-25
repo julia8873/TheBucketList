@@ -11,6 +11,7 @@ import {
 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { toast, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/album-form.styles';
 import { COVERS, SOLID_COVERS, type Cover, type CoverAspectRatio } from '../types';
 import { SectionTitle } from './SectionTitle';
@@ -28,6 +29,7 @@ export function CoverPickerSection({
   albumTitle = '',
 }: CoverPickerSectionProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const [showLinkModal, setShowLinkModal] = useState(false);
   const currentRatio: CoverAspectRatio = selectedCover.aspectRatio || '16:9';
 
@@ -59,7 +61,7 @@ export function CoverPickerSection({
     try {
       const permission = await ImagePicker.requestCameraPermissionsAsync();
       if (!permission.granted) {
-        toast.error('Necesitamos acceso a la cámara para la portada');
+        toast.error(t('albums.error_camera_permission'));
         return;
       }
       const result = await ImagePicker.launchCameraAsync({
@@ -82,7 +84,7 @@ export function CoverPickerSection({
         });
       }
     } catch {
-      toast.error('No se pudo abrir la cámara');
+      toast.error(t('albums.error_camera_open'));
     }
   };
 
@@ -127,7 +129,7 @@ export function CoverPickerSection({
 
   return (
     <View style={styles.section}>
-      <SectionTitle highlight="TU" rest=" PORTADA" />
+      <SectionTitle highlight={t('albums.section_cover_highlight')} rest={t('albums.section_cover_rest')} />
 
       {/* Botón para reajustar recorte si hay imagen seleccionada */}
       {selectedCover.type === 'image' && selectedCover.uri && (
@@ -135,10 +137,10 @@ export function CoverPickerSection({
           style={[styles.recropBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
           onPress={() => void pickImage()}
           accessibilityRole="button"
-          accessibilityLabel="Reajustar recorte de la foto"
+          accessibilityLabel={t('albums.recrop_photo')}
         >
           <Crop size={15} color="#D4B13A" strokeWidth={2} />
-          <Text style={styles.recropBtnText}>Reajustar recorte de la foto</Text>
+          <Text style={styles.recropBtnText}>{t('albums.recrop_photo')}</Text>
         </Pressable>
       )}
 
@@ -153,7 +155,7 @@ export function CoverPickerSection({
           ]}
           onPress={() => void pickImage()}
           accessibilityRole="button"
-          accessibilityLabel="Elegir foto de la galería y recortar"
+          accessibilityLabel={t('albums.pick_gallery')}
         >
           <ImageIcon color={selectedCover.type === 'image' && !selectedCover.uri?.startsWith('http') ? '#D4B13A' : theme.colors.foregroundMuted} size={24} />
         </Pressable>
@@ -166,7 +168,7 @@ export function CoverPickerSection({
           ]}
           onPress={() => void takeCameraPhoto()}
           accessibilityRole="button"
-          accessibilityLabel="Hacer foto con la cámara"
+          accessibilityLabel={t('albums.take_camera')}
         >
           <Camera color={theme.colors.foregroundMuted} size={24} />
         </Pressable>
@@ -180,7 +182,7 @@ export function CoverPickerSection({
           ]}
           onPress={() => setShowLinkModal(true)}
           accessibilityRole="button"
-          accessibilityLabel="Pegar enlace o imagen web de Google"
+          accessibilityLabel={t('albums.paste_link')}
         >
           <Link2 color={selectedCover.type === 'image' && Boolean(selectedCover.uri?.startsWith('http')) ? '#D4B13A' : theme.colors.foregroundMuted} size={24} />
         </Pressable>

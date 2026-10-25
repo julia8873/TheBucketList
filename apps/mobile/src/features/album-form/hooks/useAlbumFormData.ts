@@ -11,10 +11,12 @@ import type { CollaboratorItem } from '../../../components/CollaboratorPickerShe
 import type { TagItem } from '../../../components/TagAssignSheet';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncAlbumTags, getAlbumTagsStorageKey } from '../../../hooks/useAlbumTags';
+import { useTranslation } from '@bucketlist/shared';
 import { COVERS, SOLID_COVERS, type Cover, type AlbumPriority, type AlbumVisibility } from '../types';
 
 export function useAlbumFormData(id?: string) {
   const router = useRouter();
+  const { t } = useTranslation();
   const isEditing = Boolean(id && id !== 'unassigned');
 
   const { user, session } = useAuthStore();
@@ -63,7 +65,7 @@ export function useAlbumFormData(id?: string) {
           .single();
 
         if (error || !album) {
-          Alert.alert('Error', 'No se pudo cargar la información del álbum');
+          Alert.alert(t('common.error'), t('albums.error_load'));
           return;
         }
 
@@ -395,7 +397,7 @@ export function useAlbumFormData(id?: string) {
       }
     } catch (err: any) {
       console.error('Error saving album:', err);
-      toast.error(err?.message || 'No se pudo guardar el álbum.');
+      toast.error(err?.message || t('albums.error_save_album'));
     }
   };
 

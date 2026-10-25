@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from '@bucketlist/shared';
 import { TagFilterSheet } from './TagFilterSheet';
 import { TagEditSheet } from './TagEditSheet';
 import { useTags } from '../hooks/useTags';
@@ -25,6 +26,7 @@ interface TagAssignSheetProps {
  * se trabaja sobre un borrador y se confirma al cerrar la hoja.
  */
 export function TagAssignSheet({ visible, selectedTags, onChange, onClose }: TagAssignSheetProps) {
+    const { t } = useTranslation();
     const { data: tags = [] } = useTags();
     const [draftIds, setDraftIds] = useState<string[]>([]);
     const [creating, setCreating] = useState(false);
@@ -61,7 +63,7 @@ export function TagAssignSheet({ visible, selectedTags, onChange, onClose }: Tag
             selectedIds={draftIds}
             onChange={setDraftIds}
             onClose={commit}
-            ctaLabel={n === 0 ? 'Guardar sin etiquetas' : `Guardar ${n} ${n === 1 ? 'etiqueta' : 'etiquetas'}`}
+            ctaLabel={n === 0 ? t('tags.save_without_tags') : n === 1 ? t('tags.save_count_single') : t('tags.save_count_plural', { count: n })}
             onCreate={() => setCreating(true)}
             overlay={
                 <TagEditSheet

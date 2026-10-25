@@ -8,6 +8,7 @@ import { BucketCover } from './BucketCover';
 import { resolveTaskImage } from '../utils/taskImage';
 import { useAuthStore } from '../stores/auth.store';
 import { useCopiedBucketIds, useCopyBucket } from '../hooks/useSocial';
+import { useTranslation } from '@bucketlist/shared';
 import { TaskViewMode } from './ViewModeSelector';
 
 interface PublicTaskRowProps {
@@ -19,7 +20,7 @@ interface PublicTaskRowProps {
   mode?: TaskViewMode;
 }
 
-function buildMeta(bucket: any): string {
+function buildMeta(bucket: any, t: (key: any, options?: any) => string, locale: string): string {
   const completed = bucket.status === 'completed';
   const subtasks: Array<{ done: boolean }> = bucket.item_subtasks ?? [];
   const done = subtasks.filter((s) => s.done).length;
@@ -27,18 +28,18 @@ function buildMeta(bucket: any): string {
   let detail: string;
   if (completed) {
     if (bucket.completed_at) {
-      detail = `Completada · ${new Date(bucket.completed_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`;
+      detail = `${t('common.completed')} · ${new Date(bucket.completed_at).toLocaleDateString(locale, { day: 'numeric', month: 'short' })}`;
     } else {
-      detail = 'Completada';
+      detail = t('common.completed');
     }
   } else if (subtasks.length > 0) {
-    detail = `${done} de ${subtasks.length} pasos`;
+    detail = t('tasks.steps_count', { done, total: subtasks.length });
   } else if (bucket.location_text) {
     detail = bucket.location_text;
   } else if (bucket.deadline) {
-    detail = new Date(bucket.deadline).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    detail = new Date(bucket.deadline).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
   } else {
-    detail = 'Sin fecha';
+    detail = t('common.no_date');
   }
   return detail;
 }
@@ -54,6 +55,8 @@ function buildProgress(bucket: any): number | null {
 
 /** Fila/tarjeta de tarea de un perfil público (soporta list, gallery y compact). */
 export function PublicTaskRow({ bucket, isOwnProfile = false, isFavorite = false, onPress, mode = 'list' }: PublicTaskRowProps) {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language?.startsWith('en') ? 'en-US' : 'es-ES';
   const { theme } = useTheme();
   const overlay = useCoverOverlay();
   const { user } = useAuthStore();
@@ -69,21 +72,21 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, isFavorite = false
     if (!user || alreadyCopied || copyBucket.isPending) return;
     copyBucket.mutate(
       { bucketId: bucket.id, userId: user.id },
-      { onError: (error: any) => toast.error(error?.message ?? 'No se pudo añadir. Inténtalo de nuevo.') }
+      { onError: (error: any) => toast.error(error?.message ?? t('common.error')) }
     );
   };
 
   let chip: React.ReactNode = null;
   if (!isOwnProfile) {
     chip = alreadyCopied ? (
-      <Pill label="En tu lista" variant="muted" />
+      <Pill label={t('tasks.in_your_list')} variant="muted" />
     ) : (
-      <Pressable onPress={handleCopy} disabled={copyBucket.isPending} hitSlop={6} accessibilityRole="button" accessibilityLabel="Yo también">
-        <Pill label="Yo también" variant="outline-gold" />
+      <Pressable onPress={handleCopy} disabled={copyBucket.isPending} hitSlop={6} accessibilityRole="button" accessibilityLabel={t('tasks.me_too')}>
+        <Pill label={t('tasks.me_too')} variant="outline-gold" />
       </Pressable>
     );
   } else if (completed) {
-    chip = <Pill label="Completada" variant="outline-gold" />;
+    chip = <Pill label={t('common.completed')} variant="outline-gold" />;
   } else if (hasFutureDeadline) {
     chip = <UrgencyChip deadline={bucket.deadline} />;
   }
@@ -152,7 +155,7 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, isFavorite = false
               {bucket.title}
             </Text>
             <Text style={[styles.galleryMeta, { color: overlay.meta }]} numberOfLines={1}>
-              {buildMeta(bucket)}
+              {buildMeta(bucket, t, locale)}
             </Text>
           </View>
         </BucketCover>
@@ -191,7 +194,7 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, isFavorite = false
             </Text>
           </View>
           <Text style={[styles.compactMeta, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
-            {buildMeta(bucket)}
+            {buildMeta(bucket, t, locale)}
           </Text>
         </View>
 
@@ -230,7 +233,7 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, isFavorite = false
           </Text>
         </View>
         <Text style={[styles.meta, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
-          {buildMeta(bucket)}
+          {buildMeta(bucket, t, locale)}
         </Text>
         {progress !== null ? <ProgressBar value={progress} colorOverride={theme.colors.primary} style={styles.progress} /> : null}
       </View>

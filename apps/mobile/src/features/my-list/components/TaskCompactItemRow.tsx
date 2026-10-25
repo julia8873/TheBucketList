@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { CheckCircle2, GripVertical, Star, Users } from 'lucide-react-native';
 import { useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/my-list.styles';
 import { DragHandle } from '@/components/DraggableTaskList';
 import { BucketCover } from '@/components/BucketCover';
@@ -38,6 +39,7 @@ function TaskCompactItemRowComponent({
   onToggleComplete,
 }: TaskCompactItemRowProps) {
   const { theme } = useTheme();
+  const { t, i18n } = useTranslation();
 
   if (item.isHeader) {
     return (
@@ -73,16 +75,20 @@ function TaskCompactItemRowComponent({
       : '#D4B13A';
   const itemPriorityLabel =
     itemPriority === 'urgent'
-      ? 'Urgente'
+      ? t('common.urgent')
       : itemPriority === 'high'
-      ? 'Alta'
+      ? t('common.high')
       : itemPriority === 'low'
-      ? 'Baja'
-      : 'Media';
+      ? t('common.low')
+      : t('common.medium');
 
   const subParts: string[] = [];
   if (customization?.showCategoryLocation) {
-    const catOrLoc = item.category?.name_es || item.category?.name || item.location;
+    const isEn = i18n.language?.startsWith('en');
+    const categoryName = isEn
+      ? item.category?.name_en || item.category?.name_es
+      : item.category?.name_es || item.category?.name_en;
+    const catOrLoc = categoryName || item.category?.name || item.location;
     if (catOrLoc) subParts.push(catOrLoc);
   }
   if (customization?.showDescription && item.description) {
@@ -290,7 +296,7 @@ function TaskCompactItemRowComponent({
             )}
             {showDates && (item.deadline || item.completed_at) && (
               <Text style={{ fontSize: 10, color: theme.colors.foregroundMuted }}>
-                {new Date(item.status === 'completed' && item.completed_at ? item.completed_at : item.deadline).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                {new Date(item.status === 'completed' && item.completed_at ? item.completed_at : item.deadline).toLocaleDateString(i18n.language?.startsWith('en') ? 'en-US' : 'es-ES', { day: 'numeric', month: 'short' })}
               </Text>
             )}
             {isFav && (

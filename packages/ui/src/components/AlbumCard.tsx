@@ -20,6 +20,7 @@ import { Plus, FolderOpen, ChevronRight, Star, Lock, Check, Bookmark } from 'luc
 
 import { useTheme } from '../theme/useTheme';
 import { useCoverOverlay } from '../theme/coverOverlay';
+import { useTranslation } from '@bucketlist/shared';
 import { fontFamily, fontSize } from '../tokens/typography';
 import { gold, dark, green } from '../tokens/colors';
 import { radii } from '../tokens/radii';
@@ -88,6 +89,7 @@ export function AlbumCard({
 }: AlbumCardProps) {
   const { theme } = useTheme();
   const overlay = useCoverOverlay();
+  const { t, i18n } = useTranslation();
   const { width } = useWindowDimensions();
   const { cardWidth, cardHeight } = getAlbumCardDimensions(width);
   const progress = totalTasks > 0 ? completedTasks / totalTasks : 0;
@@ -201,20 +203,20 @@ export function AlbumCard({
           {isCompleted && !isClosed && (
             <View style={styles.completedBadge}>
               <Check size={10} color="#FFF" strokeWidth={2.5} />
-              <Text style={styles.completedText}>Completado</Text>
+              <Text style={styles.completedText}>{t('common.completed')}</Text>
             </View>
           )}
 
           {isShared && (
             <View style={styles.sharedBadge}>
-              <Text style={styles.sharedText}>Compartido</Text>
+              <Text style={styles.sharedText}>{t('albums.shared')}</Text>
             </View>
           )}
 
           {isClosed && (
             <View style={styles.closedBadge}>
               <Lock size={10} color="#D4B13A" />
-              <Text style={styles.closedText}>Cerrado</Text>
+              <Text style={styles.closedText}>{t('common.closed')}</Text>
             </View>
           )}
         </View>
@@ -234,7 +236,7 @@ export function AlbumCard({
             !theme.dark && { borderWidth: 1, borderColor: gold[400] },
           ]}
           accessibilityRole="button"
-          accessibilityLabel={isSaved ? 'Quitar de guardados' : 'Guardar álbum'}
+          accessibilityLabel={isSaved ? t('common.unsave') : t('common.save_album')}
         >
           <Bookmark
             size={14}
@@ -265,7 +267,7 @@ export function AlbumCard({
             !theme.dark && { borderWidth: 1, borderColor: gold[400] },
           ]}
           accessibilityRole="button"
-          accessibilityLabel={isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
+          accessibilityLabel={isFavorite ? t('common.unfavorite') : t('common.add_favorite')}
         >
           <Star
             size={14}
@@ -291,12 +293,12 @@ export function AlbumCard({
         <View style={styles.metaRow}>
           {showTaskCount && (
             <Text style={[styles.meta, { color: metaColor }]}>
-              {totalTasks} {totalTasks === 1 ? 'tarea' : 'tareas'} · {completedTasks} {completedTasks === 1 ? 'hecha' : 'hechas'}
+              {totalTasks} {totalTasks === 1 ? t('albums.task_single') : t('albums.task_plural')} · {completedTasks} {completedTasks === 1 ? t('albums.done_single') : t('albums.done_plural')}
             </Text>
           )}
           {showDate && createdAt && (
             <Text style={[styles.meta, { color: metaColor }]}>
-              {new Date(createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+              {new Date(createdAt).toLocaleDateString(i18n.language?.startsWith('en') ? 'en-US' : 'es-ES', { day: 'numeric', month: 'short' })}
             </Text>
           )}
           {showPriority && priority && (
@@ -327,7 +329,11 @@ export function AlbumCard({
                   },
                 ]}
               >
-                {priority === 'high' || priority === 'urgent' ? 'Alta' : priority === 'low' ? 'Baja' : 'Media'}
+                {priority === 'high' || priority === 'urgent'
+                  ? t('common.high')
+                  : priority === 'low'
+                  ? t('common.low')
+                  : t('common.medium')}
               </Text>
             </View>
           )}
@@ -357,6 +363,7 @@ export function AlbumCard({
 
 export function NewAlbumCard({ onPress, style }: { onPress?: () => void; style?: ViewStyle }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const { width } = useWindowDimensions();
   const { cardWidth, cardHeight } = getAlbumCardDimensions(width);
   return (
@@ -383,7 +390,7 @@ export function NewAlbumCard({ onPress, style }: { onPress?: () => void; style?:
       ]}
     >
       <Plus size={28} color={theme.colors.primary} strokeWidth={2} />
-      <Text style={[styles.newLabel, { color: theme.colors.primary }]}>Nuevo álbum</Text>
+      <Text style={[styles.newLabel, { color: theme.colors.primary }]}>{t('albums.new_album')}</Text>
     </Pressable>
   );
 }
@@ -397,6 +404,7 @@ interface NoAlbumRowProps {
 
 export function NoAlbumRow({ count, onPress }: NoAlbumRowProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   return (
     <Pressable
       onPress={onPress}
@@ -411,8 +419,10 @@ export function NoAlbumRow({ count, onPress }: NoAlbumRowProps) {
     >
       <FolderOpen color={theme.colors.foregroundMuted} size={22} strokeWidth={1.8} style={{ marginRight: 14 }} />
       <View style={{ flex: 1 }}>
-        <Text style={[styles.noAlbumTitle, { color: theme.colors.foreground }]}>Sin álbum</Text>
-        <Text style={[styles.noAlbumMeta, { color: theme.colors.foregroundMuted }]}>{count} tareas sueltas</Text>
+        <Text style={[styles.noAlbumTitle, { color: theme.colors.foreground }]}>{t('albums.no_album')}</Text>
+        <Text style={[styles.noAlbumMeta, { color: theme.colors.foregroundMuted }]}>
+          {count} {count === 1 ? t('albums.unassigned_task_single') : t('albums.unassigned_task_plural')}
+        </Text>
       </View>
       <ChevronRight color={theme.colors.foregroundMuted} size={20} strokeWidth={1.8} />
     </Pressable>
@@ -429,6 +439,7 @@ interface NoAlbumCardProps {
 
 export function NoAlbumCard({ count, onPress, style }: NoAlbumCardProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const { width } = useWindowDimensions();
   const { cardWidth, cardHeight } = getAlbumCardDimensions(width);
   return (
@@ -464,9 +475,9 @@ export function NoAlbumCard({ count, onPress, style }: NoAlbumCardProps) {
         <FolderOpen color={theme.colors.foregroundMuted} size={28} strokeWidth={1.8} />
       </View>
       <View style={styles.noAlbumCardTextWrap}>
-        <Text style={[styles.noAlbumCardTitle, { color: theme.colors.foreground }]}>Sin álbum</Text>
+        <Text style={[styles.noAlbumCardTitle, { color: theme.colors.foreground }]}>{t('albums.no_album')}</Text>
         <Text style={[styles.noAlbumCardMeta, { color: theme.colors.foregroundMuted }]}>
-          {count} {count === 1 ? 'tarea suelta' : 'tareas sueltas'}
+          {count} {count === 1 ? t('albums.unassigned_task_single') : t('albums.unassigned_task_plural')}
         </Text>
       </View>
     </Pressable>
@@ -477,6 +488,7 @@ export function NoAlbumCard({ count, onPress, style }: NoAlbumCardProps) {
 
 export function NewAlbumRow({ onPress, style }: { onPress?: () => void; style?: ViewStyle }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   return (
     <Pressable
       onPress={onPress}
@@ -497,13 +509,14 @@ export function NewAlbumRow({ onPress, style }: { onPress?: () => void; style?: 
         <Plus color={theme.colors.primary} size={22} strokeWidth={2.2} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={[styles.noAlbumTitle, { color: theme.colors.primary }]}>Nuevo álbum</Text>
-        <Text style={[styles.noAlbumMeta, { color: theme.colors.foregroundMuted }]}>Crear un álbum para tus tareas</Text>
+        <Text style={[styles.noAlbumTitle, { color: theme.colors.primary }]}>{t('albums.new_album')}</Text>
+        <Text style={[styles.noAlbumMeta, { color: theme.colors.foregroundMuted }]}>{t('albums.new_album_desc')}</Text>
       </View>
       <ChevronRight color={theme.colors.primary} size={20} strokeWidth={2} />
     </Pressable>
   );
 }
+
 
 // ── Styles ──────────────────────────────────────────────────────────────────
 

@@ -51,7 +51,7 @@ export function usePublicProfileData({
     queryFn: async () => {
       const baseSelect = `
         *,
-        category:categories(slug, name_es),
+        category:categories(slug, name_es, name_en),
         item_subtasks(done),
         bucket_photos(id, storage_path, thumb_path, created_at)
       `;

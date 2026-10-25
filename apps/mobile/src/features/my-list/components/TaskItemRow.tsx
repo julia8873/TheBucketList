@@ -3,6 +3,7 @@ import { View, Text, Pressable, Animated, StyleSheet, Alert } from 'react-native
 import { Swipeable } from 'react-native-gesture-handler';
 import { CheckCircle2, GripVertical, Star, Trash2 } from 'lucide-react-native';
 import { TaskRow, TagChip, confirm } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { BucketCover } from '@/components/BucketCover';
 import { resolveTaskImage } from '@/utils/taskImage';
@@ -53,6 +54,7 @@ function TaskItemRowComponent({
   theme,
 }: TaskItemRowProps) {
   const localSwipeableRef = React.useRef<Swipeable | null>(null);
+  const { t, i18n } = useTranslation();
 
   if (item.isHeader) {
     return (
@@ -74,20 +76,38 @@ function TaskItemRowComponent({
 
   let meta = '';
   if (!isItemOwner) {
-    meta = 'Colaboración';
+    meta = t('tasks.collaboration', { defaultValue: 'Colaboración' });
   } else if (showDates && isItemExpired && item.status !== 'completed') {
-    meta = `Caducó hace ${daysAgo} días`;
+    meta = t('tasks.expired_days_ago', { days: daysAgo, defaultValue: `Caducó hace ${daysAgo} días` });
   } else if (showSubtasks && subtasksTotal > 0) {
-    meta = `${subtasksDone} de ${subtasksTotal} pasos`;
-  } else if (showCategoryLoc && (item.category?.name_es || item.category?.name || item.location)) {
-    meta = [item.category?.name_es || item.category?.name, item.location].filter(Boolean).join(' · ');
+    meta = t('tasks.steps_count', { done: subtasksDone, total: subtasksTotal, defaultValue: `${subtasksDone} de ${subtasksTotal} pasos` });
+  } else if (showCategoryLoc) {
+    const isEn = i18n.language?.startsWith('en');
+    const categoryName = isEn
+      ? item.category?.name_en || item.category?.name_es
+      : item.category?.name_es || item.category?.name_en;
+    if (categoryName || item.category?.name || item.location) {
+      meta = [categoryName || item.category?.name, item.location].filter(Boolean).join(' · ');
+    }
   }
 
   const itemPriority = item.priority || 'medium';
   const itemPriorityColor =
-    itemPriority === 'high' ? '#EF4444' : itemPriority === 'low' ? '#10B981' : '#D4B13A';
+    itemPriority === 'urgent'
+      ? '#DC2626'
+      : itemPriority === 'high'
+      ? '#EF4444'
+      : itemPriority === 'low'
+      ? '#10B981'
+      : '#D4B13A';
   const itemPriorityLabel =
-    itemPriority === 'high' ? 'Alta' : itemPriority === 'low' ? 'Baja' : 'Media';
+    itemPriority === 'urgent'
+      ? t('common.urgent')
+      : itemPriority === 'high'
+      ? t('common.high')
+      : itemPriority === 'low'
+      ? t('common.low')
+      : t('common.medium');
 
   const priorityBadge = showPriority ? (
     <View
@@ -100,7 +120,7 @@ function TaskItemRowComponent({
         paddingVertical: 2,
         borderRadius: 8,
         backgroundColor:
-          itemPriority === 'high'
+          itemPriority === 'high' || itemPriority === 'urgent'
             ? 'rgba(239, 68, 68, 0.16)'
             : itemPriority === 'low'
             ? 'rgba(16, 185, 129, 0.16)'
@@ -132,7 +152,7 @@ function TaskItemRowComponent({
       }}
     >
       <Star size={11} color={gold[400]} fill={gold[400]} />
-      <Text style={{ fontSize: 11, fontWeight: '700', color: gold[400] }}>Favorita</Text>
+      <Text style={{ fontSize: 11, fontWeight: '700', color: gold[400] }}>{t('common.favorite', { defaultValue: 'Favorita' })}</Text>
     </View>
   ) : null;
 
@@ -155,10 +175,10 @@ function TaskItemRowComponent({
   /** Pregunta antes de marcar como completada (swipe a la derecha o toque en el botón verde). */
   const askComplete = () => {
     confirm.show({
-      title: '¿Marcar como completada?',
-      message: `¿Quieres marcar «${item.title}» como completada?`,
-      confirmLabel: 'Completar',
-      cancelLabel: 'Cancelar',
+      title: t('bucket.complete_confirm_title', { defaultValue: '¿Marcar como completada?' }),
+      message: t('bucket.complete_confirm_message', { title: item.title, defaultValue: `¿Quieres marcar «${item.title}» como completada?` }),
+      confirmLabel: t('common.complete', { defaultValue: 'Completar' }),
+      cancelLabel: t('common.cancel', { defaultValue: 'Cancelar' }),
       tone: 'success',
       onConfirm: () => {
         onComplete(item.id);

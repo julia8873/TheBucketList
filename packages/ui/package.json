@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "lucide-react-native": "^0.460.0",
-    "react-native-svg": "15.9.0"
+    "react-native-svg": "15.9.0",
+    "@bucketlist/shared": "*"
   }
 }

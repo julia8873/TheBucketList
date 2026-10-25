@@ -4,6 +4,8 @@ import { Lock, Flag, Eye, Users, CheckCircle2, Circle } from 'lucide-react-nativ
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { styles } from '../styles/album-detail.styles';
 
+import { useTranslation } from '@bucketlist/shared';
+
 interface AlbumHeaderBadgesProps {
   album: any;
   canEdit: boolean;
@@ -23,6 +25,8 @@ export function AlbumHeaderBadges({
   onOpenVisibility,
   onOpenPriority,
 }: AlbumHeaderBadgesProps) {
+  const { t } = useTranslation();
+
   const priorityColor =
     album.priority === 'high' || album.priority === 'urgent'
       ? '#EF4444'
@@ -31,17 +35,19 @@ export function AlbumHeaderBadges({
         : '#D4B13A';
 
   const priorityLabel =
-    album.priority === 'high' || album.priority === 'urgent'
-      ? 'Alta'
-      : album.priority === 'low'
-        ? 'Baja'
-        : 'Media';
+    album.priority === 'urgent'
+      ? t('common.urgent')
+      : album.priority === 'high'
+        ? t('common.high')
+        : album.priority === 'low'
+          ? t('common.low')
+          : t('common.medium');
 
   const visibilityLabel = (v: string) => {
     switch (v) {
-      case 'public': return 'Público';
-      case 'followers': return 'Seguidores';
-      case 'private': return 'Privado';
+      case 'public': return t('albums.visibility_public');
+      case 'followers': return t('albums.visibility_followers');
+      case 'private': return t('albums.visibility_private');
       default: return v;
     }
   };
@@ -67,21 +73,21 @@ export function AlbumHeaderBadges({
             <>
               <Lock size={13} color={gold[400]} strokeWidth={2} style={{ marginRight: 5 }} />
               <Text style={[styles.chipStatusText, { color: gold[400], fontWeight: '700' }]}>
-                Cerrado
+                {t('common.closed')}
               </Text>
             </>
           ) : areAllCompleted ? (
             <>
               <CheckCircle2 size={13} color="#34C759" strokeWidth={2.4} style={{ marginRight: 5 }} />
               <Text style={[styles.chipStatusText, { color: '#34C759', fontWeight: '700' }]}>
-                Completado
+                {t('common.completed')}
               </Text>
             </>
           ) : (
             <>
               <Circle size={11} color={gold[400]} strokeWidth={2.4} style={{ marginRight: 5 }} />
               <Text style={[styles.chipStatusText, { color: gold[400], fontWeight: '700' }]}>
-                En curso
+                {t('albums.status_in_progress')}
               </Text>
             </>
           )}

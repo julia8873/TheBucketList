@@ -3,7 +3,8 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@bucketlist/ui": ["./src/index.ts"]
+      "@bucketlist/ui": ["./src/index.ts"],
+      "@bucketlist/shared": ["../shared/src/index.ts"]
     },
     "outDir": "dist"
   },

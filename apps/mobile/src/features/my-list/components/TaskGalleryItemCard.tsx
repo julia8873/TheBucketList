@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Check, CheckCircle2, Star } from 'lucide-react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { useTheme, useCoverOverlay } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { BucketCover } from '@/components/BucketCover';
 import { resolveTaskImage } from '@/utils/taskImage';
 import { styles } from '../styles/my-list.styles';
@@ -34,6 +35,7 @@ function TaskGalleryItemCardComponent({
 }: TaskGalleryItemCardProps) {
   const { theme } = useTheme();
   const overlay = useCoverOverlay();
+  const { t, i18n } = useTranslation();
   const isCompleted = item.status === 'completed';
 
   const imageValue = resolveTaskImage(item, { preferThumb: !isSingle });
@@ -59,24 +61,28 @@ function TaskGalleryItemCardComponent({
       : '#D4B13A';
   const itemPriorityLabel =
     itemPriority === 'urgent'
-      ? 'Urgente'
+      ? t('common.urgent')
       : itemPriority === 'high'
-      ? 'Alta'
+      ? t('common.high')
       : itemPriority === 'low'
-      ? 'Baja'
-      : 'Media';
+      ? t('common.low')
+      : t('common.medium');
 
   // Build meta text according to customization
   const metaParts: string[] = [];
   if (showSubtasks) {
     if (subtasksTotal > 0) {
-      metaParts.push(`${subtasksDone}/${subtasksTotal} pasos`);
+      metaParts.push(`${subtasksDone}/${subtasksTotal} ${t('common.steps', { defaultValue: 'pasos' })}`);
     } else if (item.counter_target > 0) {
       metaParts.push(`${item.counter_count ?? 0}/${item.counter_target}`);
     }
   }
   if (showCategoryLoc) {
-    const catOrLoc = item.category?.name_es || item.category?.name || item.location;
+    const isEn = i18n.language?.startsWith('en');
+    const categoryName = isEn
+      ? item.category?.name_en || item.category?.name_es
+      : item.category?.name_es || item.category?.name_en;
+    const catOrLoc = categoryName || item.category?.name || item.location;
     if (catOrLoc) metaParts.push(catOrLoc);
   }
   if (showDates) {
@@ -84,7 +90,7 @@ function TaskGalleryItemCardComponent({
     if (targetDate) {
       try {
         const d = new Date(targetDate);
-        metaParts.push(d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }));
+        metaParts.push(d.toLocaleDateString(i18n.language?.startsWith('en') ? 'en-US' : 'es-ES', { day: 'numeric', month: 'short' }));
       } catch {}
     }
   }

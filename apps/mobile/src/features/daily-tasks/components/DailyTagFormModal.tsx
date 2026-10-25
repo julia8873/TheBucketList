@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { X, Check, Trash2 } from 'lucide-react-native';
 import { useTheme, gold } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/explore.styles';
 import type { DailyTag } from '../types';
 
@@ -64,6 +65,7 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
   onClose,
 }) => {
   const { theme } = useTheme();
+  const { t } = useTranslation();
 
   if (!visible) return null;
 
@@ -76,7 +78,7 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
       <View style={[styles.modalContent, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
         <View style={styles.modalHeader}>
           <Text style={[styles.modalTitle, { color: theme.colors.foreground }]}>
-            {editingDailyTag ? 'Editar etiqueta' : 'Nueva etiqueta'}
+            {editingDailyTag ? t('tags.edit_tag') : t('tags.new_tag')}
           </Text>
           <Pressable onPress={onClose} hitSlop={10}>
             <X size={18} color={theme.colors.foregroundMuted} />
@@ -84,7 +86,7 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
         </View>
 
         {/* Input Name */}
-        <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>Nombre</Text>
+        <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>{t('tags.tag_name')}</Text>
         <TextInput
           style={[
             styles.modalInput,
@@ -94,7 +96,7 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
               color: theme.colors.foreground,
             },
           ]}
-          placeholder="Ej. Prioritario, Gimnasio..."
+          placeholder={t('tags.tag_name_placeholder')}
           placeholderTextColor={theme.colors.foregroundSubtle ?? '#888'}
           value={tagFormName}
           onChangeText={setTagFormName}
@@ -102,7 +104,7 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
         />
 
         {/* Color Selector */}
-        <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>Color</Text>
+        <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>{t('tags.tag_color')}</Text>
         <View style={styles.paletteRow}>
           {TAG_COLOR_PALETTE.map((c) => (
             <Pressable
@@ -120,7 +122,7 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
         </View>
 
         {/* Custom Emoji Input & Presets */}
-        <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>Icono / Emoji</Text>
+        <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>{t('tags.tag_icon')}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
           <TextInput
             style={{
@@ -141,7 +143,7 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
             maxLength={6}
           />
           <Text style={{ fontSize: 12, color: theme.colors.foregroundMuted, flex: 1, lineHeight: 16 }}>
-            Escribe cualquier emoji desde tu teclado, o toca una sugerencia rápida:
+            {t('tags.tag_emoji_hint')}
           </Text>
         </View>
 
@@ -181,7 +183,7 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
             onPress={() => onDelete(editingDailyTag)}
           >
             <Trash2 size={15} color="#FF453A" />
-            <Text style={styles.deleteTagRowText}>Eliminar esta etiqueta</Text>
+            <Text style={styles.deleteTagRowText}>{t('tags.delete_this_tag')}</Text>
           </Pressable>
         )}
 
@@ -200,7 +202,7 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
             onPress={onClose}
             accessibilityRole="button"
           >
-            <Text style={[styles.modalCancelBtnText, { color: theme.colors.foreground }]}>Cancelar</Text>
+            <Text style={[styles.modalCancelBtnText, { color: theme.colors.foreground }]}>{t('common.cancel')}</Text>
           </Pressable>
           <Pressable
             style={[
@@ -216,7 +218,7 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
               <ActivityIndicator size="small" color="#000" />
             ) : (
               <Text style={styles.modalSubmitBtnText}>
-                {editingDailyTag ? 'Guardar' : 'Crear etiqueta'}
+                {editingDailyTag ? t('common.save') : t('tags.create_tag')}
               </Text>
             )}
           </Pressable>
