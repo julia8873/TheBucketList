@@ -38,6 +38,21 @@ export function getSupabaseUrl(): string {
   if (APP_ENV === 'staging') {
     return process.env['EXPO_PUBLIC_SUPABASE_URL_STAGING'] || process.env['EXPO_PUBLIC_SUPABASE_URL'] || '';
   }
+
+  // Web check: if running on web and EXPO_PUBLIC_SUPABASE_URL or EXPO_PUBLIC_SUPABASE_URL_PROD is provided,
+  // or running in a deployed browser (not localhost), use production/configured URL
+  if (Platform.OS === 'web') {
+    if (process.env['EXPO_PUBLIC_SUPABASE_URL']) {
+      return process.env['EXPO_PUBLIC_SUPABASE_URL'];
+    }
+    if (process.env['EXPO_PUBLIC_SUPABASE_URL_PROD']) {
+      return process.env['EXPO_PUBLIC_SUPABASE_URL_PROD'];
+    }
+    if (typeof window !== 'undefined' && window.location?.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      return 'https://fazxqjznuehrwkungmjm.supabase.co';
+    }
+  }
+
   // local
   if (Device.isDevice) {
     const dynamicHost = getHostIp();
@@ -65,6 +80,9 @@ export function getSupabaseAnonKey(): string {
   if (APP_ENV === 'staging') {
     return process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY_STAGING'] || process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY'] || '';
   }
+  if (Platform.OS === 'web' && process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY']) {
+    return process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY'];
+  }
   const k = process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY'] ?? process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY_LOCAL'];
   if (k && !k.includes('CRFA0NiK')) {
     return k;
@@ -85,6 +103,10 @@ export function normalizeStorageUrl<T extends string | null | undefined>(url: T)
   if (i === -1) return url;
   const base = getSupabaseUrl();
   if (!base) return url;
+  // Si la URL ya es HTTPS válida, nunca degradarla a localhost o IP local
+  if (url.startsWith('https://') && (base.includes('127.0.0.1') || base.includes('localhost') || base.includes('10.0.2.2') || base.includes('192.168.'))) {
+    return url;
+  }
   return `${base.replace(/\/$/, '')}${url.slice(i)}` as T;
 }
 

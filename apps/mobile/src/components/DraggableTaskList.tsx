@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, PanResponder, View } from 'react-native';
+import { Animated, PanResponder, View, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 
 /**
@@ -167,7 +167,7 @@ function Row(props: RowProps) {
           const p = latest.current;
           y.setValue(p.top);
           p.onDragStart(p.item.id, p.index);
-        }, 320);
+        }, Platform.OS === 'web' ? 200 : 320);
         return false;
       },
       onMoveShouldSetPanResponder: () => isLongPressing.current,
@@ -177,8 +177,9 @@ function Row(props: RowProps) {
         }
         const dx = Math.abs(evt.nativeEvent.pageX - touchStartPos.current.x);
         const dy = Math.abs(evt.nativeEvent.pageY - touchStartPos.current.y);
-        // Si el usuario desliza para hacer scroll antes de que pasen los 320ms, cancelamos el timer
-        if (dx > 8 || dy > 8) {
+        // Si el usuario desliza para hacer scroll antes de que pasen los ms, cancelamos el timer
+        const maxDelta = Platform.OS === 'web' ? 14 : 8;
+        if (dx > maxDelta || dy > maxDelta) {
           clearTimer();
           return false;
         }
@@ -227,6 +228,12 @@ function Row(props: RowProps) {
         shadowRadius: 10,
         shadowOffset: { width: 0, height: 4 },
         transform: [{ translateY: y }, { scale }],
+        ...(Platform.OS === 'web'
+          ? ({
+              userSelect: 'none',
+              WebkitUserSelect: 'none',
+            } as any)
+          : {}),
       }}
     >
       {props.renderItem(item, { panHandlers: pan.panHandlers, isActive })}

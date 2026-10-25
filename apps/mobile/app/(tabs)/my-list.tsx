@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { View, Text, Pressable, ScrollView, RefreshControl, BackHandler } from 'react-native';
+import React, { useCallback, useRef, useEffect } from 'react';
+import { View, Text, Pressable, ScrollView, RefreshControl, BackHandler, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   useTheme,
@@ -13,7 +13,7 @@ import {
 } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { FlashList } from '@shopify/flash-list';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
 import { useTranslation } from '@bucketlist/shared';
 import { Search, X, Plus, ChevronLeft, Sparkles, ChevronRight } from 'lucide-react-native';
 import { DraggableTaskList } from '@/components/DraggableTaskList';
@@ -47,11 +47,39 @@ const TaskSeparator = () => <View style={{ height: 10 }} />;
 export default function MyListScreen() {
   const { theme } = useTheme();
   const router = useRouter();
+  const navigation = useNavigation();
   const { t } = useTranslation();
   const state = useMyListState();
   const [goldTitle, ...restTitle] = t('nav.my_list', { defaultValue: 'Mi lista' }).split(' ');
   const [customizeModalVisible, setCustomizeModalVisible] = React.useState(false);
   const { taskViews, albumViews } = useMyListCustomizationStore();
+
+  const taskListScrollRef = useRef<ScrollView>(null);
+  const taskFlashListRef = useRef<any>(null);
+  const albumsScrollRef = useRef<ScrollView>(null);
+  const calendarScrollRef = useRef<ScrollView>(null);
+
+  // Al pulsar el icono de pestaña en la barra inferior, vuelve al principio de la vista
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('tabPress' as any, () => {
+      if (state.activeTab === 'list') {
+        if (state.taskViewMode === 'list' && !state.isReordering) {
+          if (taskFlashListRef.current?.scrollToOffset) {
+            taskFlashListRef.current.scrollToOffset({ offset: 0, animated: true });
+          } else if (taskFlashListRef.current?.scrollToIndex) {
+            taskFlashListRef.current.scrollToIndex({ index: 0, animated: true });
+          }
+        } else {
+          taskListScrollRef.current?.scrollTo({ y: 0, animated: true });
+        }
+      } else if (state.activeTab === 'albums') {
+        albumsScrollRef.current?.scrollTo({ y: 0, animated: true });
+      } else if (state.activeTab === 'calendar') {
+        calendarScrollRef.current?.scrollTo({ y: 0, animated: true });
+      }
+    });
+    return unsubscribe;
+  }, [navigation, state.activeTab, state.taskViewMode, state.isReordering]);
 
   const renderTaskItem = useCallback(
     ({ item, drag, index }: { item: any; drag?: any; index?: number }) => {
@@ -294,38 +322,7 @@ export default function MyListScreen() {
           )}
           <PageTitle gold={goldTitle} rest={restTitle.join(' ')} />
         </View>
-        <Pressable
-          onPress={state.toggleSearch}
-          hitSlop={12}
-          style={[styles.searchIconButton, state.isSearching && styles.searchIconButtonActive]}
-        >
-          {state.isSearching ? (
-            <X size={20} color={gold[400]} />
-          ) : (
-            <Search size={20} color={theme.colors.foregroundMuted} />
-          )}
-        </Pressable>
       </View>
-
-      {/* Barra de búsqueda */}
-      {state.isSearching && (
-        <View style={styles.searchBarContainer}>
-          <Input
-            placeholder={t('my_list.search_placeholder')}
-            value={state.searchQuery}
-            onChangeText={state.setSearchQuery}
-            autoFocus
-            leftIcon={<Search size={16} color={theme.colors.foregroundMuted} />}
-            rightIcon={
-              state.searchQuery.length > 0 ? (
-                <Pressable onPress={() => state.setSearchQuery('')} hitSlop={8}>
-                  <X size={16} color={theme.colors.foregroundMuted} />
-                </Pressable>
-              ) : undefined
-            }
-          />
-        </View>
-      )}
 
       {/* Tabs */}
       <View style={styles.tabsContainer}>
@@ -339,6 +336,49 @@ export default function MyListScreen() {
           onChange={state.setActiveTab}
         />
       </View>
+
+      {/* Barra de búsqueda debajo del toggle (mismo diseño que en momentos de amigos) */}
+      {state.activeTab !== 'calendar' && (
+        <View
+          style={[
+            styles.exploreSearchContainer,
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border,
+            },
+          ]}
+        >
+          <Search size={18} color={theme.colors.foregroundMuted} strokeWidth={1.8} />
+          <TextInput
+            placeholder={
+              state.activeTab === 'albums'
+                ? t('my_list.search_albums_placeholder', { defaultValue: 'Buscar en tus álbumes...' })
+                : t('my_list.search_placeholder', { defaultValue: 'Buscar en tu lista...' })
+            }
+            placeholderTextColor={theme.colors.foregroundMuted}
+            value={state.searchQuery}
+            onChangeText={(text) => {
+              state.setSearchQuery(text);
+              state.setIsSearching(text.trim().length > 0);
+            }}
+            style={[styles.exploreSearchInput, { color: theme.colors.foreground }]}
+            returnKeyType="search"
+          />
+          {state.searchQuery.length > 0 && (
+            <Pressable
+              onPress={() => {
+                state.setSearchQuery('');
+                state.setIsSearching(false);
+              }}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Borrar búsqueda"
+            >
+              <X size={18} color={theme.colors.foregroundMuted} strokeWidth={2} />
+            </Pressable>
+          )}
+        </View>
+      )}
     </View>
   );
 
@@ -383,7 +423,7 @@ export default function MyListScreen() {
       {state.activeTab === 'list' && (
         <View style={{ flex: 1 }}>
           {state.isLoading ? (
-            <ScrollView contentContainerStyle={styles.listContent}>
+            <ScrollView ref={taskListScrollRef} contentContainerStyle={styles.listContent}>
               {taskListHeaderElement}
               <View style={{ paddingTop: 10 }}>
                 {state.taskViewMode === 'gallery' ? (
@@ -407,6 +447,7 @@ export default function MyListScreen() {
             </ScrollView>
           ) : state.filteredBuckets.length === 0 ? (
             <ScrollView
+              ref={taskListScrollRef}
               contentContainerStyle={styles.listContent}
               refreshControl={
                 <RefreshControl refreshing={state.refreshing} onRefresh={state.onRefresh} tintColor={gold[400]} />
@@ -421,6 +462,7 @@ export default function MyListScreen() {
             </ScrollView>
           ) : state.isReordering ? (
             <ScrollView
+              ref={taskListScrollRef}
               contentContainerStyle={styles.listContent}
               scrollEnabled={!state.dragging}
             >
@@ -461,6 +503,7 @@ export default function MyListScreen() {
             </ScrollView>
           ) : state.taskViewMode === 'gallery' ? (
             <ScrollView
+              ref={taskListScrollRef}
               contentContainerStyle={styles.listContent}
               refreshControl={
                 <RefreshControl refreshing={state.refreshing} onRefresh={state.onRefresh} tintColor={gold[400]} />
@@ -537,6 +580,7 @@ export default function MyListScreen() {
             </ScrollView>
           ) : state.taskViewMode === 'compact' ? (
             <ScrollView
+              ref={taskListScrollRef}
               contentContainerStyle={styles.listContent}
               refreshControl={
                 <RefreshControl refreshing={state.refreshing} onRefresh={state.onRefresh} tintColor={gold[400]} />
@@ -563,6 +607,7 @@ export default function MyListScreen() {
             </ScrollView>
           ) : (
             <FlashList
+              ref={taskFlashListRef}
               data={state.listData}
               renderItem={renderTaskItem}
               keyExtractor={(item) => item.id}
@@ -605,6 +650,7 @@ export default function MyListScreen() {
       {state.activeTab === 'albums' && (
         <View style={{ flex: 1 }}>
           <ScrollView
+            ref={albumsScrollRef}
             contentContainerStyle={styles.albumsContent}
             refreshControl={
               <RefreshControl refreshing={state.refreshing} onRefresh={state.onRefresh} tintColor={gold[400]} />
@@ -838,7 +884,7 @@ export default function MyListScreen() {
       )}
 
       {/* Tab: Calendario */}
-      {state.activeTab === 'calendar' && <CalendarTab headerComponent={renderTopHeader(false)} />}
+      {state.activeTab === 'calendar' && <CalendarTab ref={calendarScrollRef} headerComponent={renderTopHeader(false)} />}
 
       {/* Sheets & Modales */}
       <TagFilterSheet

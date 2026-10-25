@@ -379,9 +379,9 @@ export const styles = themedStyleSheet({
     textTransform: 'uppercase',
   },
   collaboratorAvatarImg: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 25,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
   },
   collaboratorInitials: {
     color: '#D4B13A',

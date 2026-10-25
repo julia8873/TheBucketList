@@ -560,8 +560,10 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
                   borderColor: theme.colors.border,
                   borderWidth: 1,
                 },
+                Platform.OS === 'web' && ({ cursor: 'pointer' } as any),
               ]}
               onPress={onClose}
+              accessibilityRole="button"
             >
               <Text style={[styles.modalCancelBtnText, { color: theme.colors.foreground }]}>{t('common.cancel')}</Text>
             </Pressable>
@@ -569,9 +571,11 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
               style={[
                 styles.modalSubmitBtn,
                 !title.trim() && styles.modalSubmitBtnDisabled,
+                Platform.OS === 'web' && ({ cursor: title.trim() ? 'pointer' : 'not-allowed' } as any),
               ]}
               disabled={!title.trim()}
               onPress={onSubmit}
+              accessibilityRole="button"
             >
               <Text style={styles.modalSubmitBtnText}>{t('daily.create_task_btn')}</Text>
             </Pressable>

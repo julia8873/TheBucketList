@@ -1,7 +1,8 @@
 import { Alert } from '@bucketlist/ui';
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocalSearchParams } from 'expo-router';
-import { View, Text, Pressable, ScrollView, RefreshControl, Image, TextInput, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, RefreshControl, TextInput, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -551,6 +552,8 @@ export default function AlbumDetailScreen() {
                     <Image
                       source={{ uri: normalizeStorageUrl(album.owner.avatar_url) }}
                       style={styles.collaboratorAvatarImg}
+                      contentFit="cover"
+                      cachePolicy="memory-disk"
                     />
                   ) : (
                     <Text style={styles.collaboratorInitials}>
@@ -587,6 +590,8 @@ export default function AlbumDetailScreen() {
                         <Image
                           source={{ uri: normalizeStorageUrl(collab.avatar_url) }}
                           style={[styles.collaboratorAvatarImg, isPending && { opacity: 0.35 }]}
+                          contentFit="cover"
+                          cachePolicy="memory-disk"
                         />
                       ) : (
                         <Text style={[styles.collaboratorInitials, isPending && { opacity: 0.35 }]}>

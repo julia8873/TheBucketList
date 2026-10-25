@@ -58,6 +58,8 @@ const en = {
     completed: 'Completed',
     active: 'Active',
     in_progress: 'In progress',
+    status_pending: 'Pending',
+    status_completed: 'Completed',
     expired: 'Expired',
     closed: 'Closed',
     urgent: 'Urgent',
@@ -315,6 +317,7 @@ const en = {
 
   my_list: {
     search_placeholder: 'Search in your list...',
+    search_albums_placeholder: 'Search in your albums...',
     back_to_profile: 'Back to profile',
     tab_tasks: 'Tasks',
     tab_albums: 'Albums',
@@ -540,6 +543,10 @@ const en = {
     every_x_months: 'Every {{count}} months',
     custom_recurrence: 'Custom',
     priority_label: 'Priority',
+    priority_label_low: 'Low',
+    priority_label_medium: 'Medium',
+    priority_label_high: 'High',
+    priority_label_urgent: 'Urgent',
     tags_label: 'Tags',
     subtasks_label: 'Subtasks',
     add_subtask_placeholder: 'Add a subtask...',

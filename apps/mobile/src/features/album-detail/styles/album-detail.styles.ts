@@ -92,7 +92,7 @@ export const styles = themedStyleSheet({
     fontSize: 6.5, fontFamily: 'Inter_600SemiBold', color: '#D4B13A',
     letterSpacing: 0.2, textAlign: 'center', textTransform: 'uppercase',
   },
-  collaboratorAvatarImg: { width: '100%', height: '100%', borderRadius: 25 },
+  collaboratorAvatarImg: { width: 46, height: 46, borderRadius: 23 },
   collaboratorInitials: { color: '#D4B13A', fontSize: 18, fontWeight: '700', letterSpacing: 0.5 },
   addCollaboratorCircle: {
     width: 50, height: 50, borderRadius: 25, borderWidth: 1.8, borderColor: '#D4B13A',

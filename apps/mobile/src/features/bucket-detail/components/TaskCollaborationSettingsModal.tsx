@@ -8,8 +8,8 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
-  Image,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   X,
@@ -145,6 +145,8 @@ export function TaskCollaborationSettingsModal({
                           <Image
                             source={{ uri: normalizeStorageUrl(c.avatar_url) }}
                             style={styles.avatarImg}
+                            contentFit="cover"
+                            cachePolicy="memory-disk"
                           />
                         ) : (
                           <View style={[styles.initialsCircle, { backgroundColor: theme.dark ? '#2A2A2A' : '#E5E1D8' }]}>

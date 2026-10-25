@@ -1,5 +1,5 @@
 import { themedStyleSheet } from '@bucketlist/ui';
-import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet, Dimensions, Platform } from 'react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -91,7 +91,27 @@ export const styles = themedStyleSheet({
   },
   tabsContainer: {
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 12,
+  },
+  exploreSearchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    height: 48,
+    marginHorizontal: 20,
+    marginBottom: 14,
+    paddingHorizontal: 16,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
+    backgroundColor: '#141414',
+  },
+  exploreSearchInput: {
+    flex: 1,
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    color: '#F2EFE8',
+    padding: 0,
   },
   filtersContainer: {
     flexDirection: 'row',
@@ -196,8 +216,16 @@ export const styles = themedStyleSheet({
     marginBottom: 16,
   },
   galleryCard: {
-    width: (SCREEN_WIDTH - 40 - 14) / 2,
-    height: ((SCREEN_WIDTH - 40 - 14) / 2) * 1.3,
+    ...Platform.select({
+      web: {
+        width: 'calc(50% - 7px)',
+        aspectRatio: 1 / 1.3,
+      } as any,
+      default: {
+        width: (SCREEN_WIDTH - 40 - 14) / 2,
+        height: ((SCREEN_WIDTH - 40 - 14) / 2) * 1.3,
+      },
+    }),
     borderRadius: 14,
     overflow: 'hidden',
   },

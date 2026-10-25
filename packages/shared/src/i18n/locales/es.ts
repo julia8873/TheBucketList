@@ -58,6 +58,8 @@ const es = {
     completed: 'Completadas',
     active: 'En curso',
     in_progress: 'En progreso',
+    status_pending: 'Pendiente',
+    status_completed: 'Completada',
     expired: 'Vencidas',
     closed: 'Cerrados',
     urgent: 'Urgente',
@@ -315,6 +317,7 @@ const es = {
 
   my_list: {
     search_placeholder: 'Buscar en tu lista...',
+    search_albums_placeholder: 'Buscar en tus álbumes...',
     back_to_profile: 'Volver al perfil',
     tab_tasks: 'Tareas',
     tab_albums: 'Álbumes',
@@ -540,6 +543,10 @@ const es = {
     every_x_months: 'Cada {{count}} meses',
     custom_recurrence: 'Personalizado',
     priority_label: 'Prioridad',
+    priority_label_low: 'Baja',
+    priority_label_medium: 'Media',
+    priority_label_high: 'Alta',
+    priority_label_urgent: 'Urgente',
     tags_label: 'Etiquetas',
     subtasks_label: 'Subtareas',
     add_subtask_placeholder: 'Añadir una subtarea...',

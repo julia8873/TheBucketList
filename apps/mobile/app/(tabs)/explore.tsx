@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   ScrollView,
@@ -7,6 +7,7 @@ import {
   Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { ListTodo, CheckCircle2, ChevronDown, ChevronRight } from 'lucide-react-native';
 
@@ -46,8 +47,18 @@ export { PRIORITY_CONFIG, PRIORITY_ORDER };
 export default function DailyTasksScreen() {
   const { theme } = useTheme();
   const { t } = useTranslation();
+  const navigation = useNavigation();
   const state = useDailyTasksState();
   const [showCreateDatePicker, setShowCreateDatePicker] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+
+  // Al pulsar de nuevo la pestaña en la barra inferior, vuelve al principio
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('tabPress' as any, () => {
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const renderTaskRow = (item: DailyTask, drag?: any, isLast?: boolean) => (
     <DailyTaskCard
@@ -94,6 +105,7 @@ export default function DailyTasksScreen() {
       <View style={{ flex: 1 }}>
         {/* Content Area */}
         <ScrollView
+          ref={scrollRef}
           style={styles.listScroll}
           contentContainerStyle={[styles.listContent, { flexGrow: 1 }]}
           nestedScrollEnabled={true}

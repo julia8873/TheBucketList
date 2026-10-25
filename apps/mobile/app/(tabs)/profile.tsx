@@ -1,8 +1,8 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Settings, Users } from 'lucide-react-native';
 import { useTranslation } from '@bucketlist/shared';
@@ -34,9 +34,20 @@ type Filter = 'all' | 'active' | 'completed';
 export default function CurrentUserProfileScreen() {
   const { theme } = useTheme();
   const router = useRouter();
+  const navigation = useNavigation();
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const isAdmin = useIsAdmin();
+
+  const flatListRef = useRef<FlatList>(null);
+
+  // Al pulsar el icono de pestaña en la barra inferior, vuelve al principio
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('tabPress' as any, () => {
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const [activeTab, setActiveTabState] = useState<'list' | 'albums'>('list');
   const setActiveTab = (tab: 'list' | 'albums') => {
@@ -317,6 +328,7 @@ export default function CurrentUserProfileScreen() {
         </View>
       ) : (
         <FlatList
+          ref={flatListRef}
           key={`${activeTab}-${activeTab === 'list' ? taskViewMode : albumViewMode}`}
           refreshControl={<RefreshControl refreshing={manualRefreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
           data={activeTab === 'list' ? filteredTasks : []}

@@ -12,6 +12,7 @@ import {
   type ViewStyle,
   Dimensions,
   useWindowDimensions,
+  Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,8 +25,10 @@ import { gold, dark, green } from '../tokens/colors';
 import { radii } from '../tokens/radii';
 
 export function getAlbumCardDimensions(windowWidth: number) {
+  // En web el contenedor principal tiene un maxWidth de 620px
+  const effectiveWidth = Platform.OS === 'web' ? Math.min(windowWidth, 620) : windowWidth;
   // Padding horizontal en listas (20 * 2 = 40) + gap (12) + 2px de margen contra subpíxeles
-  const cardWidth = Math.floor((windowWidth - 40 - 12 - 2) / 2);
+  const cardWidth = Math.floor((effectiveWidth - 40 - 12 - 2) / 2);
   const cardHeight = Math.round(cardWidth * 1.45);
   return { cardWidth, cardHeight };
 }
@@ -165,8 +168,16 @@ export function AlbumCard({
       style={({ pressed }) => [
         styles.card,
         {
-          width: cardWidth,
-          height: cardHeight,
+          ...Platform.select({
+            web: {
+              width: 'calc(50% - 6px)',
+              aspectRatio: 1 / 1.45,
+            } as any,
+            default: {
+              width: cardWidth,
+              height: cardHeight,
+            },
+          }),
           backgroundColor: theme.colors.surface,
           opacity: pressed ? 0.85 : 1,
         },
@@ -355,8 +366,16 @@ export function NewAlbumCard({ onPress, style }: { onPress?: () => void; style?:
         styles.card,
         styles.newCard,
         {
-          width: cardWidth,
-          height: cardHeight,
+          ...Platform.select({
+            web: {
+              width: 'calc(50% - 6px)',
+              aspectRatio: 1 / 1.45,
+            } as any,
+            default: {
+              width: cardWidth,
+              height: cardHeight,
+            },
+          }),
           borderColor: theme.colors.primary,
           opacity: pressed ? 0.7 : 1,
         },
@@ -419,8 +438,16 @@ export function NoAlbumCard({ count, onPress, style }: NoAlbumCardProps) {
         styles.card,
         styles.noAlbumCard,
         {
-          width: cardWidth,
-          height: cardHeight,
+          ...Platform.select({
+            web: {
+              width: 'calc(50% - 6px)',
+              aspectRatio: 1 / 1.45,
+            } as any,
+            default: {
+              width: cardWidth,
+              height: cardHeight,
+            },
+          }),
           borderColor: theme.colors.border,
           backgroundColor: pressed ? theme.colors.secondary : theme.colors.surfaceSunken,
           opacity: pressed ? 0.75 : 1,

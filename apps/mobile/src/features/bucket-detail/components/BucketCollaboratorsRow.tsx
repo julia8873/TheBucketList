@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, Text, ScrollView, Pressable, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, Pressable } from 'react-native';
+import { Image } from 'expo-image';
 import { UserPlus, SlidersHorizontal, Clock } from 'lucide-react-native';
 import { normalizeStorageUrl } from '@/constants/urls';
 import { useRouter } from 'expo-router';
@@ -38,6 +39,7 @@ export function BucketCollaboratorsRow({
   pendingCount = 0,
 }: BucketCollaboratorsRowProps) {
   const router = useRouter();
+  const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
   const isOwnerUser = bucket.user_id === user?.id;
   const ownerEntry = {
     id: bucket.user_id,
@@ -110,10 +112,13 @@ export function BucketCollaboratorsRow({
                 c.isOwner && { borderColor: '#D4B13A', borderWidth: 2.5 },
               ]}
             >
-              {c.avatar_url ? (
+              {c.avatar_url && !imgErrors[c.id] ? (
                 <Image
                   source={{ uri: normalizeStorageUrl(c.avatar_url) }}
                   style={[styles.collaboratorAvatarImg, isPending && { opacity: 0.35 }]}
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                  onError={() => setImgErrors((prev) => ({ ...prev, [c.id]: true }))}
                 />
               ) : (
                 <Text style={[styles.collaboratorInitials, isPending && { opacity: 0.35 }]}>

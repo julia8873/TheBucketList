@@ -20,7 +20,14 @@ import { styles } from '../features/calendar/styles/calendar.styles';
 import { CalendarMonthGrid } from '../features/calendar/components/CalendarMonthGrid';
 import { CalendarTaskListSections } from '../features/calendar/components/CalendarTaskListSections';
 
-export function CalendarTab({ headerComponent }: { headerComponent?: React.ReactNode } = {}) {
+export interface CalendarTabProps {
+  headerComponent?: React.ReactNode;
+}
+
+export const CalendarTab = React.forwardRef<ScrollView, CalendarTabProps>(function CalendarTab(
+  { headerComponent },
+  ref
+) {
   const { user } = useAuthStore();
   const { refreshing, onRefresh } = usePullToRefresh();
 
@@ -119,6 +126,7 @@ export function CalendarTab({ headerComponent }: { headerComponent?: React.React
 
   return (
     <ScrollView
+      ref={ref}
       style={styles.container}
       contentContainerStyle={{ paddingBottom: 120 }}
       refreshControl={
@@ -152,4 +160,4 @@ export function CalendarTab({ headerComponent }: { headerComponent?: React.React
       />
     </ScrollView>
   );
-}
+});

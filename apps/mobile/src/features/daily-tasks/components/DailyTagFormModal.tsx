@@ -195,8 +195,10 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
                 borderColor: theme.colors.border,
                 borderWidth: 1,
               },
+              Platform.OS === 'web' && ({ cursor: 'pointer' } as any),
             ]}
             onPress={onClose}
+            accessibilityRole="button"
           >
             <Text style={[styles.modalCancelBtnText, { color: theme.colors.foreground }]}>Cancelar</Text>
           </Pressable>
@@ -204,9 +206,11 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
             style={[
               styles.modalSubmitBtn,
               (!tagFormName.trim() || isSavingTag) && styles.modalSubmitBtnDisabled,
+              Platform.OS === 'web' && ({ cursor: (!tagFormName.trim() || isSavingTag) ? 'not-allowed' : 'pointer' } as any),
             ]}
             disabled={!tagFormName.trim() || isSavingTag}
             onPress={onSave}
+            accessibilityRole="button"
           >
             {isSavingTag ? (
               <ActivityIndicator size="small" color="#000" />

@@ -72,6 +72,11 @@ function AvatarComponent({
   const resolvedInitials = (fallback ?? initials ?? '?').trim().toUpperCase().slice(0, 2);
 
   const innerDim = goldRing ? dim - 7 : dim;
+  const [hasError, setHasError] = React.useState(false);
+
+  React.useEffect(() => {
+    setHasError(false);
+  }, [resolvedUri]);
 
   return (
     <View
@@ -90,7 +95,7 @@ function AvatarComponent({
         style,
       ]}
     >
-      {resolvedUri ? (
+      {resolvedUri && !hasError ? (
         <Image
           source={{ uri: resolvedUri }}
           style={{ width: innerDim, height: innerDim, borderRadius: innerDim / 2 }}
@@ -98,6 +103,7 @@ function AvatarComponent({
           cachePolicy="disk"
           accessibilityRole="image"
           accessibilityLabel="Avatar"
+          onError={() => setHasError(true)}
         />
       ) : (
         <View
