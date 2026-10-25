@@ -38,6 +38,7 @@ import { EditDailyTaskModal } from '@/features/daily-tasks/components/EditDailyT
 import { DailyTagFilterSheet } from '@/features/daily-tasks/components/DailyTagFilterSheet';
 import { DailyTagFormModal } from '@/features/daily-tasks/components/DailyTagFormModal';
 import { DailySortSheet } from '@/features/daily-tasks/components/DailySortSheet';
+import { DailyTasksCustomizeModal } from '@/features/daily-tasks/components/DailyTasksCustomizeModal';
 
 // Re-exports for backwards compatibility
 export type { DailySortField, DailySortDirection };
@@ -49,6 +50,7 @@ export default function DailyTasksScreen() {
   const navigation = useNavigation();
   const state = useDailyTasksState();
   const [showCreateDatePicker, setShowCreateDatePicker] = useState(false);
+  const [customizeModalVisible, setCustomizeModalVisible] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
   // Al pulsar de nuevo la pestaña en la barra inferior, vuelve al principio
@@ -148,6 +150,7 @@ export default function DailyTasksScreen() {
             sortDirection={state.sortDirection}
             groupByTag={state.groupByTag}
             onOpenSortModal={() => state.setShowSortModal(true)}
+            onOpenCustomize={() => setCustomizeModalVisible(true)}
             displayedWeeks={state.displayedWeeks}
             weeksToShow={state.weeksToShow}
             setWeeksToShow={state.setWeeksToShow}
@@ -521,6 +524,12 @@ export default function DailyTasksScreen() {
           sortDirection={state.sortDirection}
           onSelectSort={state.handleSelectSort}
           onResetSort={state.handleResetSort}
+        />
+
+        {/* Modal para Personalizar vista (mostrar/ocultar prioridad, etiquetas, etc.) */}
+        <DailyTasksCustomizeModal
+          visible={customizeModalVisible}
+          onClose={() => setCustomizeModalVisible(false)}
         />
 
         {/* DateTimePicker for Overdue Reschedule */}

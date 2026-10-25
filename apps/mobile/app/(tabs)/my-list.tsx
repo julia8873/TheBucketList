@@ -18,6 +18,7 @@ import { useTranslation } from '@bucketlist/shared';
 import { Search, X, Plus, ChevronLeft, Sparkles, ChevronRight } from 'lucide-react-native';
 import { DraggableTaskList } from '@/components/DraggableTaskList';
 import { BulkTaskActionBar } from '@/components/BulkTaskActionBar';
+import { BulkAlbumActionBar } from '@/components/BulkAlbumActionBar';
 import { CalendarTab } from '@/components/CalendarTab';
 import { TagFilterSheet } from '@/components/TagFilterSheet';
 import {
@@ -217,11 +218,32 @@ export default function MyListScreen() {
         item={item}
         drag={drag}
         isFav={state.isAlbumFavorite(item.id)}
+        isSelected={state.selectedAlbumIds.includes(item.id)}
+        isSelectionMode={state.isAlbumSelectionMode}
         customization={albumViews.compact}
-        onPress={() => router.push(`/album/${item.id}` as any)}
+        onPress={() => {
+          if (state.isAlbumSelectionMode) state.toggleSelectAlbum(item.id);
+          else router.push(`/album/${item.id}` as any);
+        }}
+        onLongPress={() => {
+          if (!state.isAlbumSelectionMode) {
+            state.setIsAlbumSelectionMode(true);
+            state.setSelectedAlbumIds([item.id]);
+          }
+        }}
+        onToggleSelect={() => state.toggleSelectAlbum(item.id)}
       />
     ),
-    [state.isAlbumFavorite, router, albumViews.compact]
+    [
+      state.isAlbumFavorite,
+      state.selectedAlbumIds,
+      state.isAlbumSelectionMode,
+      state.toggleSelectAlbum,
+      state.setIsAlbumSelectionMode,
+      state.setSelectedAlbumIds,
+      router,
+      albumViews.compact,
+    ]
   );
 
   const renderListAlbum = useCallback(
@@ -232,8 +254,20 @@ export default function MyListScreen() {
         drag={drag}
         index={index}
         isFav={state.isAlbumFavorite(item.id)}
+        isSelected={state.selectedAlbumIds.includes(item.id)}
+        isSelectionMode={state.isAlbumSelectionMode}
         customization={albumViews.list}
-        onPress={() => router.push(`/album/${item.id}` as any)}
+        onPress={() => {
+          if (state.isAlbumSelectionMode) state.toggleSelectAlbum(item.id);
+          else router.push(`/album/${item.id}` as any);
+        }}
+        onLongPress={() => {
+          if (!state.isAlbumSelectionMode) {
+            state.setIsAlbumSelectionMode(true);
+            state.setSelectedAlbumIds([item.id]);
+          }
+        }}
+        onToggleSelect={() => state.toggleSelectAlbum(item.id)}
         onToggleFavorite={() =>
           state.toggleFavoriteAlbum.mutate({
             albumId: item.id,
@@ -242,7 +276,17 @@ export default function MyListScreen() {
         }
       />
     ),
-    [state.isAlbumFavorite, state.toggleFavoriteAlbum, router, albumViews.list]
+    [
+      state.isAlbumFavorite,
+      state.selectedAlbumIds,
+      state.isAlbumSelectionMode,
+      state.toggleSelectAlbum,
+      state.setIsAlbumSelectionMode,
+      state.setSelectedAlbumIds,
+      state.toggleFavoriteAlbum,
+      router,
+      albumViews.list,
+    ]
   );
 
   const renderGalleryAlbum = useCallback(
@@ -255,6 +299,8 @@ export default function MyListScreen() {
         coverUri={item.cover_path}
         isShared={item.is_shared}
         isFavorite={state.isAlbumFavorite(item.id)}
+        isSelected={state.selectedAlbumIds.includes(item.id)}
+        isSelectionMode={state.isAlbumSelectionMode}
         onToggleFavorite={() =>
           state.toggleFavoriteAlbum.mutate({
             albumId: item.id,
@@ -272,10 +318,29 @@ export default function MyListScreen() {
         showDescription={albumViews.gallery.showDescription}
         createdAt={item.created_at}
         description={item.description}
-        onPress={() => router.push(`/album/${item.id}` as any)}
+        onPress={() => {
+          if (state.isAlbumSelectionMode) state.toggleSelectAlbum(item.id);
+          else router.push(`/album/${item.id}` as any);
+        }}
+        onLongPress={() => {
+          if (!state.isAlbumSelectionMode) {
+            state.setIsAlbumSelectionMode(true);
+            state.setSelectedAlbumIds([item.id]);
+          }
+        }}
       />
     ),
-    [state.isAlbumFavorite, state.toggleFavoriteAlbum, albumViews.gallery, router]
+    [
+      state.isAlbumFavorite,
+      state.selectedAlbumIds,
+      state.isAlbumSelectionMode,
+      state.toggleSelectAlbum,
+      state.setIsAlbumSelectionMode,
+      state.setSelectedAlbumIds,
+      state.toggleFavoriteAlbum,
+      albumViews.gallery,
+      router,
+    ]
   );
 
   const isFromProfile = state.from === 'profile';
@@ -668,6 +733,11 @@ export default function MyListScreen() {
               onRemoveTagFilter={(id) =>
                 state.setSelectedTagIds((prev) => prev.filter((x) => x !== id))
               }
+              isSelectionMode={state.isAlbumSelectionMode}
+              onToggleSelectionMode={() => {
+                if (state.isAlbumSelectionMode) state.handleExitAlbumSelection();
+                else state.setIsAlbumSelectionMode(true);
+              }}
               albumViewMode={state.albumViewMode}
               setAlbumViewMode={state.setAlbumViewMode}
               albumsCount={state.filteredAlbums.length}
@@ -879,7 +949,28 @@ export default function MyListScreen() {
             </Pressable>
           </ScrollView>
 
-          <FAB onPress={() => router.push('/(modals)/create-album')} bottomOffset={24} />
+          {!state.isAlbumSelectionMode && (
+            <FAB onPress={() => router.push('/(modals)/create-album')} bottomOffset={24} />
+          )}
+
+          {state.isAlbumSelectionMode && (
+            <BulkAlbumActionBar
+              selectedIds={state.selectedAlbumIds}
+              totalAlbumsCount={state.filteredAlbums.length}
+              onClearSelection={state.handleExitAlbumSelection}
+              onSelectAll={() => {
+                if (state.selectedAlbumIds.length === state.filteredAlbums.length) {
+                  state.setSelectedAlbumIds([]);
+                } else {
+                  state.setSelectedAlbumIds(state.filteredAlbums.map((a: any) => a.id));
+                }
+              }}
+              isAllSelected={
+                state.selectedAlbumIds.length > 0 &&
+                state.selectedAlbumIds.length === state.filteredAlbums.length
+              }
+            />
+          )}
         </View>
       )}
 

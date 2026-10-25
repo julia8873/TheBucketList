@@ -14,6 +14,7 @@ interface BulkTagsModalProps {
   onToggleTag: (tagId: string) => void;
   onClose: () => void;
   onApply: () => void;
+  title?: string;
 }
 
 export function BulkTagsModal({
@@ -24,6 +25,7 @@ export function BulkTagsModal({
   onToggleTag,
   onClose,
   onApply,
+  title,
 }: BulkTagsModalProps) {
   const { t } = useTranslation();
   if (!visible) return null;
@@ -38,7 +40,7 @@ export function BulkTagsModal({
       <Pressable style={styles.modalOverlay} onPress={onClose}>
         <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{t('bulk_actions.tags_modal_title', { count })}</Text>
+            <Text style={styles.modalTitle}>{title || t('bulk_actions.tags_modal_title', { count })}</Text>
             <Pressable onPress={onClose} hitSlop={10}>
               <X size={20} color="#888" />
             </Pressable>

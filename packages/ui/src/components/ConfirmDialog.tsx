@@ -383,6 +383,8 @@ export function ConfirmDialog({
                           },
                         ]}
                         numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.8}
                       >
                         {confirmLabel}
                       </Text>
@@ -455,6 +457,8 @@ export function ConfirmDialog({
                           },
                         ]}
                         numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.8}
                       >
                         {confirmLabel}
                       </Text>
@@ -668,6 +672,12 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
     // paddingHorizontal se sobrescribe dinámicamente según el ancho de pantalla
     paddingHorizontal: 24,
+    ...Platform.select({
+      web: {
+        position: 'fixed' as any,
+        zIndex: 99999,
+      },
+    }),
   },
   inlineHost: {
     position: 'absolute',
@@ -689,6 +699,8 @@ const styles = StyleSheet.create({
     zIndex: 10001,
   },
   dialog: {
+    position: 'relative',
+    zIndex: 1,
     maxWidth: 380,
     borderRadius: 24,
     borderWidth: 1,
@@ -730,32 +742,56 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     marginTop: 6,
+    flexShrink: 0,
   },
   dialogActionsStacked: {
     flexDirection: 'column',
     alignItems: 'stretch', // los botones ocupan todo el ancho del diálogo, uno encima de otro
     alignSelf: 'stretch',
+    width: '100%',
+    gap: 10,
   },
   dialogBtn: {
     flex: 1,
     minWidth: 80,
     height: 48,
+    minHeight: 48,
     borderRadius: 24,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
+    ...Platform.select({
+      web: {
+        cursor: 'pointer' as any,
+      },
+    }),
   },
   dialogBtnStacked: {
-    flex: 0,
     alignSelf: 'stretch',
     width: '100%',
     minWidth: 0,
     height: 48,
+    minHeight: 48,
+    ...Platform.select({
+      web: {
+        flexGrow: 0,
+        flexShrink: 0,
+        flexBasis: 'auto',
+      },
+      default: {
+        flex: 0,
+      },
+    }),
   },
   dialogBtnText: {
     fontFamily: fontFamily.semibold,
     fontSize: 15,
     textAlign: 'center',
+    ...Platform.select({
+      web: {
+        userSelect: 'none' as any,
+      },
+    }),
   },
 });

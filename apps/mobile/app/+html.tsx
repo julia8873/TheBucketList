@@ -18,6 +18,28 @@ export default function Root({ children }: PropsWithChildren) {
           However, body scrolling is often nice to have for web. If you want to enable it, remove this line.
         */}
         <ScrollViewStyleReset />
+
+        {/* Ocultar barra de scroll en modo web manteniendo el desplazamiento funcional */}
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              *::-webkit-scrollbar {
+                display: none !important;
+                width: 0 !important;
+                height: 0 !important;
+              }
+              * {
+                -ms-overflow-style: none !important;
+                scrollbar-width: none !important;
+              }
+              html, body {
+                scrollbar-width: none !important;
+                -ms-overflow-style: none !important;
+                overflow-x: hidden;
+              }
+            `,
+          }}
+        />
       </head>
       <body>{children}</body>
     </html>

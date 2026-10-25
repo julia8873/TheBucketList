@@ -13,6 +13,7 @@ import {
   ChevronDown,
   Check,
   SlidersHorizontal,
+  ListChecks,
 } from 'lucide-react-native';
 import { Typography, FilterChip } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
@@ -32,6 +33,8 @@ interface AlbumListHeaderControlsProps {
   selectedTagIds: string[];
   selectedTags: Tag[];
   onRemoveTagFilter: (id: string) => void;
+  isSelectionMode?: boolean;
+  onToggleSelectionMode?: () => void;
   albumViewMode: AlbumViewMode;
   setAlbumViewMode: (mode: AlbumViewMode) => void;
   albumsCount: number;
@@ -55,6 +58,8 @@ export function AlbumListHeaderControls({
   selectedTagIds,
   selectedTags,
   onRemoveTagFilter,
+  isSelectionMode,
+  onToggleSelectionMode,
   albumViewMode,
   setAlbumViewMode,
   albumsCount,
@@ -326,6 +331,31 @@ export function AlbumListHeaderControls({
               accessibilityLabel={t('my_list.customize_view')}
             >
               <SlidersHorizontal size={14} color={gold[400]} />
+            </Pressable>
+          )}
+
+          {/* Botón Selección múltiple */}
+          {onToggleSelectionMode && (
+            <Pressable
+              onPress={onToggleSelectionMode}
+              hitSlop={8}
+              style={[
+                styles.sortTriggerBtn,
+                {
+                  height: 32,
+                  paddingHorizontal: 8,
+                  borderRadius: 8,
+                  backgroundColor: isSelectionMode ? gold[400] : theme.colors.surface,
+                  borderWidth: 1,
+                  borderColor: isSelectionMode ? gold[400] : theme.colors.border,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={isSelectionMode ? 'Salir de selección múltiple' : 'Seleccionar álbumes'}
+            >
+              <ListChecks size={15} color={isSelectionMode ? '#0E0E0E' : gold[400]} />
             </Pressable>
           )}
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { GripVertical, Lock, Star, Users, Bookmark } from 'lucide-react-native';
+import { GripVertical, Lock, Star, Users, Bookmark, CheckCircle2 } from 'lucide-react-native';
 import { useTheme, useCoverOverlay } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/my-list.styles';
@@ -69,6 +69,10 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
   onToggleSave,
   customization,
   onPress,
+  onLongPress,
+  isSelectionMode = false,
+  isSelected = false,
+  onToggleSelect,
 }: {
   item: any;
   drag?: DragHandle;
@@ -77,6 +81,10 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
   onToggleSave?: () => void;
   customization?: AlbumViewCustomization;
   onPress: () => void;
+  onLongPress?: () => void;
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
 }) {
   const { theme } = useTheme();
   const { t, i18n } = useTranslation();
@@ -88,6 +96,7 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
     <Pressable
       key={item.id}
       onPress={onPress}
+      onLongPress={onLongPress}
       style={[
         styles.compactRow,
         {
@@ -95,6 +104,10 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
             ? theme.colors.surfaceSunken
             : theme.colors.surface,
           borderColor: theme.colors.border,
+        },
+        isSelected && {
+          borderColor: theme.colors.primary,
+          backgroundColor: 'rgba(212, 177, 58, 0.08)',
         },
         drag?.isActive && { borderColor: theme.colors.primary },
         { marginBottom: drag ? 6 : 0 },
@@ -111,6 +124,30 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
         >
           <GripVertical size={18} color={drag.isActive ? theme.colors.primary : theme.colors.foregroundMuted} strokeWidth={2} />
         </View>
+      )}
+
+      {isSelectionMode && (
+        <Pressable
+          hitSlop={8}
+          onPress={onToggleSelect}
+          style={{ marginRight: 8, justifyContent: 'center', alignItems: 'center' }}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: isSelected }}
+        >
+          {isSelected ? (
+            <CheckCircle2 size={18} color={theme.colors.primary} fill={theme.colors.primary} />
+          ) : (
+            <View
+              style={{
+                width: 18,
+                height: 18,
+                borderRadius: 9,
+                borderWidth: 1.5,
+                borderColor: theme.colors.border,
+              }}
+            />
+          )}
+        </Pressable>
       )}
 
       <View style={{ marginRight: 10 }}>
@@ -246,6 +283,10 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
   isSaved = false,
   customization,
   onPress,
+  onLongPress,
+  isSelectionMode = false,
+  isSelected = false,
+  onToggleSelect,
   onToggleFavorite,
   onToggleSave,
 }: {
@@ -256,6 +297,10 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
   isSaved?: boolean;
   customization?: AlbumViewCustomization;
   onPress: () => void;
+  onLongPress?: () => void;
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
   onToggleFavorite?: () => void;
   onToggleSave?: () => void;
 }) {
@@ -304,11 +349,16 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
       )}
       <Pressable
         onPress={onPress}
+        onLongPress={onLongPress}
         style={[
           styles.listAlbumCard,
           {
             backgroundColor: theme.colors.surface,
             borderColor: theme.colors.border,
+          },
+          isSelected && {
+            borderColor: theme.colors.primary,
+            backgroundColor: 'rgba(212, 177, 58, 0.08)',
           },
           drag && { flex: 1 },
           drag?.isActive && { borderColor: theme.colors.primary },
@@ -316,6 +366,30 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
         accessibilityRole="button"
         accessibilityLabel={item.title}
       >
+        {isSelectionMode && (
+          <Pressable
+            hitSlop={8}
+            onPress={onToggleSelect}
+            style={{ marginRight: 10, justifyContent: 'center', alignItems: 'center' }}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: isSelected }}
+          >
+            {isSelected ? (
+              <CheckCircle2 size={22} color={theme.colors.primary} fill={theme.colors.primary} />
+            ) : (
+              <View
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: 11,
+                  borderWidth: 1.5,
+                  borderColor: theme.colors.border,
+                }}
+              />
+            )}
+          </Pressable>
+        )}
+
         <View style={{ marginRight: 12 }}>
           <AlbumCoverThumb coverUri={item.cover_path} colorIndex={index} size={54} />
         </View>

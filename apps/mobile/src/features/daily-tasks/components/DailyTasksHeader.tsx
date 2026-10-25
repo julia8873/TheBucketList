@@ -13,6 +13,7 @@ import {
   ChevronRight,
   ChevronDown,
   Check,
+  SlidersHorizontal,
 } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { getDateFnsLocale } from '@/utils/dateLocale';
@@ -178,6 +179,7 @@ export interface DailyTasksScrollControlsProps {
   sortDirection: DailySortDirection;
   groupByTag: boolean;
   onOpenSortModal: () => void;
+  onOpenCustomize?: () => void;
   displayedWeeks?: WeekBlockItem[];
   weeksToShow?: number;
   setWeeksToShow?: (n: number) => void;
@@ -206,6 +208,7 @@ export function DailyTasksScrollControls({
   sortDirection,
   groupByTag,
   onOpenSortModal,
+  onOpenCustomize,
   displayedWeeks,
   weeksToShow = 1,
   setWeeksToShow,
@@ -502,8 +505,33 @@ export function DailyTasksScrollControls({
         )}
       </ScrollView>
 
-      {/* Sub-toolbar: 'Prioridad' a la derecha */}
-      <View style={[styles.toolbarRow, { justifyContent: 'flex-end' }]}>
+      {/* Sub-toolbar: Personalizar y Prioridad a la derecha */}
+      <View style={[styles.toolbarRow, { justifyContent: 'flex-end', gap: 8 }]}>
+        {/* Botón Personalizar */}
+        {onOpenCustomize && (
+          <Pressable
+            onPress={onOpenCustomize}
+            hitSlop={8}
+            style={[
+              styles.sortTriggerBtn,
+              {
+                height: 32,
+                paddingHorizontal: 8,
+                borderRadius: 8,
+                backgroundColor: theme.colors.surface,
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+                justifyContent: 'center',
+                alignItems: 'center',
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t('daily.customize_view', 'Personalizar vista')}
+          >
+            <SlidersHorizontal size={14} color={gold[400]} />
+          </Pressable>
+        )}
+
         {/* Derecha: Botón Prioridad (abre opciones de ordenación y clasificación) */}
         <Pressable
           style={[

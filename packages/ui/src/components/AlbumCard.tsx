@@ -52,6 +52,9 @@ interface AlbumCardProps {
   isClosed?: boolean;
   colorIndex?: number;  // to pick a gradient when no cover
   onPress?: () => void;
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
+  onLongPress?: () => void;
   style?: ViewStyle;
   showPriority?: boolean;
   showTaskCount?: boolean;
@@ -77,6 +80,9 @@ export function AlbumCard({
   isClosed = false,
   colorIndex = 0,
   onPress,
+  onLongPress,
+  isSelectionMode = false,
+  isSelected = false,
   style,
   showPriority = true,
   showTaskCount = true,
@@ -167,6 +173,7 @@ export function AlbumCard({
   return (
     <Pressable
       onPress={onPress}
+      onLongPress={onLongPress}
       style={({ pressed }) => [
         styles.card,
         {
@@ -183,6 +190,7 @@ export function AlbumCard({
           backgroundColor: theme.colors.surface,
           opacity: pressed ? 0.85 : 1,
         },
+        isSelected && { borderColor: gold[400], borderWidth: 2 },
         style,
       ]}
     >
@@ -198,7 +206,24 @@ export function AlbumCard({
       />
 
       {/* Top left badges */}
-      {showBadges && (
+      {isSelectionMode ? (
+        <View style={styles.topLeftBadges}>
+          <View
+            style={{
+              width: 24,
+              height: 24,
+              borderRadius: 12,
+              backgroundColor: isSelected ? gold[400] : 'rgba(0,0,0,0.6)',
+              borderWidth: isSelected ? 0 : 1.5,
+              borderColor: '#FFFFFF',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {isSelected && <Check size={14} color="#0E0E0E" strokeWidth={3} />}
+          </View>
+        </View>
+      ) : showBadges && (
         <View style={styles.topLeftBadges}>
           {isCompleted && !isClosed && (
             <View style={styles.completedBadge}>

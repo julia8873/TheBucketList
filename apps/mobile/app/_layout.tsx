@@ -22,6 +22,7 @@ import {
 import { ThemeProvider, ToastProvider, ConfirmProvider, useTheme } from '@bucketlist/ui';
 import { useThemeStore, hydrateThemeStore } from '../src/stores/theme.store';
 import { hydrateMyListCustomization } from '../src/stores/myListCustomization.store';
+import { hydrateDailyTasksCustomization } from '../src/stores/dailyTasksCustomization.store';
 import { hydrateLanguageStore } from '../src/stores/language.store';
 import { hydrateHapticsStore } from '../src/stores/haptics.store';
 import { useAuthStore } from '../src/stores/auth.store';
@@ -50,6 +51,31 @@ if (Platform.OS === 'web' && typeof window !== 'undefined') {
     }
     origError(...args);
   };
+
+  if (typeof document !== 'undefined') {
+    const styleId = 'hide-web-scrollbar';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        *::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+        * {
+          -ms-overflow-style: none !important;
+          scrollbar-width: none !important;
+        }
+        html, body {
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+          overflow-x: hidden;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }
 }
 
 // Muestra el error en pantalla en lugar de una pantalla negra si falla un render
@@ -86,6 +112,7 @@ export default function RootLayout() {
           hydrateLanguageStore(),
           hydrateHapticsStore(),
           hydrateMyListCustomization(),
+          hydrateDailyTasksCustomization(),
           Font.loadAsync({
             Inter_400Regular,
             Inter_500Medium,

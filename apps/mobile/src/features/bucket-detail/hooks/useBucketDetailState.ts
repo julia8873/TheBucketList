@@ -30,7 +30,7 @@ import { useUserFavorites, useToggleFavoriteBucket } from '@/hooks/useFavorites'
 import { useEntitySubscription } from '@/hooks/useEntityNotifications';
 import { MENTION_TASK_COLUMNS, MentionTask } from '@/components/TaskMentionPickerSheet';
 import { CollaboratorItem } from '@/components/CollaboratorPickerSheet';
-import { ThumbnailMode } from '@/utils/taskImage';
+import { ThumbnailMode, resolveTaskImage } from '@/utils/taskImage';
 import { PhotoSortField, PhotoSortDir } from '../components/PhotoSortModal';
 import { DatePickerConfig } from '../components/BucketDatePickerModal';
 import type { CollaborationMode, CollaborationAudience } from '../components/TaskCollaborationSettingsModal';
@@ -506,6 +506,8 @@ export function useBucketDetailState() {
     void queryClient.invalidateQueries({ queryKey: ['bucketAlbum', id] });
     void queryClient.invalidateQueries({ queryKey: ['buckets'] });
     void queryClient.invalidateQueries({ queryKey: ['albums'] });
+    void queryClient.invalidateQueries({ queryKey: ['album'] });
+    settleTaskCaches(queryClient);
   };
 
   const handleChangeStatus = async (status: string) => {
@@ -891,6 +893,12 @@ export function useBucketDetailState() {
         if (error) throw error;
       }
 
+      const currentBucket = queryClient.getQueryData<any>(['bucketDetail', cleanId]);
+      const nextImage = resolveTaskImage(currentBucket, { preferThumb: true });
+      patchTasks(queryClient, [cleanId], {
+        task: { imageValue: nextImage },
+      });
+
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', cleanId] });
       invalidateBucket();
       toast.success(editedUris.length > 1 ? 'Fotos añadidas al momento' : 'Foto añadida al momento');
@@ -1010,6 +1018,16 @@ export function useBucketDetailState() {
       console.warn('No se pudieron borrar los archivos de la foto', e);
     }
 
+    const currentBucket = queryClient.getQueryData<any>(['bucketDetail', id]);
+    const remainingPhotos = (currentBucket?.bucket_photos || []).filter((p: any) => p.id !== photo.id);
+    const nextImage = resolveTaskImage(
+      currentBucket ? { ...currentBucket, bucket_photos: remainingPhotos } : null,
+      { preferThumb: true },
+    );
+    patchTasks(queryClient, [id], {
+      task: { imageValue: nextImage },
+    });
+
     void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
     invalidateBucket();
   };
@@ -1124,6 +1142,15 @@ export function useBucketDetailState() {
       queryClient.setQueryData(['bucketDetail', id], (oldData: any) =>
         oldData ? { ...oldData, cover_image: publicUrl } : oldData
       );
+      const currentBucket = queryClient.getQueryData<any>(['bucketDetail', id]);
+      const nextImage = resolveTaskImage(
+        currentBucket ? { ...currentBucket, cover_image: publicUrl } : { cover_image: publicUrl },
+        { preferThumb: true },
+      );
+      patchTasks(queryClient, [id], {
+        bucket: { cover_image: publicUrl },
+        task: { imageValue: nextImage || publicUrl },
+      });
       invalidateBucket();
       toast.success('Portada actualizada');
     } catch (error: any) {
@@ -1176,6 +1203,15 @@ export function useBucketDetailState() {
       queryClient.setQueryData(['bucketDetail', id], (oldData: any) =>
         oldData ? { ...oldData, cover_image: publicUrl } : oldData
       );
+      const currentBucket = queryClient.getQueryData<any>(['bucketDetail', id]);
+      const nextImage = resolveTaskImage(
+        currentBucket ? { ...currentBucket, cover_image: publicUrl } : { cover_image: publicUrl },
+        { preferThumb: true },
+      );
+      patchTasks(queryClient, [id], {
+        bucket: { cover_image: publicUrl },
+        task: { imageValue: nextImage || publicUrl },
+      });
       invalidateBucket();
       toast.success('Portada actualizada');
     } catch (error: any) {
@@ -1216,6 +1252,15 @@ export function useBucketDetailState() {
       queryClient.setQueryData(['bucketDetail', id], (oldData: any) =>
         oldData ? { ...oldData, cover_image: publicUrl } : oldData
       );
+      const currentBucket = queryClient.getQueryData<any>(['bucketDetail', id]);
+      const nextImage = resolveTaskImage(
+        currentBucket ? { ...currentBucket, cover_image: publicUrl } : { cover_image: publicUrl },
+        { preferThumb: true },
+      );
+      patchTasks(queryClient, [id], {
+        bucket: { cover_image: publicUrl },
+        task: { imageValue: nextImage || publicUrl },
+      });
       invalidateBucket();
       toast.success('Portada actualizada');
     } catch (error: any) {
@@ -1236,6 +1281,15 @@ export function useBucketDetailState() {
       queryClient.setQueryData(['bucketDetail', id], (oldData: any) =>
         oldData ? { ...oldData, cover_image: null } : oldData
       );
+      const currentBucket = queryClient.getQueryData<any>(['bucketDetail', id]);
+      const nextImage = resolveTaskImage(
+        currentBucket ? { ...currentBucket, cover_image: null } : null,
+        { preferThumb: true },
+      );
+      patchTasks(queryClient, [id], {
+        bucket: { cover_image: null },
+        task: { imageValue: nextImage },
+      });
       invalidateBucket();
       toast.success('Portada eliminada');
     } catch (error: any) {
@@ -1258,6 +1312,15 @@ export function useBucketDetailState() {
       queryClient.setQueryData(['bucketDetail', targetId], (oldData: any) =>
         oldData ? { ...oldData, cover_image: url } : oldData
       );
+      const currentBucket = queryClient.getQueryData<any>(['bucketDetail', targetId]);
+      const nextImage = resolveTaskImage(
+        currentBucket ? { ...currentBucket, cover_image: url } : { cover_image: url },
+        { preferThumb: true },
+      );
+      patchTasks(queryClient, [targetId], {
+        bucket: { cover_image: url },
+        task: { imageValue: nextImage || url },
+      });
       invalidateBucket();
       toast.success('Portada actualizada');
     } catch (error: any) {
@@ -1280,6 +1343,16 @@ export function useBucketDetailState() {
     queryClient.setQueryData(['bucketDetail', targetId], (oldData: any) =>
       oldData ? { ...oldData, ...patch } : oldData,
     );
+
+    const currentBucket = queryClient.getQueryData<any>(['bucketDetail', targetId]);
+    const nextImage = resolveTaskImage(
+      currentBucket ? { ...currentBucket, ...patch } : null,
+      { preferThumb: true },
+    );
+    patchTasks(queryClient, [targetId], {
+      bucket: patch,
+      task: { imageValue: nextImage },
+    });
 
     const { error } = await supabase.from('buckets').update(patch).eq('id', targetId);
     if (error) {

@@ -18,6 +18,10 @@ import { DailyTask, DailyTag, DailySortField, TimeView } from '../types';
 import { PRIORITY_CONFIG, getPriorityConfig } from '../constants';
 import { formatTaskDateBadge, getRecurrenceLabel } from '../utils/dailyTaskDateUtils';
 import { DragHandle } from '@/components/DraggableTaskList';
+import {
+  useDailyTasksCustomizationStore,
+  type DailyTaskCustomization,
+} from '@/stores/dailyTasksCustomization.store';
 
 export interface DailyTaskCardProps {
   item: DailyTask;
@@ -26,6 +30,7 @@ export interface DailyTaskCardProps {
   sortField: DailySortField;
   timeView: TimeView;
   tagMap: Map<string, DailyTag>;
+  customization?: DailyTaskCustomization;
   onToggle: (task: DailyTask) => void;
   onOpenEdit: (task: DailyTask) => void;
   onToggleFavorite: (task: DailyTask) => void;
@@ -39,6 +44,7 @@ export function DailyTaskCard({
   sortField,
   timeView,
   tagMap,
+  customization,
   onToggle,
   onOpenEdit,
   onToggleFavorite,
@@ -46,6 +52,8 @@ export function DailyTaskCard({
 }: DailyTaskCardProps) {
   const { theme } = useTheme();
   const { t, i18n } = useTranslation();
+  const storeCustomization = useDailyTasksCustomizationStore((s) => s.customization);
+  const activeCustomization = customization ?? storeCustomization;
   const isCompleted = item.is_completed;
   const dateBadge = formatTaskDateBadge(item.due_date, i18n.language);
   const itemTags = (item.tag_ids || [])
@@ -108,7 +116,7 @@ export function DailyTaskCard({
           {item.title}
         </Text>
 
-        {item.description ? (
+        {activeCustomization.showDescription && item.description ? (
           <Text
             numberOfLines={1}
             ellipsizeMode="tail"
@@ -124,7 +132,7 @@ export function DailyTaskCard({
 
         <View style={styles.chipsRow}>
           {/* Tag chips */}
-          {itemTags.length > 0
+          {activeCustomization.showTags && itemTags.length > 0
             ? itemTags.map((tag) => (
                 <View
                   key={tag.id}
@@ -150,7 +158,7 @@ export function DailyTaskCard({
             : null}
 
           {/* Priority chip */}
-          {item.priority && (() => {
+          {activeCustomization.showPriority && item.priority && (() => {
             const pCfg = getPriorityConfig(item.priority, theme.dark, i18n.language);
             return (
               <View
@@ -176,7 +184,7 @@ export function DailyTaskCard({
           })()}
 
           {/* Date chip */}
-          {(timeView !== 'today' || dateBadge.isOverdue || !dateBadge.isToday) && (
+          {activeCustomization.showDates && (timeView !== 'today' || dateBadge.isOverdue || !dateBadge.isToday) && (
             <View
               style={[
                 styles.dateChip,
@@ -210,7 +218,7 @@ export function DailyTaskCard({
           )}
 
           {/* Subtasks progress chip */}
-          {item.subtasks && item.subtasks.length > 0 && (() => {
+          {activeCustomization.showSubtasksProgress && item.subtasks && item.subtasks.length > 0 && (() => {
             const allDone = item.subtasks.every((s) => s.is_completed);
             return (
               <View
@@ -246,7 +254,7 @@ export function DailyTaskCard({
           })()}
 
           {/* Recurrence badge chip */}
-          {item.is_recurring && (
+          {activeCustomization.showRecurrence && item.is_recurring && (
             <View style={styles.recurrenceBadgeChip}>
               <RotateCw size={10} color={gold[400]} strokeWidth={2} />
               <Text style={styles.recurrenceBadgeText}>
@@ -298,6 +306,7 @@ export interface DailyOverdueTaskCardProps {
   sortField: DailySortField;
   tagMap: Map<string, DailyTag>;
   upcomingWeekDays: { date: Date; dateStr: string; label: string; dayNum: string; isToday: boolean }[];
+  customization?: DailyTaskCustomization;
   onToggle: (task: DailyTask) => void;
   onOpenEdit: (task: DailyTask) => void;
   onToggleFavorite: (task: DailyTask) => void;
@@ -313,6 +322,7 @@ export function DailyOverdueTaskCard({
   sortField,
   tagMap,
   upcomingWeekDays,
+  customization,
   onToggle,
   onOpenEdit,
   onToggleFavorite,
@@ -322,6 +332,8 @@ export function DailyOverdueTaskCard({
 }: DailyOverdueTaskCardProps) {
   const { theme } = useTheme();
   const { t, i18n } = useTranslation();
+  const storeCustomization = useDailyTasksCustomizationStore((s) => s.customization);
+  const activeCustomization = customization ?? storeCustomization;
   const isCompleted = item.is_completed;
   const dateBadge = formatTaskDateBadge(item.due_date, i18n.language);
   const itemTags = (item.tag_ids || [])
@@ -389,7 +401,7 @@ export function DailyOverdueTaskCard({
             </Text>
           </View>
 
-          {item.description ? (
+          {activeCustomization.showDescription && item.description ? (
             <Text
               numberOfLines={1}
               ellipsizeMode="tail"
@@ -406,13 +418,15 @@ export function DailyOverdueTaskCard({
           {/* Chips */}
           <View style={styles.chipsRow}>
             {/* Overdue alert badge */}
-            <View style={styles.overdueBadgeChip}>
-              <AlertCircle size={10} color="#F59E0B" strokeWidth={2.2} />
-              <Text style={styles.overdueBadgeText}>{dateBadge.text}</Text>
-            </View>
+            {activeCustomization.showDates && (
+              <View style={styles.overdueBadgeChip}>
+                <AlertCircle size={10} color="#F59E0B" strokeWidth={2.2} />
+                <Text style={styles.overdueBadgeText}>{dateBadge.text}</Text>
+              </View>
+            )}
 
             {/* Tag chips */}
-            {itemTags.length > 0 &&
+            {activeCustomization.showTags && itemTags.length > 0 &&
               itemTags.map((tag) => (
                 <View
                   key={tag.id}
@@ -437,7 +451,7 @@ export function DailyOverdueTaskCard({
               ))}
 
             {/* Priority badge */}
-            {item.priority && (() => {
+            {activeCustomization.showPriority && item.priority && (() => {
               const pCfg = getPriorityConfig(item.priority, theme.dark, i18n.language);
               return (
                 <View
@@ -463,7 +477,7 @@ export function DailyOverdueTaskCard({
             })()}
 
             {/* Subtasks progress chip */}
-            {item.subtasks && item.subtasks.length > 0 && (() => {
+            {activeCustomization.showSubtasksProgress && item.subtasks && item.subtasks.length > 0 && (() => {
               const allDone = item.subtasks.every((s) => s.is_completed);
               return (
                 <View

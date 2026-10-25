@@ -40,6 +40,14 @@ export function useMyListState() {
   const setActiveTab = (tab: any) => {
     setActiveTabState(tab);
     void AsyncStorage.setItem('@my_list_active_tab', tab).catch(() => undefined);
+    if (tab !== 'list') {
+      setIsSelectionMode(false);
+      setSelectedTaskIds([]);
+    }
+    if (tab !== 'albums') {
+      setIsAlbumSelectionMode(false);
+      setSelectedAlbumIds([]);
+    }
   };
 
   const [filter, setFilterState] = useState<FilterType>(
@@ -143,6 +151,21 @@ export function useMyListState() {
   const handleExitSelection = () => {
     setIsSelectionMode(false);
     setSelectedTaskIds([]);
+  };
+
+  // Album Selection mode
+  const [isAlbumSelectionMode, setIsAlbumSelectionMode] = useState(false);
+  const [selectedAlbumIds, setSelectedAlbumIds] = useState<string[]>([]);
+
+  const toggleSelectAlbum = (id: string) => {
+    setSelectedAlbumIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleExitAlbumSelection = () => {
+    setIsAlbumSelectionMode(false);
+    setSelectedAlbumIds([]);
   };
 
   // Album view mode
@@ -835,6 +858,12 @@ export function useMyListState() {
     setSelectedTaskIds,
     toggleSelectTask,
     handleExitSelection,
+    isAlbumSelectionMode,
+    setIsAlbumSelectionMode,
+    selectedAlbumIds,
+    setSelectedAlbumIds,
+    toggleSelectAlbum,
+    handleExitAlbumSelection,
     albumViewMode,
     setAlbumViewMode,
     albumFilter,

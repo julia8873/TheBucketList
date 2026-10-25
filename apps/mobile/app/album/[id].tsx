@@ -1,6 +1,6 @@
 import { Alert } from '@bucketlist/ui';
-import React, { useState, useEffect, useRef } from 'react';
-import { useLocalSearchParams } from 'expo-router';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { View, Text, Pressable, ScrollView, RefreshControl, TextInput, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,9 +21,11 @@ import {
   FolderPlus,
   UserPlus,
   ListChecks,
+  X,
 } from 'lucide-react-native';
 import { Skeleton, Avatar, useTheme } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { TaskRowSkeleton } from '@/components/TaskSkeletons';
 import { TaskItem } from '@/services/api/albumsService';
@@ -96,6 +98,34 @@ export default function AlbumDetailScreen() {
   }, [openComments]);
   const [reportVisible, setReportVisible] = useState(false);
   const reportContent = useReportContent();
+  const queryClient = useQueryClient();
+
+  useFocusEffect(
+    useCallback(() => {
+      void queryClient.invalidateQueries({ queryKey: ['album', state.id], stale: true });
+    }, [queryClient, state.id])
+  );
+
+  useEffect(() => {
+    if (state.taskSearchOpen) {
+      const timer = setTimeout(() => {
+        state.scrollRef.current?.scrollTo({
+          y: Math.max(0, state.toolbarY.current - 20),
+          animated: true,
+        });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [state.taskSearchOpen]);
+
+  useEffect(() => {
+    if (state.taskSearchOpen && state.keyboardHeight > 0) {
+      state.scrollRef.current?.scrollTo({
+        y: Math.max(0, state.toolbarY.current - 20),
+        animated: true,
+      });
+    }
+  }, [state.keyboardHeight, state.taskSearchOpen]);
 
   const handlePromoteToCollection = () => {
     const currentAlbum = state.album;
@@ -324,8 +354,12 @@ export default function AlbumDetailScreen() {
         style={styles.scroll}
         scrollEnabled={!state.dragging}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         contentContainerStyle={{
-          paddingBottom: insets.bottom + (state.isSelectionMode ? 170 : state.id === 'unassigned' ? 40 : 120),
+          paddingBottom:
+            insets.bottom +
+            (state.isSelectionMode ? 170 : state.id === 'unassigned' ? 40 : 120) +
+            (state.keyboardHeight > 0 ? state.keyboardHeight + 60 : 0),
         }}
         refreshControl={
           manualDragEnabled || state.dragging ? undefined : (
@@ -740,7 +774,12 @@ export default function AlbumDetailScreen() {
 
         {/* Toolbar de tareas (orden y búsqueda) */}
         {total > 0 && (
-          <View style={styles.tasksToolbarWrap}>
+          <View
+            style={styles.tasksToolbarWrap}
+            onLayout={(e) => {
+              state.toolbarY.current = e.nativeEvent.layout.y;
+            }}
+          >
             <View style={styles.tasksToolbar}>
               <Text style={styles.toolbarLabel}>
                 {t('albums.sort_by', { defaultValue: 'Ordenar por:' })}
@@ -799,9 +838,26 @@ export default function AlbumDetailScreen() {
                   placeholderTextColor="#8F8F8F"
                   value={state.taskSearch}
                   onChangeText={state.setTaskSearch}
+                  onFocus={() => {
+                    setTimeout(() => {
+                      state.scrollRef.current?.scrollTo({
+                        y: Math.max(0, state.toolbarY.current - 20),
+                        animated: true,
+                      });
+                    }, 150);
+                  }}
                   autoFocus
                   style={styles.taskSearchInput}
                 />
+                {state.taskSearch.length > 0 && (
+                  <Pressable
+                    onPress={() => state.setTaskSearch('')}
+                    hitSlop={8}
+                    accessibilityLabel="Borrar búsqueda"
+                  >
+                    <X size={16} color="#8F8F8F" />
+                  </Pressable>
+                )}
               </View>
             )}
           </View>

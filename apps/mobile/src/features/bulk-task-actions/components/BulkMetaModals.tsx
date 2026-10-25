@@ -10,6 +10,7 @@ interface BulkPriorityModalProps {
   count: number;
   onClose: () => void;
   onSelectPriority: (priority: 'high' | 'medium' | 'low') => void;
+  title?: string;
 }
 
 export function BulkPriorityModal({
@@ -17,6 +18,7 @@ export function BulkPriorityModal({
   count,
   onClose,
   onSelectPriority,
+  title,
 }: BulkPriorityModalProps) {
   const { t } = useTranslation();
   if (!visible) return null;
@@ -31,7 +33,7 @@ export function BulkPriorityModal({
       <Pressable style={styles.modalOverlay} onPress={onClose}>
         <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{t('bulk_actions.priority_modal_title', { count })}</Text>
+            <Text style={styles.modalTitle}>{title || t('bulk_actions.priority_modal_title', { count })}</Text>
             <Pressable onPress={onClose} hitSlop={10}>
               <X size={20} color="#888" />
             </Pressable>
@@ -64,6 +66,7 @@ interface BulkVisibilityModalProps {
   count: number;
   onClose: () => void;
   onSelectVisibility: (visibility: 'public' | 'followers' | 'private') => void;
+  title?: string;
 }
 
 export function BulkVisibilityModal({
@@ -71,6 +74,7 @@ export function BulkVisibilityModal({
   count,
   onClose,
   onSelectVisibility,
+  title,
 }: BulkVisibilityModalProps) {
   const { t } = useTranslation();
   if (!visible) return null;
@@ -85,7 +89,7 @@ export function BulkVisibilityModal({
       <Pressable style={styles.modalOverlay} onPress={onClose}>
         <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{t('bulk_actions.visibility_modal_title', { count })}</Text>
+            <Text style={styles.modalTitle}>{title || t('bulk_actions.visibility_modal_title', { count })}</Text>
             <Pressable onPress={onClose} hitSlop={10}>
               <X size={20} color="#888" />
             </Pressable>

@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
   ChevronLeft,
   Search,
@@ -79,17 +79,10 @@ export default function MapScreen() {
       .catch(() => undefined);
   }, []);
 
-  const { tasks, allTasksCount, isLoading, refetch } = useMapTasks({
+  const { tasks, allTasksCount, isLoading } = useMapTasks({
     filter: activeFilter,
     searchQuery,
   });
-
-  // Refrescar las tareas del mapa cada vez que se abre la pantalla
-  useFocusEffect(
-    React.useCallback(() => {
-      void refetch();
-    }, [refetch])
-  );
 
   const handleSelectTask = (task: MapTaskItem, group?: MapTaskItem[]) => {
     setSelectedTask(task);

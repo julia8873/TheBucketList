@@ -82,6 +82,7 @@ export function useUpdateBucket() {
           ...(data.status !== undefined ? { isCompleted: data.status === 'completed' } : {}),
           ...(data.title !== undefined ? { title: data.title } : {}),
           ...((data as any).priority !== undefined ? { priority: (data as any).priority } : {}),
+          ...((data as any).cover_image !== undefined ? { imageValue: (data as any).cover_image } : {}),
         },
       });
       return { snap };
@@ -96,6 +97,8 @@ export function useUpdateBucket() {
       void queryClient.invalidateQueries({ queryKey: BUCKETS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', variables.id] });
       void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
+      void queryClient.invalidateQueries({ queryKey: ['album'] });
+      void queryClient.invalidateQueries({ queryKey: ['albums'] });
     },
   });
 }
