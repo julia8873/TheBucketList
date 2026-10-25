@@ -138,7 +138,8 @@ export function EditDailyTaskModal({
   const { t, i18n } = useTranslation();
   const dateFnsLocale = getDateFnsLocale(i18n.language);
   const { height: windowHeight } = useWindowDimensions();
-  const maxScrollHeight = Math.max(480, Math.min(560, windowHeight - 200));
+  const availableScrollHeight = windowHeight - (Platform.OS === 'ios' ? 260 : 220);
+  const maxScrollHeight = Math.max(180, Math.min(Platform.OS === 'web' ? 380 : 320, availableScrollHeight));
   const [showDatePicker, setShowDatePicker] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const isInitialScroll = useRef(true);

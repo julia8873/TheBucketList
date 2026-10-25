@@ -112,7 +112,8 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
   const { t, i18n } = useTranslation();
   const dateFnsLocale = getDateFnsLocale(i18n.language);
   const { height: windowHeight } = useWindowDimensions();
-  const maxScrollHeight = Math.max(480, Math.min(560, windowHeight - 200));
+  const availableScrollHeight = windowHeight - (Platform.OS === 'ios' ? 260 : 220);
+  const maxScrollHeight = Math.max(180, Math.min(Platform.OS === 'web' ? 380 : 320, availableScrollHeight));
   const scrollViewRef = useRef<ScrollView>(null);
   const titleInputRef = useRef<TextInput>(null);
   const isInitialScroll = useRef(true);
