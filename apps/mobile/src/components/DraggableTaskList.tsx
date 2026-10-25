@@ -67,54 +67,133 @@ function Row(props: RowProps) {
   const y = useRef(new Animated.Value(target)).current;
   const scale = useRef(new Animated.Value(1)).current;
 
-  const isDraggingActive = useRef(false);
+  const isLongPressing = useRef(false);
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const touchStartPos = useRef({ x: 0, y: 0 });
 
-  // La fila completa responde de inmediato al arrastre cuando el puntero se mueve más de 4px:
-  // - Los toques simples (dy < 4) van directamente a los botones hijos (checkbox, pin, delete, abrir modal).
-  // - Si el usuario empieza a arrastrar, el PanResponder captura de inmediato y mueve la tarea suavemente.
+  const clearTimer = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      clearTimer();
+    };
+  }, [clearTimer]);
+
+  useEffect(() => {
+    if (isActive) return;
+    if (!animate) {
+      y.setValue(target);
+      return;
+    }
+    Animated.spring(y, {
+      toValue: target,
+      useNativeDriver: true,
+      damping: 22,
+      stiffness: 280,
+      mass: 0.6,
+    }).start();
+  }, [target, isActive, animate, y]);
+
+  useEffect(() => {
+    Animated.spring(scale, {
+      toValue: isActive ? 1.03 : 1,
+      useNativeDriver: true,
+      damping: 22,
+      stiffness: 300,
+    }).start();
+  }, [isActive, scale]);
+
+  const endDrag = useCallback(
+    (coords?: { pageY: number; clientY: number }) => {
+      clearTimer();
+      if (isLongPressing.current || latest.current.isActive) {
+        isLongPressing.current = false;
+        latest.current.onDragEnd(coords || { pageY: 0, clientY: 0 });
+      }
+    },
+    [clearTimer],
+  );
+
+  // Mecánica exacta de los 3 puntos activada al aguantar en la tarea:
+  // - Pulsar y aguantar ~280ms activa el modo de arrastre idéntico al asa de los 3 puntos (con vibración/háptica).
+  // - Si el usuario mueve el dedo antes de los ~280ms o pulsa para hacer scroll, se cancela y no se arrastra nada.
+  // - Las demás tareas se apartan de forma 100% fluida dejando el hueco sin montarse nunca.
   const rowPan = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
-      onStartShouldSetPanResponderCapture: () => false,
-      onMoveShouldSetPanResponder: (_, g) => {
-        return Math.abs(g.dy) > 4 || Math.abs(g.dx) > 4;
+      onStartShouldSetPanResponderCapture: (evt) => {
+        clearTimer();
+        isLongPressing.current = false;
+        touchStartPos.current = {
+          x: evt.nativeEvent.pageX,
+          y: evt.nativeEvent.pageY,
+        };
+
+        // Si se suelta el puntero en la web, cancelamos el temporizador de inmediato
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          const onGlobalPointerUp = () => {
+            clearTimer();
+            window.removeEventListener('pointerup', onGlobalPointerUp);
+            window.removeEventListener('mouseup', onGlobalPointerUp);
+          };
+          window.addEventListener('pointerup', onGlobalPointerUp, { once: true });
+          window.addEventListener('mouseup', onGlobalPointerUp, { once: true });
+        }
+
+        longPressTimer.current = setTimeout(() => {
+          isLongPressing.current = true;
+          try {
+            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          } catch {
+            // ignore
+          }
+          const p = latest.current;
+          y.setValue(p.top);
+          p.onDragStart(p.item.id, p.index);
+        }, Platform.OS === 'web' ? 240 : 300);
+
+        return false;
       },
-      onMoveShouldSetPanResponderCapture: (_, g) => {
-        return Math.abs(g.dy) > 4 || Math.abs(g.dx) > 4;
+      onMoveShouldSetPanResponder: () => isLongPressing.current,
+      onMoveShouldSetPanResponderCapture: (evt) => {
+        if (isLongPressing.current) {
+          return true;
+        }
+        const dx = Math.abs(evt.nativeEvent.pageX - touchStartPos.current.x);
+        const dy = Math.abs(evt.nativeEvent.pageY - touchStartPos.current.y);
+        const maxDelta = Platform.OS === 'web' ? 12 : 8;
+        if (dx > maxDelta || dy > maxDelta) {
+          clearTimer();
+          return false;
+        }
+        return false;
       },
       onPanResponderTerminationRequest: () => false,
       onPanResponderGrant: () => {
-        isDraggingActive.current = true;
-        try {
-          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        } catch {
-          // ignore
-        }
         const p = latest.current;
         y.setValue(p.top);
-        p.onDragStart(p.item.id, p.index);
       },
       onPanResponderMove: (evt, g) => {
-        if (!isDraggingActive.current && !latest.current.isActive) return;
+        if (!isLongPressing.current && !latest.current.isActive) return;
         const p = latest.current;
-        const rawY = p.top + g.dy;
-        const next = p.unclampedDrag ? rawY : Math.max(0, Math.min(rawY, p.maxTop));
+        const next = Math.max(0, Math.min(p.top + g.dy, p.maxTop));
         y.setValue(next);
         const pageY = (evt.nativeEvent as any)?.pageY ?? (evt as any)?.pageY ?? g.moveY ?? 0;
         const clientY = (evt.nativeEvent as any)?.clientY ?? (evt as any)?.clientY ?? g.moveY ?? 0;
         p.onDragMove(next + p.height / 2, { pageY, clientY });
       },
       onPanResponderRelease: (evt, g) => {
-        isDraggingActive.current = false;
         const pageY = (evt.nativeEvent as any)?.pageY ?? (evt as any)?.pageY ?? g.moveY ?? 0;
         const clientY = (evt.nativeEvent as any)?.clientY ?? (evt as any)?.clientY ?? g.moveY ?? 0;
-        latest.current.onDragEnd({ pageY, clientY });
+        endDrag({ pageY, clientY });
       },
-      onPanResponderTerminate: (evt, g) => {
-        isDraggingActive.current = false;
-        const pageY = (evt.nativeEvent as any)?.pageY ?? (evt as any)?.pageY ?? g.moveY ?? 0;
-        const clientY = (evt.nativeEvent as any)?.clientY ?? (evt as any)?.clientY ?? g.moveY ?? 0;
-        latest.current.onDragEnd({ pageY, clientY });
+      onPanResponderTerminate: () => {
+        endDrag();
       },
     }),
   ).current;
@@ -122,6 +201,8 @@ function Row(props: RowProps) {
   return (
     <Animated.View
       {...rowPan.panHandlers}
+      onTouchEnd={clearTimer}
+      onTouchCancel={clearTimer}
       onLayout={(e) => props.onMeasure(item.id, e.nativeEvent.layout.height)}
       style={{
         position: 'absolute',
@@ -139,7 +220,7 @@ function Row(props: RowProps) {
           ? ({
               userSelect: 'none',
               WebkitUserSelect: 'none',
-              cursor: isActive ? 'grabbing' : 'grab',
+              cursor: isActive ? 'grabbing' : 'default',
             } as any)
           : {}),
       }}

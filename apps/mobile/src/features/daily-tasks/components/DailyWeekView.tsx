@@ -234,8 +234,6 @@ export function DailyWeekView({
                 style={[
                   styles.weekDaySection,
                   isDropTarget && styles.weekDaySectionDropTarget,
-                  isOriginDay && { zIndex: 1000 },
-                  Platform.OS === 'web' && ({ overflow: 'visible' } as any),
                 ]}
               >
                 <View style={styles.weekDayHeader}>
@@ -306,14 +304,12 @@ export function DailyWeekView({
                               {
                                 backgroundColor: theme.colors.surface,
                                 borderColor: theme.colors.border,
-                                overflow: 'visible',
                               },
                             ]}
                           >
                             <DraggableTaskList
                               items={pendingTasks}
                               gap={0}
-                              unclampedDrag={true}
                               renderItem={(item, drag) =>
                                 renderTaskRow(item, drag, pendingTasks.indexOf(item) === pendingTasks.length - 1)
                               }
