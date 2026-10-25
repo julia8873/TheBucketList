@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { RotateCw } from 'lucide-react-native';
 import { gold, useTheme } from '@bucketlist/ui';
+import { useTranslation } from 'react-i18next';
 import { styles } from '../styles/explore.styles';
 import { getRecurrenceLabel } from '../utils/dailyTaskDateUtils';
 import type { DailyTaskRecurrenceUnit } from '../types';
@@ -36,10 +37,11 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
   onAutoSave,
 }) => {
   const { theme } = useTheme();
+  const { t, i18n } = useTranslation();
 
   return (
     <View style={{ marginBottom: 12 }}>
-      <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>Repetir / Recurrencia</Text>
+      <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>{t('daily.repeat_recurrence')}</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -67,7 +69,7 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
               !isRecurring && styles.recurrencePresetTextActive,
             ]}
           >
-            No se repite
+            {t('daily.does_not_repeat')}
           </Text>
         </Pressable>
 
@@ -99,7 +101,7 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
               isRecurring && interval === 1 && unit === 'days' && !showCustom && styles.recurrencePresetTextActive,
             ]}
           >
-            Cada día
+            {t('daily.every_day')}
           </Text>
         </Pressable>
 
@@ -131,7 +133,7 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
               isRecurring && interval === 2 && unit === 'days' && !showCustom && styles.recurrencePresetTextActive,
             ]}
           >
-            Cada 2 días
+            {t('daily.every_x_days', { count: 2 })}
           </Text>
         </Pressable>
 
@@ -163,7 +165,7 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
               isRecurring && interval === 1 && unit === 'weeks' && !showCustom && styles.recurrencePresetTextActive,
             ]}
           >
-            Cada semana
+            {t('daily.every_week')}
           </Text>
         </Pressable>
 
@@ -195,7 +197,7 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
               isRecurring && interval === 2 && unit === 'weeks' && !showCustom && styles.recurrencePresetTextActive,
             ]}
           >
-            Cada 2 semanas
+            {t('daily.every_x_weeks', { count: 2 })}
           </Text>
         </Pressable>
 
@@ -227,7 +229,7 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
               isRecurring && interval === 1 && unit === 'months' && !showCustom && styles.recurrencePresetTextActive,
             ]}
           >
-            Cada mes
+            {t('daily.every_month')}
           </Text>
         </Pressable>
 
@@ -253,7 +255,7 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
               isRecurring && showCustom && styles.recurrencePresetTextActive,
             ]}
           >
-            Personalizado...
+            {t('daily.custom_recurrence')}
           </Text>
         </Pressable>
       </ScrollView>
@@ -262,7 +264,7 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
       {isRecurring && showCustom && (
         <View style={[styles.recurrenceCustomBox, { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border }]}>
           <View style={styles.recurrenceStepperRow}>
-            <Text style={[styles.recurrenceStepperLabel, { color: theme.colors.foreground }]}>Repetir cada:</Text>
+            <Text style={[styles.recurrenceStepperLabel, { color: theme.colors.foreground }]}>{t('daily.repeat_every')}</Text>
             <View style={styles.recurrenceStepperControls}>
               <Pressable
                 style={[styles.recurrenceStepBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
@@ -299,10 +301,10 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
               const isSelected = unit === u;
               const label =
                 u === 'days'
-                  ? interval === 1 ? 'Día' : 'Días'
+                  ? interval === 1 ? t('daily.unit_day') : t('daily.unit_days')
                   : u === 'weeks'
-                  ? interval === 1 ? 'Semana' : 'Semanas'
-                  : interval === 1 ? 'Mes' : 'Meses';
+                  ? interval === 1 ? t('daily.unit_week') : t('daily.unit_weeks')
+                  : interval === 1 ? t('daily.unit_month') : t('daily.unit_months');
               return (
                 <Pressable
                   key={u}
@@ -336,7 +338,7 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
 
       {isRecurring && (
         <Text style={styles.recurrenceHelperNote}>
-          🔄 Se repetirá {getRecurrenceLabel(interval, unit)}. Al completarla, pasará automáticamente a la siguiente fecha.
+          {t('daily.recurrence_helper_note', { label: getRecurrenceLabel(interval, unit, i18n.language) })}
         </Text>
       )}
     </View>

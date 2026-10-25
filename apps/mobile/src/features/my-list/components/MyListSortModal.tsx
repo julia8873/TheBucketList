@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Pressable, Modal } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Typography } from '@bucketlist/ui';
 import { dark, gold } from '@bucketlist/ui/src/tokens/colors';
 import { ArrowDown, ArrowUp, Check, GripVertical } from 'lucide-react-native';
@@ -34,45 +35,46 @@ export function MyListSortModal({
   theme,
   onSelectOption,
 }: MyListSortModalProps) {
+  const { t } = useTranslation();
   if (!visible) return null;
 
   const options =
     activeTab === 'albums'
       ? albumSortField === 'status'
         ? [
-            { field: 'reorder_status' as const, label: 'Reordenar manualmente' },
-            { field: 'status' as const, label: 'Estado' },
-            { field: 'manual' as const, label: 'Manual (sin categorías)' },
-            { field: 'priority' as const, label: 'Prioridad' },
-            { field: 'alphabetical' as const, label: 'Alfabético' },
-            { field: 'created_at' as const, label: 'Fecha de creación' },
-            { field: 'completed_at' as const, label: 'Fecha de completado' },
+            { field: 'reorder_status' as const, label: t('my_list.sort_reorder_status') },
+            { field: 'status' as const, label: t('my_list.sort_status') },
+            { field: 'manual' as const, label: t('my_list.sort_manual_no_categories') },
+            { field: 'priority' as const, label: t('my_list.sort_priority') },
+            { field: 'alphabetical' as const, label: t('my_list.sort_alphabetical') },
+            { field: 'created_at' as const, label: t('my_list.sort_created_at') },
+            { field: 'completed_at' as const, label: t('my_list.sort_completed_at') },
           ]
         : [
-            { field: 'manual' as const, label: 'Manual' },
-            { field: 'status' as const, label: 'Estado' },
-            { field: 'priority' as const, label: 'Prioridad' },
-            { field: 'alphabetical' as const, label: 'Alfabético' },
-            { field: 'created_at' as const, label: 'Fecha de creación' },
-            { field: 'completed_at' as const, label: 'Fecha de completado' },
+            { field: 'manual' as const, label: t('my_list.sort_manual') },
+            { field: 'status' as const, label: t('my_list.sort_status') },
+            { field: 'priority' as const, label: t('my_list.sort_priority') },
+            { field: 'alphabetical' as const, label: t('my_list.sort_alphabetical') },
+            { field: 'created_at' as const, label: t('my_list.sort_created_at') },
+            { field: 'completed_at' as const, label: t('my_list.sort_completed_at') },
           ]
       : sortField === 'status'
       ? [
-          { field: 'reorder_status' as const, label: 'Reordenar manualmente' },
-          { field: 'status' as const, label: 'Estado' },
-          { field: 'manual' as const, label: 'Manual (sin categorías)' },
-          { field: 'priority' as const, label: 'Prioridad' },
-          { field: 'alphabetical' as const, label: 'Alfabético' },
-          { field: 'created_at' as const, label: 'Fecha de creación' },
-          { field: 'completed_at' as const, label: 'Fecha de completado' },
+          { field: 'reorder_status' as const, label: t('my_list.sort_reorder_status') },
+          { field: 'status' as const, label: t('my_list.sort_status') },
+          { field: 'manual' as const, label: t('my_list.sort_manual_no_categories') },
+          { field: 'priority' as const, label: t('my_list.sort_priority') },
+          { field: 'alphabetical' as const, label: t('my_list.sort_alphabetical') },
+          { field: 'created_at' as const, label: t('my_list.sort_created_at') },
+          { field: 'completed_at' as const, label: t('my_list.sort_completed_at') },
         ]
       : [
-          { field: 'manual' as const, label: 'Manual' },
-          { field: 'status' as const, label: 'Estado' },
-          { field: 'priority' as const, label: 'Prioridad' },
-          { field: 'alphabetical' as const, label: 'Alfabético' },
-          { field: 'created_at' as const, label: 'Fecha de creación' },
-          { field: 'completed_at' as const, label: 'Fecha de completado' },
+          { field: 'manual' as const, label: t('my_list.sort_manual') },
+          { field: 'status' as const, label: t('my_list.sort_status') },
+          { field: 'priority' as const, label: t('my_list.sort_priority') },
+          { field: 'alphabetical' as const, label: t('my_list.sort_alphabetical') },
+          { field: 'created_at' as const, label: t('my_list.sort_created_at') },
+          { field: 'completed_at' as const, label: t('my_list.sort_completed_at') },
         ];
 
   const currentField = activeTab === 'albums' ? albumSortField : sortField;

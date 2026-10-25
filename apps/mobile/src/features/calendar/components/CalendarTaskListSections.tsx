@@ -3,7 +3,8 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { TaskRow, useTheme } from '@bucketlist/ui';
 import { ChevronRight, Calendar } from 'lucide-react-native';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
+import { getDateFnsLocale } from '@/utils/dateLocale';
 import { useRouter } from 'expo-router';
 import { BucketCover } from '../../../components/BucketCover';
 import { resolveTaskImage } from '../../../utils/taskImage';
@@ -28,6 +29,8 @@ export function CalendarTaskListSections({
 }: CalendarTaskListSectionsProps) {
   const router = useRouter();
   const { theme } = useTheme();
+  const { t, i18n } = useTranslation();
+  const dateFnsLocale = getDateFnsLocale(i18n.language);
 
   const renderThumbnail = (task: any) => (
     <BucketCover
@@ -43,20 +46,22 @@ export function CalendarTaskListSections({
   const getMeta = (task: any) => {
     const pLabel =
       task.priority === 'high'
-        ? 'Prioridad Alta'
+        ? t('calendar.priority_high')
         : task.priority === 'low'
-        ? 'Prioridad Baja'
-        : 'Prioridad Media';
-    const catName = task.priority ? pLabel : task.category?.name_es || 'Sin categoría';
+        ? t('calendar.priority_low')
+        : t('calendar.priority_medium');
+    const catName = task.priority
+      ? pLabel
+      : (i18n.language === 'en' ? (task.category?.name_en || task.category?.name_es) : task.category?.name_es) || t('calendar.no_category');
     const subtasks = task.item_subtasks || [];
     const subtasksTotal = subtasks.length;
     const subtasksDone = subtasks.filter((s: any) => s.done).length;
 
     if (task.status === 'completed') {
-      return `${catName} · Completada`;
+      return `${catName} · ${t('calendar.completed_tag')}`;
     }
     if (subtasksTotal > 0) {
-      return `${catName} · ${subtasksDone} de ${subtasksTotal} pasos`;
+      return `${catName} · ${t('calendar.subtasks_progress', { done: subtasksDone, total: subtasksTotal })}`;
     }
     return catName;
   };
@@ -67,7 +72,7 @@ export function CalendarTaskListSections({
       <View style={styles.sectionHeader}>
         <Text style={[styles.sectionTitle, { color: theme.colors.foreground }]}>
           <Text style={{ color: '#D4B13A' }}>
-            {format(selectedDate, "d 'DE' MMMM", { locale: es }).toUpperCase()}
+            {format(selectedDate, t('calendar.date_format_day_month'), { locale: dateFnsLocale }).toUpperCase()}
           </Text>
           {selectedTasks.length > 0 ? ` · ${selectedTasks.length}` : ''}
         </Text>
@@ -78,7 +83,7 @@ export function CalendarTaskListSections({
           <View style={[styles.emptyDayContainer, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
             <Calendar color={theme.colors.foregroundMuted} size={28} style={{ marginBottom: 6 }} />
             <Text style={[styles.emptyDayText, { color: theme.colors.foregroundMuted }]}>
-              No hay tareas programadas ni completadas este día
+              {t('calendar.no_tasks_day')}
             </Text>
           </View>
         ) : (
@@ -112,13 +117,13 @@ export function CalendarTaskListSections({
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <View style={styles.expiredDot} />
               <Text style={[styles.sectionTitle, { color: theme.colors.foreground }]}>
-                <Text style={{ color: '#EF4444' }}>VENCIDAS</Text> · {expiredTasks.length}
+                <Text style={{ color: '#EF4444' }}>{t('calendar.overdue')}</Text> · {expiredTasks.length}
               </Text>
             </View>
             <Text style={[styles.expiredSectionSubtitle, { color: theme.colors.foregroundMuted }]}>
               {expiredTasks.length === 1
-                ? '1 pendiente de fecha'
-                : `${expiredTasks.length} pendientes de fecha`}
+                ? t('calendar.overdue_single')
+                : t('calendar.overdue_plural', { count: expiredTasks.length })}
             </Text>
           </View>
 
@@ -148,7 +153,7 @@ export function CalendarTaskListSections({
             onPress={onToggleUnscheduled}
           >
             <Text style={[styles.unscheduledTitle, { color: theme.colors.foregroundMuted }]}>
-              SIN FECHA PROGRAMADA · {unscheduledTasks.length}
+              {t('calendar.unscheduled')} · {unscheduledTasks.length}
             </Text>
             <ChevronRight
               color={theme.colors.foregroundMuted}

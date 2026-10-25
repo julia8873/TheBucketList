@@ -13,6 +13,7 @@ import {
   ArrowUp,
 } from 'lucide-react-native';
 import { gold, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/explore.styles';
 import type { DailySortField, DailySortDirection } from '../types';
 
@@ -38,6 +39,7 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
   onResetSort,
 }) => {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   if (!visible) return null;
 
   return (
@@ -56,7 +58,7 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
           <View style={styles.sheetHeader}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <SlidersHorizontal size={18} color={gold[400]} />
-              <Text style={[styles.sheetTitle, { color: theme.colors.foreground }]}>Ordenar y clasificar</Text>
+              <Text style={[styles.sheetTitle, { color: theme.colors.foreground }]}>{t('daily.sort_and_classify')}</Text>
             </View>
             <Pressable onPress={onClose} hitSlop={10}>
               <X size={20} color={theme.colors.foregroundMuted} />
@@ -66,7 +68,7 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
           <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 480 }}>
             {/* Section 1: Agrupar por etiquetas */}
             <View style={styles.sortSection}>
-              <Text style={[styles.sortSectionTitle, { color: theme.colors.foregroundMuted }]}>CLASIFICAR</Text>
+              <Text style={[styles.sortSectionTitle, { color: theme.colors.foregroundMuted }]}>{t('daily.classify_section')}</Text>
               <Pressable
                 style={[
                   styles.sortOptionCard,
@@ -90,10 +92,10 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.sortOptionTitle, { color: theme.colors.foreground }, groupByTag && styles.sortOptionTitleActive]}>
-                      Clasificar por etiquetas
+                      {t('daily.classify_by_tags')}
                     </Text>
                     <Text style={[styles.sortOptionSubtitle, { color: theme.colors.foregroundMuted }]}>
-                      Agrupa las tareas en bloques por cada etiqueta
+                      {t('daily.classify_by_tags_desc')}
                     </Text>
                   </View>
                 </View>
@@ -111,7 +113,7 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
                       groupByTag && styles.sortTogglePillTextActive,
                     ]}
                   >
-                    {groupByTag ? 'Activado' : 'Desactivado'}
+                    {groupByTag ? t('daily.status_enabled') : t('daily.status_disabled')}
                   </Text>
                 </View>
               </Pressable>
@@ -119,7 +121,7 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
 
             {/* Section 2: Criterio de ordenación */}
             <View style={styles.sortSection}>
-              <Text style={[styles.sortSectionTitle, { color: theme.colors.foregroundMuted }]}>ORDENAR POR</Text>
+              <Text style={[styles.sortSectionTitle, { color: theme.colors.foregroundMuted }]}>{t('daily.sort_by_section')}</Text>
 
               {/* Manual / Arrastrar */}
               <Pressable
@@ -145,10 +147,10 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.sortOptionTitle, { color: theme.colors.foreground }, sortField === 'manual' && styles.sortOptionTitleActive]}>
-                      Manual (Por defecto)
+                      {t('daily.sort_manual')}
                     </Text>
                     <Text style={[styles.sortOptionSubtitle, { color: theme.colors.foregroundMuted }]}>
-                      Arrastra y reordena las tareas en el orden que prefieras
+                      {t('daily.sort_manual_desc')}
                     </Text>
                   </View>
                 </View>
@@ -183,14 +185,14 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.sortOptionTitle, { color: theme.colors.foreground }, sortField === 'priority' && styles.sortOptionTitleActive]}>
-                      Prioridad
+                      {t('daily.sort_priority')}
                     </Text>
                     <Text style={[styles.sortOptionSubtitle, { color: theme.colors.foregroundMuted }]}>
                       {sortField === 'priority'
                         ? sortDirection === 'desc'
-                          ? 'Urgente 🔴 → Baja 🟢 (Toca para invertir)'
-                          : 'Baja 🟢 → Urgente 🔴 (Toca para invertir)'
-                        : 'Urgente 🔴 > Alta 🟠 > Media 🟡 > Baja 🟢'}
+                          ? t('daily.sort_priority_desc_urgent_first')
+                          : t('daily.sort_priority_desc_low_first')
+                        : t('daily.sort_priority_desc_general')}
                     </Text>
                   </View>
                 </View>
@@ -229,14 +231,14 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.sortOptionTitle, { color: theme.colors.foreground }, sortField === 'name' && styles.sortOptionTitleActive]}>
-                      Nombre / Título
+                      {t('daily.sort_name')}
                     </Text>
                     <Text style={[styles.sortOptionSubtitle, { color: theme.colors.foregroundMuted }]}>
                       {sortField === 'name'
                         ? sortDirection === 'asc'
-                          ? 'A → Z (Toca para invertir)'
-                          : 'Z → A (Toca para invertir)'
-                        : 'Orden alfabético de la A a la Z'}
+                          ? t('daily.sort_name_az')
+                          : t('daily.sort_name_za')
+                        : t('daily.sort_name_desc_general')}
                     </Text>
                   </View>
                 </View>
@@ -275,14 +277,14 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.sortOptionTitle, { color: theme.colors.foreground }, sortField === 'date' && styles.sortOptionTitleActive]}>
-                      Fecha de vencimiento
+                      {t('daily.sort_date')}
                     </Text>
                     <Text style={[styles.sortOptionSubtitle, { color: theme.colors.foregroundMuted }]}>
                       {sortField === 'date'
                         ? sortDirection === 'asc'
-                          ? 'Más próximas primero (Toca para invertir)'
-                          : 'Más lejanas primero (Toca para invertir)'
-                        : 'Tareas más próximas o programadas primero'}
+                          ? t('daily.sort_date_nearest')
+                          : t('daily.sort_date_furthest')
+                        : t('daily.sort_date_desc_general')}
                     </Text>
                   </View>
                 </View>
@@ -308,13 +310,13 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
               ]}
               onPress={onResetSort}
             >
-              <Text style={[styles.sortResetBtnText, { color: theme.colors.foreground }]}>Restablecer</Text>
+              <Text style={[styles.sortResetBtnText, { color: theme.colors.foreground }]}>{t('daily.reset')}</Text>
             </Pressable>
             <Pressable
               style={styles.sortApplyBtn}
               onPress={onClose}
             >
-              <Text style={styles.sortApplyBtnText}>Aplicar</Text>
+              <Text style={styles.sortApplyBtnText}>{t('daily.apply')}</Text>
             </Pressable>
           </View>
         </View>

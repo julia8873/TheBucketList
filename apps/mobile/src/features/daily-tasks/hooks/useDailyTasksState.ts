@@ -12,7 +12,8 @@ import {
   isBefore,
   isToday,
 } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
+import { getDateFnsLocale } from '@/utils/dateLocale';
 import {
   useDailyTasks,
   useDailyTaskStats,
@@ -53,6 +54,8 @@ import {
 import { sortDailyTasks, groupDailyTasksByTag } from '../utils/dailyTaskSorting';
 
 export function useDailyTasksState() {
+  const { t, i18n } = useTranslation();
+  const dateFnsLocale = getDateFnsLocale(i18n.language);
   const [timeView, setTimeView] = useState<TimeView>('today');
   const handleSetTimeView = useCallback((v: TimeView) => {
     setTimeView(v);
@@ -395,12 +398,12 @@ export function useDailyTasksState() {
     return Array.from({ length: 7 }, (_, i) => {
       const d = addDays(today, i);
       const dateStr = toDateString(d);
-      let label = format(d, 'EEE', { locale: es });
+      let label = format(d, 'EEE', { locale: dateFnsLocale });
       label = label.charAt(0).toUpperCase() + label.slice(1).replace('.', '');
       const isDayToday = i === 0;
       const isDayTomorrow = i === 1;
-      if (isDayToday) label = 'Hoy';
-      else if (isDayTomorrow) label = 'Mañana';
+      if (isDayToday) label = t('daily.today');
+      else if (isDayTomorrow) label = t('daily.tomorrow');
       return {
         date: d,
         dateStr,
@@ -409,7 +412,7 @@ export function useDailyTasksState() {
         isToday: isDayToday,
       };
     });
-  }, []);
+  }, [dateFnsLocale, t]);
 
   const displayedWeeks = useMemo(() => {
     const today = startOfDay(new Date());
@@ -425,8 +428,8 @@ export function useDailyTasksState() {
         return {
           date: day,
           dateStr: dayStr,
-          dayName: format(day, 'EEEE', { locale: es }),
-          formatted: format(day, 'd MMM', { locale: es }),
+          dayName: format(day, 'EEEE', { locale: dateFnsLocale }),
+          formatted: format(day, 'd MMM', { locale: dateFnsLocale }),
           isCurrentDay: isToday(day),
         };
       });
@@ -434,7 +437,10 @@ export function useDailyTasksState() {
       const days = allDays.filter((d) => !isBefore(d.date, today));
       const firstDay = days[0]?.date || monday;
       const lastDay = days[days.length - 1]?.date || sunday;
-      const weekLabel = `Semana del ${format(firstDay, 'd MMM', { locale: es })} al ${format(lastDay, 'd MMM yyyy', { locale: es })}`;
+      const weekLabel = t('daily.week_from_to', {
+        start: format(firstDay, 'd MMM', { locale: dateFnsLocale }),
+        end: format(lastDay, 'd MMM yyyy', { locale: dateFnsLocale }),
+      });
 
       return {
         weekIndex: weekIdx,

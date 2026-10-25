@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   X,
@@ -47,6 +48,7 @@ export function MyListCustomizeModal({
   initialTab = 'tasks',
   initialMode = 'list',
 }: MyListCustomizeModalProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
 
@@ -110,10 +112,10 @@ export function MyListCustomizeModal({
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.headerTitle, { color: theme.colors.foreground }]}>
-                  Personalizar vista
+                  {t('my_list.customize_view')}
                 </Text>
                 <Text style={[styles.headerSub, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
-                  Elige qué información mostrar en cada vista
+                  {t('my_list.customize_view_desc')}
                 </Text>
               </View>
             </View>
@@ -125,7 +127,7 @@ export function MyListCustomizeModal({
                 { backgroundColor: theme.dark ? '#222222' : '#EDE8DF', borderColor: theme.colors.border },
               ]}
               accessibilityRole="button"
-              accessibilityLabel="Cerrar personalización"
+              accessibilityLabel={t('common.close')}
             >
               <X size={18} color={theme.colors.foregroundMuted} />
             </Pressable>
@@ -155,7 +157,7 @@ export function MyListCustomizeModal({
                   activeTab === 'tasks' && styles.entityBtnTextActive,
                 ]}
               >
-                Tareas
+                {t('my_list.customize_tasks')}
               </Text>
             </Pressable>
             <Pressable
@@ -175,7 +177,7 @@ export function MyListCustomizeModal({
                   activeTab === 'albums' && styles.entityBtnTextActive,
                 ]}
               >
-                Álbumes
+                {t('my_list.customize_albums')}
               </Text>
             </Pressable>
           </View>
@@ -183,7 +185,7 @@ export function MyListCustomizeModal({
           {/* Selector de modo de vista: Lista, Galería, Compacta */}
           <View style={styles.modeSection}>
             <Text style={[styles.modeSectionLabel, { color: theme.colors.foregroundMuted }]}>
-              Modo de visualización
+              {t('my_list.customize_view_mode')}
             </Text>
             <View
               style={[
@@ -209,7 +211,7 @@ export function MyListCustomizeModal({
                     selectedMode === 'list' && styles.modeBtnTextActive,
                   ]}
                 >
-                  Lista
+                  {t('my_list.customize_mode_list')}
                 </Text>
               </Pressable>
 
@@ -231,7 +233,7 @@ export function MyListCustomizeModal({
                     selectedMode === 'gallery' && styles.modeBtnTextActive,
                   ]}
                 >
-                  Galería
+                  {t('my_list.customize_mode_gallery')}
                 </Text>
               </Pressable>
 
@@ -253,7 +255,7 @@ export function MyListCustomizeModal({
                     selectedMode === 'compact' && styles.modeBtnTextActive,
                   ]}
                 >
-                  Compacta
+                  {t('my_list.customize_mode_compact')}
                 </Text>
               </Pressable>
             </View>
@@ -269,48 +271,48 @@ export function MyListCustomizeModal({
               <>
                 <CustomizeRow
                   icon={<Flag size={16} color={gold[400]} />}
-                  title="Prioridad"
-                  subtitle="Badge con nivel de prioridad (Alta, Media, Baja)"
+                  title={t('my_list.customize_opt_priority')}
+                  subtitle={t('my_list.customize_opt_priority_sub')}
                   value={currentTaskCustomization.showPriority}
                   onChange={(v) => setTaskOption(selectedMode, 'showPriority', v)}
                   theme={theme}
                 />
                 <CustomizeRow
                   icon={<TagIcon size={16} color={gold[400]} />}
-                  title="Etiquetas"
-                  subtitle="Etiquetas temáticas asignadas a la tarea"
+                  title={t('my_list.customize_opt_tags')}
+                  subtitle={t('my_list.customize_opt_tags_sub')}
                   value={currentTaskCustomization.showTags}
                   onChange={(v) => setTaskOption(selectedMode, 'showTags', v)}
                   theme={theme}
                 />
                 <CustomizeRow
                   icon={<Calendar size={16} color={gold[400]} />}
-                  title="Fechas límite y avisos"
-                  subtitle="Indicador de fecha objetivo o vencimiento"
+                  title={t('my_list.customize_opt_dates')}
+                  subtitle={t('my_list.customize_opt_dates_sub')}
                   value={currentTaskCustomization.showDates}
                   onChange={(v) => setTaskOption(selectedMode, 'showDates', v)}
                   theme={theme}
                 />
                 <CustomizeRow
                   icon={<MapPin size={16} color={gold[400]} />}
-                  title="Categoría y lugar"
-                  subtitle="Nombre de categoría y ubicación asociada"
+                  title={t('my_list.customize_opt_cat_loc')}
+                  subtitle={t('my_list.customize_opt_cat_loc_sub')}
                   value={currentTaskCustomization.showCategoryLocation}
                   onChange={(v) => setTaskOption(selectedMode, 'showCategoryLocation', v)}
                   theme={theme}
                 />
                 <CustomizeRow
                   icon={<CheckSquare size={16} color={gold[400]} />}
-                  title="Pasos y progreso"
-                  subtitle="Contador de pasos completados o metas numéricas"
+                  title={t('my_list.customize_opt_subtasks')}
+                  subtitle={t('my_list.customize_opt_subtasks_sub')}
                   value={currentTaskCustomization.showSubtasksProgress}
                   onChange={(v) => setTaskOption(selectedMode, 'showSubtasksProgress', v)}
                   theme={theme}
                 />
                 <CustomizeRow
                   icon={<AlignLeft size={16} color={gold[400]} />}
-                  title="Descripción"
-                  subtitle="Texto explicativo o notas añadidas"
+                  title={t('my_list.customize_opt_desc')}
+                  subtitle={t('my_list.customize_opt_desc_sub')}
                   value={currentTaskCustomization.showDescription}
                   onChange={(v) => setTaskOption(selectedMode, 'showDescription', v)}
                   theme={theme}
@@ -321,48 +323,48 @@ export function MyListCustomizeModal({
               <>
                 <CustomizeRow
                   icon={<Flag size={16} color={gold[400]} />}
-                  title="Prioridad del álbum"
-                  subtitle="Indicador de nivel de prioridad del álbum"
+                  title={t('my_list.customize_opt_album_priority')}
+                  subtitle={t('my_list.customize_opt_album_priority_sub')}
                   value={currentAlbumCustomization.showPriority}
                   onChange={(v) => setAlbumOption(selectedMode, 'showPriority', v)}
                   theme={theme}
                 />
                 <CustomizeRow
                   icon={<CheckSquare size={16} color={gold[400]} />}
-                  title="Conteo de tareas"
-                  subtitle="Número de tareas totales y completadas"
+                  title={t('my_list.customize_opt_album_task_count')}
+                  subtitle={t('my_list.customize_opt_album_task_count_sub')}
                   value={currentAlbumCustomization.showTaskCount}
                   onChange={(v) => setAlbumOption(selectedMode, 'showTaskCount', v)}
                   theme={theme}
                 />
                 <CustomizeRow
                   icon={<BarChart2 size={16} color={gold[400]} />}
-                  title="Barra de progreso"
-                  subtitle="Línea visual con el avance porcentual"
+                  title={t('my_list.customize_opt_album_progress')}
+                  subtitle={t('my_list.customize_opt_album_progress_sub')}
                   value={currentAlbumCustomization.showProgress}
                   onChange={(v) => setAlbumOption(selectedMode, 'showProgress', v)}
                   theme={theme}
                 />
                 <CustomizeRow
                   icon={<Shield size={16} color={gold[400]} />}
-                  title="Distintivos de estado"
-                  subtitle="Etiquetas de Compartido, Cerrado y colaboradores"
+                  title={t('my_list.customize_opt_album_badges')}
+                  subtitle={t('my_list.customize_opt_album_badges_sub')}
                   value={currentAlbumCustomization.showBadges}
                   onChange={(v) => setAlbumOption(selectedMode, 'showBadges', v)}
                   theme={theme}
                 />
                 <CustomizeRow
                   icon={<Calendar size={16} color={gold[400]} />}
-                  title="Fecha de creación"
-                  subtitle="Indica cuándo fue creado el álbum"
+                  title={t('my_list.customize_opt_album_date')}
+                  subtitle={t('my_list.customize_opt_album_date_sub')}
                   value={currentAlbumCustomization.showDate}
                   onChange={(v) => setAlbumOption(selectedMode, 'showDate', v)}
                   theme={theme}
                 />
                 <CustomizeRow
                   icon={<AlignLeft size={16} color={gold[400]} />}
-                  title="Descripción"
-                  subtitle="Texto explicativo del propósito del álbum"
+                  title={t('my_list.customize_opt_album_desc')}
+                  subtitle={t('my_list.customize_opt_album_desc_sub')}
                   value={currentAlbumCustomization.showDescription}
                   onChange={(v) => setAlbumOption(selectedMode, 'showDescription', v)}
                   theme={theme}
@@ -382,11 +384,11 @@ export function MyListCustomizeModal({
                 { borderColor: theme.colors.border, backgroundColor: theme.colors.surface },
               ]}
               accessibilityRole="button"
-              accessibilityLabel="Restablecer valores predeterminados"
+              accessibilityLabel={t('my_list.customize_default')}
             >
               <RotateCcw size={14} color={theme.colors.foregroundMuted} />
               <Text style={[styles.resetBtnText, { color: theme.colors.foregroundMuted }]}>
-                Por defecto
+                {t('my_list.customize_default')}
               </Text>
             </Pressable>
 
@@ -394,9 +396,9 @@ export function MyListCustomizeModal({
               onPress={onClose}
               style={[styles.doneBtn, { backgroundColor: gold[400] }]}
               accessibilityRole="button"
-              accessibilityLabel="Guardar y cerrar"
+              accessibilityLabel={t('my_list.customize_done')}
             >
-              <Text style={styles.doneBtnText}>Listo</Text>
+              <Text style={styles.doneBtnText}>{t('my_list.customize_done')}</Text>
             </Pressable>
           </View>
         </View>

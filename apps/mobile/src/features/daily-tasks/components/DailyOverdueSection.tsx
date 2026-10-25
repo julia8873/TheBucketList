@@ -3,6 +3,7 @@ import { View, Text, Pressable, ScrollView } from 'react-native';
 import { AlertCircle, Calendar, CheckCircle2, Trash2 } from 'lucide-react-native';
 
 import { useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/explore.styles';
 import { DailyTask } from '../types';
 import { DraggableTaskList, DragHandle } from '@/components/DraggableTaskList';
@@ -27,6 +28,7 @@ export function DailyOverdueSection({
   onDeleteAll,
 }: DailyOverdueSectionProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
 
   if (tasks.length === 0) return null;
 
@@ -46,10 +48,10 @@ export function DailyOverdueSection({
             <AlertCircle size={15} color="#F59E0B" strokeWidth={2.4} />
           </View>
           <Text style={[styles.overdueSectionTitle, { color: theme.dark ? '#F59E0B' : '#B45309' }]}>
-            Atrasadas ({tasks.length})
+            {t('daily.overdue_title')} ({tasks.length})
           </Text>
         </View>
-        <Text style={[styles.overdueSectionHint, { color: theme.colors.foregroundMuted }]}>Pasa a hoy o reprograma</Text>
+        <Text style={[styles.overdueSectionHint, { color: theme.colors.foregroundMuted }]}>{t('daily.overdue_hint')}</Text>
       </View>
 
       {/* Bulk action buttons - deslizable horizontalmente para que ninguna acción se corte */}
@@ -64,10 +66,10 @@ export function DailyOverdueSection({
             style={styles.overdueActionBtn}
             onPress={onMoveAllToToday}
             accessibilityRole="button"
-            accessibilityLabel="Mover todas las tareas atrasadas a hoy"
+            accessibilityLabel={t('daily.overdue_move_today')}
           >
             <Calendar size={12} color="#F59E0B" strokeWidth={2} />
-            <Text style={styles.overdueActionText}>Mover a hoy</Text>
+            <Text style={styles.overdueActionText}>{t('daily.overdue_move_today')}</Text>
           </Pressable>
         )}
 
@@ -76,10 +78,10 @@ export function DailyOverdueSection({
             style={styles.overdueActionBtn}
             onPress={onCompleteAll}
             accessibilityRole="button"
-            accessibilityLabel="Completar todas las tareas atrasadas"
+            accessibilityLabel={t('daily.overdue_complete_all')}
           >
             <CheckCircle2 size={12} color="#34C759" strokeWidth={2} />
-            <Text style={[styles.overdueActionText, { color: '#34C759' }]}>Completar todas</Text>
+            <Text style={[styles.overdueActionText, { color: '#34C759' }]}>{t('daily.overdue_complete_all')}</Text>
           </Pressable>
         )}
 
@@ -88,10 +90,10 @@ export function DailyOverdueSection({
             style={[styles.overdueActionBtn, styles.overdueActionDeleteBtn]}
             onPress={onDeleteAll}
             accessibilityRole="button"
-            accessibilityLabel="Borrar todas las tareas atrasadas"
+            accessibilityLabel={t('daily.overdue_delete_all')}
           >
             <Trash2 size={12} color="#EF4444" strokeWidth={2} />
-            <Text style={[styles.overdueActionText, { color: '#EF4444' }]}>Borrar todas</Text>
+            <Text style={[styles.overdueActionText, { color: '#EF4444' }]}>{t('daily.overdue_delete_all')}</Text>
           </Pressable>
         )}
       </ScrollView>

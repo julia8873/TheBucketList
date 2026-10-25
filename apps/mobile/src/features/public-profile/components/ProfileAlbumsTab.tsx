@@ -86,7 +86,7 @@ export function ProfileAlbumsTab({
             },
           ]}
           accessibilityRole="button"
-          accessibilityLabel={`Filtro de álbumes: ${activeOption.label}`}
+          accessibilityLabel={t('profile.filter_albums_btn_label', { label: activeOption.label })}
         >
           <SlidersHorizontal
             size={14}
@@ -122,7 +122,7 @@ export function ProfileAlbumsTab({
           <Pressable
             style={StyleSheet.absoluteFill}
             onPress={() => setFilterModalVisible(false)}
-            accessibilityLabel="Cerrar filtro"
+            accessibilityLabel={t('profile.filter_albums_close_label')}
           />
           <View
             style={[
@@ -145,7 +145,7 @@ export function ProfileAlbumsTab({
             {/* Cabecera del Bottom Sheet */}
             <View style={tabStyles.sheetHeader}>
               <Text style={[tabStyles.sheetTitle, { color: theme.colors.foreground }]}>
-                Filtrar álbumes
+                {t('profile.filter_albums_title')}
               </Text>
               <Pressable
                 onPress={() => setFilterModalVisible(false)}
@@ -155,7 +155,7 @@ export function ProfileAlbumsTab({
                   { backgroundColor: theme.dark ? '#242424' : '#EFEAE1' },
                 ]}
                 accessibilityRole="button"
-                accessibilityLabel="Cerrar"
+                accessibilityLabel={t('common.close')}
               >
                 <X size={16} color={theme.colors.foregroundMuted} />
               </Pressable>

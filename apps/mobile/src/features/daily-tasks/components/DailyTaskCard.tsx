@@ -12,6 +12,7 @@ import {
 } from 'lucide-react-native';
 
 import { gold, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/explore.styles';
 import { DailyTask, DailyTag, DailySortField, TimeView } from '../types';
 import { PRIORITY_CONFIG, getPriorityConfig } from '../constants';
@@ -44,8 +45,9 @@ export function DailyTaskCard({
   onDelete,
 }: DailyTaskCardProps) {
   const { theme } = useTheme();
+  const { t, i18n } = useTranslation();
   const isCompleted = item.is_completed;
-  const dateBadge = formatTaskDateBadge(item.due_date);
+  const dateBadge = formatTaskDateBadge(item.due_date, i18n.language);
   const itemTags = (item.tag_ids || [])
     .map((id) => tagMap.get(id))
     .filter(Boolean) as DailyTag[];
@@ -146,7 +148,7 @@ export function DailyTaskCard({
 
           {/* Priority chip */}
           {item.priority && (() => {
-            const pCfg = getPriorityConfig(item.priority, theme.dark);
+            const pCfg = getPriorityConfig(item.priority, theme.dark, i18n.language);
             return (
               <View
                 style={[
@@ -171,7 +173,7 @@ export function DailyTaskCard({
           })()}
 
           {/* Date chip */}
-          {(timeView !== 'today' || dateBadge.isOverdue || dateBadge.text !== 'Hoy') && (
+          {(timeView !== 'today' || dateBadge.isOverdue || !dateBadge.isToday) && (
             <View
               style={[
                 styles.dateChip,
@@ -245,7 +247,7 @@ export function DailyTaskCard({
             <View style={styles.recurrenceBadgeChip}>
               <RotateCw size={10} color={gold[400]} strokeWidth={2} />
               <Text style={styles.recurrenceBadgeText}>
-                {getRecurrenceLabel(item.recurrence_interval, item.recurrence_unit)}
+                {getRecurrenceLabel(item.recurrence_interval, item.recurrence_unit, i18n.language)}
               </Text>
             </View>
           )}
@@ -310,8 +312,9 @@ export function DailyOverdueTaskCard({
   onOpenRescheduleDatePicker,
 }: DailyOverdueTaskCardProps) {
   const { theme } = useTheme();
+  const { t, i18n } = useTranslation();
   const isCompleted = item.is_completed;
-  const dateBadge = formatTaskDateBadge(item.due_date);
+  const dateBadge = formatTaskDateBadge(item.due_date, i18n.language);
   const itemTags = (item.tag_ids || [])
     .map((id) => tagMap.get(id))
     .filter(Boolean) as DailyTag[];
@@ -423,7 +426,7 @@ export function DailyOverdueTaskCard({
 
             {/* Priority badge */}
             {item.priority && (() => {
-              const pCfg = getPriorityConfig(item.priority, theme.dark);
+              const pCfg = getPriorityConfig(item.priority, theme.dark, i18n.language);
               return (
                 <View
                   style={[
@@ -490,7 +493,7 @@ export function DailyOverdueTaskCard({
           hitSlop={8}
           onPress={() => onToggleFavorite(item)}
           style={styles.favQuickBtn}
-          accessibilityLabel={item.is_favorite ? 'Desfijar tarea' : 'Fijar tarea'}
+          accessibilityLabel={item.is_favorite ? t('daily.unpin_task', 'Desfijar tarea') : t('daily.pin_task', 'Fijar tarea')}
         >
           <Pin
             size={14}
@@ -505,7 +508,7 @@ export function DailyOverdueTaskCard({
           hitSlop={8}
           onPress={() => onDelete(item)}
           style={styles.deleteBtn}
-          accessibilityLabel="Eliminar tarea"
+          accessibilityLabel={t('daily.delete_task', 'Eliminar tarea')}
         >
           <Trash2 size={14} color={theme.colors.foregroundMuted} strokeWidth={1.8} />
         </Pressable>
@@ -513,7 +516,7 @@ export function DailyOverdueTaskCard({
 
       {/* Reschedule row: "Mover a:" with horizontal weekday pills */}
       <View style={styles.overdueMoveRow}>
-        <Text style={[styles.overdueMoveLabel, { color: theme.colors.foregroundMuted }]}>Mover a:</Text>
+        <Text style={[styles.overdueMoveLabel, { color: theme.colors.foregroundMuted }]}>{t('daily.overdue_move_to')}</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -547,10 +550,10 @@ export function DailyOverdueTaskCard({
             style={[styles.overdueMovePillCal, { backgroundColor: theme.dark ? 'rgba(212,177,58,0.1)' : 'rgba(212,177,58,0.15)', borderColor: theme.colors.border }]}
             onPress={() => onOpenRescheduleDatePicker(item)}
             hitSlop={4}
-            accessibilityLabel="Elegir otra fecha"
+            accessibilityLabel={t('daily.overdue_pick_other_date', 'Elegir otra fecha')}
           >
             <Calendar size={12} color="#D4B13A" />
-            <Text style={styles.overdueMovePillCalText}>Otro día</Text>
+            <Text style={styles.overdueMovePillCalText}>{t('daily.overdue_other_day')}</Text>
           </Pressable>
         </ScrollView>
       </View>

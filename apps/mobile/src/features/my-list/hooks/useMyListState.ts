@@ -14,6 +14,7 @@ import { usePullToRefresh } from '@/hooks/useAutoRefresh';
 import { supabase } from '@/services/supabase';
 import { useTags, useTagUsage, Tag } from '@/hooks/useTags';
 import { useToast } from '@bucketlist/ui';
+import { useTranslation } from 'react-i18next';
 
 import {
   FilterType,
@@ -27,6 +28,7 @@ import {
 
 export function useMyListState() {
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const toast = useToast();
   const params = useLocalSearchParams<{ filter?: string; tab?: string; from?: string }>();
 
@@ -562,18 +564,18 @@ export function useMyListState() {
     const expired = nonFavorites.filter(isExpired).sort(byManual);
 
     let otherSections = [
-      { key: 'in_progress', title: 'EN PROGRESO', items: inProgress },
-      { key: 'pending', title: 'PENDIENTES', items: pending },
-      { key: 'completed', title: 'COMPLETADAS', items: completed },
-      { key: 'expired', title: 'VENCIDAS', items: expired },
+      { key: 'in_progress', title: t('my_list.section_in_progress'), items: inProgress },
+      { key: 'pending', title: t('my_list.section_pending'), items: pending },
+      { key: 'completed', title: t('my_list.section_completed_tasks'), items: completed },
+      { key: 'expired', title: t('my_list.section_expired'), items: expired },
     ];
 
     if (sortDir === 'asc') {
       otherSections.reverse();
     }
 
-    return [{ key: 'favorites', title: 'FAVORITAS ⭐', items: favorites }, ...otherSections];
-  }, [filteredBuckets, sortField, sortDir, isBucketFavorite, manualOrder]);
+    return [{ key: 'favorites', title: t('my_list.section_favorites_tasks'), items: favorites }, ...otherSections];
+  }, [filteredBuckets, sortField, sortDir, isBucketFavorite, manualOrder, t]);
 
   const sortedFlatBuckets = useMemo(() => {
     if (!filteredBuckets || filteredBuckets.length === 0) return [];
@@ -728,18 +730,18 @@ export function useMyListState() {
     const closed = nonFavorites.filter((a: any) => getAlbumStatus(a) === 'closed').sort(byAlbumManual);
 
     let otherSections = [
-      { key: 'in_progress', title: 'EN PROGRESO', items: inProgress },
-      { key: 'pending', title: 'PENDIENTES', items: pending },
-      { key: 'completed', title: 'COMPLETADOS', items: completed },
-      { key: 'closed', title: 'CERRADOS', items: closed },
+      { key: 'in_progress', title: t('my_list.section_in_progress'), items: inProgress },
+      { key: 'pending', title: t('my_list.section_pending'), items: pending },
+      { key: 'completed', title: t('my_list.section_completed_albums'), items: completed },
+      { key: 'closed', title: t('my_list.section_closed'), items: closed },
     ];
 
     if (albumSortDir === 'asc') {
       otherSections.reverse();
     }
 
-    return [{ key: 'favorites', title: 'FAVORITOS ⭐', items: favorites }, ...otherSections];
-  }, [filteredAlbums, albumSortDir, isAlbumFavorite, albumManualOrder]);
+    return [{ key: 'favorites', title: t('my_list.section_favorites_albums'), items: favorites }, ...otherSections];
+  }, [filteredAlbums, albumSortDir, isAlbumFavorite, albumManualOrder, t]);
 
   const sortedAlbumsList = useMemo(() => {
     if (!filteredAlbums || filteredAlbums.length === 0) return [];

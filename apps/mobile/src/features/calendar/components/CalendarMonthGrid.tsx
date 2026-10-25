@@ -3,7 +3,8 @@ import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { Typography, useTheme } from '@bucketlist/ui';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { format, isSameMonth, isSameDay } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
+import { getDateFnsLocale } from '@/utils/dateLocale';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { styles } from '../styles/calendar.styles';
 
@@ -31,6 +32,8 @@ export function CalendarMonthGrid({
   isLoading,
 }: CalendarMonthGridProps) {
   const { theme } = useTheme();
+  const { t, i18n } = useTranslation();
+  const dateFnsLocale = getDateFnsLocale(i18n.language);
 
   return (
     <>
@@ -42,12 +45,14 @@ export function CalendarMonthGrid({
             color={theme.colors.foreground}
             style={{ textTransform: 'capitalize', fontSize: 26 }}
           >
-            {format(currentDate, 'MMMM yyyy', { locale: es })}
+            {format(currentDate, 'MMMM yyyy', { locale: dateFnsLocale })}
           </Typography>
           <Typography variant="body" color={theme.colors.foregroundMuted} style={{ marginTop: 2 }}>
             {completedThisMonth === 0
-              ? '0 completadas este mes'
-              : `${completedThisMonth} completada${completedThisMonth === 1 ? '' : 's'} este mes`}
+              ? t('calendar.completed_this_month_zero')
+              : completedThisMonth === 1
+              ? t('calendar.completed_this_month_single')
+              : t('calendar.completed_this_month_plural', { count: completedThisMonth })}
           </Typography>
         </View>
         <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -56,7 +61,7 @@ export function CalendarMonthGrid({
             style={[styles.navButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel="Mes anterior"
+            accessibilityLabel={t('calendar.prev_month')}
           >
             <ChevronLeft color={theme.colors.foreground} size={22} />
           </Pressable>
@@ -65,7 +70,7 @@ export function CalendarMonthGrid({
             style={[styles.navButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel="Mes siguiente"
+            accessibilityLabel={t('calendar.next_month')}
           >
             <ChevronRight color={theme.colors.foreground} size={22} />
           </Pressable>
@@ -74,7 +79,7 @@ export function CalendarMonthGrid({
 
       {/* Weekdays */}
       <View style={styles.weekdaysRow}>
-        {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((day, i) => (
+        {(i18n.language === 'en' ? ['M', 'T', 'W', 'T', 'F', 'S', 'S'] : ['L', 'M', 'X', 'J', 'V', 'S', 'D']).map((day, i) => (
           <View key={i} style={styles.weekdayCell}>
             <Text style={[styles.weekdayText, { color: theme.colors.foregroundMuted }]}>{day}</Text>
           </View>
@@ -157,15 +162,15 @@ export function CalendarMonthGrid({
       <View style={styles.legendRow}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: '#D4B13A' }]} />
-          <Text style={[styles.legendText, { color: theme.colors.foregroundMuted }]}>Completada</Text>
+          <Text style={[styles.legendText, { color: theme.colors.foregroundMuted }]}>{t('common.status_completed')}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: '#3A78C4' }]} />
-          <Text style={[styles.legendText, { color: theme.colors.foregroundMuted }]}>Pendiente</Text>
+          <Text style={[styles.legendText, { color: theme.colors.foregroundMuted }]}>{t('common.status_pending')}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: '#EF4444' }]} />
-          <Text style={[styles.legendText, { color: theme.colors.foregroundMuted }]}>Vencida</Text>
+          <Text style={[styles.legendText, { color: theme.colors.foregroundMuted }]}>{t('calendar.status_overdue')}</Text>
         </View>
       </View>
     </>

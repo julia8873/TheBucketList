@@ -395,16 +395,23 @@ export async function sendPushNotification(
   if (tokenOrUserId.startsWith('ExponentPushToken[')) {
     targetTokens.push(tokenOrUserId);
   } else if (tokenOrUserId.includes('-')) {
-    // Es un user_id: buscar en push_tokens y profiles
-    const [ptRes, profRes] = await Promise.all([
-      supabase.from('push_tokens').select('token').eq('user_id', tokenOrUserId),
-      supabase.from('profiles').select('push_token').eq('id', tokenOrUserId).maybeSingle(),
+    // Es un user_id: buscar en get_user_push_tokens (RPC con security definer) y en profiles
+    const [rpcRes, ptRes, profRes] = await Promise.all([
+      Promise.resolve(supabase.rpc('get_user_push_tokens', { p_user_id: tokenOrUserId })).catch(() => ({ data: null })),
+      Promise.resolve(supabase.from('push_tokens').select('token').eq('user_id', tokenOrUserId)).catch(() => ({ data: null })),
+      Promise.resolve(supabase.from('profiles').select('push_token').eq('id', tokenOrUserId).maybeSingle()).catch(() => ({ data: null })),
     ]);
 
     const set = new Set<string>();
+    if (rpcRes.data && Array.isArray(rpcRes.data)) {
+      rpcRes.data.forEach((r: any) => {
+        const t = typeof r === 'string' ? r : r?.token;
+        if (t) set.add(t);
+      });
+    }
     if (profRes.data?.push_token) set.add(profRes.data.push_token);
-    ptRes.data?.forEach((r) => {
-      if (r.token) set.add(r.token);
+    (ptRes.data as any[])?.forEach((r) => {
+      if (r?.token) set.add(r.token);
     });
     targetTokens = Array.from(set);
   }

@@ -25,6 +25,7 @@ import { PRIORITY_CONFIG, PRIORITY_ORDER } from '@/features/daily-tasks/constant
 import { styles } from '@/features/daily-tasks/styles/explore.styles';
 import { parseLocalDate, toDateString } from '@/features/daily-tasks/utils/dailyTaskDateUtils';
 import { useDailyTasksState } from '@/features/daily-tasks/hooks/useDailyTasksState';
+import { useTranslation } from 'react-i18next';
 
 import { DailyTasksTopBar, DailyTasksScrollControls, DailyQuickAddBar } from '@/features/daily-tasks/components/DailyTasksHeader';
 import { DailyOverdueSection } from '@/features/daily-tasks/components/DailyOverdueSection';
@@ -44,6 +45,7 @@ export { PRIORITY_CONFIG, PRIORITY_ORDER };
 
 export default function DailyTasksScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const state = useDailyTasksState();
   const [showCreateDatePicker, setShowCreateDatePicker] = useState(false);
 
@@ -163,10 +165,10 @@ export default function DailyTasksScreen() {
                     <CheckCircle2 size={32} color="#34C759" strokeWidth={1.8} />
                   </View>
                   <Typography variant="bodySemibold" style={[styles.emptyTitle, { color: theme.colors.foreground }]}>
-                    No hay tareas completadas
+                    {t('daily.no_completed_today_title')}
                   </Typography>
                   <Typography variant="caption" color="textSecondary" style={styles.emptySubtitle}>
-                    Las tareas que completes hoy aparecerán aquí.
+                    {t('daily.no_completed_today_desc')}
                   </Typography>
                 </View>
               ) : (
@@ -199,10 +201,10 @@ export default function DailyTasksScreen() {
                           <ListTodo size={32} color={gold[400]} strokeWidth={1.8} />
                         </View>
                         <Typography variant="bodySemibold" style={[styles.emptyTitle, { color: theme.colors.foreground }]}>
-                          ¡Todo listo por hoy!
+                          {t('daily.all_done_today_title')}
                         </Typography>
                         <Typography variant="caption" color="textSecondary" style={styles.emptySubtitle}>
-                          Añade una tarea con el botón + abajo o arriba para organizar tu día.
+                          {t('daily.all_done_today_desc')}
                         </Typography>
                       </View>
                     ) : null
@@ -238,7 +240,7 @@ export default function DailyTasksScreen() {
                         onPress={state.toggleTodayCompleted}
                         hitSlop={8}
                         accessibilityRole="button"
-                        accessibilityLabel={state.isTodayCompletedCollapsed ? "Mostrar completadas hoy" : "Replegar completadas hoy"}
+                        accessibilityLabel={state.isTodayCompletedCollapsed ? t('daily.show_completed_today', 'Mostrar completadas hoy') : t('daily.hide_completed_today', 'Replegar completadas hoy')}
                       >
                         {state.isTodayCompletedCollapsed ? (
                           <ChevronRight size={14} color={theme.colors.foregroundMuted} />
@@ -250,8 +252,8 @@ export default function DailyTasksScreen() {
                           {state.completedList.some(
                             (t) => t.completed_at && !t.completed_at.startsWith(state.todayStr)
                           )
-                            ? `Completadas (${state.completedList.length})`
-                            : `Completadas hoy (${state.completedList.length})`}
+                            ? t('daily.completed_count', { count: state.completedList.length })
+                            : t('daily.completed_today_count', { count: state.completedList.length })}
                         </Typography>
                       </Pressable>
                       {!state.isTodayCompletedCollapsed && (
@@ -326,10 +328,10 @@ export default function DailyTasksScreen() {
                         <ListTodo size={32} color={gold[400]} strokeWidth={1.8} />
                       </View>
                       <Typography variant="bodySemibold" style={[styles.emptyTitle, { color: theme.colors.foreground }]}>
-                        No hay tareas
+                        {t('daily.no_tasks_title')}
                       </Typography>
                       <Typography variant="caption" color="textSecondary" style={styles.emptySubtitle}>
-                        Crea una tarea con el botón + abajo o arriba para comenzar.
+                        {t('daily.no_tasks_desc')}
                       </Typography>
                     </View>
                   ) : state.groupByTag ? (
@@ -366,7 +368,7 @@ export default function DailyTasksScreen() {
         <FAB
           onPress={() => state.handleOpenCreateTask()}
           bottomOffset={24}
-          accessibilityLabel="Crear tarea diaria"
+          accessibilityLabel={t('daily.new_task_btn')}
         />
 
         {/* MODAL 1: Create Task Modal */}

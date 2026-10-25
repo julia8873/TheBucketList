@@ -15,7 +15,7 @@ import {
   Check,
 } from 'lucide-react-native';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { getDateFnsLocale } from '@/utils/dateLocale';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { gold } from '@bucketlist/ui/src/tokens/colors';
@@ -25,29 +25,6 @@ import { styles } from '../styles/explore.styles';
 import { DailyTag, DailySortField, DailySortDirection, TimeView, StatusFilter } from '../types';
 import type { WeekBlockItem } from './DailyWeekView';
 import { TagSheetShell } from '@/components/TagSheetShell';
-
-const DAILY_STATUS_OPTIONS: Array<{ key: 'all' | 'pending' | 'completed' | 'favorites'; label: string; desc: string }> = [
-  { key: 'all', label: 'Todas las tareas', desc: 'Muestra todas las tareas sin filtrar por estado' },
-  { key: 'pending', label: 'Pendientes', desc: 'Tareas activas o pendientes de realizar' },
-  { key: 'completed', label: 'Completadas', desc: 'Tareas que ya has marcado como completadas' },
-  { key: 'favorites', label: 'Fijadas', desc: 'Tareas destacadas o ancladas arriba' },
-];
-
-const DAILY_PRIORITY_OPTIONS: Array<{ key: string; label: string; desc: string }> = [
-  { key: 'all', label: 'Todas las prioridades', desc: 'Muestra tareas de cualquier prioridad' },
-  { key: 'urgent', label: '🚨 Urgente', desc: 'Tareas críticas que requieren atención inmediata' },
-  { key: 'high', label: '🔴 Alta', desc: 'Tareas prioritarias o de gran importancia' },
-  { key: 'medium', label: '🟡 Media', desc: 'Tareas de prioridad habitual' },
-  { key: 'low', label: '🟢 Baja', desc: 'Tareas secundarias sin urgencia' },
-];
-
-const DAILY_PRIORITY_SHORT_LABEL: Record<string, string> = {
-  all: 'Prioridad',
-  urgent: 'Prioridad: 🚨 Urgente',
-  high: 'Prioridad: 🔴 Alta',
-  medium: 'Prioridad: 🟡 Media',
-  low: 'Prioridad: 🟢 Baja',
-};
 
 export interface DailyTasksTopBarProps {
   timeView: TimeView;
@@ -236,6 +213,7 @@ export function DailyTasksScrollControls({
   setWeekOffset,
 }: DailyTasksScrollControlsProps) {
   const { theme } = useTheme();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const [statusSheetVisible, setStatusSheetVisible] = useState(false);
   const [prioritySheetVisible, setPrioritySheetVisible] = useState(false);
@@ -243,6 +221,30 @@ export function DailyTasksScrollControls({
   const isStatusActive = statusFilter !== 'all' || onlyFavorites;
   const isPriorityActive = priorityFilter !== 'all';
   const hasActiveFilters = isStatusActive || isPriorityActive || selectedTagFilters.length > 0;
+  const dateFnsLocale = getDateFnsLocale(i18n.language);
+
+  const dailyStatusOptions: Array<{ key: 'all' | 'pending' | 'completed' | 'favorites'; label: string; desc: string }> = [
+    { key: 'all', label: t('daily.filter_status_all'), desc: t('daily.filter_status_all_desc') },
+    { key: 'pending', label: t('daily.filter_status_pending'), desc: t('daily.filter_status_pending_desc') },
+    { key: 'completed', label: t('daily.filter_status_completed'), desc: t('daily.filter_status_completed_desc') },
+    { key: 'favorites', label: t('daily.filter_status_favorites'), desc: t('daily.filter_status_favorites_desc') },
+  ];
+
+  const dailyPriorityOptions: Array<{ key: string; label: string; desc: string }> = [
+    { key: 'all', label: t('daily.filter_priority_all'), desc: t('daily.filter_priority_all_desc') },
+    { key: 'urgent', label: t('daily.filter_priority_urgent'), desc: t('daily.filter_priority_urgent_desc') },
+    { key: 'high', label: t('daily.filter_priority_high'), desc: t('daily.filter_priority_high_desc') },
+    { key: 'medium', label: t('daily.filter_priority_medium'), desc: t('daily.filter_priority_medium_desc') },
+    { key: 'low', label: t('daily.filter_priority_low'), desc: t('daily.filter_priority_low_desc') },
+  ];
+
+  const dailyPriorityShortLabel: Record<string, string> = {
+    all: t('daily.filter_priority'),
+    urgent: `${t('daily.filter_priority')}: ${t('daily.filter_priority_urgent')}`,
+    high: `${t('daily.filter_priority')}: ${t('daily.filter_priority_high')}`,
+    medium: `${t('daily.filter_priority')}: ${t('daily.filter_priority_medium')}`,
+    low: `${t('daily.filter_priority')}: ${t('daily.filter_priority_low')}`,
+  };
 
   return (
     <View style={{ marginBottom: 6 }}>
@@ -259,7 +261,7 @@ export function DailyTasksScrollControls({
               onPress={() => setWeekOffset?.((prev) => Math.max(0, prev - 1))}
               disabled={weekOffset <= 0}
               hitSlop={8}
-              accessibilityLabel="Semana anterior"
+              accessibilityLabel={t('calendar.prev_month')}
             >
               <ChevronLeft size={18} color={weekOffset <= 0 ? theme.colors.foregroundSubtle : theme.colors.foreground} />
             </Pressable>
@@ -268,7 +270,7 @@ export function DailyTasksScrollControls({
               <Text style={[styles.weekNavTitle, { color: theme.colors.foreground }]}>
                 {weeksToShow === 1
                   ? displayedWeeks[0]?.weekLabel
-                  : `${weeksToShow} semanas (${format(displayedWeeks[0]?.monday || new Date(), 'd MMM', { locale: es })} – ${format(displayedWeeks[displayedWeeks.length - 1]?.sunday || new Date(), 'd MMM', { locale: es })})`}
+                  : `${t('daily.weeks_count', { count: weeksToShow })} (${format(displayedWeeks[0]?.monday || new Date(), 'd MMM', { locale: dateFnsLocale })} – ${format(displayedWeeks[displayedWeeks.length - 1]?.sunday || new Date(), 'd MMM', { locale: dateFnsLocale })})`}
               </Text>
               {weekOffset > 0 && (
                 <Pressable
@@ -281,7 +283,7 @@ export function DailyTasksScrollControls({
                   ]}
                   onPress={() => setWeekOffset?.(0)}
                 >
-                  <Text style={styles.weekNavTodayText}>Volver a hoy</Text>
+                  <Text style={styles.weekNavTodayText}>{t('daily.back_to_today')}</Text>
                 </Pressable>
               )}
             </View>
@@ -293,7 +295,7 @@ export function DailyTasksScrollControls({
               ]}
               onPress={() => setWeekOffset?.((prev) => prev + 1)}
               hitSlop={8}
-              accessibilityLabel="Semana siguiente"
+              accessibilityLabel={t('calendar.next_month')}
             >
               <ChevronRight size={18} color={theme.colors.foreground} />
             </Pressable>
@@ -302,7 +304,7 @@ export function DailyTasksScrollControls({
           {/* Selector de número de semanas (1 sem | 2 sems | 3 sems | 4 sems) */}
           {setWeeksToShow && (
             <View style={styles.weekSpanSelector}>
-              <Text style={[styles.weekSpanLabel, { color: theme.colors.foregroundMuted }]}>Mostrar:</Text>
+              <Text style={[styles.weekSpanLabel, { color: theme.colors.foregroundMuted }]}>{t('daily.show_label')}</Text>
               {[1, 2, 3, 4].map((n) => (
                 <Pressable
                   key={n}
@@ -323,7 +325,7 @@ export function DailyTasksScrollControls({
                       weeksToShow === n && styles.weekSpanPillTextActive,
                     ]}
                   >
-                    {n} {n === 1 ? 'sem' : 'sems'}
+                    {n} {n === 1 ? t('daily.week_abbr') : t('daily.weeks_abbr')}
                   </Text>
                 </Pressable>
               ))}
@@ -344,7 +346,7 @@ export function DailyTasksScrollControls({
       >
         {/* Todas */}
         <FilterChip
-          label="Todas"
+          label={t('daily.filter_all')}
           active={statusFilter === 'all' && !onlyFavorites && priorityFilter === 'all'}
           onPress={() => {
             setStatusFilter('all');
@@ -366,7 +368,7 @@ export function DailyTasksScrollControls({
           ]}
           onPress={() => setStatusSheetVisible(true)}
           accessibilityRole="button"
-          accessibilityLabel="Filtrar por estado"
+          accessibilityLabel={t('daily.filter_status_title')}
         >
           <Text
             style={[
@@ -375,12 +377,12 @@ export function DailyTasksScrollControls({
             ]}
           >
             {onlyFavorites
-              ? `Estado: Fijadas${favoritesCount > 0 ? ` (${favoritesCount})` : ''}`
+              ? `${t('daily.filter_status')}: ${t('daily.filter_status_favorites')}${favoritesCount > 0 ? ` (${favoritesCount})` : ''}`
               : statusFilter === 'pending'
-              ? 'Estado: Pendientes'
+              ? `${t('daily.filter_status')}: ${t('daily.filter_status_pending')}`
               : statusFilter === 'completed'
-              ? 'Estado: Completadas'
-              : 'Estado'}
+              ? `${t('daily.filter_status')}: ${t('daily.filter_status_completed')}`
+              : t('daily.filter_status')}
           </Text>
           <ChevronDown size={14} color={isStatusActive ? gold[400] : theme.colors.foregroundMuted} />
         </Pressable>
@@ -398,7 +400,7 @@ export function DailyTasksScrollControls({
           ]}
           onPress={() => setPrioritySheetVisible(true)}
           accessibilityRole="button"
-          accessibilityLabel="Filtrar por prioridad"
+          accessibilityLabel={t('daily.filter_priority_title')}
         >
           <Text
             style={[
@@ -406,7 +408,7 @@ export function DailyTasksScrollControls({
               { color: isPriorityActive ? gold[400] : theme.colors.foregroundMuted },
             ]}
           >
-            {DAILY_PRIORITY_SHORT_LABEL[priorityFilter] || 'Prioridad'}
+            {dailyPriorityShortLabel[priorityFilter] || t('daily.filter_priority')}
           </Text>
           <ChevronDown size={14} color={isPriorityActive ? gold[400] : theme.colors.foregroundMuted} />
         </Pressable>
@@ -424,7 +426,7 @@ export function DailyTasksScrollControls({
           ]}
           onPress={onOpenTagFilterSheet}
           accessibilityRole="button"
-          accessibilityLabel="Gestionar y filtrar etiquetas"
+          accessibilityLabel={t('daily.filter_tags_title')}
         >
           <TagIcon
             size={13}
@@ -438,8 +440,8 @@ export function DailyTasksScrollControls({
             ]}
           >
             {selectedTagFilters.length > 0
-              ? `Etiquetas (${selectedTagFilters.length})`
-              : 'Etiquetas'}
+              ? `${t('daily.filter_tags')} (${selectedTagFilters.length})`
+              : t('daily.filter_tags')}
           </Text>
         </Pressable>
 
@@ -492,10 +494,10 @@ export function DailyTasksScrollControls({
               setPriorityFilter('all');
               setSelectedTagFilters([]);
             }}
-            accessibilityLabel="Restablecer filtros"
+            accessibilityLabel={t('daily.clear_filters')}
           >
             <X size={11} color={theme.colors.foregroundMuted} />
-            <Text style={[styles.clearFiltersPillText, { color: theme.colors.foregroundMuted }]}>Limpiar</Text>
+            <Text style={[styles.clearFiltersPillText, { color: theme.colors.foregroundMuted }]}>{t('daily.clear_filters')}</Text>
           </Pressable>
         )}
       </ScrollView>
@@ -510,7 +512,7 @@ export function DailyTasksScrollControls({
             (sortField !== 'manual' || groupByTag) && [styles.sortTriggerBtnActive, { backgroundColor: theme.dark ? '#262010' : '#FDF4DC' }],
           ]}
           onPress={onOpenSortModal}
-          accessibilityLabel="Ordenar por prioridad y opciones"
+          accessibilityLabel={t('daily.sort_and_classify')}
         >
           <ArrowUpDown
             size={12}
@@ -525,12 +527,12 @@ export function DailyTasksScrollControls({
             ]}
           >
             {sortField === 'manual'
-              ? (groupByTag ? 'Etiquetas' : 'Prioridad')
+              ? (groupByTag ? t('daily.filter_tags') : t('daily.filter_priority'))
               : sortField === 'priority'
-              ? `Prioridad ${sortDirection === 'desc' ? '↓' : '↑'}`
+              ? `${t('daily.sort_priority')} ${sortDirection === 'desc' ? '↓' : '↑'}`
               : sortField === 'name'
-              ? `Nombre ${sortDirection === 'asc' ? 'A-Z' : 'Z-A'}`
-              : `Fecha ${sortDirection === 'asc' ? '↑' : '↓'}`}
+              ? `${t('daily.sort_name')} ${sortDirection === 'asc' ? 'A-Z' : 'Z-A'}`
+              : `${t('daily.sort_date')} ${sortDirection === 'asc' ? '↑' : '↓'}`}
           </Text>
           {(sortField !== 'manual' || groupByTag) && <View style={styles.sortActiveDot} />}
         </Pressable>
@@ -540,20 +542,20 @@ export function DailyTasksScrollControls({
       <TagSheetShell visible={statusSheetVisible} onClose={() => setStatusSheetVisible(false)}>
         <View style={[dailySheetStyles.sheetContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
           <View style={dailySheetStyles.sheetHeader}>
-            <Text style={[dailySheetStyles.sheetTitle, { color: theme.colors.foreground }]}>Filtrar por estado</Text>
+            <Text style={[dailySheetStyles.sheetTitle, { color: theme.colors.foreground }]}>{t('daily.filter_status_title')}</Text>
             <Pressable
               onPress={() => setStatusSheetVisible(false)}
               hitSlop={8}
               style={[dailySheetStyles.sheetCloseBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
               accessibilityRole="button"
-              accessibilityLabel="Cerrar filtro de estado"
+              accessibilityLabel={t('common.close')}
             >
               <X size={16} color={theme.colors.foregroundMuted} />
             </Pressable>
           </View>
 
           <View style={dailySheetStyles.sheetOptionList}>
-            {DAILY_STATUS_OPTIONS.map((opt) => {
+            {dailyStatusOptions.map((opt) => {
               const isSelected =
                 opt.key === 'favorites'
                   ? onlyFavorites
@@ -582,7 +584,7 @@ export function DailyTasksScrollControls({
                     pressed && { opacity: 0.8 },
                   ]}
                   accessibilityRole="button"
-                  accessibilityLabel={`Filtrar por ${opt.label}`}
+                  accessibilityLabel={`${t('daily.filter_status')}: ${opt.label}`}
                 >
                   <View style={{ flex: 1, marginRight: 12 }}>
                     <Text
@@ -607,20 +609,20 @@ export function DailyTasksScrollControls({
       <TagSheetShell visible={prioritySheetVisible} onClose={() => setPrioritySheetVisible(false)}>
         <View style={[dailySheetStyles.sheetContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
           <View style={dailySheetStyles.sheetHeader}>
-            <Text style={[dailySheetStyles.sheetTitle, { color: theme.colors.foreground }]}>Filtrar por prioridad</Text>
+            <Text style={[dailySheetStyles.sheetTitle, { color: theme.colors.foreground }]}>{t('daily.filter_priority_title')}</Text>
             <Pressable
               onPress={() => setPrioritySheetVisible(false)}
               hitSlop={8}
               style={[dailySheetStyles.sheetCloseBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
               accessibilityRole="button"
-              accessibilityLabel="Cerrar filtro de prioridad"
+              accessibilityLabel={t('common.close')}
             >
               <X size={16} color={theme.colors.foregroundMuted} />
             </Pressable>
           </View>
 
           <View style={dailySheetStyles.sheetOptionList}>
-            {DAILY_PRIORITY_OPTIONS.map((opt) => {
+            {dailyPriorityOptions.map((opt) => {
               const isSelected = priorityFilter === opt.key;
               return (
                 <Pressable
@@ -640,7 +642,7 @@ export function DailyTasksScrollControls({
                     pressed && { opacity: 0.8 },
                   ]}
                   accessibilityRole="button"
-                  accessibilityLabel={`Filtrar por prioridad ${opt.label}`}
+                  accessibilityLabel={`${t('daily.filter_priority')}: ${opt.label}`}
                 >
                   <View style={{ flex: 1, marginRight: 12 }}>
                     <Text

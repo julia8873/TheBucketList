@@ -1,5 +1,5 @@
 import { themedStyleSheet } from '@bucketlist/ui';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import {
   Tag as TagIcon,
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react-native';
 import { Typography, FilterChip } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
+import { useTranslation } from 'react-i18next';
 import { styles } from '../styles/my-list.styles';
 import { FilterType, PriorityFilter, SortField, SortDir, TaskViewMode } from '../types';
 import { Tag } from '@/hooks/useTags';
@@ -47,38 +48,6 @@ interface TaskListHeaderControlsProps {
   theme: any;
 }
 
-const STATUS_OPTIONS: Array<{ key: FilterType; label: string; desc: string }> = [
-  { key: 'all', label: 'Todas las tareas', desc: 'Muestra todas las tareas sin filtrar por estado' },
-  { key: 'active', label: 'En curso', desc: 'Tareas activas o pendientes de realizar' },
-  { key: 'in_progress', label: 'En progreso', desc: 'Tareas marcadas como actualmente en marcha' },
-  { key: 'completed', label: 'Completadas', desc: 'Tareas que ya has marcado como finalizadas' },
-  { key: 'expired', label: 'Vencidas', desc: 'Tareas cuya fecha límite ya ha expirado' },
-  { key: 'public', label: 'Públicas', desc: 'Tareas con visibilidad pública en la comunidad' },
-];
-
-const STATUS_SHORT_LABEL: Record<FilterType, string> = {
-  all: 'Estado',
-  active: 'Estado: En curso',
-  in_progress: 'Estado: En progreso',
-  completed: 'Estado: Completadas',
-  expired: 'Estado: Vencidas',
-  public: 'Estado: Públicas',
-};
-
-const PRIORITY_OPTIONS: Array<{ key: PriorityFilter; label: string; desc: string }> = [
-  { key: 'all', label: 'Todas las prioridades', desc: 'Muestra tareas de cualquier prioridad' },
-  { key: 'high', label: '🔴 Alta', desc: 'Tareas urgentes o de máxima prioridad' },
-  { key: 'medium', label: '🟡 Media', desc: 'Tareas de prioridad estándar' },
-  { key: 'low', label: '🟢 Baja', desc: 'Tareas sin prisa o de prioridad baja' },
-];
-
-const PRIORITY_SHORT_LABEL: Record<PriorityFilter, string> = {
-  all: 'Prioridad',
-  high: 'Prioridad: 🔴 Alta',
-  medium: 'Prioridad: 🟡 Media',
-  low: 'Prioridad: 🟢 Baja',
-};
-
 export function TaskListHeaderControls({
   filter,
   setFilter,
@@ -104,8 +73,41 @@ export function TaskListHeaderControls({
   theme,
 }: TaskListHeaderControlsProps) {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const [statusSheetVisible, setStatusSheetVisible] = useState(false);
   const [prioritySheetVisible, setPrioritySheetVisible] = useState(false);
+
+  const statusOptions: Array<{ key: FilterType; label: string; desc: string }> = useMemo(() => [
+    { key: 'all', label: t('my_list.status_filter_all'), desc: t('my_list.status_filter_all_desc') },
+    { key: 'active', label: t('my_list.status_filter_active'), desc: t('my_list.status_filter_active_desc') },
+    { key: 'in_progress', label: t('my_list.status_filter_in_progress'), desc: t('my_list.status_filter_in_progress_desc') },
+    { key: 'completed', label: t('my_list.status_filter_completed'), desc: t('my_list.status_filter_completed_desc') },
+    { key: 'expired', label: t('my_list.status_filter_expired'), desc: t('my_list.status_filter_expired_desc') },
+    { key: 'public', label: t('my_list.status_filter_public'), desc: t('my_list.status_filter_public_desc') },
+  ], [t]);
+
+  const statusShortLabel: Record<FilterType, string> = useMemo(() => ({
+    all: t('my_list.filter_status_short'),
+    active: `${t('my_list.filter_status_short')}: ${t('my_list.status_filter_active')}`,
+    in_progress: `${t('my_list.filter_status_short')}: ${t('my_list.status_filter_in_progress')}`,
+    completed: `${t('my_list.filter_status_short')}: ${t('my_list.status_filter_completed')}`,
+    expired: `${t('my_list.filter_status_short')}: ${t('my_list.status_filter_expired')}`,
+    public: `${t('my_list.filter_status_short')}: ${t('my_list.status_filter_public')}`,
+  }), [t]);
+
+  const priorityOptions: Array<{ key: PriorityFilter; label: string; desc: string }> = useMemo(() => [
+    { key: 'all', label: t('my_list.priority_filter_all'), desc: t('my_list.priority_filter_all_desc') },
+    { key: 'high', label: t('my_list.priority_filter_high'), desc: t('my_list.priority_filter_high_desc') },
+    { key: 'medium', label: t('my_list.priority_filter_medium'), desc: t('my_list.priority_filter_medium_desc') },
+    { key: 'low', label: t('my_list.priority_filter_low'), desc: t('my_list.priority_filter_low_desc') },
+  ], [t]);
+
+  const priorityShortLabel: Record<PriorityFilter, string> = useMemo(() => ({
+    all: t('my_list.filter_priority_short'),
+    high: `${t('my_list.filter_priority_short')}: ${t('my_list.priority_filter_high')}`,
+    medium: `${t('my_list.filter_priority_short')}: ${t('my_list.priority_filter_medium')}`,
+    low: `${t('my_list.filter_priority_short')}: ${t('my_list.priority_filter_low')}`,
+  }), [t]);
 
   return (
     <View>
@@ -118,7 +120,7 @@ export function TaskListHeaderControls({
       >
         {/* Todas */}
         <FilterChip
-          label="Todas"
+          label={t('my_list.filter_all')}
           active={filter === 'all' && priorityFilter === 'all'}
           onPress={() => {
             setFilter('all');
@@ -130,7 +132,7 @@ export function TaskListHeaderControls({
         <Pressable
           onPress={() => setStatusSheetVisible(true)}
           accessibilityRole="button"
-          accessibilityLabel="Filtrar por estado"
+          accessibilityLabel={t('my_list.filter_status')}
           style={[
             styles.tagFilterBtn,
             {
@@ -142,7 +144,7 @@ export function TaskListHeaderControls({
           ]}
         >
           <Text style={[styles.tagFilterText, { color: filter !== 'all' ? gold[400] : theme.colors.foregroundMuted }]}>
-            {STATUS_SHORT_LABEL[filter]}
+            {statusShortLabel[filter]}
           </Text>
           <ChevronDown size={14} color={filter !== 'all' ? gold[400] : theme.colors.foregroundMuted} />
         </Pressable>
@@ -151,7 +153,7 @@ export function TaskListHeaderControls({
         <Pressable
           onPress={() => setPrioritySheetVisible(true)}
           accessibilityRole="button"
-          accessibilityLabel="Filtrar por prioridad"
+          accessibilityLabel={t('my_list.filter_priority')}
           style={[
             styles.tagFilterBtn,
             {
@@ -163,7 +165,7 @@ export function TaskListHeaderControls({
           ]}
         >
           <Text style={[styles.tagFilterText, { color: priorityFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted }]}>
-            {PRIORITY_SHORT_LABEL[priorityFilter]}
+            {priorityShortLabel[priorityFilter]}
           </Text>
           <ChevronDown size={14} color={priorityFilter !== 'all' ? gold[400] : theme.colors.foregroundMuted} />
         </Pressable>
@@ -172,7 +174,7 @@ export function TaskListHeaderControls({
         <Pressable
           onPress={onOpenTagFilterSheet}
           accessibilityRole="button"
-          accessibilityLabel="Filtrar por etiquetas"
+          accessibilityLabel={t('my_list.filter_tags')}
           style={[
             styles.tagFilterBtn,
             {
@@ -186,31 +188,31 @@ export function TaskListHeaderControls({
           <TagIcon size={14} color={selectedTagIds.length > 0 ? gold[400] : theme.colors.foregroundMuted} strokeWidth={2} />
           <Text style={[styles.tagFilterText, { color: selectedTagIds.length > 0 ? gold[400] : theme.colors.foregroundMuted }]}>
             {selectedTagIds.length === 0
-              ? 'Etiquetas'
+              ? t('my_list.filter_tags_short')
               : selectedTagIds.length === 1
-              ? '1 etiqueta'
-              : `${selectedTagIds.length} etiquetas`}
+              ? t('my_list.tags_count_single')
+              : t('my_list.tags_count_plural', { count: selectedTagIds.length })}
           </Text>
         </Pressable>
 
         {/* Chips de etiquetas seleccionadas */}
-        {selectedTags.map((t) => (
+        {selectedTags.map((tItem) => (
           <Pressable
-            key={t.id}
-            onPress={() => onRemoveTagFilter(t.id)}
+            key={tItem.id}
+            onPress={() => onRemoveTagFilter(tItem.id)}
             accessibilityRole="button"
-            accessibilityLabel={`Quitar etiqueta ${t.name}`}
+            accessibilityLabel={t('my_list.remove_tag_label', { name: tItem.name })}
             style={[styles.activeTagChip, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
           >
-            {t.emoji ? (
-              <View style={[styles.activeTagEmoji, { backgroundColor: hexToRgba(t.color, 0.3) }]}>
-                <Text style={styles.activeTagEmojiText}>{t.emoji}</Text>
+            {tItem.emoji ? (
+              <View style={[styles.activeTagEmoji, { backgroundColor: hexToRgba(tItem.color, 0.3) }]}>
+                <Text style={styles.activeTagEmojiText}>{tItem.emoji}</Text>
               </View>
             ) : (
-              <View style={[styles.activeTagDot, { backgroundColor: t.color }]} />
+              <View style={[styles.activeTagDot, { backgroundColor: tItem.color }]} />
             )}
             <Text style={[styles.activeTagText, { color: theme.colors.foreground }]} numberOfLines={1}>
-              {t.name}
+              {tItem.name}
             </Text>
             <X size={15} color={theme.colors.foregroundMuted} strokeWidth={2} />
           </Pressable>
@@ -228,7 +230,7 @@ export function TaskListHeaderControls({
       >
         {/* Izquierda: Contador de tareas */}
         <Typography variant="caption" color={theme.colors.foregroundMuted} style={styles.tasksCountLabel}>
-          {tasksCount} {tasksCount === 1 ? 'TAREA' : 'TAREAS'}
+          {tasksCount === 1 ? t('my_list.tasks_count_single', { count: tasksCount }) : t('my_list.tasks_count_plural', { count: tasksCount })}
         </Typography>
 
         {/* Derecha: 1. Modo de vista (lista, galería, compacto), 2. Ordenar (Estado / etc.) */}
@@ -240,7 +242,7 @@ export function TaskListHeaderControls({
               style={[styles.viewModeBtn, taskViewMode === 'list' && styles.viewModeBtnActive]}
               hitSlop={4}
               accessibilityRole="button"
-              accessibilityLabel="Vista detallada"
+              accessibilityLabel={t('my_list.view_detailed')}
             >
               <LayoutList size={15} color={taskViewMode === 'list' ? '#0E0E0E' : theme.colors.foregroundMuted} />
             </Pressable>
@@ -249,7 +251,7 @@ export function TaskListHeaderControls({
               style={[styles.viewModeBtn, taskViewMode === 'gallery' && styles.viewModeBtnActive]}
               hitSlop={4}
               accessibilityRole="button"
-              accessibilityLabel="Vista galería"
+              accessibilityLabel={t('my_list.view_gallery')}
             >
               <LayoutGrid size={15} color={taskViewMode === 'gallery' ? '#0E0E0E' : theme.colors.foregroundMuted} />
             </Pressable>
@@ -258,7 +260,7 @@ export function TaskListHeaderControls({
               style={[styles.viewModeBtn, taskViewMode === 'compact' && styles.viewModeBtnActive]}
               hitSlop={4}
               accessibilityRole="button"
-              accessibilityLabel="Vista compacta"
+              accessibilityLabel={t('my_list.view_compact')}
             >
               <AlignJustify size={15} color={taskViewMode === 'compact' ? '#0E0E0E' : theme.colors.foregroundMuted} />
             </Pressable>
@@ -283,22 +285,22 @@ export function TaskListHeaderControls({
                 },
               ]}
               accessibilityRole="button"
-              accessibilityLabel="Ordenar tareas"
+              accessibilityLabel={t('my_list.sort_tasks')}
             >
               <Typography variant="caption" color={gold[400]} style={{ fontWeight: '600' }}>
                 {sortField === 'manual'
-                  ? 'Manual'
+                  ? t('my_list.sort_manual')
                   : sortField === 'status'
                   ? isReordering
-                    ? 'Estado (manual)'
-                    : 'Estado'
+                    ? t('my_list.sort_status_manual')
+                    : t('my_list.sort_status')
                   : sortField === 'priority'
-                  ? 'Prioridad'
+                  ? t('my_list.sort_priority')
                   : sortField === 'alphabetical'
-                  ? 'Alfabético'
+                  ? t('my_list.sort_alphabetical')
                   : sortField === 'completed_at'
-                  ? 'Completado'
-                  : 'Fecha'}
+                  ? t('my_list.sort_completed_at_short')
+                  : t('my_list.sort_date')}
               </Typography>
               {sortField !== 'manual' &&
                 !isReordering &&
@@ -329,7 +331,7 @@ export function TaskListHeaderControls({
                 },
               ]}
               accessibilityRole="button"
-              accessibilityLabel="Personalizar vista"
+              accessibilityLabel={t('my_list.customize_view')}
             >
               <SlidersHorizontal size={14} color={gold[400]} />
             </Pressable>
@@ -357,20 +359,20 @@ export function TaskListHeaderControls({
       <TagSheetShell visible={statusSheetVisible} onClose={() => setStatusSheetVisible(false)}>
         <View style={[localStyles.sheetContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
           <View style={localStyles.sheetHeader}>
-            <Text style={[localStyles.sheetTitle, { color: theme.colors.foreground }]}>Filtrar por estado</Text>
+            <Text style={[localStyles.sheetTitle, { color: theme.colors.foreground }]}>{t('my_list.filter_status')}</Text>
             <Pressable
               onPress={() => setStatusSheetVisible(false)}
               hitSlop={8}
               style={[localStyles.sheetCloseBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
               accessibilityRole="button"
-              accessibilityLabel="Cerrar filtro de estado"
+              accessibilityLabel={t('common.close')}
             >
               <X size={16} color={theme.colors.foregroundMuted} />
             </Pressable>
           </View>
 
           <View style={localStyles.sheetOptionList}>
-            {STATUS_OPTIONS.map((opt) => {
+            {statusOptions.map((opt) => {
               const isSelected = filter === opt.key;
               return (
                 <Pressable
@@ -390,7 +392,7 @@ export function TaskListHeaderControls({
                     pressed && { opacity: 0.8 },
                   ]}
                   accessibilityRole="button"
-                  accessibilityLabel={`Filtrar por ${opt.label}`}
+                  accessibilityLabel={opt.label}
                 >
                   <View style={{ flex: 1, marginRight: 12 }}>
                     <Text
@@ -415,20 +417,20 @@ export function TaskListHeaderControls({
       <TagSheetShell visible={prioritySheetVisible} onClose={() => setPrioritySheetVisible(false)}>
         <View style={[localStyles.sheetContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
           <View style={localStyles.sheetHeader}>
-            <Text style={[localStyles.sheetTitle, { color: theme.colors.foreground }]}>Filtrar por prioridad</Text>
+            <Text style={[localStyles.sheetTitle, { color: theme.colors.foreground }]}>{t('my_list.filter_priority')}</Text>
             <Pressable
               onPress={() => setPrioritySheetVisible(false)}
               hitSlop={8}
               style={[localStyles.sheetCloseBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
               accessibilityRole="button"
-              accessibilityLabel="Cerrar filtro de prioridad"
+              accessibilityLabel={t('common.close')}
             >
               <X size={16} color={theme.colors.foregroundMuted} />
             </Pressable>
           </View>
 
           <View style={localStyles.sheetOptionList}>
-            {PRIORITY_OPTIONS.map((opt) => {
+            {priorityOptions.map((opt) => {
               const isSelected = priorityFilter === opt.key;
               return (
                 <Pressable
@@ -448,7 +450,7 @@ export function TaskListHeaderControls({
                     pressed && { opacity: 0.8 },
                   ]}
                   accessibilityRole="button"
-                  accessibilityLabel={`Filtrar por prioridad ${opt.label}`}
+                  accessibilityLabel={opt.label}
                 >
                   <View style={{ flex: 1, marginRight: 12 }}>
                     <Text

@@ -1,5 +1,5 @@
 import { themedStyleSheet } from '@bucketlist/ui';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,17 +7,12 @@ import {
   Modal,
   StyleSheet,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SlidersHorizontal, ChevronDown, Check, X } from 'lucide-react-native';
 import { useTheme, fontFamily } from '@bucketlist/ui';
 
 export type TaskFilter = 'all' | 'active' | 'completed';
-
-const TASK_FILTER_OPTIONS: Array<{ key: TaskFilter; label: string; description: string }> = [
-  { key: 'all', label: 'Todas', description: 'Todas las tareas públicas' },
-  { key: 'active', label: 'En curso', description: 'Tareas pendientes o en progreso' },
-  { key: 'completed', label: 'Completadas', description: 'Tareas ya completadas' },
-];
 
 interface ProfileTaskFilterButtonProps {
   filter: TaskFilter;
@@ -25,12 +20,19 @@ interface ProfileTaskFilterButtonProps {
 }
 
 export function ProfileTaskFilterButton({ filter, onChangeFilter }: ProfileTaskFilterButtonProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [modalVisible, setModalVisible] = useState(false);
 
+  const taskFilterOptions: Array<{ key: TaskFilter; label: string; description: string }> = useMemo(() => [
+    { key: 'all', label: t('profile.filter_all'), description: t('profile.filter_tasks_all_desc') },
+    { key: 'active', label: t('profile.filter_active'), description: t('profile.filter_tasks_active_desc') },
+    { key: 'completed', label: t('profile.filter_completed'), description: t('profile.filter_tasks_completed_desc') },
+  ], [t]);
+
   const activeOption =
-    TASK_FILTER_OPTIONS.find((o) => o.key === filter) || TASK_FILTER_OPTIONS[0]!;
+    taskFilterOptions.find((o) => o.key === filter) || taskFilterOptions[0]!;
 
   return (
     <>
@@ -49,7 +51,7 @@ export function ProfileTaskFilterButton({ filter, onChangeFilter }: ProfileTaskF
           },
         ]}
         accessibilityRole="button"
-        accessibilityLabel={`Filtro de tareas: ${activeOption.label}`}
+        accessibilityLabel={t('profile.filter_tasks_btn_label', { label: activeOption.label })}
       >
         <SlidersHorizontal
           size={14}
@@ -85,7 +87,7 @@ export function ProfileTaskFilterButton({ filter, onChangeFilter }: ProfileTaskF
           <Pressable
             style={StyleSheet.absoluteFill}
             onPress={() => setModalVisible(false)}
-            accessibilityLabel="Cerrar filtro"
+            accessibilityLabel={t('profile.filter_tasks_close_label')}
           />
           <View
             style={[
@@ -108,7 +110,7 @@ export function ProfileTaskFilterButton({ filter, onChangeFilter }: ProfileTaskF
             {/* Header */}
             <View style={styles.sheetHeader}>
               <Text style={[styles.sheetTitle, { color: theme.colors.foreground }]}>
-                Filtrar tareas
+                {t('profile.filter_tasks_title')}
               </Text>
               <Pressable
                 onPress={() => setModalVisible(false)}
@@ -118,7 +120,7 @@ export function ProfileTaskFilterButton({ filter, onChangeFilter }: ProfileTaskF
                   { backgroundColor: theme.dark ? '#242424' : '#EFEAE1' },
                 ]}
                 accessibilityRole="button"
-                accessibilityLabel="Cerrar"
+                accessibilityLabel={t('common.close')}
               >
                 <X size={16} color={theme.colors.foregroundMuted} />
               </Pressable>
@@ -126,7 +128,7 @@ export function ProfileTaskFilterButton({ filter, onChangeFilter }: ProfileTaskF
 
             {/* Options */}
             <View style={styles.optionsContainer}>
-              {TASK_FILTER_OPTIONS.map((option) => {
+              {taskFilterOptions.map((option) => {
                 const isSelected = option.key === filter;
                 return (
                   <Pressable

@@ -14,9 +14,10 @@ import {
   isToday,
   isSameDay,
 } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { getDateFnsLocale } from '@/utils/dateLocale';
 
 import { useTheme, gold } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/explore.styles';
 import { DailyTask } from '../types';
 import { toDateString } from '../utils/dailyTaskDateUtils';
@@ -52,7 +53,9 @@ export function DailyCalendarView({
   sortTasks,
 }: DailyCalendarViewProps) {
   const { theme } = useTheme();
+  const { t, i18n } = useTranslation();
   const [isCalendarCompletedCollapsed, setIsCalendarCompletedCollapsed] = useState(false);
+  const dateFnsLocale = getDateFnsLocale(i18n.language);
 
   // Calendar Grid calculation
   const calendarGrid = useMemo(() => {
@@ -76,7 +79,7 @@ export function DailyCalendarView({
     });
 
     return {
-      monthLabel: format(calendarMonth, 'MMMM yyyy', { locale: es }),
+      monthLabel: format(calendarMonth, 'MMMM yyyy', { locale: dateFnsLocale }),
       days: days.map((d) => {
         const dStr = toDateString(d);
         const taskInfo = tasksMap.get(dStr);
@@ -93,7 +96,7 @@ export function DailyCalendarView({
         };
       }),
     };
-  }, [calendarMonth, selectedCalendarDate, tasks, todayStr]);
+  }, [calendarMonth, dateFnsLocale, selectedCalendarDate, tasks, todayStr]);
 
   const selectedDateTasks = useMemo(() => {
     const dStr = toDateString(selectedCalendarDate);
@@ -109,6 +112,14 @@ export function DailyCalendarView({
     return tasks.filter((t) => t.is_completed && (t.due_date || todayStr) === dStr);
   }, [selectedCalendarDate, tasks, todayStr]);
 
+  const daysOfWeek = i18n.language === 'en'
+    ? ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+    : ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+
+  const formattedSelectedDate = i18n.language === 'en'
+    ? format(selectedCalendarDate, 'EEEE, MMMM d', { locale: dateFnsLocale }).toUpperCase()
+    : format(selectedCalendarDate, "EEEE, d 'de' MMMM", { locale: dateFnsLocale }).toUpperCase();
+
   return (
     <View style={styles.calendarContainer}>
       {/* Calendar Navigation Card */}
@@ -118,6 +129,7 @@ export function DailyCalendarView({
             style={[styles.calendarNavBtn, { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border }]}
             onPress={() => onSetCalendarMonth((prev) => subMonths(prev, 1))}
             hitSlop={8}
+            accessibilityLabel={t('calendar.prev_month')}
           >
             <ChevronLeft size={20} color={theme.colors.foreground} />
           </Pressable>
@@ -141,7 +153,7 @@ export function DailyCalendarView({
                   onSelectCalendarDate(now);
                 }}
               >
-                <Text style={styles.calendarTodayText}>Este mes</Text>
+                <Text style={styles.calendarTodayText}>{t('daily.this_month')}</Text>
               </Pressable>
             )}
           </View>
@@ -150,6 +162,7 @@ export function DailyCalendarView({
             style={[styles.calendarNavBtn, { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border }]}
             onPress={() => onSetCalendarMonth((prev) => addMonths(prev, 1))}
             hitSlop={8}
+            accessibilityLabel={t('calendar.next_month')}
           >
             <ChevronRight size={20} color={theme.colors.foreground} />
           </Pressable>
@@ -157,7 +170,7 @@ export function DailyCalendarView({
 
         {/* Day of Week Headers */}
         <View style={[styles.calendarDaysOfWeekRow, { borderBottomColor: theme.colors.border }]}>
-          {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((d, idx) => (
+          {daysOfWeek.map((d, idx) => (
             <Text key={idx} style={[styles.calendarDayOfWeekText, { color: theme.colors.foregroundMuted }]}>
               {d}
             </Text>
@@ -221,12 +234,13 @@ export function DailyCalendarView({
         <View style={styles.calendarDayDetailHeader}>
           <View>
             <Text style={[styles.calendarDayDetailDate, { color: theme.colors.primary }]}>
-              {isToday(selectedCalendarDate) ? 'HOY · ' : ''}
-              {format(selectedCalendarDate, "EEEE, d 'de' MMMM", { locale: es }).toUpperCase()}
+              {isToday(selectedCalendarDate) ? t('daily.today_prefix') : ''}
+              {formattedSelectedDate}
             </Text>
             <Text style={[styles.calendarDayDetailSub, { color: theme.colors.foregroundMuted }]}>
-              {selectedDateTasks.length}{' '}
-              {selectedDateTasks.length === 1 ? 'tarea programada' : 'tareas programadas'}
+              {selectedDateTasks.length === 1
+                ? t('daily.scheduled_tasks_count', { count: selectedDateTasks.length })
+                : t('daily.scheduled_tasks_count_plural', { count: selectedDateTasks.length })}
             </Text>
           </View>
           <Pressable
@@ -234,14 +248,14 @@ export function DailyCalendarView({
             onPress={() => onOpenCreateTask(toDateString(selectedCalendarDate))}
           >
             <Plus size={14} color="#0E0E0E" strokeWidth={2.5} />
-            <Text style={styles.calendarDayAddBtnText}>Añadir</Text>
+            <Text style={styles.calendarDayAddBtnText}>{t('daily.add_btn')}</Text>
           </Pressable>
         </View>
 
         {sortedSelectedDateTasks.length === 0 ? (
           <View style={[styles.weekDayEmpty, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
             <Text style={[styles.weekDayEmptyText, { color: theme.colors.foregroundMuted }]}>
-              Sin tareas para este día. ¡Pulsa + Añadir para crear una!
+              {t('daily.no_tasks_for_day')}
             </Text>
           </View>
         ) : (
@@ -279,7 +293,7 @@ export function DailyCalendarView({
               )}
               <CheckCircle2 size={14} color="#34C759" />
               <Text style={[styles.completedSectionTitle, { color: theme.colors.foreground }]}>
-                Completadas ({selectedDateCompleted.length})
+                {t('daily.completed_count', { count: selectedDateCompleted.length })}
               </Text>
             </Pressable>
             {!isCalendarCompletedCollapsed && (

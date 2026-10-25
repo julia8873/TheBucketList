@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text } from 'react-native';
 
 import { useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/explore.styles';
 import { DailyTask, DailyTag } from '../types';
 import { DraggableTaskList, DragHandle } from '@/components/DraggableTaskList';
@@ -20,6 +21,7 @@ export function DailyGroupedTasksView({
   onDraggingChange,
 }: DailyGroupedTasksViewProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <View style={styles.tagGroupsContainer}>
@@ -33,7 +35,7 @@ export function DailyGroupedTasksView({
               ]}
             />
             <Text style={[styles.tagGroupTitle, { color: theme.colors.foreground }]}>
-              {grp.tag ? `${grp.tag.emoji ? grp.tag.emoji + ' ' : ''}${grp.tag.name}` : 'Sin etiqueta'}
+              {grp.tag ? `${grp.tag.emoji ? grp.tag.emoji + ' ' : ''}${grp.tag.name}` : t('daily.no_tag')}
             </Text>
             <View style={[styles.tagGroupBadge, { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border }]}>
               <Text style={[styles.tagGroupBadgeText, { color: theme.colors.foregroundMuted }]}>{grp.tasks.length}</Text>

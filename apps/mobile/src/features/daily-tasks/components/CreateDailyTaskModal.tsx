@@ -21,7 +21,8 @@ import {
   CheckCircle2,
 } from 'lucide-react-native';
 import { format, addDays } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
+import { getDateFnsLocale } from '@/utils/dateLocale';
 import { gold, useTheme } from '@bucketlist/ui';
 import { styles } from '../styles/explore.styles';
 import { RecurrenceSelector } from './RecurrenceSelector';
@@ -108,6 +109,8 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
   renderTagModal,
 }) => {
   const { theme } = useTheme();
+  const { t, i18n } = useTranslation();
+  const dateFnsLocale = getDateFnsLocale(i18n.language);
   const { height: windowHeight } = useWindowDimensions();
   const maxScrollHeight = Math.max(480, Math.min(560, windowHeight - 200));
   const scrollViewRef = useRef<ScrollView>(null);
@@ -158,12 +161,12 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
         <View style={[styles.fullModalCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
           <View style={styles.modalHeader}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={[styles.modalTitle, { color: theme.colors.foreground }]}>Nueva tarea</Text>
+              <Text style={[styles.modalTitle, { color: theme.colors.foreground }]}>{t('daily.create_modal_title')}</Text>
               <Pressable
                 onPress={() => setIsFavorite((prev) => !prev)}
                 hitSlop={8}
                 style={{ padding: 4 }}
-                accessibilityLabel={isFavorite ? 'Desfijar tarea' : 'Fijar tarea'}
+                accessibilityLabel={isFavorite ? t('daily.unpin_task') : t('daily.pin_task')}
               >
                 <Pin
                   size={18}
@@ -191,7 +194,7 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
             }}
           >
             {/* Título */}
-            <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>Título *</Text>
+            <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>{t('daily.title_required')}</Text>
             <TextInput
               ref={titleInputRef}
               style={[
@@ -202,14 +205,14 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
                   color: theme.colors.foreground,
                 },
               ]}
-              placeholder="¿Qué necesitas hacer?"
+              placeholder={t('daily.create_modal_placeholder')}
               placeholderTextColor={theme.colors.foregroundMuted}
               value={title}
               onChangeText={setTitle}
             />
 
             {/* Fecha */}
-            <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>Fecha</Text>
+            <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>{t('daily.date_label')}</Text>
             <View style={styles.modalPresetsRow}>
               <Pressable
                 style={[
@@ -230,7 +233,7 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
                     dueDate === todayStr && { fontFamily: 'Inter_600SemiBold' },
                   ]}
                 >
-                  Hoy
+                  {t('daily.today')}
                 </Text>
               </Pressable>
               <Pressable
@@ -256,7 +259,7 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
                     dueDate === toDateString(addDays(new Date(), 1)) && { fontFamily: 'Inter_600SemiBold' },
                   ]}
                 >
-                  Mañana
+                  {t('daily.tomorrow')}
                 </Text>
               </Pressable>
               <Pressable
@@ -282,7 +285,7 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
                     dueDate === toDateString(addDays(new Date(), 7)) && { fontFamily: 'Inter_600SemiBold' },
                   ]}
                 >
-                  +7 días
+                  {t('daily.plus_7_days')}
                 </Text>
               </Pressable>
             </View>
@@ -296,7 +299,7 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
             >
               <Calendar size={16} color={gold[400]} />
               <Text style={[styles.datePickerTriggerText, { color: theme.colors.foreground }]}>
-                {format(parseLocalDate(dueDate), "EEEE, d 'de' MMMM", { locale: es })}
+                {format(parseLocalDate(dueDate), t('daily.date_format_full'), { locale: dateFnsLocale })}
               </Text>
             </Pressable>
 
@@ -314,10 +317,10 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
             />
 
             {/* Prioridad */}
-            <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>Prioridad</Text>
+            <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>{t('daily.priority_label')}</Text>
             <View style={styles.prioritySelectorRow}>
               {PRIORITY_ORDER.map((p) => {
-                const cfg = getPriorityConfig(p, theme.dark);
+                const cfg = getPriorityConfig(p, theme.dark, i18n.language);
                 const isSelected = priority === p;
                 return (
                   <Pressable
@@ -353,7 +356,7 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
             </View>
 
             {/* Etiquetas */}
-            <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>Etiquetas</Text>
+            <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>{t('daily.tags_label')}</Text>
             <View style={styles.tagsToggleContainer}>
               {userTags.map((tag) => {
                 const isSelected = tagIds.includes(tag.id);
@@ -396,7 +399,7 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
                 onPress={onOpenCreateTag}
               >
                 <Plus size={12} color={gold[400]} />
-                <Text style={styles.addTagPillText}>Crear</Text>
+                <Text style={styles.addTagPillText}>{t('daily.create_tag_btn')}</Text>
               </Pressable>
             </View>
 
@@ -404,7 +407,7 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
             <View style={styles.subtasksHeaderRow}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <ListChecks size={15} color={gold[400]} />
-                <Text style={[styles.fieldLabelNoMargin, { color: theme.colors.foregroundMuted }]}>Subtareas</Text>
+                <Text style={[styles.fieldLabelNoMargin, { color: theme.colors.foregroundMuted }]}>{t('daily.subtasks_label')}</Text>
               </View>
               {subtasks.length > 0 && (
                 <View
@@ -472,7 +475,7 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
                       hitSlop={8}
                       onPress={() => onDeleteSubtask(st.id)}
                       style={styles.subtaskDeleteBtn}
-                      accessibilityLabel="Eliminar subtarea"
+                      accessibilityLabel={t('daily.delete_subtask')}
                     >
                       <X size={14} color={theme.colors.foregroundMuted} />
                     </Pressable>
@@ -501,7 +504,7 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
                     backgroundColor: 'transparent',
                   },
                 ]}
-                placeholder="Añadir una subtarea..."
+                placeholder={t('daily.add_subtask_placeholder')}
                 placeholderTextColor={theme.colors.foregroundMuted}
                 value={subtaskTitle}
                 onChangeText={setSubtaskTitle}
@@ -515,7 +518,7 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
                 ]}
                 onPress={onAddSubtask}
                 disabled={!subtaskTitle.trim()}
-                accessibilityLabel="Crear subtarea"
+                accessibilityLabel={t('daily.create_subtask')}
               >
                 <Plus
                   size={16}
@@ -526,7 +529,7 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
             </View>
 
             {/* Notas */}
-            <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>Notas (opcional)</Text>
+            <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>{t('daily.notes_optional')}</Text>
             <TextInput
               style={[
                 styles.modalInput,
@@ -537,7 +540,7 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
                   color: theme.colors.foreground,
                 },
               ]}
-              placeholder="Detalles, enlaces, apuntes..."
+              placeholder={t('daily.notes_placeholder')}
               placeholderTextColor={theme.colors.foregroundMuted}
               value={description}
               onChangeText={setDescription}
@@ -560,7 +563,7 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
               ]}
               onPress={onClose}
             >
-              <Text style={[styles.modalCancelBtnText, { color: theme.colors.foreground }]}>Cancelar</Text>
+              <Text style={[styles.modalCancelBtnText, { color: theme.colors.foreground }]}>{t('common.cancel')}</Text>
             </Pressable>
             <Pressable
               style={[
@@ -570,7 +573,7 @@ export const CreateDailyTaskModal: React.FC<CreateDailyTaskModalProps> = ({
               disabled={!title.trim()}
               onPress={onSubmit}
             >
-              <Text style={styles.modalSubmitBtnText}>Crear tarea</Text>
+              <Text style={styles.modalSubmitBtnText}>{t('daily.create_task_btn')}</Text>
             </Pressable>
           </View>
         </View>

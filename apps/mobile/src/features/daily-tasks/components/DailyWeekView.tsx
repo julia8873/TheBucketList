@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 import { useTheme, gold } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/explore.styles';
 import { DailyTask } from '../types';
 import { DraggableTaskList, DragHandle } from '@/components/DraggableTaskList';
@@ -65,6 +66,7 @@ export function DailyWeekView({
   onToggleWeekDayCompleted,
 }: DailyWeekViewProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const [collapsedDays, setCollapsedDays] = useState<Record<string, boolean>>({});
 
   const toggleDay = (dateStr: string) => {
@@ -120,7 +122,7 @@ export function DailyWeekView({
                         day.isCurrentDay && styles.weekDayNameToday,
                       ]}
                     >
-                      {day.isCurrentDay ? 'HOY · ' : ''}
+                      {day.isCurrentDay ? t('daily.today_prefix') : ''}
                       {day.dayName.toUpperCase()}
                     </Text>
                     <Text style={[styles.weekDayDate, { color: theme.colors.foregroundMuted }]}>{day.formatted}</Text>
@@ -132,7 +134,7 @@ export function DailyWeekView({
                     style={styles.weekAddQuickBtn}
                   >
                     <Plus size={14} color={gold[400]} />
-                    <Text style={styles.weekAddQuickText}>Añadir</Text>
+                    <Text style={styles.weekAddQuickText}>{t('daily.add_btn')}</Text>
                   </Pressable>
                 </View>
 
@@ -140,7 +142,7 @@ export function DailyWeekView({
                   <>
                     {pendingTasks.length === 0 && completedTasks.length === 0 ? (
                       <View style={[styles.weekDayEmpty, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-                        <Text style={[styles.weekDayEmptyText, { color: theme.colors.foregroundMuted }]}>Sin tareas programadas</Text>
+                        <Text style={[styles.weekDayEmptyText, { color: theme.colors.foregroundMuted }]}>{t('daily.no_scheduled_tasks')}</Text>
                       </View>
                     ) : (
                       <>
@@ -174,7 +176,7 @@ export function DailyWeekView({
                               )}
                               <CheckCircle2 size={13} color="#34C759" />
                               <Text style={[styles.completedSectionTitle, { color: theme.colors.foregroundMuted }]}>
-                                Completadas ({completedTasks.length})
+                                {t('daily.completed_count', { count: completedTasks.length })}
                               </Text>
                             </Pressable>
 
