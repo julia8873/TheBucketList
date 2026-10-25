@@ -26,6 +26,7 @@ import { styles } from '../styles/explore.styles';
 import { DailyTag, DailySortField, DailySortDirection, TimeView, StatusFilter } from '../types';
 import type { WeekBlockItem } from './DailyWeekView';
 import { TagSheetShell } from '@/components/TagSheetShell';
+import { useDailyTasksCustomizationStore } from '@/stores/dailyTasksCustomization.store';
 
 export interface DailyTasksTopBarProps {
   timeView: TimeView;
@@ -225,6 +226,8 @@ export function DailyTasksScrollControls({
   const isPriorityActive = priorityFilter !== 'all';
   const hasActiveFilters = isStatusActive || isPriorityActive || selectedTagFilters.length > 0;
   const dateFnsLocale = getDateFnsLocale(i18n.language);
+  const customization = useDailyTasksCustomizationStore((s) => s.customization);
+  const isCustomized = Object.values(customization).some((val) => !val);
 
   const dailyStatusOptions: Array<{ key: 'all' | 'pending' | 'completed' | 'favorites'; label: string; desc: string }> = [
     { key: 'all', label: t('daily.filter_status_all'), desc: t('daily.filter_status_all_desc') },
@@ -518,9 +521,11 @@ export function DailyTasksScrollControls({
                 height: 32,
                 paddingHorizontal: 8,
                 borderRadius: 8,
-                backgroundColor: theme.colors.surface,
+                backgroundColor: isCustomized
+                  ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.14)')
+                  : theme.colors.surface,
                 borderWidth: 1,
-                borderColor: theme.colors.border,
+                borderColor: isCustomized ? gold[400] : theme.colors.border,
                 justifyContent: 'center',
                 alignItems: 'center',
               },

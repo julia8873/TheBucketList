@@ -168,3 +168,6 @@ export async function hydrateMyListCustomization(): Promise<void> {
     // Ignore error
   }
 }
+
+// Auto-hydrate on import
+void hydrateMyListCustomization();

@@ -75,3 +75,6 @@ export async function hydrateDailyTasksCustomization(): Promise<void> {
     // Ignore hydration errors
   }
 }
+
+// Auto-hydrate on import
+void hydrateDailyTasksCustomization();

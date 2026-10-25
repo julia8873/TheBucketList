@@ -23,6 +23,7 @@ import { ThemeProvider, ToastProvider, ConfirmProvider, useTheme } from '@bucket
 import { useThemeStore, hydrateThemeStore } from '../src/stores/theme.store';
 import { hydrateMyListCustomization } from '../src/stores/myListCustomization.store';
 import { hydrateDailyTasksCustomization } from '../src/stores/dailyTasksCustomization.store';
+import { hydrateDailyTasksPreferences } from '../src/features/daily-tasks/hooks/useDailyTasksState';
 import { hydrateLanguageStore } from '../src/stores/language.store';
 import { hydrateHapticsStore } from '../src/stores/haptics.store';
 import { useAuthStore } from '../src/stores/auth.store';
@@ -113,6 +114,7 @@ export default function RootLayout() {
           hydrateHapticsStore(),
           hydrateMyListCustomization(),
           hydrateDailyTasksCustomization(),
+          hydrateDailyTasksPreferences(),
           Font.loadAsync({
             Inter_400Regular,
             Inter_500Medium,

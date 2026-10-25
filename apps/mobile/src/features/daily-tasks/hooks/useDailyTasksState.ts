@@ -46,18 +46,51 @@ import {
   DailyTaskPriority,
   DailyTaskRecurrenceUnit,
 } from '../types';
-import { SORT_PREF_STORAGE_KEY, TIME_VIEW_STORAGE_KEY } from '../constants';
+import {
+  SORT_PREF_STORAGE_KEY,
+  TIME_VIEW_STORAGE_KEY,
+  WEEKS_TO_SHOW_STORAGE_KEY,
+} from '../constants';
 import {
   toDateString,
   calculateNextRecurringDate,
 } from '../utils/dailyTaskDateUtils';
 import { sortDailyTasks, groupDailyTasksByTag } from '../utils/dailyTaskSorting';
 
+let cachedTimeView: TimeView = 'today';
+let cachedWeeksToShow: number = 1;
+
+export async function hydrateDailyTasksPreferences(): Promise<void> {
+  try {
+    const [savedTimeView, savedWeeksToShow] = await Promise.all([
+      AsyncStorage.getItem(TIME_VIEW_STORAGE_KEY),
+      AsyncStorage.getItem(WEEKS_TO_SHOW_STORAGE_KEY),
+    ]);
+    if (savedTimeView && ['today', 'week', 'calendar', 'all'].includes(savedTimeView)) {
+      cachedTimeView = savedTimeView as TimeView;
+    }
+    if (savedWeeksToShow) {
+      try {
+        const n = JSON.parse(savedWeeksToShow);
+        if (typeof n === 'number' && [1, 2, 4].includes(n)) {
+          cachedWeeksToShow = n;
+        }
+      } catch {}
+    }
+  } catch {
+    // Ignore hydration errors
+  }
+}
+
+// Auto-hydrate preferences at module load time
+void hydrateDailyTasksPreferences();
+
 export function useDailyTasksState() {
   const { t, i18n } = useTranslation();
   const dateFnsLocale = getDateFnsLocale(i18n.language);
-  const [timeView, setTimeView] = useState<TimeView>('today');
+  const [timeView, setTimeView] = useState<TimeView>(cachedTimeView);
   const handleSetTimeView = useCallback((v: TimeView) => {
+    cachedTimeView = v;
     setTimeView(v);
     setDragging(false);
     void AsyncStorage.setItem(TIME_VIEW_STORAGE_KEY, v).catch((err) => {
@@ -156,6 +189,7 @@ export function useDailyTasksState() {
         const [
           savedSort,
           savedTimeView,
+          savedWeeksToShow,
           savedStatus,
           savedTags,
           savedFavs,
@@ -165,6 +199,7 @@ export function useDailyTasksState() {
         ] = await Promise.all([
           AsyncStorage.getItem(SORT_PREF_STORAGE_KEY),
           AsyncStorage.getItem(TIME_VIEW_STORAGE_KEY),
+          AsyncStorage.getItem(WEEKS_TO_SHOW_STORAGE_KEY),
           AsyncStorage.getItem('@daily_tasks_status_filter'),
           AsyncStorage.getItem('@daily_tasks_tag_filters'),
           AsyncStorage.getItem('@daily_tasks_only_favorites'),
@@ -179,7 +214,17 @@ export function useDailyTasksState() {
           if (typeof parsed.groupByTag === 'boolean') setGroupByTag(parsed.groupByTag);
         }
         if (savedTimeView && ['today', 'week', 'calendar', 'all'].includes(savedTimeView)) {
+          cachedTimeView = savedTimeView as TimeView;
           setTimeView(savedTimeView as TimeView);
+        }
+        if (savedWeeksToShow) {
+          try {
+            const n = JSON.parse(savedWeeksToShow);
+            if (typeof n === 'number' && [1, 2, 4].includes(n)) {
+              cachedWeeksToShow = n;
+              setWeeksToShowState(n);
+            }
+          } catch {}
         }
         if (savedStatus && ['all', 'pending', 'completed'].includes(savedStatus)) {
           setStatusFilterState(savedStatus as StatusFilter);
@@ -265,7 +310,17 @@ export function useDailyTasksState() {
 
   // Multi-week navigation state
   const [weekOffset, setWeekOffset] = useState(0);
-  const [weeksToShow, setWeeksToShow] = useState<number>(1);
+  const [weeksToShow, setWeeksToShowState] = useState<number>(cachedWeeksToShow);
+  const setWeeksToShow = useCallback((action: number | ((prev: number) => number)) => {
+    setWeeksToShowState((prev) => {
+      const next = typeof action === 'function' ? action(prev) : action;
+      cachedWeeksToShow = next;
+      void AsyncStorage.setItem(WEEKS_TO_SHOW_STORAGE_KEY, JSON.stringify(next)).catch((err) => {
+        console.warn('Error saving daily tasks weeks to show preference:', err);
+      });
+      return next;
+    });
+  }, []);
 
   // Calendar view state
   const [calendarMonth, setCalendarMonth] = useState(new Date());

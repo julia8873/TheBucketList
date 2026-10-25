@@ -511,6 +511,16 @@ export function DailyOverdueTaskCard({
                 </View>
               );
             })()}
+
+            {/* Recurrence badge chip */}
+            {activeCustomization.showRecurrence && item.is_recurring && (
+              <View style={styles.recurrenceBadgeChip}>
+                <RotateCw size={10} color={gold[400]} strokeWidth={2} />
+                <Text style={styles.recurrenceBadgeText}>
+                  {getRecurrenceLabel(item.recurrence_interval, item.recurrence_unit, i18n.language)}
+                </Text>
+              </View>
+            )}
           </View>
         </Pressable>
 
