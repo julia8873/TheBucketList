@@ -13,6 +13,7 @@ import { useAuthStore } from '../stores/auth.store';
 import { triggerTaskCompletedHaptic } from '../stores/haptics.store';
 import { format } from 'date-fns';
 import { toast } from '@bucketlist/ui';
+import { i18n } from '@bucketlist/shared';
 
 export const DAILY_TASKS_QUERY_KEY = ['daily_tasks'];
 export const DAILY_STATS_QUERY_KEY = ['daily_task_stats'];
@@ -110,7 +111,7 @@ export function useCreateDailyTask() {
       return { previous };
     },
     onSuccess: (savedTask) => {
-      toast.success('Tarea diaria creada');
+      toast.success(i18n.t('daily.task_created_toast'));
       queryClient.setQueryData<DailyTask[]>([...DAILY_TASKS_QUERY_KEY, userId], (old: DailyTask[] | undefined) => {
         const list = old || [];
         const filtered = list.filter((t: DailyTask) => !t.id.startsWith('temp-'));
@@ -319,7 +320,7 @@ export function useDeleteDailyTask() {
       }
     },
     onSuccess: () => {
-      toast.success('Tarea diaria eliminada');
+      toast.success(i18n.t('daily.task_deleted_toast'));
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: [...DAILY_TASKS_QUERY_KEY, userId] });
@@ -393,7 +394,7 @@ export function useClearCompletedDailyTasks() {
       }
     },
     onSuccess: () => {
-      toast.success('Tareas completadas eliminadas');
+      toast.success(i18n.t('daily.completed_cleared_toast'));
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: [...DAILY_TASKS_QUERY_KEY, userId] });
@@ -411,7 +412,7 @@ export function useConvertToBucket() {
       return dailyTasksService.convertToBucket(task, deleteDaily);
     },
     onSuccess: () => {
-      toast.success('Convertida en reto principal');
+      toast.success(i18n.t('daily.converted_to_bucket_toast'));
       void queryClient.invalidateQueries({ queryKey: [...DAILY_TASKS_QUERY_KEY, userId] });
       void queryClient.invalidateQueries({ queryKey: DAILY_TASKS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ['buckets'] });

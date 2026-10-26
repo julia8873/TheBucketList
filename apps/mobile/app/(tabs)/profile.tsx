@@ -367,8 +367,8 @@ export default function CurrentUserProfileScreen() {
             ) : (
               <Text style={styles.empty}>
                 {filter === 'all'
-                  ? 'Todavía no hay tareas públicas que mostrar.'
-                  : 'No hay tareas públicas en este filtro.'}
+                  ? t('profile.tasks_empty_title')
+                  : t('profile.tasks_filter_empty')}
               </Text>
             )
           }

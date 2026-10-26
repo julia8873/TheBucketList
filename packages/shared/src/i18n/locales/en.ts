@@ -618,6 +618,7 @@ const en = {
     section_completed_albums: 'COMPLETED',
     section_expired: 'OVERDUE',
     section_closed: 'CLOSED',
+    bulk_tasks_deleted_toast: 'Tasks deleted',
   },
 
   daily: {
@@ -817,6 +818,13 @@ const en = {
     copy_error_msg: 'Could not copy task.',
     save_tag_error_title: 'Error saving tag',
     save_tag_error_msg: 'Could not save tag',
+    show_completed_today: 'Show completed today',
+    hide_completed_today: 'Collapse completed today',
+    remove_filter_named: 'Remove {{name}} filter',
+    task_created_toast: 'Daily task created',
+    task_deleted_toast: 'Daily task deleted',
+    completed_cleared_toast: 'Completed tasks cleared',
+    converted_to_bucket_toast: 'Converted to main goal',
   },
 
   calendar: {
@@ -975,6 +983,8 @@ const en = {
     filter_completed: 'Completed',
     albums_empty_title: 'No public albums to show yet.',
     albums_filter_empty: 'No albums matching this filter.',
+    tasks_empty_title: 'No public tasks to show yet.',
+    tasks_filter_empty: 'No public tasks match this filter.',
     all_public_albums: 'All public albums',
     active_albums_desc: 'Albums with pending tasks',
     completed_albums_desc: 'Albums with all tasks completed',
@@ -1373,6 +1383,8 @@ const en = {
     delete_confirm_title: 'Delete this album?',
     delete_confirm_desc: 'Tasks will be moved to No album. This action cannot be undone.',
     delete_album_btn: 'Delete album',
+    album_created_toast: 'Album created successfully',
+    album_deleted_toast: 'Album deleted',
   },
 
   tags: {

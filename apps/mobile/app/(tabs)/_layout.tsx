@@ -53,11 +53,11 @@ export default function TabsLayout() {
             if (cancelled) return;
             if (!perm.granted && perm.canAskAgain) {
               Alert.alert(
-                '¿Activar notificaciones?',
-                'Recibe avisos al instante en tu móvil cuando tus amigos reaccionen, comenten tus publicaciones o te inviten a colaborar.',
+                t('notifications.push_prompt_title'),
+                t('notifications.push_prompt_msg'),
                 [
-                  { text: 'Ahora no', style: 'cancel' },
-                  { text: 'Activar', onPress: () => void syncPushToken() },
+                  { text: t('common.not_now'), style: 'cancel' },
+                  { text: t('common.activate'), onPress: () => void syncPushToken() },
                 ],
               );
             } else if (perm.granted) {

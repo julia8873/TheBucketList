@@ -455,7 +455,7 @@ export function DailyTasksScrollControls({
                 setSelectedTagFilters((prev) => prev.filter((tid) => tid !== tag.id));
               }}
               accessibilityRole="button"
-              accessibilityLabel={`Quitar filtro ${tag.name}`}
+              accessibilityLabel={t('daily.remove_filter_named', { name: tag.name })}
             >
               {tag.emoji ? (
                 <View

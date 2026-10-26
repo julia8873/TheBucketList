@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../stores/auth.store';
 import { toast } from '@bucketlist/ui';
+import { i18n } from '@bucketlist/shared';
 
 export const ALBUMS_QUERY_KEY = ['albums'];
 
@@ -166,7 +167,7 @@ export function useCreateAlbum() {
       return newAlbum;
     },
     onSuccess: () => {
-      toast.success('Álbum creado con éxito');
+      toast.success(i18n.t('albums.album_created_toast'));
       queryClient.invalidateQueries({ queryKey: ALBUMS_QUERY_KEY });
     },
   });
@@ -245,7 +246,7 @@ export function useDeleteAlbum() {
       }
     },
     onSuccess: () => {
-      toast.success('Álbum eliminado');
+      toast.success(i18n.t('albums.album_deleted_toast'));
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ALBUMS_QUERY_KEY });

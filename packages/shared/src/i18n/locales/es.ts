@@ -618,6 +618,7 @@ const es = {
     section_completed_albums: 'COMPLETADOS',
     section_expired: 'VENCIDAS',
     section_closed: 'CERRADOS',
+    bulk_tasks_deleted_toast: 'Tareas eliminadas',
   },
 
   daily: {
@@ -817,6 +818,13 @@ const es = {
     copy_error_msg: 'No se pudo copiar la tarea.',
     save_tag_error_title: 'Error al guardar etiqueta',
     save_tag_error_msg: 'No se pudo guardar la etiqueta',
+    show_completed_today: 'Mostrar completadas hoy',
+    hide_completed_today: 'Replegar completadas hoy',
+    remove_filter_named: 'Quitar filtro {{name}}',
+    task_created_toast: 'Tarea diaria creada',
+    task_deleted_toast: 'Tarea diaria eliminada',
+    completed_cleared_toast: 'Tareas completadas eliminadas',
+    converted_to_bucket_toast: 'Convertida en reto principal',
   },
 
   calendar: {
@@ -975,6 +983,8 @@ const es = {
     filter_completed: 'Completadas',
     albums_empty_title: 'Todavía no hay álbumes públicos que mostrar.',
     albums_filter_empty: 'No hay álbumes en este filtro.',
+    tasks_empty_title: 'Todavía no hay tareas públicas que mostrar.',
+    tasks_filter_empty: 'No hay tareas públicas en este filtro.',
     all_public_albums: 'Todos los álbumes públicos',
     active_albums_desc: 'Álbumes con tareas pendientes',
     completed_albums_desc: 'Álbumes con todas sus tareas completadas',
@@ -1373,6 +1383,8 @@ const es = {
     delete_confirm_title: '¿Eliminar este álbum?',
     delete_confirm_desc: 'Las tareas pasarán a Sin álbum. Esta acción no se puede deshacer.',
     delete_album_btn: 'Eliminar álbum',
+    album_created_toast: 'Álbum creado con éxito',
+    album_deleted_toast: 'Álbum eliminado',
   },
 
   tags: {

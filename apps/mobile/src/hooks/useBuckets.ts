@@ -4,6 +4,7 @@ import { bucketApi } from '../services/api/bucket';
 import { useOfflineStore } from '../stores/offline.store';
 import { triggerTaskCompletedHaptic } from '../stores/haptics.store';
 import type { CreateBucketForm, UpdateBucketForm } from '@bucketlist/shared';
+import { i18n } from '@bucketlist/shared';
 import {
   applyDeleteTasks,
   beginOptimistic,
@@ -37,7 +38,7 @@ export function useCreateBucket() {
       return bucketApi.createBucket(data);
     },
     onSuccess: () => {
-      toast.success('Tarea creada con éxito');
+      toast.success(i18n.t('bucket.created_success'));
       void queryClient.invalidateQueries({ queryKey: BUCKETS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
       // Si se creó dentro de un álbum, que el álbum y la lista de «Añadir tareas» lo reflejen.
@@ -129,7 +130,7 @@ export function useDeleteBucket() {
       rollbackOptimistic(queryClient, ctx?.snap);
     },
     onSuccess: () => {
-      toast.success('Tarea eliminada');
+      toast.success(i18n.t('bucket.deleted_success'));
     },
     onSettled: () => {
       settleTaskCaches(queryClient);

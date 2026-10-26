@@ -3,6 +3,7 @@ import { supabase } from '../services/supabase';
 import { useAuthStore } from '../stores/auth.store';
 import { triggerTaskCompletedHaptic } from '../stores/haptics.store';
 import { toast } from '@bucketlist/ui';
+import { i18n } from '@bucketlist/shared';
 import {
   applyAddTagsToTasks,
   applyDeleteTasks,
@@ -213,7 +214,7 @@ export function useBulkTaskOperations() {
     },
     ...optimistic<string[]>((taskIds) => applyDeleteTasks(queryClient, taskIds), settleExtras),
     onSuccess: () => {
-      toast.success('Tareas eliminadas');
+      toast.success(i18n.t('my_list.bulk_tasks_deleted_toast'));
     },
   });
 
