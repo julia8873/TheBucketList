@@ -46,7 +46,7 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: npm run test -- --ci --coverage --passWithNoTests
+        run: npm test --workspaces --if-present -- --ci --coverage --passWithNoTests
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4
@@ -70,7 +70,12 @@ jobs:
         run: supabase start
 
       - name: Run pgTAP tests
-        run: supabase test db
+        run: |
+          if [ -d "supabase/tests" ] && [ -n "$(find supabase/tests -name '*.sql' 2>/dev/null)" ]; then
+            supabase test db
+          else
+            echo "No pgTAP tests found in supabase/tests, skipping."
+          fi
 
       - name: Stop Supabase
         if: always()

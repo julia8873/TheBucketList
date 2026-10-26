@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, gold, fontFamily } from '@bucketlist/ui';
 import { useRouter } from 'expo-router';
 import { useTranslation } from '@bucketlist/shared';
-import { CollectionItem } from '../types';
+import type { CollectionItem } from '../types';
 import { useCloneCollection, useToggleCollectionLike } from '../hooks/useCollections';
 
 interface CollectionDetailModalProps {

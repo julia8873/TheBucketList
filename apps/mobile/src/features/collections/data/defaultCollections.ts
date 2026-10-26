@@ -1,4 +1,4 @@
-import { CollectionItem } from '../types';
+import type { CollectionItem } from '../types';
 import { COLLECTION_BASES, DEFAULT_COLLECTION_IDS } from './collectionsBase';
 import { en } from './locales/en';
 import { es } from './locales/es';

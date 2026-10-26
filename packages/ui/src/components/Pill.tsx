@@ -80,7 +80,7 @@ export function UrgencyChip({ deadline, style }: UrgencyChipProps) {
   const expired = daysLeft < 0; // if it's in the past and calendar difference < 0
 
   let label: string;
-  let variant: PillVariant;
+  const variant: PillVariant = 'outline-gold';
 
   if (expired) {
     return null; // Expired tasks don't show the badge in this design
@@ -89,7 +89,6 @@ export function UrgencyChip({ deadline, style }: UrgencyChipProps) {
   } else {
     label = `${daysLeft} días`;
   }
-  variant = 'outline-gold';
 
   return <Pill label={label} variant={variant} style={style} />;
 }

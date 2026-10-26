@@ -1,11 +1,12 @@
 import { Alert } from '@bucketlist/ui';
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Share, Dimensions, Animated, Platform, View } from 'react-native';
+import type { View } from 'react-native';
+import { Share, Dimensions, Animated, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { supabase } from '@/services/supabase';
@@ -28,11 +29,13 @@ import {
 import { useAlbums } from '@/hooks/useAlbums';
 import { useUserFavorites, useToggleFavoriteBucket } from '@/hooks/useFavorites';
 import { useEntitySubscription } from '@/hooks/useEntityNotifications';
-import { MENTION_TASK_COLUMNS, MentionTask } from '@/components/TaskMentionPickerSheet';
-import { CollaboratorItem } from '@/components/CollaboratorPickerSheet';
-import { ThumbnailMode, resolveTaskImage } from '@/utils/taskImage';
-import { PhotoSortField, PhotoSortDir } from '../components/PhotoSortModal';
-import { DatePickerConfig } from '../components/BucketDatePickerModal';
+import type { MentionTask } from '@/components/TaskMentionPickerSheet';
+import { MENTION_TASK_COLUMNS } from '@/components/TaskMentionPickerSheet';
+import type { CollaboratorItem } from '@/components/CollaboratorPickerSheet';
+import type { ThumbnailMode} from '@/utils/taskImage';
+import { resolveTaskImage } from '@/utils/taskImage';
+import type { PhotoSortField, PhotoSortDir } from '../components/PhotoSortModal';
+import type { DatePickerConfig } from '../components/BucketDatePickerModal';
 import type { CollaborationMode, CollaborationAudience } from '../components/TaskCollaborationSettingsModal';
 import { toast, confirm } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
@@ -315,8 +318,8 @@ export function useBucketDetailState() {
   );
   const canEdit = isOwner || isCollaborator || isInSharedAlbum;
 
-  const collaborationMode = ((bucket as any)?.collaboration_mode as CollaborationMode) || 'invite_only';
-  const collaborationAudience = ((bucket as any)?.collaboration_audience as CollaborationAudience) || 'followers';
+  const collaborationMode = ((bucket)?.collaboration_mode as CollaborationMode) || 'invite_only';
+  const collaborationAudience = ((bucket)?.collaboration_audience as CollaborationAudience) || 'followers';
 
   const myCollaboration =
     collaborators.find((c: any) => c.id === user?.id) ||

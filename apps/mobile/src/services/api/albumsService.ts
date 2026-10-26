@@ -90,7 +90,7 @@ export const albumsService = {
       const unassignedBuckets = mergedBuckets.filter(b => !b.album_items || b.album_items.length === 0);
 
       const tasks = unassignedBuckets.map(b => {
-        const cat = b.categories as any;
+        const cat = b.categories;
         const subtasks = b.item_subtasks as any[];
         
         let stepsTotal = subtasks ? subtasks.length : 0;
@@ -106,11 +106,11 @@ export const albumsService = {
           title: b.title,
           categoryName: cat?.name_es || 'Sin categoría',
           coverKey: 'aurora',
-          imageValue: resolveTaskImage(b as any, { preferThumb: true }),
+          imageValue: resolveTaskImage(b, { preferThumb: true }),
           categorySlug: cat?.slug ?? null,
           isCompleted: b.status === 'completed',
           dueDate: b.deadline || undefined,
-          completedAt: (b as any).completed_at ?? null,
+          completedAt: (b).completed_at ?? null,
           position: null,
           priority: b.priority || 'medium',
           stepsTotal,
@@ -186,12 +186,12 @@ export const albumsService = {
 
       if (bucketsError) throw bucketsError;
 
-      let tagsByTask = new Map<string, Array<{ id: string; name: string; color: string; emoji?: string | null }>>();
+      const tagsByTask = new Map<string, Array<{ id: string; name: string; color: string; emoji?: string | null }>>();
       try {
         const { data: itemTags } = await tagsPromise;
         if (itemTags) {
           for (const it of itemTags) {
-            const t = (it as any).tag;
+            const t = (it).tag;
             if (t && it.item_id) {
               const arr = tagsByTask.get(it.item_id) || [];
               arr.push({ id: t.id, name: t.name, color: t.color, emoji: t.emoji });

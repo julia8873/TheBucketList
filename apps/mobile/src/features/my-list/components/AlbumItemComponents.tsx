@@ -6,8 +6,8 @@ import { GripVertical, Lock, Star, Users, Bookmark, CheckCircle2 } from 'lucide-
 import { useTheme, useCoverOverlay } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/my-list.styles';
-import { DragHandle } from '@/components/DraggableTaskList';
-import { AlbumViewCustomization } from '@/stores/myListCustomization.store';
+import type { DragHandle } from '@/components/DraggableTaskList';
+import type { AlbumViewCustomization } from '@/stores/myListCustomization.store';
 
 export const AlbumCoverThumb = React.memo(function AlbumCoverThumb({
   coverUri,

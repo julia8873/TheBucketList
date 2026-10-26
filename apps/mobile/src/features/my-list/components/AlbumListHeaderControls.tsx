@@ -19,8 +19,8 @@ import { Typography, FilterChip } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from '../styles/my-list.styles';
-import { AlbumFilterType, PriorityFilter, SortField, SortDir, AlbumViewMode } from '../types';
-import { Tag } from '@/hooks/useTags';
+import type { AlbumFilterType, PriorityFilter, SortField, SortDir, AlbumViewMode } from '../types';
+import type { Tag } from '@/hooks/useTags';
 import { hexToRgba } from '@/constants/tagPresets';
 import { TagSheetShell } from '@/components/TagSheetShell';
 

@@ -28,7 +28,7 @@ import { useTranslation } from '@bucketlist/shared';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { TaskRowSkeleton } from '@/components/TaskSkeletons';
-import { TaskItem } from '@/services/api/albumsService';
+import type { TaskItem } from '@/services/api/albumsService';
 import { supabase } from '@/services/supabase';
 import { normalizeStorageUrl } from '@/constants/urls';
 import { CollaboratorPickerSheet } from '@/components/CollaboratorPickerSheet';
@@ -50,7 +50,8 @@ import { ReportModal } from '@/components/ReportModal';
 import { useReportContent } from '@/hooks/useBlockReport';
 import { AlbumOptionsSheet } from '@/features/album-detail/components/AlbumOptionsSheet';
 import { AlbumHeaderBadges } from '@/features/album-detail/components/AlbumHeaderBadges';
-import { AlbumSortModal, TaskSortField } from '@/features/album-detail/components/AlbumSortModal';
+import type { TaskSortField } from '@/features/album-detail/components/AlbumSortModal';
+import { AlbumSortModal } from '@/features/album-detail/components/AlbumSortModal';
 import { useAlbumDetailState } from '@/features/album-detail/hooks/useAlbumDetailState';
 import { useIsAdmin } from '@/hooks/useCurrentUserProfile';
 import { usePromoteAlbumToCollection } from '@/features/collections/hooks/useCollections';

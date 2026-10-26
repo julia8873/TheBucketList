@@ -30,7 +30,7 @@ import { getDateFnsLocale } from '@/utils/dateLocale';
 
 import { gold, useTheme } from '@bucketlist/ui';
 import { styles } from '../styles/explore.styles';
-import {
+import type {
   DailyTask,
   DailyTag,
   DailySubtask,

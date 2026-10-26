@@ -26,6 +26,7 @@ import {
 } from 'lucide-react-native';
 import { normalizeStorageUrl } from '@/constants/urls';
 import { useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { getInitials } from './BucketCollaboratorsRow';
 
 export type CollaborationMode = 'invite_only' | 'request' | 'open';
@@ -51,6 +52,7 @@ export function TaskCollaborationSettingsModal({
   onRespondRequest,
 }: TaskCollaborationSettingsModalProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [mode, setMode] = useState<CollaborationMode>(currentMode);
   const [audience, setAudience] = useState<CollaborationAudience>(currentAudience);
@@ -104,8 +106,8 @@ export function TaskCollaborationSettingsModal({
           {/* Cabecera */}
           <View style={[styles.header, { borderBottomColor: theme.colors.border }]}>
             <View>
-              <Text style={[styles.title, { color: theme.colors.foreground }]}>Ajustes de colaboración</Text>
-              <Text style={[styles.subtitle, { color: theme.colors.foregroundMuted }]}>Define quién y cómo pueden colaborar en tu tarea</Text>
+              <Text style={[styles.title, { color: theme.colors.foreground }]}>{t('collab_settings.title')}</Text>
+              <Text style={[styles.subtitle, { color: theme.colors.foregroundMuted }]}>{t('collab_settings.subtitle')}</Text>
             </View>
             <Pressable
               onPress={onClose}
@@ -123,7 +125,7 @@ export function TaskCollaborationSettingsModal({
                 <View style={styles.pendingHeader}>
                   <Clock size={16} color="#D4B13A" />
                   <Text style={styles.pendingTitle}>
-                    Solicitudes pendientes ({pendingCollaborators.length})
+                    {t('collab_settings.pending_title', { count: pendingCollaborators.length })}
                   </Text>
                 </View>
 
@@ -175,7 +177,7 @@ export function TaskCollaborationSettingsModal({
                             onPress={() => handleRespond(c.id, true)}
                           >
                             <Check size={14} color="#0D0D0D" strokeWidth={2.6} />
-                            <Text style={styles.acceptBtnText}>Aceptar</Text>
+                            <Text style={styles.acceptBtnText}>{t('common.accept')}</Text>
                           </Pressable>
                           <Pressable
                             style={[
@@ -186,7 +188,7 @@ export function TaskCollaborationSettingsModal({
                             onPress={() => handleRespond(c.id, false)}
                           >
                             <X size={14} color={theme.colors.foreground} strokeWidth={2} />
-                            <Text style={[styles.declineBtnText, { color: theme.colors.foreground }]}>Rechazar</Text>
+                            <Text style={[styles.declineBtnText, { color: theme.colors.foreground }]}>{t('common.reject')}</Text>
                           </Pressable>
                         </View>
                       )}
@@ -197,7 +199,7 @@ export function TaskCollaborationSettingsModal({
             )}
 
             {/* Sección 1: Modo de colaboración */}
-            <Text style={[styles.sectionHeading, { color: theme.colors.foregroundMuted }]}>¿CÓMO PUEDEN COLABORAR?</Text>
+            <Text style={[styles.sectionHeading, { color: theme.colors.foregroundMuted }]}>{t('collab_settings.section_how')}</Text>
 
             {/* Opción A: Solo invitación */}
             <Pressable
@@ -217,10 +219,10 @@ export function TaskCollaborationSettingsModal({
               </View>
               <View style={styles.optionContent}>
                 <Text style={[styles.optionTitle, { color: theme.colors.foreground }]}>
-                  Solo por invitación
+                  {t('collab_settings.mode_invite_title')}
                 </Text>
                 <Text style={[styles.optionDesc, { color: theme.colors.foregroundMuted }]}>
-                  Solo tú puedes añadir colaboradores manualmente a esta tarea.
+                  {t('collab_settings.mode_invite_desc')}
                 </Text>
               </View>
               <View style={[styles.radio, { borderColor: theme.dark ? '#444444' : '#CCC8BD' }, mode === 'invite_only' && styles.radioActive]}>
@@ -246,10 +248,10 @@ export function TaskCollaborationSettingsModal({
               </View>
               <View style={styles.optionContent}>
                 <Text style={[styles.optionTitle, { color: theme.colors.foreground }]}>
-                  Con solicitud de permiso
+                  {t('collab_settings.mode_request_title')}
                 </Text>
                 <Text style={[styles.optionDesc, { color: theme.colors.foregroundMuted }]}>
-                  Los usuarios pueden pedir colaborar. Tú apruebas o rechazas cada solicitud.
+                  {t('collab_settings.mode_request_desc')}
                 </Text>
               </View>
               <View style={[styles.radio, { borderColor: theme.dark ? '#444444' : '#CCC8BD' }, mode === 'request' && styles.radioActive]}>
@@ -276,14 +278,14 @@ export function TaskCollaborationSettingsModal({
               <View style={styles.optionContent}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text style={[styles.optionTitle, { color: theme.colors.foreground }]}>
-                    Unirse libremente
+                    {t('collab_settings.mode_open_title')}
                   </Text>
                   <View style={styles.openBadge}>
-                    <Text style={styles.openBadgeText}>Sin permiso</Text>
+                    <Text style={styles.openBadgeText}>{t('collab_settings.mode_open_badge')}</Text>
                   </View>
                 </View>
                 <Text style={[styles.optionDesc, { color: theme.colors.foregroundMuted }]}>
-                  Los usuarios pueden meterse directamente como colaboradores por su propia cuenta.
+                  {t('collab_settings.mode_open_desc')}
                 </Text>
               </View>
               <View style={[styles.radio, { borderColor: theme.dark ? '#444444' : '#CCC8BD' }, mode === 'open' && styles.radioActive]}>
@@ -294,7 +296,7 @@ export function TaskCollaborationSettingsModal({
             {/* Sección 2: Audiencia permitida (solo visible si no es solo por invitación) */}
             {mode !== 'invite_only' && (
               <View style={{ marginTop: 20 }}>
-                <Text style={[styles.sectionHeading, { color: theme.colors.foregroundMuted }]}>¿QUIÉN PUEDE UNIRSE O SOLICITAR?</Text>
+                <Text style={[styles.sectionHeading, { color: theme.colors.foregroundMuted }]}>{t('collab_settings.section_who')}</Text>
 
                 {/* Audiencia A: Solo seguidores */}
                 <Pressable
@@ -314,10 +316,10 @@ export function TaskCollaborationSettingsModal({
                   </View>
                   <View style={styles.optionContent}>
                     <Text style={[styles.optionTitle, { color: theme.colors.foreground }]}>
-                      Solo mis seguidores
+                      {t('collab_settings.audience_followers_title')}
                     </Text>
                     <Text style={[styles.optionDesc, { color: theme.colors.foregroundMuted }]}>
-                      Únicamente los usuarios que te siguen pueden {mode === 'open' ? 'unirse' : 'solicitar colaborar'}.
+                      {mode === 'open' ? t('collab_settings.audience_followers_desc_open') : t('collab_settings.audience_followers_desc_request')}
                     </Text>
                   </View>
                   <View style={[styles.radio, { borderColor: theme.dark ? '#444444' : '#CCC8BD' }, audience === 'followers' && styles.radioActive]}>
@@ -343,10 +345,10 @@ export function TaskCollaborationSettingsModal({
                   </View>
                   <View style={styles.optionContent}>
                     <Text style={[styles.optionTitle, { color: theme.colors.foreground }]}>
-                      Todos los usuarios de la app
+                      {t('collab_settings.audience_anyone_title')}
                     </Text>
                     <Text style={[styles.optionDesc, { color: theme.colors.foregroundMuted }]}>
-                      Cualquier usuario de The Bucket List puede {mode === 'open' ? 'unirse directamente' : 'solicitar colaborar'}.
+                      {mode === 'open' ? t('collab_settings.audience_anyone_desc_open') : t('collab_settings.audience_anyone_desc_request')}
                     </Text>
                   </View>
                   <View style={[styles.radio, { borderColor: theme.dark ? '#444444' : '#CCC8BD' }, audience === 'anyone' && styles.radioActive]}>
@@ -360,7 +362,7 @@ export function TaskCollaborationSettingsModal({
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 16 }}>
                 <ActivityIndicator size="small" color="#D4B13A" />
                 <Text style={{ color: '#D4B13A', fontSize: 13, fontFamily: 'Inter_500Medium' }}>
-                  Guardando ajustes…
+                  {t('collab_settings.saving')}
                 </Text>
               </View>
             )}

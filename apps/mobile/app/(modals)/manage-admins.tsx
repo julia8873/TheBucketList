@@ -19,7 +19,7 @@ import {
   useAddAdmin,
   useRemoveAdmin,
 } from '../../src/hooks/useAdmins';
-import { AdminUser } from '../../src/services/api/admins';
+import type { AdminUser } from '../../src/services/api/admins';
 import { useAuthStore } from '../../src/stores/auth.store';
 
 export default function ManageAdminsScreen() {

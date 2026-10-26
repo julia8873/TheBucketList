@@ -353,7 +353,7 @@ export const socialApi = {
 
     if (error) throw error;
 
-    const subtasks = ((original as any).item_subtasks ?? []) as Array<{ title: string; position: number | null }>;
+    const subtasks = ((original).item_subtasks ?? []) as Array<{ title: string; position: number | null }>;
     if (subtasks.length > 0) {
       const { error: subErr } = await supabase.from('item_subtasks').insert(
         subtasks.map((s, i) => ({

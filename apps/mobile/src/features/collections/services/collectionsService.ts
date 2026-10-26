@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../../services/supabase';
-import { CollectionItem } from '../types';
+import type { CollectionItem } from '../types';
 import { i18n } from '@bucketlist/shared';
 import { getDefaultCollections } from '../data/defaultCollections';
 import { getAlbumTagsStorageKey } from '../../../hooks/useAlbumTags';
@@ -63,8 +63,8 @@ export const collectionsService = {
     } catch {}
 
     // Intentar consultar Supabase en caso de que exista tabla 'collections' remota
-    let remoteList: CollectionItem[] = [];
-    let deletedRemoteSet = new Set<string>();
+    const remoteList: CollectionItem[] = [];
+    const deletedRemoteSet = new Set<string>();
     try {
       const { data, error } = await supabase
         .from('collections')

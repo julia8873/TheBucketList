@@ -72,8 +72,8 @@ export function useAlbumFormData(id?: string) {
         if (!isMounted) return;
         setName(album.title || '');
         setDescription(album.description || '');
-        setPriority((album.priority as any) || 'medium');
-        setVisibility((album.visibility as any) || 'private');
+        setPriority((album.priority) || 'medium');
+        setVisibility((album.visibility) || 'private');
         setIsShared(Boolean(album.is_shared));
 
         const ownerProf = Array.isArray(album.owner) ? album.owner[0] : album.owner;

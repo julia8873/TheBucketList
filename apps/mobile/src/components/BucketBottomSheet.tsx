@@ -295,7 +295,7 @@ export function BucketBottomSheet({
                 ] as const).map((item) => {
                   const IconComponent = item.icon;
                   return (
-                    <Pressable key={item.value} style={styles.sheetOption} onPress={() => void handleChangeVisibility(item.value as 'public' | 'followers' | 'private')}>
+                    <Pressable key={item.value} style={styles.sheetOption} onPress={() => void handleChangeVisibility(item.value)}>
                       <View style={styles.sheetIcon}><IconComponent color={gold[400]} size={21} /></View>
                       <View style={styles.sheetOptionText}>
                         <Typography variant="bodySemibold">{item.title}</Typography>

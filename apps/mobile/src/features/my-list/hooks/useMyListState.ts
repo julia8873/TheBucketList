@@ -1,10 +1,11 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { View, Dimensions } from 'react-native';
+import type { View} from 'react-native';
+import { Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery } from '@tanstack/react-query';
 import { isPast, differenceInCalendarDays } from 'date-fns';
 import { useLocalSearchParams } from 'expo-router';
-import { Swipeable } from 'react-native-gesture-handler';
+import type { Swipeable } from 'react-native-gesture-handler';
 
 import { useBuckets, useDeleteBucket, useUpdateBucket } from '@/hooks/useBuckets';
 import { useAlbums } from '@/hooks/useAlbums';
@@ -12,11 +13,12 @@ import { useUserFavorites, useToggleFavoriteAlbum } from '@/hooks/useFavorites';
 import { useAuthStore } from '@/stores/auth.store';
 import { usePullToRefresh } from '@/hooks/useAutoRefresh';
 import { supabase } from '@/services/supabase';
-import { useTags, useTagUsage, Tag } from '@/hooks/useTags';
+import type { Tag } from '@/hooks/useTags';
+import { useTags, useTagUsage } from '@/hooks/useTags';
 import { useToast } from '@bucketlist/ui';
 import { useTranslation } from 'react-i18next';
 
-import {
+import type {
   FilterType,
   AlbumFilterType,
   PriorityFilter,
@@ -589,7 +591,7 @@ export function useMyListState() {
     const completed = nonFavorites.filter(isCompleted).sort(byManual);
     const expired = nonFavorites.filter(isExpired).sort(byManual);
 
-    let otherSections = [
+    const otherSections = [
       { key: 'in_progress', title: t('my_list.section_in_progress'), items: inProgress },
       { key: 'pending', title: t('my_list.section_pending'), items: pending },
       { key: 'completed', title: t('my_list.section_completed_tasks'), items: completed },
@@ -755,7 +757,7 @@ export function useMyListState() {
     const completed = nonFavorites.filter((a: any) => getAlbumStatus(a) === 'completed').sort(byAlbumManual);
     const closed = nonFavorites.filter((a: any) => getAlbumStatus(a) === 'closed').sort(byAlbumManual);
 
-    let otherSections = [
+    const otherSections = [
       { key: 'in_progress', title: t('my_list.section_in_progress'), items: inProgress },
       { key: 'pending', title: t('my_list.section_pending'), items: pending },
       { key: 'completed', title: t('my_list.section_completed_albums'), items: completed },

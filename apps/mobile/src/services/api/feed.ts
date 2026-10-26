@@ -168,7 +168,7 @@ export const feedApi = {
 
     // Fetch task counts from album_progress
     const albumIds = (data ?? []).map((a: any) => a.id);
-    let progressMap = new Map<string, { total: number; completed: number }>();
+    const progressMap = new Map<string, { total: number; completed: number }>();
     if (albumIds.length > 0) {
       const { data: prog } = await supabase
         .from('album_progress')
@@ -243,7 +243,7 @@ export const feedApi = {
     if (error) throw error;
 
     const albumIds = (data ?? []).map((a: any) => a.id);
-    let progressMap = new Map<string, { total: number; completed: number }>();
+    const progressMap = new Map<string, { total: number; completed: number }>();
     if (albumIds.length > 0) {
       const { data: prog } = await supabase
         .from('album_progress')
@@ -466,7 +466,7 @@ export const feedApi = {
 
     // Mapear álbumes
     const foundAlbumIds = (albumRes.data ?? []).map((a: any) => a.id);
-    let progressMap = new Map<string, { total: number; completed: number }>();
+    const progressMap = new Map<string, { total: number; completed: number }>();
     if (foundAlbumIds.length > 0) {
       const { data: prog } = await supabase
         .from('album_progress')

@@ -66,7 +66,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
     const [mode, setMode] = useState<'list' | 'create'>('list');
     const [query, setQuery] = useState('');
     const [name, setName] = useState('');
-    const [color, setColor] = useState<string>(COLORS[0]!.value);
+    const [color, setColor] = useState<string>(COLORS[0].value);
     const [emoji, setEmoji] = useState<string | null>(null);
     const [createSession, setCreateSession] = useState(0);
     const [submitError, setSubmitError] = useState<string | null>(null);

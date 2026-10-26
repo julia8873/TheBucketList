@@ -516,17 +516,16 @@ function waitForKeyboardHidden(): Promise<void> {
       return;
     }
     let done = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const sub = Keyboard.addListener('keyboardDidHide', () => finish());
-    function finish() {
+    const finish = () => {
       if (done) return;
       done = true;
-      sub.remove();
-      if (timer) clearTimeout(timer);
+      if (sub?.remove) sub.remove();
+      clearTimeout(timer);
       // Pequeño margen para que Android termine de re-maquetar la ventana
       setTimeout(resolve, 80);
-    }
-    timer = setTimeout(finish, 600);
+    };
+    const timer = setTimeout(finish, 600);
+    const sub = Keyboard.addListener('keyboardDidHide', finish);
     Keyboard.dismiss();
   });
 }

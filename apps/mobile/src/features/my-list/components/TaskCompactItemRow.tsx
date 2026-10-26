@@ -5,11 +5,11 @@ import { CheckCircle2, GripVertical, Star, Users } from 'lucide-react-native';
 import { useTheme } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/my-list.styles';
-import { DragHandle } from '@/components/DraggableTaskList';
+import type { DragHandle } from '@/components/DraggableTaskList';
 import { BucketCover } from '@/components/BucketCover';
 import { resolveTaskImage } from '@/utils/taskImage';
-import { TaskViewCustomization } from '@/stores/myListCustomization.store';
-import { Tag } from '@/hooks/useTags';
+import type { TaskViewCustomization } from '@/stores/myListCustomization.store';
+import type { Tag } from '@/hooks/useTags';
 
 interface TaskCompactItemRowProps {
   item: any;
@@ -54,8 +54,8 @@ function TaskCompactItemRowComponent({
 
   const subtasksTotal = item.item_subtasks?.length || 0;
   const subtasksDone = item.item_subtasks?.filter((s: any) => s.done).length || 0;
-  const counterTarget = (item as any).counter_target ?? 0;
-  const counterCount = (item as any).counter_count ?? 0;
+  const counterTarget = (item).counter_target ?? 0;
+  const counterCount = (item).counter_count ?? 0;
 
   const progressText =
     subtasksTotal > 0

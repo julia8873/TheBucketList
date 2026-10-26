@@ -10,7 +10,7 @@ import { Images, Lock, Users, Heart, Bookmark, MessageCircle } from 'lucide-reac
 import { Avatar, useTheme, gold, fontFamily, fontSize, radii } from '@bucketlist/ui';
 import { useRouter } from 'expo-router';
 import { useTranslation } from '@bucketlist/shared';
-import { TaskViewMode } from './ViewModeSelector';
+import type { TaskViewMode } from './ViewModeSelector';
 import { useComments } from '../hooks/useSocial';
 import { timeAgo as getTimeAgo } from '../utils/timeAgo';
 import { TaskCommentsModal } from './TaskCommentsModal';

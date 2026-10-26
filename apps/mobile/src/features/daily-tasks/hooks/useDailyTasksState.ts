@@ -1,6 +1,6 @@
 import { Alert } from '@bucketlist/ui';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { TextInput } from 'react-native';
+import type { TextInput } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { confirm, toast } from '@bucketlist/ui';
 import {
@@ -35,7 +35,7 @@ import {
   useUpdateDailyTag,
   useDeleteDailyTag,
 } from '@/hooks/useDailyTags';
-import {
+import type {
   DailyTask,
   DailyTag,
   DailySubtask,
@@ -692,9 +692,9 @@ export function useDailyTasksState() {
     });
   };
 
-  const saveTitleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const saveDescTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const saveSubtasksTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTitleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveDescTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveSubtasksTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const editingTaskIdRef = useRef<string | null>(null);
   const editTitleRef = useRef(editTitle);
   const editDescriptionRef = useRef(editDescription);

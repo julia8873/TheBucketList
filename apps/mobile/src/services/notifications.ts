@@ -4,12 +4,15 @@ import * as Notifications from 'expo-notifications';
 import * as Linking from 'expo-linking';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+import { i18n } from '@bucketlist/shared';
 import { supabase } from './supabase';
 
 if (Platform.OS !== 'web') {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowAlert: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
       shouldPlaySound: true,
       shouldSetBadge: true,
     }),
@@ -88,10 +91,13 @@ export function openAppNotificationSettings() {
 /** Envía una notificación local de prueba para verificar sonido, banner y canal */
 export async function sendLocalTestNotification() {
   await setupNotificationChannelAsync();
+  const isEn = i18n.language === 'en';
   return await Notifications.scheduleNotificationAsync({
     content: {
       title: 'The Bucket List 🎯',
-      body: '¡Las notificaciones están funcionando correctamente en tu teléfono!',
+      body: isEn
+        ? 'Notifications are working properly on your phone!'
+        : '¡Las notificaciones están funcionando correctamente en tu teléfono!',
       data: { type: 'test' },
       sound: 'default',
       priority: Notifications.AndroidNotificationPriority.MAX,
@@ -255,12 +261,13 @@ export async function displayInAppNotification(record: any, currentUserId: strin
         .maybeSingle();
       actorName = actorProfile?.display_name || actorProfile?.username;
     }
-    const who = actorName || 'Alguien';
+    const isEn = i18n.language === 'en';
+    const who = actorName || (isEn ? 'Someone' : 'Alguien');
 
     // 3. Obtener título (y dueño) de la tarea o del álbum si aplica
     let entityTitle = '';
     const entityInfo: { bucketTitle?: string | null; bucketOwnerId?: string | null; albumTitle?: string | null; albumOwnerId?: string | null } = {};
-    if (record.bucket_id && ['reaction', 'comment', 'mention', 'collaboration_request', 'collaborator_joined'].includes(record.type)) {
+    if (record.bucket_id && ['reaction', 'comment', 'mention', 'collaboration_request', 'collaborator_joined', 'collaboration_invite', 'bucket_update'].includes(record.type)) {
       const { data: b } = await supabase
         .from('buckets')
         .select('title, user_id')
@@ -269,7 +276,7 @@ export async function displayInAppNotification(record: any, currentUserId: strin
       if (b?.title) entityTitle = b.title;
       entityInfo.bucketTitle = b?.title ?? null;
       entityInfo.bucketOwnerId = b?.user_id ?? null;
-    } else if (record.album_id && ['reaction', 'comment', 'mention', 'album_invite'].includes(record.type)) {
+    } else if (record.album_id && ['reaction', 'comment', 'mention', 'album_invite', 'album_update'].includes(record.type)) {
       const { data: a } = await supabase
         .from('albums')
         .select('title, owner_id')
@@ -282,83 +289,93 @@ export async function displayInAppNotification(record: any, currentUserId: strin
 
     // 4. Formatear título y mensaje descriptivo
     let title = 'The Bucket List 🎯';
-    let body = record.content || 'Tienes una nueva notificación.';
+    let body = isEn ? 'You have a new notification.' : (record.content || 'Tienes una nueva notificación.');
+
+    const specific = getSpecificNotificationText(record, who, entityInfo, currentUserId, i18n.language);
 
     switch (record.type) {
       case 'reaction':
-        title = 'Nueva reacción ❤️';
-        body = getSpecificNotificationText(record, who, entityInfo, currentUserId) ?? `${who} ha reaccionado a tu tarea.`;
+        title = isEn ? 'New reaction ❤️' : 'Nueva reacción ❤️';
+        body = specific ?? (isEn ? `${who} reacted to your task.` : `${who} ha reaccionado a tu tarea.`);
         break;
       case 'comment':
-        title = 'Nuevo comentario 💬';
-        body = getSpecificNotificationText(record, who, entityInfo, currentUserId) ?? `${who} ha dejado un comentario.`;
+        title = isEn ? 'New comment 💬' : 'Nuevo comentario 💬';
+        body = specific ?? (isEn ? `${who} left a comment.` : `${who} ha dejado un comentario.`);
         break;
       case 'mention':
-        title = 'Nueva mención 🏷️';
-        body = getSpecificNotificationText(record, who, entityInfo, currentUserId) ?? `${who} te ha mencionado en un comentario.`;
+        title = isEn ? 'New mention 🏷️' : 'Nueva mención 🏷️';
+        body = specific ?? (isEn ? `${who} mentioned you in a comment.` : `${who} te ha mencionado en un comentario.`);
+        break;
+      case 'comment_like':
+        title = isEn ? 'Liked comment 👍' : 'Le gustó tu comentario 👍';
+        body = specific ?? (isEn ? `${who} liked your comment.` : `A ${who} le ha gustado tu comentario.`);
         break;
       case 'follow':
-        title = 'Nuevo seguidor 👋';
-        body = `${who} ha empezado a seguirte.`;
+        title = isEn ? 'New follower 👋' : 'Nuevo seguidor 👋';
+        body = isEn ? `${who} started following you.` : `${who} ha empezado a seguirte.`;
         break;
       case 'follow_request':
-        title = 'Solicitud de seguimiento 👥';
-        body = `${who} quiere seguirte.`;
+        title = isEn ? 'Follow request 👥' : 'Solicitud de seguimiento 👥';
+        body = isEn ? `${who} wants to follow you.` : `${who} quiere seguirte.`;
         break;
       case 'follow_accepted':
-        title = 'Solicitud aceptada ✨';
-        body = `${who} aceptó tu solicitud de seguimiento.`;
+        title = isEn ? 'Request accepted ✨' : 'Solicitud aceptada ✨';
+        body = isEn ? `${who} accepted your follow request.` : `${who} aceptó tu solicitud de seguimiento.`;
         break;
       case 'friend_completed':
-        title = '¡Objetivo cumplido! 🎉';
-        body = `¡${who} ha completado una tarea de su bucket list!`;
+        title = isEn ? 'Goal achieved! 🎉' : '¡Objetivo cumplido! 🎉';
+        body = isEn ? `${who} completed a task from their bucket list!` : `¡${who} ha completado una tarea de su bucket list!`;
         break;
       case 'deadline':
-        title = 'Fecha límite próxima ⏳';
-        body = record.content || 'Tienes una tarea cuya fecha límite está cerca.';
+        title = isEn ? 'Deadline approaching ⏳' : 'Fecha límite próxima ⏳';
+        body = isEn ? 'A task deadline is approaching.' : (record.content || 'Tienes una tarea cuya fecha límite está cerca.');
         break;
       case 'collaboration_invite':
-        title = 'Invitación a colaborar 🤝';
-        body = record.content || `${who} te ha invitado a colaborar en una tarea.`;
+        title = isEn ? 'Collaboration invite 🤝' : 'Invitación a colaborar 🤝';
+        body = specific ?? (isEn ? `${who} invited you to collaborate.` : (record.content || `${who} te ha invitado a colaborar en una tarea.`));
         break;
       case 'collaboration_request':
-        title = 'Solicitud de colaboración 🤝';
-        body = record.content || `${who} ha solicitado colaborar en tu tarea.`;
+        title = isEn ? 'Collaboration request 🤝' : 'Solicitud de colaboración 🤝';
+        body = specific ?? (isEn ? `${who} requested to collaborate on your task.` : (record.content || `${who} ha solicitado colaborar en tu tarea.`));
         break;
       case 'collaborator_joined':
-        title = 'Nuevo colaborador 🎉';
-        body = record.content || `${who} se ha unido como colaborador a tu tarea.`;
+        title = isEn ? 'New collaborator 🎉' : 'Nuevo colaborador 🎉';
+        body = specific ?? (isEn ? `${who} joined as a collaborator on your task.` : (record.content || `${who} se ha unido como colaborador a tu tarea.`));
         break;
       case 'collaboration_accepted':
-        title = 'Colaboración aceptada ✨';
-        body = record.content || `${who} ha aceptado tu solicitud de colaboración.`;
+        title = isEn ? 'Collaboration accepted ✨' : 'Colaboración aceptada ✨';
+        body = specific ?? (isEn ? `${who} accepted your collaboration request.` : (record.content || `${who} ha aceptado tu solicitud de colaboración.`));
         break;
       case 'album_invite':
-        title = 'Invitación a álbum 📁';
-        body = record.content || (entityTitle ? `${who} te ha invitado al álbum "${entityTitle}"` : `${who} te ha invitado a un álbum.`);
+        title = isEn ? 'Album invite 📁' : 'Invitación a álbum 📁';
+        body = specific ?? (isEn ? (entityTitle ? `${who} invited you to album "${entityTitle}"` : `${who} invited you to an album.`) : (record.content || (entityTitle ? `${who} te ha invitado al álbum "${entityTitle}"` : `${who} te ha invitado a un álbum.`)));
         break;
       case 'notification_request':
-        title = 'Solicitud de notificaciones 🔔';
-        body = record.content || `${who} ha solicitado activar notificaciones.`;
+        title = isEn ? 'Notification request 🔔' : 'Solicitud de notificaciones 🔔';
+        body = specific ?? (isEn ? `${who} requested to enable notifications.` : (record.content || `${who} ha solicitado activar notificaciones.`));
         break;
       case 'notification_accepted':
-        title = 'Notificaciones activadas 🔔';
-        body = record.content || `${who} aceptó la solicitud de notificaciones.`;
+        title = isEn ? 'Notifications enabled 🔔' : 'Notificaciones activadas 🔔';
+        body = specific ?? (isEn ? `${who} accepted your notification request.` : (record.content || `${who} aceptó la solicitud de notificaciones.`));
         break;
       case 'bucket_update':
-        title = 'Actualización de tarea 🎯';
-        body = record.content || `${who} ha actualizado una tarea que sigues.`;
+        title = isEn ? 'Task update 🎯' : 'Actualización de tarea 🎯';
+        body = specific ?? (isEn ? `${who} updated a task you follow.` : (record.content || `${who} ha actualizado una tarea que sigues.`));
         break;
       case 'album_update':
-        title = 'Actualización de álbum 📁';
-        body = record.content || `${who} ha actualizado un álbum que sigues.`;
+        title = isEn ? 'Album update 📁' : 'Actualización de álbum 📁';
+        body = specific ?? (isEn ? `${who} updated an album you follow.` : (record.content || `${who} ha actualizado un álbum que sigues.`));
         break;
       case 'drive_access':
-        title = 'Acceso a Google Drive 📂';
-        body = record.content || `${who} ha accedido a tu enlace de Google Drive.`;
+        title = isEn ? 'Google Drive access 📂' : 'Acceso a Google Drive 📂';
+        body = specific ?? (isEn ? `${who} accessed your Google Drive link.` : (record.content || `${who} ha accedido a tu enlace de Google Drive.`));
         break;
       default:
-        if (record.content) body = record.content;
+        if (isEn) {
+          body = 'You have a new notification.';
+        } else if (record.content) {
+          body = record.content;
+        }
         break;
     }
 
@@ -446,6 +463,7 @@ export async function sendPushNotification(
 }
 
 export async function scheduleDeadlineReminder(bucketId: string, title: string, deadline: string) {
+  const isEn = i18n.language === 'en';
   const deadlineDate = new Date(deadline);
   
   // Schedule 3 days before
@@ -455,8 +473,8 @@ export async function scheduleDeadlineReminder(bucketId: string, title: string, 
   if (threeDaysBefore > new Date()) {
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: "¡Fecha límite acercándose! 🎯",
-        body: `Te quedan 3 días para completar: ${title}`,
+        title: isEn ? "Deadline approaching! 🎯" : "¡Fecha límite acercándose! 🎯",
+        body: isEn ? `You have 3 days left to complete: ${title}` : `Te quedan 3 días para completar: ${title}`,
         data: { bucketId },
         sound: 'default',
       },
@@ -468,8 +486,8 @@ export async function scheduleDeadlineReminder(bucketId: string, title: string, 
   if (deadlineDate > new Date()) {
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: "¡Hoy es el gran día! ⚡",
-        body: `¡Tu fecha límite para "${title}" es hoy!`,
+        title: isEn ? "Today is the big day! ⚡" : "¡Hoy es el gran día! ⚡",
+        body: isEn ? `Your deadline for "${title}" is today!` : `¡Tu fecha límite para "${title}" es hoy!`,
         data: { bucketId },
         sound: 'default',
       },

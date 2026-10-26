@@ -17,7 +17,7 @@ import { displayNameOf, initialsOf } from '../utils/initials';
 import { OfficialBadge, isUserAdmin } from './OfficialBadge';
 import { useTranslation } from '@bucketlist/shared';
 
-import { TaskViewMode } from './ViewModeSelector';
+import type { TaskViewMode } from './ViewModeSelector';
 
 interface FeedCardProps {
   /** { actor, bucket, type, created_at } — en explorar se construye al vuelo. */

@@ -16,10 +16,20 @@ module.exports = ({ config }) => {
         console.warn('[app.config] ⚠ Falta google-services.json: las notificaciones push NO funcionarán en esta build de producción.');
     }
 
+    // versionCode de Android. Google Play rechaza cualquier subida con un versionCode ya usado.
+    // El workflow release-apk.yml usa `expo prebuild` + Gradle, que ignora `autoIncrement` de eas.json,
+    // así que lo derivamos del número de ejecución de GitHub Actions (siempre creciente).
+    //   · ANDROID_VERSION_CODE  → fuerza un valor concreto (p. ej. para igualar una build ya subida)
+    //   · GITHUB_RUN_NUMBER     → lo define GitHub Actions automáticamente
+    // En EAS Build (appVersionSource: remote) el versionCode lo gestiona EAS; este valor no interfiere.
+    const parsedVersionCode = parseInt(process.env.ANDROID_VERSION_CODE || process.env.GITHUB_RUN_NUMBER || '', 10);
+    const versionCode = Number.isInteger(parsedVersionCode) && parsedVersionCode > 0 ? parsedVersionCode : 1;
+
     return {
         ...config,
         android: {
             ...config.android,
+            versionCode,
             ...(googleServicesFile ? { googleServicesFile } : {}),
         },
     };

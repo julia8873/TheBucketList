@@ -78,9 +78,10 @@ export function setupNavigationGuard(): void {
   isInitialized = true;
 
   // Intercept store.linkTo (the single funnel for push, navigate, replace, dismissTo)
-  if (store && typeof store.linkTo === 'function') {
-    const originalLinkTo = store.linkTo.bind(store);
-    store.linkTo = function guardedLinkTo(href: any, options: any) {
+  const anyStore = store as any;
+  if (anyStore && typeof anyStore.linkTo === 'function') {
+    const originalLinkTo = anyStore.linkTo.bind(anyStore);
+    anyStore.linkTo = function guardedLinkTo(href: any, options: any) {
       if (shouldBlockNavigation(href)) {
         return;
       }
@@ -89,9 +90,9 @@ export function setupNavigationGuard(): void {
   }
 
   // Reset guard on store.goBack
-  if (store && typeof store.goBack === 'function') {
-    const originalGoBack = store.goBack.bind(store);
-    store.goBack = function guardedGoBack() {
+  if (anyStore && typeof anyStore.goBack === 'function') {
+    const originalGoBack = anyStore.goBack.bind(anyStore);
+    anyStore.goBack = function guardedGoBack() {
       resetNavigationGuard();
       return originalGoBack();
     };

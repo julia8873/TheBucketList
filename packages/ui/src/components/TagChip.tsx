@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, Text, View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { Pressable, Text, View, StyleSheet } from 'react-native';
 import { X } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeProvider';
 

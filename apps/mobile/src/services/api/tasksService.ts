@@ -127,12 +127,12 @@ export const tasksService = {
       .map((b: any) => ({
         id: b.id,
         title: b.title,
-        categoryName: (b.categories as any)?.name_es || '',
+        categoryName: (b.categories)?.name_es || '',
         location: b.location_text || undefined,
         coverKey: 'aurora',
         imageValue: resolveTaskImage(b, { preferThumb: true }),
-        categorySlug: (b.categories as any)?.slug ?? null,
-        visibility: (b.visibility as any) || 'public',
+        categorySlug: (b.categories)?.slug ?? null,
+        visibility: (b.visibility) || 'public',
         inAlbum: !!albumId && (b.album_items ?? []).some((ai: any) => ai.album_id === albumId),
       }));
   },

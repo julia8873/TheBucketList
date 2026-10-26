@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import type {
+  GestureResponderEvent} from 'react-native';
 import {
   View,
   Text,
@@ -9,8 +11,7 @@ import {
   StyleSheet,
   Platform,
   KeyboardAvoidingView,
-  PanResponder,
-  GestureResponderEvent,
+  PanResponder
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { X, Check, Trash2, Pipette, Hash } from 'lucide-react-native';

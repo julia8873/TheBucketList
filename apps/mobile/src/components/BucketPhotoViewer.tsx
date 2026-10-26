@@ -35,7 +35,7 @@ import { Typography, ConfirmDialog, fontFamily, toast } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { storageApi } from '../services/api/storage';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { UniversalDatePicker } from './UniversalDatePicker';

@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Sparkles, Layers, Heart, Copy, ChevronRight } from 'lucide-react-native';
 import { useTheme, gold, fontFamily } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
-import { CollectionItem } from '../types';
+import type { CollectionItem } from '../types';
 
 interface FeaturedCollectionsRowProps {
   collections: CollectionItem[];

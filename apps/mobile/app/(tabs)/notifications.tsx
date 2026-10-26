@@ -61,10 +61,10 @@ export default function NotificationsScreen() {
   const handleEnablePermissions = async () => {
     if (!permStatus?.granted && !permStatus?.canAskAgain) {
       confirm.show({
-        title: 'Permisos desactivados',
-        message: 'Las notificaciones están bloqueadas en los ajustes de tu teléfono. Pulsa "Abrir Ajustes" para activarlas.',
-        confirmLabel: 'Abrir Ajustes',
-        cancelLabel: 'Cancelar',
+        title: t('notifications.dialog_perm_title'),
+        message: t('notifications.dialog_perm_msg'),
+        confirmLabel: t('notifications.perm_btn_settings'),
+        cancelLabel: t('common.cancel'),
         onConfirm: openAppNotificationSettings,
       });
       return;
@@ -74,7 +74,7 @@ export default function NotificationsScreen() {
     setPermStatus(res);
     if (res.granted && user?.id) {
       await registerForPushNotificationsAsync(user.id);
-      toast.success('¡Notificaciones activadas! Ahora recibirás avisos en tu móvil.');
+      toast.success(t('notifications.push_activated_toast'));
     }
   };
 
@@ -150,7 +150,7 @@ export default function NotificationsScreen() {
         }
       }
     } catch (e: any) {
-      toast.error(e?.message ?? 'No se pudo responder', 'Error');
+      toast.error(e?.message ?? t('common.error'), t('common.error'));
     } finally {
       setRespondingId(null);
     }
@@ -194,36 +194,38 @@ export default function NotificationsScreen() {
   };
 
   const getMessageForType = (notification: any) => {
-    const actorName = notification.actor?.display_name || notification.actor?.username || (i18n.language === 'en' ? 'Someone' : 'Alguien');
+    const isEn = i18n.language === 'en';
+    const actorName = notification.actor?.display_name || notification.actor?.username || (isEn ? 'Someone' : 'Alguien');
     
+    // Si hay formato específico enriquecido con títulos de tarea/álbum, usarlo con el idioma actual
+    const specific = getSpecificNotificationText(notification, actorName, notification, user?.id, i18n.language);
+    if (specific) return specific;
+
+    // Cuando el idioma es inglés, NO usar notification.content de la BD ya que fue insertado en español por triggers de PostgreSQL
     switch (notification.type) {
-      case 'user_reported': return notification.content || `${actorName} ${t('notifications.type_user_reported')}`;
-      case 'content_reported': return notification.content || `${actorName} ${t('notifications.type_content_reported')}`;
+      case 'user_reported': return `${actorName} ${t('notifications.type_user_reported')}`;
+      case 'content_reported': return `${actorName} ${t('notifications.type_content_reported')}`;
       case 'reaction':
       case 'comment':
       case 'mention':
       case 'comment_like':
-        return (
-          getSpecificNotificationText(notification, actorName, notification, user?.id) ??
-          notification.content ??
-          t('notifications.type_default')
-        );
+        return isEn ? `${actorName} interacted with your post.` : (notification.content || t('notifications.type_default'));
       case 'follow': return `${actorName} ${t('notifications.type_follow')}`;
       case 'follow_request': return `${actorName} ${t('notifications.type_follow_request')}`;
       case 'follow_accepted': return `${actorName} ${t('notifications.type_follow_accepted')}`;
       case 'friend_completed': return `${actorName} ${t('notifications.type_friend_completed')}`;
       case 'deadline': return t('notifications.type_deadline');
-      case 'collaboration_invite': return notification.content || `${actorName} ${t('notifications.type_collaboration_invite')}`;
-      case 'collaboration_request': return notification.content || `${actorName} ${t('notifications.type_collaboration_request')}`;
-      case 'collaborator_joined': return notification.content || `${actorName} ${t('notifications.type_collaborator_joined')}`;
-      case 'collaboration_accepted': return notification.content || `${actorName} ${t('notifications.type_collaboration_accepted')}`;
-      case 'album_invite': return notification.content || `${actorName} ${t('notifications.type_album_invite')}`;
-      case 'notification_request': return notification.content || `${actorName} ${t('notifications.type_notification_request')}`;
-      case 'notification_accepted': return notification.content || `${actorName} ${t('notifications.type_notification_accepted')}`;
-      case 'bucket_update': return notification.content || `${actorName} ${t('notifications.type_bucket_update')}`;
-      case 'album_update': return notification.content || `${actorName} ${t('notifications.type_album_update')}`;
-      case 'drive_access': return notification.content || `${actorName} ${t('notifications.type_drive_access')}`;
-      default: return notification.content || t('notifications.type_default');
+      case 'collaboration_invite': return `${actorName} ${t('notifications.type_collaboration_invite')}`;
+      case 'collaboration_request': return `${actorName} ${t('notifications.type_collaboration_request')}`;
+      case 'collaborator_joined': return `${actorName} ${t('notifications.type_collaborator_joined')}`;
+      case 'collaboration_accepted': return `${actorName} ${t('notifications.type_collaboration_accepted')}`;
+      case 'album_invite': return `${actorName} ${t('notifications.type_album_invite')}`;
+      case 'notification_request': return `${actorName} ${t('notifications.type_notification_request')}`;
+      case 'notification_accepted': return `${actorName} ${t('notifications.type_notification_accepted')}`;
+      case 'bucket_update': return `${actorName} ${t('notifications.type_bucket_update')}`;
+      case 'album_update': return `${actorName} ${t('notifications.type_album_update')}`;
+      case 'drive_access': return `${actorName} ${t('notifications.type_drive_access')}`;
+      default: return isEn ? t('notifications.type_default') : (notification.content || t('notifications.type_default'));
     }
   };
 

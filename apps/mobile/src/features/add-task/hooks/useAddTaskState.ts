@@ -1,6 +1,6 @@
 import { Alert, confirm } from '@bucketlist/ui';
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { ScrollView } from 'react-native';
+import type { ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from '@bucketlist/shared';

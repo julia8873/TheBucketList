@@ -4,8 +4,9 @@ import { View, Text } from 'react-native';
 import { useTheme } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/explore.styles';
-import { DailyTask, DailyTag } from '../types';
-import { DraggableTaskList, DragHandle } from '@/components/DraggableTaskList';
+import type { DailyTask, DailyTag } from '../types';
+import type { DragHandle } from '@/components/DraggableTaskList';
+import { DraggableTaskList } from '@/components/DraggableTaskList';
 
 interface DailyGroupedTasksViewProps {
   groups: { id: string; tag: DailyTag | null; tasks: DailyTask[] }[];

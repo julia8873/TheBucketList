@@ -138,7 +138,7 @@ export const bucketApi = {
       description: payload.description || null,
       category_id: payload.category_id || null,
       priority: payload.priority || 'medium',
-      visibility: payload.visibility as 'public' | 'followers' | 'private',
+      visibility: payload.visibility,
       deadline: payload.deadline ? payload.deadline.toISOString() : null,
       location_text: payload.location_text || null,
       location_lat: payload.location_lat || null,
@@ -232,12 +232,12 @@ export const bucketApi = {
       description: payload.description,
       category_id: payload.category_id,
       priority: payload.priority,
-      visibility: payload.visibility as 'public' | 'followers' | 'private' | undefined,
+      visibility: payload.visibility,
       deadline: payload.deadline ? payload.deadline.toISOString() : null,
       location_text: payload.location_text,
       location_lat: payload.location_lat,
       location_lng: payload.location_lng,
-      status: payload.status as 'pending' | 'in_progress' | 'completed' | 'expired' | 'archived' | undefined,
+      status: payload.status,
       completed_at: payload.completed_at ? payload.completed_at.toISOString() : undefined,
       drive_url: payload.drive_url !== undefined ? payload.drive_url : undefined,
     };
@@ -355,7 +355,7 @@ export const bucketApi = {
 
     return {
       success: true,
-      status: targetStatus as 'accepted' | 'pending',
+      status: targetStatus,
       message: targetStatus === 'accepted' ? '¡Te has unido como colaborador!' : 'Solicitud enviada al creador',
     };
   },

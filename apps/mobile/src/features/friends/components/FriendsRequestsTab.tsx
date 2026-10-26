@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { Check, X } from 'lucide-react-native';
 import { EmptyState, gold, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { PersonRow } from '../../../components/PersonRow';
 import { UserRowSkeleton } from '../../../components/TaskSkeletons';
 import { styles } from '../styles/friends.styles';
@@ -34,6 +35,8 @@ export function FriendsRequestsTab({
   onOpenProfile,
 }: FriendsRequestsTabProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
+
   if (isLoading && incomingList.length === 0 && outgoingList.length === 0) {
     return (
       <View style={{ marginTop: 8 }}>
@@ -46,8 +49,8 @@ export function FriendsRequestsTab({
   if (incomingList.length === 0 && outgoingList.length === 0) {
     return (
       <EmptyState
-        title="Sin solicitudes pendientes"
-        message="Cuando alguien con cuenta privada quiera seguirte, o tú solicites seguir a alguien, aparecerá aquí."
+        title={t('friends.requests_empty_title')}
+        message={t('friends.requests_empty_desc')}
       />
     );
   }
@@ -55,10 +58,10 @@ export function FriendsRequestsTab({
   return (
     <View>
       <View style={styles.sectionLabel}>
-        <GoldLabel>{`Recibidas · ${incomingList.length}`}</GoldLabel>
+        <GoldLabel>{t('friends.requests_received', { count: incomingList.length })}</GoldLabel>
       </View>
       {incomingList.length === 0 ? (
-        <Text style={styles.empty}>No tienes solicitudes por responder.</Text>
+        <Text style={styles.empty}>{t('friends.requests_empty_incoming')}</Text>
       ) : (
         incomingList.map(({ person }) => {
           const busy = busyId === person.id && isActionPending;
@@ -66,7 +69,7 @@ export function FriendsRequestsTab({
             <PersonRow
               key={person.id}
               person={person}
-              subtitle={`@${person.username} · quiere seguirte`}
+              subtitle={`@${person.username} · ${t('friends.requests_wants_to_follow')}`}
               onPress={() => onOpenProfile(person.id)}
               right={
                 busy ? (
@@ -77,7 +80,7 @@ export function FriendsRequestsTab({
                       onPress={() => onReject(person.id)}
                       style={[styles.roundButton, styles.rejectButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
                       accessibilityRole="button"
-                      accessibilityLabel="Rechazar solicitud"
+                      accessibilityLabel={t('friends.requests_reject_label')}
                     >
                       <X size={18} color={theme.colors.foregroundMuted} strokeWidth={2} />
                     </Pressable>
@@ -85,7 +88,7 @@ export function FriendsRequestsTab({
                       onPress={() => onAccept(person.id)}
                       style={[styles.roundButton, styles.acceptButton]}
                       accessibilityRole="button"
-                      accessibilityLabel="Aceptar solicitud"
+                      accessibilityLabel={t('friends.requests_accept_label')}
                     >
                       <Check size={18} color="#111111" strokeWidth={2.4} />
                     </Pressable>
@@ -98,25 +101,25 @@ export function FriendsRequestsTab({
       )}
 
       <View style={[styles.sectionLabel, { marginTop: 26 }]}>
-        <GoldLabel>{`Enviadas · ${outgoingList.length}`}</GoldLabel>
+        <GoldLabel>{t('friends.requests_sent', { count: outgoingList.length })}</GoldLabel>
       </View>
       {outgoingList.length === 0 ? (
-        <Text style={[styles.empty, { color: theme.colors.foregroundMuted }]}>No has enviado solicitudes.</Text>
+        <Text style={[styles.empty, { color: theme.colors.foregroundMuted }]}>{t('friends.requests_empty_outgoing')}</Text>
       ) : (
         outgoingList.map(({ person }) => (
           <PersonRow
             key={person.id}
             person={person}
-            subtitle={`@${person.username} · esperando respuesta`}
+            subtitle={`@${person.username} · ${t('friends.requests_waiting_response')}`}
             onPress={() => onOpenProfile(person.id)}
             right={
               <Pressable
                 onPress={() => onCancelOutgoing(person.id)}
                 style={[styles.cancelButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
                 accessibilityRole="button"
-                accessibilityLabel="Cancelar solicitud"
+                accessibilityLabel={t('friends.requests_cancel_label')}
               >
-                <Text style={[styles.cancelText, { color: theme.colors.foregroundMuted }]}>Cancelar</Text>
+                <Text style={[styles.cancelText, { color: theme.colors.foregroundMuted }]}>{t('common.cancel')}</Text>
               </Pressable>
             }
           />

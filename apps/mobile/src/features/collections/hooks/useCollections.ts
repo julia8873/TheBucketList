@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { collectionsService } from '../services/collectionsService';
 import { resolveCollectionsLang } from '../data/defaultCollections';
-import { CollectionItem } from '../types';
+import type { CollectionItem } from '../types';
 import { useAuthStore } from '../../../stores/auth.store';
 import { ALBUMS_QUERY_KEY } from '../../../hooks/useAlbums';
 import { useToast } from '@bucketlist/ui';

@@ -150,7 +150,7 @@ export default function CreateBucketModal() {
           console.error('Failed to create bucket:', error);
           Alert.alert(
             t('task_form.alert_create_error_title', { defaultValue: 'No se pudo crear la tarea' }),
-            (error as Error)?.message ?? t('common.retry', { defaultValue: 'Inténtalo de nuevo.' })
+            (error)?.message ?? t('common.retry', { defaultValue: 'Inténtalo de nuevo.' })
           );
         },
       });
@@ -165,7 +165,7 @@ export default function CreateBucketModal() {
 
   const onInvalid = (errs: Record<string, any>) => {
     console.warn('Formulario inválido:', errs);
-    const first = Object.values(errs)[0] as any;
+    const first = Object.values(errs)[0];
     Alert.alert(
       t('task_form.alert_invalid_title', { defaultValue: 'Revisa la tarea' }),
       first?.message ?? t('task_form.alert_invalid_msg', { defaultValue: 'Faltan datos por completar.' })

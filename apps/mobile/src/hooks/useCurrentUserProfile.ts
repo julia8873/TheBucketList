@@ -25,7 +25,7 @@ export function useCurrentUserProfile() {
 export function useIsAdmin(): boolean {
   const { data: profile } = useCurrentUserProfile();
   return (
-    (profile as any)?.role === 'admin' ||
+    (profile)?.role === 'admin' ||
     profile?.username?.toLowerCase() === 'juliamiralles8873'
   );
 }

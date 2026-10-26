@@ -25,7 +25,7 @@ import {
   useCollections,
 } from '../../src/features/collections/hooks/useCollections';
 import { CollectionCard } from '../../src/features/collections/components/CollectionCard';
-import { CollectionItem } from '../../src/features/collections/types';
+import type { CollectionItem } from '../../src/features/collections/types';
 import { useTranslation } from '@bucketlist/shared';
 
 // Category ids are language-neutral; the visible label comes from i18n (collections.cat_<id>).

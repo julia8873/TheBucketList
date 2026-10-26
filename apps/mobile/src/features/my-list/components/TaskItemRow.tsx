@@ -8,9 +8,9 @@ import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { BucketCover } from '@/components/BucketCover';
 import { resolveTaskImage } from '@/utils/taskImage';
 import { styles } from '../styles/my-list.styles';
-import { DragHandle } from '@/components/DraggableTaskList';
-import { Tag } from '@/hooks/useTags';
-import { TaskViewCustomization } from '@/stores/myListCustomization.store';
+import type { DragHandle } from '@/components/DraggableTaskList';
+import type { Tag } from '@/hooks/useTags';
+import type { TaskViewCustomization } from '@/stores/myListCustomization.store';
 
 interface TaskItemRowProps {
   item: any;
@@ -296,8 +296,8 @@ function TaskItemRowComponent({
         description={showDesc && item.description ? item.description.trim() : undefined}
         subtasksDone={showSubtasks ? subtasksDone : 0}
         subtasksTotal={showSubtasks ? subtasksTotal : 0}
-        counterCount={showSubtasks ? (item as any).counter_count : 0}
-        counterTarget={showSubtasks ? (item as any).counter_target : undefined}
+        counterCount={showSubtasks ? (item).counter_count : 0}
+        counterTarget={showSubtasks ? (item).counter_target : undefined}
         completed={item.status === 'completed'}
         onPress={onPress}
         onLongPress={onLongPress}

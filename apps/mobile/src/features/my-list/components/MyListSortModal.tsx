@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Typography } from '@bucketlist/ui';
 import { dark, gold } from '@bucketlist/ui/src/tokens/colors';
 import { ArrowDown, ArrowUp, Check, GripVertical } from 'lucide-react-native';
-import { SortField, SortDir } from '../types';
+import type { SortField, SortDir } from '../types';
 
 interface MyListSortModalProps {
   visible: boolean;

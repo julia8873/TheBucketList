@@ -21,7 +21,8 @@ import { useFollowUser, useUnfollowUser, useSavedAlbumIds, useToggleSaveAlbum } 
 import { useUserFavorites } from '../../src/hooks/useFavorites';
 import { ProfileSkeleton, TaskRowSkeleton } from '../../src/components/TaskSkeletons';
 import { PublicTaskRow } from '../../src/components/PublicTaskRow';
-import { ViewModeSelector, TaskViewMode } from '../../src/components/ViewModeSelector';
+import type { TaskViewMode } from '../../src/components/ViewModeSelector';
+import { ViewModeSelector } from '../../src/components/ViewModeSelector';
 import { displayNameOf } from '../../src/utils/initials';
 
 import { styles } from '../../src/features/public-profile/styles/profile.styles';

@@ -71,7 +71,7 @@ function Row(props: RowProps) {
   const isLongPressing = useRef(false);
   const didDragRef = useRef(false);
   const lastDragEndTime = useRef(0);
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartPos = useRef({ x: 0, y: 0 });
 
   const clearTimer = useCallback(() => {

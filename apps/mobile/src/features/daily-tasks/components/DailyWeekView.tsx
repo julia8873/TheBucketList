@@ -6,8 +6,9 @@ import * as Haptics from 'expo-haptics';
 import { useTheme, gold } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/explore.styles';
-import { DailyTask } from '../types';
-import { DraggableTaskList, DragHandle } from '@/components/DraggableTaskList';
+import type { DailyTask } from '../types';
+import type { DragHandle } from '@/components/DraggableTaskList';
+import { DraggableTaskList } from '@/components/DraggableTaskList';
 
 export interface WeekDayItem {
   date: Date;

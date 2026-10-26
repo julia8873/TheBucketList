@@ -9,7 +9,7 @@ import { resolveTaskImage } from '../utils/taskImage';
 import { useAuthStore } from '../stores/auth.store';
 import { useCopiedBucketIds, useCopyBucket } from '../hooks/useSocial';
 import { useTranslation } from '@bucketlist/shared';
-import { TaskViewMode } from './ViewModeSelector';
+import type { TaskViewMode } from './ViewModeSelector';
 
 interface PublicTaskRowProps {
   bucket: any;

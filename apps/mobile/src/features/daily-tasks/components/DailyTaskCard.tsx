@@ -14,10 +14,10 @@ import {
 import { gold, useTheme } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/explore.styles';
-import { DailyTask, DailyTag, DailySortField, TimeView } from '../types';
+import type { DailyTask, DailyTag, DailySortField, TimeView } from '../types';
 import { PRIORITY_CONFIG, getPriorityConfig } from '../constants';
 import { formatTaskDateBadge, getRecurrenceLabel } from '../utils/dailyTaskDateUtils';
-import { DragHandle } from '@/components/DraggableTaskList';
+import type { DragHandle } from '@/components/DraggableTaskList';
 import {
   useDailyTasksCustomizationStore,
   type DailyTaskCustomization,

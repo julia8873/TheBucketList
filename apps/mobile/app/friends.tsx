@@ -67,7 +67,7 @@ export default function FriendsScreen() {
     queryFn: async () => {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', targetUserId!).single();
       if (error) throw error;
-      return data as any;
+      return data;
     },
     enabled: isOtherUser && !!targetUserId,
   });
@@ -257,14 +257,14 @@ export default function FriendsScreen() {
             onAccept={(pId) =>
               runRequestAction(pId, () =>
                 accept.mutate(pId, {
-                  onError: (e: any) => Alert.alert('No se pudo aceptar', e?.message ?? ''),
+                  onError: (e: any) => Alert.alert(t('friends.error_accept'), e?.message ?? ''),
                 })
               )
             }
             onReject={(pId) =>
               runRequestAction(pId, () =>
                 reject.mutate(pId, {
-                  onError: (e: any) => Alert.alert('No se pudo rechazar', e?.message ?? ''),
+                  onError: (e: any) => Alert.alert(t('friends.error_reject'), e?.message ?? ''),
                 })
               )
             }
@@ -272,7 +272,7 @@ export default function FriendsScreen() {
               user &&
               unfollow.mutate(
                 { followerId: user.id, followingId: pId },
-                { onError: (e: any) => Alert.alert('No se pudo cancelar', e?.message ?? '') }
+                { onError: (e: any) => Alert.alert(t('friends.error_cancel'), e?.message ?? '') }
               )
             }
             onOpenProfile={openProfile}

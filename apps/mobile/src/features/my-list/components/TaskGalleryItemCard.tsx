@@ -7,8 +7,8 @@ import { useTranslation } from '@bucketlist/shared';
 import { BucketCover } from '@/components/BucketCover';
 import { resolveTaskImage } from '@/utils/taskImage';
 import { styles } from '../styles/my-list.styles';
-import { TaskViewCustomization } from '@/stores/myListCustomization.store';
-import { Tag } from '@/hooks/useTags';
+import type { TaskViewCustomization } from '@/stores/myListCustomization.store';
+import type { Tag } from '@/hooks/useTags';
 
 interface TaskGalleryItemCardProps {
   item: any;

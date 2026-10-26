@@ -14,7 +14,7 @@ import { FriendsFeedTab } from '../../src/features/feed/components/FriendsFeedTa
 import { ExploreFeedTab } from '../../src/features/feed/components/ExploreFeedTab';
 import { FeedCardSkeleton } from '../../src/components/FeedCardSkeleton';
 
-import { TaskViewMode } from '../../src/components/ViewModeSelector';
+import type { TaskViewMode } from '../../src/components/ViewModeSelector';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function FeedScreen() {

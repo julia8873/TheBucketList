@@ -7,7 +7,7 @@ import { FeedCard } from '../../../components/FeedCard';
 import { AlbumFeedCard } from '../../../components/AlbumFeedCard';
 import { FeedCardSkeleton } from '../../../components/FeedCardSkeleton';
 import { UserRowSkeleton } from '../../../components/TaskSkeletons';
-import { TaskViewMode } from '../../../components/ViewModeSelector';
+import type { TaskViewMode } from '../../../components/ViewModeSelector';
 import { styles } from '../styles/feed.styles';
 import {
   useUserLikedAlbumIds,

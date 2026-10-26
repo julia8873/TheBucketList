@@ -1,9 +1,10 @@
 import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useMemo, useRef } from 'react';
+import type {
+  TextInput} from 'react-native';
 import {
   View,
   Text,
-  TextInput,
   Pressable,
   ActivityIndicator,
   Platform,

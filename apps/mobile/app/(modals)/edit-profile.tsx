@@ -32,7 +32,7 @@ export default function EditProfileScreen() {
     queryFn: async () => {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', user!.id).single();
       if (error) throw error;
-      return data as any;
+      return data;
     },
     enabled: !!user?.id,
   });

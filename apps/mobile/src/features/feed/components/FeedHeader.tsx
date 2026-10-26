@@ -4,7 +4,8 @@ import { Bell, Search, Users, X, Map, ChevronDown, SlidersHorizontal, Check, Spa
 import { useTranslation } from '@bucketlist/shared';
 import { PageTitle, useTheme, gold, fontFamily } from '@bucketlist/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ViewModeSelector, TaskViewMode } from '../../../components/ViewModeSelector';
+import type { TaskViewMode } from '../../../components/ViewModeSelector';
+import { ViewModeSelector } from '../../../components/ViewModeSelector';
 import { TagSheetShell } from '../../../components/TagSheetShell';
 import { styles } from '../styles/feed.styles';
 
@@ -59,8 +60,8 @@ export function FeedHeader({
       {/* Top Bar */}
       <View style={styles.topBar}>
         <PageTitle
-          gold={homeTab === 'friends' ? (t('feed.friends_moments_gold', { defaultValue: 'Momentos' }) as string) : (t('feed.explore_ideas_gold', { defaultValue: 'Explorar' }) as string)}
-          rest={homeTab === 'friends' ? (t('feed.friends_moments_rest', { defaultValue: 'de amigos' }) as string) : (t('feed.explore_ideas_rest', { defaultValue: 'ideas' }) as string)}
+          gold={homeTab === 'friends' ? (t('feed.friends_moments_gold', { defaultValue: 'Momentos' })) : (t('feed.explore_ideas_gold', { defaultValue: 'Explorar' }))}
+          rest={homeTab === 'friends' ? (t('feed.friends_moments_rest', { defaultValue: 'de amigos' })) : (t('feed.explore_ideas_rest', { defaultValue: 'ideas' }))}
         />
         <View style={styles.topActions}>
           <Pressable

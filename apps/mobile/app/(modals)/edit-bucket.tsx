@@ -54,7 +54,7 @@ export default function EditBucketModal() {
 
   // Etiquetas
   const [selectedTags, setSelectedTags] = useState<TagItem[]>([]);
-  const { data: itemTagsData } = useItemTags(id as string);
+  const { data: itemTagsData } = useItemTags(id);
   const tagsInitialized = useRef(false);
 
   // Colaboradores

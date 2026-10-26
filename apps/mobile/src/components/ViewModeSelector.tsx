@@ -1,6 +1,7 @@
 import { themedStyleSheet } from '@bucketlist/ui';
 import React from 'react';
-import { View, Pressable, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { LayoutList, LayoutGrid, AlignJustify } from 'lucide-react-native';
 import { gold, useTheme } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';

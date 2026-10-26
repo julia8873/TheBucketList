@@ -14,7 +14,8 @@
  * Los scrims (rgba(0,0,0,a)) y los blancos puros usados como texto sobre
  * imágenes/botones se respetan a propósito.
  */
-import { StyleSheet, ViewStyle, TextStyle, ImageStyle } from 'react-native';
+import type { ViewStyle, TextStyle, ImageStyle } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { lightTheme } from './light';
 import type { ColorScheme } from './types';
 

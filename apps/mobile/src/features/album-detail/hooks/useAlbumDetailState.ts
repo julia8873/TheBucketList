@@ -1,6 +1,7 @@
 import { Alert } from '@bucketlist/ui';
 import { useState, useRef, useEffect } from 'react';
-import { View, Share, Platform, Dimensions, Keyboard, ScrollView, Animated, Image as RNImage } from 'react-native';
+import type { View, ScrollView} from 'react-native';
+import { Share, Platform, Dimensions, Keyboard, Animated, Image as RNImage } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
@@ -8,11 +9,12 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import { useToast, confirm } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 
-import { useAlbumDetail, useDeleteAlbumDetail, TaskItem } from '@/services/api/albumsService';
+import type { TaskItem } from '@/services/api/albumsService';
+import { useAlbumDetail, useDeleteAlbumDetail } from '@/services/api/albumsService';
 import { supabase } from '@/services/supabase';
 import { patchTasks, settleTaskCaches } from '@/utils/optimisticCache';
 import { useAuthStore } from '@/stores/auth.store';
-import { CollaboratorItem } from '@/components/CollaboratorPickerSheet';
+import type { CollaboratorItem } from '@/components/CollaboratorPickerSheet';
 import { useUserFavorites, useToggleFavoriteAlbum } from '@/hooks/useFavorites';
 import { useEntitySubscription } from '@/hooks/useEntityNotifications';
 import {
@@ -24,7 +26,7 @@ import {
   useToggleAlbumLike,
 } from '@/hooks/useSocial';
 import { uploadAlbumCover } from '@/services/api/albumCover';
-import { TaskSortField, TaskSortDir } from '../components/AlbumSortModal';
+import type { TaskSortField, TaskSortDir } from '../components/AlbumSortModal';
 import { useAlbumTags, useSyncAlbumTags } from '@/hooks/useAlbumTags';
 import type { TagItem } from '@/components/TagAssignSheet';
 import AsyncStorage from '@react-native-async-storage/async-storage';

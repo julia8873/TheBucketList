@@ -1,11 +1,13 @@
 import { themedStyleSheet, useTheme } from '@bucketlist/ui';
 import React, { memo } from 'react';
-import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { storageApi } from '../services/api/storage';
+import type {
+  CoverPreset} from '../constants/coverPresets';
 import {
-  CoverPreset,
   autoCoverPreset,
   getPresetByKey,
   presetKeyFromValue,
@@ -107,9 +109,9 @@ function BucketCoverComponent({
   const preset = chosenPreset ?? autoCoverPreset({ title, categorySlug, seed });
 
   const imageUri = isCustomImage
-    ? (value!.startsWith('http') || value!.startsWith('file:') || value!.startsWith('content:') || value!.startsWith('ph:') || value!.startsWith('blob:') || value!.startsWith('data:'))
-      ? value!
-      : storageApi.getPublicUrl(value!)
+    ? (value.startsWith('http') || value.startsWith('file:') || value.startsWith('content:') || value.startsWith('ph:') || value.startsWith('blob:') || value.startsWith('data:'))
+      ? value
+      : storageApi.getPublicUrl(value)
     : null;
 
   return (

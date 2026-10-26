@@ -23,7 +23,7 @@ import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { PageTitle, useTheme, FilterChip, SegmentedControl, Typography } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/explore.styles';
-import { DailyTag, DailySortField, DailySortDirection, TimeView, StatusFilter } from '../types';
+import type { DailyTag, DailySortField, DailySortDirection, TimeView, StatusFilter } from '../types';
 import type { WeekBlockItem } from './DailyWeekView';
 import { TagSheetShell } from '@/components/TagSheetShell';
 import { useDailyTasksCustomizationStore } from '@/stores/dailyTasksCustomization.store';
@@ -71,7 +71,7 @@ export interface DailyQuickAddBarProps {
   newTitle: string;
   setNewTitle: (t: string) => void;
   handleQuickAddTask: () => void;
-  inputRef: React.RefObject<TextInput>;
+  inputRef: React.RefObject<TextInput | null> | React.RefObject<TextInput>;
   containerStyle?: any;
 }
 

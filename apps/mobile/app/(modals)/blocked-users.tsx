@@ -15,7 +15,7 @@ import { ChevronLeft, UserX, UserCheck } from 'lucide-react-native';
 import { Avatar, PageTitle, fontFamily, gold, confirm, useTheme } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { useBlockedUsers, useUnblockUser } from '../../src/hooks/useBlockReport';
-import { BlockedUserItem } from '../../src/services/api/blockReport';
+import type { BlockedUserItem } from '../../src/services/api/blockReport';
 
 export default function BlockedUsersScreen() {
   const router = useRouter();

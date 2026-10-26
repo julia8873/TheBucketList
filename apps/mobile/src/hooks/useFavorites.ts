@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/auth.store';
-import { favoritesApi, UserFavoritesData } from '../services/api/favorites';
+import type { UserFavoritesData } from '../services/api/favorites';
+import { favoritesApi } from '../services/api/favorites';
 
 export const FAVORITES_QUERY_KEY = ['user_favorites'];
 

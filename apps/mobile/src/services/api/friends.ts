@@ -155,7 +155,7 @@ export const friendsApi = {
         ? [
             {
               ...person,
-              follow_status: (viewerId === userId ? 'accepted' : mine.get(person.id) ?? 'none') as FollowStatus,
+              follow_status: (viewerId === userId ? 'accepted' : mine.get(person.id) ?? 'none'),
               public_count: 0,
             },
           ]

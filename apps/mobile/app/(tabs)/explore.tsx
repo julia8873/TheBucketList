@@ -15,7 +15,7 @@ import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { TaskCompactSkeleton } from '@/components/TaskSkeletons';
 import { DraggableTaskList } from '@/components/DraggableTaskList';
 
-import {
+import type {
   DailySortField,
   DailySortDirection,
   DailyTaskPriority,

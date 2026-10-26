@@ -20,7 +20,7 @@ import {
 import { PageTitle, fontFamily, gold, useTheme } from '@bucketlist/ui';
 import { useIsAdmin } from '../../src/hooks/useCurrentUserProfile';
 import { useCollections, useDeleteCollection } from '../../src/features/collections/hooks/useCollections';
-import { CollectionItem } from '../../src/features/collections/types';
+import type { CollectionItem } from '../../src/features/collections/types';
 import { useTranslation } from '@bucketlist/shared';
 
 export default function ManageCollectionsScreen() {
@@ -93,7 +93,7 @@ export default function ManageCollectionsScreen() {
     const tasksCount = Array.isArray(item.tasks) ? item.tasks.length : 0;
     const gradient: [string, string, ...string[]] =
       item.gradientColors && item.gradientColors.length >= 2
-        ? (item.gradientColors as [string, string, ...string[]])
+        ? (item.gradientColors)
         : ['#1E1E1E', '#333333'];
 
     return (

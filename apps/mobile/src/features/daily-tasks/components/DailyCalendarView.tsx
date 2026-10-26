@@ -19,9 +19,10 @@ import { getDateFnsLocale } from '@/utils/dateLocale';
 import { useTheme, gold } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/explore.styles';
-import { DailyTask } from '../types';
+import type { DailyTask } from '../types';
 import { toDateString } from '../utils/dailyTaskDateUtils';
-import { DraggableTaskList, DragHandle } from '@/components/DraggableTaskList';
+import type { DragHandle } from '@/components/DraggableTaskList';
+import { DraggableTaskList } from '@/components/DraggableTaskList';
 
 interface DailyCalendarViewProps {
   tasks: DailyTask[];

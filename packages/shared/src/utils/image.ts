@@ -1,5 +1,5 @@
 import * as ImageManipulator from 'expo-image-manipulator';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 export interface ProcessedImage {
   uri: string;
@@ -34,8 +34,8 @@ export async function processBucketImage(uri: string): Promise<ImageProcessingRe
   );
 
   // 3. Get file sizes using FileSystem
-  const originalFileInfo = await FileSystem.getInfoAsync(originalProcessed.uri, { size: true });
-  const thumbFileInfo = await FileSystem.getInfoAsync(thumbProcessed.uri, { size: true });
+  const originalFileInfo = await FileSystem.getInfoAsync(originalProcessed.uri);
+  const thumbFileInfo = await FileSystem.getInfoAsync(thumbProcessed.uri);
 
   return {
     original: {

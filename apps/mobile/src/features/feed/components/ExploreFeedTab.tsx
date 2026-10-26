@@ -8,7 +8,7 @@ import { FeedCard } from '../../../components/FeedCard';
 import { FeedCardSkeleton } from '../../../components/FeedCardSkeleton';
 import { TaskGallerySkeleton } from '../../../components/TaskSkeletons';
 import { AlbumFeedCard, type AlbumFeedItem } from '../../../components/AlbumFeedCard';
-import { TaskViewMode } from '../../../components/ViewModeSelector';
+import type { TaskViewMode } from '../../../components/ViewModeSelector';
 import type { ContentFilter } from './FeedHeader';
 import { styles } from '../styles/feed.styles';
 import {
@@ -269,15 +269,6 @@ export function ExploreFeedTab({
         numColumns={viewMode === 'gallery' ? 2 : 1}
         renderItem={renderItem}
         contentContainerStyle={{ paddingBottom: 72 }}
-        estimatedItemSize={
-          viewMode === 'compact'
-            ? 70
-            : viewMode === 'gallery'
-            ? 240
-            : contentFilter === 'colecciones'
-            ? 260
-            : 300
-        }
         ListHeaderComponent={
           <View>
             {headerElement}

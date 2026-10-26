@@ -25,10 +25,11 @@ import { gold, useTheme } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMapTasks } from '../src/features/map/hooks/useMapTasks';
-import {
-  RealisticLeafletMap,
+import type {
   RealisticMapRef,
-  MapLayerMode,
+  MapLayerMode} from '../src/features/map/components/RealisticLeafletMap';
+import {
+  RealisticLeafletMap
 } from '../src/features/map/components/RealisticLeafletMap';
 import { TaskMapPreviewCard } from '../src/features/map/components/TaskMapPreviewCard';
 import type { MapFilterType, MapTaskItem } from '../src/features/map/types';

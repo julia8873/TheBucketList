@@ -2,7 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../stores/auth.store';
 import { triggerTaskCompletedHaptic } from '../stores/haptics.store';
-import { ALBUMS_QUERY_KEY, AlbumWithProgress } from './useAlbums';
+import type { AlbumWithProgress } from './useAlbums';
+import { ALBUMS_QUERY_KEY } from './useAlbums';
 
 export function useBulkAlbumOperations() {
   const queryClient = useQueryClient();

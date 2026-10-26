@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet, StyleProp, ViewStyle, Platform } from 'react-native';
+import type { StyleProp, ViewStyle} from 'react-native';
+import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Copy, Heart, Layers } from 'lucide-react-native';
 import { useTheme, gold, fontFamily } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
-import { TaskViewMode } from '../../../components/ViewModeSelector';
-import { CollectionItem } from '../types';
+import type { TaskViewMode } from '../../../components/ViewModeSelector';
+import type { CollectionItem } from '../types';
 
 interface CollectionCardProps {
   collection: CollectionItem;

@@ -146,7 +146,7 @@ export function BucketMetaSection({
               onOpenDatePicker({
                 visible: true,
                 type: 'deadline',
-                date: new Date(bucket.deadline!),
+                date: new Date(bucket.deadline),
               })
             }
             disabled={!canEdit}

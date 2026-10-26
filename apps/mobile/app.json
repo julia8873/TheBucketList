@@ -76,6 +76,15 @@
         }
       ],
       [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36
+          }
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#0F0F0F",

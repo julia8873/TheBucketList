@@ -23,11 +23,10 @@ export function AlbumPreviewCard({
   collaborators,
 }: AlbumPreviewCardProps) {
   const { t } = useTranslation();
-  const gradientColors = (
+  const gradientColors: [string, string, ...string[]] =
     selectedCover.colors && selectedCover.colors.length >= 2
-      ? selectedCover.colors
-      : ['#000000', '#000000']
-  ) as readonly [string, string, ...string[]];
+      ? (selectedCover.colors as [string, string, ...string[]])
+      : ['#000000', '#000000'];
 
   const ratio = selectedCover.aspectRatio || '1:1';
   const screenWidth = Dimensions.get('window').width;

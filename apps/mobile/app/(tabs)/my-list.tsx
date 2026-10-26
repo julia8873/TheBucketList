@@ -676,7 +676,6 @@ export default function MyListScreen() {
               data={state.listData}
               renderItem={renderTaskItem}
               keyExtractor={(item) => item.id}
-              estimatedItemSize={89}
               ItemSeparatorComponent={TaskSeparator}
               contentContainerStyle={styles.listContent}
               ListHeaderComponent={taskListHeaderElement}
