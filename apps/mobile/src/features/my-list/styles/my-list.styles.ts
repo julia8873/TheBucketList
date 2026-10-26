@@ -15,6 +15,7 @@ export const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: 60,
   },
   headerTitle: {
     fontFamily: 'PlayfairDisplay_700Bold',

@@ -13,6 +13,7 @@ export const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: 60,
   },
   titleRow: {
     flexDirection: 'row',

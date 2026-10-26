@@ -190,7 +190,7 @@ export default function CurrentUserProfileScreen() {
   const taskCount = publicBuckets?.length ?? 0;
 
   const headerTop = (
-    <View style={[styles.header, { paddingHorizontal: 0 }]}>
+    <View style={[styles.header, { marginHorizontal: -20 }]}>
       <PageTitle gold={t('profile.title_gold', { defaultValue: 'Mi' })} rest={t('profile.title_rest', { defaultValue: 'perfil' })} />
       <Pressable
         onPress={() => router.push('/(modals)/settings' as any)}
@@ -198,7 +198,7 @@ export default function CurrentUserProfileScreen() {
         accessibilityLabel={t('settings.title')}
         style={[styles.roundBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
       >
-        <Settings size={22} color={theme.colors.foreground} />
+        <Settings size={20} color={theme.colors.foreground} />
       </Pressable>
     </View>
   );
@@ -394,9 +394,24 @@ function Stat({ value, label, onPress }: { value: number; label: string; onPress
 const styles = StyleSheet.create({
   container: { flex: 1 },
   listContent: { paddingHorizontal: 20, paddingBottom: 48 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 12, paddingHorizontal: 20 },
-  roundBtn: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  identity: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 20 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 12,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+    minHeight: 60,
+  },
+  roundBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  identity: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 4 },
   name: { fontFamily: fontFamily.serifBold, fontSize: 19, lineHeight: 24 },
   handle: { fontFamily: fontFamily.regular, fontSize: 13, marginTop: 2 },
   bio: { fontFamily: fontFamily.regular, fontSize: 14, lineHeight: 20, marginTop: 14 },

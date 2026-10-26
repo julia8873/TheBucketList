@@ -99,7 +99,6 @@ export function DailyQuickAddBar({
           },
         ]}
       >
-        <Plus size={18} color={theme.colors.foregroundMuted} strokeWidth={2} />
         <TextInput
           ref={inputRef}
           style={[styles.exploreSearchInput, { color: theme.colors.foreground }]}
@@ -359,10 +358,10 @@ export function DailyTasksScrollControls({
             {onlyFavorites
               ? `${t('daily.filter_status')}: ${t('daily.filter_status_favorites')}${favoritesCount > 0 ? ` (${favoritesCount})` : ''}`
               : statusFilter === 'pending'
-              ? `${t('daily.filter_status')}: ${t('daily.filter_status_pending')}`
-              : statusFilter === 'completed'
-              ? `${t('daily.filter_status')}: ${t('daily.filter_status_completed')}`
-              : t('daily.filter_status')}
+                ? `${t('daily.filter_status')}: ${t('daily.filter_status_pending')}`
+                : statusFilter === 'completed'
+                  ? `${t('daily.filter_status')}: ${t('daily.filter_status_completed')}`
+                  : t('daily.filter_status')}
           </Text>
           <ChevronDown size={14} color={isStatusActive ? gold[400] : theme.colors.foregroundMuted} />
         </Pressable>
@@ -432,8 +431,8 @@ export function DailyTasksScrollControls({
             {selectedTagFilters.length === 0
               ? t('daily.filter_tags')
               : selectedTagFilters.length === 1
-              ? `${selectedTagFilters.length} ${t('daily.filter_tags')}`
-              : `${selectedTagFilters.length} ${t('daily.filter_tags')}`}
+                ? `${selectedTagFilters.length} ${t('daily.filter_tags')}`
+                : `${selectedTagFilters.length} ${t('daily.filter_tags')}`}
           </Text>
         </Pressable>
 
@@ -466,8 +465,8 @@ export function DailyTasksScrollControls({
                       backgroundColor: tag.color
                         ? `${tag.color}33`
                         : theme.dark
-                        ? 'rgba(212, 175, 55, 0.2)'
-                        : 'rgba(212, 175, 55, 0.15)',
+                          ? 'rgba(212, 175, 55, 0.2)'
+                          : 'rgba(212, 175, 55, 0.15)',
                     },
                   ]}
                 >
@@ -591,10 +590,10 @@ export function DailyTasksScrollControls({
               {sortField === 'manual'
                 ? (groupByTag ? t('daily.filter_tags') : t('daily.filter_priority'))
                 : sortField === 'priority'
-                ? `${t('daily.sort_priority')} ${sortDirection === 'desc' ? '↓' : '↑'}`
-                : sortField === 'name'
-                ? `${t('daily.sort_name')} ${sortDirection === 'asc' ? 'A-Z' : 'Z-A'}`
-                : `${t('daily.sort_date')} ${sortDirection === 'asc' ? '↑' : '↓'}`}
+                  ? `${t('daily.sort_priority')} ${sortDirection === 'desc' ? '↓' : '↑'}`
+                  : sortField === 'name'
+                    ? `${t('daily.sort_name')} ${sortDirection === 'asc' ? 'A-Z' : 'Z-A'}`
+                    : `${t('daily.sort_date')} ${sortDirection === 'asc' ? '↑' : '↓'}`}
             </Text>
             {(sortField !== 'manual' || groupByTag) && <View style={styles.sortActiveDot} />}
           </Pressable>
@@ -777,7 +776,7 @@ const dailySheetStyles = themedStyleSheet({
   },
 });
 
-export interface DailyTasksHeaderProps extends DailyTasksTopBarProps, DailyTasksScrollControlsProps {}
+export interface DailyTasksHeaderProps extends DailyTasksTopBarProps, DailyTasksScrollControlsProps { }
 
 export function DailyTasksHeader(props: DailyTasksHeaderProps) {
   return (
