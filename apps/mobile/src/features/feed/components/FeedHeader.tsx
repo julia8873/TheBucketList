@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, TextInput } from 'react-native';
+import { View, Text, Pressable, TextInput, ScrollView } from 'react-native';
 import { Bell, Search, Users, X, Map, ChevronDown, SlidersHorizontal, Check, Sparkles } from 'lucide-react-native';
 import { useTranslation } from '@bucketlist/shared';
 import { PageTitle, useTheme, gold, fontFamily } from '@bucketlist/ui';
@@ -199,10 +199,13 @@ export function FeedHeader({
             </Pressable>
           )}
         </View>
-      )}
-
-      {!isSearching && (
-        <View style={styles.feedControlsRow}>
+      )}      {!isSearching && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.feedControlsScrollContent}
+          style={styles.feedControlsScrollView}
+        >
           {/* Toggle desplegable a la izquierda (como los de mi lista) */}
           <Pressable
             onPress={() => setFilterSheetVisible(true)}
@@ -224,6 +227,7 @@ export function FeedHeader({
               strokeWidth={2}
             />
             <Text
+              numberOfLines={1}
               style={[
                 styles.filterDropdownText,
                 { color: contentFilter !== 'todo' ? gold[400] : theme.colors.foreground },
@@ -244,57 +248,61 @@ export function FeedHeader({
             />
           </Pressable>
 
-          {/* Acciones a la derecha: Colecciones, Mapa y Selector de vista */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            {homeTab === 'explore' ? (
-              <Pressable
-                onPress={() => onChangeContentFilter(contentFilter === 'colecciones' ? 'todo' : 'colecciones')}
-                style={({ pressed }) => [
-                  styles.collectionsTriggerBtn,
-                  {
-                    backgroundColor: contentFilter === 'colecciones'
-                      ? (theme.dark ? 'rgba(212, 175, 55, 0.16)' : 'rgba(212, 175, 55, 0.22)')
-                      : theme.colors.surface,
-                    borderColor: contentFilter === 'colecciones' ? gold[400] : theme.colors.border,
-                  },
-                  pressed && { opacity: 0.8 },
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel={t('feed.filter_collections')}
-                accessibilityState={{ selected: contentFilter === 'colecciones' }}
-              >
-                <Sparkles size={14} color={gold[400]} />
-                <Text
-                  style={[
-                    styles.collectionsTriggerBtnText,
-                    { color: contentFilter === 'colecciones' ? gold[400] : theme.colors.foreground },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {t('feed.filter_collections')}
-                </Text>
-              </Pressable>
-            ) : null}
-            {onOpenMap ? (
-              <Pressable
-                onPress={onOpenMap}
+          {/* Colecciones (explorar) */}
+          {homeTab === 'explore' ? (
+            <Pressable
+              onPress={() => onChangeContentFilter(contentFilter === 'colecciones' ? 'todo' : 'colecciones')}
+              style={({ pressed }) => [
+                styles.collectionsTriggerBtn,
+                {
+                  backgroundColor: contentFilter === 'colecciones'
+                    ? (theme.dark ? 'rgba(212, 175, 55, 0.16)' : 'rgba(212, 175, 55, 0.22)')
+                    : theme.colors.surface,
+                  borderColor: contentFilter === 'colecciones' ? gold[400] : theme.colors.border,
+                },
+                pressed && { opacity: 0.8 },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={t('feed.filter_collections')}
+              accessibilityState={{ selected: contentFilter === 'colecciones' }}
+            >
+              <Sparkles size={14} color={gold[400]} />
+              <Text
                 style={[
-                  styles.mapTriggerBtn,
-                  {
-                    backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.border,
-                  },
+                  styles.collectionsTriggerBtnText,
+                  { color: contentFilter === 'colecciones' ? gold[400] : theme.colors.foreground },
                 ]}
-                accessibilityRole="button"
-                accessibilityLabel="Ver en mapa"
+                numberOfLines={1}
               >
-                <Map size={14} color={gold[400]} />
-                <Text style={[styles.mapTriggerBtnText, { color: theme.colors.foreground }]}>{t('feed.map_btn')}</Text>
-              </Pressable>
-            ) : null}
-            <ViewModeSelector mode={viewMode} onChange={onChangeViewMode} />
-          </View>
-        </View>
+                {t('feed.filter_collections')}
+              </Text>
+            </Pressable>
+          ) : null}
+
+          {/* Mapa */}
+          {onOpenMap ? (
+            <Pressable
+              onPress={onOpenMap}
+              style={[
+                styles.mapTriggerBtn,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Ver en mapa"
+            >
+              <Map size={14} color={gold[400]} />
+              <Text numberOfLines={1} style={[styles.mapTriggerBtnText, { color: theme.colors.foreground }]}>
+                {t('feed.map_btn')}
+              </Text>
+            </Pressable>
+          ) : null}
+
+          {/* Selector de vista */}
+          <ViewModeSelector mode={viewMode} onChange={onChangeViewMode} style={{ flexShrink: 0 }} />
+        </ScrollView>
       )}
 
       {/* Bottom Sheet de selección de filtro de contenido (estilo mi lista) */}
