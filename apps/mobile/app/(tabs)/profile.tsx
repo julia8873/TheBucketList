@@ -191,7 +191,13 @@ export default function CurrentUserProfileScreen() {
 
   const headerTop = (
     <View style={[styles.header, { marginHorizontal: -20 }]}>
-      <PageTitle gold={t('profile.title_gold', { defaultValue: 'Mi' })} rest={t('profile.title_rest', { defaultValue: 'perfil' })} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 10 }}>
+        <PageTitle
+          gold={t('profile.title_gold', { defaultValue: 'Mi' })}
+          rest={t('profile.title_rest', { defaultValue: 'perfil' })}
+          style={{ fontSize: 24 }}
+        />
+      </View>
       <Pressable
         onPress={() => router.push('/(modals)/settings' as any)}
         accessibilityRole="button"
