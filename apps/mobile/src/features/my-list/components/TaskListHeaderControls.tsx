@@ -242,165 +242,177 @@ export function TaskListHeaderControls({
         ))}
       </ScrollView>
 
-      {/* Fila: Contador de tareas (izq) + Modos de vista y Ordenar (der) */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 14,
-        }}
+      {/* Fila de controles: Modos de vista, Ordenar, Personalizar, Selección */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexGrow: 1 }}
+        style={{ marginBottom: 12 }}
       >
-        {/* Izquierda: Contador de tareas */}
+        {/* Modos de vista */}
+        <View
+          style={[
+            styles.viewModeToggle,
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border,
+              flexShrink: 0,
+            },
+          ]}
+        >
+          <Pressable
+            onPress={() => setTaskViewMode('list')}
+            style={[styles.viewModeBtn, taskViewMode === 'list' && styles.viewModeBtnActive]}
+            hitSlop={4}
+            accessibilityRole="button"
+            accessibilityLabel={t('my_list.view_detailed')}
+          >
+            <LayoutList size={15} color={taskViewMode === 'list' ? '#0E0E0E' : theme.colors.foregroundMuted} />
+          </Pressable>
+          <Pressable
+            onPress={() => setTaskViewMode('gallery')}
+            style={[styles.viewModeBtn, taskViewMode === 'gallery' && styles.viewModeBtnActive]}
+            hitSlop={4}
+            accessibilityRole="button"
+            accessibilityLabel={t('my_list.view_gallery')}
+          >
+            <LayoutGrid size={15} color={taskViewMode === 'gallery' ? '#0E0E0E' : theme.colors.foregroundMuted} />
+          </Pressable>
+          <Pressable
+            onPress={() => setTaskViewMode('compact')}
+            style={[styles.viewModeBtn, taskViewMode === 'compact' && styles.viewModeBtnActive]}
+            hitSlop={4}
+            accessibilityRole="button"
+            accessibilityLabel={t('my_list.view_compact')}
+          >
+            <AlignJustify size={15} color={taskViewMode === 'compact' ? '#0E0E0E' : theme.colors.foregroundMuted} />
+          </Pressable>
+        </View>
+
+        {/* Ordenar (Estado / Manual / etc.) */}
+        <View style={[styles.sortTriggerContainer, { flexGrow: 1, flexShrink: 0 }]}>
+          <Pressable
+            ref={sortTriggerRef}
+            collapsable={false}
+            onPress={openSortMenu}
+            hitSlop={8}
+            style={[
+              styles.sortTriggerBtn,
+              {
+                height: 32,
+                paddingHorizontal: 10,
+                borderRadius: 8,
+                backgroundColor: theme.colors.surface,
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+                flex: 1,
+                justifyContent: 'center',
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t('my_list.sort_tasks')}
+          >
+            <Typography variant="caption" color={gold[400]} style={{ fontWeight: '600' }}>
+              {sortField === 'manual'
+                ? t('my_list.sort_manual')
+                : sortField === 'status'
+                ? isReordering
+                  ? t('my_list.sort_status_manual')
+                  : t('my_list.sort_status')
+                : sortField === 'priority'
+                ? t('my_list.sort_priority')
+                : sortField === 'alphabetical'
+                ? t('my_list.sort_alphabetical')
+                : sortField === 'completed_at'
+                ? t('my_list.sort_completed_at_short')
+                : t('my_list.sort_date')}
+            </Typography>
+            {sortField !== 'manual' &&
+              !isReordering &&
+              (sortDir === 'desc' ? (
+                <ArrowDown color={gold[400]} size={13} />
+              ) : (
+                <ArrowUp color={gold[400]} size={13} />
+              ))}
+          </Pressable>
+        </View>
+
+        {/* Botón Personalizar */}
+        {onOpenCustomize && (
+          <Pressable
+            onPress={onOpenCustomize}
+            hitSlop={8}
+            style={[
+              styles.sortTriggerBtn,
+              {
+                height: 32,
+                width: 32,
+                borderRadius: 8,
+                backgroundColor: theme.colors.surface,
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexShrink: 0,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t('my_list.customize_view')}
+          >
+            <SlidersHorizontal size={14} color={gold[400]} />
+          </Pressable>
+        )}
+
+        {/* Botón Selección múltiple */}
+        {onToggleSelectionMode && (
+          <Pressable
+            onPress={onToggleSelectionMode}
+            hitSlop={8}
+            style={[
+              styles.sortTriggerBtn,
+              {
+                height: 32,
+                width: 32,
+                borderRadius: 8,
+                backgroundColor: isSelectionMode ? gold[400] : theme.colors.surface,
+                borderWidth: 1,
+                borderColor: isSelectionMode ? gold[400] : theme.colors.border,
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexShrink: 0,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={isSelectionMode ? 'Salir de selección múltiple' : 'Seleccionar tareas'}
+          >
+            <ListChecks size={15} color={isSelectionMode ? '#0E0E0E' : gold[400]} />
+          </Pressable>
+        )}
+
+        {!isSearching && isReordering && (
+          <Pressable
+            onPress={() => setIsReordering(false)}
+            style={{
+              backgroundColor: gold[400],
+              height: 32,
+              paddingHorizontal: 12,
+              borderRadius: 8,
+              justifyContent: 'center',
+              alignItems: 'center',
+              flexShrink: 0,
+            }}
+            hitSlop={8}
+          >
+            <Text style={{ fontSize: 11, fontWeight: '700', color: '#0E0E0E' }}>OK</Text>
+          </Pressable>
+        )}
+      </ScrollView>
+
+      {/* Contador de tareas abajo */}
+      <View style={{ marginBottom: 10, marginTop: 2 }}>
         <Typography variant="caption" color={theme.colors.foregroundMuted} style={styles.tasksCountLabel}>
           {tasksCount === 1 ? t('my_list.tasks_count_single', { count: tasksCount }) : t('my_list.tasks_count_plural', { count: tasksCount })}
         </Typography>
-
-        {/* Derecha: 1. Modo de vista (lista, galería, compacto), 2. Ordenar (Estado / etc.) */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          {/* Modos de vista a la izquierda de ordenar */}
-          <View style={[styles.viewModeToggle, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-            <Pressable
-              onPress={() => setTaskViewMode('list')}
-              style={[styles.viewModeBtn, taskViewMode === 'list' && styles.viewModeBtnActive]}
-              hitSlop={4}
-              accessibilityRole="button"
-              accessibilityLabel={t('my_list.view_detailed')}
-            >
-              <LayoutList size={15} color={taskViewMode === 'list' ? '#0E0E0E' : theme.colors.foregroundMuted} />
-            </Pressable>
-            <Pressable
-              onPress={() => setTaskViewMode('gallery')}
-              style={[styles.viewModeBtn, taskViewMode === 'gallery' && styles.viewModeBtnActive]}
-              hitSlop={4}
-              accessibilityRole="button"
-              accessibilityLabel={t('my_list.view_gallery')}
-            >
-              <LayoutGrid size={15} color={taskViewMode === 'gallery' ? '#0E0E0E' : theme.colors.foregroundMuted} />
-            </Pressable>
-            <Pressable
-              onPress={() => setTaskViewMode('compact')}
-              style={[styles.viewModeBtn, taskViewMode === 'compact' && styles.viewModeBtnActive]}
-              hitSlop={4}
-              accessibilityRole="button"
-              accessibilityLabel={t('my_list.view_compact')}
-            >
-              <AlignJustify size={15} color={taskViewMode === 'compact' ? '#0E0E0E' : theme.colors.foregroundMuted} />
-            </Pressable>
-          </View>
-
-          {/* Ordenar (Estado / Manual / etc.) */}
-          <View style={styles.sortTriggerContainer}>
-            <Pressable
-              ref={sortTriggerRef}
-              collapsable={false}
-              onPress={openSortMenu}
-              hitSlop={8}
-              style={[
-                styles.sortTriggerBtn,
-                {
-                  height: 32,
-                  paddingHorizontal: 8,
-                  borderRadius: 8,
-                  backgroundColor: theme.colors.surface,
-                  borderWidth: 1,
-                  borderColor: theme.colors.border,
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={t('my_list.sort_tasks')}
-            >
-              <Typography variant="caption" color={gold[400]} style={{ fontWeight: '600' }}>
-                {sortField === 'manual'
-                  ? t('my_list.sort_manual')
-                  : sortField === 'status'
-                  ? isReordering
-                    ? t('my_list.sort_status_manual')
-                    : t('my_list.sort_status')
-                  : sortField === 'priority'
-                  ? t('my_list.sort_priority')
-                  : sortField === 'alphabetical'
-                  ? t('my_list.sort_alphabetical')
-                  : sortField === 'completed_at'
-                  ? t('my_list.sort_completed_at_short')
-                  : t('my_list.sort_date')}
-              </Typography>
-              {sortField !== 'manual' &&
-                !isReordering &&
-                (sortDir === 'desc' ? (
-                  <ArrowDown color={gold[400]} size={13} />
-                ) : (
-                  <ArrowUp color={gold[400]} size={13} />
-                ))}
-            </Pressable>
-          </View>
-
-          {/* Botón Personalizar */}
-          {onOpenCustomize && (
-            <Pressable
-              onPress={onOpenCustomize}
-              hitSlop={8}
-              style={[
-                styles.sortTriggerBtn,
-                {
-                  height: 32,
-                  paddingHorizontal: 8,
-                  borderRadius: 8,
-                  backgroundColor: theme.colors.surface,
-                  borderWidth: 1,
-                  borderColor: theme.colors.border,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={t('my_list.customize_view')}
-            >
-              <SlidersHorizontal size={14} color={gold[400]} />
-            </Pressable>
-          )}
-
-          {/* Botón Selección múltiple */}
-          {onToggleSelectionMode && (
-            <Pressable
-              onPress={onToggleSelectionMode}
-              hitSlop={8}
-              style={[
-                styles.sortTriggerBtn,
-                {
-                  height: 32,
-                  paddingHorizontal: 8,
-                  borderRadius: 8,
-                  backgroundColor: isSelectionMode ? gold[400] : theme.colors.surface,
-                  borderWidth: 1,
-                  borderColor: isSelectionMode ? gold[400] : theme.colors.border,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={isSelectionMode ? 'Salir de selección múltiple' : 'Seleccionar tareas'}
-            >
-              <ListChecks size={15} color={isSelectionMode ? '#0E0E0E' : gold[400]} />
-            </Pressable>
-          )}
-
-          {!isSearching && isReordering && (
-            <Pressable
-              onPress={() => setIsReordering(false)}
-              style={{
-                backgroundColor: gold[400],
-                paddingHorizontal: 10,
-                paddingVertical: 3,
-                borderRadius: 6,
-                marginLeft: 2,
-              }}
-              hitSlop={8}
-            >
-              <Text style={{ fontSize: 11, fontWeight: '700', color: '#0E0E0E' }}>OK</Text>
-            </Pressable>
-          )}
-        </View>
       </View>
 
       {/* Bottom Sheet: Filtrar por Estado */}

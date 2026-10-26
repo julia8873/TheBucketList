@@ -46,7 +46,7 @@ export function ItemTagsRow({ bucketId, isOwner }: ItemTagsRowProps) {
 
             {isOwner && tags.length === 0 && (
                 <TagChip
-                    label={`+ ${t('tags.add_tag')}`}
+                    label={`+ ${t('tags.add_tag', { defaultValue: 'Añadir etiqueta' })}`}
                     variant="create"
                     onPress={() => setOpen(true)}
                 />

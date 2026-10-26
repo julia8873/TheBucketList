@@ -1436,6 +1436,7 @@ const es = {
     view_count_albums_single: 'Ver 1 álbum',
     view_count_albums_plural: 'Ver {{count}} álbumes',
     new_tag: 'Nueva etiqueta',
+    add_tag: 'Añadir etiqueta',
     manage_tags: 'Gestionar etiquetas',
     filter_by_tags: 'Filtrar por etiquetas',
     all_unfiltered: 'Todas (sin filtrar)',

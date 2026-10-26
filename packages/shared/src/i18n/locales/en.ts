@@ -1436,6 +1436,7 @@ const en = {
     view_count_albums_single: 'View 1 album',
     view_count_albums_plural: 'View {{count}} albums',
     new_tag: 'New tag',
+    add_tag: 'Add tag',
     manage_tags: 'Manage tags',
     filter_by_tags: 'Filter by tags',
     all_unfiltered: 'All (unfiltered)',

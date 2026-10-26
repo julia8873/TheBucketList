@@ -46,12 +46,21 @@ const previousResolveRequest = config.resolver && config.resolver.resolveRequest
 config.resolver = {
   ...(config.resolver || {}),
   resolveRequest: (context, moduleName, platform) => {
-    const cleaned = moduleName.replace(/^(?:\.?[\/\\])*apps[\/\\]mobile[\/\\]/, './');
-    const targetModule = cleaned !== moduleName ? cleaned : moduleName;
-    if (previousResolveRequest) {
-      return previousResolveRequest(context, targetModule, platform);
+    try {
+      if (previousResolveRequest) {
+        return previousResolveRequest(context, moduleName, platform);
+      }
+      return context.resolveRequest(context, moduleName, platform);
+    } catch (err) {
+      const cleaned = moduleName.replace(/^(?:\.?[\/\\])*apps[\/\\]mobile[\/\\]/, './');
+      if (cleaned !== moduleName) {
+        if (previousResolveRequest) {
+          return previousResolveRequest(context, cleaned, platform);
+        }
+        return context.resolveRequest(context, cleaned, platform);
+      }
+      throw err;
     }
-    return context.resolveRequest(context, targetModule, platform);
   },
 };
 

@@ -238,165 +238,177 @@ export function AlbumListHeaderControls({
         ))}
       </ScrollView>
 
-      {/* Fila: Contador de álbumes (izq) + Modos de vista y Ordenar (der) */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 14,
-        }}
+      {/* Fila de controles: Modos de vista, Ordenar, Personalizar, Selección */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexGrow: 1 }}
+        style={{ marginBottom: 12 }}
       >
-        {/* Izquierda: Contador de álbumes */}
+        {/* Modos de vista */}
+        <View
+          style={[
+            styles.viewModeToggle,
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border,
+              flexShrink: 0,
+            },
+          ]}
+        >
+          <Pressable
+            onPress={() => setAlbumViewMode('list')}
+            style={[styles.viewModeBtn, albumViewMode === 'list' && styles.viewModeBtnActive]}
+            hitSlop={4}
+            accessibilityRole="button"
+            accessibilityLabel={t('my_list.view_detailed')}
+          >
+            <LayoutList size={15} color={albumViewMode === 'list' ? '#0E0E0E' : theme.colors.foregroundMuted} />
+          </Pressable>
+          <Pressable
+            onPress={() => setAlbumViewMode('gallery')}
+            style={[styles.viewModeBtn, albumViewMode === 'gallery' && styles.viewModeBtnActive]}
+            hitSlop={4}
+            accessibilityRole="button"
+            accessibilityLabel={t('my_list.view_gallery')}
+          >
+            <LayoutGrid size={15} color={albumViewMode === 'gallery' ? '#0E0E0E' : theme.colors.foregroundMuted} />
+          </Pressable>
+          <Pressable
+            onPress={() => setAlbumViewMode('compact')}
+            style={[styles.viewModeBtn, albumViewMode === 'compact' && styles.viewModeBtnActive]}
+            hitSlop={4}
+            accessibilityRole="button"
+            accessibilityLabel={t('my_list.view_compact')}
+          >
+            <AlignJustify size={15} color={albumViewMode === 'compact' ? '#0E0E0E' : theme.colors.foregroundMuted} />
+          </Pressable>
+        </View>
+
+        {/* Ordenar (Estado / Manual / etc.) */}
+        <View style={[styles.sortTriggerContainer, { flexGrow: 1, flexShrink: 0 }]}>
+          <Pressable
+            ref={albumSortTriggerRef}
+            collapsable={false}
+            onPress={openSortMenu}
+            hitSlop={8}
+            style={[
+              styles.sortTriggerBtn,
+              {
+                height: 32,
+                paddingHorizontal: 10,
+                borderRadius: 8,
+                backgroundColor: theme.colors.surface,
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+                flex: 1,
+                justifyContent: 'center',
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t('my_list.sort_albums')}
+          >
+            <Typography variant="caption" color={gold[400]} style={{ fontWeight: '600' }}>
+              {albumSortField === 'manual'
+                ? t('my_list.sort_manual')
+                : albumSortField === 'status'
+                ? isAlbumReordering
+                  ? t('my_list.sort_status_manual')
+                  : t('my_list.sort_status')
+                : albumSortField === 'priority'
+                ? t('my_list.sort_priority')
+                : albumSortField === 'alphabetical'
+                ? t('my_list.sort_alphabetical')
+                : albumSortField === 'completed_at'
+                ? t('my_list.sort_completed_at_short')
+                : t('my_list.sort_date')}
+            </Typography>
+            {albumSortField !== 'manual' &&
+              !isAlbumReordering &&
+              (albumSortDir === 'desc' ? (
+                <ArrowDown color={gold[400]} size={13} />
+              ) : (
+                <ArrowUp color={gold[400]} size={13} />
+              ))}
+          </Pressable>
+        </View>
+
+        {/* Botón Personalizar */}
+        {onOpenCustomize && (
+          <Pressable
+            onPress={onOpenCustomize}
+            hitSlop={8}
+            style={[
+              styles.sortTriggerBtn,
+              {
+                height: 32,
+                width: 32,
+                borderRadius: 8,
+                backgroundColor: theme.colors.surface,
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexShrink: 0,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t('my_list.customize_view')}
+          >
+            <SlidersHorizontal size={14} color={gold[400]} />
+          </Pressable>
+        )}
+
+        {/* Botón Selección múltiple */}
+        {onToggleSelectionMode && (
+          <Pressable
+            onPress={onToggleSelectionMode}
+            hitSlop={8}
+            style={[
+              styles.sortTriggerBtn,
+              {
+                height: 32,
+                width: 32,
+                borderRadius: 8,
+                backgroundColor: isSelectionMode ? gold[400] : theme.colors.surface,
+                borderWidth: 1,
+                borderColor: isSelectionMode ? gold[400] : theme.colors.border,
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexShrink: 0,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={isSelectionMode ? 'Salir de selección múltiple' : 'Seleccionar álbumes'}
+          >
+            <ListChecks size={15} color={isSelectionMode ? '#0E0E0E' : gold[400]} />
+          </Pressable>
+        )}
+
+        {!isSearching && isAlbumReordering && (
+          <Pressable
+            onPress={() => setIsAlbumReordering(false)}
+            style={{
+              backgroundColor: gold[400],
+              height: 32,
+              paddingHorizontal: 12,
+              borderRadius: 8,
+              justifyContent: 'center',
+              alignItems: 'center',
+              flexShrink: 0,
+            }}
+            hitSlop={8}
+          >
+            <Text style={{ fontSize: 11, fontWeight: '700', color: '#0E0E0E' }}>OK</Text>
+          </Pressable>
+        )}
+      </ScrollView>
+
+      {/* Contador de álbumes abajo */}
+      <View style={{ marginBottom: 10, marginTop: 2 }}>
         <Typography variant="caption" color={theme.colors.foregroundMuted} style={styles.tasksCountLabel}>
           {albumsCount === 1 ? t('my_list.albums_count_single') : t('my_list.albums_count_plural', { count: albumsCount })}
         </Typography>
-
-        {/* Derecha: 1. Modo de vista (lista, galería, compacto), 2. Ordenar (sin texto "Ordenar por:") */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          {/* Modos de vista a la izquierda de ordenar */}
-          <View style={[styles.viewModeToggle, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-            <Pressable
-              onPress={() => setAlbumViewMode('list')}
-              style={[styles.viewModeBtn, albumViewMode === 'list' && styles.viewModeBtnActive]}
-              hitSlop={4}
-              accessibilityRole="button"
-              accessibilityLabel={t('my_list.view_detailed')}
-            >
-              <LayoutList size={15} color={albumViewMode === 'list' ? '#0E0E0E' : theme.colors.foregroundMuted} />
-            </Pressable>
-            <Pressable
-              onPress={() => setAlbumViewMode('gallery')}
-              style={[styles.viewModeBtn, albumViewMode === 'gallery' && styles.viewModeBtnActive]}
-              hitSlop={4}
-              accessibilityRole="button"
-              accessibilityLabel={t('my_list.view_gallery')}
-            >
-              <LayoutGrid size={15} color={albumViewMode === 'gallery' ? '#0E0E0E' : theme.colors.foregroundMuted} />
-            </Pressable>
-            <Pressable
-              onPress={() => setAlbumViewMode('compact')}
-              style={[styles.viewModeBtn, albumViewMode === 'compact' && styles.viewModeBtnActive]}
-              hitSlop={4}
-              accessibilityRole="button"
-              accessibilityLabel={t('my_list.view_compact')}
-            >
-              <AlignJustify size={15} color={albumViewMode === 'compact' ? '#0E0E0E' : theme.colors.foregroundMuted} />
-            </Pressable>
-          </View>
-
-          {/* Ordenar (Estado / Manual / etc.) */}
-          <View style={styles.sortTriggerContainer}>
-            <Pressable
-              ref={albumSortTriggerRef}
-              collapsable={false}
-              onPress={openSortMenu}
-              hitSlop={8}
-              style={[
-                styles.sortTriggerBtn,
-                {
-                  height: 32,
-                  paddingHorizontal: 8,
-                  borderRadius: 8,
-                  backgroundColor: theme.colors.surface,
-                  borderWidth: 1,
-                  borderColor: theme.colors.border,
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={t('my_list.sort_albums')}
-            >
-              <Typography variant="caption" color={gold[400]} style={{ fontWeight: '600' }}>
-                {albumSortField === 'manual'
-                  ? t('my_list.sort_manual')
-                  : albumSortField === 'status'
-                  ? isAlbumReordering
-                    ? t('my_list.sort_status_manual')
-                    : t('my_list.sort_status')
-                  : albumSortField === 'priority'
-                  ? t('my_list.sort_priority')
-                  : albumSortField === 'alphabetical'
-                  ? t('my_list.sort_alphabetical')
-                  : albumSortField === 'completed_at'
-                  ? t('my_list.sort_completed_at_short')
-                  : t('my_list.sort_date')}
-              </Typography>
-              {albumSortField !== 'manual' &&
-                !isAlbumReordering &&
-                (albumSortDir === 'desc' ? (
-                  <ArrowDown color={gold[400]} size={13} />
-                ) : (
-                  <ArrowUp color={gold[400]} size={13} />
-                ))}
-            </Pressable>
-          </View>
-
-          {/* Botón Personalizar */}
-          {onOpenCustomize && (
-            <Pressable
-              onPress={onOpenCustomize}
-              hitSlop={8}
-              style={[
-                styles.sortTriggerBtn,
-                {
-                  height: 32,
-                  paddingHorizontal: 8,
-                  borderRadius: 8,
-                  backgroundColor: theme.colors.surface,
-                  borderWidth: 1,
-                  borderColor: theme.colors.border,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={t('my_list.customize_view')}
-            >
-              <SlidersHorizontal size={14} color={gold[400]} />
-            </Pressable>
-          )}
-
-          {/* Botón Selección múltiple */}
-          {onToggleSelectionMode && (
-            <Pressable
-              onPress={onToggleSelectionMode}
-              hitSlop={8}
-              style={[
-                styles.sortTriggerBtn,
-                {
-                  height: 32,
-                  paddingHorizontal: 8,
-                  borderRadius: 8,
-                  backgroundColor: isSelectionMode ? gold[400] : theme.colors.surface,
-                  borderWidth: 1,
-                  borderColor: isSelectionMode ? gold[400] : theme.colors.border,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={isSelectionMode ? 'Salir de selección múltiple' : 'Seleccionar álbumes'}
-            >
-              <ListChecks size={15} color={isSelectionMode ? '#0E0E0E' : gold[400]} />
-            </Pressable>
-          )}
-
-          {!isSearching && isAlbumReordering && (
-            <Pressable
-              onPress={() => setIsAlbumReordering(false)}
-              style={{
-                backgroundColor: gold[400],
-                paddingHorizontal: 10,
-                paddingVertical: 3,
-                borderRadius: 6,
-                marginLeft: 2,
-              }}
-              hitSlop={8}
-            >
-              <Text style={{ fontSize: 11, fontWeight: '700', color: '#0E0E0E' }}>OK</Text>
-            </Pressable>
-          )}
-        </View>
       </View>
 
       {/* Bottom Sheet: Filtrar por Estado */}
