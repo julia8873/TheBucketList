@@ -58,7 +58,7 @@ export const storageApi = {
 
       const { error: thumbError } = await supabase.storage
         .from('photos')
-        .upload(thumbPath, thumbData, { contentType: 'image/webp' });
+        .upload(thumbPath, thumbData, { contentType: 'image/webp', cacheControl: '31536000' });
 
       if (thumbError) throw thumbError;
       onProgress?.(0.3);
@@ -66,14 +66,14 @@ export const storageApi = {
       // 3. Upload Original
       const { error: photoError } = await supabase.storage
         .from('photos')
-        .upload(photoPath, photoData, { contentType: 'image/jpeg' });
+        .upload(photoPath, photoData, { contentType: 'image/jpeg', cacheControl: '31536000' });
 
       if (photoError) throw photoError;
       onProgress?.(0.9);
 
       return { photoPath, thumbPath };
     } catch (e) {
-      console.error('Storage upload failed', e);
+      if (__DEV__) console.error('Storage upload failed', e);
       throw e;
     }
   },
@@ -82,7 +82,7 @@ export const storageApi = {
     const data = await uriToArrayBuffer(uri);
     const { error } = await supabase.storage
       .from('photos')
-      .upload(path, data, { contentType, upsert: true });
+      .upload(path, data, { contentType, upsert: true, cacheControl: '31536000' });
     if (error) throw error;
     return supabase.storage.from('photos').getPublicUrl(path).data.publicUrl;
   },
