@@ -41,11 +41,27 @@ config.server = {
   },
 };
 
+const path = require('path');
+
 // Fallback en el resolver por si la entrada o algún módulo intenta resolver `./apps/mobile/...`
+// y forzar una única instancia de React / React-DOM desde apps/mobile en todo el monorepo.
 const previousResolveRequest = config.resolver && config.resolver.resolveRequest;
 config.resolver = {
   ...(config.resolver || {}),
   resolveRequest: (context, moduleName, platform) => {
+    if (
+      moduleName === 'react' ||
+      moduleName.startsWith('react/') ||
+      moduleName === 'react-dom' ||
+      moduleName.startsWith('react-dom/')
+    ) {
+      return context.resolveRequest(
+        { ...context, originModulePath: path.resolve(__dirname, 'package.json') },
+        moduleName,
+        platform
+      );
+    }
+
     try {
       if (previousResolveRequest) {
         return previousResolveRequest(context, moduleName, platform);

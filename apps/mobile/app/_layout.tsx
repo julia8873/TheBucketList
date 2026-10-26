@@ -26,6 +26,7 @@ import { hydrateDailyTasksCustomization } from '../src/stores/dailyTasksCustomiz
 import { hydrateDailyTasksPreferences } from '../src/features/daily-tasks/hooks/useDailyTasksState';
 import { hydrateLanguageStore } from '../src/stores/language.store';
 import { hydrateHapticsStore } from '../src/stores/haptics.store';
+import { hydrateOfflineStore } from '../src/stores/offline.store';
 import { useAuthStore } from '../src/stores/auth.store';
 import { supabase } from '../src/services/supabase';
 import { useAutoRefresh } from '../src/hooks/useAutoRefresh';
@@ -132,6 +133,7 @@ export default function RootLayout() {
           hydrateThemeStore(),
           hydrateLanguageStore(),
           hydrateHapticsStore(),
+          hydrateOfflineStore(),
           hydrateMyListCustomization(),
           hydrateDailyTasksCustomization(),
           hydrateDailyTasksPreferences(),
