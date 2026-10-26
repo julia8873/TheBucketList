@@ -3,6 +3,7 @@ import { Pressable, Text, View, StyleSheet, ActivityIndicator } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, UserX, Trash2 } from 'lucide-react-native';
 import { Avatar, fontFamily, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { displayNameOf, initialsOf } from '../../../utils/initials';
 
 interface BlockedByStateProps {
@@ -22,6 +23,7 @@ interface BlockedByStateProps {
  */
 export function BlockedByState({ profile, onBack, isAdmin, onAdminDeleteUser, isDeleting }: BlockedByStateProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const c = theme.colors;
 
   return (
@@ -32,7 +34,7 @@ export function BlockedByState({ profile, onBack, isAdmin, onAdminDeleteUser, is
           style={[styles.circleButton, { backgroundColor: c.surface, borderColor: c.border }]}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="Volver"
+          accessibilityLabel={t('common.back')}
         >
           <ChevronLeft size={22} color={c.foreground} strokeWidth={2} />
         </Pressable>
@@ -66,21 +68,21 @@ export function BlockedByState({ profile, onBack, isAdmin, onAdminDeleteUser, is
           ]}
           accessibilityRole="button"
           accessibilityState={{ disabled: true }}
-          accessibilityLabel="Este usuario te ha bloqueado"
+          accessibilityLabel={t('blocked.blocked_by_accessibility')}
         >
           <UserX size={16} color={c.error} strokeWidth={2} />
-          <Text style={[styles.blockedButtonText, { color: c.error }]}>Te ha bloqueado</Text>
+          <Text style={[styles.blockedButtonText, { color: c.error }]}>{t('blocked.blocked_by_button')}</Text>
         </View>
 
         <View style={[styles.notice, { backgroundColor: c.surface, borderColor: c.border }]}>
           <View style={[styles.noticeIcon, { backgroundColor: c.errorBackground }]}>
             <UserX size={26} color={c.error} strokeWidth={2} />
           </View>
-          <Text style={[styles.noticeTitle, { color: c.foreground }]}>Este usuario te ha bloqueado</Text>
+          <Text style={[styles.noticeTitle, { color: c.foreground }]}>{t('blocked.blocked_by_title')}</Text>
           <Text style={[styles.noticeText, { color: c.foregroundMuted }]}>
             {isAdmin
-              ? 'Como administrador, puedes ver este perfil desde el panel de moderación aunque te haya bloqueado. Su contenido no es visible para el resto de usuarios.'
-              : 'No puedes seguirlo ni ver sus tareas y álbumes mientras mantenga el bloqueo.'}
+              ? t('blocked.blocked_by_admin_desc')
+              : t('blocked.blocked_by_desc')}
           </Text>
         </View>
 
@@ -88,7 +90,7 @@ export function BlockedByState({ profile, onBack, isAdmin, onAdminDeleteUser, is
         {isAdmin && onAdminDeleteUser ? (
           <View style={styles.adminActions}>
             <Text style={[styles.adminLabel, { color: c.foregroundMuted }]}>
-              Acciones de moderación
+              {t('blocked.moderation_actions')}
             </Text>
             <Pressable
               onPress={onAdminDeleteUser}
@@ -98,7 +100,7 @@ export function BlockedByState({ profile, onBack, isAdmin, onAdminDeleteUser, is
                 { backgroundColor: c.errorBackground, borderColor: c.error, opacity: pressed || isDeleting ? 0.6 : 1 },
               ]}
               accessibilityRole="button"
-              accessibilityLabel="Eliminar cuenta del usuario"
+              accessibilityLabel={t('blocked.delete_account_accessibility')}
             >
               {isDeleting ? (
                 <ActivityIndicator size="small" color={c.error} />
@@ -106,7 +108,7 @@ export function BlockedByState({ profile, onBack, isAdmin, onAdminDeleteUser, is
                 <Trash2 size={16} color={c.error} strokeWidth={2} />
               )}
               <Text style={[styles.adminDeleteText, { color: c.error }]}>
-                {isDeleting ? 'Eliminando...' : 'Eliminar cuenta'}
+                {isDeleting ? t('blocked.deleting_account') : t('blocked.delete_account')}
               </Text>
             </Pressable>
           </View>

@@ -986,8 +986,8 @@ export function useBucketDetailState() {
     );
     const failed = results.find((r) => r.error);
     if (failed?.error) {
-      console.error('Error guardando el orden de las fotos:', failed.error);
-      Alert.alert('Error', 'No se pudo guardar el nuevo orden de las fotos');
+      if (__DEV__) console.error('Error guardando el orden de las fotos:', failed.error);
+      Alert.alert(t('common.error'), t('tasks.save_photo_order_error'));
     }
     void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
   };
@@ -1009,7 +1009,7 @@ export function useBucketDetailState() {
     const { data, error } = await supabase.from('bucket_photos').delete().eq('id', photo.id).select('id');
     if (error || !data || data.length === 0) {
       queryClient.setQueryData(['bucketDetail', id], previous);
-      Alert.alert('No se pudo borrar la foto', error?.message || 'No tienes permiso para borrar esta foto.');
+      Alert.alert(t('tasks.delete_photo_error'), error?.message || t('tasks.delete_photo_no_permission'));
       return;
     }
 
@@ -1051,7 +1051,7 @@ export function useBucketDetailState() {
         .update({ title: title.trim() || null })
         .eq('id', photoId);
       if (error) {
-        console.error('Error al actualizar título de foto:', error);
+        if (__DEV__) console.error('Error al actualizar título de foto:', error);
       }
     },
     [id, queryClient]

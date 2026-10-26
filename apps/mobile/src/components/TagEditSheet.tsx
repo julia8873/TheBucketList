@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { TagSheetShell } from './TagSheetShell';
 import { TagAppearanceFields, GoldLabel } from './TagAppearanceFields';
 import { ConfirmDialog } from './SettingsParts';
@@ -25,6 +26,7 @@ interface TagEditSheetProps {
 
 export function TagEditSheet({ visible, tag, usageCount = 0, onClose, onSaved, onDeleted }: TagEditSheetProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const isEdit = !!tag;
 
@@ -58,7 +60,7 @@ export function TagEditSheet({ visible, tag, usageCount = 0, onClose, onSaved, o
     () => (trimmed ? tags.find((t) => t.id !== tag?.id && norm(t.name) === norm(trimmed)) : undefined),
     [tags, tag?.id, trimmed],
   );
-  const errorText = duplicate ? 'Ya existe una etiqueta con ese nombre' : error;
+  const errorText = duplicate ? t('tags.duplicate_error') : error;
   const saving = createTag.isPending || updateTag.isPending;
   const canSave = !!trimmed && !duplicate && !saving;
 
@@ -72,7 +74,7 @@ export function TagEditSheet({ visible, tag, usageCount = 0, onClose, onSaved, o
       onSaved?.(saved);
       onClose();
     } catch (e: any) {
-      setError(e?.message || 'No se pudo guardar la etiqueta. Inténtalo de nuevo.');
+      setError(e?.message || t('tags.save_error'));
     }
   };
 
@@ -85,20 +87,22 @@ export function TagEditSheet({ visible, tag, usageCount = 0, onClose, onSaved, o
       onClose();
     } catch (e: any) {
       setConfirmDelete(false);
-      setError(e?.message || 'No se pudo eliminar la etiqueta.');
+      setError(e?.message || t('tags.delete_error'));
     }
   };
 
   const note = !isEdit
-    ? 'Elige un nombre, un emoji y un color. Podrás cambiarlos cuando quieras.'
+    ? t('tags.note_create')
     : usageCount === 0
-      ? 'Sin tareas todavía. Al cambiarla se actualiza en todas.'
-      : `Usada en ${usageCount} ${usageCount === 1 ? 'tarea' : 'tareas'}. Al cambiarla se actualiza en todas.`;
+      ? t('tags.note_edit_empty')
+      : usageCount === 1
+        ? t('tags.note_edit_used_one')
+        : t('tags.note_edit_used_many', { count: usageCount });
 
   return (
     <TagSheetShell visible={visible} onClose={onClose}>
       <View style={styles.content}>
-        <Text style={[styles.title, { color: theme.colors.foreground }]}>{isEdit ? 'Editar etiqueta' : 'Nueva etiqueta'}</Text>
+        <Text style={[styles.title, { color: theme.colors.foreground }]}>{isEdit ? t('tags.edit_title') : t('tags.create_title')}</Text>
 
         <ScrollView
           style={styles.scroll}
@@ -121,12 +125,12 @@ export function TagEditSheet({ visible, tag, usageCount = 0, onClose, onSaved, o
               <View style={[styles.previewDot, { backgroundColor: color }]} />
             )}
             <Text style={[styles.previewText, { color: theme.colors.foreground }]} numberOfLines={1}>
-              {trimmed || 'Nueva etiqueta'}
+              {trimmed || t('tags.preview_placeholder')}
             </Text>
           </View>
 
           {/* Nombre */}
-          <GoldLabel style={{ marginTop: 24 }}>NOMBRE</GoldLabel>
+          <GoldLabel style={{ marginTop: 24 }}>{t('tags.name_label')}</GoldLabel>
           <View
             style={[
               styles.inputBox,
@@ -137,17 +141,17 @@ export function TagEditSheet({ visible, tag, usageCount = 0, onClose, onSaved, o
             <TextInput
               style={[styles.input, { color: theme.colors.foreground }]}
               value={name}
-              onChangeText={(t) => {
-                setName(t.slice(0, TAG_NAME_MAX));
+              onChangeText={(t2) => {
+                setName(t2.slice(0, TAG_NAME_MAX));
                 setError(null);
               }}
-              placeholder="Ej. Luna de miel"
+              placeholder={t('tags.name_placeholder')}
               placeholderTextColor={theme.colors.foregroundSubtle ?? '#6B6B6B'}
               maxLength={TAG_NAME_MAX}
               autoFocus={!isEdit}
               returnKeyType="done"
               onSubmitEditing={() => void save()}
-              accessibilityLabel="Nombre de la etiqueta"
+              accessibilityLabel={t('tags.name_accessibility')}
             />
             <Text style={[styles.counter, { color: theme.colors.foregroundMuted }]}>
               {name.length}/{TAG_NAME_MAX}
@@ -187,12 +191,12 @@ export function TagEditSheet({ visible, tag, usageCount = 0, onClose, onSaved, o
             onPress={() => void save()}
             disabled={!canSave}
             accessibilityRole="button"
-            accessibilityLabel={isEdit ? 'Guardar cambios' : 'Crear etiqueta'}
+            accessibilityLabel={isEdit ? t('tags.save_accessibility') : t('tags.create_accessibility')}
           >
             {saving ? (
-              <ActivityIndicator color="#111111" />
+              <ActivityIndicator color={theme.dark ? '#111111' : '#FFFFFF'} />
             ) : (
-              <Text style={styles.ctaText}>{isEdit ? 'Guardar cambios' : 'Crear etiqueta'}</Text>
+              <Text style={styles.ctaText}>{isEdit ? t('tags.save_changes') : t('tags.create_btn')}</Text>
             )}
           </Pressable>
           {isEdit && (
@@ -201,9 +205,9 @@ export function TagEditSheet({ visible, tag, usageCount = 0, onClose, onSaved, o
               hitSlop={8}
               style={styles.deleteBtn}
               accessibilityRole="button"
-              accessibilityLabel="Eliminar etiqueta"
+              accessibilityLabel={t('tags.delete_accessibility')}
             >
-              <Text style={styles.deleteText}>Eliminar etiqueta</Text>
+              <Text style={styles.deleteText}>{t('tags.delete_btn')}</Text>
             </Pressable>
           )}
         </View>
@@ -211,14 +215,16 @@ export function TagEditSheet({ visible, tag, usageCount = 0, onClose, onSaved, o
 
       <ConfirmDialog
         visible={confirmDelete}
-        title="Eliminar etiqueta"
+        title={t('tags.delete_confirm_title')}
         message={
-          usageCount > 0
-            ? `«${tag?.name}» se quitará de ${usageCount} ${usageCount === 1 ? 'tarea' : 'tareas'}. Las tareas no se borran. Esta acción no se puede deshacer.`
-            : `Se eliminará «${tag?.name}». Esta acción no se puede deshacer.`
+          usageCount > 1
+            ? t('tags.delete_confirm_used_many', { name: tag?.name ?? '', count: usageCount })
+            : usageCount === 1
+            ? t('tags.delete_confirm_used_one', { name: tag?.name ?? '' })
+            : t('tags.delete_confirm_unused', { name: tag?.name ?? '' })
         }
-        confirmLabel="Eliminar"
-        cancelLabel="Cancelar"
+        confirmLabel={t('tags.delete_confirm_btn')}
+        cancelLabel={t('common.cancel')}
         destructive
         loading={deleteTag.isPending}
         onConfirm={() => void remove()}

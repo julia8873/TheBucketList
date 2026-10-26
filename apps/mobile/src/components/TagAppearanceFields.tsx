@@ -4,6 +4,7 @@ import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-
 import { Check, Plus, Tag as TagIcon } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import {
   TAG_COLORS,
   TAG_EMOJIS,
@@ -40,6 +41,7 @@ export function GoldLabel({ children, style }: { children: string; style?: objec
 /** Selector de emoji (con fondos de color por defecto o emoji propio) y de color (paleta o hex propio). */
 export function TagAppearanceFields({ name = '', emoji, color, autoColor = false, onChange }: Props) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const { savedColors } = useCustomColors();
   const [colorPickerVisible, setColorPickerVisible] = useState(false);
   const touchedColor = useRef(!autoColor);
@@ -134,7 +136,7 @@ export function TagAppearanceFields({ name = '', emoji, color, autoColor = false
             onChange({ emoji: null });
           }}
           accessibilityRole="button"
-          accessibilityLabel="Sin emoji"
+          accessibilityLabel={t('tags.no_emoji')}
           accessibilityState={{ selected: !emoji }}
           style={[
             styles.emojiCircle,
@@ -181,20 +183,20 @@ export function TagAppearanceFields({ name = '', emoji, color, autoColor = false
           !!customEmoji && !emojiError && { borderColor: GOLD },
         ]}
       >
-        <Text style={[styles.customHint, { color: theme.colors.foregroundMuted }]}>Tu emoji</Text>
+        <Text style={[styles.customHint, { color: theme.colors.foregroundMuted }]}>{t('tags.your_emoji')}</Text>
         <TextInput
           value={customEmoji}
           onChangeText={onCustomEmojiText}
-          placeholder="Escribe o pega uno 🙂"
+          placeholder={t('tags.custom_emoji_placeholder')}
           placeholderTextColor={theme.colors.foregroundSubtle ?? '#6B6B6B'}
           style={[styles.customInput, { color: theme.colors.foreground }]}
           autoCorrect={false}
           autoCapitalize="none"
           maxLength={16}
-          accessibilityLabel="Emoji propio"
+          accessibilityLabel={t('tags.custom_emoji_accessibility')}
         />
       </View>
-      {emojiError && <Text style={styles.errorText}>Solo se admiten emojis</Text>}
+      {emojiError && <Text style={styles.errorText}>{t('tags.only_emojis_allowed')}</Text>}
 
       {/* ── COLOR ─────────────────────────────────────────────────────────── */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, marginBottom: 8 }}>
@@ -204,7 +206,7 @@ export function TagAppearanceFields({ name = '', emoji, color, autoColor = false
           hitSlop={6}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
         >
-          <Text style={{ fontSize: 12, color: GOLD, fontWeight: '600' }}>Selector de color</Text>
+          <Text style={{ fontSize: 12, color: GOLD, fontWeight: '600' }}>{t('tags.color_picker_btn')}</Text>
         </Pressable>
       </View>
       <View style={styles.swatches}>
@@ -250,7 +252,7 @@ export function TagAppearanceFields({ name = '', emoji, color, autoColor = false
         <Pressable
           onPress={() => setColorPickerVisible(true)}
           accessibilityRole="button"
-          accessibilityLabel="Color personalizado"
+          accessibilityLabel={t('tags.custom_color_accessibility')}
           style={styles.swatch}
         >
           {!isPaletteColor ? (
@@ -311,11 +313,11 @@ export function TagAppearanceFields({ name = '', emoji, color, autoColor = false
               autoCapitalize="characters"
               autoCorrect={false}
               maxLength={6}
-              accessibilityLabel="Código de color hexadecimal"
+              accessibilityLabel={t('tags.hex_accessibility')}
             />
           </View>
           {hexInvalid && hex.length >= 3 && hex.length !== 3 && hex.length !== 6 ? (
-            <Text style={styles.errorText}>Usa 3 o 6 caracteres (0-9, A-F)</Text>
+            <Text style={styles.errorText}>{t('tags.hex_format_hint')}</Text>
           ) : null}
         </View>
       )}

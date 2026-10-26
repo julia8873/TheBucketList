@@ -14,6 +14,7 @@ import {
 import { Check, Link2, X } from 'lucide-react-native';
 import { Typography, useTheme } from '@bucketlist/ui';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
+import { useTranslation } from '@bucketlist/shared';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../stores/auth.store';
 import { BucketCover } from './BucketCover';
@@ -76,6 +77,7 @@ const HIDDEN_Y = 700;
 
 export function TaskMentionPickerSheet({ visible, currentBucketId, mentionedIds, onToggle, onClose }: Props) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const [render, setRender] = useState(visible);
   const translateY = useRef(new Animated.Value(HIDDEN_Y)).current;
@@ -260,9 +262,14 @@ export function TaskMentionPickerSheet({ visible, currentBucketId, mentionedIds,
 
             <View style={sheetStyles.sheetHeader}>
               <Typography variant="h3" color={theme.colors.foreground}>
-                Mencionar tareas
+                {t('tasks.mention_tasks')}
               </Typography>
-              <Pressable style={sheetStyles.sheetClose} onPress={onClose}>
+              <Pressable
+                style={sheetStyles.sheetClose}
+                onPress={onClose}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close')}
+              >
                 <X color={theme.colors.foregroundMuted} size={20} />
               </Pressable>
             </View>
@@ -278,7 +285,7 @@ export function TaskMentionPickerSheet({ visible, currentBucketId, mentionedIds,
                   borderRadius: 12,
                   fontSize: 16,
                 }}
-                placeholder="Buscar tarea..."
+                placeholder={t('tasks.search_task_placeholder')}
                 placeholderTextColor={theme.colors.foregroundMuted}
                 value={query}
                 onChangeText={setQuery}
@@ -294,7 +301,7 @@ export function TaskMentionPickerSheet({ visible, currentBucketId, mentionedIds,
               <View style={{ alignItems: 'center', paddingVertical: 40, gap: 12 }}>
                 <Link2 color={theme.colors.foregroundMuted} size={36} />
                 <Typography variant="body" color={theme.colors.foregroundMuted}>
-                  {query.trim() ? 'No se encontraron tareas' : 'No tienes más tareas para mencionar'}
+                  {query.trim() ? t('tasks.no_tasks_found') : t('tasks.no_more_tasks_to_mention')}
                 </Typography>
               </View>
             ) : (

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Animated, PanResponder, Pressable, View } from 'react-native';
 import { GripVertical, Trash2 } from 'lucide-react-native';
 import { Typography } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import type { MentionTask } from './TaskMentionPickerSheet';
 
 const ROW_HEIGHT = 50;
@@ -29,6 +30,7 @@ type RowProps = {
 
 function Row(props: RowProps) {
   const { item, index, slot, theme, isOwner, isActive } = props;
+  const { t } = useTranslation();
 
   const latest = useRef(props);
   latest.current = props;
@@ -197,7 +199,7 @@ function Row(props: RowProps) {
             }}
             accessible
             accessibilityRole="button"
-            accessibilityLabel="Mantén pulsado para reorganizar la tarea mencionada"
+            accessibilityLabel={t('tasks.drag_to_reorder_mention')}
           >
             <GripVertical color={theme.colors.foregroundMuted} size={20} strokeWidth={1.8} />
           </View>

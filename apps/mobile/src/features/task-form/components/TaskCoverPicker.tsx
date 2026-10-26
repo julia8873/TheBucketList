@@ -106,7 +106,7 @@ export function TaskCoverPicker({
         }
       }
     } catch (err) {
-      console.warn('Error seleccionando imagen:', err);
+      if (__DEV__) console.warn('Error seleccionando imagen:', err);
     }
   };
 
@@ -131,7 +131,7 @@ export function TaskCoverPicker({
         }
       }
     } catch (err) {
-      console.warn('Error abriendo cámara:', err);
+      if (__DEV__) console.warn('Error abriendo cámara:', err);
     }
   };
 

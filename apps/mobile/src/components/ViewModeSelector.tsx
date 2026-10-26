@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Pressable, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { LayoutList, LayoutGrid, AlignJustify } from 'lucide-react-native';
 import { gold, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 
 export type TaskViewMode = 'list' | 'gallery' | 'compact';
 
@@ -14,10 +15,11 @@ interface ViewModeSelectorProps {
 
 export function ViewModeSelector({ mode, onChange, style }: ViewModeSelectorProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const isDark = theme.dark;
 
-  const inactiveIconColor = isDark ? '#A0A0A0' : '#756E63';
-  const activeIconColor = isDark ? '#0E0E0E' : '#FFFFFF';
+  const inactiveIconColor = theme.colors.foregroundMuted ?? (isDark ? '#A0A0A0' : '#756E63');
+  const activeIconColor = theme.colors.primaryForeground ?? (isDark ? '#0E0E0E' : '#FFFFFF');
   const activeBg = theme.colors.primary;
 
   return (
@@ -25,8 +27,8 @@ export function ViewModeSelector({ mode, onChange, style }: ViewModeSelectorProp
       style={[
         styles.container,
         {
-          backgroundColor: isDark ? '#181818' : '#EAE5DB',
-          borderColor: isDark ? '#242424' : '#DDD6C9',
+          backgroundColor: theme.colors.surfaceElevated ?? (isDark ? '#181818' : '#EAE5DB'),
+          borderColor: theme.colors.border,
         },
         style,
       ]}
@@ -36,7 +38,7 @@ export function ViewModeSelector({ mode, onChange, style }: ViewModeSelectorProp
         style={[styles.btn, mode === 'list' && { backgroundColor: activeBg }]}
         hitSlop={4}
         accessibilityRole="button"
-        accessibilityLabel="Vista detallada"
+        accessibilityLabel={t('common.list')}
       >
         <LayoutList size={15} color={mode === 'list' ? activeIconColor : inactiveIconColor} />
       </Pressable>
@@ -45,7 +47,7 @@ export function ViewModeSelector({ mode, onChange, style }: ViewModeSelectorProp
         style={[styles.btn, mode === 'gallery' && { backgroundColor: activeBg }]}
         hitSlop={4}
         accessibilityRole="button"
-        accessibilityLabel="Vista galería"
+        accessibilityLabel={t('common.gallery')}
       >
         <LayoutGrid size={15} color={mode === 'gallery' ? activeIconColor : inactiveIconColor} />
       </Pressable>
@@ -54,7 +56,7 @@ export function ViewModeSelector({ mode, onChange, style }: ViewModeSelectorProp
         style={[styles.btn, mode === 'compact' && { backgroundColor: activeBg }]}
         hitSlop={4}
         accessibilityRole="button"
-        accessibilityLabel="Vista compacta"
+        accessibilityLabel={t('common.compact')}
       >
         <AlignJustify size={15} color={mode === 'compact' ? activeIconColor : inactiveIconColor} />
       </Pressable>

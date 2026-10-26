@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { Search, X, ChevronLeft } from 'lucide-react-native';
 import { TagChip, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { useTags, useCreateTag } from '../hooks/useTags';
 import { TagAppearanceFields } from './TagAppearanceFields';
 import { TAG_COLORS, TAG_NAME_MAX, defaultColorForEmoji, defaultEmojiFor, hexToRgba } from '../constants/tagPresets';
@@ -55,6 +56,7 @@ function SectionLabel({ gold, rest }: { gold: string; rest?: string }) {
 
 export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: TagPickerSheetProps) {
     const { theme } = useTheme();
+    const { t } = useTranslation();
     const [mounted, setMounted] = useState(visible);
     const translateY = useRef(new Animated.Value(SHEET_H)).current;
     const backdrop = useRef(new Animated.Value(0)).current;
@@ -133,7 +135,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
     const canCreateFromQuery = q.length > 0 && !existingNames.has(q);
 
     const duplicate = name.trim() ? tags.find((t) => norm(t.name) === norm(name)) : undefined;
-    const errorText = duplicate ? 'Ya existe una etiqueta con ese nombre' : submitError;
+    const errorText = duplicate ? t('tags.duplicate_error') : submitError;
     const nextColor = COLORS[tags.length % COLORS.length]!.value;
 
     // ─── Acciones ───────────────────────────────────────────────────────────────
@@ -166,7 +168,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
             const created = await createTag.mutateAsync({ name: label, color: sugColor, emoji: sugEmoji });
             setDraft((d) => [...d, { id: created.id, name: created.name, color: created.color, emoji: created.emoji }]);
         } catch {
-            setSubmitError('No se pudo crear la etiqueta. Inténtalo de nuevo.');
+            setSubmitError(t('tags.picker_create_error'));
         }
     };
 
@@ -180,7 +182,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
             setQuery('');
             switchMode('list');
         } catch {
-            setSubmitError('No se pudo crear la etiqueta. Inténtalo de nuevo.');
+            setSubmitError(t('tags.picker_create_error'));
         }
     };
 
@@ -196,7 +198,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
     const renderList = (
         <View style={{ flex: 1 }}>
             <View style={styles.headerRow}>
-                <Text style={[styles.title, { color: theme.colors.foreground }]}>Etiquetas</Text>
+                <Text style={[styles.title, { color: theme.colors.foreground }]}>{t('tags.picker_title')}</Text>
                 <Pressable
                     style={[
                         styles.closeBtn,
@@ -206,7 +208,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
                         },
                     ]}
                     onPress={close}
-                    accessibilityLabel="Cerrar"
+                    accessibilityLabel={t('common.close')}
                 >
                     <X color={theme.colors.foreground} size={18} />
                 </Pressable>
@@ -230,7 +232,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
                     <Search color={theme.colors.foregroundMuted} size={20} />
                     <TextInput
                         style={[styles.searchInput, { color: theme.colors.foreground }]}
-                        placeholder="Buscar etiquetas"
+                        placeholder={t('tags.picker_search_placeholder')}
                         placeholderTextColor={theme.colors.foregroundSubtle ?? '#6B6B6B'}
                         value={query}
                         onChangeText={setQuery}
@@ -240,7 +242,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
 
                 {draft.length > 0 && (
                     <>
-                        <SectionLabel gold="SELECCIONADAS" rest={`· ${draft.length}`} />
+                        <SectionLabel gold={t('tags.picker_selected_section')} rest={`· ${draft.length}`} />
                         <View style={styles.wrap}>
                             {draft.map((t) => (
                                 <TagChip
@@ -254,7 +256,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
                     </>
                 )}
 
-                <SectionLabel gold="TUS" rest="ETIQUETAS" />
+                <SectionLabel gold={t('tags.picker_your_section_gold')} rest={t('tags.picker_your_section_rest')} />
                 {isLoading ? (
                     <View style={styles.wrap}>
                         {[84, 110, 96, 72].map((w, i) => (
@@ -272,9 +274,9 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
                     </View>
                 ) : isError ? (
                     <View style={styles.errorBox}>
-                        <Text style={styles.errorText}>No se pudieron cargar tus etiquetas.</Text>
+                        <Text style={styles.errorText}>{t('tags.cant_load_tags')}</Text>
                         <Pressable onPress={() => void refetch()} hitSlop={8}>
-                            <Text style={styles.retryText}>Reintentar</Text>
+                            <Text style={styles.retryText}>{t('tags.retry')}</Text>
                         </Pressable>
                     </View>
                 ) : (
@@ -290,7 +292,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
                             />
                         ))}
                         <TagChip
-                            label={canCreateFromQuery ? `Crear «${query.trim()}»` : '+ Crear etiqueta'}
+                            label={canCreateFromQuery ? t('tags.create_with_name', { name: query.trim() }) : t('tags.create_btn_plus')}
                             variant="create"
                             onPress={() => openCreate(canCreateFromQuery ? query.trim() : '')}
                         />
@@ -299,7 +301,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
 
                 {suggestions.length > 0 && (
                     <>
-                        <SectionLabel gold="SUGERIDAS" />
+                        <SectionLabel gold={t('tags.picker_suggested')} />
                         <View style={styles.wrap}>
                             {suggestions.map((s) => (
                                 <TagChip key={s} label={s} onPress={() => void pickSuggestion(s)} />
@@ -320,7 +322,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
                 ]}
             >
                 <Pressable style={styles.cta} onPress={close}>
-                    <Text style={styles.ctaText}>Guardar etiquetas</Text>
+                    <Text style={styles.ctaText}>{t('tags.save_tags')}</Text>
                 </Pressable>
             </View>
         </View>
@@ -340,11 +342,11 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
                         },
                     ]}
                     onPress={() => switchMode('list')}
-                    accessibilityLabel="Volver"
+                    accessibilityLabel={t('common.back')}
                 >
                     <ChevronLeft color={theme.colors.foreground} size={22} />
                 </Pressable>
-                <Text style={[styles.title, { flex: 1, marginLeft: 14, color: theme.colors.foreground }]}>Nueva etiqueta</Text>
+                <Text style={[styles.title, { flex: 1, marginLeft: 14, color: theme.colors.foreground }]}>{t('tags.create_title')}</Text>
             </View>
 
             <ScrollView
@@ -353,7 +355,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
             >
-                <SectionLabel gold="NOMBRE" rest="DE LA ETIQUETA" />
+                <SectionLabel gold={t('tags.tag_name_section_gold')} rest={t('tags.tag_name_section_rest')} />
                 <TextInput
                     style={[
                         styles.nameInput,
@@ -368,7 +370,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
                         setName(t.slice(0, TAG_NAME_MAX));
                         setSubmitError(null);
                     }}
-                    placeholder="Ej. Luna de miel"
+                    placeholder={t('tags.name_placeholder')}
                     placeholderTextColor={theme.colors.foregroundSubtle ?? '#6B6B6B'}
                     autoFocus
                     maxLength={TAG_NAME_MAX}
@@ -380,7 +382,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
                         <Text style={styles.errorText}>{errorText}</Text>
                         {!!duplicate && (
                             <Pressable onPress={selectExisting} hitSlop={8}>
-                                <Text style={styles.retryText}>Seleccionar la existente</Text>
+                                <Text style={styles.retryText}>{t('tags.select_existing')}</Text>
                             </Pressable>
                         )}
                     </View>
@@ -398,19 +400,19 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
                     }}
                 />
 
-                <SectionLabel gold="VISTA" rest="PREVIA" />
+                <SectionLabel gold={t('tags.preview_gold')} rest={t('tags.preview_rest')} />
                 <View style={[styles.previewChip, { borderColor: hexToRgba(color, 0.4), backgroundColor: hexToRgba(color, 0.14) }]}>
                     {emoji ? (
                         <Text style={styles.previewEmoji}>{emoji}</Text>
                     ) : (
                         <View style={[styles.previewDot, { backgroundColor: color }]} />
                     )}
-                    <Text style={[styles.previewText, { color: theme.colors.foreground }]}>{name.trim() || 'Nueva etiqueta'}</Text>
+                    <Text style={[styles.previewText, { color: theme.colors.foreground }]}>{name.trim() || t('tags.create_title')}</Text>
                 </View>
 
                 <View style={styles.btnRow}>
                     <Pressable style={[styles.cta, styles.ctaGhost]} onPress={() => switchMode('list')}>
-                        <Text style={[styles.ctaText, { color: '#D4B13A' }]}>Cancelar</Text>
+                        <Text style={[styles.ctaText, { color: '#D4B13A' }]}>{t('common.cancel')}</Text>
                     </Pressable>
                     <Pressable
                         style={[styles.cta, { flex: 1.4 }, !canSubmit && { opacity: 0.5 }]}
@@ -420,7 +422,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
                         {createTag.isPending ? (
                             <ActivityIndicator color="#111" />
                         ) : (
-                            <Text style={styles.ctaText}>Crear etiqueta</Text>
+                            <Text style={styles.ctaText}>{t('tags.create_btn')}</Text>
                         )}
                     </Pressable>
                 </View>
@@ -432,7 +434,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
         <Modal visible transparent animationType="none" onRequestClose={onBack} statusBarTranslucent>
             <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
                 <Animated.View style={[StyleSheet.absoluteFill, styles.backdrop, { opacity: backdrop }]}>
-                    <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel="Cerrar etiquetas" />
+                    <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel={t('tags.close_tags_accessibility')} />
                 </Animated.View>
 
                 <Animated.View
