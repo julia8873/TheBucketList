@@ -505,12 +505,6 @@ export function useAlbumDetailState() {
   const pickAndUploadCover = async () => {
     if (!canEdit || !currentUserId) return;
     try {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permission.granted) {
-        toast.error('Necesitamos acceso a tus fotos para la portada');
-        return;
-      }
-
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: false,

@@ -47,8 +47,6 @@ export default function CompleteBucketModal() {
         quality: 1,
       });
     } else {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') return;
       result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         quality: 1,

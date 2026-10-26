@@ -916,12 +916,6 @@ export function useBucketDetailState() {
   const pickAndUploadPhotos = async () => {
     if (!user) return;
 
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('Permiso necesario', 'Necesitamos acceso a tus fotos para subirlas a este momento.');
-      return;
-    }
-
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsMultipleSelection: true,
@@ -1103,12 +1097,6 @@ export function useBucketDetailState() {
 
   const pickAndUploadCover = async () => {
     if (!user) return;
-
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      toast.error('Necesitamos acceso a tus fotos para la portada');
-      return;
-    }
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
