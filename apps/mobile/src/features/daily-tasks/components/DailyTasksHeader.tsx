@@ -20,7 +20,7 @@ import { getDateFnsLocale } from '@/utils/dateLocale';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { gold } from '@bucketlist/ui/src/tokens/colors';
-import { PageTitle, useTheme, FilterChip, SegmentedControl } from '@bucketlist/ui';
+import { PageTitle, useTheme, FilterChip, SegmentedControl, Typography } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/explore.styles';
 import { DailyTag, DailySortField, DailySortDirection, TimeView, StatusFilter } from '../types';
@@ -43,23 +43,26 @@ export function DailyTasksTopBar({ timeView, setTimeView, style }: DailyTasksTop
   const [goldDaily, ...restDaily] = t('nav.daily', { defaultValue: 'Día a día' }).split(' ');
 
   return (
-    <View style={[styles.header, style]}>
-      <View style={styles.titleRow}>
-        <PageTitle gold={goldDaily} rest={restDaily.join(' ')} />
+    <View style={style}>
+      <View style={styles.header}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 10 }}>
+          <PageTitle gold={goldDaily} rest={restDaily.join(' ')} />
+        </View>
       </View>
 
       {/* Time View Switcher: Hoy | Semana | Calendario | Todas */}
-      <SegmentedControl
-        options={[
-          { key: 'today', label: t('daily.tab_today') },
-          { key: 'week', label: t('daily.tab_week') },
-          { key: 'calendar', label: t('daily.tab_calendar') },
-          { key: 'all', label: t('daily.tab_all') },
-        ]}
-        selected={timeView}
-        onChange={(val) => setTimeView(val as TimeView)}
-        style={{ marginBottom: 8 }}
-      />
+      <View style={styles.tabsContainer}>
+        <SegmentedControl
+          options={[
+            { key: 'today', label: t('daily.tab_today') },
+            { key: 'week', label: t('daily.tab_week') },
+            { key: 'calendar', label: t('daily.tab_calendar') },
+            { key: 'all', label: t('daily.tab_all') },
+          ]}
+          selected={timeView}
+          onChange={(val) => setTimeView(val as TimeView)}
+        />
+      </View>
     </View>
   );
 }
@@ -73,7 +76,7 @@ export interface DailyQuickAddBarProps {
 }
 
 /**
- * Barra de añadir tarea rápida para hoy.
+ * Barra de añadir tarea rápida para hoy con bordes redondeados estilo buscador.
  */
 export function DailyQuickAddBar({
   newTitle,
@@ -86,11 +89,20 @@ export function DailyQuickAddBar({
   const { t } = useTranslation();
 
   return (
-    <View style={[{ paddingHorizontal: 16, marginBottom: 2 }, containerStyle]}>
-      <View style={[styles.inputCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, marginBottom: 2 }]}>
+    <View style={containerStyle}>
+      <View
+        style={[
+          styles.exploreSearchContainer,
+          {
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.border,
+          },
+        ]}
+      >
+        <Plus size={18} color={theme.colors.foregroundMuted} strokeWidth={2} />
         <TextInput
           ref={inputRef}
-          style={[styles.input, { color: theme.colors.foreground }]}
+          style={[styles.exploreSearchInput, { color: theme.colors.foreground }]}
           placeholder={t('daily.quick_add_placeholder')}
           placeholderTextColor={theme.colors.foregroundMuted}
           value={newTitle}
@@ -103,9 +115,10 @@ export function DailyQuickAddBar({
           style={[styles.addBtn, !newTitle.trim() && styles.addBtnDisabled]}
           onPress={handleQuickAddTask}
           disabled={!newTitle.trim()}
+          accessibilityRole="button"
           accessibilityLabel={t('daily.quick_add_placeholder')}
         >
-          <Plus size={18} color="#0E0E0E" strokeWidth={2.4} />
+          <Plus size={16} color="#0E0E0E" strokeWidth={2.4} />
         </Pressable>
       </View>
     </View>
@@ -139,6 +152,7 @@ export interface DailyTasksScrollControlsProps {
   setWeeksToShow?: (n: number) => void;
   weekOffset?: number;
   setWeekOffset?: React.Dispatch<React.SetStateAction<number>>;
+  tasksCount?: number;
 }
 
 /**
@@ -168,6 +182,7 @@ export function DailyTasksScrollControls({
   setWeeksToShow,
   weekOffset = 0,
   setWeekOffset,
+  tasksCount,
 }: DailyTasksScrollControlsProps) {
   const { theme } = useTheme();
   const { t, i18n } = useTranslation();
@@ -299,15 +314,15 @@ export function DailyTasksScrollControls({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={[
           styles.tagsFilterScroll,
-          { paddingLeft: 16, paddingRight: 16, gap: 8, flexGrow: 1 },
+          { paddingHorizontal: 20, gap: 8, flexGrow: 1 },
         ]}
-        style={{ marginHorizontal: -16 }}
+        style={{ marginHorizontal: -20, marginBottom: 16 }}
       >
         {/* Todas */}
         <FilterChip
           label={t('daily.filter_all')}
           active={statusFilter === 'all' && !onlyFavorites && priorityFilter === 'all'}
-          style={{ flexGrow: 1, flexShrink: 0, paddingHorizontal: 10 }}
+          style={{ flexGrow: 1, flexShrink: 0, paddingHorizontal: 12 }}
           onPress={() => {
             setStatusFilter('all');
             setOnlyFavorites(false);
@@ -318,14 +333,14 @@ export function DailyTasksScrollControls({
         {/* Filtrar por estado */}
         <Pressable
           style={[
-            styles.tagFilterPill,
+            styles.tagFilterBtn,
             {
               flexGrow: 1,
               flexShrink: 0,
               justifyContent: 'center',
-              paddingHorizontal: 10,
+              paddingHorizontal: 12,
               backgroundColor: isStatusActive
-                ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.14)')
+                ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
                 : theme.colors.surface,
               borderColor: isStatusActive ? gold[400] : theme.colors.border,
             },
@@ -355,14 +370,14 @@ export function DailyTasksScrollControls({
         {/* Filtrar por prioridad */}
         <Pressable
           style={[
-            styles.tagFilterPill,
+            styles.tagFilterBtn,
             {
               flexGrow: 1,
               flexShrink: 0,
               justifyContent: 'center',
-              paddingHorizontal: 10,
+              paddingHorizontal: 12,
               backgroundColor: isPriorityActive
-                ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.14)')
+                ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
                 : theme.colors.surface,
               borderColor: isPriorityActive ? gold[400] : theme.colors.border,
             },
@@ -386,14 +401,14 @@ export function DailyTasksScrollControls({
         {/* Botón Etiquetas */}
         <Pressable
           style={[
-            styles.tagFilterPill,
+            styles.tagFilterBtn,
             {
               flexGrow: 1,
               flexShrink: 0,
               justifyContent: 'center',
-              paddingHorizontal: 10,
+              paddingHorizontal: 12,
               backgroundColor: selectedTagFilters.length > 0
-                ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.14)')
+                ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
                 : theme.colors.surface,
               borderColor: selectedTagFilters.length > 0 ? gold[400] : theme.colors.border,
             },
@@ -403,9 +418,9 @@ export function DailyTasksScrollControls({
           accessibilityLabel={t('daily.filter_tags_title')}
         >
           <TagIcon
-            size={13}
+            size={14}
             color={selectedTagFilters.length > 0 ? gold[400] : theme.colors.foregroundMuted}
-            strokeWidth={2.2}
+            strokeWidth={2}
           />
           <Text
             numberOfLines={1}
@@ -414,9 +429,11 @@ export function DailyTasksScrollControls({
               { color: selectedTagFilters.length > 0 ? gold[400] : theme.colors.foregroundMuted },
             ]}
           >
-            {selectedTagFilters.length > 0
-              ? `${t('daily.filter_tags')} (${selectedTagFilters.length})`
-              : t('daily.filter_tags')}
+            {selectedTagFilters.length === 0
+              ? t('daily.filter_tags')
+              : selectedTagFilters.length === 1
+              ? `${selectedTagFilters.length} ${t('daily.filter_tags')}`
+              : `${selectedTagFilters.length} ${t('daily.filter_tags')}`}
           </Text>
         </Pressable>
 
@@ -428,33 +445,46 @@ export function DailyTasksScrollControls({
             <Pressable
               key={tag.id}
               style={[
-                styles.tagFilterPill,
+                styles.activeTagChip,
                 {
-                  borderColor: tag.color ? `${tag.color}88` : (theme.dark ? '#4A3B12' : '#E8D298'),
-                  backgroundColor: tag.color ? (theme.dark ? `${tag.color}22` : `${tag.color}15`) : (theme.dark ? '#2C2512' : '#FDF4DC'),
+                  backgroundColor: theme.colors.surface,
+                  borderColor: tag.color ? `${tag.color}88` : theme.colors.border,
+                  flexShrink: 0,
                 },
               ]}
               onPress={() => {
                 setSelectedTagFilters((prev) => prev.filter((tid) => tid !== tag.id));
               }}
+              accessibilityRole="button"
               accessibilityLabel={`Quitar filtro ${tag.name}`}
             >
               {tag.emoji ? (
-                <Text style={{ fontSize: 11 }}>{tag.emoji}</Text>
+                <View
+                  style={[
+                    styles.activeTagEmoji,
+                    {
+                      backgroundColor: tag.color
+                        ? `${tag.color}33`
+                        : theme.dark
+                        ? 'rgba(212, 175, 55, 0.2)'
+                        : 'rgba(212, 175, 55, 0.15)',
+                    },
+                  ]}
+                >
+                  <Text style={styles.activeTagEmojiText}>{tag.emoji}</Text>
+                </View>
               ) : (
                 <View
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: 3,
-                    backgroundColor: tag.color || '#D4B13A',
-                  }}
+                  style={[
+                    styles.activeTagDot,
+                    { backgroundColor: tag.color || '#D4B13A' },
+                  ]}
                 />
               )}
-              <Text style={[styles.tagFilterText, { color: tag.color || gold[400], fontWeight: '600' }]}>
+              <Text style={[styles.activeTagText, { color: theme.colors.foreground }]} numberOfLines={1}>
                 {tag.name}
               </Text>
-              <X size={10} color={theme.colors.foregroundMuted} />
+              <X size={15} color={theme.colors.foregroundMuted} strokeWidth={2} />
             </Pressable>
           );
         })}
@@ -462,82 +492,113 @@ export function DailyTasksScrollControls({
         {/* Botón rápido para limpiar filtros activos */}
         {hasActiveFilters && (
           <Pressable
-            style={[styles.clearFiltersPill, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+            style={[styles.clearFiltersPill, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, flexShrink: 0 }]}
             onPress={() => {
               setStatusFilter('all');
               setOnlyFavorites(false);
               setPriorityFilter('all');
               setSelectedTagFilters([]);
             }}
+            accessibilityRole="button"
             accessibilityLabel={t('daily.clear_filters')}
           >
-            <X size={11} color={theme.colors.foregroundMuted} />
+            <X size={14} color={theme.colors.foregroundMuted} strokeWidth={2} />
             <Text style={[styles.clearFiltersPillText, { color: theme.colors.foregroundMuted }]}>{t('daily.clear_filters')}</Text>
           </Pressable>
         )}
       </ScrollView>
 
-      {/* Sub-toolbar: Personalizar y Prioridad a la derecha */}
-      <View style={[styles.toolbarRow, { justifyContent: 'flex-end', gap: 8 }]}>
-        {/* Botón Personalizar */}
-        {onOpenCustomize && (
+      {/* Fila: Contador de tareas (izq) + Personalizar y Ordenar (der) */}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 14,
+        }}
+      >
+        {/* Izquierda: Contador de tareas */}
+        <Typography variant="caption" color={theme.colors.foregroundMuted} style={styles.tasksCountLabel}>
+          {typeof tasksCount === 'number'
+            ? tasksCount === 1
+              ? t('my_list.tasks_count_single', { count: tasksCount, defaultValue: '1 tarea' })
+              : t('my_list.tasks_count_plural', { count: tasksCount, defaultValue: `${tasksCount} tareas` })
+            : ''}
+        </Typography>
+
+        {/* Derecha: Personalizar y Ordenar */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          {/* Botón Personalizar */}
+          {onOpenCustomize && (
+            <Pressable
+              onPress={onOpenCustomize}
+              hitSlop={8}
+              style={[
+                styles.sortTriggerBtn,
+                {
+                  height: 32,
+                  paddingHorizontal: 8,
+                  borderRadius: 8,
+                  backgroundColor: isCustomized
+                    ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.14)')
+                    : theme.colors.surface,
+                  borderWidth: 1,
+                  borderColor: isCustomized ? gold[400] : theme.colors.border,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={t('daily.customize_view', 'Personalizar vista')}
+            >
+              <SlidersHorizontal size={14} color={gold[400]} />
+            </Pressable>
+          )}
+
+          {/* Botón Ordenar */}
           <Pressable
-            onPress={onOpenCustomize}
-            hitSlop={8}
             style={[
               styles.sortTriggerBtn,
               {
                 height: 32,
                 paddingHorizontal: 8,
                 borderRadius: 8,
-                backgroundColor: isCustomized
-                  ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.14)')
-                  : theme.colors.surface,
+                backgroundColor: theme.colors.surface,
                 borderWidth: 1,
-                borderColor: isCustomized ? gold[400] : theme.colors.border,
-                justifyContent: 'center',
-                alignItems: 'center',
+                borderColor: (sortField !== 'manual' || groupByTag) ? gold[400] : theme.colors.border,
               },
+              (sortField !== 'manual' || groupByTag) && [
+                styles.sortTriggerBtnActive,
+                { backgroundColor: theme.dark ? '#262010' : '#FDF4DC' },
+              ],
             ]}
+            onPress={onOpenSortModal}
             accessibilityRole="button"
-            accessibilityLabel={t('daily.customize_view', 'Personalizar vista')}
+            accessibilityLabel={t('daily.sort_and_classify')}
           >
-            <SlidersHorizontal size={14} color={gold[400]} />
+            <ArrowUpDown
+              size={12}
+              color={sortField !== 'manual' || groupByTag ? gold[400] : theme.colors.foregroundMuted}
+              strokeWidth={2.2}
+            />
+            <Text
+              style={[
+                styles.sortTriggerText,
+                { color: theme.colors.foregroundMuted },
+                (sortField !== 'manual' || groupByTag) && styles.sortTriggerTextActive,
+              ]}
+            >
+              {sortField === 'manual'
+                ? (groupByTag ? t('daily.filter_tags') : t('daily.filter_priority'))
+                : sortField === 'priority'
+                ? `${t('daily.sort_priority')} ${sortDirection === 'desc' ? '↓' : '↑'}`
+                : sortField === 'name'
+                ? `${t('daily.sort_name')} ${sortDirection === 'asc' ? 'A-Z' : 'Z-A'}`
+                : `${t('daily.sort_date')} ${sortDirection === 'asc' ? '↑' : '↓'}`}
+            </Text>
+            {(sortField !== 'manual' || groupByTag) && <View style={styles.sortActiveDot} />}
           </Pressable>
-        )}
-
-        {/* Derecha: Botón Prioridad (abre opciones de ordenación y clasificación) */}
-        <Pressable
-          style={[
-            styles.sortTriggerBtn,
-            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
-            (sortField !== 'manual' || groupByTag) && [styles.sortTriggerBtnActive, { backgroundColor: theme.dark ? '#262010' : '#FDF4DC' }],
-          ]}
-          onPress={onOpenSortModal}
-          accessibilityLabel={t('daily.sort_and_classify')}
-        >
-          <ArrowUpDown
-            size={12}
-            color={sortField !== 'manual' || groupByTag ? gold[400] : theme.colors.foregroundMuted}
-            strokeWidth={2.2}
-          />
-          <Text
-            style={[
-              styles.sortTriggerText,
-              { color: theme.colors.foregroundMuted },
-              (sortField !== 'manual' || groupByTag) && styles.sortTriggerTextActive,
-            ]}
-          >
-            {sortField === 'manual'
-              ? (groupByTag ? t('daily.filter_tags') : t('daily.filter_priority'))
-              : sortField === 'priority'
-              ? `${t('daily.sort_priority')} ${sortDirection === 'desc' ? '↓' : '↑'}`
-              : sortField === 'name'
-              ? `${t('daily.sort_name')} ${sortDirection === 'asc' ? 'A-Z' : 'Z-A'}`
-              : `${t('daily.sort_date')} ${sortDirection === 'asc' ? '↑' : '↓'}`}
-          </Text>
-          {(sortField !== 'manual' || groupByTag) && <View style={styles.sortActiveDot} />}
-        </Pressable>
+        </View>
       </View>
 
       {/* Bottom Sheet: Filtrar por Estado */}

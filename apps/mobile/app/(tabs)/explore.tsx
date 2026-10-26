@@ -138,7 +138,7 @@ export default function DailyTasksScreen() {
           <DailyTasksTopBar
             timeView={state.timeView}
             setTimeView={state.setTimeView}
-            style={{ paddingHorizontal: 0 }}
+            style={{ marginHorizontal: -20 }}
           />
 
           {/* Barra de tarea rápida: Solo en Hoy y Todas */}
@@ -148,7 +148,7 @@ export default function DailyTasksScreen() {
               setNewTitle={state.setNewTitle}
               handleQuickAddTask={state.handleQuickAddTask}
               inputRef={state.inputRef}
-              containerStyle={{ paddingHorizontal: 0 }}
+              containerStyle={{ marginHorizontal: -20 }}
             />
           )}
 
@@ -176,6 +176,13 @@ export default function DailyTasksScreen() {
             setWeeksToShow={state.setWeeksToShow}
             weekOffset={state.weekOffset}
             setWeekOffset={state.setWeekOffset}
+            tasksCount={
+              state.timeView === 'today'
+                ? (state.statusFilter === 'completed' ? state.completedList.length : state.sortedTodayTasks.length)
+                : state.timeView === 'all'
+                ? state.sortedAllTasks.length
+                : state.filteredByTagAndStatus.length
+            }
           />
           {state.isLoading && !state.tasks.length ? (
             <View style={{ gap: 8, paddingVertical: 12 }}>

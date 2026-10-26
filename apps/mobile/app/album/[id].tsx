@@ -943,10 +943,9 @@ export default function AlbumDetailScreen() {
                   strokeWidth={1.8}
                 />
                 <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: theme.colors.foregroundMuted }}>
-                  {albumLikesCount}{' '}
                   {albumLikesCount === 1
-                    ? t('collections.likes_count_single', { count: 1, defaultValue: 'me gusta' })
-                    : t('collections.likes_count_plural', { count: albumLikesCount, defaultValue: 'me gusta' })}
+                    ? t('collections.likes_count_single', { count: 1, defaultValue: '1 like' })
+                    : t('collections.likes_count_plural', { count: albumLikesCount, defaultValue: `${albumLikesCount} likes` })}
                 </Text>
               </Pressable>
             </View>
