@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../stores/auth.store';
 import { triggerTaskCompletedHaptic } from '../stores/haptics.store';
+import { toast } from '@bucketlist/ui';
 import {
   applyAddTagsToTasks,
   applyDeleteTasks,
@@ -211,6 +212,9 @@ export function useBulkTaskOperations() {
       if (error) throw error;
     },
     ...optimistic<string[]>((taskIds) => applyDeleteTasks(queryClient, taskIds), settleExtras),
+    onSuccess: () => {
+      toast.success('Tareas eliminadas');
+    },
   });
 
   // 7. Vaciar / limpiar notificaciones y suscriptores de las tareas seleccionadas

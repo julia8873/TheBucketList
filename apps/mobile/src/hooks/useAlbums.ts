@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../stores/auth.store';
+import { toast } from '@bucketlist/ui';
 
 export const ALBUMS_QUERY_KEY = ['albums'];
 
@@ -165,6 +166,7 @@ export function useCreateAlbum() {
       return newAlbum;
     },
     onSuccess: () => {
+      toast.success('Álbum creado con éxito');
       queryClient.invalidateQueries({ queryKey: ALBUMS_QUERY_KEY });
     },
   });
@@ -241,6 +243,9 @@ export function useDeleteAlbum() {
           queryClient.setQueryData(qKey, qData);
         });
       }
+    },
+    onSuccess: () => {
+      toast.success('Álbum eliminado');
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ALBUMS_QUERY_KEY });

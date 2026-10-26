@@ -12,6 +12,7 @@ export type { DailyTaskPriority, DailyTaskRecurrenceUnit, DailySubtask };
 import { useAuthStore } from '../stores/auth.store';
 import { triggerTaskCompletedHaptic } from '../stores/haptics.store';
 import { format } from 'date-fns';
+import { toast } from '@bucketlist/ui';
 
 export const DAILY_TASKS_QUERY_KEY = ['daily_tasks'];
 export const DAILY_STATS_QUERY_KEY = ['daily_task_stats'];
@@ -109,6 +110,7 @@ export function useCreateDailyTask() {
       return { previous };
     },
     onSuccess: (savedTask) => {
+      toast.success('Tarea diaria creada');
       queryClient.setQueryData<DailyTask[]>([...DAILY_TASKS_QUERY_KEY, userId], (old: DailyTask[] | undefined) => {
         const list = old || [];
         const filtered = list.filter((t: DailyTask) => !t.id.startsWith('temp-'));
@@ -316,6 +318,9 @@ export function useDeleteDailyTask() {
         queryClient.setQueryData([...DAILY_TASKS_QUERY_KEY, userId], context.previous);
       }
     },
+    onSuccess: () => {
+      toast.success('Tarea diaria eliminada');
+    },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: [...DAILY_TASKS_QUERY_KEY, userId] });
     },
@@ -387,6 +392,9 @@ export function useClearCompletedDailyTasks() {
         queryClient.setQueryData([...DAILY_TASKS_QUERY_KEY, userId], context.previous);
       }
     },
+    onSuccess: () => {
+      toast.success('Tareas completadas eliminadas');
+    },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: [...DAILY_TASKS_QUERY_KEY, userId] });
     },
@@ -403,6 +411,7 @@ export function useConvertToBucket() {
       return dailyTasksService.convertToBucket(task, deleteDaily);
     },
     onSuccess: () => {
+      toast.success('Convertida en reto principal');
       void queryClient.invalidateQueries({ queryKey: [...DAILY_TASKS_QUERY_KEY, userId] });
       void queryClient.invalidateQueries({ queryKey: DAILY_TASKS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ['buckets'] });

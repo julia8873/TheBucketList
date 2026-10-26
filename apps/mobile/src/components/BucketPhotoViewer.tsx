@@ -31,7 +31,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react-native';
-import { Typography, ConfirmDialog, fontFamily } from '@bucketlist/ui';
+import { Typography, ConfirmDialog, fontFamily, toast } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { storageApi } from '../services/api/storage';
@@ -352,6 +352,7 @@ export function BucketPhotoViewer({
 
   const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
   const [removeCompletedConfirmId, setRemoveCompletedConfirmId] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [downloadToast, setDownloadToast] = useState<{ message: string; isError?: boolean } | null>(null);
   const downloadToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -620,11 +621,21 @@ export function BucketPhotoViewer({
                 </Pressable>
               )}
               <Pressable
-                style={[styles.actionBtn, styles.actionBtnFilled, { backgroundColor: gold[400] }]}
+                style={[
+                  styles.actionBtn,
+                  styles.actionBtnFilled,
+                  { backgroundColor: gold[400] },
+                  isDownloading && { opacity: 0.75 },
+                ]}
+                disabled={isDownloading}
                 onPress={async () => {
+                  if (isDownloading) return;
                   try {
+                    setIsDownloading(true);
+                    triggerDownloadToast(t('bucket.photo_downloading', { defaultValue: 'Descargando foto...' }));
                     const { status } = await MediaLibrary.requestPermissionsAsync(true);
                     if (status !== 'granted') {
+                      setIsDownloading(false);
                       triggerDownloadToast(t('bucket.photo_download_permission'), true);
                       return;
                     }
@@ -633,15 +644,25 @@ export function BucketPhotoViewer({
                     const localUri = FileSystem.cacheDirectory + filename;
                     await FileSystem.downloadAsync(url, localUri);
                     await MediaLibrary.saveToLibraryAsync(localUri);
+                    setIsDownloading(false);
                     triggerDownloadToast(t('bucket.photo_download_saved'));
+                    toast.success(t('bucket.photo_download_saved'));
                   } catch {
+                    setIsDownloading(false);
                     triggerDownloadToast(t('bucket.photo_download_error'), true);
+                    toast.error(t('bucket.photo_download_error'));
                   }
                 }}
               >
-                <Download color="#000" size={18} strokeWidth={2} />
+                {isDownloading ? (
+                  <ActivityIndicator size="small" color="#000" />
+                ) : (
+                  <Download color="#000" size={18} strokeWidth={2} />
+                )}
                 <Typography variant="bodySemibold" color="#000" style={{ marginLeft: 8 }}>
-                  {t('bucket.photo_download')}
+                  {isDownloading
+                    ? t('bucket.photo_downloading', { defaultValue: 'Descargando...' })
+                    : t('bucket.photo_download')}
                 </Typography>
               </Pressable>
             </View>
@@ -935,12 +956,13 @@ const styles = StyleSheet.create({
   },
   viewerToastOverlay: {
     position: 'absolute',
-    bottom: 110,
+    top: Platform.OS === 'ios' ? 120 : 90,
     left: 0,
     right: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 999,
+    zIndex: 99999,
+    elevation: 99999,
   },
   viewerToastPill: {
     flexDirection: 'row',
