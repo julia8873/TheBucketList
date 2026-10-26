@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { Platform } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
 import { displayInAppNotification } from '../services/notifications';
@@ -39,79 +38,73 @@ export function useRealtimeSync(userId?: string) {
       void queryClient.invalidateQueries({ queryKey });
     };
 
-    const refreshBucket = (bucketId?: string) => {
-      // Eco de un cambio nuestro: la caché ya está al día (actualización optimista + revalidación).
-      if (isLocalEcho()) return;
-      if (bucketId) schedule(`bucket:${bucketId}`, () => invalidate('bucketDetail', bucketId));
-      schedule('buckets', () => {
-        invalidate('buckets');
-        invalidate('albums');
-        invalidate('album');
-        invalidate('calendar_month');
-        invalidate('bucketParticipants');
-        invalidate('bucketAlbum');
-      });
-    };
-    const refreshAlbums = () => {
-      if (isLocalEcho()) return;
-      schedule('albums', () => {
-        invalidate('albums');
-        invalidate('album');
-        invalidate('albumCollaborators');
-        invalidate('buckets');
-        invalidate('bucketParticipants');
-        invalidate('bucketAlbum');
-        invalidate('item_tags');
-      });
-    };
-
     const channel = supabase
-      .channel(`sync-${userId}-${Date.now()}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'buckets' }, (p: any) =>
-        refreshBucket(p.new?.id ?? p.old?.id),
-      )
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'item_subtasks' }, (p: any) =>
-        refreshBucket(p.new?.bucket_id ?? p.old?.bucket_id),
-      )
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'bucket_photos' }, (p: any) =>
-        refreshBucket(p.new?.bucket_id ?? p.old?.bucket_id),
-      )
+      .channel(`sync-${userId}`)  // Nombre estable (sin Date.now()) → Supabase no abre canales duplicados al remontarse
+      // ── Cambios en una tarea: solo recargar esa tarea y la lista ──────────────
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'buckets' }, (p: any) => {
+        if (isLocalEcho()) return;
+        const id = p.new?.id ?? p.old?.id;
+        if (id) schedule(`bucket:${id}`, () => invalidate('bucketDetail', id));
+        schedule('buckets', () => invalidate('buckets'));
+      })
+      // ── Subtareas: solo la tarea afectada ────────────────────────────────────
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'item_subtasks' }, (p: any) => {
+        if (isLocalEcho()) return;
+        const id = p.new?.bucket_id ?? p.old?.bucket_id;
+        if (id) schedule(`bucket:${id}`, () => invalidate('bucketDetail', id));
+      })
+      // ── Fotos: solo la tarea afectada ────────────────────────────────────────
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bucket_photos' }, (p: any) => {
+        if (isLocalEcho()) return;
+        const id = p.new?.bucket_id ?? p.old?.bucket_id;
+        if (id) schedule(`bucket:${id}`, () => invalidate('bucketDetail', id));
+      })
+      // ── Colaboradores: tarea + lista de colaboradores ─────────────────────────
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bucket_collaborators' }, (p: any) => {
-        const bucketId = p.new?.bucket_id ?? p.old?.bucket_id;
-        if (bucketId) schedule(`collab:${bucketId}`, () => invalidate('bucketCollaborators', bucketId));
-        refreshBucket(bucketId);
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, (p: any) => {
-        const bucketId = p.new?.bucket_id ?? p.old?.bucket_id;
-        if (bucketId) {
-          invalidate('comments', bucketId);
-          invalidate('bucketComments', bucketId);
+        if (isLocalEcho()) return;
+        const id = p.new?.bucket_id ?? p.old?.bucket_id;
+        if (id) {
+          schedule(`collab:${id}`, () => invalidate('bucketCollaborators', id));
+          schedule(`bucket:${id}`, () => invalidate('bucketDetail', id));
         }
-        refreshBucket(bucketId);
+        schedule('buckets', () => invalidate('buckets'));
       })
+      // ── Comentarios: solo los comentarios de esa tarea ────────────────────────
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, (p: any) => {
+        if (isLocalEcho()) return;
+        const id = p.new?.bucket_id ?? p.old?.bucket_id;
+        if (id) {
+          schedule(`comments:${id}`, () => {
+            invalidate('comments', id);
+            invalidate('bucketComments', id);
+          });
+        }
+      })
+      // ── Reacciones: solo las reacciones de esa tarea ─────────────────────────
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, (p: any) => {
-        const bucketId = p.new?.bucket_id ?? p.old?.bucket_id;
-        if (bucketId) invalidate('bucketReactions', bucketId);
-        refreshBucket(bucketId);
+        if (isLocalEcho()) return;
+        const id = p.new?.bucket_id ?? p.old?.bucket_id;
+        if (id) schedule(`reactions:${id}`, () => invalidate('bucketReactions', id));
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'comment_likes' }, () => {
-        invalidate('comments');
-        invalidate('bucketComments');
+        schedule('comment_likes', () => {
+          invalidate('comments');
+          invalidate('bucketComments');
+        });
       })
-      // Añadir/quitar una tarea de un álbum: es lo que hace que le aparezca (o desaparezca)
-      // a los demás miembros. La fila de `buckets` no les llega al crearse porque aún no
-      // está en el álbum y RLS la oculta; este evento es el que lo dispara.
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'album_items' }, (p: any) =>
-        refreshBucket(p.new?.bucket_id ?? p.old?.bucket_id),
-      )
-      // Etiquetas de la tarea (las copias para cada participante las crea la base de datos).
+      // ── Album items: solo los álbumes afectados ───────────────────────────────
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'album_items' }, (p: any) => {
+        if (isLocalEcho()) return;
+        const bucketId = p.new?.bucket_id ?? p.old?.bucket_id;
+        const albumId  = p.new?.album_id  ?? p.old?.album_id;
+        if (bucketId) schedule(`bucket:${bucketId}`, () => invalidate('bucketDetail', bucketId));
+        if (albumId)  schedule(`album:${albumId}`,   () => invalidate('album', albumId));
+      })
+      // ── Etiquetas: solo las etiquetas del item afectado ──────────────────────
       .on('postgres_changes', { event: '*', schema: 'public', table: 'item_tags' }, (p: any) => {
+        if (isLocalEcho()) return;
         const itemId = p.new?.item_id ?? p.old?.item_id;
         if (itemId) schedule(`item_tags:${itemId}`, () => invalidate('item_tags', itemId));
-        schedule('item_tags', () => {
-          invalidate('buckets', 'tag-usage');
-          invalidate('tags');
-        });
       })
       .on(
         'postgres_changes',
@@ -122,8 +115,19 @@ export function useRealtimeSync(userId?: string) {
             invalidate('item_tags');
           }),
       )
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'albums' }, refreshAlbums)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'album_members' }, refreshAlbums)
+      // ── Álbumes: solo los álbumes ─────────────────────────────────────────────
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'albums' }, (p: any) => {
+        if (isLocalEcho()) return;
+        const id = p.new?.id ?? p.old?.id;
+        if (id) schedule(`album:${id}`, () => invalidate('album', id));
+        schedule('albums', () => invalidate('albums'));
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'album_members' }, () => {
+        if (isLocalEcho()) return;
+        schedule('albumCollaborators', () => invalidate('albumCollaborators'));
+        schedule('albums', () => invalidate('albums'));
+      })
+      // ── Notificaciones: solo el badge y la lista ─────────────────────────────
       .on(
         'postgres_changes',
         {
@@ -151,3 +155,4 @@ export function useRealtimeSync(userId?: string) {
     };
   }, [userId, queryClient]);
 }
+

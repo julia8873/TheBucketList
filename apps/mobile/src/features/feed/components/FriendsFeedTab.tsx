@@ -18,6 +18,7 @@ import {
   useToggleSaveAlbum,
   useBatchAlbumSaveCounts,
   useBatchAlbumLikeCounts,
+  useBatchBucketSaveCounts,
 } from '../../../hooks/useSocial';
 import { useTranslation } from '@bucketlist/shared';
 import { useAuthStore } from '../../../stores/auth.store';
@@ -88,6 +89,12 @@ export function FriendsFeedTab({
   const { data: albumSaveCounts } = useBatchAlbumSaveCounts(albumIds);
   const { data: albumLikeCounts } = useBatchAlbumLikeCounts(albumIds);
 
+  const bucketIds = React.useMemo(
+    () => friendsItems.map((item) => item.bucket_id || item.id).filter(Boolean),
+    [friendsItems]
+  );
+  const { data: bucketSaveCounts } = useBatchBucketSaveCounts(bucketIds);
+
   // Build combined & filtered list
   const combinedItems = React.useMemo(() => {
     const tasks = contentFilter !== 'albumes'
@@ -117,8 +124,8 @@ export function FriendsFeedTab({
   // Stringify so FlashList re-renders album cells when like/save state or counts change
   // MUST be declared before any conditional return to obey React Rules of Hooks
   const extraData = React.useMemo(
-    () => `${likedAlbumIds?.join(',') ?? ''}-${savedAlbumIds?.join(',') ?? ''}-${JSON.stringify(albumSaveCounts ?? {})}-${JSON.stringify(albumLikeCounts ?? {})}`,
-    [likedAlbumIds, savedAlbumIds, albumSaveCounts, albumLikeCounts]
+    () => `${likedAlbumIds?.join(',') ?? ''}-${savedAlbumIds?.join(',') ?? ''}-${JSON.stringify(albumSaveCounts ?? {})}-${JSON.stringify(albumLikeCounts ?? {})}-${JSON.stringify(bucketSaveCounts ?? {})}`,
+    [likedAlbumIds, savedAlbumIds, albumSaveCounts, albumLikeCounts, bucketSaveCounts]
   );
 
   const renderItem = React.useCallback(
@@ -152,11 +159,12 @@ export function FriendsFeedTab({
           event={item}
           index={index}
           mode={viewMode}
+          saveCount={bucketSaveCounts?.[item.bucket_id || item.id] ?? 0}
           onPress={() => router.push(`/bucket/${item.bucket_id}` as any)}
         />
       );
     },
-    [viewMode, contentFilter, router, currentUserId, likedAlbumIds, savedAlbumIds, toggleAlbumLike, toggleSaveAlbum, albumSaveCounts, albumLikeCounts]
+    [viewMode, contentFilter, router, currentUserId, likedAlbumIds, savedAlbumIds, toggleAlbumLike, toggleSaveAlbum, albumSaveCounts, albumLikeCounts, bucketSaveCounts]
   );
 
   if (debouncedSearch && debouncedSearch.trim().length >= 2) {

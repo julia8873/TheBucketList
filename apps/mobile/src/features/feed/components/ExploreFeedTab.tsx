@@ -18,6 +18,7 @@ import {
   useToggleSaveAlbum,
   useBatchAlbumSaveCounts,
   useBatchAlbumLikeCounts,
+  useBatchBucketSaveCounts,
 } from '../../../hooks/useSocial';
 import { useAuthStore } from '../../../stores/auth.store';
 import { useTranslation } from '@bucketlist/shared';
@@ -94,6 +95,9 @@ export function ExploreFeedTab({
   const { data: albumSaveCounts } = useBatchAlbumSaveCounts(albumIds);
   const { data: albumLikeCounts } = useBatchAlbumLikeCounts(albumIds);
 
+  const bucketIds = useMemo(() => exploreBuckets.map((b) => b.id).filter(Boolean), [exploreBuckets]);
+  const { data: bucketSaveCounts } = useBatchBucketSaveCounts(bucketIds);
+
   // Combined + filtered list
   const combinedItems = useMemo(() => {
     if (contentFilter === 'colecciones') {
@@ -124,8 +128,8 @@ export function ExploreFeedTab({
   }, [exploreBuckets, exploreAlbums, contentFilter, collections]);
 
   const extraData = useMemo(
-    () => `${likedAlbumIds?.join(',') ?? ''}-${savedAlbumIds?.join(',') ?? ''}-${JSON.stringify(albumSaveCounts ?? {})}-${JSON.stringify(albumLikeCounts ?? {})}`,
-    [likedAlbumIds, savedAlbumIds, albumSaveCounts, albumLikeCounts]
+    () => `${likedAlbumIds?.join(',') ?? ''}-${savedAlbumIds?.join(',') ?? ''}-${JSON.stringify(albumSaveCounts ?? {})}-${JSON.stringify(albumLikeCounts ?? {})}-${JSON.stringify(bucketSaveCounts ?? {})}`,
+    [likedAlbumIds, savedAlbumIds, albumSaveCounts, albumLikeCounts, bucketSaveCounts]
   );
 
   const renderItem = useCallback(
@@ -183,11 +187,12 @@ export function ExploreFeedTab({
           }}
           index={index}
           mode={viewMode}
+          saveCount={bucketSaveCounts?.[item.id] ?? 0}
           onPress={() => router.push(`/bucket/${item.id}` as any)}
         />
       );
     },
-    [viewMode, contentFilter, router, currentUserId, likedAlbumIds, savedAlbumIds, toggleAlbumLike, toggleSaveAlbum, albumSaveCounts, albumLikeCounts, cloneMutation, toggleCollectionLike]
+    [viewMode, contentFilter, router, currentUserId, likedAlbumIds, savedAlbumIds, toggleAlbumLike, toggleSaveAlbum, albumSaveCounts, albumLikeCounts, bucketSaveCounts, cloneMutation, toggleCollectionLike]
   );
 
   if (debouncedSearch.length >= 2) {

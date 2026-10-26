@@ -161,7 +161,7 @@ export function useSavedAlbums(userId: string | undefined) {
 
       const { data: albums, error: albumsErr } = await supabaseClient
         .from('albums')
-        .select('*')
+        .select('id, title, description, cover_path, visibility, is_shared, priority, is_closed, closed_at, created_at, owner_id')
         .in('id', albumIds)
         .order('created_at', { ascending: false });
 
@@ -179,7 +179,7 @@ export function useSavedAlbums(userId: string | undefined) {
 
       const { data: progressData } = await supabaseClient
         .from('album_progress')
-        .select('*')
+        .select('album_id, total_tasks, completed_tasks')
         .in('album_id', albumIds);
 
       return (albums ?? []).map((album: any) => {

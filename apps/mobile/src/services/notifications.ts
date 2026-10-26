@@ -219,7 +219,7 @@ export async function displayInAppNotification(record: any, currentUserId: strin
     // 1. Comprobar si el usuario tiene desactivado este tipo de notificación en sus preferencias
     const { data: prefs } = await supabase
       .from('notification_prefs')
-      .select('*')
+      .select('reaction_push, comment_push, follow_push, deadline_push, friend_completed_push, quiet_start, quiet_end')
       .eq('user_id', currentUserId)
       .maybeSingle();
 

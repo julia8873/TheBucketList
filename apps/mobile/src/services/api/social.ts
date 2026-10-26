@@ -112,7 +112,7 @@ export const socialApi = {
 
     const { data, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, username, display_name, avatar_url, bio, role, is_private')
       .ilike('username', `%${query}%`)
       .limit(30);
 
@@ -573,7 +573,7 @@ export const socialApi = {
 
     const { data: profilesData } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, username, display_name, avatar_url, role')
       .in('id', userIds);
 
     const profileMap = new Map((profilesData || []).map((p: any) => [p.id, p]));

@@ -63,9 +63,6 @@ export const dailyTasksService = {
       return cached ? JSON.parse(cached) : [];
     }
 
-    // Limpiar en segundo plano las tareas completadas de hace más de un día
-    void this.cleanupOldCompletedTasks(userId);
-
     const { data, error } = await supabase
       .from('daily_tasks')
       .select('*')
@@ -78,6 +75,9 @@ export const dailyTasksService = {
       const cached = await AsyncStorage.getItem(STORAGE_KEY);
       return cached ? JSON.parse(cached) : [];
     }
+
+    // Limpiar en segundo plano reutilizando las tareas ya obtenidas (sin hacer una 2ª query select)
+    void this.cleanupOldCompletedTasks(userId, data);
 
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     const tasks = (data ?? [])
@@ -105,21 +105,32 @@ export const dailyTasksService = {
 
   /**
    * Limpia únicamente las tareas completadas hace más de un día.
-   * Guarda estadísticas en daily_task_completions antes de borrarlas.
+   * Si se le pasan las tareas ya obtenidas, evita una segunda consulta a la base de datos.
+   * Si no, consulta únicamente las columnas necesarias (id, completed_at, is_favorite) en vez de select('*').
    */
-  async cleanupOldCompletedTasks(userId: string): Promise<void> {
+  async cleanupOldCompletedTasks(
+    userId: string,
+    existingTasks?: Array<{ id: string; completed_at?: string | null; is_favorite?: boolean; is_completed?: boolean }>
+  ): Promise<void> {
     try {
       const todayStr = format(new Date(), 'yyyy-MM-dd');
 
-      const { data: completedTasks } = await supabase
-        .from('daily_tasks')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('is_completed', true);
+      let candidates: Array<{ id: string; completed_at?: string | null; is_favorite?: boolean }> = [];
 
-      if (!completedTasks || completedTasks.length === 0) return;
+      if (existingTasks) {
+        candidates = existingTasks.filter((t) => t.is_completed);
+      } else {
+        const { data } = await supabase
+          .from('daily_tasks')
+          .select('id, completed_at, is_favorite')
+          .eq('user_id', userId)
+          .eq('is_completed', true);
+        candidates = (data ?? []) as any[];
+      }
 
-      const oldCompleted = completedTasks.filter((t) => {
+      if (!candidates || candidates.length === 0) return;
+
+      const oldCompleted = candidates.filter((t) => {
         if (t.is_favorite) return false;
         if (!t.completed_at) return false;
         const compDate = format(new Date(t.completed_at), 'yyyy-MM-dd');
@@ -149,7 +160,7 @@ export const dailyTasksService = {
 
     const { count } = await supabase
       .from('daily_task_completions')
-      .select('*', { count: 'exact', head: true })
+      .select('id', { count: 'exact', head: true })
       .eq('user_id', userId);
 
     return {

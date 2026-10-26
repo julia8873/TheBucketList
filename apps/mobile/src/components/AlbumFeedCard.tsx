@@ -99,7 +99,12 @@ export function AlbumFeedCard({
   if (parsedCover) {
     if (parsedCover.type === 'image' && parsedCover.uri) {
       backgroundContent = (
-        <Image source={{ uri: parsedCover.uri }} style={StyleSheet.absoluteFill} contentFit="cover" />
+        <Image
+          source={{ uri: parsedCover.uri }}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+        />
       );
     } else if ((parsedCover.type === 'gradient' || parsedCover.type === 'solid') && parsedCover.colors) {
       backgroundContent = (
@@ -117,7 +122,12 @@ export function AlbumFeedCard({
     }
   } else if (coverPath) {
     backgroundContent = (
-      <Image source={{ uri: coverPath }} style={StyleSheet.absoluteFill} contentFit="cover" />
+      <Image
+        source={{ uri: coverPath }}
+        style={StyleSheet.absoluteFill}
+        contentFit="cover"
+        cachePolicy="memory-disk"
+      />
     );
   } else {
     backgroundContent = (

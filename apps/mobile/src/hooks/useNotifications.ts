@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
 
@@ -13,7 +12,7 @@ export function useNotifications(userId?: string) {
         .from('notifications')
         .select(`
           *,
-          actor:profiles!actor_id(*)
+          actor:profiles!actor_id(id, username, display_name, avatar_url)
         `)
         .eq('recipient_id', userId)
         .order('created_at', { ascending: false })
@@ -51,8 +50,6 @@ export function useNotifications(userId?: string) {
 }
 
 export function useUnreadCount(userId?: string) {
-  const queryClient = useQueryClient();
-
   const query = useQuery({
     queryKey: [...UNREAD_COUNT_KEY, userId],
     queryFn: async () => {
@@ -68,44 +65,10 @@ export function useUnreadCount(userId?: string) {
     enabled: !!userId,
   });
 
-  useEffect(() => {
-    if (!userId) return;
-
-    // Realtime subscription with unique channel name to avoid reusing already-subscribed channel
-    const channelName = `notifications-${userId}-${Date.now()}`;
-    const channel = supabase.channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `recipient_id=eq.${userId}`,
-        },
-        async () => {
-          void queryClient.invalidateQueries({ queryKey: [...UNREAD_COUNT_KEY, userId] });
-          void queryClient.invalidateQueries({ queryKey: [...NOTIFICATIONS_QUERY_KEY, userId] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'notifications',
-          filter: `recipient_id=eq.${userId}`,
-        },
-        () => {
-          void queryClient.invalidateQueries({ queryKey: [...UNREAD_COUNT_KEY, userId] });
-          void queryClient.invalidateQueries({ queryKey: [...NOTIFICATIONS_QUERY_KEY, userId] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [userId, queryClient]);
+  // La suscripción Realtime a notifications la gestiona useRealtimeSync (montado en el
+  // layout raíz), que ya invalida 'notifications' y 'unreadNotificationsCount' en cada
+  // INSERT. Tener aquí un canal duplicado generaba el doble de egress en WebSocket y
+  // una cascada de re-fetches innecesarios.
 
   return query;
 }

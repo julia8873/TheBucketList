@@ -25,6 +25,7 @@ interface FeedCardProps {
   onPress: () => void;
   index: number;
   mode?: TaskViewMode;
+  saveCount?: number;
 }
 
 /**
@@ -33,7 +34,7 @@ interface FeedCardProps {
  * y pie con la descripción.
  * Soporta modos: 'list' (por defecto), 'gallery' y 'compact'.
  */
-function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardProps) {
+function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: propSaveCount }: FeedCardProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const overlay = useCoverOverlay();
@@ -44,8 +45,10 @@ function FeedCardComponent({ event, onPress, index, mode = 'list' }: FeedCardPro
   const toggleLike = useToggleLike();
   const copyBucket = useCopyBucket();
   const { data: copiedIds } = useCopiedBucketIds(user?.id);
-  const { data: saveCounts } = useBatchBucketSaveCounts(event?.bucket?.id ? [event.bucket.id] : []);
-  const saveCount = saveCounts?.[event?.bucket?.id] ?? 0;
+  const { data: saveCounts } = useBatchBucketSaveCounts(
+    propSaveCount !== undefined || !event?.bucket?.id ? [] : [event.bucket.id]
+  );
+  const saveCount = propSaveCount ?? saveCounts?.[event?.bucket?.id] ?? 0;
 
   const actor = event?.actor;
   const bucket = event?.bucket;

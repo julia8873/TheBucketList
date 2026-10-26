@@ -3,14 +3,14 @@ import { AppState, Platform, type AppStateStatus } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { focusManager, useQueryClient } from '@tanstack/react-query';
 
-/** Cada cuánto se refrescan los datos "viejos" mientras la app está abierta. */
-const POLL_INTERVAL_MS = 60_000;
+/** Cada cuánto se refrescan los datos "viejos" como red de seguridad (useRealtimeSync ya maneja eventos en tiempo real). */
+const POLL_INTERVAL_MS = 240_000;
 
 /**
  * Recarga automática global. Se monta UNA vez (en app/_layout.tsx):
  *  1. Al volver a la app desde segundo plano (móvil) o a la pestaña (web).
- *  2. Al recuperar la conexión a internet.
- *  3. Cada 60 s mientras la app está en primer plano.
+ *  2. Al recuperar la conexión a internet (solo pantalla activa).
+ *  3. Cada 4 min como red de seguridad mientras la app está en primer plano.
  * Solo se recargan las consultas activas que ya están "viejas" (staleTime).
  */
 export function useAutoRefresh() {
@@ -25,7 +25,7 @@ export function useAutoRefresh() {
     return () => sub.remove();
   }, []);
 
-  // 2) Al recuperar la conexión, recargamos todo lo activo.
+  // 2) Al recuperar la conexión, recargamos solo lo activo de la pantalla visible.
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
       const online = state.isConnected !== false && state.isInternetReachable !== false;
@@ -35,7 +35,7 @@ export function useAutoRefresh() {
       }
       if (wasOffline.current) {
         wasOffline.current = false;
-        void queryClient.invalidateQueries();
+        void queryClient.invalidateQueries({ type: 'active' });
       }
     });
     return () => unsubscribe();
