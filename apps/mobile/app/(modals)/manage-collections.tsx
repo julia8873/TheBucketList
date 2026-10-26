@@ -21,11 +21,13 @@ import { PageTitle, fontFamily, gold, useTheme } from '@bucketlist/ui';
 import { useIsAdmin } from '../../src/hooks/useCurrentUserProfile';
 import { useCollections, useDeleteCollection } from '../../src/features/collections/hooks/useCollections';
 import { CollectionItem } from '../../src/features/collections/types';
+import { useTranslation } from '@bucketlist/shared';
 
 export default function ManageCollectionsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const isAdmin = useIsAdmin();
 
   const { data: collections = [], isLoading, refetch, isRefetching } = useCollections();
@@ -46,18 +48,18 @@ export default function ManageCollectionsScreen() {
 
   const handleDelete = (item: CollectionItem) => {
     Alert.alert(
-      'Eliminar Colección',
-      `¿Estás seguro de que deseas eliminar permanentemente la colección "${item.title}"?`,
+      t('collections.delete_confirm_title'),
+      t('collections.delete_confirm_msg', { title: item.title }),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Eliminar',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await deleteMutation.mutateAsync(item.id);
             } catch (err: any) {
-              Alert.alert('Error', err?.message || 'No se pudo eliminar la colección');
+              Alert.alert(t('collections.error_title'), err?.message || t('collections.err_delete'));
             }
           },
         },
@@ -76,12 +78,12 @@ export default function ManageCollectionsScreen() {
     return (
       <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top + 40, alignItems: 'center', paddingHorizontal: 24 }]}>
         <ShieldCheck color="#EF4444" size={56} />
-        <Text style={[styles.title, { color: theme.colors.foreground, marginTop: 16 }]}>Acceso Restringido</Text>
+        <Text style={[styles.title, { color: theme.colors.foreground, marginTop: 16 }]}>{t('collections.admin_restricted_title')}</Text>
         <Text style={{ color: theme.colors.foregroundMuted, textAlign: 'center', marginTop: 8, marginBottom: 24 }}>
-          Solo los administradores pueden gestionar y moderar colecciones.
+          {t('collections.admin_restricted_manage')}
         </Text>
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={{ color: '#0D0D0D', fontWeight: 'bold' }}>Volver</Text>
+          <Text style={{ color: '#0D0D0D', fontWeight: 'bold' }}>{t('common.back')}</Text>
         </Pressable>
       </View>
     );
@@ -110,7 +112,7 @@ export default function ManageCollectionsScreen() {
           />
           <View style={styles.coverRow}>
             <View style={styles.badgePill}>
-              <Text style={styles.badgePillText}>{item.badge || '✨ Colección'}</Text>
+              <Text style={styles.badgePillText}>{item.badge || t('collections.default_badge')}</Text>
             </View>
             <Text style={styles.coverEmoji}>{item.emoji || '📁'}</Text>
           </View>
@@ -149,20 +151,20 @@ export default function ManageCollectionsScreen() {
               style={styles.editBtn}
               onPress={() => handleEdit(item)}
               accessibilityRole="button"
-              accessibilityLabel={`Editar colección ${item.title}`}
+              accessibilityLabel={t('collections.edit_a11y', { title: item.title })}
             >
               <Edit3 size={15} color="#000" strokeWidth={2} />
-              <Text style={styles.editBtnText}>Editar</Text>
+              <Text style={styles.editBtnText}>{t('common.edit')}</Text>
             </Pressable>
 
             <Pressable
               style={styles.deleteBtn}
               onPress={() => handleDelete(item)}
               accessibilityRole="button"
-              accessibilityLabel={`Eliminar colección ${item.title}`}
+              accessibilityLabel={t('collections.delete_a11y', { title: item.title })}
             >
               <Trash2 size={15} color="#EF4444" strokeWidth={2} />
-              <Text style={styles.deleteBtnText}>Eliminar</Text>
+              <Text style={styles.deleteBtnText}>{t('common.delete')}</Text>
             </Pressable>
           </View>
         </View>
@@ -185,9 +187,11 @@ export default function ManageCollectionsScreen() {
         </Pressable>
 
         <View style={{ flex: 1, marginHorizontal: 12 }}>
-          <PageTitle gold="Gestionar" rest="colecciones" />
+          <PageTitle gold={t('collections.manage_title_gold')} rest={t('collections.manage_title_rest')} />
           <Text style={[styles.headerSub, { color: theme.colors.foregroundMuted }]}>
-            {collections.length} {collections.length === 1 ? 'colección disponible' : 'colecciones disponibles'}
+            {collections.length === 1
+              ? t('collections.manage_count_single')
+              : t('collections.manage_count_plural', { count: collections.length })}
           </Text>
         </View>
 
@@ -195,7 +199,7 @@ export default function ManageCollectionsScreen() {
           style={styles.newBtn}
           onPress={() => router.push('/(modals)/create-collection' as any)}
           accessibilityRole="button"
-          accessibilityLabel="Crear nueva colección"
+          accessibilityLabel={t('collections.manage_new_a11y')}
         >
           <Plus size={16} color="#000" strokeWidth={2.5} />
           <Text style={styles.newBtnText}>Nueva</Text>
@@ -207,7 +211,7 @@ export default function ManageCollectionsScreen() {
         <Search size={16} color={theme.colors.foregroundMuted} />
         <TextInput
           style={[styles.searchInput, { color: theme.colors.foreground }]}
-          placeholder="Buscar colección por título o temática..."
+          placeholder={t('collections.manage_search_placeholder')}
           placeholderTextColor={theme.colors.foregroundMuted}
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -240,12 +244,12 @@ export default function ManageCollectionsScreen() {
             <View style={styles.emptyContainer}>
               <Layers size={44} color={theme.colors.foregroundMuted} />
               <Text style={[styles.emptyTitle, { color: theme.colors.foreground }]}>
-                {searchQuery ? 'No se encontraron colecciones' : 'No hay colecciones creadas'}
+                {searchQuery ? t('collections.manage_empty_title_search') : t('collections.manage_empty_title')}
               </Text>
               <Text style={[styles.emptySub, { color: theme.colors.foregroundMuted }]}>
                 {searchQuery
-                  ? 'Prueba con otro término de búsqueda.'
-                  : 'Crea tu primera colección comunitaria para que los usuarios puedan clonarla.'}
+                  ? t('collections.manage_empty_sub_search')
+                  : t('collections.manage_empty_sub')}
               </Text>
             </View>
           }

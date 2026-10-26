@@ -53,7 +53,7 @@ export function CollectionCard({
             },
           ]}
           accessibilityRole="button"
-          accessibilityLabel={t('collections.card_a11y', { title: collection.title, defaultValue: `Colección ${collection.title}` })}
+          accessibilityLabel={t('collections.card_a11y', { title: collection.title })}
         >
           <View style={styles.galleryCover}>
             <LinearGradient
@@ -90,8 +90,7 @@ export function CollectionCard({
               </Text>
               <Text style={styles.gallerySubtext} numberOfLines={1}>
                 {t('collections.by_author', {
-                  name: collection.author?.name || t('collections.community', { defaultValue: 'Comunidad' }),
-                  defaultValue: `Por ${collection.author?.name || 'Comunidad'}`,
+                  name: collection.author?.name || t('collections.community'),
                 })}
               </Text>
 
@@ -113,8 +112,8 @@ export function CollectionCard({
                     accessibilityRole="button"
                     accessibilityLabel={
                       collection.isLiked
-                        ? t('collections.unlike', { defaultValue: 'Quitar me gusta' })
-                        : t('collections.like', { defaultValue: 'Me gusta' })
+                        ? t('collections.unlike')
+                        : t('collections.like')
                     }
                   >
                     <Heart
@@ -157,7 +156,7 @@ export function CollectionCard({
             },
           ]}
           accessibilityRole="button"
-          accessibilityLabel={t('collections.card_a11y', { title: collection.title, defaultValue: `Colección ${collection.title}` })}
+          accessibilityLabel={t('collections.card_a11y', { title: collection.title })}
         >
           {/* Thumbnail con degradado y emoji */}
           <View style={styles.compactThumbWrapper}>
@@ -179,8 +178,8 @@ export function CollectionCard({
               <Text style={[styles.compactDot, { color: theme.colors.foregroundSubtle }]}>·</Text>
               <Text style={[styles.compactTasksCount, { color: theme.colors.foregroundSubtle }]}>
                 {collection.tasks.length === 1
-                  ? t('collections.tasks_count_single', { count: 1, defaultValue: '1 tarea' })
-                  : t('collections.tasks_count_plural', { count: collection.tasks.length, defaultValue: `${collection.tasks.length} tareas` })}
+                  ? t('collections.tasks_count_single', { count: 1 })
+                  : t('collections.tasks_count_plural', { count: collection.tasks.length })}
               </Text>
             </View>
             <Text style={[styles.compactTitle, { color: theme.colors.foreground }]} numberOfLines={1}>
@@ -201,8 +200,8 @@ export function CollectionCard({
                 accessibilityRole="button"
                 accessibilityLabel={
                   collection.isLiked
-                    ? t('collections.unlike', { defaultValue: 'Quitar me gusta' })
-                    : t('collections.like', { defaultValue: 'Me gusta' })
+                    ? t('collections.unlike')
+                    : t('collections.like')
                 }
               >
                 <Heart
@@ -237,14 +236,11 @@ export function CollectionCard({
                 { opacity: isCloning ? 0.6 : 1 },
               ]}
               accessibilityRole="button"
-              accessibilityLabel={t('collections.clone_collection_btn', {
-                count: collection.tasks.length,
-                defaultValue: `Clonar colección ${collection.title}`,
-              })}
+              accessibilityLabel={t('collections.clone_a11y', { title: collection.title })}
             >
               <Copy size={12} color="#000" strokeWidth={2.2} />
               <Text style={styles.compactCloneBtnText}>
-                {isCloning ? '...' : t('collections.clone', { defaultValue: 'Clonar' })}
+                {isCloning ? '...' : t('collections.clone')}
               </Text>
             </Pressable>
           </View>
@@ -267,7 +263,7 @@ export function CollectionCard({
           },
         ]}
         accessibilityRole="button"
-        accessibilityLabel={t('collections.card_a11y', { title: collection.title, defaultValue: `Colección ${collection.title}` })}
+        accessibilityLabel={t('collections.card_a11y', { title: collection.title })}
       >
         {/* Cover con degradado y badge temático */}
         <View style={styles.cover}>
@@ -297,8 +293,8 @@ export function CollectionCard({
                 <Layers size={12} color="#FFF" />
                 <Text style={styles.taskCountBadgeText}>
                   {collection.tasks.length === 1
-                    ? t('collections.tasks_count_single', { count: 1, defaultValue: '1 tarea' })
-                    : t('collections.tasks_count_plural', { count: collection.tasks.length, defaultValue: `${collection.tasks.length} tareas` })}
+                    ? t('collections.tasks_count_single', { count: 1 })
+                    : t('collections.tasks_count_plural', { count: collection.tasks.length })}
                 </Text>
               </View>
             </View>
@@ -332,7 +328,6 @@ export function CollectionCard({
               <Text style={[styles.taskMoreText, { color: theme.colors.foregroundSubtle }]}>
                 {t('collections.more_tasks', {
                   count: collection.tasks.length - 2,
-                  defaultValue: `+${collection.tasks.length - 2} tareas más...`,
                 })}
               </Text>
             )}
@@ -343,8 +338,7 @@ export function CollectionCard({
             <View style={styles.authorAndLikeRow}>
               <Text style={[styles.authorText, { color: theme.colors.foregroundSubtle }]}>
                 {t('collections.by_author', {
-                  name: collection.author?.name || t('collections.community', { defaultValue: 'Comunidad' }),
-                  defaultValue: `Por ${collection.author?.name || 'Comunidad'}`,
+                  name: collection.author?.name || t('collections.community'),
                 })}
               </Text>
               {onToggleLike && (
@@ -358,8 +352,8 @@ export function CollectionCard({
                   accessibilityRole="button"
                   accessibilityLabel={
                     collection.isLiked
-                      ? t('collections.unlike', { defaultValue: 'Quitar me gusta' })
-                      : t('collections.like', { defaultValue: 'Dar me gusta' })
+                      ? t('collections.unlike')
+                      : t('collections.like')
                   }
                 >
                   <Heart
@@ -394,16 +388,13 @@ export function CollectionCard({
               ]}
               hitSlop={6}
               accessibilityRole="button"
-              accessibilityLabel={t('collections.clone_collection_btn', {
-                count: collection.tasks.length,
-                defaultValue: `Clonar colección ${collection.title}`,
-              })}
+              accessibilityLabel={t('collections.clone_a11y', { title: collection.title })}
             >
               <Copy size={13} color="#0E0E0E" strokeWidth={2.2} />
               <Text style={styles.cloneBtnText}>
                 {isCloning
-                  ? t('collections.cloning', { defaultValue: 'Clonando...' })
-                  : t('collections.clone', { defaultValue: 'Clonar' })}
+                  ? t('collections.cloning')
+                  : t('collections.clone')}
               </Text>
             </Pressable>
           </View>

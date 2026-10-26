@@ -131,17 +131,17 @@ export default function AlbumDetailScreen() {
     const currentAlbum = state.album;
     if (!currentAlbum) return;
     Alert.alert(
-      'Promocionar a Colección',
-      `¿Deseas convertir el álbum "${currentAlbum.title}" en una colección pública destacada en la pestaña Colecciones?`,
+      t('collections.promote_confirm_title'),
+      t('collections.promote_confirm_msg', { title: currentAlbum.title }),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Promocionar',
+          text: t('collections.promote_confirm_btn'),
           onPress: () => {
             promoteMutation.mutate({
               albumId: currentAlbum.id,
               category: 'general',
-              badge: '⭐ Destacada',
+              badge: t('collections.promote_default_badge'),
               emoji: '🌟',
             });
           },

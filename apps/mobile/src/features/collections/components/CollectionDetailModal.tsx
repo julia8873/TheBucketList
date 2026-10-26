@@ -94,8 +94,8 @@ export function CollectionDetailModal({
                 accessibilityRole="button"
                 accessibilityLabel={
                   collection.isLiked
-                    ? t('collections.unlike', { defaultValue: 'Quitar me gusta' })
-                    : t('collections.like', { defaultValue: 'Dar me gusta' })
+                    ? t('collections.unlike')
+                    : t('collections.like')
                 }
               >
                 <Heart
@@ -114,7 +114,7 @@ export function CollectionDetailModal({
                 hitSlop={8}
                 style={styles.closeBtn}
                 accessibilityRole="button"
-                accessibilityLabel={t('collections.close_detail', { defaultValue: 'Cerrar detalle' })}
+                accessibilityLabel={t('collections.close_detail')}
               >
                 <X size={18} color="#FFF" />
               </Pressable>
@@ -127,8 +127,7 @@ export function CollectionDetailModal({
             <View style={styles.headerMetaRow}>
               <Text style={styles.authorBadge}>
                 {t('collections.by_author', {
-                  name: collection.author?.name || t('collections.community', { defaultValue: 'Comunidad' }),
-                  defaultValue: `Por ${collection.author?.name || 'Comunidad'}`,
+                  name: collection.author?.name || t('collections.community'),
                 })}
               </Text>
               {collection.clonesCount !== undefined && collection.clonesCount > 0 ? (
@@ -136,8 +135,8 @@ export function CollectionDetailModal({
                   <Text style={styles.metaDot}>·</Text>
                   <Text style={styles.clonesCountText}>
                     {collection.clonesCount === 1
-                      ? t('collections.cloned_times_single', { count: 1, defaultValue: 'Clonado 1 vez' })
-                      : t('collections.cloned_times_plural', { count: collection.clonesCount, defaultValue: `Clonado ${collection.clonesCount} veces` })}
+                      ? t('collections.cloned_times_single', { count: 1 })
+                      : t('collections.cloned_times_plural', { count: collection.clonesCount })}
                   </Text>
                 </>
               ) : null}
@@ -146,8 +145,8 @@ export function CollectionDetailModal({
                   <Text style={styles.metaDot}>·</Text>
                   <Text style={styles.clonesCountText}>
                     {collection.likesCount === 1
-                      ? t('collections.likes_count_single', { count: 1, defaultValue: '1 like' })
-                      : t('collections.likes_count_plural', { count: collection.likesCount, defaultValue: `${collection.likesCount} likes` })}
+                      ? t('collections.likes_count_single', { count: 1 })
+                      : t('collections.likes_count_plural', { count: collection.likesCount })}
                   </Text>
                 </>
               ) : null}
@@ -173,12 +172,11 @@ export function CollectionDetailModal({
               <Text style={[styles.tasksSectionTitle, { color: theme.colors.foreground }]}>
                 {t('collections.included_tasks', {
                   count: collection.tasks.length,
-                  defaultValue: `Tareas incluidas (${collection.tasks.length})`,
                 })}
               </Text>
             </View>
             <Text style={[styles.clonableHint, { color: theme.colors.foregroundSubtle }]}>
-              {t('collections.will_be_added', { defaultValue: 'Se añadirán a tu cuenta' })}
+              {t('collections.will_be_added')}
             </Text>
           </View>
 
@@ -238,11 +236,11 @@ export function CollectionDetailModal({
               onPress={handleGoToAlbum}
               style={[styles.cloneMainBtn, { backgroundColor: '#10B981' }]}
               accessibilityRole="button"
-              accessibilityLabel={t('collections.cloned_success_go', { defaultValue: '¡Clonada con éxito! Ir al álbum' })}
+              accessibilityLabel={t('collections.cloned_success_go')}
             >
               <Check size={18} color="#FFF" strokeWidth={2.5} />
               <Text style={[styles.cloneMainBtnText, { color: '#FFF' }]}>
-                {t('collections.cloned_success_go', { defaultValue: '¡Clonada con éxito! Ir al álbum' })}
+                {t('collections.cloned_success_go')}
               </Text>
               <ArrowRight size={16} color="#FFF" />
             </Pressable>
@@ -255,16 +253,13 @@ export function CollectionDetailModal({
                 { opacity: pressed || cloneMutation.isPending ? 0.8 : 1 },
               ]}
               accessibilityRole="button"
-              accessibilityLabel={t('collections.clone_collection_btn', {
-                count: collection.tasks.length,
-                defaultValue: `Clonar colección con ${collection.tasks.length} tareas`,
-              })}
+              accessibilityLabel={t('collections.clone_a11y', { title: collection.title })}
             >
               {cloneMutation.isPending ? (
                 <>
                   <ActivityIndicator size="small" color="#0E0E0E" />
                   <Text style={styles.cloneMainBtnText}>
-                    {t('collections.cloning_account', { defaultValue: 'Clonando en tu cuenta...' })}
+                    {t('collections.cloning_account')}
                   </Text>
                 </>
               ) : (
@@ -273,7 +268,6 @@ export function CollectionDetailModal({
                   <Text style={styles.cloneMainBtnText}>
                     {t('collections.clone_collection_btn', {
                       count: collection.tasks.length,
-                      defaultValue: `Clonar colección (+${collection.tasks.length} tareas)`,
                     })}
                   </Text>
                 </>

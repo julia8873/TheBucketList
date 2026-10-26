@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../../services/supabase';
 import { CollectionItem } from '../types';
-import { DEFAULT_COLLECTIONS, getDefaultCollections } from '../data/defaultCollections';
+import { i18n } from '@bucketlist/shared';
+import { getDefaultCollections } from '../data/defaultCollections';
 import { getAlbumTagsStorageKey } from '../../../hooks/useAlbumTags';
 
 const STORAGE_CUSTOM_COLLECTIONS = '@bucketlist_custom_collections';
@@ -18,7 +19,7 @@ export const collectionsService = {
    * 3. Colecciones creadas/ofrecidas por usuarios
    * 4. Métricas reales de clones y likes del usuario
    */
-  getCollections: async (userId?: string, lang: string = 'es'): Promise<CollectionItem[]> => {
+  getCollections: async (userId?: string, lang?: string): Promise<CollectionItem[]> => {
     let customList: CollectionItem[] = [];
     try {
       const raw = await AsyncStorage.getItem(STORAGE_CUSTOM_COLLECTIONS);
@@ -81,12 +82,12 @@ export const collectionsService = {
             title: item.title,
             description: item.description || '',
             category: item.category || 'general',
-            badge: item.badge || '✨ Colección',
+            badge: item.badge || i18n.t('collections.default_badge'),
             emoji: item.emoji || '📁',
             gradientColors: item.gradient_colors || ['#1E1E1E', '#333333'],
             cover_path: item.cover_path || JSON.stringify({ type: 'gradient', colors: ['#1E1E1E', '#333333'], diagonal: true }),
             author: {
-              name: item.author_name || 'Comunidad',
+              name: item.author_name || i18n.t('collections.community'),
               isOfficial: Boolean(item.is_official),
               avatar_url: item.author_avatar || undefined,
               user_id: item.user_id,
@@ -104,7 +105,7 @@ export const collectionsService = {
     }
 
     const map = new Map<string, CollectionItem>();
-    getDefaultCollections(lang).forEach((c) => {
+    getDefaultCollections(lang ?? i18n.language).forEach((c) => {
       if (!deletedRemoteSet.has(c.id) && !deletedLocalSet.has(c.id)) {
         map.set(c.id, { ...c });
       }
@@ -183,7 +184,7 @@ export const collectionsService = {
    * 4. Etiquetas asociadas al álbum.
    */
   cloneCollection: async (userId: string, collection: CollectionItem): Promise<{ albumId: string; tasksCount: number }> => {
-    if (!userId) throw new Error('Usuario no autenticado');
+    if (!userId) throw new Error(i18n.t('collections.err_not_authenticated'));
 
     // 1. Crear el nuevo álbum para el usuario
     const { data: newAlbum, error: albumError } = await supabase
@@ -201,7 +202,7 @@ export const collectionsService = {
       .single();
 
     if (albumError || !newAlbum) {
-      throw new Error(albumError?.message || 'Error al crear el álbum');
+      throw new Error(albumError?.message || i18n.t('collections.err_create_album'));
     }
 
     // 2. Crear las tareas en `buckets`
@@ -222,7 +223,7 @@ export const collectionsService = {
         .select('id');
 
       if (tasksError) {
-        console.error('Error insertando tareas al clonar colección:', tasksError);
+        console.error('Error inserting tasks when cloning collection:', tasksError);
       } else if (insertedTasks && insertedTasks.length > 0) {
         createdTasksCount = insertedTasks.length;
 
@@ -238,7 +239,7 @@ export const collectionsService = {
           .insert(albumItemRows);
 
         if (itemsError) {
-          console.error('Error vinculando tareas al álbum:', itemsError);
+          console.error('Error linking tasks to album:', itemsError);
         }
       }
     }
@@ -277,7 +278,7 @@ export const collectionsService = {
       title: album.title,
       description: album.description || '',
       category: 'community',
-      badge: '🌟 Comunidad',
+      badge: i18n.t('collections.community_badge'),
       emoji: '📁',
       gradientColors: ['#1E1E1E', '#3A3A3A'],
       cover_path: album.cover_path || JSON.stringify({ type: 'gradient', colors: ['#1E1E1E', '#3A3A3A'], diagonal: true }),
@@ -331,7 +332,7 @@ export const collectionsService = {
       title: params.title.trim(),
       description: params.description?.trim() || '',
       category: params.category || 'general',
-      badge: params.badge || '✨ Colección',
+      badge: params.badge || '',
       emoji: params.emoji || '📁',
       gradient_colors: params.gradientColors || ['#1E1E1E', '#333333'],
       cover_path: params.cover_path || JSON.stringify({ type: 'gradient', colors: params.gradientColors || ['#1E1E1E', '#333333'], diagonal: true }),
@@ -350,7 +351,7 @@ export const collectionsService = {
 
     if (error) {
       console.error('Error creating collection:', error);
-      throw new Error(error.message || 'Error al crear la colección');
+      throw new Error(error.message || i18n.t('collections.err_create'));
     }
 
     return {
@@ -358,7 +359,7 @@ export const collectionsService = {
       title: data.title,
       description: data.description || '',
       category: data.category || 'general',
-      badge: data.badge || '✨ Colección',
+      badge: data.badge || i18n.t('collections.default_badge'),
       emoji: data.emoji || '📁',
       gradientColors: (data.gradient_colors as [string, string, ...string[]]) || ['#1E1E1E', '#333333'],
       cover_path: data.cover_path || '',
@@ -388,13 +389,13 @@ export const collectionsService = {
     const { data, error } = await (supabase.rpc as any)('promote_album_to_collection', {
       p_album_id: params.albumId,
       p_category: params.category || 'general',
-      p_badge: params.badge || '⭐ Destacada',
+      p_badge: params.badge || i18n.t('collections.promote_default_badge'),
       p_emoji: params.emoji || '🌟',
     });
 
     if (error) {
       console.error('Error promoting album to collection:', error);
-      throw new Error(error.message || 'Error al promocionar el álbum');
+      throw new Error(error.message || i18n.t('collections.err_promote'));
     }
 
     return data as string;
@@ -420,7 +421,7 @@ export const collectionsService = {
       title: params.title.trim(),
       description: params.description?.trim() || '',
       category: params.category || 'general',
-      badge: params.badge || '✨ Colección',
+      badge: params.badge || '',
       emoji: params.emoji || '📁',
       gradient_colors: params.gradientColors || ['#1E1E1E', '#333333'],
       cover_path: params.cover_path || JSON.stringify({ type: 'gradient', colors: params.gradientColors || ['#1E1E1E', '#333333'], diagonal: true }),
@@ -463,7 +464,7 @@ export const collectionsService = {
           }
         }
       } catch {}
-      throw new Error(error.message || 'Error al actualizar la colección');
+      throw new Error(error.message || i18n.t('collections.err_update'));
     }
 
     try {
@@ -494,7 +495,7 @@ export const collectionsService = {
       title: data.title,
       description: data.description || '',
       category: data.category || 'general',
-      badge: data.badge || '✨ Colección',
+      badge: data.badge || i18n.t('collections.default_badge'),
       emoji: data.emoji || '📁',
       gradientColors: (data.gradient_colors as [string, string, ...string[]]) || ['#1E1E1E', '#333333'],
       cover_path: data.cover_path || '',

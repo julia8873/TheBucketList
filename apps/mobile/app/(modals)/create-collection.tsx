@@ -26,34 +26,50 @@ import {
 } from '../../src/features/collections/hooks/useCollections';
 import { CollectionCard } from '../../src/features/collections/components/CollectionCard';
 import { CollectionItem } from '../../src/features/collections/types';
+import { useTranslation } from '@bucketlist/shared';
 
+// Category ids are language-neutral; the visible label comes from i18n (collections.cat_<id>).
 const CATEGORIES = [
-  { id: 'general', label: 'General', emoji: '📁' },
-  { id: 'viajes', label: 'Viajes', emoji: '✈️' },
-  { id: 'experiencias', label: 'Experiencias', emoji: '🔥' },
-  { id: 'gastronomia', label: 'Gastronomía', emoji: '🍕' },
-  { id: 'crecimiento', label: 'Crecimiento', emoji: '🌱' },
-  { id: 'fitness', label: 'Fitness & Deporte', emoji: '⚡' },
-  { id: 'cultura', label: 'Cultura & Ocio', emoji: '🎭' },
-  { id: 'pareja', label: 'En Pareja', emoji: '❤️' },
+  { id: 'general', emoji: '📁' },
+  { id: 'seasonal', emoji: '🎄' },
+  { id: 'travel', emoji: '✈️' },
+  { id: 'experiences', emoji: '🔥' },
+  { id: 'food', emoji: '🍕' },
+  { id: 'growth', emoji: '🌱' },
+  { id: 'fitness', emoji: '⚡' },
+  { id: 'culture', emoji: '🎭' },
+  { id: 'gaming', emoji: '🎮' },
+  { id: 'lifestyle', emoji: '🌿' },
+  { id: 'couple', emoji: '❤️' },
 ];
 
-const GRADIENT_PRESETS: { name: string; colors: [string, string, ...string[]] }[] = [
-  { name: 'Oro Supremo', colors: ['#2A2006', '#59440D', '#D4AF37'] },
-  { name: 'Aurora Esmeralda', colors: ['#04261B', '#0E4B43', '#1F8560'] },
-  { name: 'Medianoche', colors: ['#0B132B', '#1C2541', '#3A506B'] },
-  { name: 'Atardecer Carmesí', colors: ['#3A0CA3', '#7209B7', '#F72585'] },
-  { name: 'Obsidiana Mística', colors: ['#121212', '#242424', '#3E3E3E'] },
-  { name: 'Océano Cósmico', colors: ['#0A2540', '#0070F3', '#00DFD8'] },
+// Ids used before the categories became language-neutral (existing rows in the database).
+const LEGACY_CATEGORY_IDS: Record<string, string> = {
+  viajes: 'travel',
+  experiencias: 'experiences',
+  gastronomia: 'food',
+  crecimiento: 'growth',
+  cultura: 'culture',
+  pareja: 'couple',
+};
+
+const GRADIENT_PRESETS: { id: string; colors: [string, string, ...string[]] }[] = [
+  { id: 'gold', colors: ['#2A2006', '#59440D', '#D4AF37'] },
+  { id: 'emerald', colors: ['#04261B', '#0E4B43', '#1F8560'] },
+  { id: 'midnight', colors: ['#0B132B', '#1C2541', '#3A506B'] },
+  { id: 'sunset', colors: ['#3A0CA3', '#7209B7', '#F72585'] },
+  { id: 'obsidian', colors: ['#121212', '#242424', '#3E3E3E'] },
+  { id: 'ocean', colors: ['#0A2540', '#0070F3', '#00DFD8'] },
 ];
 
-const BADGE_PRESETS = [
-  '✨ Oficial',
-  '🔥 Destacada',
-  '🌟 Top Comunidad',
-  '👑 VIP',
-  '⚡ Imprescindibles',
-  '🌱 Nuevas Metas',
+// i18n keys: the badge text is stored with the collection, so it is translated when picked.
+const BADGE_PRESET_KEYS = [
+  'collections.badge_official',
+  'collections.badge_featured',
+  'collections.badge_top_community',
+  'collections.badge_vip',
+  'collections.badge_essentials',
+  'collections.badge_new_goals',
 ];
 
 export default function CreateCollectionModal() {
@@ -67,13 +83,14 @@ export default function CreateCollectionModal() {
   const deleteMutation = useDeleteCollection();
   const { data: collections = [] } = useCollections();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => getStyles(theme), [theme]);
 
   // Form State
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState(CATEGORIES[0]?.id ?? 'general');
-  const [badge, setBadge] = useState('✨ Colección');
+  const [badge, setBadge] = useState('');
   const [emoji, setEmoji] = useState('📁');
   const [selectedGradientIndex, setSelectedGradientIndex] = useState(0);
 
@@ -91,7 +108,7 @@ export default function CreateCollectionModal() {
       if (target) {
         setTitle(target.title || '');
         setDescription(target.description || '');
-        if (target.category) setCategory(target.category);
+        if (target.category) setCategory(LEGACY_CATEGORY_IDS[target.category] ?? target.category);
         if (target.badge) setBadge(target.badge);
         if (target.emoji) setEmoji(target.emoji);
         if (Array.isArray(target.tasks)) setTasks(target.tasks);
@@ -107,7 +124,7 @@ export default function CreateCollectionModal() {
   const handleAddOrUpdateTask = () => {
     const trimmedTitle = newTaskTitle.trim();
     if (!trimmedTitle) {
-      Alert.alert('Atención', 'Introduce el título de la tarea.');
+      Alert.alert(t('collections.form_task_missing_title'), t('collections.form_task_missing_msg'));
       return;
     }
 
@@ -159,19 +176,19 @@ export default function CreateCollectionModal() {
   const handleDelete = () => {
     if (!id) return;
     Alert.alert(
-      'Eliminar Colección',
-      `¿Estás seguro de que deseas eliminar permanentemente la colección "${title}"? Esta acción no se puede deshacer.`,
+      t('collections.delete_confirm_title'),
+      t('collections.delete_confirm_msg', { title }),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Eliminar',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await deleteMutation.mutateAsync(id);
               router.back();
             } catch (err: any) {
-              Alert.alert('Error', err?.message || 'No se pudo eliminar la colección');
+              Alert.alert(t('collections.error_title'), err?.message || t('collections.err_delete'));
             }
           },
         },
@@ -181,12 +198,12 @@ export default function CreateCollectionModal() {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      Alert.alert('Campo obligatorio', 'Por favor ingresa un título para la colección.');
+      Alert.alert(t('collections.form_missing_title_title'), t('collections.form_missing_title_msg'));
       return;
     }
 
     if (tasks.length === 0) {
-      Alert.alert('Tareas requeridas', 'Añade al menos una tarea u objetivo a la colección para que otros usuarios puedan clonarla.');
+      Alert.alert(t('collections.form_missing_tasks_title'), t('collections.form_missing_tasks_msg'));
       return;
     }
 
@@ -227,17 +244,17 @@ export default function CreateCollectionModal() {
 
       router.back();
     } catch (err: any) {
-      Alert.alert('Error', err?.message || (isEditing ? 'No se pudo actualizar la colección' : 'No se pudo crear la colección'));
+      Alert.alert(t('collections.error_title'), err?.message || t(isEditing ? 'collections.err_update' : 'collections.err_create'));
     }
   };
 
   // Preview object
   const previewItem: CollectionItem = {
     id: 'preview-id',
-    title: title.trim() || 'Título de la colección',
-    description: description.trim() || 'Descripción de la colección donde explicas la temática y objetivos.',
+    title: title.trim() || t('collections.form_preview_title'),
+    description: description.trim() || t('collections.form_preview_desc'),
     category,
-    badge: badge || '✨ Colección',
+    badge: badge || t('collections.default_badge'),
     emoji: emoji || '📁',
     gradientColors: GRADIENT_PRESETS[selectedGradientIndex]?.colors || ['#1E1E1E', '#333333'],
     cover_path: '',
@@ -246,8 +263,8 @@ export default function CreateCollectionModal() {
       isOfficial: true,
     },
     tasks: tasks.length > 0 ? tasks : [
-      { title: 'Ejemplo de primera tarea', priority: 'medium' },
-      { title: 'Ejemplo de segunda tarea', priority: 'high' },
+      { title: t('collections.form_preview_task_1'), priority: 'medium' },
+      { title: t('collections.form_preview_task_2'), priority: 'high' },
     ],
     clonesCount: 0,
     likesCount: 0,
@@ -259,13 +276,13 @@ export default function CreateCollectionModal() {
       <View style={[styles.container, { paddingTop: insets.top + 20, paddingHorizontal: 24, justifyContent: 'center', alignItems: 'center' }]}>
         <ShieldCheck color="#EF4444" size={56} />
         <Typography variant="h2" style={{ color: theme.colors.foreground, marginTop: 16, textAlign: 'center' }}>
-          Acceso Restringido
+          {t('collections.admin_restricted_title')}
         </Typography>
         <Typography variant="body" style={{ color: theme.colors.foregroundMuted, marginTop: 8, textAlign: 'center', marginBottom: 24 }}>
-          Solo los usuarios con rol de administrador tienen autorización para crear colecciones públicas.
+          {t('collections.admin_restricted_create')}
         </Typography>
         <Pressable style={styles.submitBtn} onPress={() => router.back()}>
-          <Text style={styles.submitBtnText}>Volver</Text>
+          <Text style={styles.submitBtnText}>{t('common.back')}</Text>
         </Pressable>
       </View>
     );
@@ -290,7 +307,7 @@ export default function CreateCollectionModal() {
             <View style={{ flex: 1, marginLeft: 12 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Typography variant="h3" style={{ color: theme.colors.foreground, fontWeight: 'bold' }}>
-                  {isEditing ? 'Editar Colección' : 'Nueva Colección'}
+                  {isEditing ? t('collections.form_title_edit') : t('collections.form_title_new')}
                 </Typography>
                 <View style={styles.adminBadge}>
                   <ShieldCheck size={12} color="#D4AF37" />
@@ -298,7 +315,7 @@ export default function CreateCollectionModal() {
                 </View>
               </View>
               <Typography variant="caption" style={{ color: theme.colors.foregroundMuted }}>
-                {isEditing ? 'Modifica los campos y tareas de la colección' : 'Se publicará en la pestaña de Colecciones para todos los usuarios'}
+                {isEditing ? t('collections.form_sub_edit') : t('collections.form_sub_new')}
               </Typography>
             </View>
             {isEditing && (
@@ -312,7 +329,7 @@ export default function CreateCollectionModal() {
           <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
               <Sparkles size={16} color="#D4AF37" />
-              <Text style={styles.sectionLabel}>VISTA PREVIA EN VIVO</Text>
+              <Text style={styles.sectionLabel}>{t('collections.form_preview_label').toUpperCase()}</Text>
             </View>
             <CollectionCard
               collection={previewItem}
@@ -324,20 +341,20 @@ export default function CreateCollectionModal() {
 
           {/* Información Básica */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>TÍTULO DE LA COLECCIÓN *</Text>
+            <Text style={styles.sectionLabel}>{t('collections.form_title_label').toUpperCase()}</Text>
             <TextInput
               style={styles.input}
-              placeholder="Ej: 50 Cosas que hacer antes de los 30"
+              placeholder={t('collections.form_title_placeholder')}
               placeholderTextColor={theme.dark ? '#666' : '#999'}
               value={title}
               onChangeText={setTitle}
               maxLength={80}
             />
 
-            <Text style={[styles.sectionLabel, { marginTop: 16 }]}>DESCRIPCIÓN</Text>
+            <Text style={[styles.sectionLabel, { marginTop: 16 }]}>{t('collections.form_desc_label').toUpperCase()}</Text>
             <TextInput
               style={[styles.input, styles.multilineInput]}
-              placeholder="Explica de qué trata esta selección de objetivos..."
+              placeholder={t('collections.form_desc_placeholder')}
               placeholderTextColor={theme.dark ? '#666' : '#999'}
               value={description}
               onChangeText={setDescription}
@@ -349,7 +366,7 @@ export default function CreateCollectionModal() {
 
           {/* Categoría */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>CATEGORÍA TEMÁTICA</Text>
+            <Text style={styles.sectionLabel}>{t('collections.form_category_label').toUpperCase()}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsScroll}>
               {CATEGORIES.map((cat) => {
                 const isSelected = category === cat.id;
@@ -364,7 +381,7 @@ export default function CreateCollectionModal() {
                   >
                     <Text style={styles.chipEmoji}>{cat.emoji}</Text>
                     <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>
-                      {cat.label}
+                      {t(`collections.cat_${cat.id}`)}
                     </Text>
                   </Pressable>
                 );
@@ -374,36 +391,39 @@ export default function CreateCollectionModal() {
 
           {/* Badge & Estilo */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>ETIQUETA SUPERIOR (BADGE)</Text>
+            <Text style={styles.sectionLabel}>{t('collections.form_badge_label').toUpperCase()}</Text>
             <TextInput
               style={styles.input}
-              placeholder="Ej: ✨ Oficial o 🔥 Tendencia"
+              placeholder={t('collections.form_badge_placeholder')}
               placeholderTextColor={theme.dark ? '#666' : '#999'}
               value={badge}
               onChangeText={setBadge}
               maxLength={30}
             />
             <View style={styles.badgePresetsRow}>
-              {BADGE_PRESETS.map((bp) => (
-                <Pressable
-                  key={bp}
-                  onPress={() => setBadge(bp)}
-                  style={[styles.badgePresetChip, badge === bp && styles.badgePresetChipActive]}
-                >
-                  <Text style={[styles.badgePresetText, badge === bp && styles.badgePresetTextActive]}>
-                    {bp}
-                  </Text>
-                </Pressable>
-              ))}
+              {BADGE_PRESET_KEYS.map((key) => {
+                const label = t(key);
+                return (
+                  <Pressable
+                    key={key}
+                    onPress={() => setBadge(label)}
+                    style={[styles.badgePresetChip, badge === label && styles.badgePresetChipActive]}
+                  >
+                    <Text style={[styles.badgePresetText, badge === label && styles.badgePresetTextActive]}>
+                      {label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
 
-            <Text style={[styles.sectionLabel, { marginTop: 20 }]}>PALETA VISUAL DEL DEGRADADO</Text>
+            <Text style={[styles.sectionLabel, { marginTop: 20 }]}>{t('collections.form_gradient_label').toUpperCase()}</Text>
             <View style={styles.gradientRow}>
               {GRADIENT_PRESETS.map((gp, idx) => {
                 const isSelected = selectedGradientIndex === idx;
                 return (
                   <Pressable
-                    key={gp.name}
+                    key={gp.id}
                     onPress={() => setSelectedGradientIndex(idx)}
                     style={[
                       styles.gradientOption,
@@ -422,26 +442,29 @@ export default function CreateCollectionModal() {
           <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
               <Layers size={16} color="#D4AF37" />
-              <Text style={styles.sectionLabel}>TAREAS DE LA COLECCIÓN ({tasks.length})</Text>
+              <Text style={styles.sectionLabel}>{t('collections.form_tasks_label', { count: tasks.length }).toUpperCase()}</Text>
             </View>
 
             {/* Formulario añadir / editar tarea */}
             <View style={[styles.addTaskCard, editingTaskIndex !== null && styles.addTaskCardEditing]}>
               <View style={styles.taskFormHeader}>
                 <Text style={styles.taskFormSubtitle}>
-                  {editingTaskIndex !== null ? `EDITANDO TAREA #${editingTaskIndex + 1}` : 'NUEVA TAREA'}
+                  {(editingTaskIndex !== null
+                    ? t('collections.form_task_editing', { number: editingTaskIndex + 1 })
+                    : t('collections.form_task_new')
+                  ).toUpperCase()}
                 </Text>
                 {editingTaskIndex !== null && (
                   <Pressable onPress={handleCancelEditTask} style={styles.cancelEditBtn}>
                     <X size={13} color={theme.colors.foregroundMuted} />
-                    <Text style={styles.cancelEditText}>Cancelar</Text>
+                    <Text style={styles.cancelEditText}>{t('common.cancel')}</Text>
                   </Pressable>
                 )}
               </View>
 
               <TextInput
                 style={styles.taskInput}
-                placeholder="Nombre del objetivo o tarea *"
+                placeholder={t('collections.form_task_title_placeholder')}
                 placeholderTextColor={theme.dark ? '#666' : '#999'}
                 value={newTaskTitle}
                 onChangeText={setNewTaskTitle}
@@ -450,7 +473,7 @@ export default function CreateCollectionModal() {
 
               <TextInput
                 style={[styles.taskInput, styles.taskDescInput]}
-                placeholder="Descripción o detalles (opcional)..."
+                placeholder={t('collections.form_task_desc_placeholder')}
                 placeholderTextColor={theme.dark ? '#666' : '#999'}
                 value={newTaskDescription}
                 onChangeText={setNewTaskDescription}
@@ -463,7 +486,7 @@ export default function CreateCollectionModal() {
                 <View style={styles.priorityRow}>
                   {(['low', 'medium', 'high'] as const).map((p) => {
                     const isSelected = newTaskPriority === p;
-                    const label = p === 'high' ? 'Alta' : p === 'medium' ? 'Media' : 'Baja';
+                    const label = t(`common.${p}`);
                     const color = p === 'high' ? '#EF4444' : p === 'medium' ? '#D4AF37' : '#10B981';
                     return (
                       <Pressable
@@ -489,12 +512,12 @@ export default function CreateCollectionModal() {
                   {editingTaskIndex !== null ? (
                     <>
                       <Check size={16} color="#000" strokeWidth={3} />
-                      <Text style={styles.addTaskBtnText}>Guardar</Text>
+                      <Text style={styles.addTaskBtnText}>{t('common.save')}</Text>
                     </>
                   ) : (
                     <>
                       <Plus size={16} color="#000" strokeWidth={3} />
-                      <Text style={styles.addTaskBtnText}>Añadir</Text>
+                      <Text style={styles.addTaskBtnText}>{t('common.add')}</Text>
                     </>
                   )}
                 </Pressable>
@@ -546,7 +569,7 @@ export default function CreateCollectionModal() {
                             },
                           ]}
                         >
-                          Prioridad {task.priority === 'high' ? 'Alta' : task.priority === 'low' ? 'Baja' : 'Media'}
+                          {t('collections.form_task_priority', { priority: t(`common.${task.priority ?? 'medium'}`) })}
                         </Text>
                       </View>
                     </View>
@@ -573,7 +596,7 @@ export default function CreateCollectionModal() {
 
             {tasks.length === 0 && (
               <Text style={styles.emptyTasksText}>
-                Añade tareas arriba para que los usuarios puedan verlas y clonarlas a sus álbumes.
+                {t('collections.form_tasks_empty')}
               </Text>
             )}
           </View>
@@ -592,7 +615,7 @@ export default function CreateCollectionModal() {
               <>
                 <Sparkles size={18} color="#000" />
                 <Text style={styles.submitBtnText}>
-                  {isEditing ? 'Guardar Cambios' : 'Publicar Colección Oficial'}
+                  {isEditing ? t('collections.form_submit_save') : t('collections.form_submit_publish')}
                 </Text>
               </>
             )}

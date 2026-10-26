@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { collectionsService } from '../services/collectionsService';
+import { resolveCollectionsLang } from '../data/defaultCollections';
 import { CollectionItem } from '../types';
 import { useAuthStore } from '../../../stores/auth.store';
 import { ALBUMS_QUERY_KEY } from '../../../hooks/useAlbums';
@@ -11,7 +12,7 @@ export const COLLECTIONS_QUERY_KEY = ['collections'];
 export function useCollections() {
   const { user } = useAuthStore();
   const { i18n } = useTranslation();
-  const lang = i18n.language?.toLowerCase().startsWith('en') ? 'en' : 'es';
+  const lang = resolveCollectionsLang(i18n.language);
 
   return useQuery({
     queryKey: [...COLLECTIONS_QUERY_KEY, user?.id ?? 'anon', lang],
@@ -24,7 +25,7 @@ export function useToggleCollectionLike() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const { i18n } = useTranslation();
-  const lang = i18n.language?.toLowerCase().startsWith('en') ? 'en' : 'es';
+  const lang = resolveCollectionsLang(i18n.language);
 
   return useMutation({
     mutationFn: async (collectionId: string) => {
@@ -81,7 +82,6 @@ export function useCloneCollection() {
       if (!user?.id) {
         throw new Error(
           t('collections.login_to_clone', {
-            defaultValue: 'Inicia sesión para clonar colecciones',
           })
         );
       }
@@ -96,23 +96,20 @@ export function useCloneCollection() {
       queryClient.invalidateQueries({ queryKey: COLLECTIONS_QUERY_KEY });
 
       toast.show({
-        title: t('collections.cloned_success_go', { defaultValue: '¡Colección añadida!' }),
+        title: t('collections.cloned_title'),
         message: t('collections.cloned_toast', {
           title: collection.title,
           count: data.tasksCount,
-          defaultValue: `"${collection.title}" se ha clonado en tus álbumes con ${data.tasksCount} tareas.`,
         }),
         type: 'success',
       });
     },
     onError: (err: any) => {
       toast.show({
-        title: t('collections.clone_error_title', { defaultValue: 'Error al clonar' }),
+        title: t('collections.clone_error_title'),
         message:
           err.message ||
-          t('collections.clone_error_msg', {
-            defaultValue: 'No se pudo clonar la colección. Inténtalo de nuevo.',
-          }),
+          t('collections.clone_error_msg'),
         type: 'error',
       });
     },
@@ -121,6 +118,7 @@ export function useCloneCollection() {
 
 export function useCreateCollection() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const toast = useToast();
 
   return useMutation({
@@ -131,15 +129,15 @@ export function useCreateCollection() {
       queryClient.invalidateQueries({ queryKey: COLLECTIONS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       toast.show({
-        title: '¡Colección creada!',
-        message: `"${data.title}" ya está visible para toda la comunidad.`,
+        title: t('collections.toast_created_title'),
+        message: t('collections.toast_created_msg', { title: data.title }),
         type: 'success',
       });
     },
     onError: (err: any) => {
       toast.show({
-        title: 'Error al crear colección',
-        message: err.message || 'No se pudo crear la colección.',
+        title: t('collections.toast_create_error_title'),
+        message: err.message || t('collections.err_create'),
         type: 'error',
       });
     },
@@ -148,6 +146,7 @@ export function useCreateCollection() {
 
 export function usePromoteAlbumToCollection() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const toast = useToast();
 
   return useMutation({
@@ -158,15 +157,15 @@ export function usePromoteAlbumToCollection() {
       queryClient.invalidateQueries({ queryKey: COLLECTIONS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       toast.show({
-        title: '¡Álbum promocionado!',
-        message: 'El álbum ahora figura como colección comunitaria destacada.',
+        title: t('collections.toast_promoted_title'),
+        message: t('collections.toast_promoted_msg'),
         type: 'success',
       });
     },
     onError: (err: any) => {
       toast.show({
-        title: 'Error al promocionar',
-        message: err.message || 'No se pudo promocionar a colección.',
+        title: t('collections.toast_promote_error_title'),
+        message: err.message || t('collections.err_promote'),
         type: 'error',
       });
     },
@@ -175,6 +174,7 @@ export function usePromoteAlbumToCollection() {
 
 export function useUpdateCollection() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const toast = useToast();
 
   return useMutation({
@@ -185,15 +185,15 @@ export function useUpdateCollection() {
       queryClient.invalidateQueries({ queryKey: COLLECTIONS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       toast.show({
-        title: '¡Colección actualizada!',
-        message: `Los cambios en "${data.title}" se han guardado correctamente.`,
+        title: t('collections.toast_updated_title'),
+        message: t('collections.toast_updated_msg', { title: data.title }),
         type: 'success',
       });
     },
     onError: (err: any) => {
       toast.show({
-        title: 'Error al actualizar',
-        message: err.message || 'No se pudo actualizar la colección.',
+        title: t('collections.toast_update_error_title'),
+        message: err.message || t('collections.err_update'),
         type: 'error',
       });
     },
@@ -202,6 +202,7 @@ export function useUpdateCollection() {
 
 export function useDeleteCollection() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const toast = useToast();
 
   return useMutation({
@@ -212,15 +213,15 @@ export function useDeleteCollection() {
       queryClient.invalidateQueries({ queryKey: COLLECTIONS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       toast.show({
-        title: 'Colección eliminada',
-        message: 'La colección ha sido retirada correctamente.',
+        title: t('collections.toast_deleted_title'),
+        message: t('collections.toast_deleted_msg'),
         type: 'success',
       });
     },
     onError: (err: any) => {
       toast.show({
-        title: 'Error al eliminar',
-        message: err.message || 'No se pudo eliminar la colección.',
+        title: t('collections.toast_delete_error_title'),
+        message: err.message || t('collections.err_delete'),
         type: 'error',
       });
     },

@@ -24,8 +24,8 @@ export function FeaturedCollectionsRow({
   const { theme } = useTheme();
   const { t } = useTranslation();
 
-  const resolvedTitle = title ?? t('collections.featured_title', { defaultValue: 'Colecciones destacadas' });
-  const resolvedSubtitle = subtitle ?? t('collections.featured_subtitle', { defaultValue: 'Álbumes prediseñados para clonar en tu lista' });
+  const resolvedTitle = title ?? t('collections.featured_title');
+  const resolvedSubtitle = subtitle ?? t('collections.featured_subtitle');
 
   if (!collections || collections.length === 0) return null;
 
@@ -51,9 +51,9 @@ export function FeaturedCollectionsRow({
             hitSlop={6}
             style={styles.viewAllBtn}
             accessibilityRole="button"
-            accessibilityLabel={t('collections.view_all', { defaultValue: 'Ver todas' })}
+            accessibilityLabel={t('collections.view_all')}
           >
-            <Text style={styles.viewAllText}>{t('collections.view_all', { defaultValue: 'Ver todas' })}</Text>
+            <Text style={styles.viewAllText}>{t('collections.view_all')}</Text>
             <ChevronRight size={14} color={gold[400]} />
           </Pressable>
         ) : null}
@@ -78,7 +78,7 @@ export function FeaturedCollectionsRow({
               },
             ]}
             accessibilityRole="button"
-            accessibilityLabel={`Colección ${col.title}`}
+            accessibilityLabel={t('collections.card_a11y', { title: col.title })}
           >
             <View style={styles.cardCover}>
               <LinearGradient
@@ -140,7 +140,7 @@ export function FeaturedCollectionsRow({
                 ) : null}
                 <View style={{ flex: 1 }} />
                 <Text style={styles.clonePrompt}>
-                  {t('collections.clone', { defaultValue: 'Clonar' })}
+                  {t('collections.clone')}
                 </Text>
               </View>
             </View>
