@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -11,9 +11,11 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import { X, Check, Trash2 } from 'lucide-react-native';
+import { X, Check, Trash2, ChevronLeft, ChevronRight, Pipette } from 'lucide-react-native';
 import { useTheme, gold } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
+import { ColorPickerModal, isColorDark } from '@/components/ColorPickerModal';
+import { useCustomColors } from '@/hooks/useCustomColors';
 import { styles } from '../styles/explore.styles';
 import type { DailyTag } from '../types';
 
@@ -66,6 +68,10 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
 }) => {
   const { theme } = useTheme();
   const { t } = useTranslation();
+  const { savedColors } = useCustomColors();
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const emojiScrollRef = useRef<ScrollView>(null);
+  const emojiScrollX = useRef(0);
 
   if (!visible) return null;
 
@@ -104,7 +110,22 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
         />
 
         {/* Color Selector */}
-        <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>{t('tags.tag_color')}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, marginBottom: 6 }}>
+          <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted, marginTop: 0, marginBottom: 0 }]}>
+            {t('tags.tag_color')}
+          </Text>
+          <Pressable
+            onPress={() => setShowColorPicker(true)}
+            hitSlop={6}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+          >
+            <Pipette size={13} color={gold[400]} />
+            <Text style={{ fontSize: 12, color: gold[400], fontWeight: '600' }}>
+              {t('common.custom_color', { defaultValue: 'Personalizado' })}
+            </Text>
+          </Pressable>
+        </View>
+
         <View style={styles.paletteRow}>
           {TAG_COLOR_PALETTE.map((c) => (
             <Pressable
@@ -112,17 +133,122 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
               style={[
                 styles.paletteCircle,
                 { backgroundColor: c },
-                tagFormColor === c && styles.paletteCircleSelected,
+                tagFormColor.toLowerCase() === c.toLowerCase() && styles.paletteCircleSelected,
+                Platform.OS === 'web' && ({ cursor: 'pointer' } as any),
               ]}
               onPress={() => setTagFormColor(c)}
             >
-              {tagFormColor === c && <Check size={13} color="#FFF" />}
+              {tagFormColor.toLowerCase() === c.toLowerCase() && <Check size={13} color="#FFF" />}
             </Pressable>
           ))}
+          {/* User saved colors */}
+          {savedColors
+            .filter((sc) => !TAG_COLOR_PALETTE.some((tc) => tc.toLowerCase() === sc.toLowerCase()))
+            .slice(0, 6)
+            .map((c) => {
+              const isSelected = tagFormColor.toLowerCase() === c.toLowerCase();
+              return (
+                <Pressable
+                  key={c}
+                  style={[
+                    styles.paletteCircle,
+                    { backgroundColor: c },
+                    isSelected && styles.paletteCircleSelected,
+                    Platform.OS === 'web' && ({ cursor: 'pointer' } as any),
+                  ]}
+                  onPress={() => setTagFormColor(c)}
+                >
+                  {isSelected && <Check size={13} color={isColorDark(c) ? '#FFF' : '#000'} />}
+                </Pressable>
+              );
+            })}
+          {/* Color picker circle launcher */}
+          <Pressable
+            style={[
+              styles.paletteCircle,
+              {
+                backgroundColor: !TAG_COLOR_PALETTE.some((tc) => tc.toLowerCase() === tagFormColor.toLowerCase())
+                  ? tagFormColor
+                  : (theme.colors.surfaceElevated ?? theme.colors.surface),
+                borderColor: !TAG_COLOR_PALETTE.some((tc) => tc.toLowerCase() === tagFormColor.toLowerCase())
+                  ? gold[400]
+                  : theme.colors.border,
+                borderWidth: 1.5,
+              },
+              Platform.OS === 'web' && ({ cursor: 'pointer' } as any),
+            ]}
+            onPress={() => setShowColorPicker(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Color personalizado"
+          >
+            <Pipette
+              size={14}
+              color={
+                !TAG_COLOR_PALETTE.some((tc) => tc.toLowerCase() === tagFormColor.toLowerCase())
+                  ? isColorDark(tagFormColor) ? '#FFF' : '#000'
+                  : gold[400]
+              }
+            />
+          </Pressable>
         </View>
 
+        <ColorPickerModal
+          visible={showColorPicker}
+          initialColor={tagFormColor}
+          onSelectColor={(color) => {
+            setTagFormColor(color);
+          }}
+          onClose={() => setShowColorPicker(false)}
+        />
+
         {/* Custom Emoji Input & Presets */}
-        <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted }]}>{t('tags.tag_icon')}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, marginBottom: 6 }}>
+          <Text style={[styles.fieldLabel, { color: theme.colors.foregroundMuted, marginTop: 0, marginBottom: 0 }]}>
+            {t('tags.tag_icon')}
+          </Text>
+          {Platform.OS === 'web' && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Pressable
+                onPress={() => {
+                  const nextX = Math.max(0, emojiScrollX.current - 140);
+                  emojiScrollRef.current?.scrollTo({ x: nextX, animated: true });
+                }}
+                hitSlop={8}
+                style={[
+                  styles.emojiNavBtn,
+                  {
+                    backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+                    borderColor: theme.colors.border,
+                  },
+                  Platform.OS === 'web' && ({ cursor: 'pointer' } as any),
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Anterior"
+              >
+                <ChevronLeft size={13} color={theme.colors.foregroundMuted} />
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  const nextX = emojiScrollX.current + 140;
+                  emojiScrollRef.current?.scrollTo({ x: nextX, animated: true });
+                }}
+                hitSlop={8}
+                style={[
+                  styles.emojiNavBtn,
+                  {
+                    backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+                    borderColor: theme.colors.border,
+                  },
+                  Platform.OS === 'web' && ({ cursor: 'pointer' } as any),
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Siguiente"
+              >
+                <ChevronRight size={13} color={theme.colors.foregroundMuted} />
+              </Pressable>
+            </View>
+          )}
+        </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
           <TextInput
             style={{
@@ -148,9 +274,23 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
         </View>
 
         <ScrollView
+          ref={emojiScrollRef}
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 8, paddingBottom: 6 }}
+          onScroll={(e) => {
+            emojiScrollX.current = e.nativeEvent.contentOffset.x;
+          }}
+          scrollEventThrottle={16}
+          style={[
+            styles.emojiScrollView,
+            Platform.OS === 'web' && ({
+              maxWidth: '100%',
+              minWidth: 0,
+              overflowX: 'auto',
+              WebkitOverflowScrolling: 'touch',
+            } as any),
+          ]}
+          contentContainerStyle={[styles.emojiScrollContent, { gap: 8, paddingBottom: 6 }]}
         >
           {TAG_EMOJI_PRESETS.map((em) => (
             <Pressable
@@ -161,6 +301,7 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
                   backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
                   borderColor: theme.colors.border,
                 },
+                Platform.OS === 'web' && ({ cursor: 'pointer' } as any),
                 tagFormEmoji === em && [
                   styles.emojiCircleSelected,
                   {

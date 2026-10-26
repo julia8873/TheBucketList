@@ -163,7 +163,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const atTop = currentToast?.position === 'top' || keyboardVisible;
   const topOffset = Platform.OS === 'ios' ? 64 : (StatusBar.currentHeight ?? 24) + 16;
   // Ancho explícito (nunca colapsa a 0 aunque el contenedor padre no tenga tamaño).
-  const toastWidth = Math.max(240, windowWidth - 32);
+  // En web limitamos a 420 px para que no ocupe toda la pantalla del navegador.
+  const maxToastWidth = Platform.OS === 'web' ? 420 : windowWidth - 32;
+  const toastWidth = Math.min(maxToastWidth, Math.max(240, windowWidth - 32));
+
+  // En web centramos el toast horizontalmente.
+  const webLeftOffset = Platform.OS === 'web' ? Math.max(16, (windowWidth - toastWidth) / 2) : 16;
 
   const toastView = currentToast ? (
         <Animated.View
@@ -172,7 +177,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             atTop ? { top: topOffset, bottom: undefined } : null,
             {
               width: toastWidth,
-              left: 16,
+              left: webLeftOffset,
               right: undefined,
               backgroundColor: theme.colors.surfaceElevated,
               shadowOpacity: theme.dark ? 0.45 : 0.16,

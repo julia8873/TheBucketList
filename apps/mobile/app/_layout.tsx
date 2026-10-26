@@ -38,12 +38,16 @@ import 'intl-pluralrules';
 import '../../../packages/shared/src/i18n'; // initialize i18n
 import { LogBox, Platform, View, StyleSheet } from 'react-native';
 
+import { setupWebHorizontalScroll } from '../src/utils/webScrollHelper';
+
 LogBox.ignoreLogs([
   'findDOMNode is deprecated',
   'validateDOMNesting',
 ]);
 
 if (Platform.OS === 'web' && typeof window !== 'undefined') {
+  setupWebHorizontalScroll();
+
   const origError = console.error;
   console.error = (...args: any[]) => {
     const msg = typeof args[0] === 'string' ? args[0] : '';
@@ -67,11 +71,27 @@ if (Platform.OS === 'web' && typeof window !== 'undefined') {
         * {
           -ms-overflow-style: none !important;
           scrollbar-width: none !important;
+          -webkit-overflow-scrolling: touch;
         }
         html, body {
           scrollbar-width: none !important;
           -ms-overflow-style: none !important;
           overflow-x: hidden;
+        }
+        /* Scroll horizontal sutil y accesible en modo Web */
+        div[style*="overflow-x: auto"]::-webkit-scrollbar,
+        div[style*="overflow-x: scroll"]::-webkit-scrollbar {
+          display: block !important;
+          height: 4px !important;
+        }
+        div[style*="overflow-x: auto"]::-webkit-scrollbar-thumb,
+        div[style*="overflow-x: scroll"]::-webkit-scrollbar-thumb {
+          background: rgba(212, 175, 55, 0.45) !important;
+          border-radius: 4px !important;
+        }
+        div[style*="overflow-x: auto"]::-webkit-scrollbar-thumb:hover,
+        div[style*="overflow-x: scroll"]::-webkit-scrollbar-thumb:hover {
+          background: rgba(212, 175, 55, 0.85) !important;
         }
       `;
       document.head.appendChild(style);

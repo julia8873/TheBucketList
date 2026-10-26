@@ -8,6 +8,7 @@ import {
   Link2,
   Crop,
   Camera,
+  Check,
 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { toast, useTheme } from '@bucketlist/ui';
@@ -16,6 +17,8 @@ import { styles } from '../styles/album-form.styles';
 import { COVERS, SOLID_COVERS, type Cover, type CoverAspectRatio } from '../types';
 import { SectionTitle } from './SectionTitle';
 import { ImageLinkModal } from '../../../components/ImageLinkModal';
+import { ColorPickerModal, isColorDark } from '../../../components/ColorPickerModal';
+import { useCustomColors } from '../../../hooks/useCustomColors';
 
 interface CoverPickerSectionProps {
   selectedCover: Cover;
@@ -30,7 +33,9 @@ export function CoverPickerSection({
 }: CoverPickerSectionProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
+  const { savedColors } = useCustomColors();
   const [showLinkModal, setShowLinkModal] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
   const currentRatio: CoverAspectRatio = selectedCover.aspectRatio || '16:9';
 
   const pickImage = async () => {
@@ -208,23 +213,64 @@ export function CoverPickerSection({
 
       {/* Fila de colores sólidos */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 16 }} contentContainerStyle={styles.coversRow}>
+        {/* Selector de color personalizado con ColorPickerModal */}
         <Pressable
           style={[
             styles.coverOption,
             selectedCover.id === 'custom-color' && styles.coverOptionSelected,
-            { justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+            {
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: selectedCover.id === 'custom-color' && selectedCover.colors?.[0]
+                ? selectedCover.colors[0]
+                : theme.colors.surface,
+              borderColor: selectedCover.id === 'custom-color' ? '#D4B13A' : theme.colors.border,
+            },
           ]}
-          onPress={() =>
-            onSelectCover({
-              id: 'custom-color',
-              type: 'solid',
-              colors: ['#D4B13A', '#D4B13A'],
-              aspectRatio: currentRatio,
-            })
-          }
+          onPress={() => setShowColorPicker(true)}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.custom_color', { defaultValue: 'Color personalizado' })}
         >
-          <Palette color={selectedCover.id === 'custom-color' ? '#D4B13A' : theme.colors.foregroundMuted} size={24} />
+          <Palette
+            color={
+              selectedCover.id === 'custom-color' && selectedCover.colors?.[0]
+                ? isColorDark(selectedCover.colors[0]) ? '#FFF' : '#000'
+                : '#D4B13A'
+            }
+            size={22}
+          />
         </Pressable>
+
+        {/* Colores guardados por el usuario */}
+        {savedColors
+          .filter((sc) => !SOLID_COVERS.some((soc) => soc.colors?.[0]?.toLowerCase() === sc.toLowerCase()))
+          .slice(0, 6)
+          .map((sc) => {
+            const isSelected = selectedCover.id === 'custom-color' && selectedCover.colors?.[0]?.toLowerCase() === sc.toLowerCase();
+            return (
+              <Pressable
+                key={sc}
+                style={[
+                  styles.coverOption,
+                  isSelected && styles.coverOptionSelected,
+                  { backgroundColor: sc, justifyContent: 'center', alignItems: 'center' },
+                ]}
+                onPress={() =>
+                  onSelectCover({
+                    id: 'custom-color',
+                    type: 'solid',
+                    colors: [sc, sc],
+                    aspectRatio: currentRatio,
+                  })
+                }
+                accessibilityRole="button"
+                accessibilityLabel={`Color guardado ${sc}`}
+              >
+                {isSelected && <Check size={18} color={isColorDark(sc) ? '#FFF' : '#000'} strokeWidth={2.8} />}
+              </Pressable>
+            );
+          })}
+
         {SOLID_COVERS.map((cover) => {
           const isSelected = selectedCover.id === cover.id;
           return (
@@ -233,13 +279,31 @@ export function CoverPickerSection({
               style={[
                 styles.coverOption,
                 isSelected && styles.coverOptionSelected,
-                { backgroundColor: cover.colors![0] },
+                { backgroundColor: cover.colors![0], justifyContent: 'center', alignItems: 'center' },
               ]}
               onPress={() => onSelectCover({ ...cover, aspectRatio: currentRatio })}
-            />
+            >
+              {isSelected && <Check size={18} color="#FFF" strokeWidth={2.8} />}
+            </Pressable>
           );
         })}
       </ScrollView>
+
+      {/* ColorPickerModal para portadas */}
+      <ColorPickerModal
+        visible={showColorPicker}
+        initialColor={selectedCover.colors?.[0] || '#D4B13A'}
+        onSelectColor={(color) => {
+          onSelectCover({
+            id: 'custom-color',
+            type: 'solid',
+            colors: [color, color],
+            aspectRatio: currentRatio,
+          });
+        }}
+        onClose={() => setShowColorPicker(false)}
+        title={t('albums.custom_cover_color', { defaultValue: 'Color de portada' })}
+      />
 
       {/* Modal para añadir portada con enlace web o de Google */}
       <ImageLinkModal

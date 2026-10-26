@@ -14,6 +14,8 @@ import {
   normalizeHex,
   readableOn,
 } from '../constants/tagPresets';
+import { ColorPickerModal } from './ColorPickerModal';
+import { useCustomColors } from '../hooks/useCustomColors';
 
 const GOLD = '#D4B13A';
 const RAINBOW = ['#E1553C', '#D4B13B', '#4CB06A', '#4B8FE0', '#8D5BD6'] as const;
@@ -38,6 +40,8 @@ export function GoldLabel({ children, style }: { children: string; style?: objec
 /** Selector de emoji (con fondos de color por defecto o emoji propio) y de color (paleta o hex propio). */
 export function TagAppearanceFields({ name = '', emoji, color, autoColor = false, onChange }: Props) {
   const { theme } = useTheme();
+  const { savedColors } = useCustomColors();
+  const [colorPickerVisible, setColorPickerVisible] = useState(false);
   const touchedColor = useRef(!autoColor);
   const touchedEmoji = useRef(!autoColor);
   const isPresetEmoji = !!emoji && TAG_EMOJIS.some((e) => e.emoji === emoji);
@@ -193,7 +197,16 @@ export function TagAppearanceFields({ name = '', emoji, color, autoColor = false
       {emojiError && <Text style={styles.errorText}>Solo se admiten emojis</Text>}
 
       {/* ── COLOR ─────────────────────────────────────────────────────────── */}
-      <GoldLabel style={{ marginTop: 24 }}>COLOR</GoldLabel>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, marginBottom: 8 }}>
+        <GoldLabel style={{ marginTop: 0 }}>COLOR</GoldLabel>
+        <Pressable
+          onPress={() => setColorPickerVisible(true)}
+          hitSlop={6}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+        >
+          <Text style={{ fontSize: 12, color: GOLD, fontWeight: '600' }}>Selector de color</Text>
+        </Pressable>
+      </View>
       <View style={styles.swatches}>
         {TAG_COLORS.map((c) => {
           const on = color.toLowerCase() === c.value.toLowerCase();
@@ -212,9 +225,30 @@ export function TagAppearanceFields({ name = '', emoji, color, autoColor = false
           );
         })}
 
-        {/* Color personalizado */}
+        {/* Colores guardados por el usuario */}
+        {savedColors
+          .filter((sc) => !TAG_COLORS.some((tc) => tc.value.toLowerCase() === sc.toLowerCase()))
+          .slice(0, 8)
+          .map((sc) => {
+            const on = color.toLowerCase() === sc.toLowerCase();
+            return (
+              <Pressable
+                key={sc}
+                onPress={() => pickColor(sc)}
+                accessibilityRole="button"
+                accessibilityLabel={`Color guardado ${sc}`}
+                accessibilityState={{ selected: on }}
+                style={[styles.swatch, { backgroundColor: sc }]}
+              >
+                {on && <Check size={20} color={readableOn(sc)} strokeWidth={2.6} />}
+                {on && <View style={[styles.ring, { borderColor: sc }]} pointerEvents="none" />}
+              </Pressable>
+            );
+          })}
+
+        {/* Color personalizado / Color Picker */}
         <Pressable
-          onPress={() => setCustomOpen((o) => !o)}
+          onPress={() => setColorPickerVisible(true)}
           accessibilityRole="button"
           accessibilityLabel="Color personalizado"
           style={styles.swatch}
@@ -236,6 +270,16 @@ export function TagAppearanceFields({ name = '', emoji, color, autoColor = false
           {!isPaletteColor && <View style={[styles.ring, { borderColor: color }]} pointerEvents="none" />}
         </Pressable>
       </View>
+
+      <ColorPickerModal
+        visible={colorPickerVisible}
+        initialColor={color}
+        onSelectColor={(c) => {
+          pickColor(c);
+          setHex(c.replace('#', ''));
+        }}
+        onClose={() => setColorPickerVisible(false)}
+      />
 
       {customOpen && (
         <View style={styles.hexWrap}>

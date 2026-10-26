@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, TextInput } from 'react-native';
-import { Bell, Search, Users, X, Map, ChevronDown, SlidersHorizontal, Check } from 'lucide-react-native';
+import { Bell, Search, Users, X, Map, ChevronDown, SlidersHorizontal, Check, Sparkles } from 'lucide-react-native';
 import { useTranslation } from '@bucketlist/shared';
 import { PageTitle, useTheme, gold, fontFamily } from '@bucketlist/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -243,8 +243,37 @@ export function FeedHeader({
             />
           </Pressable>
 
-          {/* Acciones a la derecha: Mapa y Selector de vista */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {/* Acciones a la derecha: Colecciones, Mapa y Selector de vista */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            {homeTab === 'explore' ? (
+              <Pressable
+                onPress={() => onChangeContentFilter(contentFilter === 'colecciones' ? 'todo' : 'colecciones')}
+                style={({ pressed }) => [
+                  styles.collectionsTriggerBtn,
+                  {
+                    backgroundColor: contentFilter === 'colecciones'
+                      ? (theme.dark ? 'rgba(212, 175, 55, 0.16)' : 'rgba(212, 175, 55, 0.22)')
+                      : theme.colors.surface,
+                    borderColor: contentFilter === 'colecciones' ? gold[400] : theme.colors.border,
+                  },
+                  pressed && { opacity: 0.8 },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={t('feed.filter_collections')}
+                accessibilityState={{ selected: contentFilter === 'colecciones' }}
+              >
+                <Sparkles size={14} color={gold[400]} />
+                <Text
+                  style={[
+                    styles.collectionsTriggerBtnText,
+                    { color: contentFilter === 'colecciones' ? gold[400] : theme.colors.foreground },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {t('feed.filter_collections')}
+                </Text>
+              </Pressable>
+            ) : null}
             {onOpenMap ? (
               <Pressable
                 onPress={onOpenMap}

@@ -1141,6 +1141,21 @@ export const styles = themedStyleSheet({
     borderColor: gold[400],
     backgroundColor: '#262112',
   },
+  emojiNavBtn: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emojiScrollView: {
+    width: '100%',
+    maxWidth: '100%',
+  },
+  emojiScrollContent: {
+    paddingVertical: 2,
+  },
   overdueSectionWrapper: {
     marginBottom: 20,
   },
