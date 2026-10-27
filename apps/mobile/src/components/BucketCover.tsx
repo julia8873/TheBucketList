@@ -38,6 +38,8 @@ const PresetArt = memo(function PresetArt({
   const IconComponent = preset.icon;
   const colors = !isDark && preset.lightColors ? preset.lightColors : preset.colors;
 
+  const isSolid = colors[0] === colors[1] && (colors.length < 3 || colors[1] === colors[2]);
+
   return (
     <>
       {preset.image ? (
@@ -55,21 +57,23 @@ const PresetArt = memo(function PresetArt({
           style={StyleSheet.absoluteFill}
         />
       )}
-      {/* Círculos decorativos */}
-      <View
-        pointerEvents="none"
-        style={[
-          styles.circle,
-          {
-            width: iconSize * 1.6,
-            height: iconSize * 1.6,
-            borderRadius: iconSize * 0.8,
-            top: -iconSize * 0.5,
-            left: -iconSize * 0.45,
-            backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.08)',
-          },
-        ]}
-      />
+      {/* Círculos decorativos (solo para degradados con arte) */}
+      {!isSolid && (
+        <View
+          pointerEvents="none"
+          style={[
+            styles.circle,
+            {
+              width: iconSize * 1.6,
+              height: iconSize * 1.6,
+              borderRadius: iconSize * 0.8,
+              top: -iconSize * 0.5,
+              left: -iconSize * 0.45,
+              backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.08)',
+            },
+          ]}
+        />
+      )}
       {IconComponent && (
         <View
           pointerEvents="none"

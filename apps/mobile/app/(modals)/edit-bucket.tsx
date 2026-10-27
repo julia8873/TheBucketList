@@ -20,6 +20,7 @@ import { AlbumPickerSheet } from '../../src/components/AlbumPickerSheet';
 import { GoogleDriveModal } from '../../src/components/GoogleDriveModal';
 
 import { styles } from '../../src/features/task-form/styles/task-form.styles';
+import { SectionTitle } from '../../src/features/task-form/components/SectionTitle';
 import { TaskSettingsCard } from '../../src/features/task-form/components/TaskSettingsCard';
 import { TaskCollaboratorsSection } from '../../src/features/task-form/components/TaskCollaboratorsSection';
 import { TaskCoverPicker } from '../../src/features/task-form/components/TaskCoverPicker';
@@ -49,6 +50,7 @@ export default function EditBucketModal() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isEditingLocation, setIsEditingLocation] = useState(false);
   const [isTitleFocused, setIsTitleFocused] = useState(false);
+  const [isDescFocused, setIsDescFocused] = useState(false);
   const [driveUrl, setDriveUrl] = useState<string | null>(null);
   const [showDriveModal, setShowDriveModal] = useState(false);
 
@@ -284,7 +286,7 @@ export default function EditBucketModal() {
               onPress={() => router.back()}
               accessibilityLabel={t('common.back', { defaultValue: 'Volver' })}
             >
-              <ChevronLeft color={theme.colors.foreground} size={28} />
+              <ChevronLeft color={theme.colors.foreground} size={22} strokeWidth={2} />
             </Pressable>
             <PageTitle
               gold={t('task_form.edit_task_gold', { defaultValue: 'Editar' })}
@@ -293,58 +295,76 @@ export default function EditBucketModal() {
           </View>
 
           {/* QUÉ QUIERES LOGRAR */}
-          <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
-            <Text style={{ color: '#D4B13A' }}>{t('task_form.section_what_gold', { defaultValue: 'QUÉ' })}</Text>
-            {t('task_form.section_what_rest', { defaultValue: ' QUIERES LOGRAR' })}
-          </Text>
-          <TextInput
-            style={[
-              styles.titleInput,
-              {
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-                color: theme.colors.foreground,
-              },
-              isTitleFocused && { borderColor: '#D4B13A' },
-            ]}
-            placeholder={t('task_form.title_placeholder', { defaultValue: 'Ej. Ver auroras boreales' })}
-            placeholderTextColor={theme.colors.foregroundMuted}
-            value={title}
-            onChangeText={setTitle}
-            onFocus={() => setIsTitleFocused(true)}
-            onBlur={() => setIsTitleFocused(false)}
-          />
-
-          {/* DESCRIPCIÓN */}
-          <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
-            <Text style={{ color: '#D4B13A' }}>{t('task_form.section_desc_gold', { defaultValue: 'DESCRIPCIÓN' })}</Text>
-          </Text>
-          <TextInput
-            style={[
-              styles.descInput,
-              {
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-                color: theme.colors.foreground,
-              },
-            ]}
-            placeholder={t('task_form.desc_placeholder', { defaultValue: 'Cuéntanos más…' })}
-            placeholderTextColor={theme.colors.foregroundMuted}
-            value={description}
-            onChangeText={setDescription}
-            multiline
-          />
+          <View style={styles.section}>
+            <SectionTitle
+              highlight={t('task_form.section_what_gold', { defaultValue: 'QUÉ' })}
+              rest={t('task_form.section_what_rest', { defaultValue: 'QUIERES LOGRAR' })}
+            />
+            <TextInput
+              style={[
+                styles.titleInput,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  color: theme.colors.foreground,
+                },
+                isTitleFocused && { borderColor: '#D4B13A' },
+              ]}
+              placeholder={t('task_form.title_placeholder', { defaultValue: 'Ej. Ver auroras boreales' })}
+              placeholderTextColor={theme.colors.foregroundMuted}
+              value={title}
+              onChangeText={setTitle}
+              onFocus={() => setIsTitleFocused(true)}
+              onBlur={() => setIsTitleFocused(false)}
+              accessibilityLabel={t('task_form.title_placeholder', { defaultValue: 'Título de la tarea' })}
+            />
+          </View>
 
           {/* PORTADA */}
-          <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
-            <Text style={{ color: '#D4B13A' }}>{t('task_form.section_cover_photo_gold', { defaultValue: 'FOTO' })}</Text>
-            {t('task_form.section_cover_photo_rest', { defaultValue: ' DE PORTADA' })}
-          </Text>
-          <TaskCoverPicker
-            coverImage={coverImage}
-            onChangeCover={setCoverImage}
-            taskTitle={title}
-          />
+          <View style={styles.section}>
+            <SectionTitle
+              highlight={t('task_form.section_cover_gold', { defaultValue: 'TU' })}
+              rest={t('task_form.section_cover_rest', { defaultValue: 'PORTADA' })}
+            />
+            <TaskCoverPicker
+              coverImage={coverImage}
+              onChangeCover={setCoverImage}
+              taskTitle={title}
+            />
+          </View>
+
+          {/* DESCRIPCIÓN */}
+          <View style={[styles.section, { marginBottom: 4 }]}>
+            <SectionTitle
+              highlight={t('task_form.section_desc_gold', { defaultValue: 'DESCRIPCIÓN' })}
+              rest={t('task_form.section_desc_rest', { defaultValue: 'DE LA TAREA' })}
+            />
+            <TextInput
+              style={[
+                styles.descInput,
+                {
+                  minHeight: 88,
+                  textAlignVertical: 'top',
+                  fontSize: 16,
+                  fontFamily: 'Inter_400Regular',
+                  paddingTop: 16,
+                  paddingBottom: 16,
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  color: theme.colors.foreground,
+                },
+                isDescFocused && { borderColor: '#D4B13A' },
+              ]}
+              placeholder={t('task_form.desc_placeholder', { defaultValue: 'Cuéntanos más sobre esta tarea…' })}
+              placeholderTextColor={theme.colors.foregroundMuted}
+              value={description}
+              onChangeText={setDescription}
+              onFocus={() => setIsDescFocused(true)}
+              onBlur={() => setIsDescFocused(false)}
+              multiline
+              accessibilityLabel={t('task_form.desc_placeholder', { defaultValue: 'Descripción de la tarea' })}
+            />
+          </View>
 
           {/* AJUSTES */}
           <TaskSettingsCard

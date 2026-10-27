@@ -21,6 +21,7 @@ import { ChevronLeft } from 'lucide-react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 
 import { styles } from '../../src/features/task-form/styles/task-form.styles';
+import { SectionTitle } from '../../src/features/task-form/components/SectionTitle';
 import { TaskCoverPicker } from '../../src/features/task-form/components/TaskCoverPicker';
 import { TaskPriorityPicker } from '../../src/features/task-form/components/TaskPriorityPicker';
 import { TaskSettingsCard } from '../../src/features/task-form/components/TaskSettingsCard';
@@ -48,6 +49,7 @@ export default function CreateBucketModal() {
 
   const [steps, setSteps] = useState<TaskStepItem[]>([]);
   const [isTitleFocused, setIsTitleFocused] = useState(false);
+  const [isDescFocused, setIsDescFocused] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isEditingLocation, setIsEditingLocation] = useState(false);
   const [selectedTags, setSelectedTags] = useState<TagItem[]>([]);
@@ -193,7 +195,7 @@ export default function CreateBucketModal() {
               onPress={() => router.back()}
               accessibilityLabel={t('common.back', { defaultValue: 'Volver' })}
             >
-              <ChevronLeft color={theme.colors.foreground} size={28} />
+              <ChevronLeft color={theme.colors.foreground} size={22} strokeWidth={2} />
             </Pressable>
             <PageTitle
               gold={t('task_form.new_task_gold', { defaultValue: 'Nueva' })}
@@ -202,52 +204,99 @@ export default function CreateBucketModal() {
           </View>
 
           {/* QUÉ QUIERES LOGRAR */}
-          <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
-            <Text style={{ color: '#D4B13A' }}>{t('task_form.section_what_gold', { defaultValue: 'QUÉ' })}</Text>
-            {t('task_form.section_what_rest', { defaultValue: ' QUIERES LOGRAR' })}
-          </Text>
-          <Controller
-            control={control}
-            name="title"
-            render={({ field: { onChange, value } }) => (
-              <TextInput
-                style={[
-                  styles.titleInput,
-                  {
-                    backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.border,
-                    color: theme.colors.foreground,
-                  },
-                  isTitleFocused && { borderColor: '#D4B13A' },
-                ]}
-                placeholder={t('task_form.title_placeholder', { defaultValue: 'Ej. Ver auroras boreales' })}
-                placeholderTextColor={theme.colors.foregroundMuted}
-                value={value}
-                onChangeText={onChange}
-                onFocus={() => setIsTitleFocused(true)}
-                onBlur={() => setIsTitleFocused(false)}
-              />
-            )}
-          />
+          <View style={styles.section}>
+            <SectionTitle
+              highlight={t('task_form.section_what_gold', { defaultValue: 'QUÉ' })}
+              rest={t('task_form.section_what_rest', { defaultValue: 'QUIERES LOGRAR' })}
+            />
+            <Controller
+              control={control}
+              name="title"
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  style={[
+                    styles.titleInput,
+                    {
+                      backgroundColor: theme.colors.surface,
+                      borderColor: theme.colors.border,
+                      color: theme.colors.foreground,
+                    },
+                    isTitleFocused && { borderColor: '#D4B13A' },
+                  ]}
+                  placeholder={t('task_form.title_placeholder', { defaultValue: 'Ej. Ver auroras boreales' })}
+                  placeholderTextColor={theme.colors.foregroundMuted}
+                  value={value}
+                  onChangeText={onChange}
+                  onFocus={() => setIsTitleFocused(true)}
+                  onBlur={() => setIsTitleFocused(false)}
+                  accessibilityLabel={t('task_form.title_placeholder', { defaultValue: 'Título de la tarea' })}
+                />
+              )}
+            />
+          </View>
 
           {/* PORTADA */}
-          <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
-            <Text style={{ color: '#D4B13A' }}>{t('task_form.section_cover_gold', { defaultValue: 'TU' })}</Text>
-            {t('task_form.section_cover_rest', { defaultValue: ' PORTADA' })}
-          </Text>
-          <TaskCoverPicker coverImage={coverImage} onChangeCover={setCoverImage} taskTitle={titleValue} />
+          <View style={styles.section}>
+            <SectionTitle
+              highlight={t('task_form.section_cover_gold', { defaultValue: 'TU' })}
+              rest={t('task_form.section_cover_rest', { defaultValue: 'PORTADA' })}
+            />
+            <TaskCoverPicker coverImage={coverImage} onChangeCover={setCoverImage} taskTitle={titleValue} />
+          </View>
+
+          {/* DESCRIPCIÓN */}
+          <View style={[styles.section, { marginBottom: 4 }]}>
+            <SectionTitle
+              highlight={t('task_form.section_desc_gold', { defaultValue: 'DESCRIPCIÓN' })}
+              rest={t('task_form.section_desc_rest', { defaultValue: 'DE LA TAREA' })}
+            />
+            <Controller
+              control={control}
+              name="description"
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  style={[
+                    styles.descInput,
+                    {
+                      minHeight: 88,
+                      textAlignVertical: 'top',
+                      fontSize: 16,
+                      fontFamily: 'Inter_400Regular',
+                      paddingTop: 16,
+                      paddingBottom: 16,
+                      backgroundColor: theme.colors.surface,
+                      borderColor: theme.colors.border,
+                      color: theme.colors.foreground,
+                    },
+                    isDescFocused && { borderColor: '#D4B13A' },
+                  ]}
+                  value={value || ''}
+                  onChangeText={onChange}
+                  placeholder={t('task_form.desc_placeholder', { defaultValue: 'Cuéntanos más sobre esta tarea…' })}
+                  placeholderTextColor={theme.colors.foregroundMuted}
+                  accessibilityLabel={t('task_form.desc_placeholder', { defaultValue: 'Descripción de la tarea' })}
+                  multiline
+                  onFocus={() => setIsDescFocused(true)}
+                  onBlur={() => setIsDescFocused(false)}
+                />
+              )}
+            />
+          </View>
 
           {/* PRIORIDAD */}
-          <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
-            <Text style={{ color: '#D4B13A' }}>{t('task_form.section_priority', { defaultValue: 'PRIORIDAD' })}</Text>
-          </Text>
-          <Controller
-            control={control}
-            name="priority"
-            render={({ field: { onChange, value } }) => (
-              <TaskPriorityPicker value={(value as any) || 'medium'} onChange={onChange} />
-            )}
-          />
+          <View style={styles.section}>
+            <SectionTitle
+              highlight={t('task_form.section_priority', { defaultValue: 'PRIORIDAD' })}
+              rest=""
+            />
+            <Controller
+              control={control}
+              name="priority"
+              render={({ field: { onChange, value } }) => (
+                <TaskPriorityPicker value={(value as any) || 'medium'} onChange={onChange} />
+              )}
+            />
+          </View>
 
           {/* AJUSTES */}
           <TaskSettingsCard

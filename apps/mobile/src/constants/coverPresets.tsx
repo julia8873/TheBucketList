@@ -68,13 +68,99 @@ export const GRADIENT_PRESETS = COVER_PRESETS.filter((p) => p.group === 'gradien
 
 export function getPresetByKey(key: string | null | undefined): CoverPreset | undefined {
   if (!key) return undefined;
-  return COVER_PRESETS.find((p) => p.key === key);
+
+  const found = COVER_PRESETS.find((p) => p.key === key);
+  if (found) return found;
+
+  const k = key.toLowerCase();
+  // Compatibilidad con gradientes de tareas y álbumes
+  if (k === 'aurora' || k === 'green') {
+    return {
+      key: 'aurora',
+      label: 'Aurora',
+      group: 'gradients',
+      colors: ['#0E4B43', '#1F8560', '#1F8560'],
+      lightColors: ['#6EE7B7', '#059669', '#059669'],
+    };
+  }
+  if (k === 'atardecer' || k === 'orange') {
+    return {
+      key: 'atardecer',
+      label: 'Atardecer',
+      group: 'gradients',
+      colors: ['#F4A460', '#C8602F', '#C8602F'],
+      lightColors: ['#FED7AA', '#EA580C', '#EA580C'],
+    };
+  }
+  if (k === 'cielo' || k === 'blue') {
+    return {
+      key: 'cielo',
+      label: 'Cielo',
+      group: 'gradients',
+      colors: ['#3A78C4', '#8CC8F4', '#8CC8F4'],
+      lightColors: ['#BAE6FD', '#2563EB', '#2563EB'],
+    };
+  }
+  if (k === 'violeta' || k === 'purple') {
+    return {
+      key: 'violeta',
+      label: 'Violeta',
+      group: 'gradients',
+      colors: ['#5B2F98', '#2E1A5E', '#2E1A5E'],
+      lightColors: ['#F3E8FF', '#7C3AED', '#7C3AED'],
+    };
+  }
+  if (k === 'dorado') {
+    return {
+      key: 'dorado',
+      label: 'Dorado',
+      group: 'gradients',
+      colors: ['#3A2F18', '#5E4E1F', '#D4AF37'],
+      lightColors: ['#FED7AA', '#D4AF37', '#D4AF37'],
+    };
+  }
+
+  // Colores sólidos predeterminados
+  const solidMap: Record<string, string> = {
+    rojo: '#E53935',
+    azul: '#1E88E5',
+    verde: '#43A047',
+    amarillo: '#FDD835',
+    morado: '#8E24AA',
+  };
+  if (solidMap[k]) {
+    const hex = solidMap[k];
+    return {
+      key: k,
+      label: k,
+      group: 'gradients',
+      colors: [hex, hex, hex],
+      lightColors: [hex, hex, hex],
+    };
+  }
+
+  // Colores hexadecimales personalizados (ej. 'color:#E53935', 'solid:#E53935' o '#E53935')
+  const hexMatch = key.match(/^(?:color:|solid:)?(#[0-9a-fA-F]{3,8})$/i);
+  if (hexMatch && hexMatch[1]) {
+    const hex = hexMatch[1];
+    return {
+      key,
+      label: hex,
+      group: 'gradients',
+      colors: [hex, hex, hex],
+      lightColors: [hex, hex, hex],
+    };
+  }
+
+  return undefined;
 }
 
 /** Devuelve la clave del preset si el valor es `preset:<key>`, o null. */
 export function presetKeyFromValue(value: string | null | undefined): string | null {
-  if (!value || !value.startsWith(COVER_PRESET_PREFIX)) return null;
-  return value.slice(COVER_PRESET_PREFIX.length);
+  if (!value) return null;
+  if (value.startsWith(COVER_PRESET_PREFIX)) return value.slice(COVER_PRESET_PREFIX.length);
+  if (value.startsWith('#')) return value;
+  return null;
 }
 
 export function presetValue(key: string): string {
