@@ -1,6 +1,6 @@
 import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState, useRef, useMemo, useEffect } from 'react';
-import { View, Text, Modal, Pressable, FlatList, TextInput, Keyboard, ScrollView, Platform, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, Modal, Pressable, FlatList, TextInput, Keyboard, ScrollView, Platform, ActivityIndicator, StyleSheet, useWindowDimensions } from 'react-native';
 import {
   MessageCircle,
   X,
@@ -50,6 +50,7 @@ function TaskCommentsModalContent({
   const { theme } = useTheme();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const effectiveTargetType: 'bucket' | 'album' = targetType || (albumId ? 'album' : 'bucket');
   const effectiveId = (effectiveTargetType === 'album' ? albumId : bucketId) || '';
   const effectiveTitle = (effectiveTargetType === 'album' ? (albumTitle || bucketTitle) : (bucketTitle || albumTitle)) || '';
@@ -208,7 +209,7 @@ function TaskCommentsModalContent({
             onClose();
           }}
         />
-        <View style={[styles.sheetContent, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }, isKeyboardVisible && styles.sheetContentKeyboard]}>
+        <View style={[styles.sheetContent, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }, { maxHeight: isKeyboardVisible ? Math.min(Math.round(windowHeight * 0.6), windowHeight - keyboardHeight - insets.top - 8) : Math.round(windowHeight * 0.6) }]}>
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: theme.colors.border }]}>
             <View style={styles.headerLeft}>
@@ -463,7 +464,7 @@ const styles = themedStyleSheet({
   sheetContent: {
     // Se ajusta al contenido (la barra de escribir queda justo bajo el último comentario)
     // y solo crece hasta el 85% de la pantalla; a partir de ahí la lista hace scroll.
-    maxHeight: '85%',
+    maxHeight: '60%',
     backgroundColor: '#121214',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
