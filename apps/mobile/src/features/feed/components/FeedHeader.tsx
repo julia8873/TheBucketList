@@ -218,6 +218,7 @@ export function FeedHeader({
                   ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.18)')
                   : theme.colors.surface,
                 borderColor: contentFilter !== 'todo' ? gold[400] : theme.colors.border,
+                flexGrow: homeTab === 'friends' ? 1 : 0,
               },
             ]}
           >
@@ -288,6 +289,7 @@ export function FeedHeader({
                 {
                   backgroundColor: theme.colors.surface,
                   borderColor: theme.colors.border,
+                  flexGrow: homeTab === 'friends' ? 1 : 0,
                 },
               ]}
               accessibilityRole="button"

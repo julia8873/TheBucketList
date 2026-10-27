@@ -13,13 +13,13 @@ import {
   ScrollView,
   BackHandler,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image as ExpoImage } from 'expo-image';
 import * as Clipboard from 'expo-clipboard';
 import { X, Globe, Clipboard as ClipboardIcon, ExternalLink, Check, AlertCircle } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { gold, useTheme, toast } from '@bucketlist/ui';
 import { resolveImageUrl, resolveImageUrlAsync, isValidImageUrl } from '../utils/imageUrlResolver';
-import { TagSheetShell } from './TagSheetShell';
 
 interface ImageLinkModalProps {
   visible: boolean;
@@ -34,6 +34,7 @@ export function ImageLinkModal({
   onApplyImage,
   initialQuery = '',
 }: ImageLinkModalProps) {
+  const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const { theme } = useTheme();
   const [inputUrl, setInputUrl] = useState('');
@@ -151,11 +152,43 @@ export function ImageLinkModal({
 
   const canConfirm = Boolean(resolvedUrl && isValidImageUrl(resolvedUrl) && !imageError);
 
+  if (!visible) return null;
+
   return (
-    <TagSheetShell visible={visible} onClose={onClose}>
-      <View style={styles.sheetBody}>
-        {/* Header */}
-        <View style={styles.header}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      onRequestClose={onClose}
+      statusBarTranslucent
+    >
+      <View style={styles.backdrop}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.close')}
+        />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.keyboardAvoid}
+          keyboardVerticalOffset={0}
+        >
+          <View
+            style={[
+              styles.sheet,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+                paddingBottom: Math.max(insets.bottom, 16) + 8,
+              },
+            ]}
+          >
+            {/* Tirador superior / drag handle */}
+            <View style={[styles.handle, { backgroundColor: theme.colors.border }]} />
+
+            {/* Header */}
+            <View style={styles.header}>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.title, { color: theme.colors.foreground }]}>{t('image_link_modal.title')}</Text>
                 <Text style={[styles.subtitle, { color: theme.colors.foregroundMuted }]}>
@@ -174,9 +207,11 @@ export function ImageLinkModal({
             </View>
 
             <ScrollView
-              contentContainerStyle={{ paddingBottom: 16 }}
+              style={styles.sheetScroll}
+              contentContainerStyle={styles.sheetScrollContent}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
+              bounces={false}
             >
               {/* Botón de acceso rápido a Google Imágenes */}
               <Pressable
@@ -352,17 +387,65 @@ export function ImageLinkModal({
                 </Text>
               </Pressable>
             </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
       </View>
-    </TagSheetShell>
+    </Modal>
   );
 }
 
 const styles = themedStyleSheet({
-  sheetBody: {
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    justifyContent: 'flex-end',
+    ...Platform.select({
+      web: {
+        alignItems: 'center',
+      },
+    }),
+  },
+  keyboardAvoid: {
+    width: '100%',
+    justifyContent: 'flex-end',
+    ...Platform.select({
+      web: {
+        alignItems: 'center',
+      },
+    }),
+  },
+  sheet: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    paddingTop: 10,
     paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: Platform.OS === 'ios' ? 36 : 24,
-    maxHeight: '92%',
+    maxHeight: '88%',
+    width: '100%',
+    overflow: 'hidden',
+    ...Platform.select({
+      web: {
+        maxWidth: 620,
+        alignSelf: 'center',
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+      },
+    }),
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 12,
+  },
+  sheetScroll: {
+    flexGrow: 0,
+    flexShrink: 1,
+  },
+  sheetScrollContent: {
+    paddingBottom: 4,
   },
   header: {
     flexDirection: 'row',

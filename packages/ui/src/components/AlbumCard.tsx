@@ -66,6 +66,61 @@ interface AlbumCardProps {
   description?: string;
 }
 
+const PRESET_COVERS: Record<string, { type: 'gradient' | 'solid'; colors: [string, string, ...string[]]; diagonal?: boolean }> = {
+  aurora: { type: 'gradient', colors: ['#0E4B43', '#1F8560'] },
+  atardecer: { type: 'gradient', colors: ['#F4A460', '#C8602F'] },
+  cielo: { type: 'gradient', colors: ['#3A78C4', '#8CC8F4'] },
+  violeta: { type: 'gradient', colors: ['#5B2F98', '#2E1A5E'] },
+  dorado: { type: 'gradient', colors: ['#3A2F18', '#5E4E1F'], diagonal: true },
+  rojo: { type: 'solid', colors: ['#E53935', '#E53935'] },
+  azul: { type: 'solid', colors: ['#1E88E5', '#1E88E5'] },
+  verde: { type: 'solid', colors: ['#43A047', '#43A047'] },
+  amarillo: { type: 'solid', colors: ['#FDD835', '#FDD835'] },
+  morado: { type: 'solid', colors: ['#8E24AA', '#8E24AA'] },
+};
+
+function parseAlbumCover(coverUri?: string | null) {
+  if (!coverUri) return null;
+  const trimmed = coverUri.trim();
+  if (!trimmed) return null;
+
+  if (trimmed.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (parsed?.id && PRESET_COVERS[parsed.id] && (!parsed.colors || !parsed.colors.length)) {
+        return { ...PRESET_COVERS[parsed.id], ...parsed };
+      }
+      return parsed;
+    } catch {}
+  }
+
+  if (trimmed.startsWith('preset:')) {
+    const key = trimmed.replace('preset:', '').trim();
+    if (PRESET_COVERS[key]) return PRESET_COVERS[key];
+  }
+
+  if (PRESET_COVERS[trimmed]) {
+    return PRESET_COVERS[trimmed];
+  }
+
+  if (trimmed.startsWith('#')) {
+    return { type: 'solid', colors: [trimmed, trimmed] as [string, string] };
+  }
+
+  if (
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('file://') ||
+    trimmed.startsWith('data:') ||
+    trimmed.startsWith('blob:') ||
+    trimmed.startsWith('/')
+  ) {
+    return { type: 'image', uri: trimmed };
+  }
+
+  return null;
+}
+
 export function AlbumCard({
   title,
   totalTasks,
@@ -101,14 +156,7 @@ export function AlbumCard({
   const progress = totalTasks > 0 ? completedTasks / totalTasks : 0;
   const [g1, g2] = overlay.placeholders[colorIndex % overlay.placeholders.length] ?? overlay.placeholders[0]!;
 
-  let parsedCover: any = null;
-  if (coverUri && coverUri.startsWith('{')) {
-    try {
-      parsedCover = JSON.parse(coverUri);
-    } catch (e) {
-      // Not JSON
-    }
-  }
+  const parsedCover = parseAlbumCover(coverUri);
 
   let backgroundContent;
   if (parsedCover) {
@@ -136,16 +184,6 @@ export function AlbumCard({
         <LinearGradient colors={[g1, g2]} start={{ x: 0.3, y: 0 }} end={{ x: 0.7, y: 1 }} style={StyleSheet.absoluteFill} />
       );
     }
-  } else if (coverUri) {
-    backgroundContent = (
-      <Image
-        source={{ uri: coverUri }}
-        style={StyleSheet.absoluteFill}
-        contentFit="cover"
-        cachePolicy="memory-disk"
-        transition={150}
-      />
-    );
   } else {
     backgroundContent = (
       <LinearGradient colors={[g1, g2]} start={{ x: 0.3, y: 0 }} end={{ x: 0.7, y: 1 }} style={StyleSheet.absoluteFill} />
@@ -153,10 +191,7 @@ export function AlbumCard({
   }
 
   const isCompleted = totalTasks > 0 && completedTasks === totalTasks;
-  const isImageCover = !!(
-    (parsedCover && parsedCover.type === 'image' && parsedCover.uri) ||
-    (!parsedCover && coverUri)
-  );
+  const isImageCover = !!(parsedCover && parsedCover.type === 'image' && parsedCover.uri);
 
   const gradientColors: [string, string] = isImageCover
     ? ['transparent', 'rgba(0,0,0,0.72)']

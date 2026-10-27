@@ -119,7 +119,10 @@ export default function MyListScreen() {
           }}
           onPress={() => {
             if (state.isSelectionMode) state.toggleSelectTask(item.id);
-            else router.push(`/bucket/${item.id}` as any);
+            else {
+              if (Date.now() - state.lastExitTaskSelectionTimeRef.current < 450) return;
+              router.push(`/bucket/${item.id}` as any);
+            }
           }}
           onLongPress={() => {
             if (!state.isSelectionMode) {
@@ -180,7 +183,10 @@ export default function MyListScreen() {
           customization={taskViews.compact}
           onPress={() => {
             if (state.isSelectionMode) state.toggleSelectTask(item.id);
-            else router.push(`/bucket/${item.id}` as any);
+            else {
+              if (Date.now() - state.lastExitTaskSelectionTimeRef.current < 450) return;
+              router.push(`/bucket/${item.id}` as any);
+            }
           }}
           onLongPress={() => {
             if (!state.isSelectionMode) {
@@ -223,7 +229,10 @@ export default function MyListScreen() {
         customization={albumViews.compact}
         onPress={() => {
           if (state.isAlbumSelectionMode) state.toggleSelectAlbum(item.id);
-          else router.push(`/album/${item.id}` as any);
+          else {
+            if (Date.now() - state.lastExitAlbumSelectionTimeRef.current < 450) return;
+            router.push(`/album/${item.id}` as any);
+          }
         }}
         onLongPress={() => {
           if (!state.isAlbumSelectionMode) {
@@ -259,7 +268,10 @@ export default function MyListScreen() {
         customization={albumViews.list}
         onPress={() => {
           if (state.isAlbumSelectionMode) state.toggleSelectAlbum(item.id);
-          else router.push(`/album/${item.id}` as any);
+          else {
+            if (Date.now() - state.lastExitAlbumSelectionTimeRef.current < 450) return;
+            router.push(`/album/${item.id}` as any);
+          }
         }}
         onLongPress={() => {
           if (!state.isAlbumSelectionMode) {
@@ -320,7 +332,10 @@ export default function MyListScreen() {
         description={item.description}
         onPress={() => {
           if (state.isAlbumSelectionMode) state.toggleSelectAlbum(item.id);
-          else router.push(`/album/${item.id}` as any);
+          else {
+            if (Date.now() - state.lastExitAlbumSelectionTimeRef.current < 450) return;
+            router.push(`/album/${item.id}` as any);
+          }
         }}
         onLongPress={() => {
           if (!state.isAlbumSelectionMode) {
@@ -597,7 +612,10 @@ export default function MyListScreen() {
                               customization={taskViews.gallery}
                               onPress={() => {
                                 if (state.isSelectionMode) state.toggleSelectTask(item.id);
-                                else router.push(`/bucket/${item.id}` as any);
+                                else {
+                                  if (Date.now() - state.lastExitTaskSelectionTimeRef.current < 450) return;
+                                  router.push(`/bucket/${item.id}` as any);
+                                }
                               }}
                               onLongPress={() => {
                                 if (!state.isSelectionMode) {
@@ -629,7 +647,10 @@ export default function MyListScreen() {
                         customization={taskViews.gallery}
                         onPress={() => {
                           if (state.isSelectionMode) state.toggleSelectTask(item.id);
-                          else router.push(`/bucket/${item.id}` as any);
+                          else {
+                            if (Date.now() - state.lastExitTaskSelectionTimeRef.current < 450) return;
+                            router.push(`/bucket/${item.id}` as any);
+                          }
                         }}
                         onLongPress={() => {
                           if (!state.isSelectionMode) {
@@ -767,7 +788,11 @@ export default function MyListScreen() {
                 <View style={styles.albumGrid}>
                   <NoAlbumCard
                     count={state.unassignedCount}
-                    onPress={() => router.push('/album/unassigned')}
+                    onPress={() => {
+                      if (state.isAlbumSelectionMode) return;
+                      if (Date.now() - state.lastExitAlbumSelectionTimeRef.current < 450) return;
+                      router.push('/album/unassigned');
+                    }}
                   />
                 </View>
               ) : (
@@ -777,7 +802,11 @@ export default function MyListScreen() {
                   </Text>
                   <NoAlbumRow
                     count={state.unassignedCount}
-                    onPress={() => router.push('/album/unassigned')}
+                    onPress={() => {
+                      if (state.isAlbumSelectionMode) return;
+                      if (Date.now() - state.lastExitAlbumSelectionTimeRef.current < 450) return;
+                      router.push('/album/unassigned');
+                    }}
                   />
                 </View>
               )
@@ -838,7 +867,11 @@ export default function MyListScreen() {
                 )}
                 <NoAlbumRow
                   count={state.unassignedCount}
-                  onPress={() => router.push('/album/unassigned')}
+                  onPress={() => {
+                    if (state.isAlbumSelectionMode) return;
+                    if (Date.now() - state.lastExitAlbumSelectionTimeRef.current < 450) return;
+                    router.push('/album/unassigned');
+                  }}
                 />
               </>
             ) : state.albumViewMode === 'list' ? (
@@ -862,7 +895,11 @@ export default function MyListScreen() {
                 )}
                 <NoAlbumRow
                   count={state.unassignedCount}
-                  onPress={() => router.push('/album/unassigned')}
+                  onPress={() => {
+                    if (state.isAlbumSelectionMode) return;
+                    if (Date.now() - state.lastExitAlbumSelectionTimeRef.current < 450) return;
+                    router.push('/album/unassigned');
+                  }}
                 />
               </>
             ) : (
@@ -885,7 +922,11 @@ export default function MyListScreen() {
                     <View style={styles.albumGrid}>
                       <NoAlbumCard
                         count={state.unassignedCount}
-                        onPress={() => router.push('/album/unassigned')}
+                        onPress={() => {
+                          if (state.isAlbumSelectionMode) return;
+                          if (Date.now() - state.lastExitAlbumSelectionTimeRef.current < 450) return;
+                          router.push('/album/unassigned');
+                        }}
                       />
                     </View>
                   </>
@@ -896,7 +937,11 @@ export default function MyListScreen() {
                     )}
                     <NoAlbumCard
                       count={state.unassignedCount}
-                      onPress={() => router.push('/album/unassigned')}
+                      onPress={() => {
+                        if (state.isAlbumSelectionMode) return;
+                        if (Date.now() - state.lastExitAlbumSelectionTimeRef.current < 450) return;
+                        router.push('/album/unassigned');
+                      }}
                     />
                   </View>
                 )}

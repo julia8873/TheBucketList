@@ -381,6 +381,12 @@ export default function AlbumDetailScreen() {
             <Image source={{ uri: parsedCover.uri }} style={StyleSheet.absoluteFill} />
           ) : parsedCover?.type === 'solid' && parsedCover?.colors ? (
             <View style={[StyleSheet.absoluteFill, { backgroundColor: parsedCover.colors[0] }]} />
+          ) : parsedCover?.colors && parsedCover.colors.length >= 2 ? (
+            <LinearGradient
+              colors={[parsedCover.colors[0], parsedCover.colors[1] || parsedCover.colors[0], theme.colors.background]}
+              locations={[0, 0.55, 1]}
+              style={StyleSheet.absoluteFill}
+            />
           ) : (
             <LinearGradient
               colors={heroColors}

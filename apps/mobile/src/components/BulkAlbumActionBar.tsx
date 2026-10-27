@@ -235,6 +235,7 @@ export function BulkAlbumActionBar({
           styles.container,
           { paddingBottom: Math.max(insets.bottom, 12) + 6 },
         ]}
+        onStartShouldSetResponder={() => true}
       >
         <View style={styles.infoRow}>
           <View style={styles.badgeCount}>
@@ -252,7 +253,16 @@ export function BulkAlbumActionBar({
                 </Text>
               </Pressable>
             )}
-            <Pressable style={styles.closeBtn} onPress={onClearSelection} hitSlop={8}>
+            <Pressable
+              style={styles.closeBtn}
+              onPress={(e) => {
+                e?.stopPropagation?.();
+                onClearSelection();
+              }}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel="Cerrar selección"
+            >
               <X size={18} color="#AAA" />
             </Pressable>
           </View>

@@ -239,11 +239,14 @@ export function AlbumListHeaderControls({
       </ScrollView>
 
       {/* Fila de controles: Modos de vista, Ordenar, Personalizar, Selección */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexGrow: 1 }}
-        style={{ marginBottom: 12 }}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+          marginBottom: 12,
+          width: '100%',
+        }}
       >
         {/* Modos de vista */}
         <View
@@ -286,7 +289,7 @@ export function AlbumListHeaderControls({
         </View>
 
         {/* Ordenar (Estado / Manual / etc.) */}
-        <View style={[styles.sortTriggerContainer, { flexGrow: 1, flexShrink: 0 }]}>
+        <View style={[styles.sortTriggerContainer, { flex: 1, minWidth: 0, flexShrink: 1 }]}>
           <Pressable
             ref={albumSortTriggerRef}
             collapsable={false}
@@ -296,19 +299,26 @@ export function AlbumListHeaderControls({
               styles.sortTriggerBtn,
               {
                 height: 32,
-                paddingHorizontal: 10,
+                paddingHorizontal: 8,
                 borderRadius: 8,
                 backgroundColor: theme.colors.surface,
                 borderWidth: 1,
                 borderColor: theme.colors.border,
                 flex: 1,
+                minWidth: 0,
                 justifyContent: 'center',
               },
             ]}
             accessibilityRole="button"
             accessibilityLabel={t('my_list.sort_albums')}
           >
-            <Typography variant="caption" color={gold[400]} style={{ fontWeight: '600' }}>
+            <Typography
+              variant="caption"
+              color={gold[400]}
+              style={{ fontWeight: '600' }}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               {albumSortField === 'manual'
                 ? t('my_list.sort_manual')
                 : albumSortField === 'status'
@@ -391,7 +401,7 @@ export function AlbumListHeaderControls({
             style={{
               backgroundColor: gold[400],
               height: 32,
-              paddingHorizontal: 12,
+              paddingHorizontal: 10,
               borderRadius: 8,
               justifyContent: 'center',
               alignItems: 'center',
@@ -402,7 +412,7 @@ export function AlbumListHeaderControls({
             <Text style={{ fontSize: 11, fontWeight: '700', color: '#0E0E0E' }}>OK</Text>
           </Pressable>
         )}
-      </ScrollView>
+      </View>
 
       {/* Contador de álbumes abajo */}
       <View style={{ marginBottom: 10, marginTop: 2 }}>

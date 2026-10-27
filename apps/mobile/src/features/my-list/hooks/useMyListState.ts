@@ -150,7 +150,9 @@ export function useMyListState() {
     );
   };
 
+  const lastExitTaskSelectionTimeRef = useRef(0);
   const handleExitSelection = () => {
+    lastExitTaskSelectionTimeRef.current = Date.now();
     setIsSelectionMode(false);
     setSelectedTaskIds([]);
   };
@@ -158,6 +160,7 @@ export function useMyListState() {
   // Album Selection mode
   const [isAlbumSelectionMode, setIsAlbumSelectionMode] = useState(false);
   const [selectedAlbumIds, setSelectedAlbumIds] = useState<string[]>([]);
+  const lastExitAlbumSelectionTimeRef = useRef(0);
 
   const toggleSelectAlbum = (id: string) => {
     setSelectedAlbumIds((prev) =>
@@ -166,6 +169,7 @@ export function useMyListState() {
   };
 
   const handleExitAlbumSelection = () => {
+    lastExitAlbumSelectionTimeRef.current = Date.now();
     setIsAlbumSelectionMode(false);
     setSelectedAlbumIds([]);
   };
@@ -860,12 +864,14 @@ export function useMyListState() {
     setSelectedTaskIds,
     toggleSelectTask,
     handleExitSelection,
+    lastExitTaskSelectionTimeRef,
     isAlbumSelectionMode,
     setIsAlbumSelectionMode,
     selectedAlbumIds,
     setSelectedAlbumIds,
     toggleSelectAlbum,
     handleExitAlbumSelection,
+    lastExitAlbumSelectionTimeRef,
     albumViewMode,
     setAlbumViewMode,
     albumFilter,

@@ -71,8 +71,9 @@ const styles = themedStyleSheet({
     alignItems: 'center',
     borderRadius: 8,
     padding: 2,
+    gap: 2,
     borderWidth: 1,
-    height: 32,
+    height: 34,
   },
   btn: {
     paddingHorizontal: 8,
