@@ -313,7 +313,7 @@ export function DailyTasksScrollControls({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={[
           styles.tagsFilterScroll,
-          { paddingHorizontal: 20, gap: 8, flexGrow: 1 },
+          { paddingHorizontal: 16, gap: 8, flexGrow: 1 },
         ]}
         style={{ marginHorizontal: -20, marginBottom: 16 }}
       >
@@ -730,7 +730,7 @@ export function DailyTasksScrollControls({
 
 const dailySheetStyles = themedStyleSheet({
   sheetContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 8,
   },
   sheetHeader: {

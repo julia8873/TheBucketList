@@ -18,7 +18,7 @@ export const styles = themedStyleSheet({
   },
   chipsContainer: {
     marginTop: -17,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     zIndex: 10,
     position: 'relative',
   },
@@ -63,19 +63,19 @@ export const styles = themedStyleSheet({
   chipSharedText: { fontFamily: 'Inter_500Medium', fontSize: 12, color: '#D4B13A' },
   title: {
     fontFamily: 'PlayfairDisplay_700Bold', fontSize: 34, lineHeight: 40,
-    color: '#F3EEE3', marginTop: 18, marginHorizontal: 20,
+    color: '#F3EEE3', marginTop: 18, marginHorizontal: 16,
   },
   titleInput: {
     fontFamily: 'PlayfairDisplay_700Bold', fontSize: 34, lineHeight: 40,
-    color: '#F3EEE3', marginTop: 14, marginHorizontal: 20, padding: 0,
+    color: '#F3EEE3', marginTop: 14, marginHorizontal: 16, padding: 0,
   },
   albumDescription: {
-    fontFamily: 'Inter_400Regular', fontSize: 15, color: '#A0A0A0', marginTop: 6, marginHorizontal: 20,
+    fontFamily: 'Inter_400Regular', fontSize: 15, color: '#A0A0A0', marginTop: 6, marginHorizontal: 16,
   },
   albumDescriptionInput: {
-    fontFamily: 'Inter_400Regular', fontSize: 15, color: '#C0BAAF', marginTop: 6, marginHorizontal: 20, padding: 0,
+    fontFamily: 'Inter_400Regular', fontSize: 15, color: '#C0BAAF', marginTop: 6, marginHorizontal: 16, padding: 0,
   },
-  collaboratorsSection: { marginHorizontal: 20, marginTop: 14 },
+  collaboratorsSection: { marginHorizontal: 16, marginTop: 14 },
   collaboratorsRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   collaboratorCircle: {
     width: 50, height: 50, borderRadius: 25, borderWidth: 2, borderColor: '#D4B13A',
@@ -103,7 +103,7 @@ export const styles = themedStyleSheet({
   addCollabEmoji: { fontSize: 18 },
   addCollabPlus: { fontSize: 16, fontWeight: '800', color: '#D4B13A', marginLeft: 1 },
   progressCard: {
-    marginTop: 18, marginHorizontal: 20, paddingVertical: 16, paddingHorizontal: 18,
+    marginTop: 18, marginHorizontal: 16, paddingVertical: 16, paddingHorizontal: 18,
     backgroundColor: '#151515', borderWidth: 1, borderColor: '#262626', borderRadius: 16,
     flexDirection: 'row', alignItems: 'center', gap: 18,
   },
@@ -117,23 +117,23 @@ export const styles = themedStyleSheet({
   progressSub: { fontFamily: 'Inter_400Regular', fontSize: 14, color: '#A0A0A0' },
   toggleAllBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    marginHorizontal: 20, marginTop: 12, paddingVertical: 10, borderRadius: 14,
+    marginHorizontal: 16, marginTop: 12, paddingVertical: 10, borderRadius: 14,
     borderWidth: 1, borderColor: '#383218', backgroundColor: 'rgba(212, 177, 58, 0.08)',
   },
   toggleAllBtnActive: { borderColor: '#423719', backgroundColor: 'rgba(212, 177, 58, 0.12)' },
   toggleAllBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#D4B13A' },
   sectionContainer: { marginTop: 24 },
   sectionHeader: {
-    paddingHorizontal: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
   sectionTitleLeft: {
     fontFamily: 'PlayfairDisplay_700Bold', fontSize: 15, letterSpacing: 0.6, textTransform: 'uppercase',
   },
   addBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   addBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#D4B13A' },
-  taskList: { paddingHorizontal: 20, paddingTop: 10, gap: 10 },
-  taskListDraggable: { paddingHorizontal: 20, paddingTop: 10 },
-  tasksToolbarWrap: { marginTop: 20, paddingHorizontal: 20 },
+  taskList: { paddingHorizontal: 16, paddingTop: 10, gap: 10 },
+  taskListDraggable: { paddingHorizontal: 16, paddingTop: 10 },
+  tasksToolbarWrap: { marginTop: 20, paddingHorizontal: 16 },
   tasksToolbar: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   toolbarIconBtn: {
     width: 36, height: 36, borderRadius: 18, backgroundColor: '#151515',
@@ -189,7 +189,7 @@ export const styles = themedStyleSheet({
   bottomBar: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     backgroundColor: '#0D0D0D', borderTopWidth: 1, borderTopColor: '#262626',
-    paddingTop: 14, paddingHorizontal: 20, flexDirection: 'row', gap: 12,
+    paddingTop: 14, paddingHorizontal: 16, flexDirection: 'row', gap: 12,
     ...Platform.select({
       web: {
         maxWidth: 620,
@@ -246,7 +246,7 @@ export const styles = themedStyleSheet({
   },
   bottomSheet: {
     maxHeight: '85%', borderTopLeftRadius: 28, borderTopRightRadius: 28,
-    paddingTop: 10, paddingBottom: Platform.OS === 'ios' ? 34 : 20, paddingHorizontal: 20,
+    paddingTop: 10, paddingBottom: Platform.OS === 'ios' ? 34 : 20, paddingHorizontal: 16,
     backgroundColor: '#151515', borderWidth: 1, borderColor: '#262626',
     width: '100%',
     ...Platform.select({

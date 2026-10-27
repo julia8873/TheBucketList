@@ -3,7 +3,7 @@ import { StyleSheet, Platform } from 'react-native';
 
 export const styles = themedStyleSheet({
   container: { flex: 1 },
-  scrollContent: { paddingHorizontal: 20, paddingTop: 14, paddingBottom: 150 },
+  scrollContent: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 150 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 10 },
   backButton: {
     width: 44,
@@ -63,7 +63,7 @@ export const styles = themedStyleSheet({
   visibilityRow: {
     flexDirection: 'row',
     gap: 8,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingBottom: 16,
   },
   coverContainer: {
@@ -287,7 +287,7 @@ export const styles = themedStyleSheet({
     height: 72,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
   },
   settingLabel: { fontFamily: 'Inter_500Medium', fontSize: 18, color: '#FFF', marginLeft: 16, flex: 1 },
@@ -360,7 +360,7 @@ export const styles = themedStyleSheet({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderWidth: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 36,
     width: '100%',

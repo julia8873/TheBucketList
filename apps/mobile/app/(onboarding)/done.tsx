@@ -59,7 +59,7 @@ export default function DoneScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing[5], gap: spacing[2] },
+  content: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing[4], gap: spacing[2] },
   title: { fontFamily: fontFamily.serifBold, fontSize: 26, marginTop: spacing[4], textAlign: 'center' },
   subtitle: { fontFamily: fontFamily.regular, fontSize: 13, textAlign: 'center', marginBottom: spacing[4] },
   card: { alignSelf: 'stretch', borderWidth: 1, borderRadius: radii.xl, padding: spacing[4], gap: spacing[3] },

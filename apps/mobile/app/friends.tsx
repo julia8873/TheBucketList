@@ -221,7 +221,7 @@ export default function FriendsScreen() {
         }
       >
         {targetIsLocked ? (
-          <View style={{ paddingHorizontal: 20, paddingTop: 40, alignItems: 'center' }}>
+          <View style={{ paddingHorizontal: 16, paddingTop: 40, alignItems: 'center' }}>
             <EmptyState
               title={t('friends.locked_account_title')}
               message={t('friends.locked_account_desc')}

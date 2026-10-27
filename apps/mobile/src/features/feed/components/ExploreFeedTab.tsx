@@ -221,7 +221,7 @@ export function ExploreFeedTab({
       return (
         <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 72 }} showsVerticalScrollIndicator={false}>
           {headerElement}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: 10 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 10 }}>
             <TaskGallerySkeleton />
             <TaskGallerySkeleton />
             <TaskGallerySkeleton />

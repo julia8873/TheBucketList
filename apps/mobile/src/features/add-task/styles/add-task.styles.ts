@@ -9,7 +9,7 @@ export const styles = themedStyleSheet({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     gap: 14,
   },
   backBtn: {
@@ -29,7 +29,7 @@ export const styles = themedStyleSheet({
   },
   albumPillContainer: {
     marginTop: 12,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     alignItems: 'flex-start',
   },
   albumPill: {
@@ -50,7 +50,7 @@ export const styles = themedStyleSheet({
   },
   searchContainer: {
     marginTop: 20,
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     height: 48,
     borderRadius: 999,
     backgroundColor: '#151515',
@@ -69,7 +69,7 @@ export const styles = themedStyleSheet({
   },
   createTaskBtn: {
     marginTop: 14,
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     height: 48,
     borderRadius: 999,
     borderWidth: 1,
@@ -90,7 +90,7 @@ export const styles = themedStyleSheet({
   },
   segmentedControl: {
     marginTop: 16,
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     height: 46,
     borderRadius: 999,
     backgroundColor: '#151515',
@@ -149,8 +149,8 @@ export const styles = themedStyleSheet({
     marginTop: 16,
   },
   tagFilterScroll: {
-    paddingLeft: 20,
-    paddingRight: 20,
+    paddingLeft: 16,
+    paddingRight: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
@@ -212,7 +212,7 @@ export const styles = themedStyleSheet({
   },
   countRow: {
     marginTop: 16,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -231,7 +231,7 @@ export const styles = themedStyleSheet({
     flex: 1,
   },
   listContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 16,
     gap: 10,
   },
@@ -307,7 +307,7 @@ export const styles = themedStyleSheet({
     borderTopWidth: 1,
     borderTopColor: '#262626',
     paddingTop: 14,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   btnAdd: {
     height: 56,

@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingTop: 12, marginBottom: 8 },
   back: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   title: { fontFamily: fontFamily.serifBold, fontSize: 30 },
-  content: { paddingHorizontal: 20, paddingBottom: 24 },
+  content: { paddingHorizontal: 16, paddingBottom: 24 },
   avatarSection: { alignItems: 'center', marginTop: 16, gap: 10 },
   camera: { position: 'absolute', right: -2, bottom: -2, width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
   changePhoto: { fontFamily: fontFamily.semibold, fontSize: 15, padding: 6 },
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
   bio: { minHeight: 96, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 14, fontFamily: fontFamily.regular, fontSize: 16, lineHeight: 23 },
   counter: { textAlign: 'right', fontFamily: fontFamily.regular, fontSize: 13, marginTop: 6 },
   hint: { fontFamily: fontFamily.regular, fontSize: 13, marginTop: 6 },
-  footer: { paddingHorizontal: 20, paddingTop: 14, paddingBottom: 14, borderTopWidth: StyleSheet.hairlineWidth },
+  footer: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 14, borderTopWidth: StyleSheet.hairlineWidth },
   cta: { height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center' },
   ctaText: { fontFamily: fontFamily.semibold, fontSize: 17 },
 });

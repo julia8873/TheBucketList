@@ -176,7 +176,7 @@ export default function ManageAdminsScreen() {
         </View>
 
         {/* Lista de administradores */}
-        <View style={{ flex: 1, paddingHorizontal: 20 }}>
+        <View style={{ flex: 1, paddingHorizontal: 16 }}>
           <Text style={[styles.sectionLabel, { color: theme.colors.foregroundMuted, marginTop: 12, marginBottom: 10 }]}>
             ADMINISTRADORES ACTUALES ({admins.length})
           </Text>
@@ -254,7 +254,7 @@ const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 8,
   },
@@ -288,7 +288,7 @@ const styles = themedStyleSheet({
   description: {
     color: '#8F8F8F',
     fontSize: 13,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     marginTop: 6,
     marginBottom: 16,
     lineHeight: 18,
@@ -299,7 +299,7 @@ const styles = themedStyleSheet({
     borderColor: '#262626',
     borderRadius: 16,
     padding: 16,
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     marginBottom: 8,
   },
   sectionLabel: {

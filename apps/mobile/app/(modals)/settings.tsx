@@ -462,6 +462,6 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingTop: 12, paddingBottom: 6 },
   back: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   title: { fontFamily: fontFamily.serifBold, fontSize: 30 },
-  content: { paddingHorizontal: 20, paddingBottom: 48 },
+  content: { paddingHorizontal: 16, paddingBottom: 48 },
   version: { textAlign: 'center', fontFamily: fontFamily.regular, fontSize: 12, marginTop: 18 },
 });

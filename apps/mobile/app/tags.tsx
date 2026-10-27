@@ -196,7 +196,7 @@ export default function TagsScreen() {
 
 const styles = themedStyleSheet({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 20, paddingTop: 12 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingTop: 12 },
   circleBtn: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   addBtn: { backgroundColor: GOLD, borderColor: GOLD },
   title: { flex: 1, fontFamily: fontFamily.serifBold, fontSize: 30 },
@@ -206,7 +206,7 @@ const styles = themedStyleSheet({
     gap: 12,
     height: 48,
     marginTop: 20,
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     paddingHorizontal: 18,
     borderRadius: 24,
     backgroundColor: '#161616',
@@ -215,7 +215,7 @@ const styles = themedStyleSheet({
   },
   searchInput: { flex: 1, fontFamily: fontFamily.regular, fontSize: 16, color: '#F5F5F5', padding: 0 },
   chipsScroll: { flexGrow: 0, marginTop: 14 },
-  chips: { flexDirection: 'row', gap: 8, paddingHorizontal: 20 },
+  chips: { flexDirection: 'row', gap: 8, paddingHorizontal: 16 },
   sectionLabel: {
     fontFamily: fontFamily.serifBold,
     fontSize: 14,
@@ -224,7 +224,7 @@ const styles = themedStyleSheet({
     marginTop: 22,
     marginBottom: 8,
   },
-  listContent: { paddingHorizontal: 20, paddingBottom: 16 },
+  listContent: { paddingHorizontal: 16, paddingBottom: 16 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -252,7 +252,7 @@ const styles = themedStyleSheet({
   errorText: { fontFamily: fontFamily.regular, fontSize: 14, color: '#E5877D' },
   retry: { fontFamily: fontFamily.semibold, fontSize: 14, color: GOLD },
   footer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: '#1F1F1F',

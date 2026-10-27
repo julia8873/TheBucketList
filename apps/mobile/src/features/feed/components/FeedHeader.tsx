@@ -244,38 +244,6 @@ export function FeedHeader({
             />
           </Pressable>
 
-          {/* Colecciones (explorar) */}
-          {homeTab === 'explore' ? (
-            <Pressable
-              onPress={() => onChangeContentFilter(contentFilter === 'colecciones' ? 'todo' : 'colecciones')}
-              style={({ pressed }) => [
-                styles.collectionsTriggerBtn,
-                {
-                  backgroundColor: contentFilter === 'colecciones'
-                    ? (theme.dark ? 'rgba(212, 175, 55, 0.16)' : 'rgba(212, 175, 55, 0.22)')
-                    : theme.colors.surface,
-                  borderColor: contentFilter === 'colecciones' ? gold[400] : theme.colors.border,
-                },
-                pressed && { opacity: 0.8 },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={t('feed.filter_collections')}
-              accessibilityState={{ selected: contentFilter === 'colecciones' }}
-            >
-              <Sparkles size={13} color={gold[400]} />
-              <Text
-                style={[
-                  styles.collectionsTriggerBtnText,
-                  { color: contentFilter === 'colecciones' ? gold[400] : theme.colors.foreground },
-                ]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {t('feed.filter_collections')}
-              </Text>
-            </Pressable>
-          ) : null}
-
           {/* Mapa */}
           {onOpenMap ? (
             <Pressable
@@ -305,6 +273,39 @@ export function FeedHeader({
           <ViewModeSelector mode={viewMode} onChange={onChangeViewMode} style={{ flexShrink: 0 }} />
         </View>
       )}
+      {!isSearching && homeTab === 'explore' ? (
+        <View style={styles.collectionsRow}>
+            <Pressable
+              onPress={() => onChangeContentFilter(contentFilter === 'colecciones' ? 'todo' : 'colecciones')}
+              style={({ pressed }) => [
+                styles.collectionsTriggerBtn,
+                styles.collectionsTriggerBtnFull,
+                {
+                  backgroundColor: contentFilter === 'colecciones'
+                    ? (theme.dark ? 'rgba(212, 175, 55, 0.16)' : 'rgba(212, 175, 55, 0.22)')
+                    : theme.colors.surface,
+                  borderColor: contentFilter === 'colecciones' ? gold[400] : theme.colors.border,
+                },
+                pressed && { opacity: 0.8 },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={t('feed.filter_collections')}
+              accessibilityState={{ selected: contentFilter === 'colecciones' }}
+            >
+              <Sparkles size={13} color={gold[400]} />
+              <Text
+                style={[
+                  styles.collectionsTriggerBtnText,
+                  { color: contentFilter === 'colecciones' ? gold[400] : theme.colors.foreground },
+                ]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {t('feed.filter_collections')}
+              </Text>
+            </Pressable>
+        </View>
+      ) : null}
 
       {/* Bottom Sheet de selección de filtro de contenido (estilo mi lista) */}
       <TagSheetShell visible={filterSheetVisible} onClose={() => setFilterSheetVisible(false)}>

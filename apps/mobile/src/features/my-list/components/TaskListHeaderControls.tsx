@@ -546,7 +546,7 @@ export function TaskListHeaderControls({
 
 const localStyles = themedStyleSheet({
   sheetContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 8,
   },
   sheetHeader: {

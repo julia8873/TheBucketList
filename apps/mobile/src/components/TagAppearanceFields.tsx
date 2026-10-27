@@ -334,7 +334,7 @@ const styles = themedStyleSheet({
     marginBottom: 12,
   },
   emojiScroll: { marginHorizontal: -20, flexGrow: 0 },
-  emojiRow: { paddingHorizontal: 20, paddingVertical: 6, gap: 12, alignItems: 'center' },
+  emojiRow: { paddingHorizontal: 16, paddingVertical: 6, gap: 12, alignItems: 'center' },
   emojiCircle: {
     width: 44,
     height: 44,

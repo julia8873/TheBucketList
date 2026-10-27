@@ -360,7 +360,7 @@ export default function CurrentUserProfileScreen() {
           )}
           ListEmptyComponent={
             activeTab !== 'list' ? null : bucketsLoading ? (
-              <View style={{ gap: 10, marginTop: 12, paddingHorizontal: 20 }}>
+              <View style={{ gap: 10, marginTop: 12, paddingHorizontal: 16 }}>
                 <TaskRowSkeleton />
                 <TaskRowSkeleton />
                 <TaskRowSkeleton />
@@ -400,14 +400,14 @@ function Stat({ value, label, onPress }: { value: number; label: string; onPress
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  listContent: { paddingHorizontal: 20, paddingBottom: 48 },
+  listContent: { paddingHorizontal: 16, paddingBottom: 48 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: 12,
     paddingBottom: 16,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     minHeight: 60,
   },
   roundBtn: {

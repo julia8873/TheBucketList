@@ -439,7 +439,7 @@ const styles = themedStyleSheet({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 16,
     minHeight: 44 + 12 + 16, // misma altura de fila (44) que Ajustes / Perfil → el título queda a la misma altura

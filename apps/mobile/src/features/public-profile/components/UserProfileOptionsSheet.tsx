@@ -197,7 +197,7 @@ const styles = themedStyleSheet({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 10,
   },
   displayName: {

@@ -417,7 +417,7 @@ const styles = themedStyleSheet({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 16,
     borderBottomWidth: 1,
@@ -440,7 +440,7 @@ const styles = themedStyleSheet({
     backgroundColor: '#222222',
   },
   content: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 16,
   },
   pendingSection: {

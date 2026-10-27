@@ -113,7 +113,7 @@ export function FeedSearchResultsView({
       </View>
 
       {totalResults === 0 ? (
-        <View style={{ paddingHorizontal: 20, paddingTop: 40, alignItems: 'center' }}>
+        <View style={{ paddingHorizontal: 16, paddingTop: 40, alignItems: 'center' }}>
           <EmptyState
             title={t('feed.search_empty_title')}
             message={t('feed.search_empty_desc', { query })}

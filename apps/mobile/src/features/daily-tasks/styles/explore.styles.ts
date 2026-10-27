@@ -7,7 +7,7 @@ export const styles = themedStyleSheet({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 16,
     flexDirection: 'row',
@@ -29,7 +29,7 @@ export const styles = themedStyleSheet({
     marginBottom: 10,
   },
   tabsContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     marginBottom: 12,
   },
   segmentedContainer: {
@@ -67,7 +67,7 @@ export const styles = themedStyleSheet({
     alignItems: 'center',
     gap: 10,
     height: 48,
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     marginBottom: 14,
     paddingHorizontal: 16,
     borderRadius: 24,
@@ -87,7 +87,7 @@ export const styles = themedStyleSheet({
     alignItems: 'center',
     gap: 10,
     height: 48,
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     marginBottom: 14,
     paddingHorizontal: 16,
     borderRadius: 24,
@@ -265,7 +265,7 @@ export const styles = themedStyleSheet({
     flex: 1,
   },
   listContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 0,
     paddingBottom: 120,
   },
@@ -1434,7 +1434,7 @@ export const styles = themedStyleSheet({
     borderTopRightRadius: 22,
     borderTopWidth: 1,
     borderColor: '#2A2A2A',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: Platform.OS === 'ios' ? 36 : 24,
     maxHeight: '82%',

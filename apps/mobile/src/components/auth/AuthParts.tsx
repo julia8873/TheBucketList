@@ -366,14 +366,14 @@ export function BigAvatar({
 
 const s = themedStyleSheet({
   flex: { flex: 1 },
-  topRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], paddingHorizontal: spacing[5], paddingTop: spacing[3], minHeight: 44 },
+  topRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], paddingHorizontal: spacing[4], paddingTop: spacing[3], minHeight: 44 },
   back: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   track: { flex: 1, height: 3, borderRadius: 2, overflow: 'hidden' },
   fill: { height: 3, borderRadius: 2 },
-  scroll: { flexGrow: 1, paddingHorizontal: spacing[5], paddingTop: spacing[5], paddingBottom: spacing[4] },
+  scroll: { flexGrow: 1, paddingHorizontal: spacing[4], paddingTop: spacing[5], paddingBottom: spacing[4] },
   title: { marginBottom: spacing[1] },
   body: { marginTop: spacing[6], gap: spacing[4] },
-  footer: { paddingHorizontal: spacing[5], paddingBottom: Platform.OS === 'ios' ? 52 : 46, paddingTop: spacing[2], gap: spacing[3] },
+  footer: { paddingHorizontal: spacing[4], paddingBottom: Platform.OS === 'ios' ? 52 : 46, paddingTop: spacing[2], gap: spacing[3] },
   field: { gap: spacing[2] },
   label: { fontFamily: fontFamily.serifBold, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase' },
   inputRow: { flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingHorizontal: spacing[4], borderRadius: radii.full },

@@ -267,7 +267,7 @@ const styles = themedStyleSheet({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 14,
   },
@@ -306,7 +306,7 @@ const styles = themedStyleSheet({
     alignItems: 'center',
     gap: 10,
     backgroundColor: '#141414',
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     marginBottom: 16,
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -321,7 +321,7 @@ const styles = themedStyleSheet({
     padding: 0,
   },
   listContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     gap: 14,
   },
   card: {
@@ -458,7 +458,7 @@ const styles = themedStyleSheet({
   },
   backBtn: {
     backgroundColor: '#D4AF37',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
   },

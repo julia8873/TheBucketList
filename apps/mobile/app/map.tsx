@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     paddingVertical: 4,
-    paddingRight: 20,
+    paddingRight: 16,
   },
   filterPill: {
     flexDirection: 'row',

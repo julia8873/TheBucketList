@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#000' },
   header: {
     paddingTop: Platform.OS === 'ios' ? 56 : 40,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.35)',
   },
   tools: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: Platform.OS === 'ios' ? 40 : 28,
     gap: 16,

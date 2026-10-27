@@ -56,7 +56,7 @@ const styles = themedStyleSheet({
     height: 72,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#2A2A2A',
   },

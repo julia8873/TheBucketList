@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 8,
   },
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 13,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     marginTop: 6,
     marginBottom: 16,
     lineHeight: 18,

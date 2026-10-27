@@ -130,7 +130,7 @@ const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 8,
   },
@@ -147,7 +147,7 @@ const styles = themedStyleSheet({
   description: {
     color: '#8F8F8F',
     fontSize: 13,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     marginTop: 6,
     marginBottom: 16,
     lineHeight: 18,
@@ -158,7 +158,7 @@ const styles = themedStyleSheet({
     alignItems: 'center',
   },
   listContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingBottom: 40,
     gap: 10,
   },

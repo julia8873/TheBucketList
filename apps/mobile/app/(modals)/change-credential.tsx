@@ -156,15 +156,15 @@ export default function ChangeCredentialScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 20, paddingTop: 12 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingTop: 12 },
   back: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   title: { fontFamily: fontFamily.serifBold, fontSize: 26, flex: 1 },
-  body: { flex: 1, paddingHorizontal: 20, paddingTop: 24 },
+  body: { flex: 1, paddingHorizontal: 16, paddingTop: 24 },
   label: { fontFamily: fontFamily.serifBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase', marginTop: 16, marginBottom: 8 },
   input: { height: 52, borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, fontFamily: fontFamily.regular, fontSize: 16 },
   err: { fontFamily: fontFamily.regular, fontSize: 13, marginTop: 8 },
   info: { fontFamily: fontFamily.regular, fontSize: 16, lineHeight: 24 },
-  footer: { paddingHorizontal: 20, paddingBottom: 16 },
+  footer: { paddingHorizontal: 16, paddingBottom: 16 },
   cta: { height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center' },
   ctaText: { fontFamily: fontFamily.semibold, fontSize: 17 },
 });

@@ -19,7 +19,7 @@ export const styles = themedStyleSheet({
     borderTopRightRadius: 22,
     paddingTop: 16,
     paddingBottom: 32,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     maxHeight: '80%',
     borderWidth: 1,
     borderColor: '#262626',

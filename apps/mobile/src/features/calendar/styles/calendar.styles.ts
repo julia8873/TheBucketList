@@ -9,7 +9,7 @@ export const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     marginBottom: 16,
     marginTop: 8,
   },
@@ -100,7 +100,7 @@ export const styles = themedStyleSheet({
   },
   legendRow: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     marginTop: 12,
     gap: 16,
     alignItems: 'center',
@@ -121,7 +121,7 @@ export const styles = themedStyleSheet({
     color: '#8A8A8A',
   },
   sectionHeader: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     marginTop: 24,
     marginBottom: 10,
   },
@@ -132,7 +132,7 @@ export const styles = themedStyleSheet({
     letterSpacing: 0.6,
   },
   tasksContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   emptyDayContainer: {
     paddingVertical: 24,
@@ -159,7 +159,7 @@ export const styles = themedStyleSheet({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     marginBottom: 12,
   },
   expiredDot: {
@@ -183,7 +183,7 @@ export const styles = themedStyleSheet({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 8,
   },
   unscheduledTitle: {

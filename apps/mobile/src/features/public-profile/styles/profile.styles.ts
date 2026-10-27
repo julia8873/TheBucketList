@@ -9,7 +9,7 @@ export const styles = themedStyleSheet({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 6,
   },
@@ -23,7 +23,7 @@ export const styles = themedStyleSheet({
     borderWidth: 1,
     borderColor: '#2A2A2A',
   },
-  listContent: { paddingHorizontal: 20, paddingBottom: 48 },
+  listContent: { paddingHorizontal: 16, paddingBottom: 48 },
   tabsContainer: { marginTop: 22, marginBottom: 4 },
   albumGrid: {
     flexDirection: 'row',

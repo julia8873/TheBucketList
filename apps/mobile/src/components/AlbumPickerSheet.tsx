@@ -272,7 +272,7 @@ const styles = themedStyleSheet({
     marginBottom: 8,
   },
   header: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingBottom: 12,
   },
   headerRow: {

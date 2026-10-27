@@ -364,7 +364,7 @@ export function BucketBottomSheet({
                   bounces={false}
                 >
                   <View style={styles.sheetOptions}>
-                    <View style={{ paddingHorizontal: 20, paddingBottom: 10 }}>
+                    <View style={{ paddingHorizontal: 16, paddingBottom: 10 }}>
                       <TextInput
                         style={{
                           backgroundColor: theme.colors.background,
