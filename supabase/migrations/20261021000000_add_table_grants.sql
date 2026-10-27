@@ -45,15 +45,8 @@ GRANT SELECT ON public.bucket_photos TO anon;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.bucket_photos TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.bucket_photos TO service_role;
 
--- shared_lists
-GRANT SELECT ON public.shared_lists TO anon;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.shared_lists TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.shared_lists TO service_role;
-
--- shared_list_members
-GRANT SELECT ON public.shared_list_members TO anon;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.shared_list_members TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.shared_list_members TO service_role;
+-- shared_lists / shared_list_members: eliminadas en 20261006000001_albums.sql (DROP TABLE),
+-- por eso ya no se les concede nada aquí.
 
 -- follows
 GRANT SELECT ON public.follows TO anon;
