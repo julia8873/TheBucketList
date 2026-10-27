@@ -4,7 +4,7 @@ import { View, ScrollView, KeyboardAvoidingView, Platform, Pressable, Text, Text
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createBucketSchema, type CreateBucketForm, processBucketImage } from '@bucketlist/shared';
+import { createBucketSchema, type CreateBucketForm } from '@bucketlist/shared';
 import { useCreateBucket } from '../../src/hooks/useBuckets';
 import { supabase } from '../../src/services/supabase';
 import { storageApi } from '../../src/services/api/storage';
@@ -123,11 +123,11 @@ export default function CreateBucketModal() {
       if (coverImage && !coverImage.startsWith('preset:') && !coverImage.startsWith('http')) {
         setIsUploadingCover(true);
         try {
-          const processed = await processBucketImage(coverImage);
-          const path = `covers/${user?.id || 'anon'}_${Date.now()}.jpg`;
-          finalCoverImage = await storageApi.uploadSingle(path, processed.original.uri);
+          finalCoverImage = await storageApi.uploadCover(user?.id || 'anon', coverImage);
         } catch (uploadErr) {
-          console.error('Failed to upload cover image, using local fallback:', uploadErr);
+          // Nunca guardar la URI local / base64 en la BD: se descargaría entera en cada consulta.
+          console.error('Failed to upload cover image, saving without cover:', uploadErr);
+          finalCoverImage = null;
         } finally {
           setIsUploadingCover(false);
         }

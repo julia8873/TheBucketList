@@ -4,7 +4,7 @@ import NetInfo from '@react-native-community/netinfo';
 import { focusManager, useQueryClient } from '@tanstack/react-query';
 
 /** Cada cuánto se refrescan los datos "viejos" como red de seguridad (useRealtimeSync ya maneja eventos en tiempo real). */
-const POLL_INTERVAL_MS = 240_000;
+const POLL_INTERVAL_MS = 900_000; // 15 min (antes 4): cada refetch de una lista infinita vuelve a pedir TODAS las páginas cargadas
 
 /**
  * Recarga automática global. Se monta UNA vez (en app/_layout.tsx):

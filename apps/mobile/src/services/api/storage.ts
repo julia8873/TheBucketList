@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy';
+import { processBucketImage } from '@bucketlist/shared';
 import { supabase } from '../supabase';
 
 const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -85,6 +86,32 @@ export const storageApi = {
       .upload(path, data, { contentType, upsert: true, cacheControl: '31536000' });
     if (error) throw error;
     return supabase.storage.from('photos').getPublicUrl(path).data.publicUrl;
+  },
+
+  /**
+   * Sube una portada a Storage y devuelve su URL pública. Acepta URIs locales (file://, content://)
+   * y URIs `data:` (imagen pegada del portapapeles). Lanza error si falla: quien llama NUNCA debe
+   * guardar la URI original en la base de datos (una imagen en base64 pesa cientos de KB y se
+   * descarga entera en cada consulta del feed → egress).
+   */
+  uploadCover: async (userId: string, uri: string): Promise<string> => {
+    let source = uri;
+    let tempPath: string | null = null;
+    if (uri.startsWith('data:')) {
+      const base64 = uri.replace(/^data:[^;]+;base64,/, '');
+      tempPath = `${FileSystem.cacheDirectory}cover_tmp_${Date.now()}.jpg`;
+      await FileSystem.writeAsStringAsync(tempPath, base64, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      source = tempPath;
+    }
+    try {
+      const processed = await processBucketImage(source);
+      const path = `covers/${userId}_${Date.now()}.jpg`;
+      return await storageApi.uploadSingle(path, processed.original.uri);
+    } finally {
+      if (tempPath) void FileSystem.deleteAsync(tempPath, { idempotent: true }).catch(() => undefined);
+    }
   },
 
   getPublicUrl: (path: string) => {

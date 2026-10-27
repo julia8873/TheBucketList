@@ -144,7 +144,11 @@ export const bucketApi = {
       location_lat: payload.location_lat || null,
       location_lng: payload.location_lng || null,
       status: 'pending',
-      cover_image: payload.cover_image || null,
+      // Defensa: jamás guardar imágenes en base64 en la fila (ver migración 20261027120000).
+      cover_image:
+        payload.cover_image && !String(payload.cover_image).startsWith('data:')
+          ? payload.cover_image
+          : null,
       drive_url: payload.drive_url || null,
       collaboration_mode: payload.collaboration_mode || 'invite_only',
       collaboration_audience: payload.collaboration_audience || 'followers',

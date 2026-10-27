@@ -24,7 +24,6 @@ import { SectionTitle } from '../../src/features/task-form/components/SectionTit
 import { TaskSettingsCard } from '../../src/features/task-form/components/TaskSettingsCard';
 import { TaskCollaboratorsSection } from '../../src/features/task-form/components/TaskCollaboratorsSection';
 import { TaskCoverPicker } from '../../src/features/task-form/components/TaskCoverPicker';
-import { processBucketImage } from '@bucketlist/shared';
 import { storageApi } from '../../src/services/api/storage';
 import { applyMoveTasks, settleTaskCaches } from '../../src/utils/optimisticCache';
 
@@ -178,11 +177,11 @@ export default function EditBucketModal() {
       !coverImage.startsWith('http')
     ) {
       try {
-        const processed = await processBucketImage(coverImage);
-        const path = `covers/${user?.id || 'anon'}_${Date.now()}.jpg`;
-        finalCoverImage = await storageApi.uploadSingle(path, processed.original.uri);
+        finalCoverImage = await storageApi.uploadCover(user?.id || 'anon', coverImage);
       } catch (uploadErr) {
         console.error('Failed to upload cover image:', uploadErr);
+        // Nunca guardar la URI local / base64 en la BD: se conserva la portada anterior.
+        finalCoverImage = initialCoverImage.current ?? null;
       }
     }
 

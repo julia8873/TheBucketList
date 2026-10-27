@@ -1292,9 +1292,13 @@ export function useBucketDetailState() {
 
   const [showCoverLinkModal, setShowCoverLinkModal] = useState(false);
 
-  const handleApplyCoverUrl = async (url: string) => {
+  const handleApplyCoverUrl = async (rawUrl: string) => {
     const targetId = Array.isArray(id) ? id[0] : id;
     try {
+      // Una imagen pegada llega como `data:image/...;base64,...`: se sube a Storage y solo se guarda la URL.
+      const url = rawUrl.startsWith('data:')
+        ? await storageApi.uploadCover(user?.id || 'anon', rawUrl)
+        : rawUrl;
       const { error } = await supabase
         .from('buckets')
         .update({ cover_image: url })
