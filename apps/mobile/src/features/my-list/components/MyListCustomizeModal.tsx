@@ -5,7 +5,6 @@ import {
   Modal,
   Pressable,
   ScrollView,
-  Switch,
   StyleSheet,
   Dimensions,
   Platform,
@@ -29,6 +28,7 @@ import {
   AlignJustify,
 } from 'lucide-react-native';
 import { useTheme, gold } from '@bucketlist/ui';
+import { AppSwitch } from '@/components/AppSwitch';
 import {
   useMyListCustomizationStore,
   type ViewModeType,
@@ -447,7 +447,7 @@ function CustomizeRow({
         <Text style={[styles.rowTitle, { color: theme.colors.foreground }]}>{title}</Text>
         <Text style={[styles.rowSubtitle, { color: theme.colors.foregroundMuted }]}>{subtitle}</Text>
       </View>
-      <Switch
+      <AppSwitch
         value={value}
         onValueChange={onChange}
         trackColor={{

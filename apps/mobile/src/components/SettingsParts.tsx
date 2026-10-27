@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Dimensions, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Dimensions, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { AppSwitch } from './AppSwitch';
 import { ChevronRight } from 'lucide-react-native';
 import { fontFamily, useTheme } from '@bucketlist/ui';
 
@@ -69,7 +70,7 @@ export function ToggleRow({
       subtitle={subtitle}
       last={last}
       right={
-        <Switch
+        <AppSwitch
           value={value}
           onValueChange={onChange}
           disabled={disabled}
