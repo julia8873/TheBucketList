@@ -295,7 +295,7 @@ export function useMyListState() {
   const [sortField, setSortField] = useState<SortField>('status');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
-  const [sortMenuPos, setSortMenuPos] = useState({ top: 0, right: 20 });
+  const [sortMenuPos, setSortMenuPos] = useState({ top: 0, right: 20, centerX: 0 });
   const sortTriggerRef = useRef<View>(null);
   const [dragging, setDragging] = useState(false);
   const [isReordering, setIsReordering] = useState(false);
@@ -334,6 +334,7 @@ export function useMyListState() {
       setSortMenuPos({
         top: y + h + 6,
         right: Math.max(16, Dimensions.get('window').width - (x + w)),
+        centerX: x + w / 2,
       });
       setSortMenuOpen(true);
     });

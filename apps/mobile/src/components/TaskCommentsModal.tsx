@@ -1,6 +1,6 @@
 import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState, useRef, useMemo, useEffect } from 'react';
-import { View, Text, Modal, Pressable, FlatList, TextInput, KeyboardAvoidingView, Keyboard, ScrollView, Platform, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, Modal, Pressable, FlatList, TextInput, Keyboard, ScrollView, Platform, ActivityIndicator, StyleSheet } from 'react-native';
 import {
   MessageCircle,
   X,
@@ -9,6 +9,7 @@ import {
   AtSign,
 } from 'lucide-react-native';
 import { Avatar, fontFamily, gold, useTheme } from '@bucketlist/ui';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useConnections, usePeopleSearch } from '../hooks/useFriends';
 import { displayNameOf, initialsOf } from '../utils/initials';
 import { useTranslation } from '@bucketlist/shared';
@@ -48,6 +49,7 @@ function TaskCommentsModalContent({
 }: TaskCommentsModalProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const effectiveTargetType: 'bucket' | 'album' = targetType || (albumId ? 'album' : 'bucket');
   const effectiveId = (effectiveTargetType === 'album' ? albumId : bucketId) || '';
   const effectiveTitle = (effectiveTargetType === 'album' ? (albumTitle || bucketTitle) : (bucketTitle || albumTitle)) || '';
@@ -191,9 +193,13 @@ function TaskCommentsModalContent({
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <KeyboardAvoidingView
-        style={styles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      {/* Con edge-to-edge (Android) el sistema no redimensiona la ventana: se reserva manualmente
+          el alto del teclado para que la hoja y la barra de escribir queden encima. */}
+      <View
+        style={[
+          styles.overlay,
+          isKeyboardVisible && { paddingBottom: keyboardHeight, paddingTop: insets.top + 8 },
+        ]}
       >
         <Pressable
           style={styles.backdrop}
@@ -269,11 +275,13 @@ function TaskCommentsModalContent({
           ) : (
             <FlatList
               ref={flatListRef}
+              style={{ flex: 1 }}
               data={threads}
               keyExtractor={(thread) => thread.root.id}
               contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
+              nestedScrollEnabled
               renderItem={({ item }) => <CommentThreadView thread={item} ctrl={ctrl} />}
             />
           )}
@@ -370,7 +378,9 @@ function TaskCommentsModalContent({
                 backgroundColor: theme.colors.surface,
                 borderTopColor: theme.colors.border,
               },
-              isKeyboardVisible && { paddingBottom: 10 },
+              isKeyboardVisible
+                ? { paddingBottom: 10 }
+                : { paddingBottom: Math.max(insets.bottom, 12) },
             ]}
           >
             {user && (
@@ -422,7 +432,7 @@ function TaskCommentsModalContent({
             </View>
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </View>
 
       <ReportModal
         visible={!!ctrl.reportingComment}
@@ -451,8 +461,8 @@ const styles = themedStyleSheet({
     backgroundColor: 'rgba(0,0,0,0.65)',
   },
   sheetContent: {
-    maxHeight: '85%',
-    minHeight: '45%',
+    // Alto definido para que la lista (flex: 1) pueda hacer scroll
+    height: '85%',
     backgroundColor: '#121214',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -470,8 +480,8 @@ const styles = themedStyleSheet({
     }),
   },
   sheetContentKeyboard: {
-    minHeight: 0,
-    maxHeight: '100%',
+    height: undefined,
+    flex: 1,
   },
   header: {
     flexDirection: 'row',

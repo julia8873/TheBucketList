@@ -199,6 +199,12 @@ export default function MyListScreen() {
             const next = item.status === 'completed' ? 'in_progress' : 'completed';
             state.updateBucket.mutate({ id: item.id, data: { status: next } });
           }}
+          isItemOwner={!item.user_id || item.user_id === state.user?.id}
+          onDelete={() => state.deleteBucket.mutate(item.id)}
+          swipeableRefSetter={(ref) => {
+            if (ref) state.swipeableRefs.current.set(item.id, ref);
+            else state.swipeableRefs.current.delete(item.id);
+          }}
         />
       );
     },
@@ -212,6 +218,9 @@ export default function MyListScreen() {
       state.setIsSelectionMode,
       state.setSelectedTaskIds,
       state.updateBucket,
+      state.deleteBucket,
+      state.user?.id,
+      state.swipeableRefs,
       router,
       taskViews.compact,
     ]

@@ -226,7 +226,10 @@ function ItemLikesModalContent({
             </View>
           ) : (
             <FlatList
+              style={{ flex: 1 }}
               data={likes}
+              nestedScrollEnabled
+              keyboardShouldPersistTaps="handled"
               keyExtractor={(item) => item.id || item.user_id}
               contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
@@ -323,8 +326,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.65)',
   },
   sheetContent: {
-    maxHeight: '80%',
-    minHeight: '40%',
+    // Alto definido para que la lista (flex: 1) pueda hacer scroll
+    height: '75%',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderWidth: 1,

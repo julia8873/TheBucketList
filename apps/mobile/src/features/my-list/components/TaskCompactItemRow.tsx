@@ -1,8 +1,9 @@
 import { themedStyleSheet } from '@bucketlist/ui';
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { CheckCircle2, GripVertical, Star, Users } from 'lucide-react-native';
-import { useTheme } from '@bucketlist/ui';
+import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
+import { CheckCircle2, GripVertical, Star, Trash2, Users } from 'lucide-react-native';
+import { useTheme, confirm } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/my-list.styles';
 import type { DragHandle } from '@/components/DraggableTaskList';
@@ -23,6 +24,10 @@ interface TaskCompactItemRowProps {
   onLongPress: () => void;
   onToggleSelect: () => void;
   onToggleComplete: () => void;
+  /** Si es false (colaboración) no se puede borrar deslizando. */
+  isItemOwner?: boolean;
+  onDelete?: () => void;
+  swipeableRefSetter?: (ref: any) => void;
 }
 
 function TaskCompactItemRowComponent({
@@ -37,9 +42,13 @@ function TaskCompactItemRowComponent({
   onLongPress,
   onToggleSelect,
   onToggleComplete,
+  isItemOwner = true,
+  onDelete,
+  swipeableRefSetter,
 }: TaskCompactItemRowProps) {
   const { theme } = useTheme();
   const { t, i18n } = useTranslation();
+  const swipeRef = React.useRef<Swipeable | null>(null);
 
   if (item.isHeader) {
     return (
@@ -109,7 +118,7 @@ function TaskCompactItemRowComponent({
     (showDates && !!(item.deadline || item.completed_at)) ||
     isFav;
 
-  return (
+  const row = (
     <Pressable
       onPress={onPress}
       onLongPress={onLongPress}
@@ -146,7 +155,7 @@ function TaskCompactItemRowComponent({
         </View>
       )}
 
-      {isSelectionMode ? (
+      {isSelectionMode && (
         <Pressable
           hitSlop={8}
           onPress={onToggleSelect}
@@ -158,25 +167,6 @@ function TaskCompactItemRowComponent({
             <CheckCircle2 size={20} color={theme.colors.primary} fill={theme.colors.primary} />
           ) : (
             <View style={[localStyles.uncheckedCircle, { borderColor: theme.colors.border }]} />
-          )}
-        </Pressable>
-      ) : (
-        <Pressable
-          hitSlop={10}
-          onPress={onToggleComplete}
-          style={localStyles.checkBtn}
-          accessibilityRole="button"
-          accessibilityLabel={isCompleted ? 'Desmarcar tarea' : 'Completar tarea'}
-        >
-          {isCompleted ? (
-            <CheckCircle2 size={20} color="#34C759" fill="rgba(52, 199, 89, 0.15)" strokeWidth={2.2} />
-          ) : (
-            <View
-              style={[
-                localStyles.uncheckedCircle,
-                { borderColor: theme.dark ? '#4E4E4E' : '#C4BDB0' },
-              ]}
-            />
           )}
         </Pressable>
       )}
@@ -311,6 +301,83 @@ function TaskCompactItemRowComponent({
       </View>
     </Pressable>
   );
+
+  // Deslizar a la derecha = completar/desmarcar, a la izquierda = borrar (solo propietario)
+  const canSwipe = !drag && !isSelectionMode;
+  if (!canSwipe) return row;
+
+  const askComplete = () => {
+    if (isCompleted) {
+      onToggleComplete();
+      swipeRef.current?.close();
+      return;
+    }
+    confirm.show({
+      title: t('bucket.complete_confirm_title', { defaultValue: '¿Marcar como completada?' }),
+      message: t('bucket.complete_confirm_message', { title: item.title, defaultValue: `¿Quieres marcar «${item.title}» como completada?` }),
+      confirmLabel: t('common.complete', { defaultValue: 'Completar' }),
+      cancelLabel: t('common.cancel', { defaultValue: 'Cancelar' }),
+      tone: 'success',
+      onConfirm: () => {
+        onToggleComplete();
+        swipeRef.current?.close();
+      },
+      onCancel: () => swipeRef.current?.close(),
+    });
+  };
+
+  const askDelete = () => {
+    confirm.show({
+      title: t('bucket.delete_task_title'),
+      message: t('bucket.delete_task_confirm', { title: item.title }),
+      confirmLabel: t('common.delete'),
+      cancelLabel: t('common.cancel'),
+      destructive: true,
+      onConfirm: () => onDelete?.(),
+      onCancel: () => swipeRef.current?.close(),
+    });
+  };
+
+  const fade = (progress: any) =>
+    progress.interpolate({ inputRange: [0, 0.15, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' });
+
+  const renderLeftActions = (progress: any) => (
+    <Animated.View style={{ opacity: fade(progress), width: 80, justifyContent: 'center' }}>
+      <View style={[localStyles.swipeAction, { backgroundColor: '#34C759', borderTopLeftRadius: 13, borderBottomLeftRadius: 13 }]}>
+        <CheckCircle2 color="#FFFFFF" size={22} />
+      </View>
+    </Animated.View>
+  );
+
+  const renderRightActions = (progress: any) => {
+    if (!isItemOwner || !onDelete) return null;
+    return (
+      <Animated.View style={{ opacity: fade(progress), width: 80, justifyContent: 'center' }}>
+        <View style={[localStyles.swipeAction, { backgroundColor: theme.colors.error, borderTopRightRadius: 13, borderBottomRightRadius: 13 }]}>
+          <Trash2 color={theme.colors.errorForeground} size={22} />
+        </View>
+      </Animated.View>
+    );
+  };
+
+  return (
+    <Swipeable
+      ref={(r) => {
+        swipeRef.current = r;
+        swipeableRefSetter?.(r);
+      }}
+      renderLeftActions={renderLeftActions}
+      renderRightActions={isItemOwner && onDelete ? renderRightActions : undefined}
+      overshootLeft={false}
+      overshootRight={false}
+      onSwipeableOpen={(direction) => {
+        if (direction === 'left') askComplete();
+        else if (direction === 'right' && isItemOwner && onDelete) askDelete();
+      }}
+    >
+      {row}
+    </Swipeable>
+  );
 }
 
 export const TaskCompactItemRow = React.memo(TaskCompactItemRowComponent);
@@ -329,6 +396,11 @@ const localStyles = themedStyleSheet({
     marginRight: 6,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  swipeAction: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   checkBtn: {
     marginRight: 10,

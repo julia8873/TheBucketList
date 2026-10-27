@@ -1,15 +1,17 @@
 import React from 'react';
-import { View, StyleSheet, Pressable, Modal } from 'react-native';
+import { View, StyleSheet, Pressable, Modal, Dimensions } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Typography } from '@bucketlist/ui';
 import { dark, gold } from '@bucketlist/ui/src/tokens/colors';
 import { ArrowDown, ArrowUp, Check, GripVertical } from 'lucide-react-native';
 import type { SortField, SortDir } from '../types';
 
+const MENU_WIDTH = 220;
+
 interface MyListSortModalProps {
   visible: boolean;
   onClose: () => void;
-  position: { top: number; right: number };
+  position: { top: number; right: number; centerX?: number };
   activeTab: string;
   sortField: SortField;
   sortDir: SortDir;
@@ -94,8 +96,16 @@ export function MyListSortModal({
           style={{
             position: 'absolute',
             top: position.top,
-            right: position.right,
-            minWidth: 160,
+            // Centrado respecto al botón de ordenar (acotado a los bordes de la pantalla)
+            ...(position.centerX
+              ? {
+                  width: MENU_WIDTH,
+                  left: Math.min(
+                    Math.max(12, position.centerX - MENU_WIDTH / 2),
+                    Dimensions.get('window').width - MENU_WIDTH - 12
+                  ),
+                }
+              : { right: position.right, minWidth: 160 }),
             backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
             borderRadius: 12,
             borderWidth: 1,
