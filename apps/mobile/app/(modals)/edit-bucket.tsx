@@ -294,6 +294,19 @@ export default function EditBucketModal() {
             />
           </View>
 
+          {/* PORTADA */}
+          <View style={styles.section}>
+            <SectionTitle
+              highlight={t('task_form.section_cover_gold', { defaultValue: 'TU' })}
+              rest={t('task_form.section_cover_rest', { defaultValue: 'PORTADA' })}
+            />
+            <TaskCoverPicker
+              coverImage={coverImage}
+              onChangeCover={setCoverImage}
+              taskTitle={title}
+            />
+          </View>
+
           {/* QUÉ QUIERES LOGRAR */}
           <View style={styles.section}>
             <SectionTitle
@@ -317,19 +330,6 @@ export default function EditBucketModal() {
               onFocus={() => setIsTitleFocused(true)}
               onBlur={() => setIsTitleFocused(false)}
               accessibilityLabel={t('task_form.title_placeholder', { defaultValue: 'Título de la tarea' })}
-            />
-          </View>
-
-          {/* PORTADA */}
-          <View style={styles.section}>
-            <SectionTitle
-              highlight={t('task_form.section_cover_gold', { defaultValue: 'TU' })}
-              rest={t('task_form.section_cover_rest', { defaultValue: 'PORTADA' })}
-            />
-            <TaskCoverPicker
-              coverImage={coverImage}
-              onChangeCover={setCoverImage}
-              taskTitle={title}
             />
           </View>
 

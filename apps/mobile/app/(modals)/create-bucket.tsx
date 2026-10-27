@@ -203,6 +203,15 @@ export default function CreateBucketModal() {
             />
           </View>
 
+          {/* PORTADA */}
+          <View style={styles.section}>
+            <SectionTitle
+              highlight={t('task_form.section_cover_gold', { defaultValue: 'TU' })}
+              rest={t('task_form.section_cover_rest', { defaultValue: 'PORTADA' })}
+            />
+            <TaskCoverPicker coverImage={coverImage} onChangeCover={setCoverImage} taskTitle={titleValue} />
+          </View>
+
           {/* QUÉ QUIERES LOGRAR */}
           <View style={styles.section}>
             <SectionTitle
@@ -233,15 +242,6 @@ export default function CreateBucketModal() {
                 />
               )}
             />
-          </View>
-
-          {/* PORTADA */}
-          <View style={styles.section}>
-            <SectionTitle
-              highlight={t('task_form.section_cover_gold', { defaultValue: 'TU' })}
-              rest={t('task_form.section_cover_rest', { defaultValue: 'PORTADA' })}
-            />
-            <TaskCoverPicker coverImage={coverImage} onChangeCover={setCoverImage} taskTitle={titleValue} />
           </View>
 
           {/* DESCRIPCIÓN */}

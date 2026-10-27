@@ -102,6 +102,13 @@ export default function CreateAlbumScreen() {
             collaborators={selectedCollaborators}
           />
 
+          {/* Sección Portada */}
+          <CoverPickerSection
+            selectedCover={selectedCover}
+            onSelectCover={setSelectedCover}
+            albumTitle={name}
+          />
+
           {/* Sección Nombre */}
           <View style={styles.section}>
             <SectionTitle highlight={t('albums.section_name_highlight')} rest={t('albums.section_name_rest')} />
@@ -121,13 +128,6 @@ export default function CreateAlbumScreen() {
               accessibilityLabel={t('albums.name_label')}
             />
           </View>
-
-          {/* Sección Portada */}
-          <CoverPickerSection
-            selectedCover={selectedCover}
-            onSelectCover={setSelectedCover}
-            albumTitle={name}
-          />
 
           {/* Sección Descripción */}
           <View style={[styles.section, { marginBottom: 4 }]}>
