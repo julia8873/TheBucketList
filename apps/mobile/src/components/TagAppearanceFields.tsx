@@ -333,7 +333,7 @@ const styles = themedStyleSheet({
     color: GOLD,
     marginBottom: 12,
   },
-  emojiScroll: { marginHorizontal: -20, flexGrow: 0 },
+  emojiScroll: { marginHorizontal: -16, flexGrow: 0 },
   emojiRow: { paddingHorizontal: 16, paddingVertical: 6, gap: 12, alignItems: 'center' },
   emojiCircle: {
     width: 44,

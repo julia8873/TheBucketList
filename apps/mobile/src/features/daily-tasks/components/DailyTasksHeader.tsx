@@ -315,13 +315,13 @@ export function DailyTasksScrollControls({
           styles.tagsFilterScroll,
           { paddingHorizontal: 16, gap: 8, flexGrow: 1 },
         ]}
-        style={{ marginHorizontal: -20, marginBottom: 16 }}
+        style={{ marginHorizontal: -16, marginBottom: 16 }}
       >
         {/* Todas */}
         <FilterChip
           label={t('daily.filter_all')}
           active={statusFilter === 'all' && !onlyFavorites && priorityFilter === 'all'}
-          style={{ flexGrow: 1, flexShrink: 0, paddingHorizontal: 12 }}
+          style={{ flexGrow: 1, flexShrink: 0, paddingHorizontal: 10 }}
           onPress={() => {
             setStatusFilter('all');
             setOnlyFavorites(false);
@@ -337,7 +337,7 @@ export function DailyTasksScrollControls({
               flexGrow: 1,
               flexShrink: 0,
               justifyContent: 'center',
-              paddingHorizontal: 12,
+              paddingHorizontal: 10,
               backgroundColor: isStatusActive
                 ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
                 : theme.colors.surface,
@@ -374,7 +374,7 @@ export function DailyTasksScrollControls({
               flexGrow: 1,
               flexShrink: 0,
               justifyContent: 'center',
-              paddingHorizontal: 12,
+              paddingHorizontal: 10,
               backgroundColor: isPriorityActive
                 ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
                 : theme.colors.surface,
@@ -405,7 +405,7 @@ export function DailyTasksScrollControls({
               flexGrow: 1,
               flexShrink: 0,
               justifyContent: 'center',
-              paddingHorizontal: 12,
+              paddingHorizontal: 10,
               backgroundColor: selectedTagFilters.length > 0
                 ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
                 : theme.colors.surface,

@@ -138,7 +138,7 @@ export default function DailyTasksScreen() {
           <DailyTasksTopBar
             timeView={state.timeView}
             setTimeView={state.setTimeView}
-            style={{ marginHorizontal: -20 }}
+            style={{ marginHorizontal: -16 }}
           />
 
           {/* Barra de tarea rápida: Solo en Hoy y Todas */}
@@ -148,7 +148,7 @@ export default function DailyTasksScreen() {
               setNewTitle={state.setNewTitle}
               handleQuickAddTask={state.handleQuickAddTask}
               inputRef={state.inputRef}
-              containerStyle={{ marginHorizontal: -20 }}
+              containerStyle={{ marginHorizontal: -16 }}
             />
           )}
 

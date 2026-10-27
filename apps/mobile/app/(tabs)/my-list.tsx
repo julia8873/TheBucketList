@@ -385,7 +385,7 @@ export default function MyListScreen() {
   );
 
   const renderTopHeader = (inListContent = true) => (
-    <View style={inListContent ? { marginHorizontal: -20 } : undefined}>
+    <View style={inListContent ? { marginHorizontal: -16 } : undefined}>
       {/* Header */}
       <View style={styles.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 10 }}>

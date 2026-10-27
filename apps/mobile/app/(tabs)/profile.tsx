@@ -191,7 +191,7 @@ export default function CurrentUserProfileScreen() {
   const taskCount = publicBuckets?.length ?? 0;
 
   const headerTop = (
-    <View style={[styles.header, { marginHorizontal: -20 }]}>
+    <View style={[styles.header, { marginHorizontal: -16 }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 10 }}>
         <PageTitle
           gold={t('profile.title_gold', { defaultValue: 'Mi' })}

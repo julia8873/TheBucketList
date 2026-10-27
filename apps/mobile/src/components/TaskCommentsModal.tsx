@@ -251,7 +251,7 @@ function TaskCommentsModalContent({
             </View>
           ) : comments.length === 0 ? (
             <ScrollView
-              style={{ flex: 1 }}
+              style={{ flexGrow: 0, flexShrink: 1 }}
               contentContainerStyle={[
                 styles.emptyContainer,
                 isKeyboardVisible && styles.emptyContainerKeyboard,
@@ -275,7 +275,7 @@ function TaskCommentsModalContent({
           ) : (
             <FlatList
               ref={flatListRef}
-              style={{ flex: 1 }}
+              style={{ flexGrow: 0, flexShrink: 1 }}
               data={threads}
               keyExtractor={(thread) => thread.root.id}
               contentContainerStyle={styles.listContent}
@@ -461,8 +461,9 @@ const styles = themedStyleSheet({
     backgroundColor: 'rgba(0,0,0,0.65)',
   },
   sheetContent: {
-    // Alto definido para que la lista (flex: 1) pueda hacer scroll
-    height: '85%',
+    // Se ajusta al contenido (la barra de escribir queda justo bajo el último comentario)
+    // y solo crece hasta el 85% de la pantalla; a partir de ahí la lista hace scroll.
+    maxHeight: '85%',
     backgroundColor: '#121214',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -480,16 +481,16 @@ const styles = themedStyleSheet({
     }),
   },
   sheetContentKeyboard: {
-    height: undefined,
-    flex: 1,
+    // Con teclado: el overlay ya reserva su alto, la hoja se queda justo encima de él.
+    maxHeight: '100%',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 18,
-    paddingTop: 16,
-    paddingBottom: 12,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(255,255,255,0.1)',
   },
@@ -542,17 +543,16 @@ const styles = themedStyleSheet({
     marginLeft: 8,
   },
   centerContainer: {
-    flex: 1,
+    flexGrow: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 180,
+    minHeight: 120,
   },
   emptyContainer: {
-    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
-    paddingVertical: 36,
+    paddingVertical: 24,
   },
   emptyContainerKeyboard: {
     paddingVertical: 12,
@@ -581,8 +581,8 @@ const styles = themedStyleSheet({
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 20,
+    paddingTop: 12,
+    paddingBottom: 12,
     gap: 14,
   },
   commentRow: {
@@ -826,7 +826,7 @@ const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: Platform.OS === 'ios' ? 24 : 12,
     borderTopWidth: StyleSheet.hairlineWidth,
