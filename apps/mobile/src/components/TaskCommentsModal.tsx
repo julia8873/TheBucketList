@@ -175,6 +175,20 @@ function TaskCommentsModalContent({
     }, 50);
   };
 
+  // Al ir a comentar, la lista baja hasta los últimos comentarios (también tras abrirse el teclado,
+  // que cambia el alto disponible). Si se está respondiendo a uno concreto, no se mueve.
+  const scrollToLatest = () => {
+    if (replyingTo) return;
+    [80, 350].forEach((ms) =>
+      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), ms),
+    );
+  };
+
+  useEffect(() => {
+    if (isKeyboardVisible) scrollToLatest();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isKeyboardVisible, keyboardHeight]);
+
   const handleSend = async () => {
     setShowMentionPicker(false);
     setMentionFilter('');
@@ -209,7 +223,7 @@ function TaskCommentsModalContent({
             onClose();
           }}
         />
-        <View style={[styles.sheetContent, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }, { maxHeight: isKeyboardVisible ? Math.min(Math.round(windowHeight * 0.6), windowHeight - keyboardHeight - insets.top - 8) : Math.round(windowHeight * 0.6) }]}>
+        <View style={[styles.sheetContent, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }, { maxHeight: isKeyboardVisible ? Math.min(Math.round(windowHeight * 0.7), windowHeight - keyboardHeight - insets.top - 8) : Math.round(windowHeight * 0.7) }]}>
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: theme.colors.border }]}>
             <View style={styles.headerLeft}>
@@ -411,6 +425,7 @@ function TaskCommentsModalContent({
                 placeholderTextColor={theme.dark ? 'rgba(255,255,255,0.45)' : 'rgba(40,36,30,0.5)'}
                 value={text}
                 onChangeText={handleTextChange}
+                onFocus={scrollToLatest}
                 multiline
                 maxLength={1000}
               />
@@ -464,7 +479,7 @@ const styles = themedStyleSheet({
   sheetContent: {
     // Se ajusta al contenido (la barra de escribir queda justo bajo el último comentario)
     // y solo crece hasta el 85% de la pantalla; a partir de ahí la lista hace scroll.
-    maxHeight: '60%',
+    maxHeight: '70%',
     backgroundColor: '#121214',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
