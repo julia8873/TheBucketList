@@ -674,6 +674,8 @@ const en = {
     overdue_move_today: 'Move to today',
     overdue_complete_all: 'Complete all',
     overdue_delete_all: 'Delete all',
+    overdue_complete_short: 'Complete',
+    overdue_delete_short: 'Delete',
     overdue_move_to: 'Move to:',
     overdue_other_day: 'Other day',
     no_tag: 'No tag',

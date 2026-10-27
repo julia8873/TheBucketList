@@ -431,6 +431,9 @@ export function DailyTasksScrollControls({
           </Text>
         </Pressable>
 
+      </View>
+      {(selectedTagFilters.length > 0 || hasActiveFilters) && (
+      <View style={[styles.tagsFilterScroll, { flexWrap: 'wrap', gap: 8, marginTop: -8, marginBottom: 16 }]}>
         {/* Etiquetas activas individuales seleccionadas con icono/emoji y nombre */}
         {selectedTagFilters.map((id) => {
           const tag = tagMap.get(id);
@@ -443,7 +446,8 @@ export function DailyTasksScrollControls({
                 {
                   backgroundColor: theme.colors.surface,
                   borderColor: tag.color ? `${tag.color}88` : theme.colors.border,
-                  flexShrink: 0,
+                  flexShrink: 1,
+                  maxWidth: '100%',
                 },
               ]}
               onPress={() => {
@@ -501,6 +505,7 @@ export function DailyTasksScrollControls({
           </Pressable>
         )}
       </View>
+      )}
 
       {/* Fila: Contador de tareas (izq) + Personalizar y Ordenar (der) */}
       <View

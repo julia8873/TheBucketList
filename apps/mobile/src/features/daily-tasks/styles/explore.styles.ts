@@ -1199,7 +1199,7 @@ export const styles = themedStyleSheet({
   },
   overdueActionsWrap: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexWrap: 'nowrap',
     alignItems: 'center',
     gap: 8,
     marginBottom: 10,
@@ -1228,6 +1228,11 @@ export const styles = themedStyleSheet({
     backgroundColor: 'rgba(245, 158, 11, 0.1)',
     borderWidth: 1,
     borderColor: 'rgba(245, 158, 11, 0.25)',
+  },
+  overdueActionBtnFlex: {
+    flex: 1,
+    minWidth: 0,
+    justifyContent: 'center',
   },
   overdueActionDeleteBtn: {
     backgroundColor: 'rgba(239, 68, 68, 0.1)',

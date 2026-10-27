@@ -109,17 +109,14 @@ export function AlbumListHeaderControls({
   return (
     <View>
       {/* Fila única de Filtros */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexGrow: 1 }}
-        style={{ marginBottom: 16 }}
-      >
+      <View style={{ marginBottom: 16 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
         {/* Todas */}
         <FilterChip
           label={t('my_list.filter_all')}
           active={albumFilter === 'all' && albumPriorityFilter === 'all'}
-          style={{ flexGrow: 1, flexShrink: 0, paddingHorizontal: 10 }}
+          style={{ flexGrow: 1, flexShrink: 1,
+              maxWidth: '100%', paddingHorizontal: 10 }}
           onPress={() => {
             setAlbumFilter('all');
             setAlbumPriorityFilter('all');
@@ -135,7 +132,8 @@ export function AlbumListHeaderControls({
             styles.tagFilterBtn,
             {
               flexGrow: 1,
-              flexShrink: 0,
+              flexShrink: 1,
+              maxWidth: '100%',
               justifyContent: 'center',
               paddingHorizontal: 10,
               backgroundColor: albumFilter !== 'all'
@@ -163,7 +161,8 @@ export function AlbumListHeaderControls({
             styles.tagFilterBtn,
             {
               flexGrow: 1,
-              flexShrink: 0,
+              flexShrink: 1,
+              maxWidth: '100%',
               justifyContent: 'center',
               paddingHorizontal: 10,
               backgroundColor: albumPriorityFilter !== 'all'
@@ -191,7 +190,8 @@ export function AlbumListHeaderControls({
             styles.tagFilterBtn,
             {
               flexGrow: 1,
-              flexShrink: 0,
+              flexShrink: 1,
+              maxWidth: '100%',
               justifyContent: 'center',
               paddingHorizontal: 10,
               backgroundColor: selectedTagIds.length > 0
@@ -214,14 +214,16 @@ export function AlbumListHeaderControls({
           </Text>
         </Pressable>
 
-        {/* Chips de etiquetas seleccionadas */}
+      </View>
+        {/* Chips de etiquetas seleccionadas: debajo de los filtros */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 8 }}>
         {selectedTags.map((tTag) => (
           <Pressable
             key={tTag.id}
             onPress={() => onRemoveTagFilter(tTag.id)}
             accessibilityRole="button"
             accessibilityLabel={t('my_list.remove_tag_label', { name: tTag.name })}
-            style={[styles.activeTagChip, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, flexShrink: 0 }]}
+            style={[styles.activeTagChip, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, flexShrink: 1, maxWidth: '100%' }]}
           >
             {tTag.emoji ? (
               <View style={[styles.activeTagEmoji, { backgroundColor: hexToRgba(tTag.color, 0.3) }]}>
@@ -236,7 +238,8 @@ export function AlbumListHeaderControls({
             <X size={15} color={theme.colors.foregroundMuted} strokeWidth={2} />
           </Pressable>
         ))}
-      </ScrollView>
+      </View>
+      </View>
 
       {/* Fila de controles: Modos de vista, Ordenar, Personalizar, Selección */}
       <View

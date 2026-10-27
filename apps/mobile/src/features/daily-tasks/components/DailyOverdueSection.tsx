@@ -59,37 +59,37 @@ export function DailyOverdueSection({
       <View style={styles.overdueActionsWrap}>
         {onMoveAllToToday && (
           <Pressable
-            style={styles.overdueActionBtn}
+            style={[styles.overdueActionBtn, styles.overdueActionBtnFlex]}
             onPress={onMoveAllToToday}
             accessibilityRole="button"
             accessibilityLabel={t('daily.overdue_move_today')}
           >
             <Calendar size={12} color="#F59E0B" strokeWidth={2} />
-            <Text style={styles.overdueActionText}>{t('daily.overdue_move_today')}</Text>
+            <Text style={styles.overdueActionText} numberOfLines={1}>{t('daily.overdue_move_today')}</Text>
           </Pressable>
         )}
 
         {onCompleteAll && (
           <Pressable
-            style={styles.overdueActionBtn}
+            style={[styles.overdueActionBtn, styles.overdueActionBtnFlex]}
             onPress={onCompleteAll}
             accessibilityRole="button"
             accessibilityLabel={t('daily.overdue_complete_all')}
           >
             <CheckCircle2 size={12} color="#34C759" strokeWidth={2} />
-            <Text style={[styles.overdueActionText, { color: '#34C759' }]}>{t('daily.overdue_complete_all')}</Text>
+            <Text style={[styles.overdueActionText, { color: '#34C759' }]} numberOfLines={1}>{t('daily.overdue_complete_short')}</Text>
           </Pressable>
         )}
 
         {onDeleteAll && (
           <Pressable
-            style={[styles.overdueActionBtn, styles.overdueActionDeleteBtn]}
+            style={[styles.overdueActionBtn, styles.overdueActionBtnFlex, styles.overdueActionDeleteBtn]}
             onPress={onDeleteAll}
             accessibilityRole="button"
             accessibilityLabel={t('daily.overdue_delete_all')}
           >
             <Trash2 size={12} color="#EF4444" strokeWidth={2} />
-            <Text style={[styles.overdueActionText, { color: '#EF4444' }]}>{t('daily.overdue_delete_all')}</Text>
+            <Text style={[styles.overdueActionText, { color: '#EF4444' }]} numberOfLines={1}>{t('daily.overdue_delete_short')}</Text>
           </Pressable>
         )}
       </View>
