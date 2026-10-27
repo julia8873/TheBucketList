@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Check, CheckCircle2, Star } from 'lucide-react-native';
-import { gold } from '@bucketlist/ui/src/tokens/colors';
+import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { useTheme, useCoverOverlay } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { BucketCover } from '@/components/BucketCover';
@@ -104,11 +104,10 @@ function TaskGalleryItemCardComponent({
       style={[
         styles.galleryCard,
         {
-          backgroundColor: theme.colors.surface,
+          backgroundColor: theme.dark ? dark[900] : dark[800],
           borderColor: theme.colors.border,
         },
         isSingle && styles.galleryCardSingle,
-        isSelected && { borderColor: gold[400], borderWidth: 2 },
       ]}
       accessibilityRole="button"
       accessibilityLabel={item.title}
@@ -121,6 +120,22 @@ function TaskGalleryItemCardComponent({
         iconSize={isSingle ? 64 : 44}
         style={StyleSheet.absoluteFill}
       />
+
+      {/* Selection Border Overlay */}
+      {isSelected && (
+        <View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              borderRadius: 14,
+              borderWidth: 2.5,
+              borderColor: gold[400],
+              zIndex: 10,
+            },
+          ]}
+        />
+      )}
 
       {/* Badges superiores */}
       <View style={styles.galleryTopBadges}>

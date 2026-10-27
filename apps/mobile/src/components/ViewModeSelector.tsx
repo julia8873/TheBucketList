@@ -73,10 +73,10 @@ const styles = themedStyleSheet({
     padding: 2,
     gap: 2,
     borderWidth: 1,
-    height: 34,
+    height: 32,
   },
   btn: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',

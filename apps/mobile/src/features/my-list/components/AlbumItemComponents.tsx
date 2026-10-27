@@ -61,7 +61,7 @@ function parseThumbCover(coverUri?: string | null) {
     return { type: 'image', uri: trimmed };
   }
 
-  return null;
+  return { type: 'image', uri: trimmed };
 }
 
 export const AlbumCoverThumb = React.memo(function AlbumCoverThumb({
@@ -78,14 +78,14 @@ export const AlbumCoverThumb = React.memo(function AlbumCoverThumb({
   const parsedCover = parseThumbCover(coverUri);
 
   let inner;
-  if (parsedCover?.type === 'image' && parsedCover.uri) {
+  if ((parsedCover?.type === 'image' || parsedCover?.uri) && parsedCover.uri) {
     inner = (
       <ExpoImage
         source={{ uri: parsedCover.uri }}
         style={StyleSheet.absoluteFill}
         contentFit="cover"
         cachePolicy="memory-disk"
-        transition={150}
+        transition={0}
       />
     );
   } else if ((parsedCover?.type === 'gradient' || parsedCover?.type === 'solid') && parsedCover.colors) {

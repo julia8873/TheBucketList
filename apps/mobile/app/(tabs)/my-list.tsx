@@ -721,7 +721,7 @@ export default function MyListScreen() {
               onClearSelection={state.handleExitSelection}
               onSelectAll={() => {
                 if (state.selectedTaskIds.length === state.filteredBuckets.length) {
-                  state.setSelectedTaskIds([]);
+                  state.handleExitSelection();
                 } else {
                   state.setSelectedTaskIds(state.filteredBuckets.map((b: any) => b.id));
                 }
@@ -1008,7 +1008,7 @@ export default function MyListScreen() {
               onClearSelection={state.handleExitAlbumSelection}
               onSelectAll={() => {
                 if (state.selectedAlbumIds.length === state.filteredAlbums.length) {
-                  state.setSelectedAlbumIds([]);
+                  state.handleExitAlbumSelection();
                 } else {
                   state.setSelectedAlbumIds(state.filteredAlbums.map((a: any) => a.id));
                 }

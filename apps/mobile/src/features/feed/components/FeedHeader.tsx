@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView } from 'react-native';
+import { View, Text, Pressable, TextInput } from 'react-native';
 import { Bell, Search, Users, X, Map, ChevronDown, SlidersHorizontal, Check, Sparkles } from 'lucide-react-native';
 import { useTranslation } from '@bucketlist/shared';
 import { PageTitle, useTheme, gold, fontFamily } from '@bucketlist/ui';
@@ -200,12 +200,7 @@ export function FeedHeader({
           )}
         </View>
       )}      {!isSearching && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.feedControlsScrollContent}
-          style={styles.feedControlsScrollView}
-        >
+        <View style={styles.feedControlsRow}>
           {/* Toggle desplegable a la izquierda (como los de mi lista) */}
           <Pressable
             onPress={() => setFilterSheetVisible(true)}
@@ -218,7 +213,6 @@ export function FeedHeader({
                   ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.18)')
                   : theme.colors.surface,
                 borderColor: contentFilter !== 'todo' ? gold[400] : theme.colors.border,
-                flexGrow: homeTab === 'friends' ? 1 : 0,
               },
             ]}
           >
@@ -229,6 +223,7 @@ export function FeedHeader({
             />
             <Text
               numberOfLines={1}
+              ellipsizeMode="tail"
               style={[
                 styles.filterDropdownText,
                 { color: contentFilter !== 'todo' ? gold[400] : theme.colors.foreground },
@@ -243,7 +238,7 @@ export function FeedHeader({
                 : t('feed.filter_collections')}
             </Text>
             <ChevronDown
-              size={13}
+              size={12}
               color={contentFilter !== 'todo' ? gold[400] : theme.colors.foregroundMuted}
               strokeWidth={2}
             />
@@ -267,13 +262,14 @@ export function FeedHeader({
               accessibilityLabel={t('feed.filter_collections')}
               accessibilityState={{ selected: contentFilter === 'colecciones' }}
             >
-              <Sparkles size={14} color={gold[400]} />
+              <Sparkles size={13} color={gold[400]} />
               <Text
                 style={[
                   styles.collectionsTriggerBtnText,
                   { color: contentFilter === 'colecciones' ? gold[400] : theme.colors.foreground },
                 ]}
                 numberOfLines={1}
+                ellipsizeMode="tail"
               >
                 {t('feed.filter_collections')}
               </Text>
@@ -289,14 +285,17 @@ export function FeedHeader({
                 {
                   backgroundColor: theme.colors.surface,
                   borderColor: theme.colors.border,
-                  flexGrow: homeTab === 'friends' ? 1 : 0,
                 },
               ]}
               accessibilityRole="button"
               accessibilityLabel="Ver en mapa"
             >
-              <Map size={14} color={gold[400]} />
-              <Text numberOfLines={1} style={[styles.mapTriggerBtnText, { color: theme.colors.foreground }]}>
+              <Map size={13} color={gold[400]} />
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[styles.mapTriggerBtnText, { color: theme.colors.foreground }]}
+              >
                 {t('feed.map_btn')}
               </Text>
             </Pressable>
@@ -304,7 +303,7 @@ export function FeedHeader({
 
           {/* Selector de vista */}
           <ViewModeSelector mode={viewMode} onChange={onChangeViewMode} style={{ flexShrink: 0 }} />
-        </ScrollView>
+        </View>
       )}
 
       {/* Bottom Sheet de selección de filtro de contenido (estilo mi lista) */}

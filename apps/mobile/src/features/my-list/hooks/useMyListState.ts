@@ -145,9 +145,13 @@ export function useMyListState() {
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
 
   const toggleSelectTask = (id: string) => {
-    setSelectedTaskIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
+    setSelectedTaskIds((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      if (next.length === 0) {
+        setIsSelectionMode(false);
+      }
+      return next;
+    });
   };
 
   const lastExitTaskSelectionTimeRef = useRef(0);
@@ -163,9 +167,13 @@ export function useMyListState() {
   const lastExitAlbumSelectionTimeRef = useRef(0);
 
   const toggleSelectAlbum = (id: string) => {
-    setSelectedAlbumIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
+    setSelectedAlbumIds((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      if (next.length === 0) {
+        setIsAlbumSelectionMode(false);
+      }
+      return next;
+    });
   };
 
   const handleExitAlbumSelection = () => {

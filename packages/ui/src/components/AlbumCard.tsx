@@ -118,7 +118,7 @@ function parseAlbumCover(coverUri?: string | null) {
     return { type: 'image', uri: trimmed };
   }
 
-  return null;
+  return { type: 'image', uri: trimmed };
 }
 
 export function AlbumCard({
@@ -160,14 +160,14 @@ export function AlbumCard({
 
   let backgroundContent;
   if (parsedCover) {
-    if (parsedCover.type === 'image' && parsedCover.uri) {
+    if ((parsedCover.type === 'image' || parsedCover.uri) && parsedCover.uri) {
       backgroundContent = (
         <Image
           source={{ uri: parsedCover.uri }}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
           cachePolicy="memory-disk"
-          transition={150}
+          transition={0}
         />
       );
     } else if ((parsedCover.type === 'gradient' || parsedCover.type === 'solid') && parsedCover.colors) {
@@ -191,7 +191,7 @@ export function AlbumCard({
   }
 
   const isCompleted = totalTasks > 0 && completedTasks === totalTasks;
-  const isImageCover = !!(parsedCover && parsedCover.type === 'image' && parsedCover.uri);
+  const isImageCover = !!(parsedCover && (parsedCover.type === 'image' || parsedCover.uri) && parsedCover.uri);
 
   const gradientColors: [string, string] = isImageCover
     ? ['transparent', 'rgba(0,0,0,0.72)']
@@ -222,15 +222,30 @@ export function AlbumCard({
               height: cardHeight,
             },
           }),
-          backgroundColor: theme.colors.surface,
+          backgroundColor: theme.dark ? dark[900] : dark[800],
           opacity: pressed ? 0.85 : 1,
         },
-        isSelected && { borderColor: gold[400], borderWidth: 2 },
         style,
       ]}
     >
       {/* Background: photo or gradient */}
       {backgroundContent}
+
+      {/* Selection Border Overlay - avoids Yoga layout recalculation and native clipping bugs */}
+      {isSelected && (
+        <View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              borderRadius: radii.xl,
+              borderWidth: 2.5,
+              borderColor: gold[400],
+              zIndex: 10,
+            },
+          ]}
+        />
+      )}
 
       {/* Bottom gradient so text is readable without washing out the cover */}
       <LinearGradient
