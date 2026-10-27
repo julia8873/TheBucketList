@@ -358,8 +358,27 @@ export function ImageLinkModal({
                   </View>
                 )}
               </View>
+            </ScrollView>
 
-              {/* Botón de Confirmación */}
+            {/* Action Footer fija en la parte inferior para que Cancelar y Confirmar se vean sin scroll */}
+            <View style={styles.footerRow}>
+              <Pressable
+                onPress={onClose}
+                style={[
+                  styles.cancelBtn,
+                  {
+                    backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
+                    borderColor: theme.colors.border,
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.cancel', { defaultValue: 'Cancelar' })}
+              >
+                <Text style={[styles.cancelBtnText, { color: theme.colors.foreground }]}>
+                  {t('common.cancel', { defaultValue: 'Cancelar' })}
+                </Text>
+              </Pressable>
+
               <Pressable
                 onPress={handleConfirm}
                 disabled={!canConfirm}
@@ -386,7 +405,7 @@ export function ImageLinkModal({
                   {t('image_link_modal.use_cover')}
                 </Text>
               </Pressable>
-            </ScrollView>
+            </View>
           </View>
         </KeyboardAvoidingView>
       </View>
@@ -421,7 +440,8 @@ const styles = themedStyleSheet({
     borderBottomWidth: 0,
     paddingTop: 10,
     paddingHorizontal: 20,
-    maxHeight: '88%',
+    minHeight: 520,
+    maxHeight: '92%',
     width: '100%',
     overflow: 'hidden',
     ...Platform.select({
@@ -441,11 +461,11 @@ const styles = themedStyleSheet({
     marginBottom: 12,
   },
   sheetScroll: {
-    flexGrow: 0,
+    flexGrow: 1,
     flexShrink: 1,
   },
   sheetScrollContent: {
-    paddingBottom: 4,
+    paddingBottom: 8,
   },
   header: {
     flexDirection: 'row',
@@ -617,14 +637,33 @@ const styles = themedStyleSheet({
     fontSize: 11,
     fontFamily: 'Inter_600SemiBold',
   },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 10,
+    paddingTop: 6,
+  },
+  cancelBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelBtnText: {
+    fontSize: 15,
+    fontFamily: 'Inter_600SemiBold',
+  },
   confirmBtn: {
+    flex: 1.4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
     height: 48,
     borderRadius: 14,
-    marginTop: 4,
   },
   confirmBtnText: {
     fontSize: 15,
