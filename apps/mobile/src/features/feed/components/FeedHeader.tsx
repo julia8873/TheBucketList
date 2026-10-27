@@ -61,7 +61,7 @@ export function FeedHeader({
       <View style={styles.topBar}>
         <PageTitle
           gold={homeTab === 'friends' ? (t('feed.friends_moments_gold', { defaultValue: 'Momentos' })) : (t('feed.explore_ideas_gold', { defaultValue: 'Explorar' }))}
-          rest={homeTab === 'friends' ? (t('feed.friends_moments_rest', { defaultValue: 'de amigos' })) : (t('feed.explore_ideas_rest', { defaultValue: 'ideas' }))}
+          rest={homeTab === 'friends' ? '' : (t('feed.explore_ideas_rest', { defaultValue: 'ideas' }))}
         />
         <View style={styles.topActions}>
           <Pressable

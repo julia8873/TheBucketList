@@ -426,7 +426,7 @@ const es = {
     new_bucket: 'añadió un nuevo objetivo',
     followed: 'empezó a seguirte',
     friends_moments_gold: 'Momentos',
-    friends_moments_rest: 'de amigos',
+    friends_moments_rest: '',
     explore_ideas_gold: 'Explorar',
     explore_ideas_rest: 'ideas',
     friends: 'Amigos',

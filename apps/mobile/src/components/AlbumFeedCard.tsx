@@ -588,7 +588,7 @@ export function AlbumFeedCard({
 
 const styles = StyleSheet.create({
   card: {
-    marginHorizontal: 16,
+    marginHorizontal: 12,
     marginBottom: 14,
     borderRadius: radii.xl,
     overflow: 'hidden',
@@ -713,7 +713,7 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   footer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 12,
   },
   ownerRow: {
@@ -753,12 +753,12 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   galleryLeftCol: {
-    paddingLeft: 16,
+    paddingLeft: 12,
     paddingRight: 5,
   },
   galleryRightCol: {
     paddingLeft: 5,
-    paddingRight: 16,
+    paddingRight: 12,
   },
   galleryCard: {
     borderRadius: 18,
@@ -866,7 +866,7 @@ const styles = StyleSheet.create({
   },
   // Compact mode styles
   compactCardWrapper: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 4,
   },
   compactCard: {

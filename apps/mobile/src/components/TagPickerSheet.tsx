@@ -495,7 +495,7 @@ const styles = themedStyleSheet({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 16,
+        paddingHorizontal: 12,
     },
     title: { fontFamily: 'PlayfairDisplay_700Bold', fontSize: 26, color: '#F5F5F5' },
     closeBtn: {
@@ -508,7 +508,7 @@ const styles = themedStyleSheet({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    scrollContent: { paddingHorizontal: 16, paddingBottom: 20 },
+    scrollContent: { paddingHorizontal: 12, paddingBottom: 20 },
     label: {
         fontFamily: 'PlayfairDisplay_700Bold',
         fontSize: 14,
@@ -536,7 +536,7 @@ const styles = themedStyleSheet({
     errorText: { fontFamily: 'Inter_400Regular', fontSize: 14, color: '#E5877D' },
     retryText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#D4B13A', marginTop: 4 },
     footer: {
-        paddingHorizontal: 16,
+        paddingHorizontal: 12,
         paddingTop: 14,
         paddingBottom: 30,
         borderTopWidth: 1,

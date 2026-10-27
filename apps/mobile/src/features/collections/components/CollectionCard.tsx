@@ -408,7 +408,7 @@ export function CollectionCard({
 const styles = StyleSheet.create({
   // ── MODO LISTA ──────────────────────────────────────────────
   cardWrapper: {
-    marginHorizontal: 16,
+    marginHorizontal: 12,
     marginBottom: 14,
   },
   card: {
@@ -668,7 +668,7 @@ const styles = StyleSheet.create({
 
   // ── MODO COMPACTO ─────────────────────────────────────────
   compactCardWrapper: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 4,
   },
   compactCard: {

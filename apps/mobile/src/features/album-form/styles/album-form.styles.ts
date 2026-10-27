@@ -9,7 +9,7 @@ export const styles = themedStyleSheet({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     marginBottom: 4,
   },
   backBtn: {
@@ -30,7 +30,7 @@ export const styles = themedStyleSheet({
   },
   previewContainer: {
     marginTop: 20,
-    marginHorizontal: 16,
+    marginHorizontal: 12,
     height: 230,
     borderRadius: 20,
     borderWidth: 1,
@@ -101,7 +101,7 @@ export const styles = themedStyleSheet({
   },
   section: {
     marginTop: 24,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   sectionTitleRow: {
     flexDirection: 'row',
@@ -251,7 +251,7 @@ export const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'center',
     minHeight: 68,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   cardRowBorder: {
     borderBottomWidth: 1,
@@ -346,7 +346,7 @@ export const styles = themedStyleSheet({
     borderTopWidth: 1,
     borderTopColor: '#262626',
     paddingTop: 14,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   createBtn: {
     height: 56,

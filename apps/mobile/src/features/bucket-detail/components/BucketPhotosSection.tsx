@@ -97,7 +97,7 @@ export function BucketPhotosSection({
               borderWidth: 1,
               borderColor: theme.colors.border,
               borderRadius: 12,
-              paddingHorizontal: 16,
+              paddingHorizontal: 12,
               paddingVertical: 10,
               color: theme.colors.foreground,
               marginBottom: 16,

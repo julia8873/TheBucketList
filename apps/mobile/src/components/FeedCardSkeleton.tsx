@@ -45,7 +45,7 @@ export function FeedCardSkeleton() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 12,
     paddingBottom: 20,
   },

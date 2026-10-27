@@ -247,7 +247,7 @@ const styles = themedStyleSheet({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderTopWidth: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 10,
     ...Platform.select({
       web: {

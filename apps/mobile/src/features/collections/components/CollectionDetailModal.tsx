@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
   },
   headerCover: {
     height: 220,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     justifyContent: 'space-between',
     paddingBottom: 20,
     position: 'relative',
@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.7)',
   },
   scrollContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 16,
   },
   description: {
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 14,
     borderTopWidth: 1,
     ...Platform.select({

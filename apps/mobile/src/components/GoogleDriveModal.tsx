@@ -374,7 +374,7 @@ export function GoogleDriveModal({
 const styles = themedStyleSheet({
   sheetBody: {
     flexShrink: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 4,
     paddingBottom: Platform.OS === 'ios' ? 36 : 24,
   },
@@ -445,7 +445,7 @@ const styles = themedStyleSheet({
     justifyContent: 'center',
     gap: 6,
     height: 48,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     borderRadius: 12,
     backgroundColor: gold[400],
   },

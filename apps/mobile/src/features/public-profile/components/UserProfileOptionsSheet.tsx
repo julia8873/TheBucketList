@@ -197,7 +197,7 @@ const styles = themedStyleSheet({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 10,
   },
   displayName: {
@@ -224,7 +224,7 @@ const styles = themedStyleSheet({
     marginVertical: 8,
   },
   optionsList: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   optionRow: {
     flexDirection: 'row',

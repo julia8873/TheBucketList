@@ -148,7 +148,7 @@ export function AddPhotoSheet({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingBottom: 36,
   },
   header: {

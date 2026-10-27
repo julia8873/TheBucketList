@@ -272,7 +272,7 @@ const styles = themedStyleSheet({
     marginBottom: 8,
   },
   header: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingBottom: 12,
   },
   headerRow: {
@@ -299,7 +299,7 @@ const styles = themedStyleSheet({
     justifyContent: 'center',
   },
   searchContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingBottom: 12,
   },
   searchBox: {
@@ -326,7 +326,7 @@ const styles = themedStyleSheet({
     flexShrink: 1,
   },
   listContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingBottom: 20,
     gap: 8,
   },

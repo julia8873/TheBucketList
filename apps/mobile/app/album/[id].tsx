@@ -670,7 +670,7 @@ export default function AlbumDetailScreen() {
 
         {/* Etiquetas del álbum */}
         {(state.albumTags.length > 0 || (state.canEdit && state.id !== 'unassigned')) && (
-          <View style={{ paddingHorizontal: 16, marginTop: 10, marginBottom: 10 }}>
+          <View style={{ paddingHorizontal: 12, marginTop: 10, marginBottom: 10 }}>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
               {state.albumTags.map((tItem) => (
                 <Pressable
@@ -934,7 +934,7 @@ export default function AlbumDetailScreen() {
 
         {/* Sección de comentarios y me gusta del álbum al final */}
         {state.id !== 'unassigned' && (
-          <View style={{ paddingHorizontal: 16, marginTop: 24, marginBottom: 16 }}>
+          <View style={{ paddingHorizontal: 12, marginTop: 24, marginBottom: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
               <Pressable
                 onPress={() => setShowLikesModal(true)}

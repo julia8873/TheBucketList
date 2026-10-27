@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 10,
     paddingBottom: 6,
   },
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
   },
-  content: { paddingHorizontal: 16 },
+  content: { paddingHorizontal: 12 },
   identity: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 14 },
   identityText: { flex: 1, gap: 3 },
   name: { fontFamily: fontFamily.serifBold, fontSize: 19, lineHeight: 24, letterSpacing: -0.2 },

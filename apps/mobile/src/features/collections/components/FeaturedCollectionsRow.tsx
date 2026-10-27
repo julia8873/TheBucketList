@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     marginBottom: 12,
   },
   title: {
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     color: gold[400],
   },
   scrollContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     gap: 12,
   },
   itemCard: {

@@ -747,7 +747,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     zIndex: 20,
   },
   topHeaderCard: {
@@ -914,7 +914,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     zIndex: 20,
   },
   actionBarInner: {

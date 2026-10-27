@@ -197,7 +197,7 @@ const styles = themedStyleSheet({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
@@ -213,7 +213,7 @@ const styles = themedStyleSheet({
     letterSpacing: 0.3,
   },
   segmentWrapper: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 12,
   },
   segmentContainer: {

@@ -9,7 +9,7 @@ export const styles = themedStyleSheet({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     gap: 14,
   },
   backBtn: {
@@ -29,7 +29,7 @@ export const styles = themedStyleSheet({
   },
   albumPillContainer: {
     marginTop: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     alignItems: 'flex-start',
   },
   albumPill: {
@@ -50,7 +50,7 @@ export const styles = themedStyleSheet({
   },
   searchContainer: {
     marginTop: 20,
-    marginHorizontal: 16,
+    marginHorizontal: 12,
     height: 48,
     borderRadius: 999,
     backgroundColor: '#151515',
@@ -69,7 +69,7 @@ export const styles = themedStyleSheet({
   },
   createTaskBtn: {
     marginTop: 14,
-    marginHorizontal: 16,
+    marginHorizontal: 12,
     height: 48,
     borderRadius: 999,
     borderWidth: 1,
@@ -90,7 +90,7 @@ export const styles = themedStyleSheet({
   },
   segmentedControl: {
     marginTop: 16,
-    marginHorizontal: 16,
+    marginHorizontal: 12,
     height: 46,
     borderRadius: 999,
     backgroundColor: '#151515',
@@ -149,8 +149,8 @@ export const styles = themedStyleSheet({
     marginTop: 16,
   },
   tagFilterScroll: {
-    paddingLeft: 16,
-    paddingRight: 16,
+    paddingLeft: 12,
+    paddingRight: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
@@ -212,7 +212,7 @@ export const styles = themedStyleSheet({
   },
   countRow: {
     marginTop: 16,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -231,7 +231,7 @@ export const styles = themedStyleSheet({
     flex: 1,
   },
   listContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 16,
     gap: 10,
   },
@@ -251,7 +251,7 @@ export const styles = themedStyleSheet({
     borderWidth: 1,
     borderColor: '#262626',
     padding: 10,
-    paddingRight: 16,
+    paddingRight: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
@@ -307,7 +307,7 @@ export const styles = themedStyleSheet({
     borderTopWidth: 1,
     borderTopColor: '#262626',
     paddingTop: 14,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   btnAdd: {
     height: 56,

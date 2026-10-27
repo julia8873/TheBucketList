@@ -495,7 +495,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingBottom: 14,
   },
   headerIconWrap: {
@@ -525,7 +525,7 @@ const styles = StyleSheet.create({
   },
   entitySwitcher: {
     flexDirection: 'row',
-    marginHorizontal: 16,
+    marginHorizontal: 12,
     padding: 3,
     borderRadius: 12,
     borderWidth: 1,
@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   modeSection: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     marginBottom: 12,
   },
   modeSectionLabel: {
@@ -598,7 +598,7 @@ const styles = StyleSheet.create({
     maxHeight: Dimensions.get('window').height * 0.45,
   },
   optionsContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 4,
   },
   row: {
@@ -633,7 +633,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 14,
     borderTopWidth: 1,
     gap: 12,

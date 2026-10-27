@@ -439,7 +439,7 @@ const styles = themedStyleSheet({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 12,
     paddingBottom: 16,
     minHeight: 44 + 12 + 16, // misma altura de fila (44) que Ajustes / Perfil → el título queda a la misma altura
@@ -478,7 +478,7 @@ const styles = themedStyleSheet({
   notificationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing[4],
+    paddingHorizontal: spacing[3],
     paddingVertical: spacing[4],
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#eee',
@@ -532,7 +532,7 @@ const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginHorizontal: 16,
+    marginHorizontal: 12,
     marginTop: 10,
     marginBottom: 6,
     padding: 12,

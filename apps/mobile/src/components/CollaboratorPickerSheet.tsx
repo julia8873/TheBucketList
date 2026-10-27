@@ -316,7 +316,7 @@ const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#1E1E1E',
@@ -344,7 +344,7 @@ const styles = themedStyleSheet({
     fontFamily: fontFamily.medium,
   },
   searchContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 12,
     paddingBottom: 8,
   },
@@ -376,11 +376,11 @@ const styles = themedStyleSheet({
     fontSize: 11,
     fontFamily: fontFamily.bold,
     letterSpacing: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     marginBottom: 8,
   },
   chipsContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     gap: 8,
   },
   chip: {
@@ -401,7 +401,7 @@ const styles = themedStyleSheet({
     maxWidth: 120,
   },
   listHeader: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 14,
     paddingBottom: 8,
   },
@@ -441,7 +441,7 @@ const styles = themedStyleSheet({
     flex: 1,
   },
   listContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingBottom: 20,
   },
   userRow: {
@@ -488,7 +488,7 @@ const styles = themedStyleSheet({
     borderColor: '#D4B13A',
   },
   footer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: '#1E1E1E',

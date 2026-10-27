@@ -1134,7 +1134,7 @@ const styles = StyleSheet.create({
   },
   dragHandleBarBtn: {
     paddingVertical: 4,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   dragHandleArea: {
     width: '100%',

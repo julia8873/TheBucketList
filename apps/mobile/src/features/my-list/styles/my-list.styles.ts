@@ -9,7 +9,7 @@ export const styles = themedStyleSheet({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 12,
     paddingBottom: 16,
     flexDirection: 'row',
@@ -40,7 +40,7 @@ export const styles = themedStyleSheet({
     backgroundColor: 'rgba(212, 177, 58, 0.15)',
   },
   searchBarContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     marginBottom: 12,
   },
   tagFilterBtn: {
@@ -91,7 +91,7 @@ export const styles = themedStyleSheet({
     maxWidth: 140,
   },
   tabsContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     marginBottom: 12,
   },
   exploreSearchContainer: {
@@ -99,9 +99,9 @@ export const styles = themedStyleSheet({
     alignItems: 'center',
     gap: 10,
     height: 48,
-    marginHorizontal: 16,
+    marginHorizontal: 12,
     marginBottom: 14,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     borderRadius: 24,
     borderWidth: 1,
     borderColor: '#2A2A2A',
@@ -116,7 +116,7 @@ export const styles = themedStyleSheet({
   },
   filtersContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingRight: 40,
     gap: 8,
   },
@@ -335,11 +335,11 @@ export const styles = themedStyleSheet({
     textDecorationLine: 'line-through',
   },
   listContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingBottom: 120,
   },
   albumsContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingBottom: 120,
   },
   albumsLabelRow: {
@@ -432,7 +432,7 @@ export const styles = themedStyleSheet({
   exploreCollectionsBanner: {
     marginTop: 20,
     marginBottom: 40,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 14,
     borderRadius: 16,
     borderWidth: 1,

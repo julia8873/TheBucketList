@@ -19,7 +19,7 @@ export const styles = themedStyleSheet({
     borderTopRightRadius: 22,
     paddingTop: 16,
     paddingBottom: 32,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     maxHeight: '80%',
     borderWidth: 1,
     borderColor: '#262626',
@@ -199,7 +199,7 @@ export const styles = themedStyleSheet({
   emptySubscribers: {
     alignItems: 'center',
     paddingVertical: 26,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     backgroundColor: '#131313',
     borderRadius: 12,
     borderWidth: 1,

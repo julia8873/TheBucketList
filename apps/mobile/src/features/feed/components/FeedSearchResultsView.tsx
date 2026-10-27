@@ -58,7 +58,7 @@ export function FeedSearchResultsView({
 
   if (isLoading) {
     return (
-      <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+      <View style={{ paddingHorizontal: 12, paddingTop: 16 }}>
         <FeedCardSkeleton />
         <UserRowSkeleton />
         <UserRowSkeleton />
@@ -69,7 +69,7 @@ export function FeedSearchResultsView({
   return (
     <View style={{ flex: 1 }}>
       {/* Pills de filtrado de resultados */}
-      <View style={{ paddingHorizontal: 16, paddingBottom: 10 }}>
+      <View style={{ paddingHorizontal: 12, paddingBottom: 10 }}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -113,7 +113,7 @@ export function FeedSearchResultsView({
       </View>
 
       {totalResults === 0 ? (
-        <View style={{ paddingHorizontal: 16, paddingTop: 40, alignItems: 'center' }}>
+        <View style={{ paddingHorizontal: 12, paddingTop: 40, alignItems: 'center' }}>
           <EmptyState
             title={t('feed.search_empty_title')}
             message={t('feed.search_empty_desc', { query })}
@@ -121,7 +121,7 @@ export function FeedSearchResultsView({
         </View>
       ) : (
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 80 }}
+          contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 80 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >

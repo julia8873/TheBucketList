@@ -191,7 +191,7 @@ export default function CurrentUserProfileScreen() {
   const taskCount = publicBuckets?.length ?? 0;
 
   const headerTop = (
-    <View style={[styles.header, { marginHorizontal: -16 }]}>
+    <View style={[styles.header, { marginHorizontal: -12 }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 10 }}>
         <PageTitle
           gold={t('profile.title_gold', { defaultValue: 'Mi' })}
@@ -360,7 +360,7 @@ export default function CurrentUserProfileScreen() {
           )}
           ListEmptyComponent={
             activeTab !== 'list' ? null : bucketsLoading ? (
-              <View style={{ gap: 10, marginTop: 12, paddingHorizontal: 16 }}>
+              <View style={{ gap: 10, marginTop: 12, paddingHorizontal: 12 }}>
                 <TaskRowSkeleton />
                 <TaskRowSkeleton />
                 <TaskRowSkeleton />
@@ -400,14 +400,14 @@ function Stat({ value, label, onPress }: { value: number; label: string; onPress
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  listContent: { paddingHorizontal: 16, paddingBottom: 48 },
+  listContent: { paddingHorizontal: 12, paddingBottom: 48 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: 12,
     paddingBottom: 16,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     minHeight: 60,
   },
   roundBtn: {

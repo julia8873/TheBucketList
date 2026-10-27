@@ -110,7 +110,7 @@ const styles = themedStyleSheet({
   pill: {
     height: 38,
     minWidth: 98,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     borderRadius: 19,
   },
   block: {

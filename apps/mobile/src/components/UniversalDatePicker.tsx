@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   confirmBtn: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 8,
   },

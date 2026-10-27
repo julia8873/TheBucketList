@@ -546,7 +546,7 @@ export function TaskListHeaderControls({
 
 const localStyles = themedStyleSheet({
   sheetContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 8,
   },
   sheetHeader: {
@@ -575,7 +575,7 @@ const localStyles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 14,
     borderRadius: 14,
     backgroundColor: '#1C1C1C',

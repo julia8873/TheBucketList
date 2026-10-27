@@ -635,7 +635,7 @@ const getStyles = (theme: any) =>
     header: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 16,
+      paddingHorizontal: 12,
       paddingBottom: 16,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: theme.colors.border,
@@ -678,7 +678,7 @@ const getStyles = (theme: any) =>
       letterSpacing: 0.5,
     },
     section: {
-      paddingHorizontal: 16,
+      paddingHorizontal: 12,
       marginTop: 24,
     },
     sectionHeaderRow: {
@@ -699,7 +699,7 @@ const getStyles = (theme: any) =>
       borderWidth: 1,
       borderColor: theme.colors.border,
       borderRadius: 12,
-      paddingHorizontal: 16,
+      paddingHorizontal: 12,
       paddingVertical: 14,
       color: theme.colors.foreground,
       fontSize: 15,
@@ -959,7 +959,7 @@ const getStyles = (theme: any) =>
       backgroundColor: theme.colors.background,
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: theme.colors.border,
-      paddingHorizontal: 16,
+      paddingHorizontal: 12,
       paddingTop: 12,
     },
     submitBtn: {

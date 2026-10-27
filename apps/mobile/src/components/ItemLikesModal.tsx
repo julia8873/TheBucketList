@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   listContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 8,
     paddingBottom: 28,
   },

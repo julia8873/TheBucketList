@@ -159,12 +159,12 @@ export function OptionDialog<T extends string>({ visible, title, options, select
 const styles = StyleSheet.create({
   sectionTitle: { fontFamily: fontFamily.serifBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase', marginTop: 24, marginBottom: 8 },
   card: { borderWidth: 1, borderRadius: 20, overflow: 'hidden' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 14, minHeight: 52 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 14, minHeight: 52 },
   rowTitle: { fontFamily: fontFamily.medium, fontSize: 15 },
   rowSub: { fontFamily: fontFamily.regular, fontSize: 13, marginTop: 2 },
   rowValue: { fontFamily: fontFamily.regular, fontSize: 15 },
   pillWrap: { flexDirection: 'row', padding: 3, borderWidth: 1, borderRadius: 22 },
-  pill: { height: 34, paddingHorizontal: 16, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  pill: { height: 34, paddingHorizontal: 12, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
   pillText: { fontFamily: fontFamily.semibold, fontSize: 14 },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', padding: 24 },
   dialog: { width: '100%', maxWidth: 380, borderRadius: 24, borderWidth: 1, padding: 20, gap: 12 },
@@ -174,5 +174,5 @@ const styles = StyleSheet.create({
   dialogActions: { flexDirection: 'row', gap: 10, marginTop: 4 },
   dialogBtn: { flex: 1, height: 48, borderRadius: 24, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   dialogBtnText: { fontFamily: fontFamily.semibold, fontSize: 15 },
-  option: { height: 52, borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, justifyContent: 'center' },
+  option: { height: 52, borderWidth: 1, borderRadius: 16, paddingHorizontal: 12, justifyContent: 'center' },
 });

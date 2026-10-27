@@ -439,7 +439,7 @@ const styles = themedStyleSheet({
     borderWidth: 1,
     borderBottomWidth: 0,
     paddingTop: 10,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     minHeight: 520,
     maxHeight: '92%',
     width: '100%',
@@ -582,7 +582,7 @@ const styles = themedStyleSheet({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   previewEmptyText: {
     fontSize: 12,
@@ -605,7 +605,7 @@ const styles = themedStyleSheet({
     backgroundColor: 'rgba(0,0,0,0.85)',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     gap: 6,
   },
   previewErrorTitle: {

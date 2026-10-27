@@ -58,7 +58,7 @@ export function TaskCompactSkeleton() {
 export function TaskGallerySkeleton() {
   const { width } = useWindowDimensions();
   const { theme } = useTheme();
-  const cardWidth = Math.floor((width - 32 - 10 - 2) / 2);
+  const cardWidth = Math.floor((width - 24 - 10 - 2) / 2);
 
   return (
     <View
@@ -207,10 +207,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   profileContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 16,
   },
   profileIdentity: {

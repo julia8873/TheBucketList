@@ -440,7 +440,7 @@ export const FeedCard = React.memo(FeedCardComponent);
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 12,
     paddingBottom: 18,
   },
@@ -513,12 +513,12 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   galleryLeftCol: {
-    paddingLeft: 16,
+    paddingLeft: 12,
     paddingRight: 5,
   },
   galleryRightCol: {
     paddingLeft: 5,
-    paddingRight: 16,
+    paddingRight: 12,
   },
   galleryCard: {
     borderRadius: 18,
@@ -592,7 +592,7 @@ const styles = StyleSheet.create({
   },
   // Compacto
   compactCardWrapper: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 4,
   },
   compactCard: {
