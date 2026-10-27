@@ -762,13 +762,16 @@ export function useAlbumDetailState() {
       setShowCoverLinkModal(false);
 
       let finalUrl = url;
-      if (url.startsWith('data:')) {
+      const isOurStorage = url.includes('/storage/v1/object/public/photos/') ||
+        (url.startsWith('album-covers/') && !url.includes('://'));
+
+      if (!isOurStorage) {
         if (!currentUserId) throw new Error('Debes iniciar sesión para subir la portada.');
         try {
           finalUrl = await uploadAlbumCover(currentUserId, url);
         } catch (e: any) {
-          console.error('Error uploading base64 cover:', e);
-          throw new Error(e?.message || 'No se pudo procesar la imagen del portapapeles.');
+          console.error('Error uploading cover from link:', e);
+          throw new Error(e?.message || 'No se pudo procesar la imagen del enlace.');
         }
       }
 

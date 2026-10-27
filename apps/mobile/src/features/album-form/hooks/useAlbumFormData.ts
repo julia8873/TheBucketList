@@ -283,11 +283,15 @@ export function useAlbumFormData(id?: string) {
 
     try {
       let coverToSave: any = selectedCover;
-      if (selectedCover.type === 'image' && isLocalUri(selectedCover.uri)) {
+      const isOurStorage = !!selectedCover.uri && (
+        selectedCover.uri.includes('/storage/v1/object/public/photos/') ||
+        (selectedCover.uri.startsWith('album-covers/') && !selectedCover.uri.includes('://'))
+      );
+      if (selectedCover.type === 'image' && selectedCover.uri && !isOurStorage) {
         if (!user?.id) throw new Error('Debes iniciar sesión para subir la portada.');
         let publicUrl: string;
         try {
-          publicUrl = await uploadAlbumCover(user.id, selectedCover.uri!);
+          publicUrl = await uploadAlbumCover(user.id, selectedCover.uri);
         } catch (e: any) {
           console.error('Error uploading album cover:', e);
           throw new Error(e?.message || 'No se pudo subir la portada. Vuelve a elegir la imagen e inténtalo de nuevo.');

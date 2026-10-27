@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system/legacy';
 
@@ -33,22 +34,30 @@ export async function processBucketImage(uri: string): Promise<ImageProcessingRe
     { compress: 0.5, format: ImageManipulator.SaveFormat.WEBP } // WebP is supported in expo-image-manipulator on most platforms
   );
 
-  // 3. Get file sizes using FileSystem
-  const originalFileInfo = await FileSystem.getInfoAsync(originalProcessed.uri);
-  const thumbFileInfo = await FileSystem.getInfoAsync(thumbProcessed.uri);
+  // 3. Get file sizes using FileSystem (móvil solo; en web expo-file-system no está disponible)
+  let originalSize = 0;
+  let thumbSize = 0;
+  if (Platform.OS !== 'web') {
+    try {
+      const originalFileInfo = await FileSystem.getInfoAsync(originalProcessed.uri);
+      const thumbFileInfo = await FileSystem.getInfoAsync(thumbProcessed.uri);
+      originalSize = originalFileInfo.exists && !originalFileInfo.isDirectory ? originalFileInfo.size || 0 : 0;
+      thumbSize = thumbFileInfo.exists && !thumbFileInfo.isDirectory ? thumbFileInfo.size || 0 : 0;
+    } catch {}
+  }
 
   return {
     original: {
       uri: originalProcessed.uri,
       width: originalProcessed.width,
       height: originalProcessed.height,
-      sizeBytes: originalFileInfo.exists && !originalFileInfo.isDirectory ? originalFileInfo.size || 0 : 0,
+      sizeBytes: originalSize,
     },
     thumbnail: {
       uri: thumbProcessed.uri,
       width: thumbProcessed.width,
       height: thumbProcessed.height,
-      sizeBytes: thumbFileInfo.exists && !thumbFileInfo.isDirectory ? thumbFileInfo.size || 0 : 0,
+      sizeBytes: thumbSize,
     }
   };
 }

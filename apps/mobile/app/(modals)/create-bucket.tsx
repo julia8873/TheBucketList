@@ -120,12 +120,18 @@ export default function CreateBucketModal() {
       const collaborator_ids = selectedCollaborators.map((c) => c.id);
       let finalCoverImage: string | null = coverImage;
 
-      if (coverImage && !coverImage.startsWith('preset:') && !coverImage.startsWith('http')) {
+      const isPreset = !!coverImage && coverImage.startsWith('preset:');
+      const isAlreadyOurStorage = !!coverImage && (
+        coverImage.includes('/storage/v1/object/public/photos/') ||
+        (coverImage.startsWith('covers/') && !coverImage.includes('://'))
+      );
+
+      if (coverImage && !isPreset && !isAlreadyOurStorage) {
         setIsUploadingCover(true);
         try {
           finalCoverImage = await storageApi.uploadCover(user?.id || 'anon', coverImage);
         } catch (uploadErr) {
-          // Nunca guardar la URI local / base64 en la BD: se descargaría entera en cada consulta.
+          // Nunca guardar la URI local / base64 / URL externa larga en la BD: viola la restricción o dispara el egress.
           console.error('Failed to upload cover image, saving without cover:', uploadErr);
           finalCoverImage = null;
         } finally {

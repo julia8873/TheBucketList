@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, Image as RNImage } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, Image as RNImage, Platform } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -83,7 +83,7 @@ export function TaskCoverPicker({
 
   const prepareCrop = async (targetUri: string, initialW?: number, initialH?: number) => {
     let localUri = targetUri;
-    if (targetUri.startsWith('http')) {
+    if (targetUri.startsWith('http') && Platform.OS !== 'web') {
       try {
         const filename = `crop_temp_${Date.now()}.jpg`;
         const dest = `${FileSystem.cacheDirectory}${filename}`;

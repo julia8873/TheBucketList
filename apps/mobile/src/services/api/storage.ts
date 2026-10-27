@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import { processBucketImage } from '@bucketlist/shared';
 import { supabase } from '../supabase';
@@ -22,11 +23,18 @@ export function base64ToArrayBuffer(base64: string): ArrayBuffer {
 }
 
 /**
- * Lee un archivo local y lo devuelve como ArrayBuffer.
- * En React Native, subir un Blob creado con XMLHttpRequest a Supabase falla
- * con "Network request failed"; un ArrayBuffer funciona de forma fiable.
+ * Lee un archivo local o URL y lo devuelve como ArrayBuffer.
+ * En web o URLs remotas (blob:, http:, data:) se usa fetch o decodificación directa.
  */
 async function uriToArrayBuffer(uri: string): Promise<ArrayBuffer> {
+  if (uri.startsWith('data:')) {
+    const base64 = uri.replace(/^data:[^;]+;base64,/, '');
+    return base64ToArrayBuffer(base64);
+  }
+  if (Platform.OS === 'web' || uri.startsWith('http://') || uri.startsWith('https://') || uri.startsWith('blob:')) {
+    const res = await fetch(uri);
+    return await res.arrayBuffer();
+  }
   const base64 = await FileSystem.readAsStringAsync(uri, {
     encoding: FileSystem.EncodingType.Base64,
   });
@@ -89,22 +97,79 @@ export const storageApi = {
   },
 
   /**
-   * Sube una portada a Storage y devuelve su URL pública. Acepta URIs locales (file://, content://)
-   * y URIs `data:` (imagen pegada del portapapeles). Lanza error si falla: quien llama NUNCA debe
-   * guardar la URI original en la base de datos (una imagen en base64 pesa cientos de KB y se
-   * descarga entera en cada consulta del feed → egress).
+   * Sube una portada a Storage y devuelve su URL pública. Acepta URIs locales (file://, content://),
+   * URIs `data:` (imagen pegada del portapapeles) y URLs de internet (http://, https://).
+   * Lanza error si falla: quien llama NUNCA debe guardar la URI original en la base de datos
+   * (evita que URLs largas excedan buckets_cover_image_max_len y evita que imágenes sin optimizar
+   * disparen el consumo de egress).
    */
   uploadCover: async (userId: string, uri: string): Promise<string> => {
+    // Si ya es una URL de nuestro Supabase Storage, no hace falta re-subirla
+    if (
+      uri.includes('/storage/v1/object/public/photos/covers/') ||
+      (uri.startsWith('covers/') && !uri.includes('://'))
+    ) {
+      return uri;
+    }
+
+    // EN WEB: No existe expo-file-system. Procesar o subir directamente como ArrayBuffer.
+    if (Platform.OS === 'web') {
+      try {
+        const processed = await processBucketImage(uri);
+        return await storageApi.uploadSingle(`covers/${userId}_${Date.now()}.jpg`, processed.original.uri);
+      } catch {
+        const data = await uriToArrayBuffer(uri);
+        const path = `covers/${userId}_${Date.now()}.jpg`;
+        const { error } = await supabase.storage
+          .from('photos')
+          .upload(path, data, { contentType: 'image/jpeg', upsert: true, cacheControl: '31536000' });
+        if (error) throw error;
+        return supabase.storage.from('photos').getPublicUrl(path).data.publicUrl;
+      }
+    }
+
     let source = uri;
     let tempPath: string | null = null;
+
     if (uri.startsWith('data:')) {
       const base64 = uri.replace(/^data:[^;]+;base64,/, '');
-      tempPath = `${FileSystem.cacheDirectory}cover_tmp_${Date.now()}.jpg`;
+      tempPath = `${FileSystem.cacheDirectory}cover_tmp_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
       await FileSystem.writeAsStringAsync(tempPath, base64, {
         encoding: FileSystem.EncodingType.Base64,
       });
       source = tempPath;
+    } else if (uri.startsWith('http://') || uri.startsWith('https://')) {
+      tempPath = `${FileSystem.cacheDirectory}cover_net_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
+      try {
+        const dl = await FileSystem.downloadAsync(uri, tempPath);
+        if (dl.status === 200) {
+          source = dl.uri;
+        } else {
+          throw new Error(`Download status: ${dl.status}`);
+        }
+      } catch {
+        // Fallback: descargar mediante fetch y escribir base64
+        const response = await fetch(uri);
+        if (!response.ok) {
+          throw new Error(`No se pudo descargar la imagen (${response.status})`);
+        }
+        const blob = await response.blob();
+        const base64Data = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const res = reader.result as string;
+            resolve(res.replace(/^data:[^;]+;base64,/, ''));
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        await FileSystem.writeAsStringAsync(tempPath, base64Data, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        source = tempPath;
+      }
     }
+
     try {
       const processed = await processBucketImage(source);
       const path = `covers/${userId}_${Date.now()}.jpg`;

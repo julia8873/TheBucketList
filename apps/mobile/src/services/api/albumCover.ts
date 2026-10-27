@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '../supabase';
@@ -11,9 +12,43 @@ export function isLocalUri(uri?: string | null): boolean {
 
 /**
  * Redimensiona la imagen, la sube a Supabase Storage (bucket `photos`) y devuelve su URL pública.
- * Soporta URIs locales (file://, content://) y data URIs en base64 (data:image/...).
+ * Soporta URIs locales (file://, content://), data URIs en base64 y URLs remotas.
  */
 export async function uploadAlbumCover(userId: string, localUri: string): Promise<string> {
+  if (Platform.OS === 'web') {
+    try {
+      const result = await ImageManipulator.manipulateAsync(
+        localUri,
+        [{ resize: { width: 1080 } }],
+        { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG, base64: true },
+      );
+      const arrayBuffer = result.base64
+        ? base64ToArrayBuffer(result.base64)
+        : await (await fetch(result.uri)).arrayBuffer();
+      const path = `album-covers/${userId}_${Date.now()}.jpg`;
+      const { error } = await supabase.storage
+        .from('photos')
+        .upload(path, arrayBuffer, { contentType: 'image/jpeg', upsert: true });
+      if (error) throw error;
+      return supabase.storage.from('photos').getPublicUrl(path).data.publicUrl;
+    } catch {
+      let arrayBuffer: ArrayBuffer;
+      if (localUri.startsWith('data:')) {
+        const base64Data = localUri.replace(/^data:[^;]+;base64,/, '');
+        arrayBuffer = base64ToArrayBuffer(base64Data);
+      } else {
+        const res = await fetch(localUri);
+        arrayBuffer = await res.arrayBuffer();
+      }
+      const path = `album-covers/${userId}_${Date.now()}.jpg`;
+      const { error } = await supabase.storage
+        .from('photos')
+        .upload(path, arrayBuffer, { contentType: 'image/jpeg', upsert: true });
+      if (error) throw error;
+      return supabase.storage.from('photos').getPublicUrl(path).data.publicUrl;
+    }
+  }
+
   let fileToManipulate = localUri;
   let tempFilePath: string | null = null;
 
@@ -25,6 +60,33 @@ export async function uploadAlbumCover(userId: string, localUri: string): Promis
         encoding: FileSystem.EncodingType.Base64,
       });
       fileToManipulate = tempFilePath;
+    } else if (localUri.startsWith('http://') || localUri.startsWith('https://')) {
+      tempFilePath = `${FileSystem.cacheDirectory}album_cover_net_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
+      try {
+        const dl = await FileSystem.downloadAsync(localUri, tempFilePath);
+        if (dl.status === 200) {
+          fileToManipulate = dl.uri;
+        } else {
+          throw new Error(`Download status: ${dl.status}`);
+        }
+      } catch {
+        const response = await fetch(localUri);
+        if (!response.ok) throw new Error(`No se pudo descargar la imagen (${response.status})`);
+        const blob = await response.blob();
+        const base64Data = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const res = reader.result as string;
+            resolve(res.replace(/^data:[^;]+;base64,/, ''));
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        await FileSystem.writeAsStringAsync(tempFilePath, base64Data, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        fileToManipulate = tempFilePath;
+      }
     }
 
     const result = await ImageManipulator.manipulateAsync(

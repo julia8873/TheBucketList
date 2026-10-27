@@ -949,7 +949,7 @@ export function useBucketDetailState() {
     if (!user) return;
     try {
       let localUri = targetUrl;
-      if (targetUrl.startsWith('http')) {
+      if (targetUrl.startsWith('http') && Platform.OS !== 'web') {
         const filename = `photo_remote_${Date.now()}.jpg`;
         const dest = `${FileSystem.cacheDirectory}${filename}`;
         const download = await FileSystem.downloadAsync(targetUrl, dest);
@@ -1295,10 +1295,12 @@ export function useBucketDetailState() {
   const handleApplyCoverUrl = async (rawUrl: string) => {
     const targetId = Array.isArray(id) ? id[0] : id;
     try {
-      // Una imagen pegada llega como `data:image/...;base64,...`: se sube a Storage y solo se guarda la URL.
-      const url = rawUrl.startsWith('data:')
-        ? await storageApi.uploadCover(user?.id || 'anon', rawUrl)
-        : rawUrl;
+      // Cualquier imagen externa (data: o http de internet) se descarga, optimiza y sube a Supabase Storage
+      const isAlreadyOurStorage = rawUrl.includes('/storage/v1/object/public/photos/') ||
+        (rawUrl.startsWith('covers/') && !rawUrl.includes('://'));
+      const url = isAlreadyOurStorage
+        ? rawUrl
+        : await storageApi.uploadCover(user?.id || 'anon', rawUrl);
       const { error } = await supabase
         .from('buckets')
         .update({ cover_image: url })

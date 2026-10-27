@@ -632,7 +632,12 @@ export function BucketPhotoViewer({
                   if (isDownloading) return;
                   try {
                     setIsDownloading(true);
-                    triggerDownloadToast(t('bucket.photo_downloading', { defaultValue: 'Descargando foto...' }));
+                    if (Platform.OS === 'web') {
+                      const url = storageApi.getPublicUrl(currentPhoto.storage_path);
+                      if (typeof window !== 'undefined') window.open(url, '_blank');
+                      setIsDownloading(false);
+                      return;
+                    }
                     const { status } = await MediaLibrary.requestPermissionsAsync(true);
                     if (status !== 'granted') {
                       setIsDownloading(false);
