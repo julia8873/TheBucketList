@@ -1197,6 +1197,13 @@ export const styles = themedStyleSheet({
     marginHorizontal: -12,
     marginBottom: 10,
   },
+  overdueActionsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
   overdueActionsScroll: {
     flexDirection: 'row',
     alignItems: 'center',

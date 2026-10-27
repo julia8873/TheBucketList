@@ -308,15 +308,7 @@ export function DailyTasksScrollControls({
       )}
 
       {/* Quick Filters Bar agrupada y consistente */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.tagsFilterScroll,
-          { paddingHorizontal: 12, gap: 8, flexGrow: 1 },
-        ]}
-        style={{ marginHorizontal: -12, marginBottom: 16 }}
-      >
+      <View style={[styles.tagsFilterScroll, { flexWrap: 'wrap', gap: 8, marginBottom: 16 }]}>
         {/* Todas */}
         <FilterChip
           label={t('daily.filter_all')}
@@ -335,7 +327,8 @@ export function DailyTasksScrollControls({
             styles.tagFilterBtn,
             {
               flexGrow: 1,
-              flexShrink: 0,
+              flexShrink: 1,
+              maxWidth: '100%',
               justifyContent: 'center',
               paddingHorizontal: 10,
               backgroundColor: isStatusActive
@@ -372,7 +365,8 @@ export function DailyTasksScrollControls({
             styles.tagFilterBtn,
             {
               flexGrow: 1,
-              flexShrink: 0,
+              flexShrink: 1,
+              maxWidth: '100%',
               justifyContent: 'center',
               paddingHorizontal: 10,
               backgroundColor: isPriorityActive
@@ -403,7 +397,8 @@ export function DailyTasksScrollControls({
             styles.tagFilterBtn,
             {
               flexGrow: 1,
-              flexShrink: 0,
+              flexShrink: 1,
+              maxWidth: '100%',
               justifyContent: 'center',
               paddingHorizontal: 10,
               backgroundColor: selectedTagFilters.length > 0
@@ -505,7 +500,7 @@ export function DailyTasksScrollControls({
             <Text style={[styles.clearFiltersPillText, { color: theme.colors.foregroundMuted }]}>{t('daily.clear_filters')}</Text>
           </Pressable>
         )}
-      </ScrollView>
+      </View>
 
       {/* Fila: Contador de tareas (izq) + Personalizar y Ordenar (der) */}
       <View

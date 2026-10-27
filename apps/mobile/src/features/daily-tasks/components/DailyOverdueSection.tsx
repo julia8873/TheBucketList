@@ -56,12 +56,7 @@ export function DailyOverdueSection({
       </View>
 
       {/* Bulk action buttons - deslizable horizontalmente para que ninguna acción se corte */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.overdueActionsScroll}
-        style={styles.overdueActionsScrollContainer}
-      >
+      <View style={styles.overdueActionsWrap}>
         {onMoveAllToToday && (
           <Pressable
             style={styles.overdueActionBtn}
@@ -97,7 +92,7 @@ export function DailyOverdueSection({
             <Text style={[styles.overdueActionText, { color: '#EF4444' }]}>{t('daily.overdue_delete_all')}</Text>
           </Pressable>
         )}
-      </ScrollView>
+      </View>
 
       <View
         style={[
