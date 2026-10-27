@@ -10,6 +10,11 @@ jobs:
   ping:
     name: Ping Supabase Staging + Prod
     runs-on: ubuntu-latest
+    # El contexto `secrets` NO se puede usar en `if:` de un paso. Se exponen como variables
+    # de entorno del job y los `if:` comprueban `env.*`.
+    env:
+      SUPABASE_URL_PROD: ${{ secrets.SUPABASE_URL_PROD }}
+      SUPABASE_DB_URL_PROD: ${{ secrets.SUPABASE_DB_URL_PROD }}
     steps:
       - name: Ping staging
         run: |
@@ -21,7 +26,7 @@ jobs:
           [ "$STATUS" = "200" ] || echo "Warning: staging returned $STATUS"
 
       - name: Ping production
-        if: ${{ secrets.SUPABASE_URL_PROD != '' }}
+        if: ${{ env.SUPABASE_URL_PROD != '' }}
         run: |
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             "${{ secrets.SUPABASE_URL_PROD }}/rest/v1/app_config?select=key&limit=1" \
@@ -32,7 +37,7 @@ jobs:
 
       - name: Weekly backup (prod)
         # Run backup on Mondays (weekday 1)
-        if: ${{ github.event_name == 'schedule' && secrets.SUPABASE_DB_URL_PROD != '' }}
+        if: ${{ github.event_name == 'schedule' && env.SUPABASE_DB_URL_PROD != '' }}
         run: |
           TIMESTAMP=$(date +%Y%m%d_%H%M%S)
           echo "Backup timestamp: $TIMESTAMP"
@@ -53,7 +58,7 @@ jobs:
           fi
 
       - name: Upload encrypted backup
-        if: ${{ secrets.SUPABASE_DB_URL_PROD != '' }}
+        if: ${{ env.SUPABASE_DB_URL_PROD != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: db-backup-${{ github.run_id }}
