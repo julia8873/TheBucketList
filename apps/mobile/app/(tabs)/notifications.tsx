@@ -10,7 +10,8 @@ import { useAuthStore } from '../../src/stores/auth.store';
 import { usePullToRefresh } from '../../src/hooks/useAutoRefresh';
 import { supabase } from '../../src/services/supabase';
 import { bucketApi } from '../../src/services/api/bucket';
-import { getNotificationRoute, getSpecificNotificationText } from '../../src/utils/notificationRouting';
+import { getNotificationRoute, getSpecificNotificationText, isActionableNotification } from '../../src/utils/notificationRouting';
+import { prefetchBucketDetail } from '../../src/features/bucket-detail/bucketDetailQueries';
 import { useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
@@ -80,6 +81,11 @@ export default function NotificationsScreen() {
 
   const handleCollaborationResponse = async (notification: any, accept: boolean) => {
     setRespondingId(notification.id);
+    // Optimista (solo en caché): los botones desaparecen al instante. Se marca como leída en la
+    // base de datos únicamente cuando la respuesta termina bien; si falla, se restaura.
+    queryClient.setQueriesData<any[]>({ queryKey: ['notifications'] }, (old) =>
+      Array.isArray(old) ? old.map((n) => (n.id === notification.id ? { ...n, is_read: true } : n)) : old,
+    );
     try {
       if (notification.type === 'collaboration_request') {
         await bucketApi.respondToCollaborationRequest(notification.bucket_id, notification.actor_id, accept);
@@ -150,6 +156,7 @@ export default function NotificationsScreen() {
         }
       }
     } catch (e: any) {
+      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast.error(e?.message ?? t('common.error'), t('common.error'));
     } finally {
       setRespondingId(null);
@@ -157,13 +164,18 @@ export default function NotificationsScreen() {
   };
 
   const handleNotificationPress = (notification: any) => {
-    if (!notification.is_read) {
+    // Las invitaciones / solicitudes se responden solo con sus botones: al tocar la notificación
+    // se abre la tarea pero NO se marca como leída (así los botones siguen disponibles).
+    if (!notification.is_read && !isActionableNotification(notification.type)) {
       markAsRead.mutate(notification.id);
     }
-    
+
     // Navegar según el tipo (los comentarios y menciones abren directamente la hoja de comentarios)
     const route = getNotificationRoute(notification);
-    if (route) router.push(route as any);
+    if (!route) return;
+    // Precarga la tarea (y su invitación) para que se abra al instante
+    if (notification.bucket_id) prefetchBucketDetail(queryClient, notification.bucket_id);
+    router.push(route as any);
   };
 
   const getIconForType = (type: string) => {

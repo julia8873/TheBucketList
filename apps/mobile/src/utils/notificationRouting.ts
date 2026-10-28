@@ -15,6 +15,13 @@ export interface NotificationLike {
   actorId?: string | null;
 }
 
+/** Notificaciones que se responden con botones (aceptar / rechazar) y no deben marcarse como leídas al tocarlas. */
+const ACTIONABLE_TYPES = new Set(['collaboration_invite', 'collaboration_request', 'album_invite', 'notification_request']);
+
+export function isActionableNotification(type?: string | null): boolean {
+  return !!type && ACTIONABLE_TYPES.has(type);
+}
+
 /** Tipos que deben abrir directamente la hoja de comentarios. */
 const COMMENT_TYPES = new Set(['comment', 'mention', 'comment_like', 'comment_reply']);
 
@@ -32,8 +39,8 @@ export function getNotificationRoute(n: NotificationLike): string | null {
   if (type === 'user_reported' || type === 'content_reported') return '/(modals)/admin-reports';
   if (type === 'follow' || type === 'follow_accepted') return actorId ? `/profile/${actorId}` : null;
   if (type === 'follow_request') return '/friends?tab=requests';
-  // Estas se responden desde la lista de notificaciones (botones aceptar / rechazar)
-  if (type === 'notification_request' || type === 'collaboration_invite') return null;
+  // Las invitaciones y solicitudes se aceptan / rechazan con los botones de la notificación,
+  // pero tocar la notificación en sí lleva a la tarea o álbum (sin responder).
 
   const query = isCommentNotification(type) ? '?openComments=1' : '';
   if (bucketId) return `/bucket/${bucketId}${query}`;

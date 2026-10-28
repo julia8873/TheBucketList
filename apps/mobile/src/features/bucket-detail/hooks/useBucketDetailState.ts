@@ -12,6 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/services/supabase';
 import { storageApi } from '@/services/api/storage';
 import { bucketApi } from '@/services/api/bucket';
+import { fetchBucketDetail, fetchBucketCollaborators, fetchBucketParticipants } from '../bucketDetailQueries';
 import { processBucketImage } from '@bucketlist/shared';
 import { useAuthStore } from '@/stores/auth.store';
 import { usePullToRefresh } from '@/hooks/useAutoRefresh';
@@ -125,22 +126,7 @@ export function useBucketDetailState() {
 
   const { data: bucket, isLoading } = useQuery({
     queryKey: ['bucketDetail', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('buckets')
-        .select(`
-          *,
-          user:profiles!buckets_user_id_fkey(*),
-          category:categories(*),
-          item_subtasks(*),
-          bucket_photos(*),
-          album_items(album_id)
-        `)
-        .eq('id', id)
-        .single();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => fetchBucketDetail(id as string),
     enabled: !!id,
   });
 
@@ -226,47 +212,13 @@ export function useBucketDetailState() {
 
   const { data: collaborators = [], refetch: refetchCollaborators } = useQuery({
     queryKey: ['bucketCollaborators', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('bucket_collaborators')
-        .select('user_id, status, origin, profiles:user_id(id, username, display_name, avatar_url)')
-        .eq('bucket_id', id);
-      if (error) {
-        console.warn('Error fetching collaborators:', error);
-        return [];
-      }
-      return (data || []).map((row: any) => {
-        const p = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
-        return {
-          id: row.user_id,
-          username: p?.username || '',
-          display_name: p?.display_name || null,
-          avatar_url: p?.avatar_url || null,
-          status: row.status,
-          origin: (row.origin as 'invite' | 'request' | undefined) ?? undefined,
-        };
-      });
-    },
+    queryFn: () => fetchBucketCollaborators(id as string),
     enabled: !!id,
   });
 
   const { data: participantsData = [] } = useQuery({
     queryKey: ['bucketParticipants', id],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_bucket_participants', { p_bucket_id: id });
-      if (error) {
-        console.warn('Error fetching participants:', error);
-        return [];
-      }
-      return (data || []).map((r: any) => ({
-        id: r.id as string,
-        username: r.username || '',
-        display_name: r.display_name || null,
-        avatar_url: r.avatar_url || null,
-        status: ((r.status as string) || 'accepted') as 'accepted' | 'pending',
-        isOwner: !!r.is_owner,
-      }));
-    },
+    queryFn: () => fetchBucketParticipants(id as string),
     enabled: !!id,
   });
 
@@ -444,6 +396,17 @@ export function useBucketDetailState() {
           .eq('user_id', user.id);
         if (error) throw error;
       }
+      // La invitación ya está respondida: quita sus botones en la lista de notificaciones.
+      void supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('recipient_id', user.id)
+        .eq('bucket_id', bucketId)
+        .eq('type', 'collaboration_invite')
+        .then(() => {
+          void queryClient.invalidateQueries({ queryKey: ['notifications'] });
+          void queryClient.invalidateQueries({ queryKey: ['unreadNotificationsCount'] });
+        });
       void refetchCollaborators();
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', bucketId] });
       void queryClient.invalidateQueries({ queryKey: ['bucketCollaborators', bucketId] });
