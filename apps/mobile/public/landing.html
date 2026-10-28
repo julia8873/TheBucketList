@@ -9,7 +9,7 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="TheBucketList — Tu lista de sueños, hecha realidad">
 <meta property="og:description" content="Apunta tus metas, organízalas en álbumes y compártelas con tus amigos.">
-<meta property="og:image" content="/landing/mi-lista.webp">
+<meta property="og:image" content="/landing/mi-lista-tareas.webp">
 <link rel="icon" href="/favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -57,11 +57,12 @@ nav{position:sticky;top:0;z-index:20;background:rgba(15,15,15,.82);backdrop-filt
 .hero p.lead{margin-top:20px;color:var(--muted);font-size:clamp(16px,2.6vw,19px);max-width:34em}
 .cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
 .hero-note{margin-top:16px;font-size:13px;color:var(--muted)}
-.phones{position:relative;height:520px;max-width:420px;margin:0 auto;width:100%}
+.phones{position:relative;width:100%;max-width:460px;aspect-ratio:460/570;margin:0 auto}
 .phone{position:absolute;border-radius:34px;padding:8px;background:#1b1b1b;border:1px solid #333;box-shadow:0 30px 70px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.03)}
 .phone img{border-radius:27px;width:100%}
-.phone.a{width:62%;left:0;top:30px;transform:rotate(-4deg);z-index:2}
-.phone.b{width:62%;right:0;top:0;transform:rotate(4deg);z-index:1;box-shadow:0 30px 70px rgba(0,0,0,.6),0 0 60px rgba(212,177,58,.18)}
+.phone.c{width:47%;left:26.5%;top:3%;z-index:3;box-shadow:0 36px 80px rgba(0,0,0,.65),0 0 70px rgba(212,177,58,.22)}
+.phone.a{width:44%;left:0;top:13%;transform:rotate(-6deg);z-index:1}
+.phone.b{width:44%;right:0;top:9%;transform:rotate(6deg);z-index:2}
 
 /* stats strip */
 .strip{margin-top:48px;border-block:1px solid var(--line);background:var(--bg2)}
@@ -85,6 +86,16 @@ section{padding:72px 0}
 .feat li::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:var(--gold);margin-top:8px}
 .shot{width:min(300px,78%);margin:0 auto;border-radius:34px;padding:8px;background:#1b1b1b;border:1px solid #333;box-shadow:0 30px 70px rgba(0,0,0,.55),0 0 80px rgba(212,177,58,.10)}
 .shot img{border-radius:27px;width:100%}
+.shot-col{display:flex;flex-direction:column;align-items:center;gap:22px}
+.shot-col .shot{width:min(300px,78%);margin:0}
+.stack{display:grid}
+.stack img{grid-area:1/1;opacity:0;visibility:hidden;transition:opacity .35s ease,visibility .35s}
+.stack img.on,.stack img:only-child{opacity:1;visibility:visible}
+.tabs{display:inline-flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:999px;background:var(--bg2);max-width:100%}
+.tabs button{border:0;background:none;color:var(--muted);font:600 13px var(--sans);padding:9px 16px;border-radius:999px;cursor:pointer;white-space:nowrap;transition:background .2s,color .2s}
+.tabs button:hover{color:var(--text)}
+.tabs button[aria-selected=true]{background:var(--gold);color:var(--ink)}
+.tabs button:focus-visible{outline:2px solid var(--gold2);outline-offset:2px}
 
 /* how */
 .steps{display:grid;gap:16px}
@@ -113,7 +124,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--muted);f
   :root{--gutter:32px}
   .hero{padding:88px 0 40px}
   .hero-grid{grid-template-columns:1.05fr .95fr}
-  .phones{height:600px;max-width:480px}
+  .phones{max-width:500px}
   .strip-in{grid-template-columns:repeat(4,1fr)}
   .strip-in div{border-bottom:0!important;border-right:1px solid var(--line)!important}
   .strip-in div:last-child{border-right:0!important}
@@ -150,8 +161,9 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--muted);f
     <p class="hero-note" data-i="note">Gratis · Español e inglés · Modo oscuro y claro</p>
   </div>
   <div class="phones" aria-hidden="true">
-    <div class="phone b"><img src="/landing/explorar.webp" alt="" width="540" height="808"></div>
-    <div class="phone a"><img src="/landing/mi-lista.webp" alt="" width="540" height="813" fetchpriority="high"></div>
+    <div class="phone a"><img src="/landing/momentos-amigos.webp" alt="" width="640" height="1391"></div>
+    <div class="phone b"><img src="/landing/explorar-ideas.webp" alt="" width="640" height="1391"></div>
+    <div class="phone c"><img src="/landing/mi-lista-tareas.webp" alt="" width="640" height="1391" fetchpriority="high"></div>
   </div>
 </div></header>
 
@@ -172,18 +184,24 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--muted);f
     <div class="txt">
       <h3 data-i="f1h">Tu lista, a tu manera</h3>
       <p data-i="f1p">Crea tareas con foto, fecha, prioridad y etiquetas con emoji. Cambia entre vista de lista, compacta o galería y filtra por estado o prioridad.</p>
-      <ul><li data-i="f1a">Favoritas, en curso, pendientes y completadas</li><li data-i="f1b">Álbumes para agrupar planes y compartirlos</li><li data-i="f1c">Calendario para ver cada plan en su día</li></ul>
+      <ul><li data-i="f1a">Favoritas, en curso, pendientes y completadas</li><li data-i="f1b">Álbumes para agrupar planes y compartirlos con colaboradores</li><li data-i="f1c">Calendario para ver cada plan en su día</li></ul>
     </div>
-    <div class="shot-col"><div class="shot"><img src="/landing/mi-lista.webp" alt="Pantalla Mi lista con tareas favoritas, en curso y pendientes" width="540" height="813" loading="lazy"></div></div>
+    <div class="shot-col" data-tabs>
+      <div class="shot"><div class="stack"><img src="/landing/mi-lista-tareas.webp" alt="" data-alt="alt1" width="640" height="1391" class="on" loading="lazy"><img src="/landing/mi-lista-albumes.webp" alt="" data-alt="alt1b" width="640" height="1391" loading="lazy"><img src="/landing/mi-lista-calendario.webp" alt="" data-alt="alt1c" width="640" height="1391" loading="lazy"></div></div>
+      <div class="tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-i="tb_tasks">Tareas</button><button type="button" role="tab" aria-selected="false" data-i="tb_albums">Álbumes</button><button type="button" role="tab" aria-selected="false" data-i="tb_cal">Calendario</button></div>
+    </div>
   </div>
 
   <div class="feat rev">
     <div class="txt">
       <h3 data-i="f2h">Momentos con tus amigos</h3>
-      <p data-i="f2p">Mira lo que están cumpliendo tus amigos, dales like, coméntalo y apúntate al plan con un toque en «Me too».</p>
+      <p data-i="f2p">Mira lo que están cumpliendo tus amigos, dales like, coméntalo y apúntate al plan con un toque en «Yo también».</p>
       <ul><li data-i="f2a">Feed en lista, compacto o galería</li><li data-i="f2b">Comentarios y menciones</li><li data-i="f2c">Guarda las ideas que te inspiren</li></ul>
     </div>
-    <div class="shot-col"><div class="shot"><img src="/landing/momentos.webp" alt="Feed de momentos de amigos" width="540" height="810" loading="lazy"></div></div>
+    <div class="shot-col">
+      <div class="shot"><div class="stack"><img src="/landing/momentos-amigos.webp" alt="" data-alt="alt2" width="640" height="1391" loading="lazy"></div></div>
+      
+    </div>
   </div>
 
   <div class="feat">
@@ -192,34 +210,34 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--muted);f
       <p data-i="f3p">¿Sin ideas? Clona colecciones ya preparadas, como una noche de Halloween o una Navidad en casa y fuera, y conviértelas en tus propios planes.</p>
       <ul><li data-i="f3a">Colecciones por temporada y temática</li><li data-i="f3b">Clónalas con un toque</li><li data-i="f3c">Descubre planes de otras personas</li></ul>
     </div>
-    <div class="shot-col"><div class="shot"><img src="/landing/explorar.webp" alt="Pantalla Explorar con colecciones prediseñadas" width="540" height="808" loading="lazy"></div></div>
+    <div class="shot-col">
+      <div class="shot"><div class="stack"><img src="/landing/explorar-ideas.webp" alt="" data-alt="alt3" width="640" height="1391" loading="lazy"></div></div>
+      
+    </div>
   </div>
-
 
   <div class="feat rev">
     <div class="txt">
-      <h3 data-i="f5h"></h3>
-      <p data-i="f5p"></p>
-      <ul><li data-i="f5a"></li><li data-i="f5b"></li><li data-i="f5c"></li></ul>
+      <h3 data-i="f5h">Tus planes, en el mapa</h3>
+      <p data-i="f5p">Mira de un vistazo dónde están tus planes y los de tus amigos, en cualquier rincón del mundo. Busca una ciudad, un país o una tarea y filtra por completadas o por hacer.</p>
+      <ul><li data-i="f5a">Agrupación de lugares cercanos</li><li data-i="f5b">Filtros: mis tareas, amigos, completadas y por hacer</li><li data-i="f5c">Sin seguimiento: los lugares los añades tú</li></ul>
     </div>
-    <div class="shot-col"><div class="shot"><img src="/landing/mapa.webp" alt="" data-alt="alt5" width="540" height="829" loading="lazy"></div></div>
+    <div class="shot-col">
+      <div class="shot"><div class="stack"><img src="/landing/mapa.webp" alt="" data-alt="alt5" width="640" height="1391" loading="lazy"></div></div>
+      
+    </div>
   </div>
 
   <div class="feat">
     <div class="txt">
-      <h3 data-i="f6h"></h3>
-      <p data-i="f6p"></p>
-      <ul><li data-i="f6a"></li><li data-i="f6b"></li><li data-i="f6c"></li></ul>
-    </div>
-    <div class="shot-col"><div class="shot"><img src="/landing/nueva-tarea.webp" alt="" data-alt="alt6" width="540" height="820" loading="lazy"></div></div>
-  </div>
-  <div class="feat rev">
-    <div class="txt">
       <h3 data-i="f4h">Tu día a día, bajo control</h3>
-      <p data-i="f4p">Una lista rápida para lo de hoy: añade tareas en un segundo, ordénalas por prioridad y márcalas al terminar. También tienes vista semanal, calendario y todas.</p>
+      <p data-i="f4p">Una lista rápida para lo de hoy: añade tareas en un segundo, ordénalas por prioridad y márcalas al terminar. También tienes vista semanal, calendario y todas. Las tareas pueden repetirse cada día o cada pocos días.</p>
       <ul><li data-i="f4a">Añadido rápido desde la cabecera</li><li data-i="f4b">Etiquetas, estados y prioridades</li><li data-i="f4c">Completadas hoy, a la vista</li></ul>
     </div>
-    <div class="shot-col"><div class="shot"><img src="/landing/dia-a-dia.webp" alt="Pantalla Día a día con tareas de hoy" width="540" height="815" loading="lazy"></div></div>
+    <div class="shot-col" data-tabs>
+      <div class="shot"><div class="stack"><img src="/landing/dia-a-dia-hoy.webp" alt="" data-alt="alt4" width="640" height="1391" class="on" loading="lazy"><img src="/landing/dia-a-dia-calendario.webp" alt="" data-alt="alt4b" width="640" height="1391" loading="lazy"></div></div>
+      <div class="tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-i="tb_today">Hoy</button><button type="button" role="tab" aria-selected="false" data-i="tb_cal2">Calendario</button></div>
+    </div>
   </div>
 </div></section>
 
@@ -260,25 +278,28 @@ const T={
 es:{nav_cta:"Descargar",eyebrow:"Tu lista de vida",h1a:"Tus sueños,",h1b:"uno a uno, hechos realidad.",lead:"Apunta tus metas y planes, organízalos en álbumes, comparte momentos con tus amigos y míralos en un mapa. Todo en una sola app.",play:"Disponible en Google Play",web:"Abrir en el navegador",note:"Gratis · Español e inglés · Modo oscuro y claro",
 s1t:"Listas",s1d:"metas, prioridades y etiquetas",s2t:"Álbumes",s2d:"con fotos y colaboradores",s3t:"Amigos",s3d:"momentos, likes y comentarios",s4t:"Mapa",s4d:"tus lugares por visitar",
 fh:'Todo lo que necesitas para <span class="gold">cumplir lo que te propones</span>',fp:"Desde el plan del fin de semana hasta la meta de toda la vida.",
-f1h:"Tu lista, a tu manera",f1p:"Crea tareas con foto, fecha, prioridad y etiquetas con emoji. Cambia entre vista de lista, compacta o galería y filtra por estado o prioridad.",f1a:"Favoritas, en curso, pendientes y completadas",f1b:"Álbumes para agrupar planes y compartirlos",f1c:"Calendario para ver cada plan en su día",
-f2h:"Momentos con tus amigos",f2p:"Mira lo que están cumpliendo tus amigos, dales like, coméntalo y apúntate al plan con un toque en «Me too».",f2a:"Feed en lista, compacto o galería",f2b:"Comentarios y menciones",f2c:"Guarda las ideas que te inspiren",
+f1h:"Tu lista, a tu manera",f1p:"Crea tareas con foto, fecha, prioridad y etiquetas con emoji. Cambia entre vista de lista, compacta o galería y filtra por estado o prioridad.",f1a:"Favoritas, en curso, pendientes y completadas",f1b:"Álbumes para agrupar planes y compartirlos con colaboradores",f1c:"Calendario para ver cada plan en su día",tb_tasks:"Tareas",tb_albums:"Álbumes",tb_cal:"Calendario",tb_today:"Hoy",tb_cal2:"Calendario",
+f2h:"Momentos con tus amigos",f2p:"Mira lo que están cumpliendo tus amigos, dales like, coméntalo y apúntate al plan con un toque en «Yo también».",f2a:"Feed en lista, compacto o galería",f2b:"Comentarios y menciones",f2c:"Guarda las ideas que te inspiren",
 f3h:"Explora ideas y colecciones",f3p:"¿Sin ideas? Clona colecciones ya preparadas, como una noche de Halloween o una Navidad en casa y fuera, y conviértelas en tus propios planes.",f3a:"Colecciones por temporada y temática",f3b:"Clónalas con un toque",f3c:"Descubre planes de otras personas",
-f4h:"Tu día a día, bajo control",f4p:"Una lista rápida para lo de hoy: añade tareas en un segundo, ordénalas por prioridad y márcalas al terminar. También tienes vista semanal, calendario y todas.",f4a:"Añadido rápido desde la cabecera",f4b:"Etiquetas, estados y prioridades",f4c:"Completadas hoy, a la vista",
-f5h:"Tus planes, en el mapa",f5p:"Mira de un vistazo dónde están tus planes y los de tus amigos. Busca una ciudad, un país o una tarea y filtra por completadas o por hacer.",f5a:"Agrupación de lugares cercanos",f5b:"Filtros: mis tareas, amigos, completadas y por hacer",f5c:"Sin seguimiento: los lugares los añades tú",f6h:"Crear un plan lleva segundos",f6p:"Ponle portada (foto, cámara, enlace, color o degradado), escribe qué quieres lograr y elige la prioridad. Puedes añadir ubicación, fecha y etiquetas.",f6a:"Portadas con fotos o colores",f6b:"Prioridad baja, media o alta",f6c:"Ubicación opcional para verlo en el mapa",hh:"Empezar es muy fácil",st1h:"Apunta",st1p:"Añade lo que quieres hacer, con foto, fecha y etiquetas. O clona una colección.",st2h:"Organiza",st2p:"Agrúpalo en álbumes, ponle prioridad y míralo en la lista, el calendario o el mapa.",st3h:"Cúmplelo y compártelo",st3p:"Marca lo completado, sube tus fotos y comparte el momento con tus amigos.",
+f4h:"Tu día a día, bajo control",f4p:"Una lista rápida para lo de hoy: añade tareas en un segundo, ordénalas por prioridad y márcalas al terminar. También tienes vista semanal, calendario y todas. Las tareas pueden repetirse cada día o cada pocos días.",f4a:"Añadido rápido desde la cabecera",f4b:"Etiquetas, estados y prioridades",f4c:"Completadas hoy, a la vista",
+f5h:"Tus planes, en el mapa",f5p:"Mira de un vistazo dónde están tus planes y los de tus amigos, en cualquier rincón del mundo. Busca una ciudad, un país o una tarea y filtra por completadas o por hacer.",f5a:"Agrupación de lugares cercanos",f5b:"Filtros: mis tareas, amigos, completadas y por hacer",f5c:"Sin seguimiento: los lugares los añades tú",hh:"Empezar es muy fácil",st1h:"Apunta",st1p:"Añade lo que quieres hacer, con foto, fecha y etiquetas. O clona una colección.",st2h:"Organiza",st2p:"Agrúpalo en álbumes, ponle prioridad y míralo en la lista, el calendario o el mapa.",st3h:"Cúmplelo y compártelo",st3p:"Marca lo completado, sube tus fotos y comparte el momento con tus amigos.",
 ph:'Pensada para <span class="gold">respetar tu privacidad</span>',p1h:"Sin rastreo en segundo plano",p1p:"Los lugares los añades tú a mano. La app no sigue tu ubicación.",p2h:"Solo las fotos que eliges",p2p:"Usa el selector de fotos del sistema: no pide acceso a toda tu galería.",p3h:"Tú mandas sobre tus datos",p3p:"Controla qué compartes, bloquea o reporta usuarios y borra tu cuenta cuando quieras.",
 fnh:'Empieza hoy tu lista de <span class="gold">cosas por vivir</span>',fnp:"Descarga TheBucketList y apunta lo primero que te gustaría hacer este año.",play2:"Descargar en Google Play",web2:"Probar en el navegador",lp:"Privacidad",lt:"Términos",ld:"Eliminar cuenta",lc:"Contacto"},
 en:{nav_cta:"Download",eyebrow:"Your life list",h1a:"Your dreams,",h1b:"one by one, made real.",lead:"Write down your goals and plans, organise them into albums, share moments with friends and see them on a map. All in one app.",play:"Get it on Google Play",web:"Open in your browser",note:"Free · English and Spanish · Dark and light mode",
 s1t:"Lists",s1d:"goals, priorities and tags",s2t:"Albums",s2d:"with photos and collaborators",s3t:"Friends",s3d:"moments, likes and comments",s4t:"Map",s4d:"the places you want to visit",
 fh:'Everything you need to <span class="gold">achieve what you set out to do</span>',fp:"From this weekend's plan to a lifelong goal.",
-f1h:"Your list, your way",f1p:"Create tasks with a photo, date, priority and emoji tags. Switch between list, compact and gallery views, and filter by status or priority.",f1a:"Favourites, in progress, pending and completed",f1b:"Albums to group plans and share them",f1c:"Calendar to see each plan on its day",
+f1h:"Your list, your way",f1p:"Create tasks with a photo, date, priority and emoji tags. Switch between list, compact and gallery views, and filter by status or priority.",f1a:"Favourites, in progress, pending and completed",f1b:"Albums to group plans and share them with collaborators",f1c:"Calendar to see each plan on its day",tb_tasks:"Tasks",tb_albums:"Albums",tb_cal:"Calendar",tb_today:"Today",tb_cal2:"Calendar",
 f2h:"Moments with your friends",f2p:"See what your friends are ticking off, like and comment, and join the plan with one tap on “Me too”.",f2a:"Feed in list, compact or gallery view",f2b:"Comments and mentions",f2c:"Save the ideas that inspire you",
 f3h:"Explore ideas and collections",f3p:"Out of ideas? Clone ready-made collections, like a Halloween night or Christmas at home and out, and turn them into your own plans.",f3a:"Collections by season and theme",f3b:"Clone them with one tap",f3c:"Discover other people's plans",
-f4h:"Your day, under control",f4p:"A quick list for today: add tasks in a second, sort them by priority and tick them off. You also get a weekly view, a calendar and an all-tasks view.",f4a:"Quick add from the header",f4b:"Tags, statuses and priorities",f4c:"Completed today, at a glance",
-f5h:"Your plans, on the map",f5p:"See at a glance where your plans and your friends' plans are. Search a city, a country or a task and filter by completed or to do.",f5a:"Nearby places grouped together",f5b:"Filters: my tasks, friends, completed and to do",f5c:"No tracking: you add the places yourself",f6h:"Creating a plan takes seconds",f6p:"Give it a cover (photo, camera, link, colour or gradient), write what you want to achieve and pick a priority. You can add a location, date and tags.",f6a:"Covers with photos or colours",f6b:"Low, medium or high priority",f6c:"Optional location to see it on the map",hh:"Getting started is easy",st1h:"Write it down",st1p:"Add what you want to do, with a photo, date and tags. Or clone a collection.",st2h:"Organise",st2p:"Group it into albums, set a priority and see it in the list, calendar or map.",st3h:"Do it and share it",st3p:"Mark it as done, add your photos and share the moment with your friends.",
+f4h:"Your day, under control",f4p:"A quick list for today: add tasks in a second, sort them by priority and tick them off. You also get a weekly view, a calendar and an all-tasks view. Tasks can repeat every day or every few days.",f4a:"Quick add from the header",f4b:"Tags, statuses and priorities",f4c:"Completed today, at a glance",
+f5h:"Your plans, on the map",f5p:"See at a glance where your plans and your friends' plans are, anywhere in the world. Search a city, a country or a task and filter by completed or to do.",f5a:"Nearby places grouped together",f5b:"Filters: my tasks, friends, completed and to do",f5c:"No tracking: you add the places yourself",hh:"Getting started is easy",st1h:"Write it down",st1p:"Add what you want to do, with a photo, date and tags. Or clone a collection.",st2h:"Organise",st2p:"Group it into albums, set a priority and see it in the list, calendar or map.",st3h:"Do it and share it",st3p:"Mark it as done, add your photos and share the moment with your friends.",
 ph:'Built to <span class="gold">respect your privacy</span>',p1h:"No background tracking",p1p:"You add places by hand. The app doesn't follow your location.",p2h:"Only the photos you choose",p2p:"It uses the system photo picker: it doesn't ask for access to your whole gallery.",p3h:"You control your data",p3p:"Choose what you share, block or report users, and delete your account whenever you want.",
 fnh:'Start your list of <span class="gold">things to live</span> today',fnp:"Download TheBucketList and write down the first thing you'd love to do this year.",play2:"Download on Google Play",web2:"Try it in your browser",lp:"Privacy",lt:"Terms",ld:"Delete account",lc:"Contact"}
 };
-const A={es:{alt5:'Mapa con los planes agrupados por zonas de España',alt6:'Pantalla para crear una tarea nueva con portada, descripción y prioridad'},en:{alt5:'Map with plans grouped by area across Spain',alt6:'New task screen with cover, description and priority'}};
+const A={
+es:{alt1:'Mi lista: tareas favoritas y pendientes con foto, prioridad y colaboradores',alt1b:'Mi lista: álbumes con portada, progreso y colaboradores',alt1c:'Mi lista: calendario mensual con tareas completadas y pendientes',alt2:'Feed de momentos de amigos con foto, likes y botón «Yo también»',alt3:'Explorar: colecciones prediseñadas de temporada para clonar',alt4:'Día a día: tareas de hoy con etiquetas, prioridad y repetición',alt4b:'Día a día: calendario mensual con las tareas programadas del día',alt5:'Mapa de Europa con los planes agrupados por zonas'},
+en:{alt1:'My list: favourite and pending tasks with photo, priority and collaborators',alt1b:'My list: albums with cover, progress and collaborators',alt1c:'My list: monthly calendar with completed and pending tasks',alt2:'Friends moments feed with photo, likes and “Me too” button',alt3:'Explore: ready-made seasonal collections to clone',alt4:'Daily: today’s tasks with tags, priority and repeat',alt4b:'Daily: monthly calendar with the day’s scheduled tasks',alt5:'Map of Europe with plans grouped by area'}
+};
 function setLang(l){
   document.documentElement.lang=l;
   document.querySelectorAll('[data-i]').forEach(e=>{const v=T[l][e.dataset.i];if(v!==undefined)e.innerHTML=v});
@@ -290,6 +311,14 @@ function setLang(l){
 document.querySelectorAll('.lang button').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.l)));
 let l='es';try{l=localStorage.getItem('tbl-lang')||((navigator.language||'es').toLowerCase().startsWith('en')?'en':'es')}catch(e){}
 setLang(l);
+document.querySelectorAll('[data-tabs]').forEach(col=>{
+  const imgs=col.querySelectorAll('.stack img'),btns=col.querySelectorAll('[role=tab]');
+  btns.forEach((b,i)=>b.addEventListener('click',()=>{
+    imgs.forEach((im,j)=>{im.classList.toggle('on',i===j);im.setAttribute('aria-hidden',i===j?'false':'true')});
+    btns.forEach((x,j)=>x.setAttribute('aria-selected',i===j?'true':'false'));
+  }));
+  imgs.forEach((im,j)=>{if(j>0)im.setAttribute('aria-hidden','true')});
+});
 document.getElementById('y').textContent=new Date().getFullYear();
 </script>
 </body>
