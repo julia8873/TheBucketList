@@ -13,9 +13,12 @@ interface TaskCollaborationViewerCardProps {
   collaborationAudience: CollaborationAudience;
   isFollower: boolean;
   isPendingCollaborator: boolean;
+  /** El creador me ha invitado y estoy pendiente de aceptar/rechazar. */
+  isPendingInvitation?: boolean;
   ownerUsername?: string;
   onRequestOrJoin: () => Promise<void>;
   onCancelRequest: () => Promise<void>;
+  onRespondToInvite?: (accept: boolean) => Promise<void>;
   onFollowOwner?: () => Promise<void>;
 }
 
@@ -26,16 +29,79 @@ export function TaskCollaborationViewerCard({
   collaborationAudience,
   isFollower,
   isPendingCollaborator,
+  isPendingInvitation = false,
   ownerUsername = 'el creador',
   onRequestOrJoin,
   onCancelRequest,
+  onRespondToInvite,
   onFollowOwner,
 }: TaskCollaborationViewerCardProps) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
+  const [respondingTo, setRespondingTo] = useState<'accept' | 'decline' | null>(null);
 
   // Si es el creador o ya es colaborador aceptado, no mostrar esta tarjeta
   if (isOwner || isCollaborator) return null;
+
+  const handleInviteResponse = async (accept: boolean) => {
+    if (!onRespondToInvite) return;
+    setRespondingTo(accept ? 'accept' : 'decline');
+    try {
+      await onRespondToInvite(accept);
+    } finally {
+      setRespondingTo(null);
+    }
+  };
+
+  // Caso 0: el creador me ha invitado → soy yo quien debe aceptar o rechazar
+  if (isPendingInvitation && onRespondToInvite) {
+    return (
+      <View style={[styles.card, styles.pendingCard]}>
+        <View style={styles.cardHeader}>
+          <View style={styles.iconCirclePending}>
+            <UserPlus size={18} color="#D4B13A" strokeWidth={2.2} />
+          </View>
+          <View style={styles.cardTexts}>
+            <Text style={styles.cardTitle}>{t('bucket.collab_invite_received_title')}</Text>
+            <Text style={styles.cardSubtitle}>
+              {t('bucket.collab_invite_received_desc', { username: ownerUsername })}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.inviteActions}>
+          <Pressable
+            style={[styles.btn, styles.inviteBtn, styles.cancelBtn]}
+            onPress={() => handleInviteResponse(false)}
+            disabled={respondingTo !== null}
+          >
+            {respondingTo === 'decline' ? (
+              <ActivityIndicator size="small" color="#9E9E9E" />
+            ) : (
+              <>
+                <X size={15} color="#9E9E9E" />
+                <Text style={styles.cancelBtnText}>{t('bucket.collab_invite_decline')}</Text>
+              </>
+            )}
+          </Pressable>
+          <Pressable
+            style={[styles.btn, styles.inviteBtn, styles.joinBtn]}
+            onPress={() => handleInviteResponse(true)}
+            disabled={respondingTo !== null}
+          >
+            {respondingTo === 'accept' ? (
+              <ActivityIndicator size="small" color="#0D0D0D" />
+            ) : (
+              <>
+                <Check size={16} color="#0D0D0D" strokeWidth={2.4} />
+                <Text style={styles.btnText}>{t('bucket.collab_invite_accept')}</Text>
+              </>
+            )}
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
 
   // Si la tarea es solo por invitación, no mostrar
   if (collaborationMode === 'invite_only' && !isPendingCollaborator) return null;
@@ -272,6 +338,13 @@ const styles = themedStyleSheet({
     color: '#0D0D0D',
     fontSize: 13,
     fontFamily: 'Inter_600SemiBold',
+  },
+  inviteActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  inviteBtn: {
+    flex: 1,
   },
   cancelBtn: {
     backgroundColor: '#242424',

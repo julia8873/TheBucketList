@@ -229,7 +229,7 @@ export function useBucketDetailState() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('bucket_collaborators')
-        .select('user_id, status, profiles:user_id(id, username, display_name, avatar_url)')
+        .select('user_id, status, origin, profiles:user_id(id, username, display_name, avatar_url)')
         .eq('bucket_id', id);
       if (error) {
         console.warn('Error fetching collaborators:', error);
@@ -243,6 +243,7 @@ export function useBucketDetailState() {
           display_name: p?.display_name || null,
           avatar_url: p?.avatar_url || null,
           status: row.status,
+          origin: (row.origin as 'invite' | 'request' | undefined) ?? undefined,
         };
       });
     },
@@ -331,7 +332,12 @@ export function useBucketDetailState() {
   const myCollaboration =
     collaborators.find((c: any) => c.id === user?.id) ||
     participantsData.find((p: any) => p.id === user?.id);
-  const isPendingCollaborator = myCollaboration?.status === 'pending';
+  const isPending = myCollaboration?.status === 'pending';
+  // `origin` indica quién originó la fila pendiente:
+  //  · 'invite'  → el dueño me invitó a mí (yo debo aceptar o rechazar).
+  //  · 'request' → yo pedí unirme (el dueño debe aprobar).
+  const isPendingInvitation = isPending && (myCollaboration as any)?.origin === 'invite';
+  const isPendingCollaborator = isPending && !isPendingInvitation;
 
   // Colaboradores para los ajustes de colaboración: directos (aceptados o con invitación pendiente,
   // se pueden quitar) y los que lo son por un álbum compartido (se gestionan desde el álbum).
@@ -415,6 +421,36 @@ export function useBucketDetailState() {
       void queryClient.invalidateQueries({ queryKey: ['buckets'] });
     } catch (e: any) {
       Alert.alert('Error', e?.message || 'No se pudo cancelar la solicitud');
+    }
+  };
+
+  /** La persona invitada acepta o rechaza la invitación que le envió el creador. */
+  const handleRespondToCollaborationInvite = async (accept: boolean) => {
+    if (!id || !user?.id) return;
+    const bucketId = Array.isArray(id) ? id[0] : id;
+    try {
+      if (accept) {
+        const { error } = await supabase
+          .from('bucket_collaborators')
+          .update({ status: 'accepted' })
+          .eq('bucket_id', bucketId)
+          .eq('user_id', user.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('bucket_collaborators')
+          .delete()
+          .eq('bucket_id', bucketId)
+          .eq('user_id', user.id);
+        if (error) throw error;
+      }
+      void refetchCollaborators();
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', bucketId] });
+      void queryClient.invalidateQueries({ queryKey: ['bucketCollaborators', bucketId] });
+      void queryClient.invalidateQueries({ queryKey: ['bucketParticipants', bucketId] });
+      void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+    } catch (e: any) {
+      Alert.alert('Colaboración', e?.message || 'No se pudo responder a la invitación');
     }
   };
 
@@ -1922,10 +1958,12 @@ export function useBucketDetailState() {
     collaborationAudience,
     isFollower,
     isPendingCollaborator,
+    isPendingInvitation,
     showCollaborationSettingsModal,
     setShowCollaborationSettingsModal,
     handleRequestOrJoinCollaboration,
     handleCancelCollaborationRequest,
+    handleRespondToCollaborationInvite,
     handleUpdateCollaborationSettings,
     handleRemoveCollaborator,
     collaboratorsList,

@@ -328,9 +328,11 @@ export default function BucketDetailScreen() {
             collaborationAudience={state.collaborationAudience}
             isFollower={state.isFollower}
             isPendingCollaborator={state.isPendingCollaborator}
+            isPendingInvitation={state.isPendingInvitation}
             ownerUsername={bucket.user?.username || 'el creador'}
             onRequestOrJoin={state.handleRequestOrJoinCollaboration}
             onCancelRequest={state.handleCancelCollaborationRequest}
+            onRespondToInvite={state.handleRespondToCollaborationInvite}
             onFollowOwner={state.handleFollowOwner}
           />
 
