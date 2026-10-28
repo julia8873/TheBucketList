@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { useTranslation } from '@bucketlist/shared';
-import { UserPlus, SlidersHorizontal } from 'lucide-react-native';
+import { UserPlus } from 'lucide-react-native';
 import { normalizeStorageUrl } from '@/constants/urls';
 import { useRouter } from 'expo-router';
 import { styles } from '../styles/bucket-detail.styles';
@@ -25,7 +25,6 @@ interface BucketCollaboratorsRowProps {
   user: any;
   canEdit: boolean;
   onOpenPicker: () => void;
-  onOpenSettings?: () => void;
 }
 
 export function BucketCollaboratorsRow({
@@ -35,7 +34,6 @@ export function BucketCollaboratorsRow({
   user,
   canEdit,
   onOpenPicker,
-  onOpenSettings,
 }: BucketCollaboratorsRowProps) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -113,13 +111,13 @@ export function BucketCollaboratorsRow({
               {c.avatar_url && !imgErrors[c.id] ? (
                 <Image
                   source={{ uri: normalizeStorageUrl(c.avatar_url) }}
-                  style={[styles.collaboratorAvatarImg, isPending && { opacity: 0.35 }]}
+                  style={[styles.collaboratorAvatarImg, isPending && { opacity: 0.8 }]}
                   contentFit="cover"
                   cachePolicy="memory-disk"
                   onError={() => setImgErrors((prev) => ({ ...prev, [c.id]: true }))}
                 />
               ) : (
-                <Text style={[styles.collaboratorInitials, isPending && { opacity: 0.35 }]}>
+                <Text style={[styles.collaboratorInitials, isPending && { opacity: 0.8 }]}>
                   {getInitials(c.display_name || c.username)}
                 </Text>
               )}
@@ -133,32 +131,15 @@ export function BucketCollaboratorsRow({
         })}
 
         {canEdit && (
-          <>
-            <Pressable
-              style={styles.addCollaboratorCircle}
-              onPress={onOpenPicker}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={t('bucket.add_collaborator')}
-            >
-              <UserPlus size={22} color="#D4B13A" strokeWidth={1.8} />
-            </Pressable>
-
-            {isOwnerUser && onOpenSettings && (
-              <Pressable
-                style={[
-                  styles.addCollaboratorCircle,
-                  { backgroundColor: 'rgba(255,255,255,0.06)', borderColor: '#333333' },
-                ]}
-                onPress={onOpenSettings}
-                hitSlop={8}
-                accessibilityRole="button"
-                accessibilityLabel={t('bucket.collaboration_settings')}
-              >
-                <SlidersHorizontal size={18} color="#CFCABD" strokeWidth={2} />
-              </Pressable>
-            )}
-          </>
+          <Pressable
+            style={styles.addCollaboratorCircle}
+            onPress={onOpenPicker}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('bucket.add_collaborator')}
+          >
+            <UserPlus size={22} color="#D4B13A" strokeWidth={1.8} />
+          </Pressable>
         )}
       </ScrollView>
     </View>

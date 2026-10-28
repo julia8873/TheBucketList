@@ -225,6 +225,8 @@ const en = {
     deleted_success: 'Task deleted',
     collaboration_settings: 'Collaboration settings',
     collaboration_settings_desc: 'Manage who can collaborate on this task',
+    options_collaborators: 'Manage collaborators',
+    options_collaborators_sub: 'Invite or remove people from this task',
     photo_downloaded: 'Photo saved to your gallery',
     copy_credit: 'Inspired by {{username}}',
     copy_action: 'I want to do this too',

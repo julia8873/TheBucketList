@@ -52,7 +52,6 @@ import { ItemLikesModal } from '@/components/ItemLikesModal';
 import { ItemCommentsSection } from '@/components/ItemCommentsSection';
 import { ImageLinkModal } from '@/components/ImageLinkModal';
 import { GoogleDriveModal } from '@/components/GoogleDriveModal';
-import { TaskCollaborationSettingsModal } from '@/features/bucket-detail/components/TaskCollaborationSettingsModal';
 import { TaskCollaborationViewerCard } from '@/features/bucket-detail/components/TaskCollaborationViewerCard';
 import { openGoogleDriveLink } from '@/utils/driveAccess';
 import { timeAgo } from '@/utils/timeAgo';
@@ -317,7 +316,6 @@ export default function BucketDetailScreen() {
             user={state.user}
             canEdit={state.canEdit}
             onOpenPicker={() => state.setShowCollaboratorPicker(true)}
-            onOpenSettings={() => state.setShowCollaborationSettingsModal(true)}
           />
 
           {/* Tarjeta de invitación/solicitud de colaboración para seguidores y otros usuarios */}
@@ -648,7 +646,7 @@ export default function BucketDetailScreen() {
         isSaved={state.isSaved}
         onToggleSave={state.handleToggleSaveBucket}
         onLeaveCollaboration={state.handleLeaveCollaboration}
-        onOpenCollaborationSettings={() => state.setShowCollaborationSettingsModal(true)}
+        onOpenCollaborators={() => state.setShowCollaboratorPicker(true)}
         onReport={() => setTimeout(() => setReportVisible(true), 250)}
         uploadPhotos={state.uploadPhotos}
         uploadCover={state.uploadCover}
@@ -762,8 +760,8 @@ export default function BucketDetailScreen() {
         ]}
         onChange={(collabs) => void state.handleCollaboratorsChange(collabs)}
         onClose={() => state.setShowCollaboratorPicker(false)}
-        current={state.isOwner ? state.collaboratorsList.filter((c: any) => !c.viaAlbum) : []}
-        onRemoveCurrent={state.isOwner ? state.handleRemoveCollaborator : undefined}
+        current={state.canManageCollaborators ? state.collaboratorsList.filter((c: any) => !c.viaAlbum) : []}
+        onRemoveCurrent={state.canManageCollaborators ? state.handleRemoveCollaborator : undefined}
         readOnlyIds={[
           ...(bucket.user_id ? [bucket.user_id] : []),
           ...state.participantsData.filter((p: any) => p.id !== state.user?.id).map((p: any) => p.id),
@@ -846,16 +844,6 @@ export default function BucketDetailScreen() {
           void state.addPhotoFromUrl(url);
         }}
         initialQuery={bucket?.title || ''}
-      />
-
-      <TaskCollaborationSettingsModal
-        visible={state.showCollaborationSettingsModal}
-        currentMode={state.collaborationMode}
-        currentAudience={state.collaborationAudience}
-        collaborators={state.collaboratorsList}
-        onRemoveCollaborator={state.handleRemoveCollaborator}
-        onClose={() => state.setShowCollaborationSettingsModal(false)}
-        onSaveSettings={state.handleUpdateCollaborationSettings}
       />
 
       <GoogleDriveModal

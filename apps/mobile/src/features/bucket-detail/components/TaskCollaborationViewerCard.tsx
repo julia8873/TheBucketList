@@ -4,7 +4,7 @@ import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-nati
 import { useTranslation } from '@bucketlist/shared';
 import { Zap, Clock, UserPlus, Users, X, Check, Heart } from 'lucide-react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
-import type { CollaborationMode, CollaborationAudience } from './TaskCollaborationSettingsModal';
+import type { CollaborationMode, CollaborationAudience } from '../collaboration.types';
 
 interface TaskCollaborationViewerCardProps {
   isOwner: boolean;

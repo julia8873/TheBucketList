@@ -225,6 +225,8 @@ const es = {
     deleted_success: 'Tarea eliminada',
     collaboration_settings: 'Ajustes de colaboración',
     collaboration_settings_desc: 'Gestiona quién puede colaborar en esta tarea',
+    options_collaborators: 'Gestionar colaboradores',
+    options_collaborators_sub: 'Invita o quita personas de esta tarea',
     photo_downloaded: 'La foto se ha guardado en tu galería',
     copy_credit: 'Inspirado por {{username}}',
     copy_action: 'Yo también quiero hacerlo',

@@ -681,12 +681,12 @@ export default function AlbumDetailScreen() {
                       {collab.avatar_url ? (
                         <Image
                           source={{ uri: normalizeStorageUrl(collab.avatar_url) }}
-                          style={[styles.collaboratorAvatarImg, isPending && { opacity: 0.35 }]}
+                          style={[styles.collaboratorAvatarImg, isPending && { opacity: 0.8 }]}
                           contentFit="cover"
                           cachePolicy="memory-disk"
                         />
                       ) : (
-                        <Text style={[styles.collaboratorInitials, isPending && { opacity: 0.35 }]}>
+                        <Text style={[styles.collaboratorInitials, isPending && { opacity: 0.8 }]}>
                           {(collab.display_name || collab.username || '?').slice(0, 2).toUpperCase()}
                         </Text>
                       )}
@@ -1185,11 +1185,11 @@ export default function AlbumDetailScreen() {
         onChange={state.handleCollaboratorsChange}
         onClose={() => state.setShowCollaboratorPicker(false)}
         current={
-          state.isOwner
+          state.canEdit
             ? state.albumCollaborators.filter((c: any) => c.id !== state.ownerEntry.id && c.id !== state.user?.id)
             : []
         }
-        onRemoveCurrent={state.isOwner ? state.handleRemoveAlbumCollaborator : undefined}
+        onRemoveCurrent={state.canEdit ? state.handleRemoveAlbumCollaborator : undefined}
         readOnlyIds={[state.ownerEntry.id]}
         excludeIds={[
           ...(state.ownerEntry.id ? [state.ownerEntry.id] : []),

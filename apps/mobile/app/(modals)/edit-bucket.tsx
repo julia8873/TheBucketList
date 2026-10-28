@@ -66,8 +66,6 @@ export default function EditBucketModal() {
   const [selectedCollaborators, setSelectedCollaborators] = useState<CollaboratorItem[]>([]);
   const [showCollaboratorPicker, setShowCollaboratorPicker] = useState(false);
   const collaboratorsInitialized = useRef(false);
-  const [collaborationMode, setCollaborationMode] = useState<'invite_only' | 'request' | 'open'>('invite_only');
-  const [collaborationAudience, setCollaborationAudience] = useState<'followers' | 'anyone'>('followers');
 
   // Portada
   const [coverImage, setCoverImage] = useState<string>('preset:green');
@@ -123,7 +121,7 @@ export default function EditBucketModal() {
 
     supabase
       .from('buckets')
-      .select('title, description, visibility, priority, location_text, location_lat, location_lng, deadline, collaboration_mode, collaboration_audience, cover_image, drive_url')
+      .select('title, description, visibility, priority, location_text, location_lat, location_lng, deadline, cover_image, drive_url')
       .eq('id', id)
       .single()
       .then(({ data, error }) => {
@@ -143,12 +141,6 @@ export default function EditBucketModal() {
         setLocationLat(data.location_lat ?? null);
         setLocationLng(data.location_lng ?? null);
         setDeadline(data.deadline ? new Date(data.deadline) : null);
-        if ((data as any).collaboration_mode) {
-          setCollaborationMode((data as any).collaboration_mode);
-        }
-        if ((data as any).collaboration_audience) {
-          setCollaborationAudience((data as any).collaboration_audience);
-        }
         if ((data as any).cover_image) {
           setCoverImage((data as any).cover_image);
           initialCoverImage.current = (data as any).cover_image;
@@ -204,8 +196,6 @@ export default function EditBucketModal() {
       location_lat: locationText.trim() ? locationLat : null,
       location_lng: locationText.trim() ? locationLng : null,
       deadline,
-      collaboration_mode: collaborationMode,
-      collaboration_audience: collaborationAudience,
       cover_image: finalCoverImage,
       drive_url: driveUrl,
       // Solo se envía si cambió (al igualarla a la del álbum): así no se pisa un cambio hecho en otro sitio.
@@ -439,10 +429,6 @@ export default function EditBucketModal() {
             onRemoveCollaborator={(collabId) =>
               setSelectedCollaborators((prev) => prev.filter((x) => x.id !== collabId))
             }
-            collaborationMode={collaborationMode}
-            onChangeCollaborationMode={setCollaborationMode}
-            collaborationAudience={collaborationAudience}
-            onChangeCollaborationAudience={setCollaborationAudience}
           />
         </ScrollView>
 

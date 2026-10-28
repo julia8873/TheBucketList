@@ -259,7 +259,7 @@ export function useAlbumDetailState() {
     });
   };
 
-  const { data: albumCollaborators = [], refetch: refetchCollaborators } = useQuery({
+  const { data: albumCollaborators = [] } = useQuery({
     queryKey: ['albumCollaborators', cleanId],
     queryFn: async () => {
       if (!cleanId || cleanId === 'unassigned') return [];
@@ -289,9 +289,10 @@ export function useAlbumDetailState() {
   const isCollaborator = !isOwner && albumCollaborators.some((c: any) => isSelf(c.id) && c.status === 'accepted');
   const canEdit = isOwner || isCollaborator;
 
-  /** El dueño quita a un colaborador o cancela su invitación pendiente. */
+  /** El dueño o cualquier colaborador quita a otro colaborador o cancela su invitación pendiente. */
   const handleRemoveAlbumCollaborator = async (targetUserId: string) => {
-    if (!cleanId || cleanId === 'unassigned' || !isOwner) return;
+    if (!cleanId || cleanId === 'unassigned' || !canEdit) return;
+    if (rawOwnerId && targetUserId === rawOwnerId) return; // al dueño no lo puede quitar nadie
     const previous = queryClient.getQueryData(['albumCollaborators', cleanId]);
     queryClient.setQueryData(['albumCollaborators', cleanId], (old: any) =>
       Array.isArray(old) ? old.filter((c: any) => c.id !== targetUserId) : old,
@@ -313,6 +314,8 @@ export function useAlbumDetailState() {
   };
 
   const handleCollaboratorsChange = async (newCollabs: CollaboratorItem[]) => {
+    const collabKey = ['albumCollaborators', cleanId];
+    const prevCollabs = queryClient.getQueryData(collabKey);
     try {
       const currentIds = new Set(albumCollaborators.map((c: any) => c.id));
       const newIds = new Set(newCollabs.map((c) => c.id));
@@ -323,57 +326,59 @@ export function useAlbumDetailState() {
       const toRemoveIds = albumCollaborators
         .filter((c: any) => !newIds.has(c.id) && c.id !== rawOwnerId && !isSelf(c.id))
         .map((c: any) => c.id);
+      const needsShared =
+        !album?.isShared && newCollabs.some((c) => c.id !== rawOwnerId && !isSelf(c.id));
+      if (toAdd.length === 0 && toRemoveIds.length === 0 && !needsShared) return;
+      const removeSet = new Set(toRemoveIds);
 
-      const existingStatusMap = new Map<string, string>(
-        albumCollaborators.map((c: any) => [c.id, c.status])
-      );
-      const selfCollab = albumCollaborators.find((c: any) => isSelf(c.id));
-      const remainingCollabs = newCollabs.filter(c => c.id !== rawOwnerId && !isSelf(c.id));
-      const mergedCollabs = [
-        ...(selfCollab ? [selfCollab] : []),
-        ...remainingCollabs.map((c) => ({
-          ...c,
-          status: existingStatusMap.get(c.id) || 'pending',
+      // Evita que una carga en vuelo pise el cambio optimista
+      await queryClient.cancelQueries({ queryKey: collabKey });
+
+      // Optimista: aparece al instante con su foto y «Pendiente»
+      queryClient.setQueryData(collabKey, [
+        ...albumCollaborators.filter((c: any) => !removeSet.has(c.id)),
+        ...toAdd.map((c) => ({
+          id: c.id,
+          username: c.username,
+          display_name: c.display_name ?? null,
+          avatar_url: c.avatar_url ?? null,
+          status: 'pending',
         })),
-      ];
-      queryClient.setQueryData(['albumCollaborators', cleanId], mergedCollabs);
+      ]);
 
-      if (toAdd.length > 0) {
-        const { error: insErr } = await supabase.from('album_members').insert(
-          toAdd.map((c) => ({
-            album_id: cleanId,
-            user_id: c.id,
-            role: 'member',
-            status: 'pending',
-          }))
-        );
-        if (insErr) console.warn('Error adding album members:', insErr);
+      // Todo en paralelo (antes: insertar → borrar → marcar como compartido, en serie)
+      const [insRes, delRes, shareRes] = await Promise.all([
+        toAdd.length > 0
+          ? supabase.from('album_members').insert(
+              toAdd.map((c) => ({ album_id: cleanId, user_id: c.id, role: 'member', status: 'pending' })),
+            )
+          : Promise.resolve({ error: null } as any),
+        toRemoveIds.length > 0
+          ? supabase.from('album_members').delete().eq('album_id', cleanId).in('user_id', toRemoveIds)
+          : Promise.resolve({ error: null } as any),
+        needsShared
+          ? supabase.from('albums').update({ is_shared: true }).eq('id', cleanId)
+          : Promise.resolve({ error: null } as any),
+      ]);
+      const opError = insRes?.error || delRes?.error;
+      if (opError) {
+        console.warn('Error updating album collaborators:', opError);
+        queryClient.setQueryData(collabKey, prevCollabs);
+        Alert.alert('Error', opError.message || 'No se pudo actualizar a los colaboradores');
+      } else if (shareRes?.error) {
+        console.warn('Error sharing album:', shareRes.error);
       }
-
-      if (toRemoveIds.length > 0) {
-        const { error: delErr } = await supabase
-          .from('album_members')
-          .delete()
-          .eq('album_id', cleanId)
-          .in('user_id', toRemoveIds);
-        if (delErr) console.warn('Error removing album members:', delErr);
-      }
-
-      if (newCollabs.length > 0 && !album?.isShared) {
-        await supabase.from('albums').update({ is_shared: true }).eq('id', cleanId);
-        void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
-        if (cleanId !== id) void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
-        void queryClient.invalidateQueries({ queryKey: ['albums'] });
-      }
-
-      void refetchCollaborators();
-      void queryClient.invalidateQueries({ queryKey: ['albumCollaborators', cleanId] });
-      void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
-      void queryClient.invalidateQueries({ queryKey: ['albums'] });
-      void queryClient.invalidateQueries({ queryKey: ['albums'] });
-    } catch (err) {
+    } catch (err: any) {
       console.warn('Error updating album collaborators:', err);
-      void refetchCollaborators();
+      queryClient.setQueryData(collabKey, prevCollabs);
+      Alert.alert('Error', err?.message || 'No se pudo actualizar a los colaboradores');
+    } finally {
+      void queryClient.invalidateQueries({ queryKey: collabKey });
+      void queryClient.invalidateQueries({ queryKey: ['item_participants'] });
+      void queryClient.invalidateQueries({ queryKey: ['bucketParticipants'] });
+      void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
+      if (cleanId !== id) void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+      void queryClient.invalidateQueries({ queryKey: ['albums'] });
     }
   };
 

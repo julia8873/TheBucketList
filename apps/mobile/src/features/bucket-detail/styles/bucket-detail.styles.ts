@@ -380,9 +380,14 @@ export const styles = themedStyleSheet({
     borderStyle: 'dashed',
     backgroundColor: 'rgba(212, 177, 58, 0.06)',
   },
+  // Franja inferior: antes cubría todo el círculo (62 % negro) y tapaba la foto del colaborador
   pendingCenterOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.62)',
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 15,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 2,

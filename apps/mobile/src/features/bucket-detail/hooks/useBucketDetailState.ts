@@ -43,7 +43,7 @@ import type { ThumbnailMode} from '@/utils/taskImage';
 import { resolveTaskImage } from '@/utils/taskImage';
 import type { PhotoSortField, PhotoSortDir } from '../components/PhotoSortModal';
 import type { DatePickerConfig } from '../components/BucketDatePickerModal';
-import type { CollaborationMode, CollaborationAudience } from '../components/TaskCollaborationSettingsModal';
+import type { CollaborationMode, CollaborationAudience } from '../collaboration.types';
 import { toast, confirm } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 
@@ -277,6 +277,8 @@ export function useBucketDetailState() {
     (albumsData ?? []).some((a: any) => a.id === bi.album_id),
   );
   const canEdit = isOwner || isCollaborator || isInSharedAlbum;
+  // El creador y todos los colaboradores gestionan a las demás personas; el creador nunca se puede quitar.
+  const canManageCollaborators = isOwner || isCollaborator;
 
   const collaborationMode = ((bucket)?.collaboration_mode as CollaborationMode) || 'invite_only';
   const collaborationAudience = ((bucket)?.collaboration_audience as CollaborationAudience) || 'followers';
@@ -339,8 +341,6 @@ export function useBucketDetailState() {
       Alert.alert('Error', e?.message || 'No se pudo seguir al usuario');
     }
   };
-
-  const [showCollaborationSettingsModal, setShowCollaborationSettingsModal] = useState(false);
 
   const handleRequestOrJoinCollaboration = async () => {
     if (!id) return;
@@ -417,9 +417,10 @@ export function useBucketDetailState() {
     }
   };
 
-  /** El creador quita a un colaborador (o cancela una invitación pendiente). */
+  /** El creador o cualquier colaborador quita a otro colaborador (o cancela una invitación pendiente). */
   const handleRemoveCollaborator = async (targetUserId: string) => {
-    if (!id || !isOwner) return;
+    if (!id || !canManageCollaborators) return;
+    if (targetUserId === bucket?.user_id) return; // al creador no lo puede quitar nadie
     const bucketId = Array.isArray(id) ? id[0] : id;
     queryClient.setQueryData(['bucketCollaborators', bucketId], (old: any) =>
       Array.isArray(old) ? old.filter((c: any) => c.id !== targetUserId) : old,
@@ -441,28 +442,6 @@ export function useBucketDetailState() {
     void queryClient.invalidateQueries({ queryKey: ['bucketDetail', bucketId] });
     void queryClient.invalidateQueries({ queryKey: ['item_participants'] });
     void queryClient.invalidateQueries({ queryKey: ['buckets'] });
-  };
-
-  const handleUpdateCollaborationSettings = async (
-    newMode: CollaborationMode,
-    newAudience: CollaborationAudience
-  ) => {
-    if (!id) return;
-    const bucketId = Array.isArray(id) ? id[0] : id;
-    try {
-      await bucketApi.updateBucket(bucketId, {
-        collaboration_mode: newMode,
-        collaboration_audience: newAudience,
-      });
-      queryClient.setQueryData(['bucketDetail', bucketId], (old: any) =>
-        old ? { ...old, collaboration_mode: newMode, collaboration_audience: newAudience } : old
-      );
-      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', bucketId] });
-      void queryClient.invalidateQueries({ queryKey: ['buckets'] });
-    } catch (e: any) {
-      Alert.alert('Error', e?.message || 'No se pudieron guardar los ajustes');
-      throw e;
-    }
   };
 
   let photos: any[] = [...(bucket?.bucket_photos || [])];
@@ -1729,6 +1708,10 @@ export function useBucketDetailState() {
   };
 
   const handleCollaboratorsChange = async (rawCollabs: CollaboratorItem[]) => {
+    const collabKey = ['bucketCollaborators', id];
+    const partKey = ['bucketParticipants', id];
+    const prevCollabs = queryClient.getQueryData(collabKey);
+    const prevParts = queryClient.getQueryData(partKey);
     try {
       const lockedIds = new Set<string>([
         ...(bucket?.user_id ? [bucket.user_id] : []),
@@ -1742,41 +1725,65 @@ export function useBucketDetailState() {
       const toRemoveIds = collaborators
         .filter((c: any) => !newIds.has(c.id) && !lockedIds.has(c.id) && c.id !== user?.id)
         .map((c: any) => c.id);
+      if (toAdd.length === 0 && toRemoveIds.length === 0) return;
+      const removeSet = new Set(toRemoveIds);
 
-      const existingStatusMap = new Map<string, string>(collaborators.map((c: any) => [c.id, c.status]));
-      const selfCollab = collaborators.find((c: any) => c.id === user?.id);
-      const remainingCollabs = newCollabs.filter((c) => !lockedIds.has(c.id));
-      const mergedCollabs = [
-        ...(selfCollab ? [selfCollab] : []),
-        ...remainingCollabs.map((c) => ({ ...c, status: existingStatusMap.get(c.id) || 'pending' })),
-      ];
-      queryClient.setQueryData(['bucketCollaborators', id], mergedCollabs);
+      // Evita que una carga en vuelo pise el cambio optimista
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: collabKey }),
+        queryClient.cancelQueries({ queryKey: partKey }),
+      ]);
 
-      if (toAdd.length > 0) {
-        const { error: insErr } = await supabase.from('bucket_collaborators').insert(
-          toAdd.map((c) => ({
-            bucket_id: id,
-            user_id: c.id,
-            status: 'pending',
-          }))
-        );
-        if (insErr) console.warn('Error adding collaborators:', insErr);
+      // Optimista: la persona aparece al instante, con su foto y «Pendiente»
+      const asPending = (c: CollaboratorItem) => ({
+        id: c.id,
+        username: c.username,
+        display_name: c.display_name ?? null,
+        avatar_url: c.avatar_url ?? null,
+        status: 'pending' as const,
+        origin: 'invite' as const,
+      });
+      queryClient.setQueryData(collabKey, [
+        ...collaborators.filter((c: any) => !removeSet.has(c.id)),
+        ...toAdd.map(asPending),
+      ]);
+      queryClient.setQueryData(partKey, (old: any) => {
+        const base = Array.isArray(old) ? old : participantsData;
+        const have = new Set(base.map((p: any) => p.id));
+        return [
+          ...base.filter((p: any) => !removeSet.has(p.id)),
+          ...toAdd.filter((c) => !have.has(c.id)).map((c) => ({ ...asPending(c), isOwner: false })),
+        ];
+      });
+
+      // Insertar y borrar en paralelo (antes: uno detrás de otro)
+      const [insRes, delRes] = await Promise.all([
+        toAdd.length > 0
+          ? supabase.from('bucket_collaborators').insert(
+              toAdd.map((c) => ({ bucket_id: id, user_id: c.id, status: 'pending' })),
+            )
+          : Promise.resolve({ error: null } as any),
+        toRemoveIds.length > 0
+          ? supabase.from('bucket_collaborators').delete().eq('bucket_id', id).in('user_id', toRemoveIds)
+          : Promise.resolve({ error: null } as any),
+      ]);
+      const opError = insRes?.error || delRes?.error;
+      if (opError) {
+        console.warn('Error updating collaborators:', opError);
+        queryClient.setQueryData(collabKey, prevCollabs);
+        queryClient.setQueryData(partKey, prevParts);
+        Alert.alert('Error', opError.message || 'No se pudo actualizar a los colaboradores');
       }
-
-      if (toRemoveIds.length > 0) {
-        const { error: delErr } = await supabase
-          .from('bucket_collaborators')
-          .delete()
-          .eq('bucket_id', id)
-          .in('user_id', toRemoveIds);
-        if (delErr) console.warn('Error removing collaborators:', delErr);
-      }
-
-      void refetchCollaborators();
-      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
-    } catch (err) {
+    } catch (err: any) {
       console.warn('Error updating collaborators:', err);
-      void refetchCollaborators();
+      queryClient.setQueryData(collabKey, prevCollabs);
+      queryClient.setQueryData(partKey, prevParts);
+      Alert.alert('Error', err?.message || 'No se pudo actualizar a los colaboradores');
+    } finally {
+      void queryClient.invalidateQueries({ queryKey: collabKey });
+      void queryClient.invalidateQueries({ queryKey: partKey });
+      void queryClient.invalidateQueries({ queryKey: ['item_participants'] });
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
     }
   };
 
@@ -1922,13 +1929,11 @@ export function useBucketDetailState() {
     isFollower,
     isPendingCollaborator,
     isPendingInvitation,
-    showCollaborationSettingsModal,
-    setShowCollaborationSettingsModal,
     handleRequestOrJoinCollaboration,
     handleCancelCollaborationRequest,
     handleRespondToCollaborationInvite,
-    handleUpdateCollaborationSettings,
     handleRemoveCollaborator,
+    canManageCollaborators,
     collaboratorsList,
     handleFollowOwner,
     isSaved,

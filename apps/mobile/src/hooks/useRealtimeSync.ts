@@ -65,6 +65,7 @@ export function useRealtimeSync(userId?: string) {
         const id = p.new?.bucket_id ?? p.old?.bucket_id;
         if (id) {
           schedule(`collab:${id}`, () => invalidate('bucketCollaborators', id));
+          schedule(`participants:${id}`, () => invalidate('bucketParticipants', id));
           schedule(`bucket:${id}`, () => invalidate('bucketDetail', id));
         }
         schedule('buckets', () => invalidate('buckets'));
@@ -128,6 +129,7 @@ export function useRealtimeSync(userId?: string) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'album_members' }, () => {
         if (isLocalEcho()) return;
         schedule('albumCollaborators', () => invalidate('albumCollaborators'));
+        schedule('bucketParticipants', () => invalidate('bucketParticipants'));
         schedule('item_participants', () => invalidate('item_participants'));
         schedule('albums', () => invalidate('albums'));
       })

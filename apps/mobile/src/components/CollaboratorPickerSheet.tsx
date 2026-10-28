@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, Pressable, StyleSheet, ScrollView, Modal,
   ActivityIndicator, KeyboardAvoidingView, Platform
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, Search, Check, Users, X, UserMinus } from 'lucide-react-native';
+import { Search, Check, Users, X, UserMinus } from 'lucide-react-native';
 import { themedStyleSheet, Avatar, fontFamily, useTheme, Alert } from '@bucketlist/ui';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../stores/auth.store';
 import { blockReportApi } from '../services/api/blockReport';
+import { normalizeStorageUrl } from '../constants/urls';
+import { Image as ExpoImage } from 'expo-image';
 
 export interface CollaboratorItem {
   id: string;
@@ -51,9 +53,19 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
   const [loading, setLoading] = useState(false);
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
   const [removingId, setRemovingId] = useState<string | null>(null);
+  // Los bloqueados se consultan UNA vez por apertura (antes: 2 consultas en serie en cada tecla)
+  const blockedRef = useRef<Promise<string[]> | null>(null);
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
-    if (visible) setRemovedIds(new Set());
+    if (visible) {
+      setRemovedIds(new Set());
+      hasLoadedRef.current = false;
+      blockedRef.current = user?.id
+        ? blockReportApi.getMutualBlockedUserIds(user.id).catch(() => [] as string[])
+        : Promise.resolve([] as string[]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
   const currentVisible = current.filter(c => !removedIds.has(c.id));
@@ -103,7 +115,8 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
   useEffect(() => {
     if (!visible) return;
     let isMounted = true;
-    setLoading(true);
+    // Solo spinner en la primera carga; después se mantiene la lista anterior (sin parpadeo)
+    if (!hasLoadedRef.current) setLoading(true);
 
     const fetchUsers = async () => {
       try {
@@ -124,21 +137,29 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
 
         const [res, blockedIds] = await Promise.all([
           q,
-          user?.id ? blockReportApi.getMutualBlockedUserIds(user.id) : Promise.resolve([]),
+          blockedRef.current ??
+            (user?.id ? blockReportApi.getMutualBlockedUserIds(user.id) : Promise.resolve([] as string[])),
         ]);
         const blockedSet = new Set(blockedIds);
 
         if (!res.error && res.data && isMounted) {
-          setProfiles(
-            res.data
-              .filter((p: any) => p.id !== user?.id && !blockedSet.has(p.id) && !excludedSet.has(p.id))
-              .map((p: any) => ({
-                id: p.id,
-                username: p.username,
-                display_name: p.display_name,
-                avatar_url: p.avatar_url,
-              }))
-          );
+          const list = res.data
+            .filter((p: any) => p.id !== user?.id && !blockedSet.has(p.id) && !excludedSet.has(p.id))
+            .map((p: any) => ({
+              id: p.id,
+              username: p.username,
+              display_name: p.display_name,
+              avatar_url: p.avatar_url,
+            }));
+          hasLoadedRef.current = true;
+          setProfiles(list);
+          // Precarga las fotos para que aparezcan al instante (también al añadirlas a la tarea)
+          const urls = list
+            .map((p: CollaboratorItem) => normalizeStorageUrl(p.avatar_url))
+            .filter((u: string | null | undefined): u is string => !!u);
+          if (urls.length > 0) {
+            try { void ExpoImage.prefetch(urls); } catch { /* sin precarga */ }
+          }
         }
       } catch (err) {
         console.warn('Error fetching profiles:', err);
@@ -181,23 +202,23 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
     <Modal
       visible={visible}
       animationType="slide"
-      presentationStyle={Platform.OS === 'web' ? 'overFullScreen' : 'fullScreen'}
+      transparent
+      statusBarTranslucent
       onRequestClose={onClose}
-      transparent={Platform.OS === 'web'}
     >
+      {/* Hoja que sube desde abajo; tocar fuera la cierra */}
       <View style={styles.modalBackdrop}>
-        {Platform.OS === 'web' && (
-          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        )}
-        <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, 16) }]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Cerrar" />
         <KeyboardAvoidingView
-          style={{ flex: 1 }}
+          style={styles.sheetWrap}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          {/* Cabecera de la página */}
+        <View style={[styles.container, { backgroundColor: theme.colors.background, paddingBottom: Math.max(insets.bottom, 16) }]}>
+          <View style={styles.grabber} />
+          {/* Cabecera de la hoja */}
           <View style={styles.header}>
-            <Pressable style={styles.backButton} onPress={onClose} hitSlop={10}>
-              <ChevronLeft color={theme.colors.foreground} size={26} />
+            <Pressable style={styles.backButton} onPress={onClose} hitSlop={10} accessibilityRole="button" accessibilityLabel="Cerrar">
+              <X color={theme.colors.foreground} size={24} />
             </Pressable>
             <Text style={[styles.headerTitle, { color: theme.colors.foreground }]}>Buscar colaboradores</Text>
             <Pressable style={styles.doneButton} onPress={handleSave}>
@@ -374,8 +395,8 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
               </Text>
             </Pressable>
           </View>
-        </KeyboardAvoidingView>
         </View>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );
@@ -384,35 +405,32 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
 const styles = themedStyleSheet({
   modalBackdrop: {
     flex: 1,
-    ...Platform.select({
-      web: {
-        backgroundColor: 'rgba(0, 0, 0, 0.75)',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '100%',
-        height: '100%',
-      },
-      default: {
-        flex: 1,
-      },
-    }),
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    justifyContent: 'flex-end',
+  },
+  sheetWrap: {
+    width: '100%',
+    maxWidth: 620,
+    alignSelf: 'center',
+    height: '88%',
   },
   container: {
     flex: 1,
     backgroundColor: '#121212',
-    width: '100%',
-    position: 'relative',
-    ...Platform.select({
-      web: {
-        maxWidth: 620,
-        height: '100%',
-        borderLeftWidth: 1,
-        borderRightWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.07)',
-        boxShadow: '0 0 40px rgba(0, 0, 0, 0.45)',
-        overflow: 'hidden',
-      } as any,
-    }),
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
+    overflow: 'hidden',
+  },
+  grabber: {
+    alignSelf: 'center',
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    marginTop: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
   },
   header: {
     flexDirection: 'row',
