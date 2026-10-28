@@ -229,6 +229,11 @@ export default function AlbumDetailScreen() {
       if (tb === null) return -1;
       return ta !== tb ? (ta - tb) * dirSign : byManual(a, b);
     }
+    if (state.taskSortField === 'created_at') {
+      const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return ta !== tb ? (ta - tb) * dirSign : byManual(a, b);
+    }
     return byManual(a, b);
   };
 
@@ -804,6 +809,8 @@ export default function AlbumDetailScreen() {
                     ? t('albums.sort_name', { defaultValue: 'Nombre' })
                     : state.taskSortField === 'completed_at'
                     ? t('albums.sort_completed_date', { defaultValue: 'Fecha de completado' })
+                    : state.taskSortField === 'created_at'
+                    ? t('albums.sort_created_date', { defaultValue: 'Fecha de creación' })
                     : t('albums.sort_manual', { defaultValue: 'Manual' })}
                 </Text>
                 {state.taskSortField !== 'manual' &&

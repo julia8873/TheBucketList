@@ -593,7 +593,9 @@ export function DailyTasksScrollControls({
                   ? `${t('daily.sort_priority')} ${sortDirection === 'desc' ? '↓' : '↑'}`
                   : sortField === 'name'
                     ? `${t('daily.sort_name')} ${sortDirection === 'asc' ? 'A-Z' : 'Z-A'}`
-                    : `${t('daily.sort_date')} ${sortDirection === 'asc' ? '↑' : '↓'}`}
+                    : sortField === 'created_at'
+                      ? `${t('daily.sort_created_at')} ${sortDirection === 'asc' ? '↑' : '↓'}`
+                      : `${t('daily.sort_date')} ${sortDirection === 'asc' ? '↑' : '↓'}`}
             </Text>
             {(sortField !== 'manual' || groupByTag) && <View style={styles.sortActiveDot} />}
           </Pressable>

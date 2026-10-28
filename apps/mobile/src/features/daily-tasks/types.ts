@@ -5,7 +5,7 @@ import type { DailyTask, DailyCompletion, DailyStats } from '../../services/api/
 export type TimeView = 'today' | 'week' | 'calendar' | 'all';
 export type StatusFilter = 'all' | 'pending' | 'completed';
 export type PriorityFilter = 'all' | 'urgent' | 'high' | 'medium' | 'low';
-export type DailySortField = 'manual' | 'priority' | 'name' | 'date';
+export type DailySortField = 'manual' | 'priority' | 'name' | 'date' | 'created_at';
 export type DailySortDirection = 'asc' | 'desc';
 
 export type {

@@ -29,6 +29,12 @@ export function sortDailyTasks(
       return sortDirection === 'asc' ? comp : -comp;
     }
 
+    if (sortField === 'created_at') {
+      const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return sortDirection === 'asc' ? ta - tb : tb - ta;
+    }
+
     return 0;
   });
 }

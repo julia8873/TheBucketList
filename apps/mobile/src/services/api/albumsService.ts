@@ -12,6 +12,8 @@ export interface TaskItem {
   dueDate?: string;
   /** Fecha en que se completó (para ordenar). */
   completedAt?: string | null;
+  /** Fecha de creación (para ordenar). */
+  createdAt?: string | null;
   /** Posición manual dentro del álbum (album_items.position). */
   position?: number | null;
   stepsTotal?: number;
@@ -51,7 +53,7 @@ export const albumsService = {
 
     if (id === 'unassigned') {
       const selectCols = `
-          id, title, deadline, completed_at, cover_image, thumbnail_mode, thumbnail_photo_id, status, priority,
+          id, title, deadline, created_at, completed_at, cover_image, thumbnail_mode, thumbnail_photo_id, status, priority,
           category_id, counter_count, counter_target,
           categories ( name_es, color, slug ),
           item_subtasks ( id, done ),
@@ -111,6 +113,7 @@ export const albumsService = {
           isCompleted: b.status === 'completed',
           dueDate: b.deadline || undefined,
           completedAt: (b).completed_at ?? null,
+          createdAt: (b as any).created_at ?? null,
           position: null,
           priority: b.priority || 'medium',
           stepsTotal,
@@ -176,7 +179,7 @@ export const albumsService = {
       const { data: buckets, error: bucketsError } = await supabase
         .from('buckets')
         .select(`
-          id, title, deadline, completed_at, cover_image, thumbnail_mode, thumbnail_photo_id, status, priority,
+          id, title, deadline, created_at, completed_at, cover_image, thumbnail_mode, thumbnail_photo_id, status, priority,
           category_id, counter_count, counter_target,
           categories ( name_es, color, slug ),
           item_subtasks ( id, done ),
@@ -226,6 +229,7 @@ export const albumsService = {
           isCompleted: b.status === 'completed',
           dueDate: b.deadline || undefined,
           completedAt: (b as any).completed_at ?? null,
+          createdAt: (b as any).created_at ?? null,
           position: positionByBucket.get(b.id) ?? null,
           priority: b.priority || 'medium',
           stepsTotal,

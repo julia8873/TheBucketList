@@ -298,6 +298,52 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
                   </View>
                 )}
               </Pressable>
+
+              {/* Fecha de creación */}
+              <Pressable
+                style={[
+                  styles.sortOptionCard,
+                  { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border },
+                  sortField === 'created_at' && {
+                    backgroundColor: theme.dark ? '#262010' : '#FDF4DC',
+                    borderColor: gold[400],
+                  },
+                ]}
+                onPress={() => onSelectSort('created_at')}
+              >
+                <View style={styles.sortOptionLeft}>
+                  <View
+                    style={[
+                      styles.sortOptionIconBox,
+                      { backgroundColor: theme.dark ? '#262626' : '#E8E3D8' },
+                      sortField === 'created_at' && styles.sortOptionIconBoxActive,
+                    ]}
+                  >
+                    <Calendar size={18} color={sortField === 'created_at' ? '#0E0E0E' : gold[400]} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.sortOptionTitle, { color: theme.colors.foreground }, sortField === 'created_at' && styles.sortOptionTitleActive]}>
+                      {t('daily.sort_created_at')}
+                    </Text>
+                    <Text style={[styles.sortOptionSubtitle, { color: theme.colors.foregroundMuted }]}>
+                      {sortField === 'created_at'
+                        ? sortDirection === 'asc'
+                          ? t('daily.sort_created_oldest')
+                          : t('daily.sort_created_newest')
+                        : t('daily.sort_created_desc_general')}
+                    </Text>
+                  </View>
+                </View>
+                {sortField === 'created_at' && (
+                  <View style={styles.sortCheckCircle}>
+                    {sortDirection === 'asc' ? (
+                      <ArrowUp size={14} color="#0E0E0E" strokeWidth={2.8} />
+                    ) : (
+                      <ArrowDown size={14} color="#0E0E0E" strokeWidth={2.8} />
+                    )}
+                  </View>
+                )}
+              </Pressable>
             </View>
           </ScrollView>
 
