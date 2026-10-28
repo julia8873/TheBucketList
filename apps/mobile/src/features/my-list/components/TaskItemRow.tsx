@@ -78,9 +78,7 @@ function TaskItemRowComponent({
   const subtasksDone = item.item_subtasks?.filter((s: any) => s.done).length || 0;
 
   let meta = '';
-  if (!isItemOwner) {
-    meta = t('tasks.collaboration', { defaultValue: 'Colaboración' });
-  } else if (showDates && isItemExpired && item.status !== 'completed') {
+  if (showDates && isItemExpired && item.status !== 'completed') {
     meta = t('tasks.expired_days_ago', { days: daysAgo, defaultValue: `Caducó hace ${daysAgo} días` });
   } else if (showSubtasks && subtasksTotal > 0) {
     meta = t('tasks.steps_count', { done: subtasksDone, total: subtasksTotal, defaultValue: `${subtasksDone} de ${subtasksTotal} pasos` });

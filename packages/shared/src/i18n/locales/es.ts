@@ -85,8 +85,7 @@ const es = {
   auth: {
     welcome_title: 'Tu vida,\ntu bucket list.',
     welcome_subtitle: 'Anota lo que quieres hacer, compártelo con amigos y hazlo de verdad.',
-    slogan_before: 'Debería',
-    slogan_after: 'Hecho',
+    slogan: 'Para esas personas que dicen que deberían hacerlo, pero luego nunca lo hacen.',
     sign_in: 'Iniciar sesión',
     sign_up: 'Crear cuenta',
     email: 'Correo electrónico',
