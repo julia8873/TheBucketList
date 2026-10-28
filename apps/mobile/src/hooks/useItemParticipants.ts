@@ -31,8 +31,72 @@ function chunked<T>(items: T[], size = CHUNK): T[][] {
 }
 
 /**
- * Devuelve, por cada tarea/álbum que tenga al menos un colaborador aceptado, la lista de
- * participantes: primero el propietario y después los colaboradores.
+ * Para cada tarea que esté en algún álbum, devuelve el dueño del álbum y los miembros aceptados
+ * de ese álbum: todos ellos son colaboradores de la tarea aunque no se les haya añadido a mano.
+ */
+async function fetchAlbumParticipantsByTask(taskIds: string[]): Promise<Map<string, string[]>> {
+  const result = new Map<string, string[]>();
+  if (taskIds.length === 0) return result;
+
+  // 1. Tarea → álbumes que la contienen
+  const albumsByTask = new Map<string, string[]>();
+  await Promise.all(
+    chunked(taskIds).map(async (part) => {
+      const { data, error } = await (supabase as any)
+        .from('album_items')
+        .select('album_id, bucket_id')
+        .in('bucket_id', part);
+      if (error) {
+        console.warn('No se pudieron cargar los álbumes de las tareas:', error.message);
+        return;
+      }
+      (data ?? []).forEach((row: any) => {
+        const list = albumsByTask.get(row.bucket_id) ?? [];
+        list.push(row.album_id);
+        albumsByTask.set(row.bucket_id, list);
+      });
+    }),
+  );
+  if (albumsByTask.size === 0) return result;
+
+  // 2. Álbum → dueño + miembros aceptados
+  const albumIds = Array.from(new Set(Array.from(albumsByTask.values()).flat()));
+  const peopleByAlbum = new Map<string, string[]>();
+  await Promise.all(
+    chunked(albumIds).map(async (part) => {
+      const [ownersRes, membersRes] = await Promise.all([
+        (supabase as any).from('albums').select('id, owner_id').in('id', part),
+        (supabase as any).from('album_members').select('album_id, user_id').in('album_id', part).eq('status', 'accepted'),
+      ]);
+      if (ownersRes.error) console.warn('No se pudieron cargar los dueños de álbum:', ownersRes.error.message);
+      if (membersRes.error) console.warn('No se pudieron cargar los miembros de álbum:', membersRes.error.message);
+      (ownersRes.data ?? []).forEach((row: any) => {
+        if (!row.owner_id) return;
+        const list = peopleByAlbum.get(row.id) ?? [];
+        list.push(row.owner_id);
+        peopleByAlbum.set(row.id, list);
+      });
+      (membersRes.data ?? []).forEach((row: any) => {
+        const list = peopleByAlbum.get(row.album_id) ?? [];
+        list.push(row.user_id);
+        peopleByAlbum.set(row.album_id, list);
+      });
+    }),
+  );
+
+  // 3. Tarea → personas (sin repetidos)
+  albumsByTask.forEach((albums, taskId) => {
+    const people = new Set<string>();
+    albums.forEach((albumId) => (peopleByAlbum.get(albumId) ?? []).forEach((u) => people.add(u)));
+    if (people.size > 0) result.set(taskId, Array.from(people));
+  });
+  return result;
+}
+
+/**
+ * Devuelve, por cada tarea/álbum que tenga al menos un colaborador aceptado (en las tareas,
+ * también los del álbum compartido que las contiene), la lista de participantes: primero el
+ * propietario y después los colaboradores.
  * Los elementos sin colaboradores no aparecen en el resultado.
  */
 export async function fetchParticipants(
@@ -64,9 +128,24 @@ export async function fetchParticipants(
     }),
   );
 
-  if (collabsByItem.size === 0) return {};
-
   const ownerByItem = new Map(sources.map((s) => [s.id, s.ownerId ?? null] as const));
+
+  // Las tareas de un álbum compartido también tienen como colaboradores al dueño del álbum
+  // y a sus miembros aceptados (igual que `bucket_participant_ids` en la base de datos).
+  if (kind === 'task') {
+    const albumExtras = await fetchAlbumParticipantsByTask(sources.map((s) => s.id));
+    albumExtras.forEach((users, taskId) => {
+      const taskOwner = ownerByItem.get(taskId);
+      const list = collabsByItem.get(taskId) ?? [];
+      users.forEach((uid) => {
+        if (uid === taskOwner || list.includes(uid)) return;
+        list.push(uid);
+      });
+      if (list.length > 0) collabsByItem.set(taskId, list);
+    });
+  }
+
+  if (collabsByItem.size === 0) return {};
 
   const userIds = new Set<string>();
   collabsByItem.forEach((users, itemId) => {

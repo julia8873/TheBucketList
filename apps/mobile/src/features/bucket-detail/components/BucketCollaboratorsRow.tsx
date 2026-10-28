@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { useTranslation } from '@bucketlist/shared';
-import { UserPlus, SlidersHorizontal, Clock } from 'lucide-react-native';
+import { UserPlus, SlidersHorizontal } from 'lucide-react-native';
 import { normalizeStorageUrl } from '@/constants/urls';
 import { useRouter } from 'expo-router';
 import { styles } from '../styles/bucket-detail.styles';
@@ -26,7 +26,6 @@ interface BucketCollaboratorsRowProps {
   canEdit: boolean;
   onOpenPicker: () => void;
   onOpenSettings?: () => void;
-  pendingCount?: number;
 }
 
 export function BucketCollaboratorsRow({
@@ -37,7 +36,6 @@ export function BucketCollaboratorsRow({
   canEdit,
   onOpenPicker,
   onOpenSettings,
-  pendingCount = 0,
 }: BucketCollaboratorsRowProps) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -100,9 +98,7 @@ export function BucketCollaboratorsRow({
             <Pressable
               key={c.id}
               onPress={() => {
-                if (isPending && canEdit && onOpenSettings) {
-                  onOpenSettings();
-                } else if (c.id) {
+                if (c.id) {
                   router.push(`/profile/${c.id}` as any);
                 }
               }}
@@ -153,38 +149,13 @@ export function BucketCollaboratorsRow({
                 style={[
                   styles.addCollaboratorCircle,
                   { backgroundColor: 'rgba(255,255,255,0.06)', borderColor: '#333333' },
-                  pendingCount > 0 && { borderColor: '#D4B13A', backgroundColor: 'rgba(212,177,58,0.12)' },
                 ]}
                 onPress={onOpenSettings}
                 hitSlop={8}
                 accessibilityRole="button"
                 accessibilityLabel={t('bucket.collaboration_settings')}
               >
-                {pendingCount > 0 ? (
-                  <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-                    <Clock size={16} color="#D4B13A" strokeWidth={2.4} />
-                    <View
-                      style={{
-                        position: 'absolute',
-                        top: -8,
-                        right: -8,
-                        backgroundColor: '#EF4444',
-                        borderRadius: 8,
-                        minWidth: 16,
-                        height: 16,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        paddingHorizontal: 3,
-                      }}
-                    >
-                      <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: '700' }}>
-                        {pendingCount}
-                      </Text>
-                    </View>
-                  </View>
-                ) : (
-                  <SlidersHorizontal size={18} color="#CFCABD" strokeWidth={2} />
-                )}
+                <SlidersHorizontal size={18} color="#CFCABD" strokeWidth={2} />
               </Pressable>
             )}
           </>

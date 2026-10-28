@@ -82,11 +82,14 @@ export function useBulkAlbumOperations() {
         album_id: albumId,
         user_id: collaboratorId,
         role: 'member',
-        status: 'accepted',
+        // Invitación: solo la otra persona puede aceptarla.
+        status: 'pending',
       }));
 
+      // ignoreDuplicates: no se pisa a quien ya es miembro (o ya está invitado).
       const { error: memberErr } = await supabase.from('album_members').upsert(rows, {
         onConflict: 'album_id,user_id',
+        ignoreDuplicates: true,
       });
       if (memberErr) throw memberErr;
 

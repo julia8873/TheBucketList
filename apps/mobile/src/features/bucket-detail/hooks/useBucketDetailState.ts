@@ -332,12 +332,6 @@ export function useBucketDetailState() {
     collaborators.find((c: any) => c.id === user?.id) ||
     participantsData.find((p: any) => p.id === user?.id);
   const isPendingCollaborator = myCollaboration?.status === 'pending';
-  const pendingCollaborators = [
-    ...collaborators.filter((c: any) => c.status === 'pending'),
-    ...participantsData.filter(
-      (p: any) => p.status === 'pending' && !collaborators.some((c: any) => c.id === p.id),
-    ),
-  ];
 
   const { data: isFollowerData } = useQuery({
     queryKey: ['isFollowerOf', user?.id, bucket?.user_id],
@@ -424,21 +418,6 @@ export function useBucketDetailState() {
       void queryClient.invalidateQueries({ queryKey: ['buckets'] });
     } catch (e: any) {
       Alert.alert('Error', e?.message || 'No se pudieron guardar los ajustes');
-      throw e;
-    }
-  };
-
-  const handleRespondCollaboratorRequest = async (targetUserId: string, accept: boolean) => {
-    if (!id) return;
-    const bucketId = Array.isArray(id) ? id[0] : id;
-    try {
-      await bucketApi.respondToCollaborationRequest(bucketId, targetUserId, accept);
-      void refetchCollaborators();
-      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', bucketId] });
-      void queryClient.invalidateQueries({ queryKey: ['bucketCollaborators', bucketId] });
-      void queryClient.invalidateQueries({ queryKey: ['buckets'] });
-    } catch (e: any) {
-      Alert.alert('Error', e?.message || 'No se pudo procesar la respuesta');
       throw e;
     }
   };
@@ -671,10 +650,15 @@ export function useBucketDetailState() {
             queryClient.setQueryData(['bucketDetail', id], (old: any) =>
               old ? { ...old, completed_at: null } : old
             );
-            await supabase.from('buckets').update({ completed_at: null }).eq('id', id);
+            // Refleja el cambio al instante en listas y álbumes.
+            patchTasks(queryClient, [id], {
+              bucket: { completed_at: null },
+              task: { completedAt: null },
+            });
+            const { error } = await supabase.from('buckets').update({ completed_at: null }).eq('id', id);
+            if (error) Alert.alert('Error', error.message);
             void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
-            void queryClient.invalidateQueries({ queryKey: ['buckets'] });
-            void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
+            settleTaskCaches(queryClient);
           },
         },
         {
@@ -684,10 +668,18 @@ export function useBucketDetailState() {
             queryClient.setQueryData(['bucketDetail', id], (old: any) =>
               old ? { ...old, completed_at: null, status: 'pending' } : old
             );
-            await supabase.from('buckets').update({ completed_at: null, status: 'pending' }).eq('id', id);
+            // Refleja el estado al instante en listas y álbumes (antes solo cambiaba el detalle).
+            patchTasks(queryClient, [id], {
+              bucket: { completed_at: null, status: 'pending' },
+              task: { isCompleted: false, completedAt: null },
+            });
+            const { error } = await supabase
+              .from('buckets')
+              .update({ completed_at: null, status: 'pending' })
+              .eq('id', id);
+            if (error) Alert.alert('No se pudo cambiar el estado', error.message);
             void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
-            void queryClient.invalidateQueries({ queryKey: ['buckets'] });
-            void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
+            settleTaskCaches(queryClient);
           },
         },
       ]
@@ -1886,13 +1878,11 @@ export function useBucketDetailState() {
     collaborationAudience,
     isFollower,
     isPendingCollaborator,
-    pendingCollaborators,
     showCollaborationSettingsModal,
     setShowCollaborationSettingsModal,
     handleRequestOrJoinCollaboration,
     handleCancelCollaborationRequest,
     handleUpdateCollaborationSettings,
-    handleRespondCollaboratorRequest,
     handleFollowOwner,
     isSaved,
     handleToggleSaveBucket,

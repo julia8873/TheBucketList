@@ -100,6 +100,8 @@ export function useRealtimeSync(userId?: string) {
         const albumId  = p.new?.album_id  ?? p.old?.album_id;
         if (bucketId) schedule(`bucket:${bucketId}`, () => invalidate('bucketDetail', bucketId));
         if (albumId)  schedule(`album:${albumId}`,   () => invalidate('album', albumId));
+        // Una tarea entra/sale de un álbum compartido → cambian sus colaboradores visibles.
+        schedule('item_participants', () => invalidate('item_participants'));
       })
       // ── Etiquetas: solo las etiquetas del item afectado ──────────────────────
       .on('postgres_changes', { event: '*', schema: 'public', table: 'item_tags' }, (p: any) => {

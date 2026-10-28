@@ -318,7 +318,6 @@ export default function BucketDetailScreen() {
             canEdit={state.canEdit}
             onOpenPicker={() => state.setShowCollaboratorPicker(true)}
             onOpenSettings={() => state.setShowCollaborationSettingsModal(true)}
-            pendingCount={state.pendingCollaborators.length}
           />
 
           {/* Tarjeta de invitación/solicitud de colaboración para seguidores y otros usuarios */}
@@ -844,10 +843,8 @@ export default function BucketDetailScreen() {
         visible={state.showCollaborationSettingsModal}
         currentMode={state.collaborationMode}
         currentAudience={state.collaborationAudience}
-        pendingCollaborators={state.pendingCollaborators}
         onClose={() => state.setShowCollaborationSettingsModal(false)}
         onSaveSettings={state.handleUpdateCollaborationSettings}
-        onRespondRequest={state.handleRespondCollaboratorRequest}
       />
 
       <GoogleDriveModal

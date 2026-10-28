@@ -225,14 +225,14 @@ isOneToOne: false
                   ]
                 },"bucket_collaborators": {
                   Row: {
-                    "bucket_id": string,"created_at": string,"id": string,"status": string,"updated_at": string,"user_id": string
+                    "bucket_id": string,"created_at": string,"id": string,"origin": string,"status": string,"updated_at": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "bucket_id": string,"created_at"?: string,"id"?: string,"status"?: string,"updated_at"?: string,"user_id": string
+                    "bucket_id": string,"created_at"?: string,"id"?: string,"origin"?: string,"status"?: string,"updated_at"?: string,"user_id": string
                   }
                   Update: {
-                    "bucket_id"?: string,"created_at"?: string,"id"?: string,"status"?: string,"updated_at"?: string,"user_id"?: string
+                    "bucket_id"?: string,"created_at"?: string,"id"?: string,"origin"?: string,"status"?: string,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {

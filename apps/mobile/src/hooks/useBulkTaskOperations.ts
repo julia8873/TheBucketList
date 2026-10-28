@@ -160,11 +160,14 @@ export function useBulkTaskOperations() {
       const rows = taskIds.map((bucketId) => ({
         bucket_id: bucketId,
         user_id: collaboratorId,
-        status: 'accepted',
+        // Invitación: solo la otra persona puede aceptarla.
+        status: 'pending',
       }));
 
+      // ignoreDuplicates: no se pisa a quien ya es colaborador (o ya está invitado).
       const { error } = await supabase.from('bucket_collaborators').upsert(rows, {
         onConflict: 'bucket_id,user_id',
+        ignoreDuplicates: true,
       });
       if (error) throw error;
     },
