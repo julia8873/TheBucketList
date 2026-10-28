@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TheBucketList — Tu lista de sueños, hecha realidad</title>
+<meta name="description" content="TheBucketList es la app para apuntar tus metas y planes, organizarlos en álbumes, compartir momentos con amigos y verlos en un mapa. Gratis en Google Play.">
+<meta name="theme-color" content="#0F0F0F">
+<meta property="og:type" content="website">
+<meta property="og:title" content="TheBucketList — Tu lista de sueños, hecha realidad">
+<meta property="og:description" content="Apunta tus metas, organízalas en álbumes y compártelas con tus amigos.">
+<meta property="og:image" content="/landing/mi-lista.webp">
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0F0F0F; --bg2:#141414; --card:#171717; --line:#2A2A2A; --text:#F2EFE8; --muted:#A39F94;
+  --gold:#D4B13A; --gold2:#E8C95A; --ink:#0F0F0F;
+  --serif:'Playfair Display',Georgia,'Times New Roman',serif;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --gutter:20px; --max:1120px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{max-width:100%;height:auto;display:block}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 var(--gutter)}
+.gold{color:var(--gold)}
+h1,h2,h3{font-family:var(--serif);line-height:1.12;letter-spacing:-.01em}
+
+/* nav */
+nav{position:sticky;top:0;z-index:20;background:rgba(15,15,15,.82);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.06)}
+.nav-in{display:flex;align-items:center;justify-content:space-between;height:64px}
+.logo{font-family:var(--serif);font-weight:800;font-size:22px}
+.logo b{color:var(--gold)}
+.nav-r{display:flex;align-items:center;gap:10px}
+.lang{display:flex;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--bg2)}
+.lang button{border:0;background:none;color:var(--muted);font:600 12px var(--sans);padding:6px 11px;border-radius:999px;cursor:pointer}
+.lang button.on{background:var(--gold);color:var(--ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;font:600 15px var(--sans);padding:14px 22px;border-radius:999px;border:1px solid var(--gold);transition:transform .15s,background .15s}
+.btn:hover{transform:translateY(-2px)}
+.btn.primary{background:var(--gold);color:var(--ink)}
+.btn.primary:hover{background:var(--gold2)}
+.btn.ghost{color:var(--gold);background:transparent}
+.btn.sm{padding:9px 16px;font-size:13px}
+.btn svg{width:20px;height:20px;flex:none}
+
+/* hero */
+.hero{position:relative;padding:56px 0 24px;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:-20% -10% auto -10%;height:80%;background:radial-gradient(60% 60% at 70% 30%,rgba(212,177,58,.20),transparent 70%);pointer-events:none}
+.hero-grid{position:relative;display:grid;gap:44px;align-items:center}
+.eyebrow{display:inline-block;font:600 12px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--gold);border:1px solid rgba(212,177,58,.4);padding:6px 12px;border-radius:999px;margin-bottom:20px}
+.hero h1{font-size:clamp(40px,9vw,68px);font-weight:800}
+.hero p.lead{margin-top:20px;color:var(--muted);font-size:clamp(16px,2.6vw,19px);max-width:34em}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
+.hero-note{margin-top:16px;font-size:13px;color:var(--muted)}
+.phones{position:relative;height:520px;max-width:420px;margin:0 auto;width:100%}
+.phone{position:absolute;border-radius:34px;padding:8px;background:#1b1b1b;border:1px solid #333;box-shadow:0 30px 70px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.03)}
+.phone img{border-radius:27px;width:100%}
+.phone.a{width:62%;left:0;top:30px;transform:rotate(-4deg);z-index:2}
+.phone.b{width:62%;right:0;top:0;transform:rotate(4deg);z-index:1;box-shadow:0 30px 70px rgba(0,0,0,.6),0 0 60px rgba(212,177,58,.18)}
+
+/* stats strip */
+.strip{margin-top:48px;border-block:1px solid var(--line);background:var(--bg2)}
+.strip-in{display:grid;grid-template-columns:1fr 1fr}
+.strip-in div{padding:20px 12px;text-align:center;border-bottom:1px solid var(--line)}
+.strip-in div:nth-child(odd){border-right:1px solid var(--line)}
+.strip-in div:nth-last-child(-n+2){border-bottom:0}
+.strip strong{display:block;font-family:var(--serif);font-size:22px;color:var(--gold)}
+.strip span{font-size:13px;color:var(--muted)}
+
+/* sections */
+section{padding:72px 0}
+.sec-head{max-width:640px;margin-bottom:40px}
+.sec-head h2{font-size:clamp(30px,6vw,44px)}
+.sec-head p{margin-top:14px;color:var(--muted);font-size:17px}
+.feat{display:grid;gap:36px;align-items:center;padding:36px 0}
+.feat .txt h3{font-size:clamp(26px,5vw,36px)}
+.feat .txt p{margin-top:14px;color:var(--muted);font-size:17px}
+.feat ul{margin-top:18px;list-style:none;display:grid;gap:10px}
+.feat li{display:flex;gap:10px;font-size:15px}
+.feat li::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:var(--gold);margin-top:8px}
+.shot{width:min(300px,78%);margin:0 auto;border-radius:34px;padding:8px;background:#1b1b1b;border:1px solid #333;box-shadow:0 30px 70px rgba(0,0,0,.55),0 0 80px rgba(212,177,58,.10)}
+.shot img{border-radius:27px;width:100%}
+
+/* how */
+.steps{display:grid;gap:16px}
+.step{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px}
+.step .n{font-family:var(--serif);font-size:34px;color:var(--gold);font-weight:800}
+.step h3{font-size:22px;margin:8px 0 8px}
+.step p{color:var(--muted);font-size:15px}
+
+/* privacy */
+.priv{display:grid;gap:14px}
+.pcard{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px}
+.pcard h4{font:700 16px var(--sans);margin-bottom:6px}
+.pcard p{color:var(--muted);font-size:14.5px}
+
+/* final */
+.final{text-align:center;background:radial-gradient(70% 90% at 50% 0%,rgba(212,177,58,.16),transparent 70%);border-top:1px solid var(--line)}
+.final h2{font-size:clamp(32px,7vw,52px);max-width:14em;margin:0 auto}
+.final p{color:var(--muted);margin:16px auto 0;max-width:30em;font-size:17px}
+.final .cta{justify-content:center}
+footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--muted);font-size:13px}
+.foot{display:flex;flex-wrap:wrap;gap:14px 24px;justify-content:space-between;align-items:center}
+.foot nav{all:unset;display:flex;flex-wrap:wrap;gap:8px 20px}
+.foot a:hover{color:var(--gold)}
+
+@media(min-width:860px){
+  :root{--gutter:32px}
+  .hero{padding:88px 0 40px}
+  .hero-grid{grid-template-columns:1.05fr .95fr}
+  .phones{height:600px;max-width:480px}
+  .strip-in{grid-template-columns:repeat(4,1fr)}
+  .strip-in div{border-bottom:0!important;border-right:1px solid var(--line)!important}
+  .strip-in div:last-child{border-right:0!important}
+  .feat{grid-template-columns:1fr 1fr;gap:72px;padding:48px 0}
+  .feat.rev .shot-col{order:-1}
+  .steps{grid-template-columns:repeat(3,1fr)}
+  .priv{grid-template-columns:repeat(3,1fr)}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<nav><div class="wrap nav-in">
+  <a class="logo" href="#top"><b>The</b>BucketList</a>
+  <div class="nav-r">
+    <div class="lang" role="group" aria-label="Idioma"><button data-l="es" class="on">ES</button><button data-l="en">EN</button></div>
+    <a class="btn primary sm" href="#descargar" data-i="nav_cta">Descargar</a>
+  </div>
+</div></nav>
+
+<header class="hero" id="top"><div class="wrap hero-grid">
+  <div>
+    <span class="eyebrow" data-i="eyebrow">Tu lista de vida</span>
+    <h1><span class="gold" data-i="h1a">Tus sueños,</span> <span data-i="h1b">uno a uno, hechos realidad.</span></h1>
+    <p class="lead" data-i="lead">Apunta tus metas y planes, organízalos en álbumes, comparte momentos con tus amigos y míralos en un mapa. Todo en una sola app.</p>
+    <div class="cta" id="descargar">
+      <a class="btn primary" href="https://play.google.com/store/apps/details?id=com.bucketlist.app" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 3.2v17.6c0 .6.7 1 1.2.7l14-8.8c.5-.3.5-1.1 0-1.4l-14-8.8C6.700 2.200 6 2.600 6 3.200z"/></svg>
+        <span data-i="play">Disponible en Google Play</span>
+      </a>
+      <a class="btn ghost" href="/" data-i="web">Abrir en el navegador</a>
+    </div>
+    <p class="hero-note" data-i="note">Gratis · Español e inglés · Modo oscuro y claro</p>
+  </div>
+  <div class="phones" aria-hidden="true">
+    <div class="phone b"><img src="/landing/explorar.webp" alt="" width="540" height="808"></div>
+    <div class="phone a"><img src="/landing/mi-lista.webp" alt="" width="540" height="813" fetchpriority="high"></div>
+  </div>
+</div></header>
+
+<div class="strip"><div class="wrap strip-in">
+  <div><strong data-i="s1t">Listas</strong><span data-i="s1d">metas, prioridades y etiquetas</span></div>
+  <div><strong data-i="s2t">Álbumes</strong><span data-i="s2d">con fotos y colaboradores</span></div>
+  <div><strong data-i="s3t">Amigos</strong><span data-i="s3d">momentos, likes y comentarios</span></div>
+  <div><strong data-i="s4t">Mapa</strong><span data-i="s4d">tus lugares por visitar</span></div>
+</div></div>
+
+<section id="funciones"><div class="wrap">
+  <div class="sec-head">
+    <h2 data-i="fh">Todo lo que necesitas para <span class="gold">cumplir lo que te propones</span></h2>
+    <p data-i="fp">Desde el plan del fin de semana hasta la meta de toda la vida.</p>
+  </div>
+
+  <div class="feat">
+    <div class="txt">
+      <h3 data-i="f1h">Tu lista, a tu manera</h3>
+      <p data-i="f1p">Crea tareas con foto, fecha, prioridad y etiquetas con emoji. Cambia entre vista de lista, compacta o galería y filtra por estado o prioridad.</p>
+      <ul><li data-i="f1a">Favoritas, en curso, pendientes y completadas</li><li data-i="f1b">Álbumes para agrupar planes y compartirlos</li><li data-i="f1c">Calendario para ver cada plan en su día</li></ul>
+    </div>
+    <div class="shot-col"><div class="shot"><img src="/landing/mi-lista.webp" alt="Pantalla Mi lista con tareas favoritas, en curso y pendientes" width="540" height="813" loading="lazy"></div></div>
+  </div>
+
+  <div class="feat rev">
+    <div class="txt">
+      <h3 data-i="f2h">Momentos con tus amigos</h3>
+      <p data-i="f2p">Mira lo que están cumpliendo tus amigos, dales like, coméntalo y apúntate al plan con un toque en «Me too».</p>
+      <ul><li data-i="f2a">Feed en lista, compacto o galería</li><li data-i="f2b">Comentarios y menciones</li><li data-i="f2c">Guarda las ideas que te inspiren</li></ul>
+    </div>
+    <div class="shot-col"><div class="shot"><img src="/landing/momentos.webp" alt="Feed de momentos de amigos" width="540" height="810" loading="lazy"></div></div>
+  </div>
+
+  <div class="feat">
+    <div class="txt">
+      <h3 data-i="f3h">Explora ideas y colecciones</h3>
+      <p data-i="f3p">¿Sin ideas? Clona colecciones ya preparadas, como una noche de Halloween o una Navidad en casa y fuera, y conviértelas en tus propios planes.</p>
+      <ul><li data-i="f3a">Colecciones por temporada y temática</li><li data-i="f3b">Clónalas con un toque</li><li data-i="f3c">Descubre planes de otras personas</li></ul>
+    </div>
+    <div class="shot-col"><div class="shot"><img src="/landing/explorar.webp" alt="Pantalla Explorar con colecciones prediseñadas" width="540" height="808" loading="lazy"></div></div>
+  </div>
+
+
+  <div class="feat rev">
+    <div class="txt">
+      <h3 data-i="f5h"></h3>
+      <p data-i="f5p"></p>
+      <ul><li data-i="f5a"></li><li data-i="f5b"></li><li data-i="f5c"></li></ul>
+    </div>
+    <div class="shot-col"><div class="shot"><img src="/landing/mapa.webp" alt="" data-alt="alt5" width="540" height="829" loading="lazy"></div></div>
+  </div>
+
+  <div class="feat">
+    <div class="txt">
+      <h3 data-i="f6h"></h3>
+      <p data-i="f6p"></p>
+      <ul><li data-i="f6a"></li><li data-i="f6b"></li><li data-i="f6c"></li></ul>
+    </div>
+    <div class="shot-col"><div class="shot"><img src="/landing/nueva-tarea.webp" alt="" data-alt="alt6" width="540" height="820" loading="lazy"></div></div>
+  </div>
+  <div class="feat rev">
+    <div class="txt">
+      <h3 data-i="f4h">Tu día a día, bajo control</h3>
+      <p data-i="f4p">Una lista rápida para lo de hoy: añade tareas en un segundo, ordénalas por prioridad y márcalas al terminar. También tienes vista semanal, calendario y todas.</p>
+      <ul><li data-i="f4a">Añadido rápido desde la cabecera</li><li data-i="f4b">Etiquetas, estados y prioridades</li><li data-i="f4c">Completadas hoy, a la vista</li></ul>
+    </div>
+    <div class="shot-col"><div class="shot"><img src="/landing/dia-a-dia.webp" alt="Pantalla Día a día con tareas de hoy" width="540" height="815" loading="lazy"></div></div>
+  </div>
+</div></section>
+
+<section style="background:var(--bg2);border-block:1px solid var(--line)"><div class="wrap">
+  <div class="sec-head"><h2 data-i="hh">Empezar es muy fácil</h2></div>
+  <div class="steps">
+    <div class="step"><div class="n">1</div><h3 data-i="st1h">Apunta</h3><p data-i="st1p">Añade lo que quieres hacer, con foto, fecha y etiquetas. O clona una colección.</p></div>
+    <div class="step"><div class="n">2</div><h3 data-i="st2h">Organiza</h3><p data-i="st2p">Agrúpalo en álbumes, ponle prioridad y míralo en la lista, el calendario o el mapa.</p></div>
+    <div class="step"><div class="n">3</div><h3 data-i="st3h">Cúmplelo y compártelo</h3><p data-i="st3p">Marca lo completado, sube tus fotos y comparte el momento con tus amigos.</p></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="sec-head"><h2 data-i="ph">Pensada para <span class="gold">respetar tu privacidad</span></h2></div>
+  <div class="priv">
+    <div class="pcard"><h4 data-i="p1h">Sin rastreo en segundo plano</h4><p data-i="p1p">Los lugares los añades tú a mano. La app no sigue tu ubicación.</p></div>
+    <div class="pcard"><h4 data-i="p2h">Solo las fotos que eliges</h4><p data-i="p2p">Usa el selector de fotos del sistema: no pide acceso a toda tu galería.</p></div>
+    <div class="pcard"><h4 data-i="p3h">Tú mandas sobre tus datos</h4><p data-i="p3p">Controla qué compartes, bloquea o reporta usuarios y borra tu cuenta cuando quieras.</p></div>
+  </div>
+</div></section>
+
+<section class="final"><div class="wrap">
+  <h2 data-i="fnh">Empieza hoy tu lista de <span class="gold">cosas por vivir</span></h2>
+  <p data-i="fnp">Descarga TheBucketList y apunta lo primero que te gustaría hacer este año.</p>
+  <div class="cta">
+    <a class="btn primary" href="https://play.google.com/store/apps/details?id=com.bucketlist.app" rel="noopener" data-i="play2">Descargar en Google Play</a>
+    <a class="btn ghost" href="/" data-i="web2">Probar en el navegador</a>
+  </div>
+</div></section>
+
+<footer><div class="wrap foot">
+  <span>© <span id="y"></span> TheBucketList</span>
+  <nav><a href="/privacy.html" data-i="lp">Privacidad</a><a href="/terms.html" data-i="lt">Términos</a><a href="/delete-account.html" data-i="ld">Eliminar cuenta</a><a href="mailto:thebucketlist898@gmail.com" data-i="lc">Contacto</a></nav>
+</div></footer>
+
+<script>
+const T={
+es:{nav_cta:"Descargar",eyebrow:"Tu lista de vida",h1a:"Tus sueños,",h1b:"uno a uno, hechos realidad.",lead:"Apunta tus metas y planes, organízalos en álbumes, comparte momentos con tus amigos y míralos en un mapa. Todo en una sola app.",play:"Disponible en Google Play",web:"Abrir en el navegador",note:"Gratis · Español e inglés · Modo oscuro y claro",
+s1t:"Listas",s1d:"metas, prioridades y etiquetas",s2t:"Álbumes",s2d:"con fotos y colaboradores",s3t:"Amigos",s3d:"momentos, likes y comentarios",s4t:"Mapa",s4d:"tus lugares por visitar",
+fh:'Todo lo que necesitas para <span class="gold">cumplir lo que te propones</span>',fp:"Desde el plan del fin de semana hasta la meta de toda la vida.",
+f1h:"Tu lista, a tu manera",f1p:"Crea tareas con foto, fecha, prioridad y etiquetas con emoji. Cambia entre vista de lista, compacta o galería y filtra por estado o prioridad.",f1a:"Favoritas, en curso, pendientes y completadas",f1b:"Álbumes para agrupar planes y compartirlos",f1c:"Calendario para ver cada plan en su día",
+f2h:"Momentos con tus amigos",f2p:"Mira lo que están cumpliendo tus amigos, dales like, coméntalo y apúntate al plan con un toque en «Me too».",f2a:"Feed en lista, compacto o galería",f2b:"Comentarios y menciones",f2c:"Guarda las ideas que te inspiren",
+f3h:"Explora ideas y colecciones",f3p:"¿Sin ideas? Clona colecciones ya preparadas, como una noche de Halloween o una Navidad en casa y fuera, y conviértelas en tus propios planes.",f3a:"Colecciones por temporada y temática",f3b:"Clónalas con un toque",f3c:"Descubre planes de otras personas",
+f4h:"Tu día a día, bajo control",f4p:"Una lista rápida para lo de hoy: añade tareas en un segundo, ordénalas por prioridad y márcalas al terminar. También tienes vista semanal, calendario y todas.",f4a:"Añadido rápido desde la cabecera",f4b:"Etiquetas, estados y prioridades",f4c:"Completadas hoy, a la vista",
+f5h:"Tus planes, en el mapa",f5p:"Mira de un vistazo dónde están tus planes y los de tus amigos. Busca una ciudad, un país o una tarea y filtra por completadas o por hacer.",f5a:"Agrupación de lugares cercanos",f5b:"Filtros: mis tareas, amigos, completadas y por hacer",f5c:"Sin seguimiento: los lugares los añades tú",f6h:"Crear un plan lleva segundos",f6p:"Ponle portada (foto, cámara, enlace, color o degradado), escribe qué quieres lograr y elige la prioridad. Puedes añadir ubicación, fecha y etiquetas.",f6a:"Portadas con fotos o colores",f6b:"Prioridad baja, media o alta",f6c:"Ubicación opcional para verlo en el mapa",hh:"Empezar es muy fácil",st1h:"Apunta",st1p:"Añade lo que quieres hacer, con foto, fecha y etiquetas. O clona una colección.",st2h:"Organiza",st2p:"Agrúpalo en álbumes, ponle prioridad y míralo en la lista, el calendario o el mapa.",st3h:"Cúmplelo y compártelo",st3p:"Marca lo completado, sube tus fotos y comparte el momento con tus amigos.",
+ph:'Pensada para <span class="gold">respetar tu privacidad</span>',p1h:"Sin rastreo en segundo plano",p1p:"Los lugares los añades tú a mano. La app no sigue tu ubicación.",p2h:"Solo las fotos que eliges",p2p:"Usa el selector de fotos del sistema: no pide acceso a toda tu galería.",p3h:"Tú mandas sobre tus datos",p3p:"Controla qué compartes, bloquea o reporta usuarios y borra tu cuenta cuando quieras.",
+fnh:'Empieza hoy tu lista de <span class="gold">cosas por vivir</span>',fnp:"Descarga TheBucketList y apunta lo primero que te gustaría hacer este año.",play2:"Descargar en Google Play",web2:"Probar en el navegador",lp:"Privacidad",lt:"Términos",ld:"Eliminar cuenta",lc:"Contacto"},
+en:{nav_cta:"Download",eyebrow:"Your life list",h1a:"Your dreams,",h1b:"one by one, made real.",lead:"Write down your goals and plans, organise them into albums, share moments with friends and see them on a map. All in one app.",play:"Get it on Google Play",web:"Open in your browser",note:"Free · English and Spanish · Dark and light mode",
+s1t:"Lists",s1d:"goals, priorities and tags",s2t:"Albums",s2d:"with photos and collaborators",s3t:"Friends",s3d:"moments, likes and comments",s4t:"Map",s4d:"the places you want to visit",
+fh:'Everything you need to <span class="gold">achieve what you set out to do</span>',fp:"From this weekend's plan to a lifelong goal.",
+f1h:"Your list, your way",f1p:"Create tasks with a photo, date, priority and emoji tags. Switch between list, compact and gallery views, and filter by status or priority.",f1a:"Favourites, in progress, pending and completed",f1b:"Albums to group plans and share them",f1c:"Calendar to see each plan on its day",
+f2h:"Moments with your friends",f2p:"See what your friends are ticking off, like and comment, and join the plan with one tap on “Me too”.",f2a:"Feed in list, compact or gallery view",f2b:"Comments and mentions",f2c:"Save the ideas that inspire you",
+f3h:"Explore ideas and collections",f3p:"Out of ideas? Clone ready-made collections, like a Halloween night or Christmas at home and out, and turn them into your own plans.",f3a:"Collections by season and theme",f3b:"Clone them with one tap",f3c:"Discover other people's plans",
+f4h:"Your day, under control",f4p:"A quick list for today: add tasks in a second, sort them by priority and tick them off. You also get a weekly view, a calendar and an all-tasks view.",f4a:"Quick add from the header",f4b:"Tags, statuses and priorities",f4c:"Completed today, at a glance",
+f5h:"Your plans, on the map",f5p:"See at a glance where your plans and your friends' plans are. Search a city, a country or a task and filter by completed or to do.",f5a:"Nearby places grouped together",f5b:"Filters: my tasks, friends, completed and to do",f5c:"No tracking: you add the places yourself",f6h:"Creating a plan takes seconds",f6p:"Give it a cover (photo, camera, link, colour or gradient), write what you want to achieve and pick a priority. You can add a location, date and tags.",f6a:"Covers with photos or colours",f6b:"Low, medium or high priority",f6c:"Optional location to see it on the map",hh:"Getting started is easy",st1h:"Write it down",st1p:"Add what you want to do, with a photo, date and tags. Or clone a collection.",st2h:"Organise",st2p:"Group it into albums, set a priority and see it in the list, calendar or map.",st3h:"Do it and share it",st3p:"Mark it as done, add your photos and share the moment with your friends.",
+ph:'Built to <span class="gold">respect your privacy</span>',p1h:"No background tracking",p1p:"You add places by hand. The app doesn't follow your location.",p2h:"Only the photos you choose",p2p:"It uses the system photo picker: it doesn't ask for access to your whole gallery.",p3h:"You control your data",p3p:"Choose what you share, block or report users, and delete your account whenever you want.",
+fnh:'Start your list of <span class="gold">things to live</span> today',fnp:"Download TheBucketList and write down the first thing you'd love to do this year.",play2:"Download on Google Play",web2:"Try it in your browser",lp:"Privacy",lt:"Terms",ld:"Delete account",lc:"Contact"}
+};
+const A={es:{alt5:'Mapa con los planes agrupados por zonas de España',alt6:'Pantalla para crear una tarea nueva con portada, descripción y prioridad'},en:{alt5:'Map with plans grouped by area across Spain',alt6:'New task screen with cover, description and priority'}};
+function setLang(l){
+  document.documentElement.lang=l;
+  document.querySelectorAll('[data-i]').forEach(e=>{const v=T[l][e.dataset.i];if(v!==undefined)e.innerHTML=v});
+  document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('on',b.dataset.l===l));
+  document.querySelectorAll("[data-alt]").forEach(e=>{e.alt=A[l][e.dataset.alt]||e.alt});
+  document.title=l==='es'?'TheBucketList — Tu lista de sueños, hecha realidad':'TheBucketList — Your dream list, made real';
+  try{localStorage.setItem('tbl-lang',l)}catch(e){}
+}
+document.querySelectorAll('.lang button').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.l)));
+let l='es';try{l=localStorage.getItem('tbl-lang')||((navigator.language||'es').toLowerCase().startsWith('en')?'en':'es')}catch(e){}
+setLang(l);
+document.getElementById('y').textContent=new Date().getFullYear();
+</script>
+</body>
+</html>
