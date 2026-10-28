@@ -16,11 +16,10 @@ import {
   X,
 } from 'lucide-react-native';
 import { useBulkAlbumOperations } from '../hooks/useBulkAlbumOperations';
-import { useTags } from '../hooks/useTags';
 import { CollaboratorPickerSheet, type CollaboratorItem } from './CollaboratorPickerSheet';
 
 import { styles } from '../features/bulk-task-actions/styles/bulk-actions.styles';
-import { BulkTagsModal } from '../features/bulk-task-actions/components/BulkTagsModal';
+import { BulkTagsSheet } from './BulkTagsSheet';
 import { BulkAlbumMoreMenuModal } from '../features/bulk-album-actions/components/BulkAlbumMoreMenuModal';
 import { BulkPriorityModal, BulkVisibilityModal } from '../features/bulk-task-actions/components/BulkMetaModals';
 import { useTranslation } from '@bucketlist/shared';
@@ -57,7 +56,6 @@ export function BulkAlbumActionBar({
     setFavoritesForAlbums,
   } = useBulkAlbumOperations();
 
-  const { data: allTags = [] } = useTags();
 
   // Modals state
   const [showTagsModal, setShowTagsModal] = useState(false);
@@ -79,8 +77,11 @@ export function BulkAlbumActionBar({
     if (!selectedTagIds.length) return;
     const okTags = await askBulk(
       t('bulk_album_actions.confirm_tags_title'),
-      `Se asignarán ${selectedTagIds.length === 1 ? 'la etiqueta elegida' : `las ${selectedTagIds.length} etiquetas elegidas`} a ${plural}.`,
-      t('bulk_album_actions.action_tags'),
+      t(`bulk_album_actions.confirm_tags_msg_${selectedTagIds.length === 1 ? '1' : 'n'}_${count === 1 ? '1' : 'n'}`, {
+        tags: selectedTagIds.length,
+        items: count,
+      }),
+      t('common.confirm'),
     );
     if (!okTags) return;
 
@@ -306,17 +307,11 @@ export function BulkAlbumActionBar({
         </View>
       </View>
 
-      <BulkTagsModal
+      <BulkTagsSheet
         visible={showTagsModal}
-        count={count}
-        allTags={allTags}
+        itemType="album"
         selectedTagIds={selectedTagIds}
-        title={t('bulk_album_actions.tags_modal_title', { count })}
-        onToggleTag={(tagId) => {
-          setSelectedTagIds((prev) =>
-            prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]
-          );
-        }}
+        onChange={setSelectedTagIds}
         onClose={() => setShowTagsModal(false)}
         onApply={handleAssignTags}
       />

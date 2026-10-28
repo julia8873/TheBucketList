@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, Pencil, Plus, Search, Tag as TagIcon, X } from 'lucide-react-native';
+import { ChevronLeft, Pencil, Search, Tag as TagIcon, X } from 'lucide-react-native';
 import { FilterChip, fontFamily, useTheme, PageTitle } from '@bucketlist/ui';
 import { TagBadge } from '../src/components/TagBadge';
 import { TagEditSheet } from '../src/components/TagEditSheet';
@@ -77,14 +77,6 @@ export default function TagsScreen() {
           <ChevronLeft size={22} color={theme.colors.foreground} />
         </Pressable>
         <PageTitle gold="Mis" rest="etiquetas" style={{ flex: 1 }} />
-        <Pressable
-          onPress={openCreate}
-          accessibilityRole="button"
-          accessibilityLabel="Nueva etiqueta"
-          style={[styles.circleBtn, styles.addBtn]}
-        >
-          <Plus size={24} color="#111111" strokeWidth={2.2} />
-        </Pressable>
       </View>
 
       {/* Buscador */}

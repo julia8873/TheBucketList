@@ -36,6 +36,10 @@ interface TagFilterSheetProps {
   itemType?: 'task' | 'album';
   /** Contenido extra dentro de la hoja (p. ej. otra hoja anidada). */
   overlay?: React.ReactNode;
+  /** Acción del botón principal. Si no se indica, el botón cierra la hoja (`onClose`). */
+  onConfirm?: () => void;
+  /** Desactiva el botón principal. */
+  ctaDisabled?: boolean;
 }
 
 const VISIBLE_ROWS = 6;
@@ -53,6 +57,8 @@ export function TagFilterSheet({
   onCreate,
   itemType = 'task',
   overlay,
+  onConfirm,
+  ctaDisabled = false,
 }: TagFilterSheetProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
@@ -244,7 +250,12 @@ export function TagFilterSheet({
           },
         ]}
       >
-        <Pressable style={styles.cta} onPress={onClose} accessibilityRole="button">
+        <Pressable
+          style={[styles.cta, ctaDisabled && { opacity: 0.5 }]}
+          onPress={onConfirm ?? onClose}
+          disabled={ctaDisabled}
+          accessibilityRole="button"
+        >
           <Text style={styles.ctaText}>{ctaLabel}</Text>
         </Pressable>
         {assign && onCreate ? (

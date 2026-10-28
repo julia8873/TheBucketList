@@ -506,13 +506,21 @@ export default function MyListScreen() {
     </View>
   );
 
+  // En modo selección la barra inferior tapa el final de la lista: más margen para poder hacer scroll.
+  const listContentStyle = state.isSelectionMode
+    ? { paddingHorizontal: 12, paddingBottom: 280 }
+    : styles.listContent;
+  const albumsContentStyle = state.isAlbumSelectionMode
+    ? { paddingHorizontal: 12, paddingBottom: 280 }
+    : styles.albumsContent;
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
       {/* Tab: Tareas */}
       {state.activeTab === 'list' && (
         <View style={{ flex: 1 }}>
           {state.isLoading ? (
-            <ScrollView ref={taskListScrollRef} contentContainerStyle={styles.listContent}>
+            <ScrollView ref={taskListScrollRef} contentContainerStyle={listContentStyle}>
               {taskListHeaderElement}
               <View style={{ paddingTop: 10 }}>
                 {state.taskViewMode === 'gallery' ? (
@@ -537,7 +545,7 @@ export default function MyListScreen() {
           ) : state.filteredBuckets.length === 0 ? (
             <ScrollView
               ref={taskListScrollRef}
-              contentContainerStyle={styles.listContent}
+              contentContainerStyle={listContentStyle}
               refreshControl={
                 <RefreshControl refreshing={state.refreshing} onRefresh={state.onRefresh} tintColor={gold[400]} />
               }
@@ -552,7 +560,7 @@ export default function MyListScreen() {
           ) : state.isReordering ? (
             <ScrollView
               ref={taskListScrollRef}
-              contentContainerStyle={styles.listContent}
+              contentContainerStyle={listContentStyle}
               scrollEnabled={!state.dragging}
             >
               {taskListHeaderElement}
@@ -593,7 +601,7 @@ export default function MyListScreen() {
           ) : state.taskViewMode === 'gallery' ? (
             <ScrollView
               ref={taskListScrollRef}
-              contentContainerStyle={styles.listContent}
+              contentContainerStyle={listContentStyle}
               refreshControl={
                 <RefreshControl refreshing={state.refreshing} onRefresh={state.onRefresh} tintColor={gold[400]} />
               }
@@ -676,7 +684,7 @@ export default function MyListScreen() {
           ) : state.taskViewMode === 'compact' ? (
             <ScrollView
               ref={taskListScrollRef}
-              contentContainerStyle={styles.listContent}
+              contentContainerStyle={listContentStyle}
               refreshControl={
                 <RefreshControl refreshing={state.refreshing} onRefresh={state.onRefresh} tintColor={gold[400]} />
               }
@@ -707,7 +715,7 @@ export default function MyListScreen() {
               renderItem={renderTaskItem}
               keyExtractor={(item) => item.id}
               ItemSeparatorComponent={TaskSeparator}
-              contentContainerStyle={styles.listContent}
+              contentContainerStyle={listContentStyle}
               ListHeaderComponent={taskListHeaderElement}
               refreshControl={
                 <RefreshControl refreshing={state.refreshing} onRefresh={state.onRefresh} tintColor={gold[400]} />
@@ -749,7 +757,7 @@ export default function MyListScreen() {
         <View style={{ flex: 1 }}>
           <ScrollView
             ref={albumsScrollRef}
-            contentContainerStyle={styles.albumsContent}
+            contentContainerStyle={albumsContentStyle}
             refreshControl={
               <RefreshControl refreshing={state.refreshing} onRefresh={state.onRefresh} tintColor={gold[400]} />
             }

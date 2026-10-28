@@ -359,7 +359,7 @@ export default function AlbumDetailScreen() {
         contentContainerStyle={{
           paddingBottom:
             insets.bottom +
-            (state.isSelectionMode ? 170 : state.id === 'unassigned' ? 40 : 120) +
+            (state.isSelectionMode ? 290 : state.id === 'unassigned' ? 40 : 120) +
             (state.keyboardHeight > 0 ? state.keyboardHeight + 60 : 0),
         }}
         refreshControl={

@@ -18,13 +18,12 @@ import {
 } from 'lucide-react-native';
 import { useBulkTaskOperations } from '../hooks/useBulkTaskOperations';
 import { useAlbums } from '../hooks/useAlbums';
-import { useTags } from '../hooks/useTags';
 import { useAuthStore } from '../stores/auth.store';
 import { CollaboratorPickerSheet, type CollaboratorItem } from './CollaboratorPickerSheet';
 
 import { styles } from '../features/bulk-task-actions/styles/bulk-actions.styles';
 import { BulkMoveModal } from '../features/bulk-task-actions/components/BulkMoveModal';
-import { BulkTagsModal } from '../features/bulk-task-actions/components/BulkTagsModal';
+import { BulkTagsSheet } from './BulkTagsSheet';
 import { BulkMoreMenuModal } from '../features/bulk-task-actions/components/BulkMoreMenuModal';
 import { BulkPriorityModal, BulkVisibilityModal } from '../features/bulk-task-actions/components/BulkMetaModals';
 import { useTranslation } from '@bucketlist/shared';
@@ -63,7 +62,6 @@ export function BulkTaskActionBar({
   } = useBulkTaskOperations();
 
   const { data: albums = [] } = useAlbums(user?.id);
-  const { data: allTags = [] } = useTags();
 
   // Modals state
   const [showMoveModal, setShowMoveModal] = useState(false);
@@ -149,8 +147,11 @@ export function BulkTaskActionBar({
     if (!selectedTagIds.length) return;
     const okTags = await askBulk(
       t('bulk_actions.confirm_tags_title'),
-      `Se asignarán ${selectedTagIds.length === 1 ? 'la etiqueta elegida' : `las ${selectedTagIds.length} etiquetas elegidas`} a ${plural}.`,
-      t('bulk_actions.action_tags'),
+      t(`bulk_actions.confirm_tags_msg_${selectedTagIds.length === 1 ? '1' : 'n'}_${count === 1 ? '1' : 'n'}`, {
+        tags: selectedTagIds.length,
+        items: count,
+      }),
+      t('common.confirm'),
     );
     if (!okTags) return;
     // Optimista: las etiquetas se ven al instante; el servidor se sincroniza detrás.
@@ -340,16 +341,11 @@ export function BulkTaskActionBar({
         onSelectAlbum={(albId) => void handleMoveToAlbum(albId)}
       />
 
-      <BulkTagsModal
+      <BulkTagsSheet
         visible={showTagsModal}
-        count={count}
-        allTags={allTags}
+        itemType="task"
         selectedTagIds={selectedTagIds}
-        onToggleTag={(tagId) => {
-          setSelectedTagIds((prev) =>
-            prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]
-          );
-        }}
+        onChange={setSelectedTagIds}
         onClose={() => setShowTagsModal(false)}
         onApply={handleAssignTags}
       />

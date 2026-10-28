@@ -1,5 +1,5 @@
 import { Alert } from '@bucketlist/ui';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, ScrollView, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
@@ -48,6 +48,8 @@ export default function CreateBucketModal() {
   const [showDriveModal, setShowDriveModal] = useState(false);
 
   const [steps, setSteps] = useState<TaskStepItem[]>([]);
+  const scrollRef = useRef<ScrollView>(null);
+  const titleSectionY = useRef(0);
   const [isTitleFocused, setIsTitleFocused] = useState(false);
   const [isDescFocused, setIsDescFocused] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -190,7 +192,11 @@ export default function CreateBucketModal() {
         style={[styles.container, { backgroundColor: theme.colors.background }]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* CABECERA */}
           <View style={styles.header}>
             <Pressable
@@ -219,7 +225,7 @@ export default function CreateBucketModal() {
           </View>
 
           {/* QUÉ QUIERES LOGRAR */}
-          <View style={styles.section}>
+          <View style={styles.section} onLayout={(e) => { titleSectionY.current = e.nativeEvent.layout.y; }}>
             <SectionTitle
               highlight={t('task_form.section_what_gold', { defaultValue: 'QUÉ' })}
               rest={t('task_form.section_what_rest', { defaultValue: 'QUIERES LOGRAR' })}
@@ -242,7 +248,13 @@ export default function CreateBucketModal() {
                   placeholderTextColor={theme.colors.foregroundMuted}
                   value={value}
                   onChangeText={onChange}
-                  onFocus={() => setIsTitleFocused(true)}
+                  onFocus={() => {
+                    setIsTitleFocused(true);
+                    // Baja la pantalla para que el título quede por encima del teclado.
+                    setTimeout(() => {
+                      scrollRef.current?.scrollTo({ y: Math.max(0, titleSectionY.current - 12), animated: true });
+                    }, 150);
+                  }}
                   onBlur={() => setIsTitleFocused(false)}
                   accessibilityLabel={t('task_form.title_placeholder', { defaultValue: 'Título de la tarea' })}
                 />
