@@ -17,6 +17,7 @@ export interface AlbumWithProgress {
   is_closed?: boolean;
   closed_at?: string | null;
   created_at?: string;
+  owner_id?: string;
   total_tasks: number;
   completed_tasks: number;
   tags?: string[];
@@ -118,6 +119,7 @@ export async function fetchAlbums(userId: string): Promise<AlbumWithProgress[]> 
       is_closed: Boolean(album.is_closed),
       closed_at: album.closed_at || null,
       created_at: album.created_at || undefined,
+      owner_id: album.owner_id || undefined,
       total_tasks: prog?.total_tasks || 0,
       completed_tasks: prog?.completed_tasks || 0,
       tags: albumTagsMap[album.id] || [],

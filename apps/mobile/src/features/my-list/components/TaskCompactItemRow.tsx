@@ -11,6 +11,7 @@ import { BucketCover } from '@/components/BucketCover';
 import { resolveTaskImage } from '@/utils/taskImage';
 import type { TaskViewCustomization } from '@/stores/myListCustomization.store';
 import type { Tag } from '@/hooks/useTags';
+import { ParticipantsStack, useParticipantsOf } from '@/components/ItemParticipants';
 
 interface TaskCompactItemRowProps {
   item: any;
@@ -49,6 +50,7 @@ function TaskCompactItemRowComponent({
   const { theme } = useTheme();
   const { t, i18n } = useTranslation();
   const swipeRef = React.useRef<Swipeable | null>(null);
+  const participants = useParticipantsOf('task', item.id);
 
   if (item.isHeader) {
     return (
@@ -110,8 +112,11 @@ function TaskCompactItemRowComponent({
   const showTags = customization?.showTags ?? false;
   const showProgress = customization?.showSubtasksProgress ?? true;
   const showDates = customization?.showDates ?? false;
+  const visibleParticipants =
+    (customization?.showCollaborators ?? false) && participants && participants.length > 0 ? participants : undefined;
 
   const hasMetaBadges =
+    !!visibleParticipants ||
     showPriority ||
     (showTags && itemTags && itemTags.length > 0) ||
     (showProgress && !!progressText) ||
@@ -295,6 +300,16 @@ function TaskCompactItemRowComponent({
                 color={theme.colors.primary}
                 fill={theme.colors.primary}
               />
+            )}
+            {visibleParticipants && (
+              <View style={{ marginLeft: 'auto' }}>
+                <ParticipantsStack
+                  participants={visibleParticipants}
+                  max={3}
+                  ringColor={isCompleted ? (theme.dark ? '#121212' : '#EDE8DE') : theme.colors.surface}
+                  disabled={isSelectionMode || !!drag}
+                />
+              </View>
             )}
           </View>
         )}

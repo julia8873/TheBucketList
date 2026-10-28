@@ -64,6 +64,8 @@ interface AlbumCardProps {
   showDescription?: boolean;
   createdAt?: string;
   description?: string;
+  /** Elemento extra (p. ej. fotos de colaboradores) sobre la barra de progreso. */
+  participantsElement?: React.ReactNode;
 }
 
 const PRESET_COVERS: Record<string, { type: 'gradient' | 'solid'; colors: [string, string, ...string[]]; diagonal?: boolean }> = {
@@ -147,6 +149,7 @@ export function AlbumCard({
   showDescription = false,
   createdAt,
   description,
+  participantsElement,
 }: AlbumCardProps) {
   const { theme } = useTheme();
   const overlay = useCoverOverlay();
@@ -421,6 +424,10 @@ export function AlbumCard({
           >
             {description.trim()}
           </Text>
+        ) : null}
+
+        {participantsElement ? (
+          <View style={{ alignItems: 'flex-start', marginBottom: 6 }}>{participantsElement}</View>
         ) : null}
 
         {/* Progress bar */}

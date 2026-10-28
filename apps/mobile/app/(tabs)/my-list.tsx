@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useEffect } from 'react';
+import React, { useCallback, useRef, useEffect, useMemo } from 'react';
 import { View, Text, Pressable, ScrollView, RefreshControl, BackHandler, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -42,6 +42,11 @@ import {
 import { MyListSortModal } from '@/features/my-list/components/MyListSortModal';
 import { MyListCustomizeModal } from '@/features/my-list/components/MyListCustomizeModal';
 import { useMyListCustomizationStore } from '@/stores/myListCustomization.store';
+import {
+  ItemParticipantsProvider,
+  ParticipantsStack,
+  useParticipantsValue,
+} from '@/components/ItemParticipants';
 
 const TaskSeparator = () => <View style={{ height: 10 }} />;
 
@@ -81,6 +86,22 @@ export default function MyListScreen() {
     });
     return unsubscribe;
   }, [navigation, state.activeTab, state.taskViewMode, state.isReordering]);
+
+  // Colaboradores (fotos de perfil): solo se cargan si la vista actual los muestra.
+  const participantTaskSources = useMemo(
+    () => (state.buckets ?? []).map((b: any) => ({ id: b.id as string, ownerId: (b.user_id as string | undefined) ?? null })),
+    [state.buckets],
+  );
+  const participantAlbumSources = useMemo(
+    () => (state.albums ?? []).map((a: any) => ({ id: a.id as string, ownerId: (a.owner_id as string | undefined) ?? null })),
+    [state.albums],
+  );
+  const participantsValue = useParticipantsValue({
+    taskSources: participantTaskSources,
+    albumSources: participantAlbumSources,
+    tasksEnabled: state.activeTab === 'list' && !!taskViews[state.taskViewMode]?.showCollaborators,
+    albumsEnabled: state.activeTab === 'albums' && !!albumViews[state.albumViewMode]?.showCollaborators,
+  });
 
   const renderTaskItem = useCallback(
     ({ item, drag, index }: { item: any; drag?: any; index?: number }) => {
@@ -339,6 +360,16 @@ export default function MyListScreen() {
         showDescription={albumViews.gallery.showDescription}
         createdAt={item.created_at}
         description={item.description}
+        participantsElement={
+          albumViews.gallery.showCollaborators && participantsValue.album[item.id] ? (
+            <ParticipantsStack
+              participants={participantsValue.album[item.id]}
+              max={4}
+              ringColor="#3A3A3A"
+              disabled={state.isAlbumSelectionMode}
+            />
+          ) : undefined
+        }
         onPress={() => {
           if (state.isAlbumSelectionMode) state.toggleSelectAlbum(item.id);
           else {
@@ -363,6 +394,7 @@ export default function MyListScreen() {
       state.setSelectedAlbumIds,
       state.toggleFavoriteAlbum,
       albumViews.gallery,
+      participantsValue,
       router,
     ]
   );
@@ -515,6 +547,7 @@ export default function MyListScreen() {
     : styles.albumsContent;
 
   return (
+    <ItemParticipantsProvider value={participantsValue}>
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
       {/* Tab: Tareas */}
       {state.activeTab === 'list' && (
@@ -1079,5 +1112,6 @@ export default function MyListScreen() {
         initialMode={state.activeTab === 'albums' ? state.albumViewMode : state.taskViewMode}
       />
     </SafeAreaView>
+    </ItemParticipantsProvider>
   );
 }

@@ -564,6 +564,8 @@ const en = {
     customize_opt_dates_sub: 'Target date or deadline indicator',
     customize_opt_cat_loc: 'Category and location',
     customize_opt_cat_loc_sub: 'Category name and associated location',
+    customize_opt_collaborators: 'Collaborators',
+    customize_opt_collaborators_sub: 'Profile photos of everyone taking part in the task (you included)',
     customize_opt_subtasks: 'Steps and progress',
     customize_opt_subtasks_sub: 'Counter of completed steps or numeric goals',
     customize_opt_desc: 'Description',
@@ -578,6 +580,8 @@ const en = {
     customize_opt_album_badges_sub: 'Shared, Closed and collaborator badges',
     customize_opt_album_date: 'Creation date',
     customize_opt_album_date_sub: 'Indicates when the album was created',
+    customize_opt_album_collaborators: 'Collaborators',
+    customize_opt_album_collaborators_sub: 'Profile photos of everyone taking part in the album (you included)',
     customize_opt_album_desc: 'Description',
     customize_opt_album_desc_sub: 'Explanatory text of album purpose',
     customize_default: 'Default',
@@ -1559,6 +1563,14 @@ const en = {
     status_pending: 'To do',
     default_user: 'User',
     default_location: 'Location',
+  },
+
+  participants: {
+    title: 'Collaborators',
+    open: 'See all {{count}} collaborators',
+    owner: 'Owner',
+    collaborator: 'Collaborator',
+    you: 'You',
   },
 
   bulk_actions: {

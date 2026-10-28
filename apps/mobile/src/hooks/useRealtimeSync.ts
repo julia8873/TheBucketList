@@ -68,6 +68,7 @@ export function useRealtimeSync(userId?: string) {
           schedule(`bucket:${id}`, () => invalidate('bucketDetail', id));
         }
         schedule('buckets', () => invalidate('buckets'));
+        schedule('item_participants', () => invalidate('item_participants'));
       })
       // ── Comentarios: solo los comentarios de esa tarea ────────────────────────
       .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, (p: any) => {
@@ -125,6 +126,7 @@ export function useRealtimeSync(userId?: string) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'album_members' }, () => {
         if (isLocalEcho()) return;
         schedule('albumCollaborators', () => invalidate('albumCollaborators'));
+        schedule('item_participants', () => invalidate('item_participants'));
         schedule('albums', () => invalidate('albums'));
       })
       // ── Notificaciones: solo el badge y la lista ─────────────────────────────

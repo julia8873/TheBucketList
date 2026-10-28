@@ -11,6 +11,7 @@ import { styles } from '../styles/my-list.styles';
 import type { DragHandle } from '@/components/DraggableTaskList';
 import type { Tag } from '@/hooks/useTags';
 import type { TaskViewCustomization } from '@/stores/myListCustomization.store';
+import { ParticipantsStack, useParticipantsOf } from '@/components/ItemParticipants';
 
 interface TaskItemRowProps {
   item: any;
@@ -55,6 +56,7 @@ function TaskItemRowComponent({
 }: TaskItemRowProps) {
   const localSwipeableRef = React.useRef<Swipeable | null>(null);
   const { t, i18n } = useTranslation();
+  const participants = useParticipantsOf('task', item.id);
 
   if (item.isHeader) {
     return (
@@ -70,6 +72,7 @@ function TaskItemRowComponent({
   const showCategoryLoc = customization?.showCategoryLocation ?? true;
   const showSubtasks = customization?.showSubtasksProgress ?? true;
   const showDesc = customization?.showDescription ?? false;
+  const showCollab = customization?.showCollaborators ?? true;
 
   const subtasksTotal = item.item_subtasks?.length || 0;
   const subtasksDone = item.item_subtasks?.filter((s: any) => s.done).length || 0;
@@ -157,7 +160,8 @@ function TaskItemRowComponent({
   ) : null;
 
   const visibleTags = showTags ? itemTags : [];
-  const hasTagsOrBadges = favoriteBadge || priorityBadge || visibleTags.length > 0;
+  const visibleParticipants = showCollab && participants && participants.length > 0 ? participants : undefined;
+  const hasTagsOrBadges = favoriteBadge || priorityBadge || visibleTags.length > 0 || !!visibleParticipants;
 
   const tagsElement = hasTagsOrBadges ? (
     <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
@@ -168,6 +172,15 @@ function TaskItemRowComponent({
       ))}
       {visibleTags.length > 2 && (
         <TagChip label={`+${visibleTags.length - 2}`} variant="colored" color="#8A8A8A" size="sm" />
+      )}
+      {visibleParticipants && (
+        <View style={{ marginLeft: 'auto' }}>
+          <ParticipantsStack
+            participants={visibleParticipants}
+            ringColor={theme.colors.surface}
+            disabled={isSelectionMode || !!drag}
+          />
+        </View>
       )}
     </View>
   ) : null;

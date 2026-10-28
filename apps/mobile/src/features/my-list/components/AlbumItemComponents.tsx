@@ -8,6 +8,7 @@ import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/my-list.styles';
 import type { DragHandle } from '@/components/DraggableTaskList';
 import type { AlbumViewCustomization } from '@/stores/myListCustomization.store';
+import { ParticipantsStack, useParticipantsOf } from '@/components/ItemParticipants';
 
 const PRESET_COVERS: Record<string, { type: 'gradient' | 'solid'; colors: [string, string, ...string[]]; diagonal?: boolean }> = {
   aurora: { type: 'gradient', colors: ['#0E4B43', '#1F8560'] },
@@ -131,6 +132,9 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
   const total = item.total_tasks ?? 0;
   const completed = item.completed_tasks ?? 0;
   const isCompleted = total > 0 && completed === total;
+  const participants = useParticipantsOf('album', item.id);
+  const visibleParticipants =
+    (customization?.showCollaborators ?? false) && participants && participants.length > 0 ? participants : undefined;
 
   return (
     <Pressable
@@ -206,6 +210,14 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
       </View>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 8 }}>
+        {visibleParticipants && (
+          <ParticipantsStack
+            participants={visibleParticipants}
+            max={3}
+            ringColor={isCompleted ? theme.colors.surfaceSunken : theme.colors.surface}
+            disabled={isSelectionMode || !!drag}
+          />
+        )}
         {(customization?.showBadges ?? true) && item.is_closed ? <Lock size={12} color={theme.colors.foregroundMuted} /> : null}
         {(customization?.showBadges ?? true) && item.is_shared ? <Users size={12} color={theme.colors.primary} /> : null}
         {(customization?.showPriority ?? false) && item.priority && (
@@ -369,6 +381,9 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
   const showBadges = customization?.showBadges ?? true;
   const showDate = customization?.showDate ?? false;
   const showDesc = customization?.showDescription ?? false;
+  const participants = useParticipantsOf('album', item.id);
+  const visibleParticipants =
+    (customization?.showCollaborators ?? true) && participants && participants.length > 0 ? participants : undefined;
 
   return (
     <View
@@ -504,6 +519,16 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
               <View style={[styles.listAlbumBadge, { borderColor: priorityColor }]}>
                 <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: priorityColor }} />
                 <Text style={[styles.listAlbumBadgeText, { color: priorityColor }]}>{priorityLabel}</Text>
+              </View>
+            )}
+
+            {visibleParticipants && (
+              <View style={{ marginLeft: 'auto' }}>
+                <ParticipantsStack
+                  participants={visibleParticipants}
+                  ringColor={isSelected ? (theme.dark ? '#26221A' : '#F7F1DD') : theme.colors.surface}
+                  disabled={isSelectionMode || !!drag}
+                />
               </View>
             )}
           </View>

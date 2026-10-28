@@ -564,6 +564,8 @@ const es = {
     customize_opt_dates_sub: 'Indicador de fecha objetivo o vencimiento',
     customize_opt_cat_loc: 'Categoría y lugar',
     customize_opt_cat_loc_sub: 'Nombre de categoría y ubicación asociada',
+    customize_opt_collaborators: 'Colaboradores',
+    customize_opt_collaborators_sub: 'Fotos de perfil de quienes participan en la tarea (tú incluido)',
     customize_opt_subtasks: 'Pasos y progreso',
     customize_opt_subtasks_sub: 'Contador de pasos completados o metas numéricas',
     customize_opt_desc: 'Descripción',
@@ -578,6 +580,8 @@ const es = {
     customize_opt_album_badges_sub: 'Etiquetas de Compartido, Cerrado y colaboradores',
     customize_opt_album_date: 'Fecha de creación',
     customize_opt_album_date_sub: 'Indica cuándo fue creado el álbum',
+    customize_opt_album_collaborators: 'Colaboradores',
+    customize_opt_album_collaborators_sub: 'Fotos de perfil de quienes participan en el álbum (tú incluido)',
     customize_opt_album_desc: 'Descripción',
     customize_opt_album_desc_sub: 'Texto explicativo del propósito del álbum',
     customize_default: 'Por defecto',
@@ -1559,6 +1563,14 @@ const es = {
     status_pending: 'Por hacer',
     default_user: 'Usuario',
     default_location: 'Ubicación',
+  },
+
+  participants: {
+    title: 'Colaboradores',
+    open: 'Ver los {{count}} colaboradores',
+    owner: 'Propietario',
+    collaborator: 'Colaborador',
+    you: 'Tú',
   },
 
   bulk_actions: {

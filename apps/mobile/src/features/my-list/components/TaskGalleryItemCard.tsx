@@ -9,6 +9,7 @@ import { resolveTaskImage } from '@/utils/taskImage';
 import { styles } from '../styles/my-list.styles';
 import type { TaskViewCustomization } from '@/stores/myListCustomization.store';
 import type { Tag } from '@/hooks/useTags';
+import { ParticipantsStack, useParticipantsOf } from '@/components/ItemParticipants';
 
 interface TaskGalleryItemCardProps {
   item: any;
@@ -37,6 +38,7 @@ function TaskGalleryItemCardComponent({
   const overlay = useCoverOverlay();
   const { t, i18n } = useTranslation();
   const isCompleted = item.status === 'completed';
+  const participants = useParticipantsOf('task', item.id);
 
   const imageValue = resolveTaskImage(item, { preferThumb: !isSingle });
   const isImageCover = !!imageValue && !imageValue.startsWith('preset:');
@@ -47,6 +49,8 @@ function TaskGalleryItemCardComponent({
   const showCategoryLoc = customization?.showCategoryLocation ?? true;
   const showSubtasks = customization?.showSubtasksProgress ?? true;
   const showDesc = customization?.showDescription ?? false;
+  const visibleParticipants =
+    (customization?.showCollaborators ?? true) && participants && participants.length > 0 ? participants : undefined;
 
   const subtasksTotal = item.item_subtasks?.length || 0;
   const subtasksDone = item.item_subtasks?.filter((s: any) => s.done).length || 0;
@@ -238,25 +242,37 @@ function TaskGalleryItemCardComponent({
           { backgroundColor: isImageCover ? 'rgba(0,0,0,0.52)' : overlay.panel },
         ]}
       >
-        <Text
-          style={[styles.galleryCardTitle, { color: overlay.title }, isSingle && { fontSize: 16 }]}
-          numberOfLines={showDesc && item.description ? 1 : 2}
-        >
-          {item.title}
-        </Text>
-        {metaText ? (
-          <Text style={[styles.galleryCardMeta, { color: overlay.meta }]} numberOfLines={1}>
-            {metaText}
-          </Text>
-        ) : null}
-        {showDesc && item.description ? (
-          <Text
-            style={[styles.galleryCardMeta, { color: overlay.meta, fontSize: 11, marginTop: 2 }]}
-            numberOfLines={1}
-          >
-            {item.description.trim()}
-          </Text>
-        ) : null}
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+          <View style={{ flex: 1 }}>
+            <Text
+              style={[styles.galleryCardTitle, { color: overlay.title }, isSingle && { fontSize: 16 }]}
+              numberOfLines={showDesc && item.description ? 1 : 2}
+            >
+              {item.title}
+            </Text>
+            {metaText ? (
+              <Text style={[styles.galleryCardMeta, { color: overlay.meta }]} numberOfLines={1}>
+                {metaText}
+              </Text>
+            ) : null}
+            {showDesc && item.description ? (
+              <Text
+                style={[styles.galleryCardMeta, { color: overlay.meta, fontSize: 11, marginTop: 2 }]}
+                numberOfLines={1}
+              >
+                {item.description.trim()}
+              </Text>
+            ) : null}
+          </View>
+          {visibleParticipants && (
+            <ParticipantsStack
+              participants={visibleParticipants}
+              max={3}
+              ringColor={isImageCover ? '#2A2A2A' : overlay.panel}
+              disabled={isSelectionMode}
+            />
+          )}
+        </View>
       </View>
     </Pressable>
   );

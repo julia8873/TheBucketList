@@ -26,6 +26,7 @@ import {
   LayoutList,
   LayoutGrid,
   AlignJustify,
+  Users,
 } from 'lucide-react-native';
 import { useTheme, gold } from '@bucketlist/ui';
 import { AppSwitch } from '@/components/AppSwitch';
@@ -311,6 +312,14 @@ export function MyListCustomizeModal({
                   theme={theme}
                 />
                 <CustomizeRow
+                  icon={<Users size={16} color={gold[400]} />}
+                  title={t('my_list.customize_opt_collaborators')}
+                  subtitle={t('my_list.customize_opt_collaborators_sub')}
+                  value={currentTaskCustomization.showCollaborators}
+                  onChange={(v) => setTaskOption(selectedMode, 'showCollaborators', v)}
+                  theme={theme}
+                />
+                <CustomizeRow
                   icon={<AlignLeft size={16} color={gold[400]} />}
                   title={t('my_list.customize_opt_desc')}
                   subtitle={t('my_list.customize_opt_desc_sub')}
@@ -360,6 +369,14 @@ export function MyListCustomizeModal({
                   subtitle={t('my_list.customize_opt_album_date_sub')}
                   value={currentAlbumCustomization.showDate}
                   onChange={(v) => setAlbumOption(selectedMode, 'showDate', v)}
+                  theme={theme}
+                />
+                <CustomizeRow
+                  icon={<Users size={16} color={gold[400]} />}
+                  title={t('my_list.customize_opt_album_collaborators')}
+                  subtitle={t('my_list.customize_opt_album_collaborators_sub')}
+                  value={currentAlbumCustomization.showCollaborators}
+                  onChange={(v) => setAlbumOption(selectedMode, 'showCollaborators', v)}
                   theme={theme}
                 />
                 <CustomizeRow

@@ -7,6 +7,7 @@ export interface TaskViewCustomization {
   showDates: boolean;
   showCategoryLocation: boolean;
   showSubtasksProgress: boolean;
+  showCollaborators: boolean;
   showDescription: boolean;
 }
 
@@ -16,6 +17,7 @@ export interface AlbumViewCustomization {
   showProgress: boolean;
   showBadges: boolean;
   showDate: boolean;
+  showCollaborators: boolean;
   showDescription: boolean;
 }
 
@@ -28,6 +30,7 @@ export const DEFAULT_TASK_CUSTOMIZATION: Record<ViewModeType, TaskViewCustomizat
     showDates: true,
     showCategoryLocation: true,
     showSubtasksProgress: true,
+    showCollaborators: true,
     showDescription: false,
   },
   gallery: {
@@ -36,6 +39,7 @@ export const DEFAULT_TASK_CUSTOMIZATION: Record<ViewModeType, TaskViewCustomizat
     showDates: true,
     showCategoryLocation: true,
     showSubtasksProgress: true,
+    showCollaborators: true,
     showDescription: false,
   },
   compact: {
@@ -44,6 +48,7 @@ export const DEFAULT_TASK_CUSTOMIZATION: Record<ViewModeType, TaskViewCustomizat
     showDates: false,
     showCategoryLocation: false,
     showSubtasksProgress: true,
+    showCollaborators: false,
     showDescription: false,
   },
 };
@@ -55,6 +60,7 @@ export const DEFAULT_ALBUM_CUSTOMIZATION: Record<ViewModeType, AlbumViewCustomiz
     showProgress: true,
     showBadges: true,
     showDate: false,
+    showCollaborators: true,
     showDescription: false,
   },
   gallery: {
@@ -63,6 +69,7 @@ export const DEFAULT_ALBUM_CUSTOMIZATION: Record<ViewModeType, AlbumViewCustomiz
     showProgress: true,
     showBadges: true,
     showDate: false,
+    showCollaborators: true,
     showDescription: false,
   },
   compact: {
@@ -71,6 +78,7 @@ export const DEFAULT_ALBUM_CUSTOMIZATION: Record<ViewModeType, AlbumViewCustomiz
     showProgress: false,
     showBadges: true,
     showDate: false,
+    showCollaborators: false,
     showDescription: false,
   },
 };
