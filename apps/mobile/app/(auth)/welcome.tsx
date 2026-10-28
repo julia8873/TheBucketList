@@ -17,6 +17,14 @@ export default function WelcomeScreen() {
         <Text style={[styles.logo, { color: theme.colors.foreground }]} accessibilityRole="header">
           The<Text style={{ color: theme.colors.primary }}>Bucket</Text>List
         </Text>
+        <View style={styles.slogan} accessible accessibilityLabel={`${t('auth.slogan_before')} → ${t('auth.slogan_after')}`}>
+          <Text style={[styles.sloganBefore, { color: theme.colors.foregroundMuted }]}>
+            {t('auth.slogan_before')}
+          </Text>
+          <Text style={[styles.sloganAfter, { color: theme.colors.primary }]}>
+            {t('auth.slogan_after')}
+          </Text>
+        </View>
       </View>
 
       <View style={styles.footer}>
@@ -31,5 +39,8 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing[6] },
   logo: { fontFamily: fontFamily.serifBold, fontSize: 40, letterSpacing: -0.5 },
+  slogan: { flexDirection: 'row', alignItems: 'baseline', gap: spacing[2], marginTop: spacing[3] },
+  sloganBefore: { fontFamily: fontFamily.regular, fontSize: 18, textDecorationLine: 'line-through' },
+  sloganAfter: { fontFamily: fontFamily.semibold, fontSize: 18 },
   footer: { paddingHorizontal: spacing[3], paddingBottom: Platform.OS === 'ios' ? 58 : 52, gap: spacing[3] },
 });

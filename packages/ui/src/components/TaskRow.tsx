@@ -32,6 +32,8 @@ interface TaskRowProps {
   thumbnailElement?: React.ReactNode;
   /** Etiquetas de la tarea (se pintan entre el título y la meta). */
   tagsElement?: React.ReactNode;
+  /** Colaboradores de la tarea (se pintan justo debajo del título, encima de las etiquetas). */
+  participantsElement?: React.ReactNode;
   description?: string;
   onPress?: () => void;
   onLongPress?: () => void;
@@ -53,6 +55,7 @@ function TaskRowComponent({
   counterTarget,
   thumbnailElement,
   tagsElement,
+  participantsElement,
   description,
   onPress,
   onLongPress,
@@ -107,6 +110,7 @@ function TaskRowComponent({
         <Text style={[styles.title, { color: completed ? theme.colors.foregroundSubtle : theme.colors.foreground }]} numberOfLines={2}>
           {title}
         </Text>
+        {participantsElement ? <View style={styles.participants}>{participantsElement}</View> : null}
         {tagsElement ? <View style={styles.tags}>{tagsElement}</View> : null}
         {meta ? (
           <Text style={[styles.meta, { color: completed ? theme.colors.foregroundSubtle : theme.colors.foregroundMuted }]} numberOfLines={1}>
@@ -187,6 +191,11 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.serif,
     fontSize: 16,
     lineHeight: 22,
+  },
+  participants: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 2,
   },
   tags: {
     flexDirection: 'row',

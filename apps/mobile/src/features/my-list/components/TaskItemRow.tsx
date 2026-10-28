@@ -161,7 +161,7 @@ function TaskItemRowComponent({
 
   const visibleTags = showTags ? itemTags : [];
   const visibleParticipants = showCollab && participants && participants.length > 0 ? participants : undefined;
-  const hasTagsOrBadges = favoriteBadge || priorityBadge || visibleTags.length > 0 || !!visibleParticipants;
+  const hasTagsOrBadges = favoriteBadge || priorityBadge || visibleTags.length > 0;
 
   const tagsElement = hasTagsOrBadges ? (
     <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
@@ -173,16 +173,15 @@ function TaskItemRowComponent({
       {visibleTags.length > 2 && (
         <TagChip label={`+${visibleTags.length - 2}`} variant="colored" color="#8A8A8A" size="sm" />
       )}
-      {visibleParticipants && (
-        <View style={{ marginLeft: 'auto' }}>
-          <ParticipantsStack
-            participants={visibleParticipants}
-            ringColor={theme.colors.surface}
-            disabled={isSelectionMode || !!drag}
-          />
-        </View>
-      )}
     </View>
+  ) : null;
+
+  const participantsElement = visibleParticipants ? (
+    <ParticipantsStack
+      participants={visibleParticipants}
+      ringColor={theme.colors.surface}
+      disabled={isSelectionMode || !!drag}
+    />
   ) : null;
 
   /** Pregunta antes de marcar como completada (swipe a la derecha o toque en el botón verde). */
@@ -305,6 +304,7 @@ function TaskItemRowComponent({
             />
           )
         }
+        participantsElement={participantsElement}
         tagsElement={tagsElement}
         description={showDesc && item.description ? item.description.trim() : undefined}
         subtasksDone={showSubtasks ? subtasksDone : 0}
