@@ -31,7 +31,7 @@ async function fetchNotifications(userId: string) {
     .limit(30);
 
   if (!error) {
-    const rows = (data ?? []) as any[];
+    const rows = (data ?? []);
     const bucketMap = new Map<string, any>(rows.filter((n) => n.bucket).map((n) => [n.bucket_id, n.bucket]));
     const albumMap = new Map<string, any>(rows.filter((n) => n.album).map((n) => [n.album_id, n.album]));
     return withEntityInfo(rows, bucketMap, albumMap);

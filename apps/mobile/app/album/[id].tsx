@@ -1,4 +1,4 @@
-import { Alert } from '@bucketlist/ui';
+import { Alert, HEART_COLOR } from '@bucketlist/ui';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { View, Text, Pressable, ScrollView, RefreshControl, TextInput, StyleSheet } from 'react-native';
@@ -495,8 +495,8 @@ export default function AlbumDetailScreen() {
                       >
                         <Heart
                           size={20}
-                          color="#EF4444"
-                          fill="#EF4444"
+                          color={HEART_COLOR}
+                          fill={HEART_COLOR}
                           strokeWidth={1.8}
                         />
                       </Pressable>
@@ -514,8 +514,8 @@ export default function AlbumDetailScreen() {
                     >
                       <Heart
                         size={20}
-                        color={state.isLiked ? '#EF4444' : '#F3EEE3'}
-                        fill={state.isLiked ? '#EF4444' : 'transparent'}
+                        color={state.isLiked ? HEART_COLOR : '#F3EEE3'}
+                        fill={state.isLiked ? HEART_COLOR : 'transparent'}
                         strokeWidth={1.8}
                       />
                     </Pressable>
@@ -1006,8 +1006,8 @@ export default function AlbumDetailScreen() {
               >
                 <Heart
                   size={16}
-                  color="#EF4444"
-                  fill={state.isLiked ? '#EF4444' : 'transparent'}
+                  color={HEART_COLOR}
+                  fill={state.isLiked ? HEART_COLOR : 'transparent'}
                   strokeWidth={1.8}
                 />
                 <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: theme.colors.foregroundMuted }}>

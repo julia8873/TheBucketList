@@ -1,4 +1,4 @@
-import { useCoverOverlay } from '@bucketlist/ui';
+import { useCoverOverlay, HEART_COLOR } from '@bucketlist/ui';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -156,7 +156,7 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
               <View style={styles.galleryActions}>
                 <View style={styles.galleryActionItem}>
                   <Pressable onPress={handleLike} hitSlop={6}>
-                    <Heart size={14} color={liked ? gold[400] : '#F2EFE8'} fill={liked ? gold[400] : 'transparent'} strokeWidth={1.8} />
+                    <Heart size={14} color={liked ? HEART_COLOR : '#F2EFE8'} fill={liked ? HEART_COLOR : 'transparent'} strokeWidth={1.8} />
                   </Pressable>
                   <Pressable onPress={() => setShowLikes(true)} hitSlop={6}>
                     <Text style={styles.galleryActionText}>{likeCount}</Text>
@@ -248,7 +248,7 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
           <View style={styles.compactActions}>
             <View style={styles.compactActionBtn}>
               <Pressable onPress={handleLike} hitSlop={6}>
-                <Heart size={16} color={liked ? theme.colors.primary : theme.colors.foregroundSubtle} fill={liked ? theme.colors.primary : 'transparent'} strokeWidth={1.8} />
+                <Heart size={16} color={liked ? HEART_COLOR : theme.colors.foregroundSubtle} fill={liked ? HEART_COLOR : 'transparent'} strokeWidth={1.8} />
               </Pressable>
               <Pressable onPress={() => setShowLikes(true)} hitSlop={6}>
                 <Text style={[styles.compactActionCount, { color: liked ? theme.colors.primary : theme.colors.foregroundSubtle }]}>{likeCount}</Text>
@@ -348,7 +348,7 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
             accessibilityLabel={liked ? t('feed.unlike', { defaultValue: 'Quitar me gusta' }) : t('feed.like', { defaultValue: 'Me gusta' })}
             accessibilityState={{ selected: liked }}
           >
-            <Heart size={24} color={liked ? theme.colors.primary : theme.colors.foreground} fill={liked ? theme.colors.primary : 'transparent'} strokeWidth={1.8} />
+            <Heart size={24} color={liked ? HEART_COLOR : theme.colors.foreground} fill={liked ? HEART_COLOR : 'transparent'} strokeWidth={1.8} />
           </Pressable>
           <Pressable
             onPress={() => setShowLikes(true)}

@@ -264,7 +264,7 @@ export const en: CollectionTexts = {
   'collection-pareja': {
     title: 'Things to do as a couple',
     description: 'Ideas to do together, without spending a lot and without always doing the same thing.',
-    badge: '❤️ Couples',
+    badge: '💛 Couples',
     tags: ['Couple', 'Plans', 'Getaways'],
     tasks: [
       ["Eat at a restaurant you've never been to", "Pick a cuisine you haven't tried.", 'm'],

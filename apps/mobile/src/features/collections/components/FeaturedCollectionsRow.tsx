@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Sparkles, Layers, Heart, Copy, ChevronRight } from 'lucide-react-native';
-import { useTheme, gold, fontFamily } from '@bucketlist/ui';
+import { useTheme, gold, fontFamily, HEART_COLOR } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import type { CollectionItem } from '../types';
 
@@ -124,8 +124,8 @@ export function FeaturedCollectionsRow({
                 </View>
                 {col.likesCount !== undefined && col.likesCount > 0 ? (
                   <View style={styles.metricsTag}>
-                    <Heart size={11} color={col.isLiked ? '#EF4444' : theme.colors.foregroundMuted} fill={col.isLiked ? '#EF4444' : 'transparent'} />
-                    <Text style={[styles.metricsTagText, { color: col.isLiked ? '#EF4444' : theme.colors.foregroundMuted }]}>
+                    <Heart size={11} color={col.isLiked ? HEART_COLOR : theme.colors.foregroundMuted} fill={col.isLiked ? HEART_COLOR : 'transparent'} />
+                    <Text style={[styles.metricsTagText, { color: col.isLiked ? HEART_COLOR : theme.colors.foregroundMuted }]}>
                       {col.likesCount}
                     </Text>
                   </View>

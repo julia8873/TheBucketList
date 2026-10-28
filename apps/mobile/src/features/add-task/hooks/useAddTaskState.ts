@@ -244,7 +244,7 @@ export function useAddTaskState(albumId?: string) {
       if (visibilityCount > 0 || priorityCount > 0) {
         setSyncPrompt({
           albumName: albumData.title,
-          albumVisibility: (albumVisibility || 'public') as AlbumVisibility,
+          albumVisibility: (albumVisibility || 'public'),
           albumPriority,
           visibilityCount,
           priorityCount,

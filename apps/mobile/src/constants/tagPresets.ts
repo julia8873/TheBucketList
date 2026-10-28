@@ -40,7 +40,7 @@ export const TAG_EMOJIS: TagEmojiPreset[] = [
   { emoji: '📚', color: '#4B8FE0' },
   { emoji: '🏖️', color: '#31B19A' },
   { emoji: '🎉', color: '#D4B13B' },
-  { emoji: '❤️', color: '#E1553C' },
+  { emoji: '💛', color: '#FACC15' },
   { emoji: '🚀', color: '#4B8FE0' },
   { emoji: '🍷', color: '#E1553C' },
   { emoji: '🏃', color: '#E17B3B' },

@@ -342,7 +342,7 @@ function DesignSystemScreenImpl() {
                     key={emoji}
                     style={[styles.emojiBtn, { backgroundColor: theme.colors.secondary }]}
                   >
-                    <Typography variant="body">{emoji}</Typography>
+                    <Typography variant="body">{emoji === '❤️' ? '💛' : emoji}</Typography>
                   </Pressable>
                 ))}
               </View>

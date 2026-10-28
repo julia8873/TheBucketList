@@ -12,7 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { X, Copy, Heart, Check, Sparkles, Layers, ArrowRight } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme, gold, fontFamily } from '@bucketlist/ui';
+import { useTheme, gold, fontFamily, HEART_COLOR } from '@bucketlist/ui';
 import { useRouter } from 'expo-router';
 import { useTranslation } from '@bucketlist/shared';
 import type { CollectionItem } from '../types';
@@ -89,7 +89,7 @@ export function CollectionDetailModal({
                 hitSlop={8}
                 style={[
                   styles.likeTopBtn,
-                  collection.isLiked && { backgroundColor: 'rgba(239, 68, 68, 0.25)', borderColor: '#EF4444' },
+                  collection.isLiked && { backgroundColor: 'rgba(250, 204, 21, 0.25)', borderColor: HEART_COLOR },
                 ]}
                 accessibilityRole="button"
                 accessibilityLabel={
@@ -100,11 +100,11 @@ export function CollectionDetailModal({
               >
                 <Heart
                   size={17}
-                  color={collection.isLiked ? '#EF4444' : '#FFF'}
-                  fill={collection.isLiked ? '#EF4444' : 'transparent'}
+                  color={collection.isLiked ? HEART_COLOR : '#FFF'}
+                  fill={collection.isLiked ? HEART_COLOR : 'transparent'}
                 />
                 {collection.likesCount !== undefined && collection.likesCount > 0 ? (
-                  <Text style={[styles.likeTopBtnText, collection.isLiked && { color: '#EF4444' }]}>
+                  <Text style={[styles.likeTopBtnText, collection.isLiked && { color: HEART_COLOR }]}>
                     {collection.likesCount}
                   </Text>
                 ) : null}

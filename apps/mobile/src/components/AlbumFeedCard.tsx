@@ -1,4 +1,4 @@
-import { useCoverOverlay } from '@bucketlist/ui';
+import { useCoverOverlay, HEART_COLOR } from '@bucketlist/ui';
 /**
  * AlbumFeedCard — wide card for albums shown in the friends/explore feed.
  */
@@ -207,8 +207,8 @@ export function AlbumFeedCard({
                     <Pressable onPress={onToggleLike} hitSlop={6}>
                       <Heart
                         size={14}
-                        color={isLiked ? '#EF4444' : '#F2EFE8'}
-                        fill={isLiked ? '#EF4444' : 'transparent'}
+                        color={isLiked ? HEART_COLOR : '#F2EFE8'}
+                        fill={isLiked ? HEART_COLOR : 'transparent'}
                         strokeWidth={1.8}
                       />
                     </Pressable>
@@ -325,13 +325,13 @@ export function AlbumFeedCard({
               >
                 <Heart
                   size={16}
-                  color={isLiked ? theme.colors.primary : theme.colors.foregroundSubtle}
-                  fill={isLiked ? theme.colors.primary : 'transparent'}
+                  color={isLiked ? HEART_COLOR : theme.colors.foregroundSubtle}
+                  fill={isLiked ? HEART_COLOR : 'transparent'}
                   strokeWidth={1.8}
                 />
               </Pressable>
               <Pressable onPress={() => setShowLikes(true)} hitSlop={6}>
-                <Text style={[styles.compactActionCount, { color: isLiked ? theme.colors.primary : theme.colors.foregroundSubtle }]}>
+                <Text style={[styles.compactActionCount, { color: isLiked ? HEART_COLOR : theme.colors.foregroundSubtle }]}>
                   {likeCount}
                 </Text>
               </Pressable>
@@ -455,8 +455,8 @@ export function AlbumFeedCard({
               >
                 <Heart
                   size={16}
-                  color={isLiked ? '#EF4444' : 'rgba(255,255,255,0.85)'}
-                  fill={isLiked ? '#EF4444' : 'transparent'}
+                  color={isLiked ? HEART_COLOR : 'rgba(255,255,255,0.85)'}
+                  fill={isLiked ? HEART_COLOR : 'transparent'}
                   strokeWidth={2}
                 />
               </Pressable>

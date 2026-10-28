@@ -96,7 +96,7 @@ export const socialApi = {
         const actorName = actor?.display_name || actor?.username || 'Alguien';
         void sendPushNotification(
           bucket.user_id,
-          'Nueva reacción ❤️',
+          'Nueva reacción 💛',
           `${actorName} le ha dado me gusta a tu tarea "${bucket.title || 'tarea'}"`,
           { bucketId, type: 'reaction' }
         );

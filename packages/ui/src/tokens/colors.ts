@@ -92,6 +92,10 @@ export const categoryColors = {
   other:    dark[700],
 } as const;
 
+// ─── Hearts ───────────────────────────────────────────────────────────────────
+/** Único color para TODOS los corazones (me gusta) de la app */
+export const HEART_COLOR = '#FACC15';
+
 // ─── Reactions ────────────────────────────────────────────────────────────────
 export const REACTION_EMOJIS = ['🔥', '❤️', '👏', '🎉', '✈️', '🌟'] as const;
 export type ReactionEmoji = (typeof REACTION_EMOJIS)[number];

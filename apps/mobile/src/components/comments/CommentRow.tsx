@@ -2,14 +2,14 @@ import React from 'react';
 import { View, Text, TextInput, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
 import { Heart, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Avatar, fontFamily, gold, useTheme } from '@bucketlist/ui';
+import { Avatar, fontFamily, gold, useTheme, HEART_COLOR } from '@bucketlist/ui';
 import { displayNameOf, initialsOf } from '../../utils/initials';
 import { timeAgo } from '../../utils/timeAgo';
 import { OfficialBadge, isUserAdmin } from '../OfficialBadge';
 import type { CommentThread } from './commentTree';
 import type { CommentsController } from './useCommentsController';
 
-const LIKE_COLOR = '#F43F5E';
+const LIKE_COLOR = HEART_COLOR;
 
 /** Cuerpo del comentario con las @menciones resaltadas. */
 function CommentBody({ body, color }: { body: string; color: string }) {

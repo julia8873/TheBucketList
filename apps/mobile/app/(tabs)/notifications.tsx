@@ -1,4 +1,4 @@
-import { themedStyleSheet } from '@bucketlist/ui';
+import { themedStyleSheet, HEART_COLOR } from '@bucketlist/ui';
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator, FlatList, Pressable, Text, AppState } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -182,7 +182,7 @@ export default function NotificationsScreen() {
     switch (type) {
       case 'user_reported':
       case 'content_reported': return <ShieldAlert size={16} color={theme.colors.error} />;
-      case 'reaction': return <Heart size={16} color={theme.colors.primary} />;
+      case 'reaction': return <Heart size={16} color={HEART_COLOR} />;
       case 'comment':
       case 'mention':
       case 'comment_like': return <MessageCircle size={16} color={theme.colors.primary} />;

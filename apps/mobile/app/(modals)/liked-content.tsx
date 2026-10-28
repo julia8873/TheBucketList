@@ -1,4 +1,4 @@
-import { themedStyleSheet } from '@bucketlist/ui';
+import { themedStyleSheet, HEART_COLOR } from '@bucketlist/ui';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -108,7 +108,7 @@ export default function LikedContentScreen() {
         tasks.length === 0 ? (
           <View style={styles.emptyContainer}>
             <View style={[styles.emptyIconCircle, { backgroundColor: theme.dark ? '#1E1E1E' : '#F5F2EB' }]}>
-              <Heart size={32} color={gold[400]} />
+              <Heart size={32} color={HEART_COLOR} />
             </View>
             <Text style={[styles.emptyTitle, { color: theme.colors.foreground }]}>{t('liked.empty_tasks_title')}</Text>
             <Text style={[styles.emptySub, { color: theme.colors.foregroundMuted }]}>

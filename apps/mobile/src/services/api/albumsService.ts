@@ -117,7 +117,7 @@ export const albumsService = {
           isCompleted: b.status === 'completed',
           dueDate: b.deadline || undefined,
           completedAt: (b).completed_at ?? null,
-          createdAt: (b as any).created_at ?? null,
+          createdAt: (b).created_at ?? null,
           position: null,
           priority: b.priority || 'medium',
           stepsTotal,

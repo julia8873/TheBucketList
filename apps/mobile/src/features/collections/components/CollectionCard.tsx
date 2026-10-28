@@ -3,7 +3,7 @@ import type { StyleProp, ViewStyle} from 'react-native';
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Copy, Heart, Layers } from 'lucide-react-native';
-import { useTheme, gold, fontFamily } from '@bucketlist/ui';
+import { useTheme, gold, fontFamily, HEART_COLOR } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import type { TaskViewMode } from '../../../components/ViewModeSelector';
 import type { CollectionItem } from '../types';
@@ -119,14 +119,14 @@ export function CollectionCard({
                   >
                     <Heart
                       size={12}
-                      color={collection.isLiked ? '#EF4444' : '#F2EFE8'}
-                      fill={collection.isLiked ? '#EF4444' : 'transparent'}
+                      color={collection.isLiked ? HEART_COLOR : '#F2EFE8'}
+                      fill={collection.isLiked ? HEART_COLOR : 'transparent'}
                     />
                     {collection.likesCount !== undefined && collection.likesCount > 0 ? (
                       <Text
                         style={[
                           styles.galleryActionText,
-                          collection.isLiked && { color: '#EF4444' },
+                          collection.isLiked && { color: HEART_COLOR },
                         ]}
                       >
                         {collection.likesCount}
@@ -207,15 +207,15 @@ export function CollectionCard({
               >
                 <Heart
                   size={15}
-                  color={collection.isLiked ? '#EF4444' : theme.colors.foregroundSubtle}
-                  fill={collection.isLiked ? '#EF4444' : 'transparent'}
+                  color={collection.isLiked ? HEART_COLOR : theme.colors.foregroundSubtle}
+                  fill={collection.isLiked ? HEART_COLOR : 'transparent'}
                   strokeWidth={1.8}
                 />
                 {collection.likesCount !== undefined && collection.likesCount > 0 ? (
                   <Text
                     style={[
                       styles.compactActionCount,
-                      { color: collection.isLiked ? '#EF4444' : theme.colors.foregroundSubtle },
+                      { color: collection.isLiked ? HEART_COLOR : theme.colors.foregroundSubtle },
                     ]}
                   >
                     {collection.likesCount}
@@ -359,14 +359,14 @@ export function CollectionCard({
                 >
                   <Heart
                     size={15}
-                    color={collection.isLiked ? '#EF4444' : theme.colors.foregroundMuted}
-                    fill={collection.isLiked ? '#EF4444' : 'transparent'}
+                    color={collection.isLiked ? HEART_COLOR : theme.colors.foregroundMuted}
+                    fill={collection.isLiked ? HEART_COLOR : 'transparent'}
                   />
                   {collection.likesCount !== undefined && collection.likesCount > 0 && (
                     <Text
                       style={[
                         styles.likeCountText,
-                        { color: collection.isLiked ? '#EF4444' : theme.colors.foregroundMuted },
+                        { color: collection.isLiked ? HEART_COLOR : theme.colors.foregroundMuted },
                       ]}
                     >
                       {collection.likesCount}

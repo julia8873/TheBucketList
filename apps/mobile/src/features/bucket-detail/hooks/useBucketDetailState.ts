@@ -288,7 +288,7 @@ export function useBucketDetailState() {
   // `origin` indica quién originó la fila pendiente:
   //  · 'invite'  → el dueño me invitó a mí (yo debo aceptar o rechazar).
   //  · 'request' → yo pedí unirme (el dueño debe aprobar).
-  const isPendingInvitation = isPending && (myCollaboration as any)?.origin === 'invite';
+  const isPendingInvitation = isPending && (myCollaboration)?.origin === 'invite';
   const isPendingCollaborator = isPending && !isPendingInvitation;
 
   // Colaboradores para los ajustes de colaboración: directos (aceptados o con invitación pendiente,

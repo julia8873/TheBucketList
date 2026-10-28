@@ -264,7 +264,7 @@ export const es: CollectionTexts = {
   'collection-pareja': {
     title: 'Planes en pareja',
     description: 'Ideas para hacer juntos, sin gastar mucho y sin caer siempre en lo mismo.',
-    badge: '❤️ En pareja',
+    badge: '💛 En pareja',
     tags: ['Pareja', 'Planes', 'Escapadas'],
     tasks: [
       ['Cenar en un restaurante al que nunca hayáis ido', 'Que sea de una cocina que no habéis probado.', 'm'],

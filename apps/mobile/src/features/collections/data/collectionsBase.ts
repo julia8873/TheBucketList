@@ -136,7 +136,7 @@ export const COLLECTION_BASES: Record<DefaultCollectionId, CollectionBase> = {
   },
   'collection-pareja': {
     category: 'general',
-    emoji: '❤️',
+    emoji: '💛',
     gradientColors: ['#4A0E2E', '#B83B5E', '#F6A5B8'],
     cover: ['#2F081D', '#8A2A45', '#D17B8C'],
   },

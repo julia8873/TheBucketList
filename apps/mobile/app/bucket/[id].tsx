@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Typography, useTheme } from '@bucketlist/ui';
+import { Typography, useTheme, HEART_COLOR } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import {
@@ -433,8 +433,8 @@ export default function BucketDetailScreen() {
                 accessibilityLabel={state.myReaction ? t('common.unlike') : t('common.give_like')}
               >
                 <Heart
-                  color={state.myReaction ? '#f97316' : theme.colors.foregroundMuted}
-                  fill={state.myReaction ? '#f97316' : 'transparent'}
+                  color={state.myReaction ? HEART_COLOR : theme.colors.foregroundMuted}
+                  fill={state.myReaction ? HEART_COLOR : 'transparent'}
                   size={18}
                   strokeWidth={1.8}
                 />

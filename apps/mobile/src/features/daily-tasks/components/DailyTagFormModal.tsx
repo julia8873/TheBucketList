@@ -48,7 +48,7 @@ const TAG_COLOR_PALETTE = [
 
 const TAG_EMOJI_PRESETS = [
   '📌', '💼', '🏠', '🏃', '🛒', '📚', '⭐', '💡', '🎯',
-  '🔥', '🚀', '💻', '🎉', '🍕', '✈️', '🎨', '🎵', '❤️',
+  '🔥', '🚀', '💻', '🎉', '🍕', '✈️', '🎨', '🎵', '💛',
 ];
 
 export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({

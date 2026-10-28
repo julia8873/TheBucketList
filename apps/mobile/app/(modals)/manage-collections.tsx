@@ -1,4 +1,4 @@
-import { Alert } from '@bucketlist/ui';
+import { Alert, HEART_COLOR } from '@bucketlist/ui';
 import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState, useMemo } from 'react';
 import { View, Text, FlatList, Pressable, ActivityIndicator, StyleSheet, RefreshControl, TextInput } from 'react-native';
@@ -140,7 +140,7 @@ export default function ManageCollectionsScreen() {
               <Text style={[styles.statText, { color: theme.colors.foregroundMuted }]}>{item.clonesCount || 0} clones</Text>
             </View>
             <View style={styles.statItem}>
-              <Heart size={13} color={theme.colors.foregroundMuted} />
+              <Heart size={13} color={HEART_COLOR} />
               <Text style={[styles.statText, { color: theme.colors.foregroundMuted }]}>{item.likesCount || 0} likes</Text>
             </View>
           </View>

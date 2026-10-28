@@ -13,7 +13,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Heart, X } from 'lucide-react-native';
 import { useTranslation } from '@bucketlist/shared';
-import { Avatar, fontFamily, gold, useTheme } from '@bucketlist/ui';
+import { Avatar, fontFamily, gold, useTheme, HEART_COLOR } from '@bucketlist/ui';
 import { useAuthStore } from '../stores/auth.store';
 import { useItemLikes, useUserFollows, useFollowUser, useUnfollowUser } from '../hooks/useSocial';
 import { displayNameOf, initialsOf } from '../utils/initials';
@@ -143,7 +143,7 @@ function ItemLikesModalContent({
           >
             <View style={styles.headerLeft}>
               <View style={styles.headerIconCircle}>
-                <Heart size={18} color="#F43F5E" fill="#F43F5E" />
+                <Heart size={18} color={HEART_COLOR} fill={HEART_COLOR} />
               </View>
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -381,10 +381,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 10,
-    backgroundColor: 'rgba(244, 63, 94, 0.16)',
+    backgroundColor: 'rgba(250, 204, 21, 0.16)',
   },
   countBadgeText: {
-    color: '#F43F5E',
+    color: HEART_COLOR,
     fontSize: 11,
     fontFamily: fontFamily.semibold,
   },

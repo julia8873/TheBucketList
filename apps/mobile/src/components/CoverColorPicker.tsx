@@ -68,7 +68,7 @@ export function CoverColorPicker({ onSelectGradient, onSelectSolid }: CoverColor
             accessibilityLabel={`Degradado ${cover.id}`}
           >
             <LinearGradient
-              colors={cover.colors!}
+              colors={cover.colors}
               start={cover.diagonal ? { x: 0, y: 0 } : { x: 0.5, y: 0 }}
               end={cover.diagonal ? { x: 1, y: 1 } : { x: 0.5, y: 1 }}
               style={StyleSheet.absoluteFill}

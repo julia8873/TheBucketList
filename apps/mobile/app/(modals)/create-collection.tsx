@@ -40,7 +40,7 @@ const CATEGORIES = [
   { id: 'culture', emoji: '🎭' },
   { id: 'gaming', emoji: '🎮' },
   { id: 'lifestyle', emoji: '🌿' },
-  { id: 'couple', emoji: '❤️' },
+  { id: 'couple', emoji: '💛' },
 ];
 
 // Ids used before the categories became language-neutral (existing rows in the database).

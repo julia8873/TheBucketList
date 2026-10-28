@@ -1,4 +1,4 @@
-import { themedStyleSheet } from '@bucketlist/ui';
+import { themedStyleSheet, HEART_COLOR } from '@bucketlist/ui';
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { useTranslation } from '@bucketlist/shared';
@@ -234,7 +234,7 @@ export function TaskCollaborationViewerCard({
           style={[styles.btn, styles.followBtn]}
           onPress={onFollowOwner}
         >
-          <Heart size={15} color="#D4B13A" />
+          <Heart size={15} color={HEART_COLOR} />
           <Text style={styles.followBtnText}>{`${t('profile.follow')} @${ownerUsername}`}</Text>
         </Pressable>
       </View>
