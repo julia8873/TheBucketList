@@ -4,8 +4,8 @@ import {
   ActivityIndicator, KeyboardAvoidingView, Platform
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, Search, Check, Users, X } from 'lucide-react-native';
-import { themedStyleSheet, Avatar, fontFamily, useTheme } from '@bucketlist/ui';
+import { ChevronLeft, Search, Check, Users, X, UserMinus } from 'lucide-react-native';
+import { themedStyleSheet, Avatar, fontFamily, useTheme, Alert } from '@bucketlist/ui';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../stores/auth.store';
 import { blockReportApi } from '../services/api/blockReport';
@@ -30,9 +30,16 @@ interface CollaboratorPickerSheetProps {
    * los resultados ni entre los seleccionados; se conservan tal cual al guardar.
    */
   excludeIds?: string[];
+  /**
+   * Personas que ya colaboran o tienen la invitación pendiente. Si se pasa junto a
+   * `onRemoveCurrent`, se muestran en una sección propia con un botón para quitar al
+   * colaborador o cancelar su invitación pendiente.
+   */
+  current?: CollaboratorItem[];
+  onRemoveCurrent?: (userId: string) => Promise<void> | void;
 }
 
-export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, readOnlyIds = [], excludeIds = [] }: CollaboratorPickerSheetProps) {
+export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, readOnlyIds = [], excludeIds = [], current = [], onRemoveCurrent }: CollaboratorPickerSheetProps) {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const { user } = useAuthStore();
@@ -42,6 +49,47 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
   const [draft, setDraft] = useState<CollaboratorItem[]>(selected);
   const [profiles, setProfiles] = useState<CollaboratorItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
+  const [removingId, setRemovingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (visible) setRemovedIds(new Set());
+  }, [visible]);
+
+  const currentVisible = current.filter(c => !removedIds.has(c.id));
+
+  const confirmRemoveCurrent = (c: CollaboratorItem) => {
+    if (!onRemoveCurrent) return;
+    const name = c.display_name || c.username || '';
+    const isPending = c.status === 'pending';
+    Alert.alert(
+      isPending ? 'Cancelar invitación' : 'Quitar colaborador',
+      isPending ? `¿Cancelar la invitación a ${name}?` : `¿Quitar a ${name} como colaborador?`,
+      [
+        { text: 'Volver', style: 'cancel' },
+        {
+          text: isPending ? 'Cancelar invitación' : 'Quitar',
+          style: 'destructive',
+          onPress: async () => {
+            setRemovingId(c.id);
+            // Desaparece al instante de la lista; el padre actualiza la caché y la base de datos
+            setRemovedIds(prev => new Set(prev).add(c.id));
+            try {
+              await onRemoveCurrent(c.id);
+            } catch {
+              setRemovedIds(prev => {
+                const next = new Set(prev);
+                next.delete(c.id);
+                return next;
+              });
+            } finally {
+              setRemovingId(null);
+            }
+          },
+        },
+      ],
+    );
+  };
 
   useEffect(() => {
     if (visible) {
@@ -205,6 +253,48 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
                     }
                   </Pressable>
                 ))}
+              </ScrollView>
+            </View>
+          )}
+
+          {/* Colaboradores actuales e invitaciones pendientes (se pueden quitar / cancelar) */}
+          {onRemoveCurrent && currentVisible.length > 0 && query.trim().length === 0 && (
+            <View style={styles.currentSection}>
+              <Text style={styles.currentSectionLabel}>COLABORADORES E INVITACIONES ({currentVisible.length})</Text>
+              <ScrollView style={styles.currentList} nestedScrollEnabled keyboardShouldPersistTaps="handled">
+                {currentVisible.map(c => {
+                  const isPending = c.status === 'pending';
+                  return (
+                    <View key={c.id} style={styles.currentRow}>
+                      <Avatar
+                        uri={c.avatar_url}
+                        initials={(c.display_name || c.username || '?')[0]?.toUpperCase() || '?'}
+                        size="sm"
+                      />
+                      <View style={styles.userInfo}>
+                        <Text style={[styles.displayName, { color: theme.colors.foreground }]} numberOfLines={1}>
+                          {c.display_name || c.username}
+                        </Text>
+                        <Text style={styles.usernameHandle} numberOfLines={1}>
+                          @{c.username}{isPending ? ' · Invitación pendiente' : ''}
+                        </Text>
+                      </View>
+                      {removingId === c.id ? (
+                        <ActivityIndicator size="small" color="#D4B13A" />
+                      ) : (
+                        <Pressable
+                          onPress={() => confirmRemoveCurrent(c)}
+                          hitSlop={8}
+                          style={styles.currentRemoveBtn}
+                          accessibilityRole="button"
+                          accessibilityLabel={isPending ? 'Cancelar invitación' : 'Quitar colaborador'}
+                        >
+                          <UserMinus size={16} color="#EF4444" strokeWidth={2} />
+                        </Pressable>
+                      )}
+                    </View>
+                  );
+                })}
               </ScrollView>
             </View>
           )}
@@ -411,6 +501,36 @@ const styles = themedStyleSheet({
     fontSize: 13,
     fontFamily: fontFamily.medium,
     maxWidth: 120,
+  },
+  currentSection: {
+    paddingTop: 12,
+    paddingHorizontal: 12,
+    paddingBottom: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1E1E1E',
+  },
+  currentSectionLabel: {
+    color: '#D4B13A',
+    fontSize: 11,
+    fontFamily: fontFamily.bold,
+    letterSpacing: 1,
+    marginBottom: 6,
+  },
+  currentList: {
+    maxHeight: 190,
+  },
+  currentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  currentRemoveBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
   },
   listHeader: {
     paddingHorizontal: 12,

@@ -762,6 +762,8 @@ export default function BucketDetailScreen() {
         ]}
         onChange={(collabs) => void state.handleCollaboratorsChange(collabs)}
         onClose={() => state.setShowCollaboratorPicker(false)}
+        current={state.isOwner ? state.collaboratorsList.filter((c: any) => !c.viaAlbum) : []}
+        onRemoveCurrent={state.isOwner ? state.handleRemoveCollaborator : undefined}
         readOnlyIds={[
           ...(bucket.user_id ? [bucket.user_id] : []),
           ...state.participantsData.filter((p: any) => p.id !== state.user?.id).map((p: any) => p.id),

@@ -289,6 +289,29 @@ export function useAlbumDetailState() {
   const isCollaborator = !isOwner && albumCollaborators.some((c: any) => isSelf(c.id) && c.status === 'accepted');
   const canEdit = isOwner || isCollaborator;
 
+  /** El dueño quita a un colaborador o cancela su invitación pendiente. */
+  const handleRemoveAlbumCollaborator = async (targetUserId: string) => {
+    if (!cleanId || cleanId === 'unassigned' || !isOwner) return;
+    const previous = queryClient.getQueryData(['albumCollaborators', cleanId]);
+    queryClient.setQueryData(['albumCollaborators', cleanId], (old: any) =>
+      Array.isArray(old) ? old.filter((c: any) => c.id !== targetUserId) : old,
+    );
+    const { error } = await supabase
+      .from('album_members')
+      .delete()
+      .eq('album_id', cleanId)
+      .eq('user_id', targetUserId);
+    if (error) {
+      queryClient.setQueryData(['albumCollaborators', cleanId], previous);
+      Alert.alert('Error', error.message || 'No se pudo quitar al colaborador');
+      throw error;
+    }
+    void queryClient.invalidateQueries({ queryKey: ['albumCollaborators', cleanId] });
+    void queryClient.invalidateQueries({ queryKey: ['item_participants'] });
+    void queryClient.invalidateQueries({ queryKey: ['albums'] });
+    void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
+  };
+
   const handleCollaboratorsChange = async (newCollabs: CollaboratorItem[]) => {
     try {
       const currentIds = new Set(albumCollaborators.map((c: any) => c.id));
@@ -1313,6 +1336,7 @@ export function useAlbumDetailState() {
     manualRefreshing,
     handleRefresh,
     handleCollaboratorsChange,
+    handleRemoveAlbumCollaborator,
     confirmLeaveAlbum,
     handleTitleChange,
     flushTitleChange,

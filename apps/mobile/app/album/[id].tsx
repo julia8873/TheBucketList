@@ -1178,6 +1178,12 @@ export default function AlbumDetailScreen() {
         ]}
         onChange={state.handleCollaboratorsChange}
         onClose={() => state.setShowCollaboratorPicker(false)}
+        current={
+          state.isOwner
+            ? state.albumCollaborators.filter((c: any) => c.id !== state.ownerEntry.id && c.id !== state.user?.id)
+            : []
+        }
+        onRemoveCurrent={state.isOwner ? state.handleRemoveAlbumCollaborator : undefined}
         readOnlyIds={[state.ownerEntry.id]}
         excludeIds={[
           ...(state.ownerEntry.id ? [state.ownerEntry.id] : []),
