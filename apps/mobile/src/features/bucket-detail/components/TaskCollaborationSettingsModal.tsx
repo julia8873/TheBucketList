@@ -1,4 +1,4 @@
-import { themedStyleSheet } from '@bucketlist/ui';
+import { themedStyleSheet, Alert } from '@bucketlist/ui';
 import React, { useState } from 'react';
 import {
   View,
@@ -10,9 +10,11 @@ import {
   ActivityIndicator,
   Platform,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   X,
+  UserMinus,
   Lock,
   UserCheck,
   Zap,
@@ -21,14 +23,30 @@ import {
 } from 'lucide-react-native';
 import { useTheme } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
+import { normalizeStorageUrl } from '@/constants/urls';
+import { getInitials } from './BucketCollaboratorsRow';
 
 export type CollaborationMode = 'invite_only' | 'request' | 'open';
 export type CollaborationAudience = 'followers' | 'anyone';
+
+export interface SettingsCollaborator {
+  id: string;
+  username?: string;
+  display_name?: string | null;
+  avatar_url?: string | null;
+  status?: string;
+  /** Es colaborador por un álbum compartido: se gestiona desde el álbum, no se puede quitar aquí. */
+  viaAlbum?: boolean;
+}
 
 interface TaskCollaborationSettingsModalProps {
   visible: boolean;
   currentMode: CollaborationMode;
   currentAudience: CollaborationAudience;
+  /** Colaboradores actuales y con invitación pendiente. */
+  collaborators?: SettingsCollaborator[];
+  /** Quita a un colaborador o cancela su invitación pendiente (solo el creador). */
+  onRemoveCollaborator?: (userId: string) => Promise<void>;
   onClose: () => void;
   onSaveSettings: (mode: CollaborationMode, audience: CollaborationAudience) => Promise<void>;
 }
@@ -37,6 +55,8 @@ export function TaskCollaborationSettingsModal({
   visible,
   currentMode,
   currentAudience,
+  collaborators = [],
+  onRemoveCollaborator,
   onClose,
   onSaveSettings,
 }: TaskCollaborationSettingsModalProps) {
@@ -46,6 +66,38 @@ export function TaskCollaborationSettingsModal({
   const [mode, setMode] = useState<CollaborationMode>(currentMode);
   const [audience, setAudience] = useState<CollaborationAudience>(currentAudience);
   const [saving, setSaving] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+
+  const confirmRemove = (c: SettingsCollaborator) => {
+    if (!onRemoveCollaborator) return;
+    const name = c.display_name || c.username || '';
+    const isPending = c.status === 'pending';
+    Alert.alert(
+      isPending
+        ? t('collab_settings.cancel_invite_title', { defaultValue: 'Cancelar invitación' })
+        : t('collab_settings.remove_title', { defaultValue: 'Quitar colaborador' }),
+      isPending
+        ? t('collab_settings.cancel_invite_msg', { name, defaultValue: `¿Cancelar la invitación a ${name}?` })
+        : t('collab_settings.remove_msg', { name, defaultValue: `¿Quitar a ${name} como colaborador de esta tarea?` }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: isPending
+            ? t('collab_settings.cancel_invite_confirm', { defaultValue: 'Cancelar invitación' })
+            : t('collab_settings.remove_confirm', { defaultValue: 'Quitar' }),
+          style: 'destructive',
+          onPress: async () => {
+            setRemovingId(c.id);
+            try {
+              await onRemoveCollaborator(c.id);
+            } finally {
+              setRemovingId(null);
+            }
+          },
+        },
+      ],
+    );
+  };
 
   React.useEffect(() => {
     if (visible) {
@@ -98,6 +150,79 @@ export function TaskCollaborationSettingsModal({
           </View>
 
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            {/* Colaboradores actuales y pendientes */}
+            <Text style={[styles.sectionHeading, { color: theme.colors.foregroundMuted }]}>
+              {t('collab_settings.section_people', { defaultValue: 'COLABORADORES' })} ({collaborators.length})
+            </Text>
+            {collaborators.length === 0 ? (
+              <Text style={[styles.emptyPeople, { color: theme.colors.foregroundMuted }]}>
+                {t('collab_settings.no_collaborators', { defaultValue: 'Todavía no hay colaboradores en esta tarea.' })}
+              </Text>
+            ) : (
+              <View style={{ marginBottom: 20 }}>
+                {collaborators.map((c) => {
+                  const isPending = c.status === 'pending';
+                  const removing = removingId === c.id;
+                  const canRemove = !!onRemoveCollaborator && !c.viaAlbum;
+                  return (
+                    <View
+                      key={c.id}
+                      style={[
+                        styles.personRow,
+                        {
+                          backgroundColor: theme.colors.surfaceElevated ?? (theme.dark ? '#1C1C1C' : '#F7F5F0'),
+                          borderColor: theme.colors.border,
+                        },
+                      ]}
+                    >
+                      {c.avatar_url ? (
+                        <Image
+                          source={{ uri: normalizeStorageUrl(c.avatar_url) }}
+                          style={[styles.avatarImg, isPending && { opacity: 0.45 }]}
+                          contentFit="cover"
+                          cachePolicy="memory-disk"
+                        />
+                      ) : (
+                        <View style={[styles.initialsCircle, { backgroundColor: theme.dark ? '#2A2A2A' : '#E5E1D8' }]}>
+                          <Text style={styles.initialsText}>{getInitials(c.display_name || c.username)}</Text>
+                        </View>
+                      )}
+                      <View style={{ flex: 1, marginLeft: 10 }}>
+                        <Text style={[styles.userName, { color: theme.colors.foreground }]} numberOfLines={1}>
+                          {c.display_name || c.username}
+                        </Text>
+                        <Text style={[styles.userHandle, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
+                          @{c.username}
+                          {isPending
+                            ? ` · ${t('collab_settings.invite_pending', { defaultValue: 'Invitación pendiente' })}`
+                            : c.viaAlbum
+                              ? ` · ${t('collab_settings.via_album', { defaultValue: 'Por álbum compartido' })}`
+                              : ''}
+                        </Text>
+                      </View>
+                      {removing ? (
+                        <ActivityIndicator size="small" color="#D4B13A" />
+                      ) : canRemove ? (
+                        <Pressable
+                          onPress={() => confirmRemove(c)}
+                          hitSlop={8}
+                          style={[styles.removeBtn, { backgroundColor: theme.dark ? '#2B2B2B' : '#E5E1D8' }]}
+                          accessibilityRole="button"
+                          accessibilityLabel={
+                            isPending
+                              ? t('collab_settings.cancel_invite_title', { defaultValue: 'Cancelar invitación' })
+                              : t('collab_settings.remove_title', { defaultValue: 'Quitar colaborador' })
+                          }
+                        >
+                          <UserMinus size={16} color="#EF4444" strokeWidth={2} />
+                        </Pressable>
+                      ) : null}
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+
             {/* Sección 1: Modo de colaboración */}
             <Text style={[styles.sectionHeading, { color: theme.colors.foregroundMuted }]}>{t('collab_settings.section_how')}</Text>
 
@@ -342,6 +467,51 @@ const styles = themedStyleSheet({
   content: {
     paddingHorizontal: 12,
     paddingTop: 16,
+  },
+  personRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  avatarImg: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
+  initialsCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  initialsText: {
+    color: '#D4B13A',
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  userName: {
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  userHandle: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+  },
+  removeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyPeople: {
+    fontSize: 13,
+    fontFamily: 'Inter_400Regular',
+    marginBottom: 20,
   },
   sectionHeading: {
     color: '#8E8E8E',

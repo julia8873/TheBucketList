@@ -51,6 +51,7 @@ export default function CreateAlbumScreen() {
     selectedCollaborators,
     setSelectedCollaborators,
     readOnlyIds,
+    existingCollaboratorIds,
     showCollaboratorPicker,
     setShowCollaboratorPicker,
     selectedTags,
@@ -192,6 +193,7 @@ export default function CreateAlbumScreen() {
         onChange={setSelectedCollaborators}
         onClose={() => setShowCollaboratorPicker(false)}
         readOnlyIds={readOnlyIds}
+        excludeIds={existingCollaboratorIds}
       />
 
       <TagAssignSheet

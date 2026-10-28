@@ -262,7 +262,7 @@ export function useBucketDetailState() {
         username: r.username || '',
         display_name: r.display_name || null,
         avatar_url: r.avatar_url || null,
-        status: 'accepted' as const,
+        status: ((r.status as string) || 'accepted') as 'accepted' | 'pending',
         isOwner: !!r.is_owner,
       }));
     },
@@ -333,6 +333,24 @@ export function useBucketDetailState() {
     participantsData.find((p: any) => p.id === user?.id);
   const isPendingCollaborator = myCollaboration?.status === 'pending';
 
+  // Colaboradores para los ajustes de colaboración: directos (aceptados o con invitación pendiente,
+  // se pueden quitar) y los que lo son por un álbum compartido (se gestionan desde el álbum).
+  const collaboratorsList = (() => {
+    const ownerId = bucket?.user_id;
+    const visibleStatus = (s?: string) => !s || s === 'accepted' || s === 'pending';
+    const direct = collaborators
+      .filter((c: any) => c.id !== ownerId && c.id !== user?.id && visibleStatus(c.status))
+      .map((c: any) => ({ ...c, viaAlbum: false }));
+    const directIds = new Set(direct.map((c: any) => c.id));
+    const viaAlbum = participantsData
+      .filter(
+        (p: any) =>
+          p.id !== ownerId && p.id !== user?.id && !directIds.has(p.id) && !p.isOwner && visibleStatus(p.status),
+      )
+      .map((p: any) => ({ ...p, viaAlbum: true }));
+    return [...direct, ...viaAlbum];
+  })();
+
   const { data: isFollowerData } = useQuery({
     queryKey: ['isFollowerOf', user?.id, bucket?.user_id],
     queryFn: async () => {
@@ -398,6 +416,32 @@ export function useBucketDetailState() {
     } catch (e: any) {
       Alert.alert('Error', e?.message || 'No se pudo cancelar la solicitud');
     }
+  };
+
+  /** El creador quita a un colaborador (o cancela una invitación pendiente). */
+  const handleRemoveCollaborator = async (targetUserId: string) => {
+    if (!id || !isOwner) return;
+    const bucketId = Array.isArray(id) ? id[0] : id;
+    queryClient.setQueryData(['bucketCollaborators', bucketId], (old: any) =>
+      Array.isArray(old) ? old.filter((c: any) => c.id !== targetUserId) : old,
+    );
+    queryClient.setQueryData(['bucketParticipants', bucketId], (old: any) =>
+      Array.isArray(old) ? old.filter((p: any) => p.id !== targetUserId || p.isOwner) : old,
+    );
+    const { error } = await supabase
+      .from('bucket_collaborators')
+      .delete()
+      .eq('bucket_id', bucketId)
+      .eq('user_id', targetUserId);
+    if (error) {
+      Alert.alert('Error', error.message || 'No se pudo quitar al colaborador');
+    }
+    void refetchCollaborators();
+    void queryClient.invalidateQueries({ queryKey: ['bucketCollaborators', bucketId] });
+    void queryClient.invalidateQueries({ queryKey: ['bucketParticipants', bucketId] });
+    void queryClient.invalidateQueries({ queryKey: ['bucketDetail', bucketId] });
+    void queryClient.invalidateQueries({ queryKey: ['item_participants'] });
+    void queryClient.invalidateQueries({ queryKey: ['buckets'] });
   };
 
   const handleUpdateCollaborationSettings = async (
@@ -1883,6 +1927,8 @@ export function useBucketDetailState() {
     handleRequestOrJoinCollaboration,
     handleCancelCollaborationRequest,
     handleUpdateCollaborationSettings,
+    handleRemoveCollaborator,
+    collaboratorsList,
     handleFollowOwner,
     isSaved,
     handleToggleSaveBucket,

@@ -2087,6 +2087,16 @@ const es = {
     audience_anyone_desc_open: 'Cualquier usuario de The Bucket List puede unirse directamente.',
     audience_anyone_desc_request: 'Cualquier usuario de The Bucket List puede solicitar colaborar.',
     saving: 'Guardando ajustes…',
+    section_people: 'COLABORADORES',
+    no_collaborators: 'Todavía no hay colaboradores en esta tarea.',
+    invite_pending: 'Invitación pendiente',
+    via_album: 'Por álbum compartido',
+    remove_title: 'Quitar colaborador',
+    remove_msg: '¿Quitar a {{name}} como colaborador de esta tarea?',
+    remove_confirm: 'Quitar',
+    cancel_invite_title: 'Cancelar invitación',
+    cancel_invite_msg: '¿Cancelar la invitación a {{name}}?',
+    cancel_invite_confirm: 'Cancelar invitación',
   },
 
   design_system: {

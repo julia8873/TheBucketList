@@ -1179,6 +1179,10 @@ export default function AlbumDetailScreen() {
         onChange={state.handleCollaboratorsChange}
         onClose={() => state.setShowCollaboratorPicker(false)}
         readOnlyIds={[state.ownerEntry.id]}
+        excludeIds={[
+          ...(state.ownerEntry.id ? [state.ownerEntry.id] : []),
+          ...state.albumCollaborators.map((c: any) => c.id),
+        ]}
       />
 
       {/* Notificaciones */}

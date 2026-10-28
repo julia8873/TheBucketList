@@ -25,23 +25,32 @@ interface CollaboratorPickerSheetProps {
   onClose: () => void;
   /** IDs that are already collaborators and cannot be removed (for non-owner collaborators) */
   readOnlyIds?: string[];
+  /**
+   * IDs de personas que ya son colaboradoras o tienen la invitación pendiente. No aparecen en
+   * los resultados ni entre los seleccionados; se conservan tal cual al guardar.
+   */
+  excludeIds?: string[];
 }
 
-export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, readOnlyIds = [] }: CollaboratorPickerSheetProps) {
+export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, readOnlyIds = [], excludeIds = [] }: CollaboratorPickerSheetProps) {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const { user } = useAuthStore();
   const [query, setQuery] = useState('');
+  const excludeKey = excludeIds.join(',');
+  const excludedSet = new Set([...excludeIds, ...readOnlyIds]);
   const [draft, setDraft] = useState<CollaboratorItem[]>(selected);
   const [profiles, setProfiles] = useState<CollaboratorItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (visible) {
-      setDraft(selected.filter(c => c.id !== user?.id));
+      // Solo las personas nuevas: las que ya colaboran (o están invitadas) no se muestran aquí.
+      setDraft(selected.filter(c => c.id !== user?.id && !excludedSet.has(c.id)));
       setQuery('');
     }
-  }, [visible, selected, user?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, selected, user?.id, excludeKey]);
 
   useEffect(() => {
     if (!visible) return;
@@ -74,7 +83,7 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
         if (!res.error && res.data && isMounted) {
           setProfiles(
             res.data
-              .filter((p: any) => p.id !== user?.id && !blockedSet.has(p.id))
+              .filter((p: any) => p.id !== user?.id && !blockedSet.has(p.id) && !excludedSet.has(p.id))
               .map((p: any) => ({
                 id: p.id,
                 username: p.username,
@@ -95,7 +104,8 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [visible, query, user?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, query, user?.id, excludeKey]);
 
   const readOnlySet = new Set(readOnlyIds);
   const selectedIds = new Set(draft.map(c => c.id));
@@ -111,7 +121,9 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
   };
 
   const handleSave = () => {
-    onChange(draft);
+    // Se devuelven también los colaboradores existentes para que quien llama no los dé de baja.
+    const kept = selected.filter(c => c.id !== user?.id && excludedSet.has(c.id));
+    onChange([...kept, ...draft]);
     onClose();
   };
 
@@ -268,7 +280,7 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
               <Text style={styles.confirmButtonText}>
                 {draft.length > 0
                   ? `Añadir ${draft.length} colaborador${draft.length > 1 ? 'es' : ''}`
-                  : 'Guardar sin colaboradores'}
+                  : excludeIds.length > 0 ? 'Cerrar' : 'Guardar sin colaboradores'}
               </Text>
             </Pressable>
           </View>

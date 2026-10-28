@@ -764,6 +764,11 @@ export default function BucketDetailScreen() {
           ...(bucket.user_id ? [bucket.user_id] : []),
           ...state.participantsData.filter((p: any) => p.id !== state.user?.id).map((p: any) => p.id),
         ]}
+        excludeIds={[
+          ...(bucket.user_id ? [bucket.user_id] : []),
+          ...state.participantsData.map((p: any) => p.id),
+          ...state.collaborators.map((c: any) => c.id),
+        ]}
       />
 
       <NotificationSubscribersModal
@@ -843,6 +848,8 @@ export default function BucketDetailScreen() {
         visible={state.showCollaborationSettingsModal}
         currentMode={state.collaborationMode}
         currentAudience={state.collaborationAudience}
+        collaborators={state.collaboratorsList}
+        onRemoveCollaborator={state.handleRemoveCollaborator}
         onClose={() => state.setShowCollaborationSettingsModal(false)}
         onSaveSettings={state.handleUpdateCollaborationSettings}
       />

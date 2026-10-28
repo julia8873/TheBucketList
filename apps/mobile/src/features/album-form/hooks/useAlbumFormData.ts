@@ -425,6 +425,10 @@ export function useAlbumFormData(id?: string) {
     selectedCollaborators,
     setSelectedCollaborators,
     readOnlyIds,
+    existingCollaboratorIds: useMemo(
+      () => [...initialCollaboratorIds, ...(albumOwner?.id ? [albumOwner.id] : [])],
+      [initialCollaboratorIds, albumOwner?.id],
+    ),
     showCollaboratorPicker,
     setShowCollaboratorPicker,
     selectedTags,

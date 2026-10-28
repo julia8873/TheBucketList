@@ -81,6 +81,8 @@ export default function EditBucketModal() {
   const [albumId, setAlbumId] = useState<string | null>(null);
   const [showAlbumPicker, setShowAlbumPicker] = useState(false);
   const initialAlbumId = useRef<string | null>(null);
+  // Colaboradores ya existentes (aceptados o con invitación pendiente): no se vuelven a ofrecer al buscar.
+  const [existingCollaboratorIds, setExistingCollaboratorIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (!id || collaboratorsInitialized.current) return;
@@ -90,6 +92,7 @@ export default function EditBucketModal() {
       .eq('bucket_id', id)
       .then(({ data }) => {
         if (data && data.length > 0) {
+          setExistingCollaboratorIds(data.map((c: any) => c.profiles.id as string));
           setSelectedCollaborators(
             data.map((c: any) => ({
               id: c.profiles.id,
@@ -448,6 +451,7 @@ export default function EditBucketModal() {
           selected={selectedCollaborators}
           onChange={setSelectedCollaborators}
           onClose={() => setShowCollaboratorPicker(false)}
+          excludeIds={existingCollaboratorIds}
         />
 
         <AlbumPickerSheet
