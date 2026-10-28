@@ -20,6 +20,7 @@ import { styles } from '../src/features/add-task/styles/add-task.styles';
 import { AddTaskItemCard } from '../src/features/add-task/components/AddTaskItemCard';
 import { AddTaskTagFilterBar } from '../src/features/add-task/components/AddTaskTagFilterBar';
 import { AddTaskSegmentedControl } from '../src/features/add-task/components/AddTaskSegmentedControl';
+import { AddTaskSyncSheet } from '../src/features/add-task/components/AddTaskSyncSheet';
 import { useAddTaskState } from '../src/features/add-task/hooks/useAddTaskState';
 
 export default function AddTaskScreen() {
@@ -50,6 +51,9 @@ export default function AddTaskScreen() {
     handleBack,
     handleCreateTask,
     handleAdd,
+    syncPrompt,
+    closeSyncPrompt,
+    confirmSyncPrompt,
     isPending,
     scrollViewRef,
   } = useAddTaskState(albumId);
@@ -198,6 +202,8 @@ export default function AddTaskScreen() {
           )}
         </Pressable>
       </View>
+
+      <AddTaskSyncSheet prompt={syncPrompt} onClose={closeSyncPrompt} onConfirm={confirmSyncPrompt} />
 
       <TagFilterSheet
         visible={tagSheetOpen}

@@ -3,6 +3,8 @@ import { Modal, View, Pressable, Animated, ActivityIndicator, StyleSheet, TextIn
 import { useTranslation } from '@bucketlist/shared';
 import { Typography, toast } from '@bucketlist/ui';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
+import { CoverColorPicker } from '@/components/CoverColorPicker';
+import { customGradientValue, presetValue, solidCoverValue } from '@/constants/coverPresets';
 import { X, Camera, FolderPlus, ListPlus, Trash2, Circle, MoreHorizontal, CheckCircle2, Check, Eye, Users, Lock, ArrowLeft, FolderOpen, Image as ImageIcon, Tag, LogOut, Flag, Star, Crop, Link2, Bookmark } from 'lucide-react-native';
 import { styles } from '@/features/bucket-detail/styles/bucket-detail.styles';
 
@@ -30,6 +32,8 @@ type BucketBottomSheetProps = {
   openCoverLinkModal?: () => void;
   recropCurrentCover?: () => void;
   removeCover?: () => void;
+  /** Guarda una portada de degradado/color (`preset:…`). */
+  applyCoverPreset?: (value: string) => void;
   loadAlbums: () => void;
   user: any;
   copyBucket: any;
@@ -50,7 +54,7 @@ type BucketBottomSheetProps = {
 };
 
 export function BucketBottomSheet({
-  sheetVisible, sheetMode, sheetTranslateY, closeSheet, theme, isOwner, canEdit, isCollaborator, isFavorite, onToggleFavorite, isSaved, onToggleSave, onLeaveCollaboration, onOpenCollaborationSettings, onReport, uploadPhotos, uploadCover, pickAndUploadCover, takePhotoAndUploadCover, openCoverLinkModal, recropCurrentCover, removeCover, loadAlbums, user, copyBucket, id, handleDelete, bucket, handleChangeStatus, handleChangeVisibility, handleChangeCategory, handleChangePriority, setSheetMode, albumsLoading, toggleAlbum, removeAllAlbums, albums, bucketAlbums, categories
+  sheetVisible, sheetMode, sheetTranslateY, closeSheet, theme, isOwner, canEdit, isCollaborator, isFavorite, onToggleFavorite, isSaved, onToggleSave, onLeaveCollaboration, onOpenCollaborationSettings, onReport, uploadPhotos, uploadCover, pickAndUploadCover, takePhotoAndUploadCover, openCoverLinkModal, recropCurrentCover, removeCover, applyCoverPreset, loadAlbums, user, copyBucket, id, handleDelete, bucket, handleChangeStatus, handleChangeVisibility, handleChangeCategory, handleChangePriority, setSheetMode, albumsLoading, toggleAlbum, removeAllAlbums, albums, bucketAlbums, categories
 }: BucketBottomSheetProps) {
   const { t } = useTranslation();
   const [albumSearchQuery, setAlbumSearchQuery] = useState('');
@@ -425,6 +429,18 @@ export function BucketBottomSheet({
                 showsVerticalScrollIndicator={false}
                 bounces={false}
               >
+                <View style={{ paddingHorizontal: 20, paddingBottom: 8 }}>
+                  <CoverColorPicker
+                    onSelectGradient={(colors, gradientId) =>
+                      closeSheet(() =>
+                        void applyCoverPreset?.(
+                          gradientId ? presetValue(gradientId) : customGradientValue(colors[0], colors[1]),
+                        ),
+                      )
+                    }
+                    onSelectSolid={(hex) => closeSheet(() => void applyCoverPreset?.(solidCoverValue(hex)))}
+                  />
+                </View>
                 <View style={styles.sheetOptions}>
                   <Pressable
                     style={styles.sheetOption}

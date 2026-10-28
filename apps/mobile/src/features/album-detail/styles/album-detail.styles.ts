@@ -186,6 +186,47 @@ export const styles = themedStyleSheet({
   checkCircleEmpty: {
     borderWidth: 1.5, borderColor: '#4A4A4A', backgroundColor: 'rgba(255, 255, 255, 0.03)',
   },
+  lastActivityText: {
+    fontFamily: 'Inter_500Medium', fontSize: 12, color: '#8F8F8F', marginTop: 14, marginBottom: -6, marginHorizontal: 12,
+    letterSpacing: 0.2,
+  },
+  viewModeWrap: { marginLeft: 4 },
+  taskCompactRow: {
+    height: 52, borderRadius: 14, borderWidth: 1, borderColor: '#262626', backgroundColor: '#151515',
+    paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 10,
+  },
+  taskCompactCheck: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  taskCompactTitle: { flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 15, color: '#F3EEE3' },
+  taskCompactAdd: {
+    width: 26, height: 26, borderRadius: 13, backgroundColor: '#D4B13A',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  taskGalleryGrid: {
+    paddingHorizontal: 12, paddingTop: 10, flexDirection: 'row', flexWrap: 'wrap',
+    justifyContent: 'space-between', rowGap: 12,
+  },
+  galleryCard: {
+    width: '48.5%', aspectRatio: 1 / 1.3, borderRadius: 14, overflow: 'hidden',
+    backgroundColor: '#151515', borderWidth: 1, borderColor: '#262626',
+  },
+  galleryTopBadges: {
+    position: 'absolute', top: 8, left: 8, right: 8,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+  },
+  galleryCheck: {
+    width: 24, height: 24, borderRadius: 12, borderWidth: 1.5,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  galleryBottomOverlay: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    paddingHorizontal: 10, paddingVertical: 8,
+  },
+  galleryCardTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 13, lineHeight: 18, color: '#FFFFFF' },
+  galleryCardMeta: { fontFamily: 'Inter_400Regular', fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
+  galleryAddBtn: {
+    width: 24, height: 24, borderRadius: 12, backgroundColor: '#D4B13A',
+    alignItems: 'center', justifyContent: 'center',
+  },
   bottomBar: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     backgroundColor: '#0D0D0D', borderTopWidth: 1, borderTopColor: '#262626',

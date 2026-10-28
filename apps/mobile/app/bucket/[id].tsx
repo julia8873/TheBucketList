@@ -656,6 +656,7 @@ export default function BucketDetailScreen() {
         openCoverLinkModal={() => state.setShowCoverLinkModal(true)}
         recropCurrentCover={state.recropCurrentCover}
         removeCover={state.removeCover}
+        applyCoverPreset={state.applyCoverPreset}
         loadAlbums={state.loadAlbums}
         user={state.user}
         copyBucket={state.copyBucket}

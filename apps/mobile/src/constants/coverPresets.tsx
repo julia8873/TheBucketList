@@ -139,6 +139,13 @@ export function getPresetByKey(key: string | null | undefined): CoverPreset | un
     };
   }
 
+  // Degradado personalizado de dos colores: 'gradient:#RRGGBB,#RRGGBB'
+  const gradMatch = key.match(/^gradient:(#[0-9a-fA-F]{3,8}),(#[0-9a-fA-F]{3,8})$/);
+  if (gradMatch && gradMatch[1] && gradMatch[2]) {
+    const g: [string, string, string] = [gradMatch[1], gradMatch[2], gradMatch[2]];
+    return { key, label: 'Custom', group: 'gradients', colors: g, lightColors: g };
+  }
+
   // Colores hexadecimales personalizados (ej. 'color:#E53935', 'solid:#E53935' o '#E53935')
   const hexMatch = key.match(/^(?:color:|solid:)?(#[0-9a-fA-F]{3,8})$/i);
   if (hexMatch && hexMatch[1]) {
@@ -161,6 +168,16 @@ export function presetKeyFromValue(value: string | null | undefined): string | n
   if (value.startsWith(COVER_PRESET_PREFIX)) return value.slice(COVER_PRESET_PREFIX.length);
   if (value.startsWith('#')) return value;
   return null;
+}
+
+/** Valor de `cover_image` para un degradado personalizado de dos colores. */
+export function customGradientValue(from: string, to: string): string {
+  return `${COVER_PRESET_PREFIX}gradient:${from},${to}`;
+}
+
+/** Valor de `cover_image` para un color sólido (el mismo que usa el selector del formulario). */
+export function solidCoverValue(hex: string): string {
+  return `${COVER_PRESET_PREFIX}color:${hex}`;
 }
 
 export function presetValue(key: string): string {

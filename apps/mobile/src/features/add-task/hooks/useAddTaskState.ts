@@ -1,4 +1,4 @@
-import { Alert, confirm } from '@bucketlist/ui';
+import { Alert } from '@bucketlist/ui';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import type { ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -14,6 +14,20 @@ import {
 } from '../../../services/api/tasksService';
 import { useTags, useTagUsage, type Tag } from '../../../hooks/useTags';
 
+type AlbumVisibility = 'public' | 'followers' | 'private';
+type AlbumPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+/** Datos para el menú inferior que pregunta si se igualan las tareas añadidas al álbum. */
+export interface AddTaskSyncPrompt {
+  albumName: string;
+  albumVisibility: AlbumVisibility;
+  albumPriority: AlbumPriority;
+  /** Nº de tareas cuya visibilidad es distinta a la del álbum. */
+  visibilityCount: number;
+  /** Nº de tareas cuya prioridad es distinta a la del álbum. */
+  priorityCount: number;
+}
+
 export function useAddTaskState(albumId?: string) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -28,7 +42,7 @@ export function useAddTaskState(albumId?: string) {
       if (!albumId || albumId === 'new') return null;
       const { data } = await supabase
         .from('albums')
-        .select('id, title, visibility')
+        .select('id, title, visibility, priority')
         .eq('id', albumId)
         .maybeSingle();
       return data;
@@ -43,6 +57,7 @@ export function useAddTaskState(albumId?: string) {
   const [tagSheetOpen, setTagSheetOpen] = useState(false);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [syncPrompt, setSyncPrompt] = useState<AddTaskSyncPrompt | null>(null);
 
   const { data: allTags = [] } = useTags();
   const { data: tagUsage } = useTagUsage();
@@ -172,90 +187,86 @@ export function useAddTaskState(albumId?: string) {
     else router.push(href);
   };
 
-  const handleAdd = async () => {
-    if (selectedIds.size === 0) return;
+  const albumVisibility = albumData?.visibility as AlbumVisibility | undefined;
+  const albumPriority = (albumData?.priority || 'medium') as AlbumPriority;
 
-    const userSelectedTasks = userTasks.filter((t) => selectedIds.has(t.id));
-    const userSelectedIds = userSelectedTasks.map((t) => t.id);
+  /** Añade las tareas seleccionadas; `sync` indica qué propiedades se igualan a las del álbum. */
+  const executeAdd = async (sync: { visibility?: AlbumVisibility; priority?: AlbumPriority }) => {
+    const userSelectedIds = userTasks.filter((t) => selectedIds.has(t.id)).map((t) => t.id);
     const defaultSelected = availableDefaultTasks
       .filter((t) => selectedIds.has(t.id))
       .map((t) => t.id);
 
-    const executeAdd = async (syncVisibility?: 'public' | 'followers' | 'private') => {
-      try {
-        let newIds: string[] = [];
-        if (defaultSelected.length > 0) {
-          newIds = await createMutation.mutateAsync({
-            ids: defaultSelected,
-            visibility: syncVisibility || (albumVisibility || 'public'),
-          });
-        }
-
-        await queryClient.invalidateQueries({ queryKey: ['buckets'] });
-        await queryClient.invalidateQueries({ queryKey: ['unassigned_tasks'] });
-
-        if (!albumId || albumId === 'new') {
-          handleBack();
-          return;
-        }
-
-        await assignMutation.mutateAsync({
-          albumId,
-          taskIds: [...userSelectedIds, ...newIds],
-          updateVisibility: syncVisibility,
+    try {
+      let newIds: string[] = [];
+      if (defaultSelected.length > 0) {
+        newIds = await createMutation.mutateAsync({
+          ids: defaultSelected,
+          visibility: sync.visibility || albumVisibility || 'public',
         });
-        handleBack();
-      } catch (err: any) {
-        Alert.alert('Error', err?.message || 'No se pudieron añadir las tareas');
       }
-    };
 
-    const albumVisibility = albumData?.visibility as 'public' | 'followers' | 'private' | undefined;
+      await queryClient.invalidateQueries({ queryKey: ['buckets'] });
+      await queryClient.invalidateQueries({ queryKey: ['unassigned_tasks'] });
 
-    // Si hay álbum con visibilidad definida, comprobamos si alguna tarea difiere de la privacidad del álbum
-    if (albumId && albumId !== 'new' && albumVisibility) {
-      const tasksWithDifferentVis = userSelectedTasks.filter(
-        (t) => t.visibility && t.visibility !== albumVisibility
-      );
+      if (!albumId || albumId === 'new') {
+        handleBack();
+        return;
+      }
 
-      // Si hay tareas existentes o por defecto con distinta privacidad que el álbum
-      if (tasksWithDifferentVis.length > 0 || (defaultSelected.length > 0 && albumVisibility !== 'public')) {
-        const visLabels: Record<string, string> = {
-          private: t('albums.visibility_private').toLowerCase(),
-          followers: t('albums.visibility_followers').toLowerCase(),
-          public: t('albums.visibility_public').toLowerCase(),
-        };
-        const visLabel = visLabels[albumVisibility] || albumVisibility;
-        const count = tasksWithDifferentVis.length + (albumVisibility !== 'public' ? defaultSelected.length : 0);
-        const isPlural = count > 1;
+      await assignMutation.mutateAsync({
+        albumId,
+        taskIds: [...userSelectedIds, ...newIds],
+        updateVisibility: sync.visibility,
+        updatePriority: sync.priority,
+      });
+      handleBack();
+    } catch (err: any) {
+      Alert.alert('Error', err?.message || 'No se pudieron añadir las tareas');
+    }
+  };
 
-        const title = isPlural
-          ? t('add_task.change_vis_title_plural')
-          : t('add_task.change_vis_title_single');
-        const message = isPlural
-          ? t('add_task.change_vis_msg_plural', { count, visLabel })
-          : t('add_task.change_vis_msg_single', { visLabel });
+  const handleAdd = async () => {
+    if (selectedIds.size === 0) return;
 
-        confirm.show({
-          title,
-          message,
-          actions: [
-            {
-              label: t('add_task.set_to_vis', { visLabel }),
-              onPress: () => void executeAdd(albumVisibility),
-            },
-            {
-              label: t('add_task.keep_current'),
-              style: 'cancel',
-              onPress: () => void executeAdd(undefined),
-            },
-          ],
+    const userSelectedTasks = userTasks.filter((t) => selectedIds.has(t.id));
+
+    // Si el álbum tiene prioridad/visibilidad definidas, comprobamos si alguna tarea difiere
+    if (albumId && albumId !== 'new' && albumData) {
+      const visibilityCount = albumVisibility
+        ? userSelectedTasks.filter((t) => t.visibility && t.visibility !== albumVisibility).length
+        : 0;
+      // Las ideas por defecto se crean con prioridad media
+      const priorityCount =
+        userSelectedTasks.filter((t) => (t.priority || 'medium') !== albumPriority).length +
+        (albumPriority !== 'medium' ? defaultSelectedCount : 0);
+
+      if (visibilityCount > 0 || priorityCount > 0) {
+        setSyncPrompt({
+          albumName: albumData.title,
+          albumVisibility: (albumVisibility || 'public') as AlbumVisibility,
+          albumPriority,
+          visibilityCount,
+          priorityCount,
         });
         return;
       }
     }
 
-    await executeAdd(undefined);
+    await executeAdd({});
+  };
+
+  const closeSyncPrompt = () => setSyncPrompt(null);
+
+  /** El usuario ha elegido en el menú inferior qué igualar (o nada) y se añaden las tareas. */
+  const confirmSyncPrompt = async (apply: { visibility: boolean; priority: boolean }) => {
+    const prompt = syncPrompt;
+    setSyncPrompt(null);
+    if (!prompt) return;
+    await executeAdd({
+      visibility: apply.visibility && prompt.visibilityCount > 0 ? prompt.albumVisibility : undefined,
+      priority: apply.priority && prompt.priorityCount > 0 ? prompt.albumPriority : undefined,
+    });
   };
 
   const isPending = assignMutation.isPending || createMutation.isPending;
@@ -282,6 +293,9 @@ export function useAddTaskState(albumId?: string) {
     handleBack,
     handleCreateTask,
     handleAdd,
+    syncPrompt,
+    closeSyncPrompt,
+    confirmSyncPrompt,
     isPending,
     scrollViewRef,
   };

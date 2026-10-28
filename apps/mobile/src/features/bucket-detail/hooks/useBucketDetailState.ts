@@ -1290,6 +1290,32 @@ export function useBucketDetailState() {
     }
   };
 
+  /** Portada con degradado o color (`preset:<clave>`, `preset:gradient:#a,#b` o `preset:color:#hex`). */
+  const applyCoverPreset = async (value: string) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase.from('buckets').update({ cover_image: value }).eq('id', id);
+      if (error) throw error;
+
+      queryClient.setQueryData(['bucketDetail', id], (oldData: any) =>
+        oldData ? { ...oldData, cover_image: value } : oldData
+      );
+      const currentBucket = queryClient.getQueryData<any>(['bucketDetail', id]);
+      const nextImage = resolveTaskImage(
+        currentBucket ? { ...currentBucket, cover_image: value } : { cover_image: value },
+        { preferThumb: true },
+      );
+      patchTasks(queryClient, [id], {
+        bucket: { cover_image: value },
+        task: { imageValue: nextImage || value },
+      });
+      invalidateBucket();
+      toast.success('Portada actualizada');
+    } catch (error: any) {
+      toast.error(error?.message || 'No se pudo actualizar la portada');
+    }
+  };
+
   const [showCoverLinkModal, setShowCoverLinkModal] = useState(false);
 
   const handleApplyCoverUrl = async (rawUrl: string) => {
@@ -1789,6 +1815,7 @@ export function useBucketDetailState() {
     takePhotoAndUploadCover,
     recropCurrentCover,
     removeCover,
+    applyCoverPreset,
     showCoverLinkModal,
     setShowCoverLinkModal,
     handleApplyCoverUrl,

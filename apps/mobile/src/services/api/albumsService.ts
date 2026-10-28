@@ -37,6 +37,10 @@ export interface AlbumDetail {
   priority?: 'low' | 'medium' | 'high' | 'urgent';
   is_closed?: boolean;
   closed_at?: string | null;
+  /** Fecha de creación del álbum. */
+  createdAt?: string | null;
+  /** Última modificación del álbum (si la tabla tiene `updated_at`). */
+  updatedAt?: string | null;
   ownerId?: string;
   owner?: {
     id: string;
@@ -260,6 +264,8 @@ export const albumsService = {
       priority: (album.priority || 'medium') as 'low' | 'medium' | 'high' | 'urgent',
       is_closed: Boolean(album.is_closed),
       closed_at: album.closed_at || null,
+      createdAt: album.created_at || null,
+      updatedAt: album.updated_at || null,
       ownerId: album.owner_id,
       owner: ownerProfile ? {
         id: ownerProfile.id,

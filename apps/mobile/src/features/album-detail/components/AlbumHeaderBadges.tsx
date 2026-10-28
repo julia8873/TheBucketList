@@ -80,7 +80,7 @@ export function AlbumHeaderBadges({
             <>
               <CheckCircle2 size={13} color="#34C759" strokeWidth={2.4} style={{ marginRight: 5 }} />
               <Text style={[styles.chipStatusText, { color: '#34C759', fontWeight: '700' }]}>
-                {t('common.completed')}
+                {t('albums.status_completed')}
               </Text>
             </>
           ) : (

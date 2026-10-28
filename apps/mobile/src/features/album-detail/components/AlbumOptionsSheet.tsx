@@ -33,6 +33,7 @@ import {
   Maximize2,
   Sparkles,
 } from 'lucide-react-native';
+import { CoverColorPicker } from '@/components/CoverColorPicker';
 import { styles } from '../styles/album-detail.styles';
 import { useTranslation } from '@bucketlist/shared';
 
@@ -72,6 +73,10 @@ interface AlbumOptionsSheetProps {
   onRecropCover?: () => void;
   onChangeCoverShape?: (newRatio: '1:1' | '16:9' | '3:4') => void;
   onRemoveCover?: () => void;
+  /** Portada con degradado (predeterminado o personalizado). */
+  onSelectCoverGradient?: (colors: [string, string], id: string | null) => void;
+  /** Portada con color sólido. */
+  onSelectCoverSolid?: (hex: string) => void;
   onToggleClose: (close: boolean) => void;
   onChangePriority: (p: 'low' | 'medium' | 'high') => void;
   onChangeVisibility: (v: 'public' | 'followers' | 'private') => void;
@@ -115,6 +120,8 @@ export function AlbumOptionsSheet({
   onRecropCover,
   onChangeCoverShape,
   onRemoveCover,
+  onSelectCoverGradient,
+  onSelectCoverSolid,
   onToggleClose,
   onChangePriority,
   onChangeVisibility,
@@ -400,6 +407,18 @@ export function AlbumOptionsSheet({
                 showsVerticalScrollIndicator={false}
                 bounces={false}
               >
+                <View style={{ paddingHorizontal: 20, paddingBottom: 8 }}>
+                  <CoverColorPicker
+                    onSelectGradient={(colors, id) => {
+                      onClose();
+                      onSelectCoverGradient?.(colors, id);
+                    }}
+                    onSelectSolid={(hex) => {
+                      onClose();
+                      onSelectCoverSolid?.(hex);
+                    }}
+                  />
+                </View>
                 <View style={styles.sheetOptions}>
                   <SheetOption
                     icon={<ImageIcon color="#D4B13A" size={20} />}

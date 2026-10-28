@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { GripVertical, Check, Plus, CheckCircle2 } from 'lucide-react-native';
 import type { TaskItem } from '@/services/api/albumsService';
@@ -37,8 +37,12 @@ function getSubTitle(task: TaskItem, t?: (k: any, o?: any) => string): string {
   return parts.join(' · ');
 }
 
+export type AlbumTaskViewMode = 'list' | 'gallery' | 'compact';
+
 interface AlbumTaskCardProps {
   task: TaskItem;
+  /** Vista de la tarea dentro del álbum: normal (lista), galería (2 columnas) o compacta. */
+  viewMode?: AlbumTaskViewMode;
   canEdit: boolean;
   copiedIds?: string[];
   drag?: { panHandlers: any; isActive: boolean };
@@ -53,6 +57,7 @@ interface AlbumTaskCardProps {
 
 export function AlbumTaskCard({
   task,
+  viewMode = 'list',
   canEdit,
   copiedIds,
   drag,
@@ -114,6 +119,182 @@ export function AlbumTaskCard({
       </Text>
     </View>
   );
+
+  const handlePress = () => {
+    if (isSelectionMode) onToggleSelect?.(task);
+    else router.push(`/bucket/${task.id}`);
+  };
+  const handleLongPress =
+    canEdit && !isSelectionMode && !drag ? () => onLongPressTask?.(task) : undefined;
+  const isCopied = copiedIds?.includes(task.id);
+
+  // ───────────── Vista compacta ─────────────
+  if (viewMode === 'compact') {
+    return (
+      <Pressable
+        style={[styles.taskCompactRow, isSelectionMode && isSelected && { borderColor: '#D4B13A' }]}
+        onPress={handlePress}
+        onLongPress={handleLongPress}
+        delayLongPress={350}
+        accessibilityRole={isSelectionMode ? 'checkbox' : 'button'}
+        accessibilityState={isSelectionMode ? { checked: isSelected } : undefined}
+      >
+        {isSelectionMode ? (
+          isSelected ? (
+            <CheckCircle2 size={22} color="#D4B13A" fill="#D4B13A" />
+          ) : (
+            <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: '#555555' }} />
+          )
+        ) : canEdit ? (
+          <Pressable
+            hitSlop={8}
+            onPress={(e) => onToggleCompleted(task, e)}
+            style={[styles.taskCompactCheck, isDone ? styles.checkCircleDone : styles.checkCircleEmpty]}
+          >
+            {isDone && <Check size={13} color="#0D0D0D" strokeWidth={3} />}
+          </Pressable>
+        ) : (
+          <View style={[styles.taskCompactCheck, isDone ? styles.checkCircleDone : styles.checkCircleEmpty]}>
+            {isDone && <Check size={13} color="#0D0D0D" strokeWidth={3} />}
+          </View>
+        )}
+        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: itemPriorityColor }} />
+        <Text
+          style={[styles.taskCompactTitle, isDone && { color: '#BDB7AA', textDecorationLine: 'line-through' }]}
+          numberOfLines={1}
+        >
+          {task.title}
+        </Text>
+        {!isDone && badge && (
+          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: '#D4B13A' }}>{badge}</Text>
+        )}
+        {drag && !isSelectionMode && (
+          <View {...drag.panHandlers} hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }} accessibilityLabel={t('albums.drag_reorder')}>
+            <GripVertical size={18} color="#8F8F8F" strokeWidth={1.8} />
+          </View>
+        )}
+        {!canEdit && !isSelectionMode && (
+          isCopied ? (
+            <Check size={16} color="#D4B13A" strokeWidth={2.5} />
+          ) : (
+            <Pressable hitSlop={8} onPress={(e) => onCopySingleTask(task, e)} style={styles.taskCompactAdd}>
+              <Plus size={14} color="#0D0D0D" strokeWidth={2.5} />
+            </Pressable>
+          )
+        )}
+      </Pressable>
+    );
+  }
+
+  // ───────────── Vista galería (2 columnas) ─────────────
+  if (viewMode === 'gallery') {
+    const imageValue = task.imageValue ?? null;
+    const isImageCover = !!imageValue && !imageValue.startsWith('preset:');
+    return (
+      <Pressable
+        style={[styles.galleryCard, isSelectionMode && isSelected && { borderColor: '#D4B13A', borderWidth: 2.5 }]}
+        onPress={handlePress}
+        onLongPress={handleLongPress}
+        delayLongPress={350}
+        accessibilityRole={isSelectionMode ? 'checkbox' : 'button'}
+        accessibilityState={isSelectionMode ? { checked: isSelected } : undefined}
+        accessibilityLabel={task.title}
+      >
+        <BucketCover
+          value={imageValue}
+          title={task.title}
+          categorySlug={task.categorySlug}
+          seed={task.id}
+          iconSize={44}
+          style={StyleSheet.absoluteFill}
+        />
+
+        <View style={styles.galleryTopBadges} pointerEvents="box-none">
+          {isSelectionMode ? (
+            <View
+              style={[
+                styles.galleryCheck,
+                isSelected
+                  ? { backgroundColor: '#D4B13A', borderWidth: 0 }
+                  : { backgroundColor: 'rgba(0,0,0,0.6)', borderColor: '#FFFFFF' },
+              ]}
+            >
+              {isSelected && <Check size={14} color="#0D0D0D" strokeWidth={3} />}
+            </View>
+          ) : canEdit ? (
+            <Pressable
+              hitSlop={8}
+              onPress={(e) => onToggleCompleted(task, e)}
+              style={[
+                styles.galleryCheck,
+                isDone
+                  ? { backgroundColor: '#D4B13A', borderWidth: 0 }
+                  : { backgroundColor: 'rgba(0,0,0,0.55)', borderColor: '#FFFFFF' },
+              ]}
+            >
+              {isDone && <Check size={14} color="#0D0D0D" strokeWidth={3} />}
+            </Pressable>
+          ) : isDone ? (
+            <View style={[styles.galleryCheck, { backgroundColor: 'rgba(52,199,89,0.9)', borderWidth: 0 }]}>
+              <Check size={14} color="#FFFFFF" strokeWidth={3} />
+            </View>
+          ) : (
+            <View />
+          )}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+              paddingHorizontal: 6,
+              paddingVertical: 2,
+              borderRadius: 8,
+              backgroundColor: 'rgba(0,0,0,0.65)',
+              borderWidth: 1,
+              borderColor: itemPriorityColor,
+            }}
+          >
+            <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: itemPriorityColor }} />
+            <Text style={{ fontSize: 10, fontWeight: '700', color: itemPriorityColor }}>{itemPriorityLabel}</Text>
+          </View>
+        </View>
+
+        <View
+          style={[
+            styles.galleryBottomOverlay,
+            { backgroundColor: isImageCover ? 'rgba(0,0,0,0.52)' : 'rgba(0,0,0,0.72)' },
+          ]}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+            <View style={{ flex: 1 }}>
+              <Text
+                style={[styles.galleryCardTitle, isDone && { textDecorationLine: 'line-through', opacity: 0.7 }]}
+                numberOfLines={2}
+              >
+                {task.title}
+              </Text>
+              {subTitle.length > 0 && (
+                <Text style={styles.galleryCardMeta} numberOfLines={1}>
+                  {subTitle}
+                </Text>
+              )}
+            </View>
+            {!canEdit && !isSelectionMode && (
+              isCopied ? (
+                <View style={styles.galleryAddBtn}>
+                  <Check size={14} color="#0D0D0D" strokeWidth={2.5} />
+                </View>
+              ) : (
+                <Pressable hitSlop={8} onPress={(e) => onCopySingleTask(task, e)} style={styles.galleryAddBtn}>
+                  <Plus size={14} color="#0D0D0D" strokeWidth={2.5} />
+                </Pressable>
+              )
+            )}
+          </View>
+        </View>
+      </Pressable>
+    );
+  }
 
   return (
     <Pressable

@@ -11,6 +11,8 @@ export interface UnassignedTask {
   inAlbum?: boolean;
   /** Visibilidad de la tarea: public, followers o private. */
   visibility?: 'public' | 'followers' | 'private';
+  /** Prioridad de la tarea (las ideas por defecto no tienen: se crean con prioridad media). */
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
   /** Valor para `BucketCover` (foto elegida/última, portada o null = degradado automático). */
   imageValue?: string | null;
   categorySlug?: string | null;
@@ -69,7 +71,7 @@ export const tasksService = {
     const userId = userAuth.user.id;
 
     const select =
-      'id, title, location_text, created_at, cover_image, thumbnail_mode, thumbnail_photo_id, visibility, ' +
+      'id, title, location_text, created_at, cover_image, thumbnail_mode, thumbnail_photo_id, visibility, priority, ' +
       'categories(name_es, name_en, slug), album_items(album_id), bucket_photos(id, storage_path, thumb_path, created_at, completed_at, title)';
 
     const { data: own, error } = await supabase
@@ -133,6 +135,7 @@ export const tasksService = {
         imageValue: resolveTaskImage(b, { preferThumb: true }),
         categorySlug: (b.categories)?.slug ?? null,
         visibility: (b.visibility) || 'public',
+        priority: (b.priority) || 'medium',
         inAlbum: !!albumId && (b.album_items ?? []).some((ai: any) => ai.album_id === albumId),
       }));
   },
@@ -140,15 +143,16 @@ export const tasksService = {
   async assignTasksToAlbum(
     albumId: string,
     taskIds: string[],
-    updateVisibility?: 'public' | 'followers' | 'private'
+    updateVisibility?: 'public' | 'followers' | 'private',
+    updatePriority?: 'low' | 'medium' | 'high' | 'urgent'
   ): Promise<void> {
     if (!taskIds.length) return;
 
-    if (updateVisibility) {
-      await supabase
-        .from('buckets')
-        .update({ visibility: updateVisibility })
-        .in('id', taskIds);
+    const patch: Record<string, string> = {};
+    if (updateVisibility) patch.visibility = updateVisibility;
+    if (updatePriority) patch.priority = updatePriority;
+    if (Object.keys(patch).length > 0) {
+      await supabase.from('buckets').update(patch).in('id', taskIds);
     }
     
     // Las tareas nuevas van al final del orden manual del álbum.
@@ -243,13 +247,15 @@ export function useAssignTasks() {
       albumId,
       taskIds,
       updateVisibility,
+      updatePriority,
     }: {
       albumId: string;
       taskIds: string[];
       updateVisibility?: 'public' | 'followers' | 'private';
-    }) => tasksService.assignTasksToAlbum(albumId, taskIds, updateVisibility),
+      updatePriority?: 'low' | 'medium' | 'high' | 'urgent';
+    }) => tasksService.assignTasksToAlbum(albumId, taskIds, updateVisibility, updatePriority),
     // Las tareas aparecen en el álbum al instante (si tenemos sus datos en caché).
-    onMutate: async ({ albumId, taskIds }: { albumId: string; taskIds: string[]; updateVisibility?: 'public' | 'followers' | 'private' }) => {
+    onMutate: async ({ albumId, taskIds }: { albumId: string; taskIds: string[]; updateVisibility?: 'public' | 'followers' | 'private'; updatePriority?: 'low' | 'medium' | 'high' | 'urgent' }) => {
       const snap = await beginOptimistic(queryClient);
       applyAddToAlbum(queryClient, taskIds, albumId);
       return { snap };

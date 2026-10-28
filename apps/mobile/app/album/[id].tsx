@@ -46,6 +46,8 @@ import { useItemLikes } from '@/hooks/useSocial';
 
 import { styles } from '@/features/album-detail/styles/album-detail.styles';
 import { AlbumTaskCard } from '@/features/album-detail/components/AlbumTaskCard';
+import type { AlbumTaskViewMode } from '@/features/album-detail/components/AlbumTaskCard';
+import { ViewModeSelector } from '@/components/ViewModeSelector';
 import { ReportModal } from '@/components/ReportModal';
 import { useReportContent } from '@/hooks/useBlockReport';
 import { AlbumOptionsSheet } from '@/features/album-detail/components/AlbumOptionsSheet';
@@ -78,8 +80,10 @@ export function getInitials(name?: string | null): string {
 export default function AlbumDetailScreen() {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const state = useAlbumDetailState();
+  // Vista de las tareas dentro del álbum: normal (lista), galería (2 columnas) o compacta
+  const [taskViewMode, setTaskViewMode] = useState<AlbumTaskViewMode>('list');
   const isAdmin = useIsAdmin();
   const promoteMutation = usePromoteAlbumToCollection();
   const [showCommentsModal, setShowCommentsModal] = useState(false);
@@ -250,6 +254,7 @@ export default function AlbumDetailScreen() {
     state.id !== 'unassigned' &&
     state.taskSortField === 'manual' &&
     !isSearchingTasks &&
+    taskViewMode !== 'gallery' &&
     state.isReorderingTasks;
 
   const persistTaskOrder = async (orderedIds: string[]) => {
@@ -333,6 +338,41 @@ export default function AlbumDetailScreen() {
   ];
   const isAlbumClosed = Boolean(album.is_closed);
 
+  // Última fecha de actividad del álbum: cerrado > completado > última actualización
+  const dateLocale = i18n.language?.startsWith('en') ? 'en-US' : 'es-ES';
+  const formatAlbumDate = (iso: string) =>
+    new Date(iso).toLocaleDateString(dateLocale, { day: 'numeric', month: 'short', year: 'numeric' });
+  const latestIso = (values: Array<string | null | undefined>): string | null => {
+    let best: string | null = null;
+    let bestTime = -Infinity;
+    for (const v of values) {
+      if (!v) continue;
+      const time = new Date(v).getTime();
+      if (!Number.isNaN(time) && time > bestTime) {
+        best = v;
+        bestTime = time;
+      }
+    }
+    return best;
+  };
+  const lastCompletedIso = latestIso(tasks.map((tk) => tk.completedAt));
+  const lastUpdatedIso = latestIso([
+    album.updatedAt,
+    album.createdAt,
+    album.closed_at,
+    ...tasks.map((tk) => tk.completedAt),
+  ]);
+  let lastActivityText: string | null = null;
+  if (state.id !== 'unassigned') {
+    if (isAlbumClosed && album.closed_at) {
+      lastActivityText = t('albums.last_closed', { date: formatAlbumDate(album.closed_at) });
+    } else if (areAllCompleted && lastCompletedIso) {
+      lastActivityText = t('albums.last_completed', { date: formatAlbumDate(lastCompletedIso) });
+    } else if (lastUpdatedIso) {
+      lastActivityText = t('albums.last_updated', { date: formatAlbumDate(lastUpdatedIso) });
+    }
+  }
+
   const visibleTaskIds = [...pendientes, ...completadas].map((t) => t.id);
   const isAllSelected =
     visibleTaskIds.length > 0 && visibleTaskIds.every((tid) => state.selectedTaskIds.includes(tid));
@@ -341,6 +381,7 @@ export default function AlbumDetailScreen() {
     <AlbumTaskCard
       key={task.id}
       task={task}
+      viewMode={taskViewMode}
       canEdit={state.canEdit}
       copiedIds={state.copiedIds ?? []}
       drag={drag}
@@ -548,6 +589,9 @@ export default function AlbumDetailScreen() {
             }}
           />
         )}
+
+        {/* Última fecha de actualización / completado / cierre */}
+        {lastActivityText && <Text style={styles.lastActivityText}>{lastActivityText}</Text>}
 
         {/* Título */}
         {state.canEdit && state.id !== 'unassigned' ? (
@@ -799,10 +843,10 @@ export default function AlbumDetailScreen() {
               <Pressable
                 ref={state.taskSortTriggerRef}
                 collapsable={false}
-                style={styles.toolbarSortBtn}
+                style={[styles.toolbarSortBtn, { flexShrink: 1 }]}
                 onPress={openTaskSortMenu}
               >
-                <Text style={styles.toolbarSortText}>
+                <Text style={styles.toolbarSortText} numberOfLines={1}>
                   {state.taskSortField === 'priority'
                     ? t('albums.sort_priority', { defaultValue: 'Prioridad' })
                     : state.taskSortField === 'alphabetical'
@@ -822,6 +866,8 @@ export default function AlbumDetailScreen() {
               </Pressable>
 
               <View style={{ flex: 1 }} />
+
+              <ViewModeSelector mode={taskViewMode} onChange={setTaskViewMode} style={styles.viewModeWrap} />
 
               {state.canEdit && (
                 <Pressable
@@ -897,6 +943,10 @@ export default function AlbumDetailScreen() {
                   renderItem={(item, drag) => renderTaskCard(item, drag)}
                 />
               </View>
+            ) : taskViewMode === 'gallery' ? (
+              <View style={styles.taskGalleryGrid}>
+                {pendientes.map((task) => renderTaskCard(task))}
+              </View>
             ) : (
               <View style={styles.taskList}>
                 {pendientes.map((task) => renderTaskCard(task))}
@@ -924,6 +974,10 @@ export default function AlbumDetailScreen() {
                   onDraggingChange={state.setDragging}
                   renderItem={(item, drag) => renderTaskCard(item, drag)}
                 />
+              </View>
+            ) : taskViewMode === 'gallery' ? (
+              <View style={styles.taskGalleryGrid}>
+                {completadas.map((task) => renderTaskCard(task))}
               </View>
             ) : (
               <View style={styles.taskList}>
@@ -1070,6 +1124,8 @@ export default function AlbumDetailScreen() {
         onRecropCover={() => void state.recropCurrentCover()}
         onChangeCoverShape={(ratio) => void state.handleChangeCoverShape(ratio)}
         onRemoveCover={() => void state.removeCover()}
+        onSelectCoverGradient={(colors, id) => void state.handleSelectCoverColors(colors, 'gradient', id)}
+        onSelectCoverSolid={(hex) => void state.handleSelectCoverColors([hex, hex], 'solid', null)}
         onToggleClose={state.handleToggleCloseAlbum}
         onChangePriority={state.handleChangePriority}
         onChangeVisibility={state.handleChangeVisibility}

@@ -866,6 +866,41 @@ export function useAlbumDetailState() {
     }
   };
 
+  /** Portada con degradado o color sólido (se guarda como JSON en `albums.cover_path`). */
+  const handleSelectCoverColors = async (
+    colors: [string, string],
+    type: 'gradient' | 'solid',
+    coverId: string | null,
+  ) => {
+    if (!canEdit || !cleanId) return;
+    try {
+      const coverJson = JSON.stringify({
+        id: coverId ?? (type === 'solid' ? 'custom-solid' : 'custom-gradient'),
+        type,
+        colors,
+        tag_ids: albumTags.map((t) => t.id),
+      });
+      queryClient.setQueryData(['album', cleanId, user?.id], (old: any) =>
+        old ? { ...old, coverPath: coverJson, coverKey: coverId ?? 'aurora' } : old
+      );
+      if (cleanId !== id) {
+        queryClient.setQueryData(['album', id, user?.id], (old: any) =>
+          old ? { ...old, coverPath: coverJson, coverKey: coverId ?? 'aurora' } : old
+        );
+      }
+      const { error } = await supabase.from('albums').update({ cover_path: coverJson }).eq('id', cleanId);
+      if (error) throw error;
+
+      void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
+      if (cleanId !== id) void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+      void queryClient.invalidateQueries({ queryKey: ['albums'] });
+      toast.success('Portada actualizada');
+    } catch (err: any) {
+      toast.error(err?.message || 'No se pudo cambiar la portada');
+      void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
+    }
+  };
+
   const handleSaveAlbumTags = async (newTags: TagItem[]) => {
     setShowTagAssignSheet(false);
     if (!id || id === 'unassigned') return;
@@ -1296,6 +1331,7 @@ export function useAlbumDetailState() {
     setShowCoverLinkModal,
     handleSaveCoverLink,
     handleChangeCoverShape,
+    handleSelectCoverColors,
     albumTags,
     showTagAssignSheet,
     setShowTagAssignSheet,
