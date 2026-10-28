@@ -53,7 +53,7 @@ export function ProfileAlbumsTab({
     () => [
       { key: 'all', label: t('common.all_m'), description: t('profile.all_public_albums') },
       { key: 'active', label: t('common.active'), description: t('profile.active_albums_desc') },
-      { key: 'completed', label: t('common.completed'), description: t('profile.completed_albums_desc') },
+      { key: 'completed', label: t('profile.filter_album_completed'), description: t('profile.completed_albums_desc') },
       { key: 'closed', label: t('common.closed'), description: t('profile.closed_albums_desc') },
     ],
     [t]

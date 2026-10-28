@@ -281,7 +281,7 @@ export function AlbumCard({
           {isCompleted && !isClosed && (
             <View style={styles.completedBadge}>
               <Check size={10} color="#FFF" strokeWidth={2.5} />
-              <Text style={styles.completedText}>{t('common.completed')}</Text>
+              <Text style={styles.completedText}>{t('common.completed_m')}</Text>
             </View>
           )}
 

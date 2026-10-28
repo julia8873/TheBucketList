@@ -139,9 +139,12 @@ export const styles = themedStyleSheet({
     width: 36, height: 36, borderRadius: 18, backgroundColor: '#151515',
     borderWidth: 1, borderColor: '#262626', justifyContent: 'center', alignItems: 'center',
   },
-  toolbarLabel: { fontFamily: 'Inter_400Regular', fontSize: 13, color: '#8F8F8F' },
-  toolbarSortBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  toolbarSortText: { fontFamily: 'Inter_600SemiBold', fontSize: 13, color: '#D4B13A' },
+  toolbarSortContainer: { flex: 1, minWidth: 0, flexShrink: 1, flexDirection: 'row', alignItems: 'center' },
+  toolbarSortBtn: {
+    flex: 1, minWidth: 0, height: 32, paddingHorizontal: 8, borderRadius: 8, borderWidth: 1,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4,
+  },
+  toolbarSortText: { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#D4B13A' },
   taskSearchBox: {
     marginTop: 12, height: 44, borderRadius: 999, backgroundColor: '#151515',
     borderWidth: 1, borderColor: '#262626', paddingHorizontal: 12,
@@ -190,7 +193,7 @@ export const styles = themedStyleSheet({
     fontFamily: 'Inter_500Medium', fontSize: 12, color: '#8F8F8F', marginTop: 14, marginBottom: -6, marginHorizontal: 12,
     letterSpacing: 0.2,
   },
-  viewModeWrap: { marginLeft: 4 },
+  viewModeWrap: { marginLeft: 0 },
   taskCompactRow: {
     height: 52, borderRadius: 14, borderWidth: 1, borderColor: '#262626', backgroundColor: '#151515',
     paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 10,

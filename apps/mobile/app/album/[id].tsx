@@ -837,37 +837,43 @@ export default function AlbumDetailScreen() {
             }}
           >
             <View style={styles.tasksToolbar}>
-              <Text style={styles.toolbarLabel}>
-                {t('albums.sort_by', { defaultValue: 'Ordenar por:' })}
-              </Text>
-              <Pressable
-                ref={state.taskSortTriggerRef}
-                collapsable={false}
-                style={[styles.toolbarSortBtn, { flexShrink: 1 }]}
-                onPress={openTaskSortMenu}
-              >
-                <Text style={styles.toolbarSortText} numberOfLines={1}>
-                  {state.taskSortField === 'priority'
-                    ? t('albums.sort_priority', { defaultValue: 'Prioridad' })
-                    : state.taskSortField === 'alphabetical'
-                    ? t('albums.sort_name', { defaultValue: 'Nombre' })
-                    : state.taskSortField === 'completed_at'
-                    ? t('albums.sort_completed_date', { defaultValue: 'Fecha de completado' })
-                    : state.taskSortField === 'created_at'
-                    ? t('albums.sort_created_date', { defaultValue: 'Fecha de creación' })
-                    : t('albums.sort_manual', { defaultValue: 'Manual' })}
-                </Text>
-                {state.taskSortField !== 'manual' &&
-                  (state.taskSortDir === 'desc' ? (
-                    <ArrowDown size={14} color="#D4B13A" />
-                  ) : (
-                    <ArrowUp size={14} color="#D4B13A" />
-                  ))}
-              </Pressable>
-
-              <View style={{ flex: 1 }} />
-
               <ViewModeSelector mode={taskViewMode} onChange={setTaskViewMode} style={styles.viewModeWrap} />
+
+              {/* Ordenar: misma barra rectangular y centrada que en Mi lista */}
+              <View style={styles.toolbarSortContainer}>
+                <Pressable
+                  ref={state.taskSortTriggerRef}
+                  collapsable={false}
+                  style={[
+                    styles.toolbarSortBtn,
+                    {
+                      backgroundColor: theme.colors.surface,
+                      borderColor: theme.colors.border,
+                    },
+                  ]}
+                  onPress={openTaskSortMenu}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.toolbarSortText} numberOfLines={1} ellipsizeMode="tail">
+                    {state.taskSortField === 'priority'
+                      ? t('albums.sort_priority', { defaultValue: 'Prioridad' })
+                      : state.taskSortField === 'alphabetical'
+                      ? t('albums.sort_name', { defaultValue: 'Nombre' })
+                      : state.taskSortField === 'completed_at'
+                      ? t('albums.sort_completed_date', { defaultValue: 'Fecha de completado' })
+                      : state.taskSortField === 'created_at'
+                      ? t('albums.sort_created_date', { defaultValue: 'Fecha de creación' })
+                      : t('albums.sort_manual', { defaultValue: 'Manual' })}
+                  </Text>
+                  {state.taskSortField !== 'manual' &&
+                    (state.taskSortDir === 'desc' ? (
+                      <ArrowDown size={13} color="#D4B13A" />
+                    ) : (
+                      <ArrowUp size={13} color="#D4B13A" />
+                    ))}
+                </Pressable>
+              </View>
 
               {state.canEdit && (
                 <Pressable
