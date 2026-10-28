@@ -17,6 +17,7 @@ import { LocationPickerModal } from '../../src/components/LocationPickerModal';
 import type { TagItem } from '../../src/components/TagPickerSheet';
 import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/components/CollaboratorPickerSheet';
 import { AlbumPickerSheet } from '../../src/components/AlbumPickerSheet';
+import { useAlbumSync, toSyncPriority, type SyncPriority } from '../../src/hooks/useAlbumSync';
 import { GoogleDriveModal } from '../../src/components/GoogleDriveModal';
 
 import { styles } from '../../src/features/task-form/styles/task-form.styles';
@@ -42,6 +43,9 @@ export default function EditBucketModal() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState<Visibility>('public');
+  // La prioridad no se edita en este formulario; solo cambia si el usuario acepta igualarla a la del álbum.
+  const [priority, setPriority] = useState<SyncPriority>('medium');
+  const initialPriority = useRef<SyncPriority>('medium');
   const [locationText, setLocationText] = useState('');
   const [locationLat, setLocationLat] = useState<number | null>(null);
   const [locationLng, setLocationLng] = useState<number | null>(null);
@@ -73,6 +77,7 @@ export default function EditBucketModal() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const { data: albums = [] } = useAlbums(user?.id);
+  const { askAlbumSync, albumSyncSheet } = useAlbumSync();
   const [albumId, setAlbumId] = useState<string | null>(null);
   const [showAlbumPicker, setShowAlbumPicker] = useState(false);
   const initialAlbumId = useRef<string | null>(null);
@@ -115,7 +120,7 @@ export default function EditBucketModal() {
 
     supabase
       .from('buckets')
-      .select('title, description, visibility, location_text, location_lat, location_lng, deadline, collaboration_mode, collaboration_audience, cover_image, drive_url')
+      .select('title, description, visibility, priority, location_text, location_lat, location_lng, deadline, collaboration_mode, collaboration_audience, cover_image, drive_url')
       .eq('id', id)
       .single()
       .then(({ data, error }) => {
@@ -128,6 +133,9 @@ export default function EditBucketModal() {
         setTitle(data.title || '');
         setDescription(data.description || '');
         setVisibility((data.visibility as Visibility) || 'public');
+        const loadedPriority = toSyncPriority((data as any).priority) ?? 'medium';
+        setPriority(loadedPriority);
+        initialPriority.current = loadedPriority;
         setLocationText(data.location_text || '');
         setLocationLat(data.location_lat ?? null);
         setLocationLng(data.location_lng ?? null);
@@ -197,6 +205,8 @@ export default function EditBucketModal() {
       collaboration_audience: collaborationAudience,
       cover_image: finalCoverImage,
       drive_url: driveUrl,
+      // Solo se envía si cambió (al igualarla a la del álbum): así no se pisa un cambio hecho en otro sitio.
+      ...(priority !== initialPriority.current ? { priority } : {}),
     } as any;
 
     try {
@@ -263,6 +273,27 @@ export default function EditBucketModal() {
       </View>
     );
   }
+
+  /**
+   * Al elegir un álbum en el selector se pregunta si la tarea adopta su visibilidad y prioridad.
+   * Los cambios se aplican en el formulario y se guardan al pulsar «Guardar». Si el usuario cierra
+   * la pregunta, se mantiene el álbum anterior.
+   */
+  const handleSelectAlbum = async (newAlbumId: string | null) => {
+    const album = newAlbumId && newAlbumId !== albumId ? albums.find((a) => a.id === newAlbumId) : undefined;
+    if (!album) {
+      setAlbumId(newAlbumId);
+      return;
+    }
+    const answer = await askAlbumSync(album, [{ visibility, priority }], {
+      // En iOS el selector aún se está cerrando: se espera a que termine para abrir la pregunta.
+      delayMs: Platform.OS === 'ios' ? 450 : 0,
+    });
+    if (answer === null) return;
+    setAlbumId(album.id);
+    if (answer.visibility) setVisibility(answer.visibility);
+    if (answer.priority) setPriority(answer.priority);
+  };
 
   const selectedAlbumTitle = albumId
     ? albums.find((a) => a.id === albumId)?.title || 'Seleccionado'
@@ -422,9 +453,11 @@ export default function EditBucketModal() {
         <AlbumPickerSheet
           visible={showAlbumPicker}
           selectedAlbumId={albumId}
-          onSelectAlbum={setAlbumId}
+          onSelectAlbum={(id) => void handleSelectAlbum(id)}
           onClose={() => setShowAlbumPicker(false)}
         />
+
+        {albumSyncSheet}
 
         <LocationPickerModal
           visible={isEditingLocation}

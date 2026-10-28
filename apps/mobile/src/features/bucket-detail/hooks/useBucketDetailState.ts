@@ -27,6 +27,12 @@ import {
   settleTaskCaches,
 } from '@/utils/optimisticCache';
 import { useAlbums } from '@/hooks/useAlbums';
+import {
+  albumSyncToBucketPatch,
+  settleAlbumSyncCaches,
+  useAlbumSync,
+  type AlbumSyncChanges,
+} from '@/hooks/useAlbumSync';
 import { useUserFavorites, useToggleFavoriteBucket } from '@/hooks/useFavorites';
 import { useEntitySubscription } from '@/hooks/useEntityNotifications';
 import type { MentionTask } from '@/components/TaskMentionPickerSheet';
@@ -88,6 +94,7 @@ export function useBucketDetailState() {
   const toggleFavorite = useToggleFavoriteBucket();
   const isFav = isBucketFavorite(id);
   const { data: albumsData, isLoading: albumsLoading } = useAlbums(user?.id);
+  const { askAlbumSync, albumSyncSheet } = useAlbumSync();
 
   const { data: savedBucketIds } = useSavedBucketIds(user?.id);
   const toggleSaveBucket = useToggleSaveBucket();
@@ -695,6 +702,22 @@ export function useBucketDetailState() {
     if (!user) return;
     const isCurrentlySelected = bucketAlbums?.some((a: any) => a.album_id === albumId);
 
+    // Al AÑADIR la tarea a un álbum se pregunta si se iguala su visibilidad y prioridad a las
+    // del álbum (solo si difieren). Si el usuario cierra el menú, no se añade.
+    let sync: AlbumSyncChanges = {};
+    if (!isCurrentlySelected) {
+      const album = (albumsData ?? []).find((a: any) => a.id === albumId);
+      if (album) {
+        const answer = await askAlbumSync(album, [
+          { visibility: bucket?.visibility, priority: bucket?.priority },
+        ]);
+        if (answer === null) return;
+        sync = answer;
+      }
+    }
+    const patch = albumSyncToBucketPatch(sync);
+    const hasPatch = Object.keys(patch).length > 0;
+
     // Optimista: el selector de álbumes y la lista del álbum cambian al instante.
     const snap = await beginOptimistic(queryClient);
     if (isCurrentlySelected) {
@@ -702,30 +725,44 @@ export function useBucketDetailState() {
     } else {
       queryClient.setQueryData(['bucketAlbum', id], (old: any) => [...(old ?? []), { album_id: albumId }]);
       applyAddToAlbum(queryClient, [id], albumId);
+      if (hasPatch) {
+        patchTasks(queryClient, [id], {
+          bucket: patch,
+          task: sync.priority ? { priority: sync.priority } : undefined,
+        });
+      }
     }
 
+    // 1) Visibilidad / prioridad de la tarea (comprobando el error: antes se ignoraba).
+    if (hasPatch) {
+      const { error: patchError } = await supabase.from('buckets').update(patch).eq('id', id);
+      if (patchError) {
+        rollbackOptimistic(queryClient, snap);
+        Alert.alert(t('add_task.sync_error'), patchError.message);
+        return;
+      }
+    }
+
+    // 2) Pertenencia al álbum.
     const { error } = isCurrentlySelected
       ? await supabase.from('album_items').delete().eq('bucket_id', id).eq('album_id', albumId)
       : await supabase.from('album_items').insert({ album_id: albumId, bucket_id: id, position: 0 });
 
     if (error) {
       rollbackOptimistic(queryClient, snap);
+      // La tarea ya se había actualizado en la BD: se revalida para reflejar el estado real.
+      if (hasPatch) settleAlbumSyncCaches(queryClient, [id]);
       Alert.alert('Error', error.message);
       return;
     }
-    settleTaskCaches(queryClient);
+    if (hasPatch) settleAlbumSyncCaches(queryClient, [id]);
+    else settleTaskCaches(queryClient);
   };
 
   const removeAllAlbums = async () => {
     if (!user) return;
-    const okRemove = await confirm.ask({
-      title: t('bucket.remove_from_all_albums_title'),
-      message: t('bucket.remove_from_all_albums_msg'),
-      confirmLabel: t('common.delete'),
-      cancelLabel: t('common.cancel'),
-    });
-    if (!okRemove) return;
 
+    // «Sin álbum»: se aplica directamente, sin diálogo de confirmación.
     // Optimista: se vacía al instante y la hoja se cierra sin esperar a la red.
     const snap = await beginOptimistic(queryClient);
     applyMoveTasks(queryClient, [id], null);
@@ -1796,6 +1833,7 @@ export function useBucketDetailState() {
     loadAlbums,
     toggleAlbum,
     removeAllAlbums,
+    albumSyncSheet,
     toggleMention,
     removeMention,
     handleMoveMention,

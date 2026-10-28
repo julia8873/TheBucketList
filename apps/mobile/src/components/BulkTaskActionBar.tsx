@@ -18,6 +18,8 @@ import {
 } from 'lucide-react-native';
 import { useBulkTaskOperations } from '../hooks/useBulkTaskOperations';
 import { useAlbums } from '../hooks/useAlbums';
+import { useAlbumSync, type AlbumSyncChanges } from '../hooks/useAlbumSync';
+import { supabase } from '../services/supabase';
 import { useAuthStore } from '../stores/auth.store';
 import { CollaboratorPickerSheet, type CollaboratorItem } from './CollaboratorPickerSheet';
 
@@ -62,6 +64,7 @@ export function BulkTaskActionBar({
   } = useBulkTaskOperations();
 
   const { data: albums = [] } = useAlbums(user?.id);
+  const { askAlbumSync, albumSyncSheet } = useAlbumSync();
 
   // Modals state
   const [showMoveModal, setShowMoveModal] = useState(false);
@@ -83,52 +86,35 @@ export function BulkTaskActionBar({
     const targetAlbum = albumId ? albums.find((a: any) => a.id === albumId) : null;
     const albumName = targetAlbum?.title;
 
-    const executeMove = async (updateVis?: 'public' | 'followers' | 'private') => {
+    const executeMove = async (changes: AlbumSyncChanges = {}) => {
       // Actualización optimista: la UI cambia al instante; el servidor se sincroniza detrás.
       const pending = moveTasksToAlbum.mutateAsync({
-          taskIds: selectedIds,
-          albumId,
-          updateVisibility: updateVis,
-        });
+        taskIds: selectedIds,
+        albumId,
+        updateVisibility: changes.visibility,
+        updatePriority: changes.priority,
+      });
       setShowMoveModal(false);
       onClearSelection();
       toast.success(albumId ? t('bulk_actions.toast_moved_album') : t('bulk_actions.toast_removed_album'));
       try {
         await pending;
       } catch (e: any) {
-        toast.error(e?.message || 'No se pudieron mover las tareas');
+        toast.error(e?.message || t('bulk_actions.move_error'));
       }
     };
 
-    if (albumId && targetAlbum?.visibility) {
-      const visLabels: Record<string, string> = {
-        private: t('albums.visibility_private').toLowerCase(),
-        followers: t('albums.visibility_followers').toLowerCase(),
-        public: t('albums.visibility_public').toLowerCase(),
-      };
-      const visLabel = visLabels[targetAlbum.visibility] || targetAlbum.visibility;
-
-      confirm.show({
-        title: count === 1
-          ? t('bulk_actions.confirm_change_vis_title_single')
-          : t('bulk_actions.confirm_change_vis_title_plural'),
-        message: t('bulk_actions.confirm_change_vis_msg', {
-          albumName: albumName || t('common.albums'),
-          visLabel,
-          plural,
-        }),
-        actions: [
-          {
-            label: t('bulk_actions.set_to_vis', { visLabel }),
-            onPress: () => void executeMove(targetAlbum.visibility as any),
-          },
-          {
-            label: t('bulk_actions.keep_current'),
-            style: 'cancel',
-            onPress: () => void executeMove(undefined),
-          },
-        ],
-      });
+    if (albumId && targetAlbum) {
+      // Se compara cada tarea con el álbum (datos reales de la BD) y, si difiere su
+      // visibilidad o prioridad, se pregunta si se igualan a las del álbum.
+      const { data: rows } = await supabase
+        .from('buckets')
+        .select('id, visibility, priority')
+        .in('id', selectedIds);
+      const tasks = rows && rows.length > 0 ? rows : selectedIds.map(() => ({}));
+      const answer = await askAlbumSync(targetAlbum, tasks);
+      if (answer === null) return;
+      await executeMove(answer);
       return;
     }
 
@@ -140,7 +126,7 @@ export function BulkTaskActionBar({
       t('bulk_actions.action_move'),
     );
     if (!okMove) return;
-    await executeMove(undefined);
+    await executeMove();
   };
 
   const handleAssignTags = async () => {
@@ -340,6 +326,9 @@ export function BulkTaskActionBar({
         onClose={() => setShowMoveModal(false)}
         onSelectAlbum={(albId) => void handleMoveToAlbum(albId)}
       />
+
+      {/* Pregunta al mover a un álbum: igualar visibilidad y prioridad */}
+      {albumSyncSheet}
 
       <BulkTagsSheet
         visible={showTagsModal}

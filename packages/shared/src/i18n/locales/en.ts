@@ -1637,6 +1637,7 @@ const en = {
     remove_from_album_msg: '{{plural}} will be removed from their album (unassigned).',
     toast_moved_album: 'Tasks moved to album',
     toast_removed_album: 'Tasks removed from album',
+    move_error: 'Could not move the tasks',
     toast_tags_assigned: 'Tags assigned',
     toast_shared: 'Added {{name}} to {{count}} tasks.',
     toast_completed: '{{count}} tasks completed',
@@ -1869,6 +1870,25 @@ const en = {
     sync_visibility_sub_other: '{{count}} tasks have a different visibility',
     sync_apply: 'Apply and add',
     sync_keep: 'Keep as they are',
+    sync_title_single: 'Adjust the task',
+    sync_priority_sub_task: 'The task has a different priority',
+    sync_visibility_sub_task: 'The task has a different visibility',
+    sync_apply_single: 'Apply and add',
+    sync_keep_single: 'Keep as it is',
+    sync_error: 'Could not update the task priority or visibility',
+  },
+
+  album_picker: {
+    title: 'Select album',
+    search_placeholder: 'Search album...',
+    no_album: 'No album',
+    no_album_desc: 'Leave the task without a folder or album',
+    task_one: 'task',
+    task_other: 'tasks',
+    empty_title: "You don't have any albums yet",
+    empty_subtitle: 'You can create an album from your list or profile to organize your tasks.',
+    no_results_title: 'No albums found',
+    no_results_subtitle: 'Try a different search term.',
   },
 
   task_form: {

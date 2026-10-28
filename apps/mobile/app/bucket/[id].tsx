@@ -676,6 +676,9 @@ export default function BucketDetailScreen() {
         handleChangePriority={state.handleChangePriority}
       />
 
+      {/* Pregunta al añadir la tarea a un álbum: igualar visibilidad y prioridad */}
+      {state.albumSyncSheet}
+
       {/* Modales adicionales */}
       <PhotoSortModal
         visible={state.photoSortMenuOpen}

@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Search, Check, Folder, FolderOpen, X, Globe, Lock, Users } from 'lucide-react-native';
 import { fontFamily } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { useAlbums, type AlbumWithProgress } from '../hooks/useAlbums';
 import { useAuthStore } from '../stores/auth.store';
 
@@ -32,6 +33,7 @@ export function AlbumPickerSheet({
   onSelectAlbum,
   onClose,
 }: AlbumPickerSheetProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
   const { data: albums = [], isLoading } = useAlbums(user?.id);
@@ -53,11 +55,11 @@ export function AlbumPickerSheet({
   const getVisibilityLabel = (visibility: string) => {
     switch (visibility) {
       case 'public':
-        return 'Pública';
+        return t('albums.visibility_public');
       case 'followers':
-        return 'Seguidores';
+        return t('albums.visibility_followers');
       case 'private':
-        return 'Privada';
+        return t('albums.visibility_private');
       default:
         return '';
     }
@@ -97,7 +99,7 @@ export function AlbumPickerSheet({
               <View style={styles.headerRow}>
                 <View style={styles.headerTitleContainer}>
                   <Folder color="#D4B13A" size={20} />
-                  <Text style={styles.headerTitle}>Seleccionar álbum</Text>
+                  <Text style={styles.headerTitle}>{t('album_picker.title')}</Text>
                 </View>
                 <Pressable onPress={onClose} hitSlop={12} style={styles.closeButton}>
                   <X color="#999" size={20} />
@@ -111,7 +113,7 @@ export function AlbumPickerSheet({
                 <Search color="#666" size={18} />
                 <TextInput
                   style={styles.searchInput}
-                  placeholder="Buscar álbum..."
+                  placeholder={t('album_picker.search_placeholder')}
                   placeholderTextColor="#666"
                   value={searchQuery}
                   onChangeText={setSearchQuery}
@@ -136,7 +138,7 @@ export function AlbumPickerSheet({
                 contentContainerStyle={styles.listContent}
                 keyboardShouldPersistTaps="handled"
               >
-                {/* Option: Sin álbum */}
+                {/* Opción «Sin álbum» */}
                 <Pressable
                   style={[
                     styles.albumRow,
@@ -148,8 +150,8 @@ export function AlbumPickerSheet({
                     <FolderOpen color={selectedAlbumId === null ? '#111' : '#D4B13A'} size={20} />
                   </View>
                   <View style={styles.albumInfo}>
-                    <Text style={styles.albumTitle}>Sin álbum</Text>
-                    <Text style={styles.albumSubtitle}>Dejar la tarea sin carpeta o álbum asignado</Text>
+                    <Text style={styles.albumTitle}>{t('album_picker.no_album')}</Text>
+                    <Text style={styles.albumSubtitle}>{t('album_picker.no_album_desc')}</Text>
                   </View>
                   <View style={[styles.checkCircle, selectedAlbumId === null && styles.checkCircleSelected]}>
                     {selectedAlbumId === null && <Check color="#111" size={14} strokeWidth={3} />}
@@ -182,7 +184,7 @@ export function AlbumPickerSheet({
                             </View>
                           )}
                           <Text style={styles.taskCount}>
-                            {album.total_tasks} {album.total_tasks === 1 ? 'tarea' : 'tareas'}
+                            {album.total_tasks} {t(album.total_tasks === 1 ? 'album_picker.task_one' : 'album_picker.task_other')}
                           </Text>
                         </View>
                       </View>
@@ -196,18 +198,16 @@ export function AlbumPickerSheet({
                 {albums.length === 0 && (
                   <View style={styles.emptyContainer}>
                     <Folder color="#444" size={42} />
-                    <Text style={styles.emptyTitle}>No tienes álbumes creados</Text>
-                    <Text style={styles.emptySubtitle}>
-                      Puedes crear un álbum desde tu lista o perfil para organizar tus tareas.
-                    </Text>
+                    <Text style={styles.emptyTitle}>{t('album_picker.empty_title')}</Text>
+                    <Text style={styles.emptySubtitle}>{t('album_picker.empty_subtitle')}</Text>
                   </View>
                 )}
 
                 {albums.length > 0 && filteredAlbums.length === 0 && (
                   <View style={styles.emptyContainer}>
                     <Search color="#444" size={32} />
-                    <Text style={styles.emptyTitle}>No se encontró ningún álbum</Text>
-                    <Text style={styles.emptySubtitle}>Prueba con otro término de búsqueda.</Text>
+                    <Text style={styles.emptyTitle}>{t('album_picker.no_results_title')}</Text>
+                    <Text style={styles.emptySubtitle}>{t('album_picker.no_results_subtitle')}</Text>
                   </View>
                 )}
               </ScrollView>

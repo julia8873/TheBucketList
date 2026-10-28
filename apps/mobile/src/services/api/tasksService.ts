@@ -52,6 +52,7 @@ import { applyAlbumTagsToTasks } from '../../hooks/useAlbumTags';
 import {
   applyAddToAlbum,
   beginOptimistic,
+  patchTasks,
   rollbackOptimistic,
   settleTaskCaches,
 } from '../../utils/optimisticCache';
@@ -152,9 +153,11 @@ export const tasksService = {
     if (updateVisibility) patch.visibility = updateVisibility;
     if (updatePriority) patch.priority = updatePriority;
     if (Object.keys(patch).length > 0) {
-      await supabase.from('buckets').update(patch).in('id', taskIds);
+      // Antes el error se ignoraba y la tarea podía quedarse sin actualizar sin avisar.
+      const { error: patchError } = await supabase.from('buckets').update(patch).in('id', taskIds);
+      if (patchError) throw patchError;
     }
-    
+
     // Las tareas nuevas van al final del orden manual del álbum.
     const { data: last } = await supabase
       .from('album_items')
@@ -255,16 +258,29 @@ export function useAssignTasks() {
       updatePriority?: 'low' | 'medium' | 'high' | 'urgent';
     }) => tasksService.assignTasksToAlbum(albumId, taskIds, updateVisibility, updatePriority),
     // Las tareas aparecen en el álbum al instante (si tenemos sus datos en caché).
-    onMutate: async ({ albumId, taskIds }: { albumId: string; taskIds: string[]; updateVisibility?: 'public' | 'followers' | 'private'; updatePriority?: 'low' | 'medium' | 'high' | 'urgent' }) => {
+    onMutate: async ({ albumId, taskIds, updateVisibility, updatePriority }: { albumId: string; taskIds: string[]; updateVisibility?: 'public' | 'followers' | 'private'; updatePriority?: 'low' | 'medium' | 'high' | 'urgent' }) => {
       const snap = await beginOptimistic(queryClient);
       applyAddToAlbum(queryClient, taskIds, albumId);
+      // La visibilidad / prioridad elegidas se ven al instante en listas, álbumes y detalle.
+      const bucketPatch: Record<string, string> = {};
+      if (updateVisibility) bucketPatch.visibility = updateVisibility;
+      if (updatePriority) bucketPatch.priority = updatePriority;
+      if (Object.keys(bucketPatch).length > 0) {
+        patchTasks(queryClient, taskIds, {
+          bucket: bucketPatch,
+          task: updatePriority ? { priority: updatePriority } : undefined,
+        });
+      }
       return { snap };
     },
     onError: (_e, _vars, ctx) => {
       rollbackOptimistic(queryClient, ctx?.snap);
     },
-    onSettled: () => {
+    onSettled: (_data, _err, vars) => {
       settleTaskCaches(queryClient);
+      // El detalle de cada tarea y el feed dependen de la visibilidad / prioridad.
+      vars?.taskIds.forEach((id) => void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] }));
+      void queryClient.invalidateQueries({ queryKey: ['feed'] });
     },
   });
 }

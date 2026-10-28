@@ -1637,6 +1637,7 @@ const es = {
     remove_from_album_msg: 'Se sacarán de su álbum {{plural}} (quedarán sin álbum).',
     toast_moved_album: 'Tareas movidas al álbum',
     toast_removed_album: 'Tareas sacadas del álbum',
+    move_error: 'No se pudieron mover las tareas',
     toast_tags_assigned: 'Etiquetas asignadas',
     toast_shared: 'Se ha añadido a {{name}} a las {{count}} tareas.',
     toast_completed: '{{count}} tareas completadas',
@@ -1869,6 +1870,25 @@ const es = {
     sync_visibility_sub_other: '{{count}} tareas tienen otra visibilidad',
     sync_apply: 'Aplicar y añadir',
     sync_keep: 'Mantener como están',
+    sync_title_single: 'Ajustar la tarea',
+    sync_priority_sub_task: 'La tarea tiene otra prioridad',
+    sync_visibility_sub_task: 'La tarea tiene otra visibilidad',
+    sync_apply_single: 'Aplicar y añadir',
+    sync_keep_single: 'Mantener como está',
+    sync_error: 'No se pudo actualizar la prioridad o la visibilidad de la tarea',
+  },
+
+  album_picker: {
+    title: 'Seleccionar álbum',
+    search_placeholder: 'Buscar álbum...',
+    no_album: 'Sin álbum',
+    no_album_desc: 'Dejar la tarea sin carpeta o álbum asignado',
+    task_one: 'tarea',
+    task_other: 'tareas',
+    empty_title: 'No tienes álbumes creados',
+    empty_subtitle: 'Puedes crear un álbum desde tu lista o perfil para organizar tus tareas.',
+    no_results_title: 'No se encontró ningún álbum',
+    no_results_subtitle: 'Prueba con otro término de búsqueda.',
   },
 
   task_form: {

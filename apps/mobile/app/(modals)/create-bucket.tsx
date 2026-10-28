@@ -16,6 +16,7 @@ import { CollaboratorPickerSheet, type CollaboratorItem } from '../../src/compon
 import { AlbumPickerSheet } from '../../src/components/AlbumPickerSheet';
 import { GoogleDriveModal } from '../../src/components/GoogleDriveModal';
 import { useAlbums } from '../../src/hooks/useAlbums';
+import { useAlbumSync, toSyncPriority } from '../../src/hooks/useAlbumSync';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { ChevronLeft } from 'lucide-react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
@@ -37,6 +38,7 @@ export default function CreateBucketModal() {
   const { theme } = useTheme();
   const { user } = useAuthStore();
   const { data: albums = [] } = useAlbums(user?.id);
+  const { askAlbumSync, albumSyncSheet } = useAlbumSync();
 
   const [coverImage, setCoverImage] = useState<string>('preset:green');
   const [isUploadingCover, setIsUploadingCover] = useState(false);
@@ -72,14 +74,17 @@ export default function CreateBucketModal() {
   });
 
   useEffect(() => {
-    // Si la tarea se crea dentro de un álbum, usar preferentemente la visibilidad del álbum
+    // Si la tarea se crea dentro de un álbum, usar preferentemente la visibilidad y la prioridad
+    // del álbum como valores iniciales (el usuario puede cambiarlas en el formulario).
     if (params.albumId && params.albumId !== 'new') {
       void supabase
         .from('albums')
-        .select('visibility')
+        .select('visibility, priority')
         .eq('id', params.albumId)
         .maybeSingle()
         .then(({ data }) => {
+          const albumPriority = toSyncPriority((data as any)?.priority);
+          if (albumPriority) setValue('priority', albumPriority);
           const albumVis = data?.visibility;
           if (albumVis === 'public' || albumVis === 'followers' || albumVis === 'private') {
             setValue('visibility', albumVis);
@@ -107,6 +112,29 @@ export default function CreateBucketModal() {
   const locationTextValue = watch('location_text') || '';
   const deadlineValue = watch('deadline');
   const visibilityValue = watch('visibility');
+  const priorityValue = watch('priority');
+
+  /**
+   * Al elegir un álbum en el selector se pregunta si la tarea adopta la visibilidad y la
+   * prioridad del álbum. Si el usuario cierra la pregunta, se mantiene el álbum anterior.
+   */
+  const handleSelectAlbum = async (newAlbumId: string | null) => {
+    const album = newAlbumId && newAlbumId !== albumId ? albums.find((a) => a.id === newAlbumId) : undefined;
+    if (!album) {
+      setAlbumId(newAlbumId);
+      return;
+    }
+    const answer = await askAlbumSync(
+      album,
+      [{ visibility: visibilityValue, priority: priorityValue }],
+      // En iOS el selector aún se está cerrando: se espera a que termine para abrir la pregunta.
+      { delayMs: Platform.OS === 'ios' ? 450 : 0 },
+    );
+    if (answer === null) return;
+    setAlbumId(album.id);
+    if (answer.visibility) setValue('visibility', answer.visibility);
+    if (answer.priority) setValue('priority', answer.priority);
+  };
 
   const onSubmit = async (data: CreateBucketForm) => {
     try {
@@ -384,9 +412,11 @@ export default function CreateBucketModal() {
         <AlbumPickerSheet
           visible={showAlbumPicker}
           selectedAlbumId={albumId}
-          onSelectAlbum={setAlbumId}
+          onSelectAlbum={(id) => void handleSelectAlbum(id)}
           onClose={() => setShowAlbumPicker(false)}
         />
+
+        {albumSyncSheet}
 
         <LocationPickerModal
           visible={isEditingLocation}

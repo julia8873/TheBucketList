@@ -9,6 +9,8 @@ interface AddTaskSyncSheetProps {
   prompt: AddTaskSyncPrompt | null;
   onClose: () => void;
   onConfirm: (apply: { visibility: boolean; priority: boolean }) => void;
+  /** Se pregunta por una única tarea (textos en singular, sin contadores). */
+  single?: boolean;
 }
 
 const GOLD = '#D4B13A';
@@ -17,7 +19,7 @@ const GOLD = '#D4B13A';
  * Menú inferior que aparece al añadir tareas a un álbum cuando su prioridad o visibilidad
  * difieren de las del álbum. Permite elegir qué propiedades se igualan a las del álbum.
  */
-export function AddTaskSyncSheet({ prompt, onClose, onConfirm }: AddTaskSyncSheetProps) {
+export function AddTaskSyncSheet({ prompt, onClose, onConfirm, single = false }: AddTaskSyncSheetProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [applyPriority, setApplyPriority] = useState(true);
@@ -63,6 +65,7 @@ export function AddTaskSyncSheet({ prompt, onClose, onConfirm }: AddTaskSyncShee
     prompt.albumVisibility === 'public' ? Eye : prompt.albumVisibility === 'followers' ? Users : Lock;
 
   const countText = (count: number, kind: 'priority' | 'visibility') => {
+    if (single) return t(`add_task.sync_${kind}_sub_task`);
     const one = count === 1;
     return t(`add_task.sync_${kind}_sub_${one ? 'one' : 'other'}`, { count });
   };
@@ -100,7 +103,7 @@ export function AddTaskSyncSheet({ prompt, onClose, onConfirm }: AddTaskSyncShee
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel={t('common.close')} />
         <View style={[localStyles.sheet, { paddingBottom: Math.max(24, insets.bottom + 12) }]}>
           <View style={localStyles.handle} />
-          <Text style={localStyles.title}>{t('add_task.sync_title')}</Text>
+          <Text style={localStyles.title}>{t(single ? 'add_task.sync_title_single' : 'add_task.sync_title')}</Text>
           <Text style={localStyles.subtitle}>
             {t('add_task.sync_subtitle', { albumName: prompt.albumName })}
           </Text>
@@ -135,7 +138,9 @@ export function AddTaskSyncSheet({ prompt, onClose, onConfirm }: AddTaskSyncShee
             accessibilityRole="button"
           >
             <Text style={localStyles.primaryBtnText}>
-              {nothingSelected ? t('add_task.sync_keep') : t('add_task.sync_apply')}
+              {nothingSelected
+                ? t(single ? 'add_task.sync_keep_single' : 'add_task.sync_keep')
+                : t(single ? 'add_task.sync_apply_single' : 'add_task.sync_apply')}
             </Text>
           </Pressable>
 
@@ -145,7 +150,9 @@ export function AddTaskSyncSheet({ prompt, onClose, onConfirm }: AddTaskSyncShee
               onPress={() => onConfirm({ priority: false, visibility: false })}
               accessibilityRole="button"
             >
-              <Text style={localStyles.secondaryBtnText}>{t('add_task.sync_keep')}</Text>
+              <Text style={localStyles.secondaryBtnText}>
+                {t(single ? 'add_task.sync_keep_single' : 'add_task.sync_keep')}
+              </Text>
             </Pressable>
           )}
         </View>

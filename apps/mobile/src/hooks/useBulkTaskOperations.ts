@@ -4,6 +4,7 @@ import { useAuthStore } from '../stores/auth.store';
 import { triggerTaskCompletedHaptic } from '../stores/haptics.store';
 import { toast } from '@bucketlist/ui';
 import { i18n } from '@bucketlist/shared';
+import { albumSyncToBucketPatch, type SyncPriority, type SyncVisibility } from './useAlbumSync';
 import {
   applyAddTagsToTasks,
   applyDeleteTasks,
@@ -14,6 +15,13 @@ import {
   settleTaskCaches,
   type CacheSnapshot,
 } from '../utils/optimisticCache';
+
+interface MoveTasksVars {
+  taskIds: string[];
+  albumId: string | null;
+  updateVisibility?: SyncVisibility;
+  updatePriority?: SyncPriority;
+}
 
 export function useBulkTaskOperations() {
   const queryClient = useQueryClient();
@@ -57,23 +65,20 @@ export function useBulkTaskOperations() {
   };
 
   // 1. Mover de álbum (o poner Sin Álbum)
+  //    `updateVisibility` / `updatePriority`: igualar esas propiedades de las tareas a las del álbum.
   const moveTasksToAlbum = useMutation({
     mutationFn: async ({
       taskIds,
       albumId,
       updateVisibility,
-    }: {
-      taskIds: string[];
-      albumId: string | null;
-      updateVisibility?: 'public' | 'followers' | 'private';
-    }) => {
+      updatePriority,
+    }: MoveTasksVars) => {
       if (!taskIds.length) return;
 
-      if (updateVisibility) {
-        await supabase
-          .from('buckets')
-          .update({ visibility: updateVisibility })
-          .in('id', taskIds);
+      const patch = albumSyncToBucketPatch({ visibility: updateVisibility, priority: updatePriority });
+      if (Object.keys(patch).length > 0) {
+        const { error: patchErr } = await supabase.from('buckets').update(patch).in('id', taskIds);
+        if (patchErr) throw patchErr;
       }
 
       // Primero borrar de cualquier álbum anterior
@@ -94,14 +99,21 @@ export function useBulkTaskOperations() {
         if (insErr) throw insErr;
       }
     },
-    ...optimistic<{ taskIds: string[]; albumId: string | null; updateVisibility?: 'public' | 'followers' | 'private' }>(
-      ({ taskIds, albumId, updateVisibility }) => {
+    ...optimistic<MoveTasksVars>(
+      ({ taskIds, albumId, updateVisibility, updatePriority }) => {
         applyMoveTasks(queryClient, taskIds, albumId);
-        if (updateVisibility) {
-          patchTasks(queryClient, taskIds, { bucket: { visibility: updateVisibility } });
+        const patch = albumSyncToBucketPatch({ visibility: updateVisibility, priority: updatePriority });
+        if (Object.keys(patch).length > 0) {
+          patchTasks(queryClient, taskIds, {
+            bucket: patch,
+            task: updatePriority ? { priority: updatePriority } : undefined,
+          });
         }
       },
-      settleExtras,
+      () => {
+        settleExtras();
+        void queryClient.invalidateQueries({ queryKey: ['bucketDetail'] });
+      },
     ),
   });
 
