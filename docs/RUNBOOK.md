@@ -162,7 +162,7 @@ If a project was inactive for 7+ days and got paused:
 
 ### Google OAuth failing on Android
 1. Verify SHA-1 is registered in Firebase console (see `SETUP.md` section 8)
-2. Check that `google-services.json` is correct and matches the package name `com.bucketlist.app`
+2. Check that `google-services.json` is correct and matches the package name `com.thebucketlist.app`
 3. Verify `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` in `.env`
 
 ---

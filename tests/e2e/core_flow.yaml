@@ -1,4 +1,4 @@
-appId: com.bucketlist.app
+appId: com.thebucketlist.app
 ---
 - launchApp:
     clearState: true

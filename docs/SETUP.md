@@ -142,7 +142,7 @@ keytool -list -v \
 
 ### Register in Firebase Console
 1. Go to **Firebase Console** → Your project → **Project Settings**
-2. Under **Your apps** → Android app (`com.bucketlist.app`)
+2. Under **Your apps** → Android app (`com.thebucketlist.app`)
 3. Click **Add fingerprint** → paste the SHA1 → **Save**
 
 ### Configure .env
@@ -157,7 +157,7 @@ EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID=123456789-yyy.apps.googleusercontent.com
 
 1. Go to https://console.firebase.google.com → **Add project** → `bucketlist-dev`
 2. **No Google Analytics** needed (free plan)
-3. **Add Android app:** package name `com.bucketlist.app`
+3. **Add Android app:** package name `com.thebucketlist.app`
 4. Download `google-services.json` → place in `apps/mobile/google-services.json`
    > ⚠️ This file is in `.gitignore`. NEVER commit it.
 5. **Project Settings** → **Cloud Messaging** → note the **Server key** (not used for HTTP v1, but keep it)

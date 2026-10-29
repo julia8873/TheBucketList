@@ -17,7 +17,7 @@
     ],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.bucketlist.app",
+      "bundleIdentifier": "com.thebucketlist.app",
       "buildNumber": "2"
     },
     "android": {
@@ -25,7 +25,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0F0F0F"
       },
-      "package": "com.bucketlist.app",
+      "package": "com.thebucketlist.app",
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECEIVE_BOOT_COMPLETED",
