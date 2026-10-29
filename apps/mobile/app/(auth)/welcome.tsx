@@ -17,8 +17,11 @@ export default function WelcomeScreen() {
         <Text style={[styles.logo, { color: theme.colors.foreground }]} accessibilityRole="header">
           The<Text style={{ color: theme.colors.primary }}>Bucket</Text>List
         </Text>
+        <Text style={[styles.subtitle, { color: theme.colors.foreground }]}>
+          {t('auth.subtitle')}
+        </Text>
         <Text style={[styles.slogan, { color: theme.colors.foregroundMuted }]}>
-          {t('auth.slogan')}
+          “{t('auth.slogan')}”
         </Text>
       </View>
 
