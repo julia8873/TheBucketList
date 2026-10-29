@@ -2,6 +2,30 @@ import { supabase } from '../supabase';
 import { blockReportApi } from './blockReport';
 
 const PAGE_SIZE = 10;
+// Máximo de IDs que se envían en el filtro `not in` del servidor (evita URLs enormes).
+// Siempre se vuelve a filtrar en cliente, así que el resultado es correcto aunque se supere.
+const MAX_SERVER_EXCLUDE_IDS = 150;
+
+/**
+ * IDs de tareas (de otras personas) en las que el usuario ya es colaborador
+ * (aceptado o con invitación pendiente). Esas tareas ya aparecen en "Mi lista",
+ * así que no deben repetirse en "Momentos de amigos" ni en "Explorar".
+ */
+const getCollaboratingBucketIds = async (userId?: string): Promise<string[]> => {
+  if (!userId) return [];
+  try {
+    const { data, error } = await supabase
+      .from('bucket_collaborators')
+      .select('bucket_id')
+      .eq('user_id', userId)
+      .in('status', ['accepted', 'pending']);
+    if (error) throw error;
+    return Array.from(new Set((data ?? []).map((c: any) => c.bucket_id as string)));
+  } catch (err) {
+    console.warn('Error fetching collaborating bucket ids:', err);
+    return [];
+  }
+};
 
 export const feedApi = {
   /**
@@ -9,17 +33,19 @@ export const feedApi = {
    * Se excluyen las tareas del propio usuario y de usuarios bloqueados.
    */
   getFeed: async (userId: string, pageParam: number = 0) => {
-    const [followsRes, blockedIds] = await Promise.all([
+    const [followsRes, blockedIds, collabBucketIds] = await Promise.all([
       supabase
         .from('follows')
         .select('following_id')
         .eq('follower_id', userId)
         .eq('status', 'accepted'),
       blockReportApi.getMutualBlockedUserIds(userId),
+      getCollaboratingBucketIds(userId),
     ]);
     if (followsRes.error) throw followsRes.error;
 
     const blockedSet = new Set(blockedIds);
+    const collabSet = new Set(collabBucketIds);
 
     // Solo amigos seguidos (excluyendo al propio usuario y a usuarios con bloqueo)
     const targetIds = (followsRes.data ?? [])
@@ -34,7 +60,7 @@ export const feedApi = {
     }
 
     // Obtenemos todas las tareas públicas y visibles para seguidores de nuestros amigos
-    const { data, error } = await supabase
+    let feedQuery = supabase
       .from('buckets')
       .select(
         `
@@ -47,7 +73,14 @@ export const feedApi = {
       `
       )
       .in('user_id', targetIds)
-      .in('visibility', ['public', 'followers'])
+      .in('visibility', ['public', 'followers']);
+
+    // Excluir tareas en las que ya soy colaborador
+    if (collabBucketIds.length > 0 && collabBucketIds.length <= MAX_SERVER_EXCLUDE_IDS) {
+      feedQuery = feedQuery.not('id', 'in', `(${collabBucketIds.join(',')})`);
+    }
+
+    const { data, error } = await feedQuery
       .order('created_at', { ascending: false })
       .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1);
 
@@ -55,7 +88,10 @@ export const feedApi = {
 
     // Mapear al formato que espera FeedCard y la lista de amigos
     const items = (data ?? [])
-      .filter((b: any) => b.user_id !== userId && targetIds.includes(b.user_id))
+      .filter(
+        (b: any) =>
+          b.user_id !== userId && targetIds.includes(b.user_id) && !collabSet.has(b.id)
+      )
       .map((b: any) => ({
         id: b.id,
         actor_id: b.user_id,
@@ -78,16 +114,19 @@ export const feedApi = {
   getExploreFeed: async (pageParam: number = 0, userId?: string) => {
     const limit = 15;
     let excludedUserIds: string[] = [];
+    let collabBucketIds: string[] = [];
 
     if (userId) {
-      const [followsRes, blockedIds] = await Promise.all([
+      const [followsRes, blockedIds, collabIds] = await Promise.all([
         supabase
           .from('follows')
           .select('following_id')
           .eq('follower_id', userId)
           .eq('status', 'accepted'),
         blockReportApi.getMutualBlockedUserIds(userId),
+        getCollaboratingBucketIds(userId),
       ]);
+      collabBucketIds = collabIds;
 
       const friendIds = (followsRes.data ?? []).map((f: any) => f.following_id as string);
       // Excluir al propio usuario, a todos sus amigos Y a usuarios con bloqueo
@@ -114,6 +153,11 @@ export const feedApi = {
       query = query.not('user_id', 'in', `(${excludedUserIds.join(',')})`);
     }
 
+    // Excluir tareas en las que ya soy colaborador
+    if (collabBucketIds.length > 0 && collabBucketIds.length <= MAX_SERVER_EXCLUDE_IDS) {
+      query = query.not('id', 'in', `(${collabBucketIds.join(',')})`);
+    }
+
     const { data, error } = await query.range(
       pageParam * limit,
       (pageParam + 1) * limit - 1
@@ -122,7 +166,10 @@ export const feedApi = {
     if (error) throw error;
 
     const excludedSet = new Set(excludedUserIds);
-    const items = (data ?? []).filter((b: any) => !excludedSet.has(b.user_id));
+    const collabSet = new Set(collabBucketIds);
+    const items = (data ?? []).filter(
+      (b: any) => !excludedSet.has(b.user_id) && !collabSet.has(b.id)
+    );
 
     return {
       items,
@@ -306,16 +353,19 @@ export const feedApi = {
     // 1. Resolver usuarios bloqueados y amigos si aplica
     let blockedIds: string[] = [];
     let friendIds: string[] = [];
+    let collabBucketIds: string[] = [];
     if (userId) {
-      const [bIds, followsRes] = await Promise.all([
+      const [bIds, followsRes, collabIds] = await Promise.all([
         blockReportApi.getMutualBlockedUserIds(userId),
         supabase
           .from('follows')
           .select('following_id')
           .eq('follower_id', userId)
           .eq('status', 'accepted'),
+        getCollaboratingBucketIds(userId),
       ]);
       blockedIds = bIds;
+      collabBucketIds = collabIds;
       friendIds = (followsRes.data ?? []).map((f: any) => f.following_id as string);
     }
 
@@ -441,6 +491,11 @@ export const feedApi = {
       }
     }
 
+    // Excluir tareas en las que ya soy colaborador
+    if (collabBucketIds.length > 0 && collabBucketIds.length <= MAX_SERVER_EXCLUDE_IDS) {
+      taskQuery = taskQuery.not('id', 'in', `(${collabBucketIds.join(',')})`);
+    }
+
     const [taskRes, albumRes, userRes] = await Promise.all([
       taskQuery.order('created_at', { ascending: false }).limit(limit),
       albumQuery.order('created_at', { ascending: false }).limit(limit),
@@ -452,17 +507,20 @@ export const feedApi = {
     if (userRes.error) console.warn('Search users error:', userRes.error);
 
     // Mapear tareas para FeedCard
-    const mappedTasks = (taskRes.data ?? []).map((b: any) => ({
-      id: b.id,
-      actor_id: b.user_id,
-      bucket_id: b.id,
-      actor: b.actor || b.user,
-      user: b.user || b.actor,
-      bucket: b,
-      type: b.status === 'completed' ? 'completed' : 'new_bucket',
-      created_at: b.completed_at || b.created_at,
-      _type: 'task' as const,
-    }));
+    const collabSet = new Set(collabBucketIds);
+    const mappedTasks = (taskRes.data ?? [])
+      .filter((b: any) => !collabSet.has(b.id))
+      .map((b: any) => ({
+        id: b.id,
+        actor_id: b.user_id,
+        bucket_id: b.id,
+        actor: b.actor || b.user,
+        user: b.user || b.actor,
+        bucket: b,
+        type: b.status === 'completed' ? 'completed' : 'new_bucket',
+        created_at: b.completed_at || b.created_at,
+        _type: 'task' as const,
+      }));
 
     // Mapear álbumes
     const foundAlbumIds = (albumRes.data ?? []).map((a: any) => a.id);
