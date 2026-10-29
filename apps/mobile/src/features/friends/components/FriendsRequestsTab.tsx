@@ -61,7 +61,7 @@ export function FriendsRequestsTab({
         <GoldLabel>{t('friends.requests_received', { count: incomingList.length })}</GoldLabel>
       </View>
       {incomingList.length === 0 ? (
-        <Text style={styles.empty}>{t('friends.requests_empty_incoming')}</Text>
+        <Text style={[styles.empty, { color: theme.colors.foregroundMuted }]}>{t('friends.requests_empty_incoming')}</Text>
       ) : (
         incomingList.map(({ person }) => {
           const busy = busyId === person.id && isActionPending;
