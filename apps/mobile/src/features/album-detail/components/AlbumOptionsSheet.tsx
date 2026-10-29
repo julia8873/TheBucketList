@@ -22,11 +22,9 @@ import {
   Users,
   Pencil,
   Trash2,
-  X,
   Globe,
   Check,
   Tag as TagIcon,
-  ChevronLeft,
   Image as ImageIcon,
   Link2,
   Crop,
@@ -163,9 +161,6 @@ export function AlbumOptionsSheet({
                 <Text style={styles.sheetHeaderText}>
                   {t('albums.options_title', { defaultValue: 'Opciones del álbum' })}
                 </Text>
-                <Pressable style={styles.sheetCloseBtn} onPress={onClose}>
-                  <X color="#8F8F8F" size={20} />
-                </Pressable>
               </View>
               <ScrollView
                 style={styles.sheetScroll}
@@ -322,9 +317,6 @@ export function AlbumOptionsSheet({
                 <Text style={styles.sheetHeaderText}>
                   {t('albums.options_change_priority', { defaultValue: 'Prioridad del álbum' })}
                 </Text>
-                <Pressable style={styles.sheetCloseBtn} onPress={() => onSetSheetMode('menu')}>
-                  <X color="#8F8F8F" size={20} />
-                </Pressable>
               </View>
               <View style={styles.sheetOptions}>
                 {[
@@ -356,9 +348,6 @@ export function AlbumOptionsSheet({
                 <Text style={styles.sheetHeaderText}>
                   {t('albums.options_change_visibility', { defaultValue: 'Visibilidad del álbum' })}
                 </Text>
-                <Pressable style={styles.sheetCloseBtn} onPress={() => onSetSheetMode('menu')}>
-                  <X color="#8F8F8F" size={20} />
-                </Pressable>
               </View>
               <View style={styles.sheetOptions}>
                 {[
@@ -386,19 +375,9 @@ export function AlbumOptionsSheet({
           {sheetMode === 'cover' && (
             <>
               <View style={styles.sheetHeader}>
-                <Pressable
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
-                  onPress={() => onSetSheetMode('menu')}
-                  hitSlop={8}
-                >
-                  <ChevronLeft color="#D4B13A" size={22} />
-                  <Text style={styles.sheetHeaderText}>
+                                  <Text style={styles.sheetHeaderText}>
                     {t('albums.options_cover_title', { defaultValue: 'Foto de portada' })}
                   </Text>
-                </Pressable>
-                <Pressable style={styles.sheetCloseBtn} onPress={onClose}>
-                  <X color="#8F8F8F" size={20} />
-                </Pressable>
               </View>
 
               <ScrollView
@@ -492,19 +471,9 @@ export function AlbumOptionsSheet({
           {sheetMode === 'status' && (
             <>
               <View style={styles.sheetHeader}>
-                <Pressable
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
-                  onPress={() => onSetSheetMode('menu')}
-                  hitSlop={8}
-                >
-                  <ChevronLeft color="#D4B13A" size={22} />
-                  <Text style={styles.sheetHeaderText}>
+                                  <Text style={styles.sheetHeaderText}>
                     {t('albums.options_status_title', { defaultValue: 'Estado del álbum' })}
                   </Text>
-                </Pressable>
-                <Pressable style={styles.sheetCloseBtn} onPress={onClose}>
-                  <X color="#8F8F8F" size={20} />
-                </Pressable>
               </View>
               <View style={styles.sheetOptions}>
                 <SheetOption

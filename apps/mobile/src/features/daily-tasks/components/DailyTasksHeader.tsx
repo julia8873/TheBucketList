@@ -607,15 +607,6 @@ export function DailyTasksScrollControls({
         <View style={[dailySheetStyles.sheetContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
           <View style={dailySheetStyles.sheetHeader}>
             <Text style={[dailySheetStyles.sheetTitle, { color: theme.colors.foreground }]}>{t('daily.filter_status_title')}</Text>
-            <Pressable
-              onPress={() => setStatusSheetVisible(false)}
-              hitSlop={8}
-              style={[dailySheetStyles.sheetCloseBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.close')}
-            >
-              <X size={16} color={theme.colors.foregroundMuted} />
-            </Pressable>
           </View>
 
           <View style={dailySheetStyles.sheetOptionList}>
@@ -674,15 +665,6 @@ export function DailyTasksScrollControls({
         <View style={[dailySheetStyles.sheetContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
           <View style={dailySheetStyles.sheetHeader}>
             <Text style={[dailySheetStyles.sheetTitle, { color: theme.colors.foreground }]}>{t('daily.filter_priority_title')}</Text>
-            <Pressable
-              onPress={() => setPrioritySheetVisible(false)}
-              hitSlop={8}
-              style={[dailySheetStyles.sheetCloseBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.close')}
-            >
-              <X size={16} color={theme.colors.foregroundMuted} />
-            </Pressable>
           </View>
 
           <View style={dailySheetStyles.sheetOptionList}>
@@ -738,13 +720,14 @@ const dailySheetStyles = themedStyleSheet({
   sheetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     marginBottom: 16,
     paddingBottom: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   sheetTitle: {
+    textAlign: 'center',
     fontSize: 16,
     fontWeight: '700',
     fontFamily: 'Newsreader_700Bold',

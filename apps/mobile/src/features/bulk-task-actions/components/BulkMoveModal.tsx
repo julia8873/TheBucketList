@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, Modal, ScrollView } from 'react-native';
-import { X, FolderOpen, FolderInput } from 'lucide-react-native';
+import { FolderOpen, FolderInput } from 'lucide-react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { styles } from '../styles/bulk-actions.styles';
 import { useTranslation } from '@bucketlist/shared';
@@ -39,9 +39,6 @@ export function BulkMoveModal({
         <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>{t('bulk_actions.move_modal_title', { count })}</Text>
-            <Pressable onPress={onClose} hitSlop={10}>
-              <X size={20} color="#888" />
-            </Pressable>
           </View>
 
           <ScrollView style={{ maxHeight: 340 }}>

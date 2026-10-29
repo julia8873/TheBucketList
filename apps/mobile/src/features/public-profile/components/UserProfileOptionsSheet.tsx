@@ -12,7 +12,6 @@ import {
   UserX,
   UserCheck,
   Flag,
-  X,
 } from 'lucide-react-native';
 import { Avatar, fontFamily } from '@bucketlist/ui';
 
@@ -66,7 +65,7 @@ export function UserProfileOptionsSheet({
               fallback={user.display_name?.charAt(0) || user.username.charAt(0)}
               size="md"
             />
-            <View style={{ flex: 1, marginLeft: 12 }}>
+            <View style={{ flexShrink: 1, marginLeft: 12 }}>
               <Text style={styles.displayName} numberOfLines={1}>
                 {user.display_name || user.username}
               </Text>
@@ -74,9 +73,6 @@ export function UserProfileOptionsSheet({
                 @{user.username}
               </Text>
             </View>
-            <Pressable style={styles.closeBtn} onPress={onClose} hitSlop={8}>
-              <X color="#8F8F8F" size={20} />
-            </Pressable>
           </View>
 
           <View style={styles.divider} />
@@ -197,6 +193,7 @@ const styles = themedStyleSheet({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 12,
     paddingVertical: 10,
   },

@@ -69,6 +69,7 @@ export function MyListSortModal({
           { field: 'alphabetical' as const, label: t('my_list.sort_alphabetical') },
           { field: 'created_at' as const, label: t('my_list.sort_created_at') },
           { field: 'completed_at' as const, label: t('my_list.sort_completed_at') },
+          { field: 'deadline' as const, label: t('my_list.sort_deadline') },
         ]
       : [
           { field: 'manual' as const, label: t('my_list.sort_manual') },
@@ -77,6 +78,7 @@ export function MyListSortModal({
           { field: 'alphabetical' as const, label: t('my_list.sort_alphabetical') },
           { field: 'created_at' as const, label: t('my_list.sort_created_at') },
           { field: 'completed_at' as const, label: t('my_list.sort_completed_at') },
+          { field: 'deadline' as const, label: t('my_list.sort_deadline') },
         ];
 
   const currentField = activeTab === 'albums' ? albumSortField : sortField;

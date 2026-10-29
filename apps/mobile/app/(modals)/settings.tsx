@@ -160,7 +160,7 @@ export default function SettingsScreen() {
   const deadlineOn = prefs?.deadline_push !== false;
 
   // ── Tema ───────────────────────────────────────────────────────────────────
-  const themeSelected: 'dark' | 'light' = override === 'system' ? (theme.dark ? 'dark' : 'light') : override;
+  const themeSelected: 'system' | 'dark' | 'light' = override;
 
   // ── Sesión ─────────────────────────────────────────────────────────────────
   const handleLogout = async () => {
@@ -350,10 +350,11 @@ export default function SettingsScreen() {
             subtitle={t('settings.theme_desc')}
             last
             right={
-              <PillToggle
+              <PillToggle<'system' | 'dark' | 'light'>
                 options={[
-                  { key: 'dark', label: t('settings.theme_dark') },
+                  { key: 'system', label: t('settings.theme_system') },
                   { key: 'light', label: t('settings.theme_light') },
+                  { key: 'dark', label: t('settings.theme_dark') },
                 ]}
                 selected={themeSelected}
                 onChange={(k) => setOverride(k)}

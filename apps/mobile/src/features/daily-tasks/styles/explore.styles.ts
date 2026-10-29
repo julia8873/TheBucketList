@@ -1471,7 +1471,7 @@ export const styles = themedStyleSheet({
   sheetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     marginBottom: 14,
   },
   sheetTitle: {

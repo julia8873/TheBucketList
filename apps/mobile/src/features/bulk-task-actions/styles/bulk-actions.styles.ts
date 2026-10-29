@@ -137,7 +137,7 @@ export const styles = themedStyleSheet({
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingBottom: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#262626',
@@ -147,6 +147,7 @@ export const styles = themedStyleSheet({
     fontFamily: 'Inter_600SemiBold',
     fontSize: 15,
     color: '#FFF',
+    textAlign: 'center',
   },
   albumOptionRow: {
     flexDirection: 'row',

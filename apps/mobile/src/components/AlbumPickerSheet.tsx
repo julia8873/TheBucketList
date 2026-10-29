@@ -101,9 +101,6 @@ export function AlbumPickerSheet({
                   <Folder color="#D4B13A" size={20} />
                   <Text style={styles.headerTitle}>{t('album_picker.title')}</Text>
                 </View>
-                <Pressable onPress={onClose} hitSlop={12} style={styles.closeButton}>
-                  <X color="#999" size={20} />
-                </Pressable>
               </View>
             </View>
 
@@ -278,7 +275,7 @@ const styles = themedStyleSheet({
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
   headerTitleContainer: {
     flexDirection: 'row',

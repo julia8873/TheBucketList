@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { SlidersHorizontal, ChevronDown, Check, X } from 'lucide-react-native';
+import { SlidersHorizontal, ChevronDown, Check } from 'lucide-react-native';
 import { useTheme, fontFamily } from '@bucketlist/ui';
 
 export type TaskFilter = 'all' | 'active' | 'completed';
@@ -113,18 +113,6 @@ export function ProfileTaskFilterButton({ filter, onChangeFilter }: ProfileTaskF
               <Text style={[styles.sheetTitle, { color: theme.colors.foreground }]}>
                 {t('profile.filter_tasks_title')}
               </Text>
-              <Pressable
-                onPress={() => setModalVisible(false)}
-                hitSlop={8}
-                style={[
-                  styles.closeButton,
-                  { backgroundColor: theme.dark ? '#242424' : '#EFEAE1' },
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel={t('common.close')}
-              >
-                <X size={16} color={theme.colors.foregroundMuted} />
-              </Pressable>
             </View>
 
             {/* Options */}
@@ -268,13 +256,14 @@ const styles = themedStyleSheet({
   sheetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     marginBottom: 16,
   },
   sheetTitle: {
     fontFamily: fontFamily.serifBold,
     fontSize: 18,
     letterSpacing: -0.2,
+    textAlign: 'center',
   },
   closeButton: {
     width: 30,

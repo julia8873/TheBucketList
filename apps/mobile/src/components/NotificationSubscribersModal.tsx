@@ -4,7 +4,7 @@ import { View, Text, Modal, Pressable, ScrollView } from 'react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { confirm, toast } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
-import { Bell, X } from 'lucide-react-native';
+import { Bell } from 'lucide-react-native';
 import {
   useEntitySubscription,
   useEntitySubscribers,
@@ -154,20 +154,17 @@ export function NotificationSubscribersModal({
               <View style={styles.headerIconCircle}>
                 <Bell size={20} color={gold[400]} />
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.headerTitle} numberOfLines={1}>
+              <View style={{ alignItems: 'center', flexShrink: 1 }}>
+                <Text style={[styles.headerTitle, { textAlign: 'center' }]} numberOfLines={1}>
                   {targetType === 'bucket'
                     ? t('notification_subscribers.modal_title_bucket')
                     : t('notification_subscribers.modal_title_album')}
                 </Text>
-                <Text style={styles.headerSubtitle} numberOfLines={1}>
+                <Text style={[styles.headerSubtitle, { textAlign: 'center' }]} numberOfLines={1}>
                   {targetTitle}
                 </Text>
               </View>
             </View>
-            <Pressable onPress={onClose} hitSlop={10} style={styles.closeBtn}>
-              <X size={20} color="#888" />
-            </Pressable>
           </View>
 
           <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false}>

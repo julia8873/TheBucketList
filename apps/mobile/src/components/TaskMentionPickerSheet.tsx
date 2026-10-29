@@ -11,7 +11,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Check, Link2, X } from 'lucide-react-native';
+import { Check, Link2 } from 'lucide-react-native';
 import { Typography, useTheme } from '@bucketlist/ui';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { useTranslation } from '@bucketlist/shared';
@@ -264,14 +264,6 @@ export function TaskMentionPickerSheet({ visible, currentBucketId, mentionedIds,
               <Typography variant="h3" color={theme.colors.foreground}>
                 {t('tasks.mention_tasks')}
               </Typography>
-              <Pressable
-                style={sheetStyles.sheetClose}
-                onPress={onClose}
-                accessibilityRole="button"
-                accessibilityLabel={t('common.close')}
-              >
-                <X color={theme.colors.foregroundMuted} size={20} />
-              </Pressable>
             </View>
 
             <View style={{ paddingBottom: 10 }}>

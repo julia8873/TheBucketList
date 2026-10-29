@@ -129,7 +129,7 @@ export function TagFilterSheet({
           accessibilityRole="button"
           accessibilityLabel={t('common.clear', { defaultValue: 'Limpiar' })}
           disabled={selectedIds.length === 0}
-          style={selectedIds.length === 0 && { opacity: 0.5 }}
+          style={[styles.clearAbs, selectedIds.length === 0 && { opacity: 0.5 }]}
         >
           <Text style={styles.clear}>{t('common.clear', { defaultValue: 'Limpiar' })}</Text>
         </Pressable>
@@ -280,12 +280,14 @@ const styles = themedStyleSheet({
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingHorizontal: 12,
     marginTop: 4,
+    minHeight: 32,
   },
-  title: { fontFamily: 'PlayfairDisplay_700Bold', fontSize: 24, color: '#F5F0E6' },
+  title: { fontFamily: 'PlayfairDisplay_700Bold', fontSize: 24, color: '#F5F0E6', textAlign: 'center' },
   clear: { fontFamily: 'Inter_600SemiBold', fontSize: 15, color: GOLD },
+  clearAbs: { position: 'absolute', right: 12 },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',

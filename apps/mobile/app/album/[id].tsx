@@ -225,6 +225,15 @@ export default function AlbumDetailScreen() {
       const cmp = a.title.localeCompare(b.title, 'es', { sensitivity: 'base' });
       return cmp !== 0 ? cmp * dirSign : byManual(a, b);
     }
+    if (state.taskSortField === 'deadline') {
+      // Sin fecha límite siempre al final, sea cual sea la dirección.
+      const ta = a.dueDate ? new Date(a.dueDate).getTime() : null;
+      const tb = b.dueDate ? new Date(b.dueDate).getTime() : null;
+      if (ta === null && tb === null) return byManual(a, b);
+      if (ta === null) return 1;
+      if (tb === null) return -1;
+      return ta !== tb ? (ta - tb) * dirSign : byManual(a, b);
+    }
     if (state.taskSortField === 'completed_at') {
       const ta = a.completedAt ? new Date(a.completedAt).getTime() : null;
       const tb = b.completedAt ? new Date(b.completedAt).getTime() : null;
@@ -313,7 +322,7 @@ export default function AlbumDetailScreen() {
       state.setTaskSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
       state.setTaskSortField(field);
-      state.setTaskSortDir(field === 'alphabetical' ? 'asc' : 'desc');
+      state.setTaskSortDir(field === 'alphabetical' || field === 'deadline' ? 'asc' : 'desc');
       state.setTaskSortMenuOpen(false);
     }
   };
@@ -860,6 +869,8 @@ export default function AlbumDetailScreen() {
                       ? t('albums.sort_priority', { defaultValue: 'Prioridad' })
                       : state.taskSortField === 'alphabetical'
                       ? t('albums.sort_name', { defaultValue: 'Nombre' })
+                      : state.taskSortField === 'deadline'
+                      ? t('albums.sort_deadline_date', { defaultValue: 'Fecha límite' })
                       : state.taskSortField === 'completed_at'
                       ? t('albums.sort_completed_date', { defaultValue: 'Fecha de completado' })
                       : state.taskSortField === 'created_at'

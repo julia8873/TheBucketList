@@ -217,11 +217,8 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
           <View style={styles.grabber} />
           {/* Cabecera de la hoja */}
           <View style={styles.header}>
-            <Pressable style={styles.backButton} onPress={onClose} hitSlop={10} accessibilityRole="button" accessibilityLabel="Cerrar">
-              <X color={theme.colors.foreground} size={24} />
-            </Pressable>
             <Text style={[styles.headerTitle, { color: theme.colors.foreground }]}>Buscar colaboradores</Text>
-            <Pressable style={styles.doneButton} onPress={handleSave}>
+            <Pressable style={[styles.doneButton, styles.doneButtonAbs]} onPress={handleSave}>
               <Text style={styles.doneText}>
                 {draft.length > 0 ? `Listo (${draft.length})` : 'Listo'}
               </Text>
@@ -435,20 +432,21 @@ const styles = themedStyleSheet({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingHorizontal: 12,
     paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#1E1E1E',
   },
-  backButton: {
-    padding: 6,
-    marginLeft: -6,
-  },
   headerTitle: {
     color: '#FFF',
     fontSize: 18,
     fontFamily: fontFamily.bold,
+    textAlign: 'center',
+  },
+  doneButtonAbs: {
+    position: 'absolute',
+    right: 12,
   },
   doneButton: {
     backgroundColor: 'rgba(212, 177, 58, 0.15)',

@@ -429,15 +429,6 @@ export function AlbumListHeaderControls({
         <View style={[localStyles.sheetContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
           <View style={localStyles.sheetHeader}>
             <Text style={[localStyles.sheetTitle, { color: theme.colors.foreground }]}>{t('my_list.filter_status')}</Text>
-            <Pressable
-              onPress={() => setStatusSheetVisible(false)}
-              hitSlop={8}
-              style={[localStyles.sheetCloseBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.close')}
-            >
-              <X size={16} color={theme.colors.foregroundMuted} />
-            </Pressable>
           </View>
 
           <View style={localStyles.sheetOptionList}>
@@ -487,15 +478,6 @@ export function AlbumListHeaderControls({
         <View style={[localStyles.sheetContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
           <View style={localStyles.sheetHeader}>
             <Text style={[localStyles.sheetTitle, { color: theme.colors.foreground }]}>{t('my_list.filter_priority')}</Text>
-            <Pressable
-              onPress={() => setPrioritySheetVisible(false)}
-              hitSlop={8}
-              style={[localStyles.sheetCloseBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.close')}
-            >
-              <X size={16} color={theme.colors.foregroundMuted} />
-            </Pressable>
           </View>
 
           <View style={localStyles.sheetOptionList}>
@@ -551,10 +533,11 @@ const localStyles = themedStyleSheet({
   sheetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     marginBottom: 16,
   },
   sheetTitle: {
+    textAlign: 'center',
     fontFamily: 'PlayfairDisplay_700Bold',
     fontSize: 18,
     color: '#FFF',

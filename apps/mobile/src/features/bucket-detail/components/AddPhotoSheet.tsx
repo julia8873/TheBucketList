@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { Camera, Image as ImageIcon, Globe, X } from 'lucide-react-native';
+import { Camera, Image as ImageIcon, Globe } from 'lucide-react-native';
 import { gold, useTheme } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { TagSheetShell } from '@/components/TagSheetShell';
@@ -27,27 +27,12 @@ export function AddPhotoSheet({
     <TagSheetShell visible={visible} onClose={onClose}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <View>
-            <Text style={[styles.title, { color: theme.colors.foreground }]}>{t('bucket.add_photo_sheet_title')}</Text>
-            <Text style={[styles.subtitle, { color: theme.colors.foregroundMuted }]}>
+          <View style={{ alignItems: 'center' }}>
+            <Text style={[styles.title, { color: theme.colors.foreground, textAlign: 'center' }]}>{t('bucket.add_photo_sheet_title')}</Text>
+            <Text style={[styles.subtitle, { color: theme.colors.foregroundMuted, textAlign: 'center' }]}>
               {t('bucket.add_photo_sheet_subtitle')}
             </Text>
           </View>
-          <Pressable
-            onPress={onClose}
-            hitSlop={8}
-            style={[
-              styles.closeBtn,
-              {
-                backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
-                borderColor: theme.colors.border,
-              },
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={t('common.close')}
-          >
-            <X size={16} color={theme.colors.foregroundMuted} />
-          </Pressable>
         </View>
 
         <View style={styles.optionsList}>
@@ -154,7 +139,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.06)',

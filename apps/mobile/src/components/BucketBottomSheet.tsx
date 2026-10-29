@@ -5,7 +5,7 @@ import { Typography, toast } from '@bucketlist/ui';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { CoverColorPicker } from '@/components/CoverColorPicker';
 import { customGradientValue, presetValue, solidCoverValue } from '@/constants/coverPresets';
-import { X, Camera, FolderPlus, ListPlus, Trash2, Circle, MoreHorizontal, CheckCircle2, Check, Eye, Users, Lock, ArrowLeft, FolderOpen, Image as ImageIcon, Tag, LogOut, Flag, Star, Crop, Link2, Bookmark } from 'lucide-react-native';
+import { X, Camera, FolderPlus, ListPlus, Trash2, Circle, MoreHorizontal, CheckCircle2, Check, Eye, Users, Lock, FolderOpen, Image as ImageIcon, Tag, LogOut, Flag, Star, Crop, Link2, Bookmark } from 'lucide-react-native';
 import { styles } from '@/features/bucket-detail/styles/bucket-detail.styles';
 
 type BucketBottomSheetProps = {
@@ -97,9 +97,6 @@ export function BucketBottomSheet({
             <>
               <View style={styles.sheetHeader}>
                 <Typography variant="h3" color={theme.colors.foreground}>{t('bucket.sheet_options_title')}</Typography>
-                <Pressable style={styles.sheetClose} onPress={() => closeSheet()}>
-                  <X color={theme.colors.foregroundMuted} size={20} />
-                </Pressable>
               </View>
 
               <ScrollView
@@ -262,7 +259,7 @@ export function BucketBottomSheet({
 
           {sheetMode === 'status' && (
             <>
-              <View style={[styles.sheetHeader, { justifyContent: 'center' }]}>
+              <View style={styles.sheetHeader}>
                 <Typography variant="h3" color={theme.colors.foreground}>{t('bucket.status_title')}</Typography>
               </View>
               <View style={styles.sheetOptions}>
@@ -290,7 +287,7 @@ export function BucketBottomSheet({
 
           {sheetMode === 'visibility' && (
             <>
-              <View style={[styles.sheetHeader, { justifyContent: 'center' }]}>
+              <View style={styles.sheetHeader}>
                 <Typography variant="h3" color={theme.colors.foreground}>{t('bucket.visibility_title')}</Typography>
               </View>
               <View style={styles.sheetOptions}>
@@ -318,11 +315,7 @@ export function BucketBottomSheet({
           {sheetMode === 'priority' && (
             <>
               <View style={styles.sheetHeader}>
-                <Pressable style={styles.backSheetButton} onPress={() => setSheetMode('menu')}>
-                  <ArrowLeft color={theme.colors.foreground} size={20} />
-                </Pressable>
                 <Typography variant="h3" color={theme.colors.foreground}>{t('bucket.priority_title')}</Typography>
-                <View style={{ width: 36 }} />
               </View>
               <View style={styles.sheetOptions}>
                 {([
@@ -353,11 +346,7 @@ export function BucketBottomSheet({
           {sheetMode === 'albums' && (
             <>
               <View style={styles.sheetHeader}>
-                <Pressable style={styles.backSheetButton} onPress={() => setSheetMode('menu')}>
-                  <ArrowLeft color={theme.colors.foreground} size={20} />
-                </Pressable>
                 <Typography variant="h3" color={theme.colors.foreground}>{t('bucket.select_folders_title')}</Typography>
-                <View style={{ width: 36 }} />
               </View>
               {albumsLoading ? (
                 <View style={styles.sheetLoading}><ActivityIndicator color={gold[400]} /></View>
@@ -419,11 +408,7 @@ export function BucketBottomSheet({
           {sheetMode === 'cover' && (
             <>
               <View style={styles.sheetHeader}>
-                <Pressable style={styles.backSheetButton} onPress={() => setSheetMode('menu')}>
-                  <ArrowLeft color={theme.colors.foreground} size={20} />
-                </Pressable>
                 <Typography variant="h3" color={theme.colors.foreground}>{t('bucket.cover_title')}</Typography>
-                <View style={{ width: 36 }} />
               </View>
               <ScrollView
                 style={styles.sheetScroll}

@@ -230,7 +230,7 @@ function TaskCommentsModalContent({
               <View style={styles.headerIconCircle}>
                 <MessageCircle size={18} color={gold[400]} />
               </View>
-              <View style={{ flex: 1 }}>
+              <View style={{ alignItems: 'center' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text style={[styles.headerTitle, { color: theme.colors.foreground }]}>{t('comments.modal_title')}</Text>
                   {comments.length > 0 && (
@@ -240,23 +240,12 @@ function TaskCommentsModalContent({
                   )}
                 </View>
                 {effectiveTitle ? (
-                  <Text style={[styles.headerSubtitle, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
+                  <Text style={[styles.headerSubtitle, { color: theme.colors.foregroundMuted, textAlign: 'center' }]} numberOfLines={1}>
                     {effectiveTitle}
                   </Text>
                 ) : null}
               </View>
             </View>
-            <Pressable
-              onPress={() => {
-                Keyboard.dismiss();
-                onClose();
-              }}
-              hitSlop={10}
-              style={[styles.closeBtn, { backgroundColor: theme.colors.surface }]}
-              accessibilityLabel={t('comments.close')}
-            >
-              <X size={18} color={theme.colors.foregroundMuted} />
-            </Pressable>
           </View>
 
           {/* Lista de comentarios sin caja exterior, con fotos a la izquierda y respuestas plegables */}
@@ -503,7 +492,7 @@ const styles = themedStyleSheet({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingHorizontal: 12,
     paddingTop: 12,
     paddingBottom: 10,
@@ -513,8 +502,8 @@ const styles = themedStyleSheet({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 12,
-    flex: 1,
   },
   headerIconCircle: {
     width: 36,

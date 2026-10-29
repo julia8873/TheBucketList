@@ -218,6 +218,7 @@ const styles = StyleSheet.create({
   sheetHeader: {
     flexDirection: 'row',
     alignItems: 'baseline',
+    justifyContent: 'center',
     gap: 8,
     paddingHorizontal: 20,
     marginTop: 2,

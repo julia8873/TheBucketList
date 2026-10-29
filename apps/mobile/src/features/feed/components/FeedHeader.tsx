@@ -314,15 +314,6 @@ export function FeedHeader({
             <Text style={[styles.sheetTitle, { color: theme.colors.foreground }]}>
               {t('feed.filter_sheet_title')}
             </Text>
-            <Pressable
-              onPress={() => setFilterSheetVisible(false)}
-              hitSlop={8}
-              style={[styles.sheetCloseBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
-              accessibilityRole="button"
-              accessibilityLabel="Cerrar filtro"
-            >
-              <X size={16} color={theme.colors.foregroundMuted} />
-            </Pressable>
           </View>
 
           <View style={styles.sheetOptionList}>

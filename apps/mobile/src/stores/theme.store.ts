@@ -9,7 +9,8 @@ interface ThemeStore {
 }
 
 export const useThemeStore = create<ThemeStore>((set, get) => ({
-  override: 'dark',
+  // Por defecto sigue el tema del sistema; el usuario puede fijar claro/oscuro.
+  override: 'system',
   setOverride: (scheme) => {
     set({ override: scheme });
     void AsyncStorage.setItem('@theme_override', scheme).catch(() => {});

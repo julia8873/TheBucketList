@@ -312,10 +312,10 @@ export const styles = themedStyleSheet({
     backgroundColor: 'rgba(255,255,255,0.22)', marginBottom: 12,
   },
   sheetHeader: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     paddingVertical: 8, marginBottom: 8,
   },
-  sheetHeaderText: { fontFamily: 'PlayfairDisplay_700Bold', fontSize: 22, color: '#F3EEE3' },
+  sheetHeaderText: { fontFamily: 'PlayfairDisplay_700Bold', fontSize: 22, color: '#F3EEE3', textAlign: 'center' },
   sheetCloseBtn: {
     width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.08)',
     alignItems: 'center', justifyContent: 'center',

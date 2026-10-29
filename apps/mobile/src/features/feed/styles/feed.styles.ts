@@ -200,7 +200,7 @@ export const styles = themedStyleSheet({
   sheetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     marginBottom: 16,
     paddingHorizontal: 4,
   },
@@ -208,6 +208,7 @@ export const styles = themedStyleSheet({
     fontFamily: fontFamily.bold,
     fontSize: 18,
     letterSpacing: -0.3,
+    textAlign: 'center',
   },
   sheetCloseBtn: {
     width: 32,

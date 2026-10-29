@@ -5,7 +5,7 @@ import { useTheme } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/album-detail.styles';
 
-export type TaskSortField = 'manual' | 'priority' | 'alphabetical' | 'completed_at' | 'created_at';
+export type TaskSortField = 'manual' | 'priority' | 'alphabetical' | 'completed_at' | 'created_at' | 'deadline';
 export type TaskSortDir = 'asc' | 'desc';
 
 interface AlbumSortModalProps {
@@ -56,6 +56,7 @@ export function AlbumSortModal({
                 : []),
               { field: 'priority' as const, label: t('albums.sort_priority', { defaultValue: 'Prioridad' }) },
               { field: 'alphabetical' as const, label: t('albums.sort_name', { defaultValue: 'Nombre' }) },
+              { field: 'deadline' as const, label: t('albums.sort_deadline_date', { defaultValue: 'Fecha límite' }) },
               { field: 'completed_at' as const, label: t('albums.sort_completed_date', { defaultValue: 'Fecha de completado' }) },
               { field: 'created_at' as const, label: t('albums.sort_created_date', { defaultValue: 'Fecha de creación' }) },
             ] as const

@@ -398,7 +398,7 @@ export function useMyListState() {
         setSortDir(nextDir);
         void AsyncStorage.setItem('@my_list_sort_dir', nextDir).catch(() => undefined);
       } else {
-        const nextDir = field === 'alphabetical' ? 'asc' : 'desc';
+        const nextDir = field === 'alphabetical' || field === 'deadline' ? 'asc' : 'desc';
         setSortField(field as SortField);
         setSortDir(nextDir);
         void AsyncStorage.setItem('@my_list_sort_field', field).catch(() => undefined);
@@ -658,6 +658,19 @@ export function useMyListState() {
         const da = new Date(a.created_at || 0).getTime();
         const db = new Date(b.created_at || 0).getTime();
         return sortDir === 'asc' ? da - db : db - da;
+      });
+    }
+
+    if (sortField === 'deadline') {
+      // Sin fecha límite siempre al final, sea cual sea la dirección.
+      return [...filteredBuckets].sort((a: any, b: any) => {
+        const da = a.deadline ? new Date(a.deadline).getTime() : null;
+        const db = b.deadline ? new Date(b.deadline).getTime() : null;
+        if (da === null && db === null) return byManual(a, b);
+        if (da === null) return 1;
+        if (db === null) return -1;
+        if (da !== db) return sortDir === 'asc' ? da - db : db - da;
+        return byManual(a, b);
       });
     }
 

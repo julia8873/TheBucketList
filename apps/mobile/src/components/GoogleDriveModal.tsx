@@ -124,28 +124,19 @@ export function GoogleDriveModal({
           <View style={styles.sheetBody}>
             {/* Header */}
             <View style={styles.header}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
                 <View style={styles.iconCircle}>
                   <HardDrive size={20} color={gold[400]} />
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.title, { color: theme.colors.foreground }]}>
+                <View style={{ flexShrink: 1, alignItems: 'center' }}>
+                  <Text style={[styles.title, { color: theme.colors.foreground, textAlign: 'center' }]}>
                     {t('google_drive_modal.title')}
                   </Text>
-                  <Text style={[styles.subtitle, { color: theme.colors.foregroundMuted }]}>
+                  <Text style={[styles.subtitle, { color: theme.colors.foregroundMuted, textAlign: 'center' }]}>
                     {t('google_drive_modal.subtitle')}
                   </Text>
                 </View>
               </View>
-              <Pressable
-                onPress={onClose}
-                hitSlop={10}
-                style={styles.closeBtn}
-                accessibilityRole="button"
-                accessibilityLabel={t('google_drive_modal.close_label')}
-              >
-                <X size={20} color={theme.colors.foregroundMuted} />
-              </Pressable>
             </View>
 
             <ScrollView
@@ -381,7 +372,7 @@ const styles = themedStyleSheet({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     marginBottom: 16,
   },
   iconCircle: {

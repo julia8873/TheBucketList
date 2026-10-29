@@ -189,21 +189,12 @@ export function ImageLinkModal({
 
             {/* Header */}
             <View style={styles.header}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.title, { color: theme.colors.foreground }]}>{t('image_link_modal.title')}</Text>
-                <Text style={[styles.subtitle, { color: theme.colors.foregroundMuted }]}>
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <Text style={[styles.title, { color: theme.colors.foreground, textAlign: 'center' }]}>{t('image_link_modal.title')}</Text>
+                <Text style={[styles.subtitle, { color: theme.colors.foregroundMuted, textAlign: 'center' }]}>
                   {t('image_link_modal.subtitle')}
                 </Text>
               </View>
-              <Pressable
-                onPress={onClose}
-                hitSlop={10}
-                style={styles.closeBtn}
-                accessibilityRole="button"
-                accessibilityLabel={t('common.close')}
-              >
-                <X size={20} color={theme.colors.foregroundMuted} />
-              </Pressable>
             </View>
 
             <ScrollView
@@ -470,7 +461,7 @@ const styles = themedStyleSheet({
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     marginBottom: 16,
   },
   title: {

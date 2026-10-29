@@ -13,7 +13,6 @@ import {
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  X,
   UserMinus,
   Lock,
   UserCheck,
@@ -136,17 +135,10 @@ export function TaskCollaborationSettingsModal({
 
           {/* Cabecera */}
           <View style={[styles.header, { borderBottomColor: theme.colors.border }]}>
-            <View>
-              <Text style={[styles.title, { color: theme.colors.foreground }]}>{t('collab_settings.title')}</Text>
-              <Text style={[styles.subtitle, { color: theme.colors.foregroundMuted }]}>{t('collab_settings.subtitle')}</Text>
+            <View style={{ alignItems: 'center' }}>
+              <Text style={[styles.title, { color: theme.colors.foreground, textAlign: 'center' }]}>{t('collab_settings.title')}</Text>
+              <Text style={[styles.subtitle, { color: theme.colors.foregroundMuted, textAlign: 'center' }]}>{t('collab_settings.subtitle')}</Text>
             </View>
-            <Pressable
-              onPress={onClose}
-              hitSlop={10}
-              style={[styles.closeBtn, { backgroundColor: theme.dark ? '#222222' : '#EAE6DD' }]}
-            >
-              <X size={20} color={theme.colors.foregroundMuted} />
-            </Pressable>
           </View>
 
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -440,7 +432,7 @@ const styles = themedStyleSheet({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'flex-start',
     paddingHorizontal: 12,
     paddingTop: 12,

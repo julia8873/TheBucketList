@@ -7,7 +7,7 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
-import { Tag as TagIcon, X, Plus, Check, Pencil } from 'lucide-react-native';
+import { Tag as TagIcon, Plus, Check, Pencil } from 'lucide-react-native';
 import { gold, useTheme } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/explore.styles';
@@ -64,9 +64,6 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
                 </View>
               )}
             </View>
-            <Pressable onPress={onClose} hitSlop={10}>
-              <X size={20} color={theme.colors.foregroundMuted} />
-            </Pressable>
           </View>
 
           {/* Quick actions: Todas (sin filtrar) | Crear etiqueta */}

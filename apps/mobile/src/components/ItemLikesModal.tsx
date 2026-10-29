@@ -11,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Heart, X } from 'lucide-react-native';
+import { Heart } from 'lucide-react-native';
 import { useTranslation } from '@bucketlist/shared';
 import { Avatar, fontFamily, gold, useTheme, HEART_COLOR } from '@bucketlist/ui';
 import { useAuthStore } from '../stores/auth.store';
@@ -145,7 +145,7 @@ function ItemLikesModalContent({
               <View style={styles.headerIconCircle}>
                 <Heart size={18} color={HEART_COLOR} fill={HEART_COLOR} />
               </View>
-              <View style={{ flex: 1 }}>
+              <View style={{ alignItems: 'center' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text
                     style={[
@@ -174,17 +174,6 @@ function ItemLikesModalContent({
                 ) : null}
               </View>
             </View>
-            <Pressable
-              onPress={onClose}
-              hitSlop={10}
-              style={[
-                styles.closeBtn,
-                { backgroundColor: theme.dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' },
-              ]}
-              accessibilityLabel={t('likes.close', { defaultValue: 'Cerrar' })}
-            >
-              <X size={20} color={theme.dark ? '#888' : '#666'} />
-            </Pressable>
           </View>
 
           {/* List or States */}
@@ -345,7 +334,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingHorizontal: 18,
     paddingTop: 16,
     paddingBottom: 14,
@@ -354,8 +343,8 @@ const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 12,
-    flex: 1,
   },
   headerIconCircle: {
     width: 36,
@@ -376,6 +365,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: fontFamily.regular,
     marginTop: 1,
+    textAlign: 'center',
   },
   countBadge: {
     paddingHorizontal: 7,

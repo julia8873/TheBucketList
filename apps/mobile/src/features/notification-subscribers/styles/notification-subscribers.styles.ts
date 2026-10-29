@@ -36,7 +36,7 @@ export const styles = themedStyleSheet({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingBottom: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#262626',
@@ -45,7 +45,7 @@ export const styles = themedStyleSheet({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    justifyContent: 'center',
     gap: 12,
   },
   headerIconCircle: {

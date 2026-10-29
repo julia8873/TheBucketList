@@ -2,7 +2,6 @@ import React from 'react';
 import { View, Text, Modal, Pressable, ScrollView, StyleSheet } from 'react-native';
 import {
   SlidersHorizontal,
-  X,
   Layers,
   GripVertical,
   Flag,
@@ -60,9 +59,6 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
               <SlidersHorizontal size={18} color={gold[400]} />
               <Text style={[styles.sheetTitle, { color: theme.colors.foreground }]}>{t('daily.sort_and_classify')}</Text>
             </View>
-            <Pressable onPress={onClose} hitSlop={10}>
-              <X size={20} color={theme.colors.foregroundMuted} />
-            </Pressable>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 480 }}>

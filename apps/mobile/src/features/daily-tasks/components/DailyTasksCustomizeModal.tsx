@@ -12,7 +12,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  X,
   SlidersHorizontal,
   Flag,
   Tag as TagIcon,
@@ -66,7 +65,7 @@ export function DailyTasksCustomizeModal({
         >
           {/* Header */}
           <View style={styles.header}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
               <View
                 style={[
                   styles.headerIconWrap,
@@ -75,27 +74,15 @@ export function DailyTasksCustomizeModal({
               >
                 <SlidersHorizontal size={18} color={gold[400]} />
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.headerTitle, { color: theme.colors.foreground }]}>
+              <View style={{ flexShrink: 1, alignItems: 'center' }}>
+                <Text style={[styles.headerTitle, { color: theme.colors.foreground, textAlign: 'center' }]}>
                   {t('daily.customize_view')}
                 </Text>
-                <Text style={[styles.headerSub, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
+                <Text style={[styles.headerSub, { color: theme.colors.foregroundMuted, textAlign: 'center' }]} numberOfLines={1}>
                   {t('daily.customize_view_desc')}
                 </Text>
               </View>
             </View>
-            <Pressable
-              onPress={onClose}
-              hitSlop={10}
-              style={[
-                styles.closeBtn,
-                { backgroundColor: theme.dark ? '#222222' : '#EDE8DF', borderColor: theme.colors.border },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.close')}
-            >
-              <X size={18} color={theme.colors.foregroundMuted} />
-            </Pressable>
           </View>
 
           {/* Opciones de personalización */}
@@ -274,7 +261,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingHorizontal: 12,
     paddingBottom: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,

@@ -15,7 +15,7 @@ import {
     Platform,
     ActivityIndicator,
 } from 'react-native';
-import { Search, X, ChevronLeft } from 'lucide-react-native';
+import { Search } from 'lucide-react-native';
 import { TagChip, useTheme } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { useTags, useCreateTag } from '../hooks/useTags';
@@ -199,19 +199,6 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
         <View style={{ flex: 1 }}>
             <View style={styles.headerRow}>
                 <Text style={[styles.title, { color: theme.colors.foreground }]}>{t('tags.picker_title')}</Text>
-                <Pressable
-                    style={[
-                        styles.closeBtn,
-                        {
-                            backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
-                            borderColor: theme.colors.border,
-                        },
-                    ]}
-                    onPress={close}
-                    accessibilityLabel={t('common.close')}
-                >
-                    <X color={theme.colors.foreground} size={18} />
-                </Pressable>
             </View>
 
             <ScrollView
@@ -333,20 +320,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
     const renderCreate = (
         <View style={{ flexShrink: 1 }}>
             <View style={styles.headerRow}>
-                <Pressable
-                    style={[
-                        styles.closeBtn,
-                        {
-                            backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
-                            borderColor: theme.colors.border,
-                        },
-                    ]}
-                    onPress={() => switchMode('list')}
-                    accessibilityLabel={t('common.back')}
-                >
-                    <ChevronLeft color={theme.colors.foreground} size={22} />
-                </Pressable>
-                <Text style={[styles.title, { flex: 1, marginLeft: 14, color: theme.colors.foreground }]}>{t('tags.create_title')}</Text>
+                <Text style={[styles.title, { color: theme.colors.foreground }]}>{t('tags.create_title')}</Text>
             </View>
 
             <ScrollView
@@ -494,20 +468,10 @@ const styles = themedStyleSheet({
     headerRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         paddingHorizontal: 12,
     },
-    title: { fontFamily: 'PlayfairDisplay_700Bold', fontSize: 26, color: '#F5F5F5' },
-    closeBtn: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#161616',
-        borderWidth: 1,
-        borderColor: '#2A2A2A',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
+    title: { fontFamily: 'PlayfairDisplay_700Bold', fontSize: 26, color: '#F5F5F5', textAlign: 'center' },
     scrollContent: { paddingHorizontal: 12, paddingBottom: 20 },
     label: {
         fontFamily: 'PlayfairDisplay_700Bold',

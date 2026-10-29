@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, Modal, ScrollView } from 'react-native';
-import { X, Check } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { styles } from '../styles/bulk-actions.styles';
 import type { Tag } from '../../../hooks/useTags';
@@ -41,9 +41,6 @@ export function BulkTagsModal({
         <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>{title || t('bulk_actions.tags_modal_title', { count })}</Text>
-            <Pressable onPress={onClose} hitSlop={10}>
-              <X size={20} color="#888" />
-            </Pressable>
           </View>
 
           <ScrollView style={{ maxHeight: 280 }}>
