@@ -102,7 +102,7 @@ export function DailyTaskCard({
           if (drag?.isActive || drag?.justDropped?.()) return;
           onOpenEdit(item);
         }}
-        accessibilityLabel={`Editar tarea ${item.title}`}
+        accessibilityLabel={t('daily.edit_task_a11y', { title: item.title, defaultValue: `Editar tarea ${item.title}` })}
       >
         <Text
           numberOfLines={1}
@@ -273,7 +273,7 @@ export function DailyTaskCard({
           onToggleFavorite(item);
         }}
         style={styles.favQuickBtn}
-        accessibilityLabel={item.is_favorite ? 'Desfijar tarea' : 'Fijar tarea'}
+        accessibilityLabel={item.is_favorite ? t('daily.unpin_task', { defaultValue: 'Desfijar tarea' }) : t('daily.pin_task', { defaultValue: 'Fijar tarea' })}
       >
         <Pin
           size={14}
@@ -291,7 +291,7 @@ export function DailyTaskCard({
           onDelete(item);
         }}
         style={styles.deleteBtn}
-        accessibilityLabel="Eliminar tarea"
+        accessibilityLabel={t('daily.delete_task', { defaultValue: 'Eliminar tarea' })}
       >
         <Trash2 size={14} color={theme.colors.foregroundMuted} strokeWidth={1.8} />
       </Pressable>
@@ -385,7 +385,7 @@ export function DailyOverdueTaskCard({
             if (drag?.isActive || drag?.justDropped?.()) return;
             onOpenEdit(item);
           }}
-          accessibilityLabel={`Editar tarea ${item.title}`}
+          accessibilityLabel={t('daily.edit_task_a11y', { title: item.title, defaultValue: `Editar tarea ${item.title}` })}
         >
           <View style={styles.overdueTitleRow}>
             <Text

@@ -84,9 +84,9 @@ export interface AlertButton {
 
 function inferTone(title: string): DialogTone {
   const t = title.toLowerCase();
-  if (/error|no se pudo|no se pudieron|no se encontr|fall|inválid|invalid/.test(t)) return 'error';
-  if (/éxito|exito|activadas|enviada|subidas|copiada|convertida|guardad|cancelada/.test(t)) return 'success';
-  if (/atenci|aviso|falta|obligatori|requerid|permiso|revisa|no permitida|necesari/.test(t)) return 'warning';
+  if (/error|no se pudo|no se pudieron|no se encontr|fall|inválid|invalid|fail|could not|unable|not found/.test(t)) return 'error';
+  if (/éxito|exito|activadas|enviada|subidas|copiada|convertida|guardad|cancelada|success|done|saved|copied|uploaded|sent|activated|enabled/.test(t)) return 'success';
+  if (/atenci|aviso|falta|obligatori|requerid|permiso|revisa|no permitida|necesari|warn|alert|attention|notice|missing|require|permission|caution|cancel|elimin|borr|bloque|delete|remove|block|leave/.test(t)) return 'warning';
   return 'info';
 }
 

@@ -398,7 +398,7 @@ export function TaskListHeaderControls({
               },
             ]}
             accessibilityRole="button"
-            accessibilityLabel={isSelectionMode ? 'Salir de selección múltiple' : 'Seleccionar tareas'}
+            accessibilityLabel={isSelectionMode ? t('my_list.exit_selection_a11y', { defaultValue: 'Salir de selección múltiple' }) : t('my_list.select_tasks_a11y', { defaultValue: 'Seleccionar tareas' })}
           >
             <ListChecks size={15} color={isSelectionMode ? '#0E0E0E' : gold[400]} />
           </Pressable>

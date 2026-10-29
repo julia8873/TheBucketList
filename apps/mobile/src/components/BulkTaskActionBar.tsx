@@ -152,7 +152,7 @@ export function BulkTaskActionBar({
     try {
       await pending;
     } catch (e: any) {
-      toast.error(e?.message || 'No se pudieron asignar las etiquetas');
+      toast.error(e?.message || t('bulk_actions.assign_tags_error', { defaultValue: 'No se pudieron asignar las etiquetas' }));
     }
   };
 
@@ -163,7 +163,7 @@ export function BulkTaskActionBar({
     if (!friend) return;
     const okShare = await askBulk(
       t('bulk_actions.confirm_share_title'),
-      `Se invitará a ${friend.display_name || friend.username} a colaborar en ${plural}.`,
+      t('bulk_actions.confirm_share_msg', { name: friend.display_name || friend.username, plural }),
       t('bulk_actions.action_share'),
     );
     if (!okShare) return;
@@ -175,7 +175,7 @@ export function BulkTaskActionBar({
       onClearSelection();
       toast.success(t('bulk_actions.toast_shared', { name: friend.display_name || friend.username, count }));
     } catch (e: any) {
-      toast.error(e?.message || 'No se pudieron compartir las tareas');
+      toast.error(e?.message || t('bulk_actions.share_error'));
     }
   };
 
@@ -193,7 +193,7 @@ export function BulkTaskActionBar({
         try {
           await pending;
         } catch (e: any) {
-          toast.error(e?.message || 'Error al completar las tareas');
+          toast.error(e?.message || t('bulk_actions.complete_error', { defaultValue: 'Error al completar las tareas' }));
         }
       },
     });
@@ -215,7 +215,7 @@ export function BulkTaskActionBar({
         try {
           await pending;
         } catch (e: any) {
-          toast.error(e?.message || 'Error al eliminar las tareas');
+          toast.error(e?.message || t('bulk_actions.delete_error', { defaultValue: 'Error al eliminar las tareas' }));
         }
       },
     });
@@ -235,7 +235,7 @@ export function BulkTaskActionBar({
           onClearSelection();
           toast.success(t('bulk_actions.toast_notifications_cleared'));
         } catch (e: any) {
-          toast.error(e?.message || 'Error al vaciar notificaciones');
+          toast.error(e?.message || t('bulk_actions.clear_notif_error', { defaultValue: 'Error al vaciar notificaciones' }));
         }
       },
     });
@@ -274,7 +274,7 @@ export function BulkTaskActionBar({
               }}
               hitSlop={10}
               accessibilityRole="button"
-              accessibilityLabel="Cerrar selección"
+              accessibilityLabel={t('bulk_actions.close_label', { defaultValue: 'Cerrar selección' })}
             >
               <X size={18} color="#AAA" />
             </Pressable>
@@ -377,14 +377,14 @@ export function BulkTaskActionBar({
             onClearSelection();
             toast.success(t('bulk_actions.toast_favorites_added', { count }));
           } catch (e: any) {
-            toast.error(e?.message || 'Error al marcar como favoritas');
+            toast.error(e?.message || t('bulk_actions.favorites_error', { defaultValue: 'Error al marcar como favoritas' }));
           }
         }}
         onReopenTasks={async () => {
           setShowMoreMenuModal(false);
           const okReopen = await askBulk(
             t('bulk_actions.reopen_tasks'),
-            `Se volverán a marcar como pendientes ${plural}.`,
+            t('bulk_actions.reopen_confirm_msg', { plural, defaultValue: `Se volverán a marcar como pendientes ${plural}.` }),
             t('bulk_actions.reopen_tasks'),
           );
           if (!okReopen) return;
@@ -395,7 +395,7 @@ export function BulkTaskActionBar({
           try {
             await pending;
           } catch (e: any) {
-            toast.error(e?.message || 'Error al reabrir tareas');
+            toast.error(e?.message || t('bulk_actions.reopen_error', { defaultValue: 'Error al reabrir tareas' }));
           }
         }}
         onDeleteAll={handleDeleteAll}
@@ -423,7 +423,7 @@ export function BulkTaskActionBar({
           try {
             await pending;
           } catch (e: any) {
-            toast.error(e?.message || 'Error al cambiar prioridad');
+            toast.error(e?.message || t('bulk_actions.priority_error', { defaultValue: 'Error al cambiar prioridad' }));
           }
         }}
       />
@@ -450,7 +450,7 @@ export function BulkTaskActionBar({
           try {
             await pending;
           } catch (e: any) {
-            toast.error(e?.message || 'Error al cambiar visibilidad');
+            toast.error(e?.message || t('bulk_actions.visibility_error', { defaultValue: 'Error al cambiar visibilidad' }));
           }
         }}
       />

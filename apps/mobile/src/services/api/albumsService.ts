@@ -110,7 +110,7 @@ export const albumsService = {
         return {
           id: b.id,
           title: b.title,
-          categoryName: cat?.name_es || 'Sin categoría',
+          categoryName: cat?.name_es || '',
           coverKey: 'aurora',
           imageValue: resolveTaskImage(b, { preferThumb: true }),
           categorySlug: cat?.slug ?? null,
@@ -127,7 +127,7 @@ export const albumsService = {
 
       return {
         id: 'unassigned',
-        title: 'Sin álbum',
+        title: '',
         coverKey: 'aurora',
         visibility: 'private',
         isShared: false,
@@ -226,7 +226,7 @@ export const albumsService = {
         return {
           id: b.id,
           title: b.title,
-          categoryName: cat?.name_es || 'Sin categoría',
+          categoryName: cat?.name_es || '',
           coverKey: coverKey,
           imageValue: resolveTaskImage(b as any, { preferThumb: true }),
           categorySlug: cat?.slug ?? null,

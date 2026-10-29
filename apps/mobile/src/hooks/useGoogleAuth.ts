@@ -1,3 +1,4 @@
+import { i18n } from '@bucketlist/shared';
 import { useCallback, useState } from 'react';
 import * as WebBrowser from 'expo-web-browser';
 import { createClient } from '@supabase/supabase-js';
@@ -187,7 +188,7 @@ export function useGoogleAuth(mode: GoogleAuthMode) {
 
       return { type: 'success', email };
     } catch (e: any) {
-      return { type: 'error', errorMessage: e?.message ?? 'Error desconocido' };
+      return { type: 'error', errorMessage: e?.message ?? i18n.t('auth.err_unknown', { defaultValue: 'Error desconocido' }) };
     } finally {
       setLoading(false);
       useAuthStore.getState().setOauthInProgress(false);

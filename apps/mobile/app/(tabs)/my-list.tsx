@@ -493,7 +493,7 @@ export default function MyListScreen() {
               }}
               hitSlop={8}
               accessibilityRole="button"
-              accessibilityLabel="Borrar búsqueda"
+              accessibilityLabel={t('common.clear_search', { defaultValue: 'Borrar búsqueda' })}
             >
               <X size={18} color={theme.colors.foregroundMuted} strokeWidth={2} />
             </Pressable>
@@ -586,7 +586,7 @@ export default function MyListScreen() {
               {taskListHeaderElement}
               <View style={styles.empty}>
                 <Text style={{ color: theme.colors.foregroundMuted, fontSize: 14 }}>
-                  {state.searchQuery ? 'No se encontraron tareas' : 'No tienes tareas en esta vista'}
+                  {state.searchQuery ? t('my_list.no_tasks_search', { defaultValue: 'No se encontraron tareas' }) : t('my_list.empty_tasks', { defaultValue: 'No tienes tareas en esta vista' })}
                 </Text>
               </View>
             </ScrollView>
@@ -848,7 +848,7 @@ export default function MyListScreen() {
               ) : (
                 <View style={[styles.empty, { gap: 14 }]}>
                   <Text style={{ color: theme.colors.foregroundMuted, fontSize: 14 }}>
-                    {state.searchQuery ? 'No se encontraron álbumes' : 'No tienes álbumes'}
+                    {state.searchQuery ? t('my_list.no_albums_search', { defaultValue: 'No se encontraron álbumes' }) : t('my_list.empty_albums', { defaultValue: 'No tienes álbumes' })}
                   </Text>
                   <NoAlbumRow
                     count={state.unassignedCount}

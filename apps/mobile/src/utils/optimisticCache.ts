@@ -301,7 +301,7 @@ export function applyAddToAlbum(qc: QueryClient, taskIds: string[], albumId: str
       added.push({
         id: b.id,
         title: b.title,
-        categoryName: b.category?.name_es || 'Sin categoría',
+        categoryName: b.category?.name_es || '',
         coverKey: data.coverKey ?? 'aurora',
         imageValue: b.imageValue ?? null,
         categorySlug: b.category?.slug ?? null,

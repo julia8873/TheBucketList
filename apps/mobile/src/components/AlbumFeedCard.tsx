@@ -188,7 +188,7 @@ export function AlbumFeedCard({
 
               <View style={styles.galleryAlbumBadge}>
                 <Images size={10} color="rgba(255,255,255,0.95)" />
-                <Text style={styles.galleryAlbumBadgeText}>Álbum</Text>
+                <Text style={styles.galleryAlbumBadgeText}>{t('common.album', { defaultValue: 'Álbum' })}</Text>
               </View>
             </View>
 
@@ -198,7 +198,7 @@ export function AlbumFeedCard({
                 {album.title}
               </Text>
               <Text style={styles.gallerySubtext} numberOfLines={1}>
-                {album.completed_tasks}/{album.total_tasks} tareas
+                {album.completed_tasks}/{album.total_tasks} {t('albums.tasks', { defaultValue: 'tareas' })}
               </Text>
 
               <View style={styles.galleryActions}>

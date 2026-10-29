@@ -1,3 +1,4 @@
+import { useTranslation } from '@bucketlist/shared';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Check, ShieldCheck, Sparkles } from 'lucide-react-native';
@@ -11,11 +12,14 @@ interface OfficialBadgeProps {
 }
 
 export function OfficialBadge({
+  label: customLabel,
   size = 'sm',
   showLabel = false,
-  label = 'Oficial',
+  
   style,
 }: OfficialBadgeProps) {
+  const { t } = useTranslation();
+  const label = customLabel ?? t('common.official', { defaultValue: 'Oficial' });
   const iconSize = size === 'xs' ? 9 : size === 'sm' ? 11 : size === 'md' ? 13 : 15;
   const badgeSize = size === 'xs' ? 14 : size === 'sm' ? 17 : size === 'md' ? 20 : 24;
 
@@ -41,7 +45,7 @@ export function OfficialBadge({
         },
         style,
       ]}
-      accessibilityLabel="Cuenta Oficial Verificada"
+      accessibilityLabel={t('common.verified_official_account', { defaultValue: 'Cuenta Oficial Verificada' })}
     >
       <Check size={iconSize} color="#0D0D0D" strokeWidth={3.8} />
     </View>

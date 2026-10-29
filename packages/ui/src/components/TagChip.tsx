@@ -3,6 +3,7 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, Text, View, StyleSheet } from 'react-native';
 import { X } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeProvider';
+import { useTranslation } from '@bucketlist/shared';
 
 interface TagChipProps {
   label: string;
@@ -27,6 +28,7 @@ function tint(hex: string | undefined, alpha: number): string {
 
 export function TagChip({ label, variant = 'default', color, emoji, size = 'md', onPress, onRemove, style }: TagChipProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const isCreate = variant === 'create';
   const isSelected = variant === 'selected';
   const isColored = variant === 'colored';
@@ -87,7 +89,7 @@ export function TagChip({ label, variant = 'default', color, emoji, size = 'md',
       </Text>
 
       {isSelected && onRemove && (
-        <Pressable onPress={onRemove} style={styles.removeIcon} hitSlop={10} accessibilityLabel="Eliminar etiqueta">
+        <Pressable onPress={onRemove} style={styles.removeIcon} hitSlop={10} accessibilityLabel={t('tags.delete_this_tag', { defaultValue: 'Eliminar etiqueta' })}>
           <X color="#D4B13A" size={14} />
         </Pressable>
       )}

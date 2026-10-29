@@ -21,12 +21,13 @@ function ThumbOption({
   children: React.ReactNode;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ selected }}
-      accessibilityLabel={`Imagen de la tarea: ${label}`}
+      accessibilityLabel={t('bucket.thumbnail_label', { label, defaultValue: `Imagen de la tarea: ${label}` })}
       style={{ width: 72, alignItems: 'center', gap: 6 }}
     >
       <View
@@ -80,6 +81,7 @@ interface BucketThumbnailSelectorProps {
 }
 
 export function BucketThumbnailSelector({
+
   bucket,
   hasCover,
   thumbSelection,

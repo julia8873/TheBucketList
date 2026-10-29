@@ -150,7 +150,7 @@ function TaskCompactItemRowComponent({
           {...drag.panHandlers}
           hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
           style={localStyles.dragContainer}
-          accessibilityLabel="Arrastrar para reordenar"
+          accessibilityLabel={t('common.drag_to_reorder', { defaultValue: 'Arrastrar para reordenar' })}
         >
           <GripVertical
             size={18}

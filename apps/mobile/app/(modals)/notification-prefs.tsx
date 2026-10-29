@@ -76,7 +76,7 @@ export default function NotificationPrefsScreen() {
             <Pressable
               onPress={goBack}
               accessibilityRole="button"
-              accessibilityLabel="Volver"
+              accessibilityLabel={t('common.back', { defaultValue: 'Volver' })}
               style={[styles.back, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
             >
               <ChevronLeft size={22} color={theme.colors.foreground} />

@@ -392,7 +392,7 @@ export function AlbumListHeaderControls({
               },
             ]}
             accessibilityRole="button"
-            accessibilityLabel={isSelectionMode ? 'Salir de selección múltiple' : 'Seleccionar álbumes'}
+            accessibilityLabel={isSelectionMode ? t('my_list.exit_selection_a11y', { defaultValue: 'Salir de selección múltiple' }) : t('my_list.select_albums_a11y', { defaultValue: 'Seleccionar álbumes' })}
           >
             <ListChecks size={15} color={isSelectionMode ? '#0E0E0E' : gold[400]} />
           </Pressable>

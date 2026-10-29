@@ -19,6 +19,7 @@ import { Check, AlertCircle, Info, X } from 'lucide-react-native';
 import { fontFamily, fontSize } from '../tokens/typography';
 import { gold, dark } from '../tokens/colors';
 import { useTheme } from '../theme/useTheme';
+import { useTranslation } from '@bucketlist/shared';
 
 // En iOS las pantallas con `presentation: 'modal'` son controladores nativos que tapan todo
 // lo dibujado en la raíz de la app (el toast quedaba oculto detrás). FullWindowOverlay lo
@@ -78,6 +79,7 @@ export function useToast() {
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation();
   const [currentToast, setCurrentToast] = useState<ToastOptions | null>(null);
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(20)).current;
@@ -243,9 +245,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               }}
               style={styles.undoBtn}
               accessibilityRole="button"
-              accessibilityLabel={currentToast.undoLabel ?? 'Deshacer'}
+              accessibilityLabel={currentToast.undoLabel ?? t('common.undo', { defaultValue: 'Deshacer' })}
             >
-              <Text style={styles.undoText}>{currentToast.undoLabel ?? 'Deshacer'}</Text>
+              <Text style={styles.undoText}>{currentToast.undoLabel ?? t('common.undo', { defaultValue: 'Deshacer' })}</Text>
             </Pressable>
           ) : (
             <Pressable
@@ -253,7 +255,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               hitSlop={10}
               style={styles.closeBtn}
               accessibilityRole="button"
-              accessibilityLabel="Cerrar notificación"
+              accessibilityLabel={t('common.close_notification', { defaultValue: 'Cerrar notificación' })}
             >
               <X size={16} color={theme.colors.foregroundMuted} strokeWidth={2.2} />
             </Pressable>

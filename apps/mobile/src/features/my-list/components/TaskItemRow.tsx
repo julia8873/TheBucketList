@@ -344,7 +344,7 @@ function TaskItemRowComponent({
           {...drag.panHandlers}
           hitSlop={{ top: 14, bottom: 14, left: 10, right: 10 }}
           style={{ width: 28, height: 56, alignItems: 'center', justifyContent: 'center' }}
-          accessibilityLabel="Arrastrar para reordenar"
+          accessibilityLabel={t('common.drag_to_reorder', { defaultValue: 'Arrastrar para reordenar' })}
         >
           <GripVertical size={20} color={drag.isActive ? gold[400] : '#8F8F8F'} strokeWidth={2} />
         </View>

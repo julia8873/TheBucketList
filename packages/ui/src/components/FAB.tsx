@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { gold, dark } from '../tokens/colors';
 import { fontFamily } from '../tokens/typography';
+import { useTranslation } from '@bucketlist/shared';
 
 interface FABProps {
   onPress: () => void;
@@ -23,9 +24,11 @@ interface FABProps {
 export function FAB({
   onPress,
   icon = '+',
-  accessibilityLabel = 'Crear nueva tarea',
+  accessibilityLabel,
   bottomOffset = 104,
 }: FABProps) {
+  const { t } = useTranslation();
+  const a11y = accessibilityLabel ?? t('bucket.new', { defaultValue: 'Crear nueva tarea' });
   const scale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -55,7 +58,7 @@ export function FAB({
         onPressOut={handlePressOut}
         style={styles.button}
         accessibilityRole="button"
-        accessibilityLabel={accessibilityLabel}
+        accessibilityLabel={a11y}
       >
         <Text style={styles.icon}>{icon}</Text>
       </Pressable>

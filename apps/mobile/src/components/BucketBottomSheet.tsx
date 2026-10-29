@@ -210,8 +210,8 @@ export function BucketBottomSheet({
                       style={styles.sheetOption}
                       onPress={() => {
                         closeSheet(() => copyBucket.mutate({ bucketId: id, userId: user.id }, {
-                          onSuccess: () => toast.success('La tarea se ha copiado a tu lista.'),
-                          onError: (error: any) => toast.error(error?.message || 'No se pudo copiar la tarea'),
+                          onSuccess: () => toast.success(t('bucket.copy_success')),
+                          onError: (error: any) => toast.error(error?.message || t('bucket.copy_error')),
                         }));
                       }}
                     >

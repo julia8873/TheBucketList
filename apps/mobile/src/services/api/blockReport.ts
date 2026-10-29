@@ -1,3 +1,4 @@
+import { i18n } from '@bucketlist/shared';
 import { supabase } from '../supabase';
 
 export interface BlockedUserItem {
@@ -56,7 +57,7 @@ function one<T>(value: T | T[] | null | undefined): T | null {
 
 function normalizeReport(item: any): UserReportItem {
   const unknownUser = (id: string | null | undefined) =>
-    id ? { id, username: 'usuario', display_name: null, avatar_url: null } : null;
+    id ? { id, username: '', display_name: null, avatar_url: null } : null;
   return {
     id: item.id,
     reason: item.reason,
@@ -83,7 +84,7 @@ export const blockReportApi = {
     const { error } = await (supabase.rpc as any)('block_user', {
       p_target_user_id: targetUserId,
     });
-    if (error) throw new Error(error.message || 'Error al bloquear usuario');
+    if (error) throw new Error(error.message || i18n.t('blocked.err_block_user', { defaultValue: 'Error al bloquear usuario' }));
     return true;
   },
 
@@ -94,7 +95,7 @@ export const blockReportApi = {
     const { error } = await (supabase.rpc as any)('unblock_user', {
       p_target_user_id: targetUserId,
     });
-    if (error) throw new Error(error.message || 'Error al desbloquear usuario');
+    if (error) throw new Error(error.message || i18n.t('blocked.err_unblock_user', { defaultValue: 'Error al desbloquear usuario' }));
     return true;
   },
 
@@ -214,7 +215,7 @@ export const blockReportApi = {
       .eq('blocker_id', currentUserId)
       .order('created_at', { ascending: false });
 
-    if (error) throw new Error(error.message || 'Error al obtener usuarios bloqueados');
+    if (error) throw new Error(error.message || i18n.t('blocked.err_get_blocked', { defaultValue: 'Error al obtener usuarios bloqueados' }));
 
     return (data ?? []).map((row: any) => ({
       id: row.id,
@@ -350,7 +351,7 @@ export const blockReportApi = {
       target_user_id: targetUserId,
     });
 
-    if (error) throw new Error(error.message || 'Error al eliminar cuenta de usuario');
+    if (error) throw new Error(error.message || i18n.t('blocked.err_delete_user', { defaultValue: 'Error al eliminar cuenta de usuario' }));
   },
 
   /**

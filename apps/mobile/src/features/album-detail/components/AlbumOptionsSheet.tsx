@@ -282,8 +282,8 @@ export function AlbumOptionsSheet({
                   {isAdmin && onPromoteToCollection && (
                     <SheetOption
                       icon={<Sparkles color={gold[400]} size={21} />}
-                      title="Promocionar a Colección (Admin)"
-                      subtitle="Publica este álbum en la pestaña Colecciones para todos"
+                      title={t('albums.promote_to_collection', { defaultValue: 'Promocionar a Colección (Admin)' })}
+                      subtitle={t('albums.promote_to_collection_sub', { defaultValue: 'Publica este álbum en la pestaña Colecciones para todos' })}
                       onPress={() => {
                         onClose();
                         onPromoteToCollection();
@@ -438,8 +438,8 @@ export function AlbumOptionsSheet({
 
                       <SheetOption
                         icon={<Maximize2 color={gold[400]} size={21} />}
-                        title={coverAspectRatio === '1:1' ? 'Cambiar a Panorámica (16:9)' : 'Cambiar a Cuadrada (1:1)'}
-                        subtitle={coverAspectRatio === '1:1' ? 'Formato horizontal panorámico' : 'Formato cuadrado 1:1'}
+                        title={coverAspectRatio === '1:1' ? t('albums.options_cover_switch_widescreen', { defaultValue: 'Cambiar a Panorámica (16:9)' }) : t('albums.options_cover_switch_square', { defaultValue: 'Cambiar a Cuadrada (1:1)' })}
+                        subtitle={coverAspectRatio === '1:1' ? t('albums.options_cover_widescreen_sub', { defaultValue: 'Formato horizontal panorámico' }) : t('albums.options_cover_square_sub', { defaultValue: 'Formato cuadrado 1:1' })}
                         onPress={() => {
                           onChangeCoverShape?.(coverAspectRatio === '1:1' ? '16:9' : '1:1');
                         }}

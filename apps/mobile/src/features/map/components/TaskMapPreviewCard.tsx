@@ -144,8 +144,8 @@ export function TaskMapPreviewCard({
   }
 
   const locationTitle = task.location_text
-    ? task.location_text.split(',')[0]?.trim() || 'Ubicación'
-    : 'Ubicación';
+    ? task.location_text.split(',')[0]?.trim() || t('map.default_location', { defaultValue: 'Ubicación' })
+    : t('map.default_location', { defaultValue: 'Ubicación' });
 
   // Si está expandido en pantalla completa
   if (isExpanded) {

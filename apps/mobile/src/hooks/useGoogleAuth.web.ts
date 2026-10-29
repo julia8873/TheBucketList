@@ -1,3 +1,4 @@
+import { i18n } from '@bucketlist/shared';
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../services/supabase';
 import { getAuthRedirectUrl } from '../constants/urls';
@@ -76,7 +77,7 @@ export function useGoogleAuth(mode: GoogleAuthMode) {
       return new Promise<GoogleAuthResult>(() => {});
     } catch (e: any) {
       setLoading(false);
-      return { type: 'error', errorMessage: e?.message ?? 'Error desconocido' };
+      return { type: 'error', errorMessage: e?.message ?? i18n.t('auth.err_unknown', { defaultValue: 'Error desconocido' }) };
     }
   }, [mode]);
 

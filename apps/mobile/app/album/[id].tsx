@@ -468,7 +468,7 @@ export default function AlbumDetailScreen() {
           <SafeAreaView style={styles.navOverlay} edges={['top']}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Volver"
+              accessibilityLabel={t('common.back', { defaultValue: 'Volver' })}
               style={styles.heroBtn}
               onPress={() => state.router.back()}
             >
@@ -481,7 +481,7 @@ export default function AlbumDetailScreen() {
                   <>
                     <Pressable
                       accessibilityRole="button"
-                      accessibilityLabel={state.isFav ? 'Quitar de favoritos' : 'Marcar como favorito'}
+                      accessibilityLabel={state.isFav ? t('album_detail.fav_remove_a11y', { defaultValue: 'Quitar de favoritos' }) : t('album_detail.fav_add_a11y', { defaultValue: 'Marcar como favorito' })}
                       style={styles.heroBtn}
                       onPress={() =>
                         state.toggleFavoriteAlbum.mutate({
@@ -500,7 +500,7 @@ export default function AlbumDetailScreen() {
                     {albumLikesCount > 0 && (
                       <Pressable
                         accessibilityRole="button"
-                        accessibilityLabel="Ver me gusta"
+                        accessibilityLabel={t('album_detail.view_likes_a11y', { defaultValue: 'Ver me gusta' })}
                         style={styles.heroBtn}
                         onPress={() => setShowLikesModal(true)}
                       >
@@ -518,7 +518,7 @@ export default function AlbumDetailScreen() {
                   <>
                     <Pressable
                       accessibilityRole="button"
-                      accessibilityLabel={state.isLiked ? 'Quitar me gusta' : 'Dar me gusta'}
+                      accessibilityLabel={state.isLiked ? t('album_detail.unlike_a11y', { defaultValue: 'Quitar me gusta' }) : t('album_detail.give_like_a11y', { defaultValue: 'Dar me gusta' })}
                       style={styles.heroBtn}
                       onPress={state.handleToggleLikeAlbum}
                       onLongPress={() => setShowLikesModal(true)}
@@ -532,7 +532,7 @@ export default function AlbumDetailScreen() {
                     </Pressable>
                     <Pressable
                       accessibilityRole="button"
-                      accessibilityLabel={state.isSaved ? 'Quitar de guardados' : 'Guardar álbum'}
+                      accessibilityLabel={state.isSaved ? t('album_detail.save_remove_a11y', { defaultValue: 'Quitar de guardados' }) : t('album_detail.save_add_a11y', { defaultValue: 'Guardar álbum' })}
                       style={styles.heroBtn}
                       onPress={state.handleToggleSaveAlbum}
                     >
@@ -548,7 +548,7 @@ export default function AlbumDetailScreen() {
                 {state.currentUserId && (
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Notificaciones"
+                    accessibilityLabel={t('common.notifications', { defaultValue: 'Notificaciones' })}
                     style={styles.heroBtn}
                     onPress={() => state.setShowNotificationModal(true)}
                   >
@@ -562,7 +562,7 @@ export default function AlbumDetailScreen() {
                 )}
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel="Más opciones"
+                  accessibilityLabel={t('common.more_options', { defaultValue: 'Más opciones' })}
                   style={styles.heroBtn}
                   onPress={state.handleMore}
                 >
@@ -649,7 +649,7 @@ export default function AlbumDetailScreen() {
                   onPress={() => state.router.push(`/profile/${album.owner!.id}` as any)}
                   style={[styles.collaboratorCircle, { borderColor: '#D4B13A', borderWidth: 2.5 }]}
                   accessibilityRole="button"
-                  accessibilityLabel={`Perfil de ${album.owner.display_name || album.owner.username || 'propietario'}`}
+                  accessibilityLabel={t('album_detail.owner_profile_a11y', { name: album.owner.display_name || album.owner.username || '', defaultValue: `Perfil de ${album.owner.display_name || album.owner.username || ''}` })}
                 >
                   {album.owner.avatar_url ? (
                     <Image
@@ -687,7 +687,7 @@ export default function AlbumDetailScreen() {
                         isPending && styles.collaboratorCirclePending,
                       ]}
                       accessibilityRole="button"
-                      accessibilityLabel={`Perfil de ${collab.display_name || collab.username || 'colaborador'}`}
+                      accessibilityLabel={t('album_detail.collab_profile_a11y', { name: collab.display_name || collab.username || '', defaultValue: `Perfil de ${collab.display_name || collab.username || ''}` })}
                     >
                       {collab.avatar_url ? (
                         <Image
@@ -752,7 +752,7 @@ export default function AlbumDetailScreen() {
                     }
                   }}
                   accessibilityRole="button"
-                  accessibilityLabel={`Etiqueta ${tItem.name}`}
+                  accessibilityLabel={t('album_detail.tag_a11y', { name: tItem.name, defaultValue: `Etiqueta ${tItem.name}` })}
                 >
                   {tItem.emoji ? <Text style={{ fontSize: 13 }}>{tItem.emoji}</Text> : null}
                   <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: tItem.color || '#D4B13A' }}>
@@ -892,7 +892,7 @@ export default function AlbumDetailScreen() {
                 <Pressable
                   style={styles.toolbarIconBtn}
                   onPress={() => (state.isSelectionMode ? state.handleExitSelection() : state.startSelection())}
-                  accessibilityLabel={state.isSelectionMode ? 'Salir de la selección' : 'Seleccionar tareas'}
+                  accessibilityLabel={state.isSelectionMode ? t('album_detail.exit_selection_a11y', { defaultValue: 'Salir de la selección' }) : t('album_detail.select_tasks_a11y', { defaultValue: 'Seleccionar tareas' })}
                 >
                   <ListChecks size={16} color={state.isSelectionMode ? '#D4B13A' : '#8F8F8F'} />
                 </Pressable>
@@ -932,7 +932,7 @@ export default function AlbumDetailScreen() {
                   <Pressable
                     onPress={() => state.setTaskSearch('')}
                     hitSlop={8}
-                    accessibilityLabel="Borrar búsqueda"
+                    accessibilityLabel={t('common.clear_search', { defaultValue: 'Borrar búsqueda' })}
                   >
                     <X size={16} color="#8F8F8F" />
                   </Pressable>
@@ -1021,7 +1021,7 @@ export default function AlbumDetailScreen() {
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4 }}
                 hitSlop={8}
                 accessibilityRole="button"
-                accessibilityLabel="Ver me gusta"
+                accessibilityLabel={t('album_detail.view_likes_a11y', { defaultValue: 'Ver me gusta' })}
               >
                 <Heart
                   size={16}

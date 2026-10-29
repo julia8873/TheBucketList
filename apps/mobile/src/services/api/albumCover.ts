@@ -1,3 +1,4 @@
+import { i18n } from '@bucketlist/shared';
 import { Platform } from 'react-native';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -71,7 +72,7 @@ export async function uploadAlbumCover(userId: string, localUri: string): Promis
         }
       } catch {
         const response = await fetch(localUri);
-        if (!response.ok) throw new Error(`No se pudo descargar la imagen (${response.status})`);
+        if (!response.ok) throw new Error(i18n.t('storage.download_error', { defaultValue: 'No se pudo descargar la imagen' }) + ` (${response.status})`);
         const blob = await response.blob();
         const base64Data = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
@@ -94,7 +95,7 @@ export async function uploadAlbumCover(userId: string, localUri: string): Promis
       [{ resize: { width: 1080 } }],
       { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG, base64: true },
     );
-    if (!result.base64) throw new Error('No se pudo procesar la imagen');
+    if (!result.base64) throw new Error(i18n.t('storage.process_error', { defaultValue: 'No se pudo procesar la imagen' }));
 
     // Decodificar base64 de forma segura sin depender de atob (que no existe en Hermes)
     const arrayBuffer = base64ToArrayBuffer(result.base64);

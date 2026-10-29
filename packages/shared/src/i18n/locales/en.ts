@@ -1,5 +1,15 @@
 const en = {
   common: {
+    clear_search: 'Clear search',
+    drag_to_reorder: 'Drag to reorder',
+    official: 'Official',
+    verified_official_account: 'Verified Official Account',
+    close_notification: 'Close notification',
+    undo: 'Undo',
+    error_update: 'Could not update',
+    days_remaining: '{{count}} days',
+    previous: 'Previous',
+    unknown_error: 'Unknown error',
     save: 'Save',
     cancel: 'Cancel',
     delete: 'Delete',
@@ -84,6 +94,8 @@ const en = {
   },
 
   auth: {
+    err_unknown: 'Unknown error',
+    err_not_authenticated: 'User not authenticated',
     welcome_title: 'Your life,\nyour bucket list.',
     welcome_subtitle: 'Track what you want to do, share it with friends, do it for real.',
     slogan: 'For those people who say they should do it, but then never do.',
@@ -199,6 +211,12 @@ const en = {
   },
 
   bucket: {
+    creator_cannot_join: 'You are already the creator of this task',
+    not_open_collab: 'This task does not allow open joining or collaboration requests',
+    followers_only_collab: 'Only followers of the creator can collaborate on this task',
+    must_login_collab: 'You must log in to collaborate',
+    task_not_found: 'Could not find task',
+    thumbnail_label: 'Task image: {{label}}',
     new: 'New goal',
     title_placeholder: 'What do you want to do?',
     description_placeholder: 'Tell us more… (optional)',
@@ -413,6 +431,8 @@ const en = {
     collab_locked_desc: 'Follow @{{username}} to be able to {{action}}.',
     collab_join_freely: 'join freely',
     collab_request_to_join: 'request to collaborate',
+    copy_success: 'Task copied to your list.',
+    copy_error: 'Could not copy task',
   },
 
   complete: {
@@ -515,6 +535,16 @@ const en = {
   },
 
   my_list: {
+    no_tasks_search: 'No tasks found',
+    empty_tasks: 'You have no tasks in this view',
+    no_albums_search: 'No albums found',
+    empty_albums: 'You have no albums',
+    select_all_label: 'Select all',
+    deselect_all_label: 'Deselect all',
+    select_tasks_a11y: 'Select tasks',
+    select_albums_a11y: 'Select albums',
+    exit_selection_a11y: 'Exit multi-selection',
+    clear_search_label: 'Clear search',
     search_placeholder: 'Search in your list...',
     search_albums_placeholder: 'Search in your albums...',
     back_to_profile: 'Back to profile',
@@ -636,6 +666,11 @@ const en = {
   },
 
   daily: {
+    edit_task_a11y: 'Edit task {{title}}',
+    show_day_tasks_a11y: 'Show tasks for {{day}}',
+    hide_day_tasks_a11y: 'Hide tasks for {{day}}',
+    show_completed_a11y: 'Show completed',
+    hide_completed_a11y: 'Hide completed',
     today: 'Today',
     week: 'Week',
     calendar: 'Calendar',
@@ -875,6 +910,13 @@ const en = {
   },
 
   social: {
+    cannot_follow_self: 'You cannot follow yourself',
+    empty_comment: 'Comment cannot be empty',
+    already_yours: 'This task is already yours',
+    already_in_list: 'You already have this task in your list',
+    unidentified_task: 'Unidentified user or task',
+    unidentified_album: 'Unidentified user or album',
+    unfollow_confirm_title: 'Unfollow {{name}}?',
     follow: 'Follow',
     following: 'Following',
     requested: 'Requested',
@@ -1040,6 +1082,12 @@ const en = {
   },
 
   settings: {
+    notif_perm_disabled_title: 'Permissions disabled',
+    notif_perm_disabled_msg: 'Notifications are blocked in your phone settings. Tap "Open Settings" to enable them.',
+    notif_perm_enabled_title: 'Notifications enabled!',
+    notif_perm_enabled_msg: 'You will now receive alerts on your phone when there are updates.',
+    notif_perm_required_title: 'Permissions required',
+    notif_perm_required_msg: 'To receive alerts, you must enable notifications in your device settings.',
     title: 'Settings',
     language: 'Language',
     theme: 'Theme',
@@ -1127,6 +1175,12 @@ const en = {
   },
 
   blocked: {
+    back_label: 'Back',
+    clear_search_label: 'Clear search',
+    err_block_user: 'Error blocking user',
+    err_unblock_user: 'Error unblocking user',
+    err_get_blocked: 'Error getting blocked users',
+    err_delete_user: 'Error deleting user account',
     title_gold: 'Blocked',
     title_rest: ' users',
     description: 'Users on this list cannot view your goals, follow you or interact with you.',
@@ -1145,6 +1199,12 @@ const en = {
   },
 
   friends: {
+    error_load: 'Could not load friends',
+    back_label: 'Back',
+    clear_search_label: 'Clear search',
+    error_complete: 'Could not complete',
+    unfollow_confirm: 'Unfollow {{name}}?',
+    request_not_found: 'Request no longer exists',
     search_placeholder: 'Search people',
     title_gold: 'My',
     title_rest: 'friends',
@@ -1269,6 +1329,12 @@ const en = {
   },
 
   albums: {
+    promote_to_collection: 'Promote to Collection (Admin)',
+    promote_to_collection_sub: 'Publish this album in the Collections tab for everyone',
+    options_cover_switch_widescreen: 'Switch to Widescreen (16:9)',
+    options_cover_switch_square: 'Switch to Square (1:1)',
+    options_cover_widescreen_sub: 'Horizontal widescreen format',
+    options_cover_square_sub: 'Square format 1:1',
     shared: 'Shared',
     new: 'New',
     album: 'album',
@@ -1454,6 +1520,8 @@ const en = {
   },
 
   tags: {
+    close_label: 'Close',
+    custom_color: 'Custom color',
     search_placeholder: 'Search tag',
     sort_popular: 'Most used',
     sort_az: 'A–Z',
@@ -1575,6 +1643,7 @@ const en = {
   },
 
   map: {
+    default_task: 'Task',
     filter_all: 'All',
     filter_mine: 'My tasks',
     filter_friends: 'Friends',
@@ -1628,6 +1697,18 @@ const en = {
   },
 
   bulk_actions: {
+    confirm_share_msg: '{{name}} will be invited to collaborate on {{plural}}.',
+    share_error: 'Could not share the tasks',
+    assign_tags_error: 'Could not assign tags',
+    complete_error: 'Error completing tasks',
+    delete_error: 'Error deleting tasks',
+    clear_notif_error: 'Error clearing notifications',
+    favorites_error: 'Error marking as favorites',
+    reopen_confirm_msg: '{{plural}} will be marked as pending again.',
+    reopen_error: 'Error reopening tasks',
+    priority_error: 'Error changing priority',
+    visibility_error: 'Error changing visibility',
+    close_label: 'Close selection',
     selected_single: '1 task selected',
     selected_plural: '{{count}} tasks selected',
     select_all: 'All',
@@ -1691,6 +1772,18 @@ const en = {
   },
 
   bulk_album_actions: {
+    assign_tags_error: 'Could not assign tags',
+    share_error: 'Could not share the albums',
+    complete_error: 'Error completing album tasks',
+    close_error: 'Error closing albums',
+    reopen_error: 'Error reopening albums',
+    delete_error: 'Error deleting albums',
+    clear_notif_error: 'Error clearing notifications',
+    favorites_error: 'Error marking as favorites',
+    reopen_tasks_error: 'Error reopening album tasks',
+    priority_error: 'Error changing priority',
+    visibility_error: 'Error changing visibility',
+    close_label: 'Close selection',
     selected_single: '1 album selected',
     selected_plural: '{{count}} albums selected',
     select_all: 'All',
@@ -1876,6 +1969,7 @@ const en = {
   },
 
   add_task: {
+    error_add_tasks: 'Could not add tasks',
     title_gold: 'Add',
     title_rest: 'tasks',
     search_user_placeholder: 'Search your tasks',
@@ -2032,6 +2126,7 @@ const en = {
   },
 
   google_drive_modal: {
+    err_open: 'Error opening Google Drive',
     title: 'Google Drive',
     subtitle: 'Folder or file linked to this task',
     input_label: 'Google Drive link',
@@ -2328,6 +2423,110 @@ const en = {
     dark_mode: 'Dark Mode',
     light_mode: 'Light Mode',
     toggle_theme: 'Toggle Theme',
+  },
+
+  bucket_detail: {
+    follow_error: 'Could not follow user',
+    collab_title: 'Collaboration',
+    collab_process_error: 'Could not process request',
+    cancel_request_title: 'Request cancelled',
+    cancel_request_msg: 'You cancelled your collaboration request',
+    cancel_request_error: 'Could not cancel request',
+    respond_invite_error: 'Could not respond to invitation',
+    remove_collab_error: 'Could not remove collaborator',
+    change_status_error: 'Could not change status',
+    change_visibility_error: 'Could not change visibility',
+    change_category_error: 'Could not change category',
+    change_priority_error: 'Could not change priority',
+    update_counter_error: 'Could not update counter',
+    remove_counter_title: 'Remove counter',
+    remove_counter_msg: 'The current count will be lost.',
+    update_step_error: 'Could not update step',
+    reorder_steps_error: 'Could not reorder steps',
+    update_collabs_error: 'Could not update collaborators',
+    fav_add_a11y: 'Mark as favorite',
+    fav_remove_a11y: 'Remove from favorites',
+    save_add_a11y: 'Save task',
+    save_remove_a11y: 'Remove from saved',
+  },
+
+  album_detail: {
+    follow_error: 'Could not follow user',
+    remove_collab_error: 'Could not remove collaborator',
+    update_collabs_error: 'Could not update collaborators',
+    remove_tags_tasks_title: 'Remove tags from tasks',
+    remove_tags_tasks_msg: 'You deselected {{tags}}. Do you also want to remove {{plural}} from all tasks in the album?',
+    remove_tags_only_album: 'Only from album',
+    remove_tags_also_tasks: 'From tasks too',
+    saved_success: 'Album saved',
+    saved_removed: 'Album removed from saved',
+    save_error: 'Could not save album',
+    like_success: 'You like this album',
+    like_removed: 'Like removed',
+    change_visibility_error: 'Could not change visibility',
+    change_priority_error: 'Could not change priority',
+    close_album_error: 'Could not close album',
+    reopen_album_error: 'Could not reopen album',
+    cover_updated: 'Cover updated',
+    cover_update_error: 'Could not update cover',
+    cover_camera_perm_error: 'We need camera access for the cover',
+    cover_recropped: 'Cover readjusted',
+    cover_recrop_error: 'Could not readjust cover',
+    cover_removed: 'Cover removed',
+    cover_remove_error: 'Could not remove cover',
+    cover_shape_updated: 'Cover format updated',
+    cover_shape_error: 'Could not change cover aspect ratio.',
+    update_tasks_error: 'Could not update tasks',
+    login_to_add_tasks: 'You must log in to add tasks to your list.',
+    task_already_in_list: 'You already have this task in your list.',
+    task_added_to_list: 'Task added to your list 🎉',
+    task_add_error: 'Could not add. Please try again.',
+    copy_album_error: 'Could not copy album. Please try again.',
+    fav_add_a11y: 'Mark as favorite',
+    fav_remove_a11y: 'Remove from favorites',
+    save_add_a11y: 'Save album',
+    save_remove_a11y: 'Remove from saved',
+    view_likes_a11y: 'View likes',
+    give_like_a11y: 'Like',
+    unlike_a11y: 'Unlike',
+    owner_profile_a11y: 'Profile of {{name}}',
+    collab_profile_a11y: 'Profile of {{name}}',
+    tag_a11y: 'Tag {{name}}',
+    select_tasks_a11y: 'Select tasks',
+    exit_selection_a11y: 'Exit selection',
+  },
+
+  manage_collections: {
+    loading: 'Loading collections...',
+    back_label: 'Back',
+    clear_search_label: 'Clear search',
+  },
+
+  report: {
+    title_user: 'Report user',
+    title_bucket: 'Report task',
+    title_album: 'Report album',
+    title_comment: 'Report comment',
+    notice_user: 'This report will be sent confidentially and directly to the administrator to evaluate account suspension or deletion.',
+    notice_bucket: 'This report will be sent confidentially to the administrator, who may delete the task or block the author’s account.',
+    notice_album: 'This report will be sent confidentially to the administrator, who may delete the album or block the author’s account.',
+    notice_comment: 'This report will be sent confidentially to the administrator, who may delete the comment or block the author’s account.',
+    reason_spam: 'Spam, bots, or abusive advertising',
+    reason_harassment: 'Harassment, insults, or intimidation',
+    reason_inappropriate: 'Explicit or inappropriate content',
+    reason_impersonation: 'Impersonation or deception',
+    reason_hate: 'Hate speech or incitement to hatred',
+    reason_other: 'Other reason',
+    section_reason: 'WHAT IS THE REASON FOR THE REPORT?',
+    section_details: 'ADDITIONAL DETAILS (OPTIONAL)',
+    details_placeholder: 'Add information or context for the administrator...',
+    submit: 'Send report',
+    submitting: 'Sending...',
+  },
+
+  storage: {
+    process_error: 'Could not process image',
+    download_error: 'Could not download image',
   },
 } as const;
 

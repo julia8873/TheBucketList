@@ -1,3 +1,4 @@
+import { i18n } from '@bucketlist/shared';
 import { supabase } from '../supabase';
 
 export type FollowStatus = 'none' | 'pending' | 'accepted';
@@ -120,7 +121,7 @@ export const friendsApi = {
       .match({ follower_id: followerId, following_id: myId, status: 'pending' })
       .select('follower_id');
     if (error) throw error;
-    if (!data || data.length === 0) throw new Error('La solicitud ya no existe');
+    if (!data || data.length === 0) throw new Error(i18n.t('friends.request_not_found', { defaultValue: 'La solicitud ya no existe' }));
     return true;
   },
 

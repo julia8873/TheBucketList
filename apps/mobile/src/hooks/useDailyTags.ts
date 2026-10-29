@@ -1,3 +1,4 @@
+import { i18n } from '@bucketlist/shared';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../stores/auth.store';
@@ -98,7 +99,7 @@ export function useCreateDailyTag() {
 
   return useMutation({
     mutationFn: async (payload: { name: string; color?: string; emoji?: string | null }): Promise<DailyTag> => {
-      if (!userId) throw new Error('Usuario no autenticado');
+      if (!userId) throw new Error(i18n.t('auth.err_not_authenticated', { defaultValue: 'Usuario no autenticado' }));
 
       const storageKey = getStorageKey(userId);
       const name = payload.name.trim();
@@ -160,7 +161,7 @@ export function useUpdateDailyTag() {
 
   return useMutation({
     mutationFn: async (payload: { id: string; name: string; color?: string; emoji?: string | null }): Promise<DailyTag> => {
-      if (!userId) throw new Error('Usuario no autenticado');
+      if (!userId) throw new Error(i18n.t('auth.err_not_authenticated', { defaultValue: 'Usuario no autenticado' }));
 
       const storageKey = getStorageKey(userId);
       const name = payload.name.trim();

@@ -96,7 +96,7 @@ export function BulkAlbumActionBar({
     try {
       await pending;
     } catch (e: any) {
-      toast.error(e?.message || 'No se pudieron asignar las etiquetas');
+      toast.error(e?.message || t('bulk_album_actions.assign_tags_error', { defaultValue: 'No se pudieron asignar las etiquetas' }));
     }
   };
 
@@ -120,7 +120,7 @@ export function BulkAlbumActionBar({
       onClearSelection();
       toast.success(t('bulk_album_actions.toast_shared', { name: friend.display_name || friend.username, count }));
     } catch (e: any) {
-      toast.error(e?.message || 'No se pudieron compartir los álbumes');
+      toast.error(e?.message || t('bulk_album_actions.share_error', { defaultValue: 'No se pudieron compartir los álbumes' }));
     }
   };
 
@@ -138,7 +138,7 @@ export function BulkAlbumActionBar({
         try {
           await pending;
         } catch (e: any) {
-          toast.error(e?.message || 'Error al completar las tareas de los álbumes');
+          toast.error(e?.message || t('bulk_album_actions.complete_error', { defaultValue: 'Error al completar las tareas de los álbumes' }));
         }
       },
     });
@@ -159,7 +159,7 @@ export function BulkAlbumActionBar({
         try {
           await pending;
         } catch (e: any) {
-          toast.error(e?.message || 'Error al cerrar los álbumes');
+          toast.error(e?.message || t('bulk_album_actions.close_error', { defaultValue: 'Error al cerrar los álbumes' }));
         }
       },
     });
@@ -180,7 +180,7 @@ export function BulkAlbumActionBar({
         try {
           await pending;
         } catch (e: any) {
-          toast.error(e?.message || 'Error al reabrir los álbumes');
+          toast.error(e?.message || t('bulk_album_actions.reopen_error', { defaultValue: 'Error al reabrir los álbumes' }));
         }
       },
     });
@@ -202,7 +202,7 @@ export function BulkAlbumActionBar({
         try {
           await pending;
         } catch (e: any) {
-          toast.error(e?.message || 'Error al eliminar los álbumes');
+          toast.error(e?.message || t('bulk_album_actions.delete_error', { defaultValue: 'Error al eliminar los álbumes' }));
         }
       },
     });
@@ -223,7 +223,7 @@ export function BulkAlbumActionBar({
           onClearSelection();
           toast.success(t('bulk_album_actions.toast_notifications_cleared'));
         } catch (e: any) {
-          toast.error(e?.message || 'Error al vaciar notificaciones');
+          toast.error(e?.message || t('bulk_album_actions.clear_notif_error', { defaultValue: 'Error al vaciar notificaciones' }));
         }
       },
     });
@@ -262,7 +262,7 @@ export function BulkAlbumActionBar({
               }}
               hitSlop={10}
               accessibilityRole="button"
-              accessibilityLabel="Cerrar selección"
+              accessibilityLabel={t('bulk_album_actions.close_label', { defaultValue: 'Cerrar selección' })}
             >
               <X size={18} color="#AAA" />
             </Pressable>
@@ -354,7 +354,7 @@ export function BulkAlbumActionBar({
             onClearSelection();
             toast.success(t('bulk_album_actions.toast_favorites_added', { count }));
           } catch (e: any) {
-            toast.error(e?.message || 'Error al marcar como favoritos');
+            toast.error(e?.message || t('bulk_album_actions.favorites_error', { defaultValue: 'Error al marcar como favoritos' }));
           }
         }}
         onReopenTasks={async () => {
@@ -371,7 +371,7 @@ export function BulkAlbumActionBar({
           try {
             await pending;
           } catch (e: any) {
-            toast.error(e?.message || 'Error al reabrir tareas de álbumes');
+            toast.error(e?.message || t('bulk_album_actions.reopen_tasks_error', { defaultValue: 'Error al reabrir tareas de álbumes' }));
           }
         }}
         onCloseAlbums={handleCloseAlbums}
@@ -401,7 +401,7 @@ export function BulkAlbumActionBar({
           try {
             await pending;
           } catch (e: any) {
-            toast.error(e?.message || 'Error al cambiar prioridad');
+            toast.error(e?.message || t('bulk_album_actions.priority_error', { defaultValue: 'Error al cambiar prioridad' }));
           }
         }}
       />
@@ -428,7 +428,7 @@ export function BulkAlbumActionBar({
           try {
             await pending;
           } catch (e: any) {
-            toast.error(e?.message || 'Error al cambiar visibilidad');
+            toast.error(e?.message || t('bulk_album_actions.visibility_error', { defaultValue: 'Error al cambiar visibilidad' }));
           }
         }}
       />

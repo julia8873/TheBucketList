@@ -1,3 +1,4 @@
+import { useTranslation } from '@bucketlist/shared';
 import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -31,8 +32,10 @@ interface TagSheetShellProps {
  * Hoja inferior animada (fondo oscuro, asa, arrastrar hacia abajo para cerrar).
  * Se monta mientras `visible` o mientras dura la animación de salida.
  */
-export function TagSheetShell({ visible, onClose, fixedHeight, children }: TagSheetShellProps) {
+export function TagSheetShell({
+ visible, onClose, fixedHeight, children }: TagSheetShellProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const [mounted, setMounted] = useState(visible);
   const sheetH = fixedHeight ?? MAX_H;
   const translateY = useRef(new Animated.Value(sheetH)).current;
@@ -80,7 +83,7 @@ export function TagSheetShell({ visible, onClose, fixedHeight, children }: TagSh
     <Modal visible transparent animationType="none" onRequestClose={() => closeRef.current()} statusBarTranslucent>
       <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Animated.View style={[StyleSheet.absoluteFill, styles.backdrop, { opacity: backdrop }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => closeRef.current()} accessibilityLabel="Cerrar" />
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => closeRef.current()} accessibilityLabel={t('tags.close_label', { defaultValue: 'Cerrar' })} />
         </Animated.View>
 
         <Animated.View

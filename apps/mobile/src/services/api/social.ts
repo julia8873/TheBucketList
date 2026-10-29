@@ -1,3 +1,4 @@
+import { i18n } from '@bucketlist/shared';
 import { supabase } from '../supabase';
 import { sendPushNotification } from '../notifications';
 
@@ -252,7 +253,7 @@ export const socialApi = {
 
   updateComment: async (commentId: string, body: string) => {
     const trimmed = body.trim();
-    if (!trimmed) throw new Error('El comentario no puede estar vacío');
+    if (!trimmed) throw new Error(i18n.t('social.empty_comment', { defaultValue: 'El comentario no puede estar vacío' }));
 
     const { data, error } = await supabase
       .from('comments')
@@ -318,14 +319,14 @@ export const socialApi = {
       .single();
 
     if (fetchErr) throw fetchErr;
-    if (original.user_id === userId) throw new Error('Esta tarea ya es tuya');
+    if (original.user_id === userId) throw new Error(i18n.t('social.already_yours', { defaultValue: 'Esta tarea ya es tuya' }));
 
     const { data: already } = await supabase
       .from('buckets')
       .select('id')
       .match({ user_id: userId, copied_from_id: bucketId })
       .limit(1);
-    if (already && already.length > 0) throw new Error('Ya tienes esta tarea en tu lista');
+    if (already && already.length > 0) throw new Error(i18n.t('social.already_in_list', { defaultValue: 'Ya tienes esta tarea en tu lista' }));
 
     const { data, error } = await supabase
       .from('buckets')
@@ -406,7 +407,7 @@ export const socialApi = {
   },
 
   toggleSaveBucket: async (userId: string, bucketId: string, currentlySaved: boolean) => {
-    if (!userId || !bucketId) throw new Error('Usuario o tarea no identificada');
+    if (!userId || !bucketId) throw new Error(i18n.t('social.unidentified_task', { defaultValue: 'Usuario o tarea no identificada' }));
     if (currentlySaved) {
       const { error } = await supabase
         .from('user_saved_buckets')
@@ -622,7 +623,7 @@ export const socialApi = {
       effectiveUserId = authUser?.id || '';
     }
     if (!effectiveUserId || !albumId) {
-      throw new Error('Usuario o álbum no identificado');
+      throw new Error(i18n.t('social.unidentified_album', { defaultValue: 'Usuario o álbum no identificado' }));
     }
 
     if (currentlySaved) {

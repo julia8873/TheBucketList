@@ -63,7 +63,7 @@ export function useCreateDailyTask() {
             subtasks?: DailySubtask[];
           }
     ) => {
-      if (!userId) throw new Error('Usuario no autenticado');
+      if (!userId) throw new Error(i18n.t('auth.err_not_authenticated', { defaultValue: 'Usuario no autenticado' }));
       return dailyTasksService.createTask(userId, payload);
     },
     onMutate: async (payload) => {

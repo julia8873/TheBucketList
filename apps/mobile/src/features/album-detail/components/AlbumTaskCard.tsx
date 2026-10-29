@@ -24,7 +24,7 @@ function getBadgeText(dateStr?: string, t?: (k: any, o?: any) => string): string
 
 function getSubTitle(task: TaskItem, t?: (k: any, o?: any) => string): string {
   const cat =
-    task.categoryName && !task.categoryName.startsWith('Prioridad ') && task.categoryName !== 'Sin categoría'
+    task.categoryName && !task.categoryName.startsWith('Prioridad ')
       ? task.categoryName
       : null;
   const parts: string[] = [];

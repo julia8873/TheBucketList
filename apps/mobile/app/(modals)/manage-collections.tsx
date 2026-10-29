@@ -181,7 +181,7 @@ export default function ManageCollectionsScreen() {
           style={[styles.circleBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="Volver"
+          accessibilityLabel={t('common.back', { defaultValue: 'Volver' })}
         >
           <ChevronLeft size={22} color={theme.colors.foreground} />
         </Pressable>
@@ -224,7 +224,7 @@ export default function ManageCollectionsScreen() {
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator color={gold[400]} size="large" />
-          <Text style={[styles.loadingText, { color: theme.colors.foregroundMuted }]}>Cargando colecciones...</Text>
+          <Text style={[styles.loadingText, { color: theme.colors.foregroundMuted }]}>{t('manage_collections.loading', { defaultValue: 'Cargando colecciones...' })}</Text>
         </View>
       ) : (
         <FlatList

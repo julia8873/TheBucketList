@@ -1,3 +1,4 @@
+import { i18n } from '@bucketlist/shared';
 import { Linking } from 'react-native';
 import { supabase } from '../services/supabase';
 import { toast } from '@bucketlist/ui';
@@ -59,6 +60,6 @@ export async function openGoogleDriveLink({
     }
   } catch (err) {
     console.warn('[DriveAccess] Error opening URL:', err);
-    toast.error('Error al abrir Google Drive');
+    toast.error(i18n.t('google_drive_modal.err_open', { defaultValue: 'Error al abrir Google Drive' }));
   }
 }

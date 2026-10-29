@@ -74,11 +74,11 @@ export default function SettingsScreen() {
   const handleEnablePermissions = async () => {
     if (!permStatus?.granted && !permStatus?.canAskAgain) {
       Alert.alert(
-        'Permisos desactivados',
-        'Las notificaciones están bloqueadas en los ajustes de tu teléfono. Pulsa "Abrir Ajustes" para activarlas.',
+        t('settings.notif_perm_disabled_title', { defaultValue: 'Permisos desactivados' }),
+        t('settings.notif_perm_disabled_msg', { defaultValue: 'Las notificaciones están bloqueadas en los ajustes de tu teléfono. Pulsa "Abrir Ajustes" para activarlas.' }),
         [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Abrir Ajustes', onPress: openAppNotificationSettings },
+          { text: t('common.cancel', { defaultValue: 'Cancelar' }), style: 'cancel' },
+          { text: t('common.open_settings', { defaultValue: 'Abrir Ajustes' }), onPress: openAppNotificationSettings },
         ]
       );
       return;
@@ -89,14 +89,14 @@ export default function SettingsScreen() {
     if (res.granted && user?.id) {
       await registerForPushNotificationsAsync(user.id);
       void queryClient.invalidateQueries({ queryKey: ['notification_prefs', user.id] });
-      Alert.alert('¡Notificaciones activadas!', 'Ahora recibirás avisos en tu móvil cuando haya novedades.');
+      Alert.alert(t('settings.notif_perm_enabled_title', { defaultValue: '¡Notificaciones activadas!' }), t('settings.notif_perm_enabled_msg', { defaultValue: 'Ahora recibirás avisos en tu móvil cuando haya novedades.' }));
     } else if (!res.granted && !res.canAskAgain) {
       Alert.alert(
-        'Permisos necesarios',
-        'Para recibir avisos, debes activar las notificaciones en los ajustes de tu dispositivo.',
+        t('settings.notif_perm_required_title', { defaultValue: 'Permisos necesarios' }),
+        t('settings.notif_perm_required_msg', { defaultValue: 'Para recibir avisos, debes activar las notificaciones en los ajustes de tu dispositivo.' }),
         [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Abrir Ajustes', onPress: openAppNotificationSettings },
+          { text: t('common.cancel', { defaultValue: 'Cancelar' }), style: 'cancel' },
+          { text: t('common.open_settings', { defaultValue: 'Abrir Ajustes' }), onPress: openAppNotificationSettings },
         ]
       );
     }

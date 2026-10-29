@@ -213,9 +213,9 @@ export function FriendsFeedTab({
       <View style={styles.container}>
         {headerElement}
         <EmptyState
-          title="No se pudo cargar el feed"
-          message="Revisa tu conexión e inténtalo de nuevo."
-          actionLabel="Reintentar"
+          title={t('feed.load_error_title')}
+          message={t('feed.load_error_msg')}
+          actionLabel={t('common.retry')}
           onAction={onRetry}
         />
       </View>

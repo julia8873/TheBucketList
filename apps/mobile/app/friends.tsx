@@ -108,10 +108,10 @@ export default function FriendsScreen() {
   const onFollowPress = (person: PersonResult) => {
     if (!user || person.id === user.id) return;
     const vars = { followerId: user.id, followingId: person.id, targetIsPrivate: person.visibility === 'private' };
-    const fail = (error: any) => Alert.alert('No se pudo completar', error?.message ?? 'Inténtalo de nuevo.');
+    const fail = (error: any) => Alert.alert(t('friends.error_complete', { defaultValue: 'No se pudo completar' }), error?.message ?? t('errors.try_again', { defaultValue: 'Inténtalo de nuevo.' }));
 
     if (person.follow_status === 'accepted') {
-      Alert.alert(`¿Dejar de seguir a ${displayNameOf(person)}?`, undefined, [
+      Alert.alert(t('friends.unfollow_confirm', { name: displayNameOf(person), defaultValue: `¿Dejar de seguir a ${displayNameOf(person)}?` }), undefined, [
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Dejar de seguir', style: 'destructive', onPress: () => unfollow.mutate(vars, { onError: fail }) },
       ]);
@@ -151,7 +151,7 @@ export default function FriendsScreen() {
           style={[styles.back, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="Volver"
+          accessibilityLabel={t('common.back', { defaultValue: 'Volver' })}
         >
           <ChevronLeft size={22} color={theme.colors.foreground} strokeWidth={2} />
         </Pressable>
@@ -185,7 +185,7 @@ export default function FriendsScreen() {
               selectionColor={gold[400]}
             />
             {query.length > 0 ? (
-              <Pressable onPress={() => setQuery('')} hitSlop={10} accessibilityRole="button" accessibilityLabel="Borrar búsqueda">
+              <Pressable onPress={() => setQuery('')} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('common.clear_search', { defaultValue: 'Borrar búsqueda' })}>
                 <X size={18} color={theme.colors.foregroundMuted} strokeWidth={2} />
               </Pressable>
             ) : null}

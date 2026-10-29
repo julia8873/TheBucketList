@@ -1,3 +1,4 @@
+import { i18n } from '@bucketlist/shared';
 import { supabase } from '../supabase';
 import type { Database } from '@bucketlist/shared';
 import type { CreateBucketForm, UpdateBucketForm } from '@bucketlist/shared';
@@ -287,7 +288,7 @@ export const bucketApi = {
   /** Solicitar o unirse como colaborador a una tarea (respetando modo abierto o solicitud) */
   requestOrJoinCollaboration: async (bucketId: string, requestOnly = false) => {
     const { data: userAuth } = await supabase.auth.getUser();
-    if (!userAuth?.user) throw new Error('Debes iniciar sesión para colaborar');
+    if (!userAuth?.user) throw new Error(i18n.t('bucket.must_login_collab', { defaultValue: 'Debes iniciar sesión para colaborar' }));
     const uid = userAuth.user.id;
 
     // 1. Intentar vía RPC
@@ -315,14 +316,14 @@ export const bucketApi = {
       .eq('id', bucketId)
       .single();
 
-    if (bErr || !bucket) throw new Error('No se pudo encontrar la tarea');
-    if (bucket.user_id === uid) throw new Error('Ya eres el creador de esta tarea');
+    if (bErr || !bucket) throw new Error(i18n.t('bucket.task_not_found', { defaultValue: 'No se pudo encontrar la tarea' }));
+    if (bucket.user_id === uid) throw new Error(i18n.t('bucket.creator_cannot_join', { defaultValue: 'Ya eres el creador de esta tarea' }));
 
     const mode = (bucket as any).collaboration_mode || 'invite_only';
     const audience = (bucket as any).collaboration_audience || 'followers';
 
     if (mode === 'invite_only') {
-      throw new Error('Esta tarea no permite unirse libremente ni solicitar colaborar');
+      throw new Error(i18n.t('bucket.not_open_collab', { defaultValue: 'Esta tarea no permite unirse libremente ni solicitar colaborar' }));
     }
 
     if (audience === 'followers') {
@@ -333,7 +334,7 @@ export const bucketApi = {
         .eq('following_id', bucket.user_id)
         .eq('status', 'accepted')
         .maybeSingle();
-      if (!f) throw new Error('Solo los seguidores del creador pueden colaborar en esta tarea');
+      if (!f) throw new Error(i18n.t('bucket.followers_only_collab', { defaultValue: 'Solo los seguidores del creador pueden colaborar en esta tarea' }));
     }
 
     const targetStatus = mode === 'open' && !requestOnly ? 'accepted' : 'pending';

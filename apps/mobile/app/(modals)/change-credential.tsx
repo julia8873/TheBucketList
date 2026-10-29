@@ -37,7 +37,7 @@ export default function ChangeCredentialScreen() {
       const { error: rpcErr } = await supabase.rpc('update_user_email', { new_email: cleanEmail });
       if (rpcErr) {
         setLoading(false);
-        setError(rpcErr.message || 'No se pudo actualizar');
+        setError(rpcErr.message || t('common.error_update', { defaultValue: 'No se pudo actualizar' }));
         return;
       }
 
@@ -61,7 +61,7 @@ export default function ChangeCredentialScreen() {
     const { error: passErr } = await supabase.auth.updateUser({ password: value });
     setLoading(false);
     if (passErr) {
-      setError(passErr.message || 'No se pudo actualizar');
+      setError(passErr.message || t('common.error_update', { defaultValue: 'No se pudo actualizar' }));
     } else {
       setDone(true);
     }

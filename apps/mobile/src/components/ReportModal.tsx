@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Flag, X, ShieldAlert } from 'lucide-react-native';
 import { fontFamily, useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 
 export type ReportTargetKind = 'user' | 'bucket' | 'album' | 'comment';
 
@@ -58,6 +59,30 @@ export function ReportModal({
   isLoading = false,
 }: ReportModalProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
+
+  const titlesMap: Record<ReportTargetKind, string> = {
+    user: t('report.title_user', { defaultValue: 'Reportar usuario' }),
+    bucket: t('report.title_bucket', { defaultValue: 'Reportar tarea' }),
+    album: t('report.title_album', { defaultValue: 'Reportar álbum' }),
+    comment: t('report.title_comment', { defaultValue: 'Reportar comentario' }),
+  };
+
+  const noticesMap: Record<ReportTargetKind, string> = {
+    user: t('report.notice_user', { defaultValue: 'Este reporte se enviará de forma confidencial y directa al administrador para evaluar la suspensión o borrado de la cuenta.' }),
+    bucket: t('report.notice_bucket', { defaultValue: 'Este reporte se enviará de forma confidencial al administrador, que podrá eliminar la tarea o bloquear la cuenta de su autor.' }),
+    album: t('report.notice_album', { defaultValue: 'Este reporte se enviará de forma confidencial al administrador, que podrá eliminar el álbum o bloquear la cuenta de su autor.' }),
+    comment: t('report.notice_comment', { defaultValue: 'Este reporte se enviará de forma confidencial al administrador, que podrá eliminar el comentario o bloquear la cuenta de su autor.' }),
+  };
+
+  const reasonsList = [
+    { id: 'Spam o bots', label: t('report.reason_spam', { defaultValue: 'Spam, bots o publicidad abusiva' }) },
+    { id: 'Acoso o intimidación', label: t('report.reason_harassment', { defaultValue: 'Acoso, insultos o intimidación' }) },
+    { id: 'Contenido inapropiado', label: t('report.reason_inappropriate', { defaultValue: 'Contenido explícito o inadecuado' }) },
+    { id: 'Suplantación de identidad', label: t('report.reason_impersonation', { defaultValue: 'Suplantación de identidad o engaño' }) },
+    { id: 'Incitación al odio', label: t('report.reason_hate', { defaultValue: 'Discurso o incitación al odio' }) },
+    { id: 'Otro', label: t('report.reason_other', { defaultValue: 'Otro motivo' }) },
+  ];
   const c = theme.colors;
   const [selectedReason, setSelectedReason] = useState<string>(REPORT_REASONS[0]?.id ?? 'Otro');
   const [details, setDetails] = useState('');
@@ -101,7 +126,7 @@ export function ReportModal({
                   <ShieldAlert color={c.error} size={22} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.title, { color: c.foreground }]}>{TITLES[kind]}</Text>
+                  <Text style={[styles.title, { color: c.foreground }]}>{titlesMap[kind]}</Text>
                   {subject ? (
                     <Text style={[styles.subtitle, { color: c.foregroundMuted }]} numberOfLines={1}>
                       {subject}
@@ -114,7 +139,7 @@ export function ReportModal({
                 onPress={onClose}
                 hitSlop={8}
                 accessibilityRole="button"
-                accessibilityLabel="Cerrar"
+                accessibilityLabel={t('common.close', { defaultValue: 'Cerrar' })}
               >
                 <X color={c.foregroundMuted} size={20} />
               </Pressable>
@@ -122,11 +147,11 @@ export function ReportModal({
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 10 }}>
               <Text style={[styles.sectionLabel, { color: c.foregroundMuted }]}>
-                ¿CUÁL ES EL MOTIVO DEL REPORTE?
+                {t('report.section_reason', { defaultValue: '¿CUÁL ES EL MOTIVO DEL REPORTE?' })}
               </Text>
 
               <View style={styles.reasonsList}>
-                {REPORT_REASONS.map((r) => {
+                {reasonsList.map((r) => {
                   const isSelected = selectedReason === r.id;
                   return (
                     <Pressable
@@ -162,14 +187,14 @@ export function ReportModal({
               </View>
 
               <Text style={[styles.sectionLabel, { color: c.foregroundMuted, marginTop: 18 }]}>
-                DETALLES ADICIONALES (OPCIONAL)
+                {t('report.section_details', { defaultValue: 'DETALLES ADICIONALES (OPCIONAL)' })}
               </Text>
               <TextInput
                 style={[
                   styles.textInput,
                   { backgroundColor: c.surfaceSunken, borderColor: c.border, color: c.foreground },
                 ]}
-                placeholder="Añade información o contexto para el administrador..."
+                placeholder={t('report.details_placeholder', { defaultValue: 'Añade información o contexto para el administrador...' })}
                 placeholderTextColor={c.foregroundSubtle}
                 value={details}
                 onChangeText={setDetails}
@@ -180,7 +205,7 @@ export function ReportModal({
 
               <View style={[styles.noticeBox, { backgroundColor: c.surfaceSunken, borderColor: c.border }]}>
                 <Text style={[styles.noticeText, { color: c.foregroundMuted }]}>
-                  ℹ️ {NOTICES[kind]}
+                  ℹ️ {noticesMap[kind]}
                 </Text>
               </View>
 
@@ -190,7 +215,7 @@ export function ReportModal({
                   onPress={onClose}
                   disabled={isLoading}
                 >
-                  <Text style={[styles.cancelBtnText, { color: c.foreground }]}>Cancelar</Text>
+                  <Text style={[styles.cancelBtnText, { color: c.foreground }]}>{t('common.cancel', { defaultValue: 'Cancelar' })}</Text>
                 </Pressable>
 
                 <Pressable

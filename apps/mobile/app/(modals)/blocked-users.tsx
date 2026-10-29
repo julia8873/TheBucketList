@@ -58,7 +58,7 @@ export default function BlockedUsersScreen() {
                   onPress={() => router.back()}
                   hitSlop={8}
                   accessibilityRole="button"
-                  accessibilityLabel="Volver"
+                  accessibilityLabel={t('common.back', { defaultValue: 'Volver' })}
                 >
                   <ChevronLeft color={theme.colors.foreground} size={24} />
                 </Pressable>

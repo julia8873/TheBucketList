@@ -1,3 +1,4 @@
+import { i18n } from '@bucketlist/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { friendsApi, type FollowStatus } from '../services/api/friends';
 
@@ -69,7 +70,7 @@ export function useAcceptRequest(myId?: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (followerId: string) => {
-      if (!myId) throw new Error('Sin sesión');
+      if (!myId) throw new Error(i18n.t('auth.err_not_authenticated', { defaultValue: 'Sin sesión' }));
       return friendsApi.acceptRequest(followerId, myId);
     },
     onSettled: () => {
@@ -83,7 +84,7 @@ export function useRejectRequest(myId?: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (followerId: string) => {
-      if (!myId) throw new Error('Sin sesión');
+      if (!myId) throw new Error(i18n.t('auth.err_not_authenticated', { defaultValue: 'Sin sesión' }));
       return friendsApi.rejectRequest(followerId, myId);
     },
     onSettled: () => {

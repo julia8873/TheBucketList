@@ -1,3 +1,4 @@
+import { i18n } from '@bucketlist/shared';
 import React, {
   useRef,
   useImperativeHandle,
@@ -159,11 +160,11 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
 
       const rawLoc = (t.location_text || '').trim();
       const parts = rawLoc.split(',').map((p) => p.trim()).filter(Boolean);
-      const primaryLoc = parts[0] || 'Ubicación';
+      const primaryLoc = parts[0] || i18n.t('map.default_location', { defaultValue: 'Ubicación' });
 
       return {
         id: t.id,
-        title: t.title || 'Tarea',
+        title: t.title || i18n.t('map.default_task', { defaultValue: 'Tarea' }),
         lat,
         lng,
         location: primaryLoc,

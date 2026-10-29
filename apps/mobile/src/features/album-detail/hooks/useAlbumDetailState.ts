@@ -56,10 +56,10 @@ export function useAlbumDetailState() {
       { userId: currentUserId, albumId: cleanId, currentlySaved: isSaved },
       {
         onSuccess: () => {
-          toast.success(isSaved ? 'Álbum quitado de guardados' : 'Álbum guardado');
+          toast.success(isSaved ? t('album_detail.saved_removed', { defaultValue: 'Álbum quitado de guardados' }) : t('album_detail.saved_success', { defaultValue: 'Álbum guardado' }));
         },
         onError: (err: any) => {
-          toast.error(err?.message || 'No se pudo guardar el álbum');
+          toast.error(err?.message || t('album_detail.save_error', { defaultValue: 'No se pudo guardar el álbum' }));
         },
       }
     );
@@ -74,7 +74,7 @@ export function useAlbumDetailState() {
       { albumId: cleanId, userId: currentUserId },
       {
         onSuccess: () => {
-          toast.success(isLiked ? 'Me gusta eliminado' : 'Te gusta este álbum');
+          toast.success(isLiked ? t('album_detail.like_removed', { defaultValue: 'Me gusta eliminado' }) : t('album_detail.like_success', { defaultValue: 'Te gusta este álbum' }));
         },
       }
     );
@@ -304,7 +304,7 @@ export function useAlbumDetailState() {
       .eq('user_id', targetUserId);
     if (error) {
       queryClient.setQueryData(['albumCollaborators', cleanId], previous);
-      Alert.alert('Error', error.message || 'No se pudo quitar al colaborador');
+      Alert.alert(t('common.error'), error.message || t('album_detail.remove_collab_error', { defaultValue: 'No se pudo quitar al colaborador' }));
       throw error;
     }
     void queryClient.invalidateQueries({ queryKey: ['albumCollaborators', cleanId] });
@@ -364,14 +364,14 @@ export function useAlbumDetailState() {
       if (opError) {
         console.warn('Error updating album collaborators:', opError);
         queryClient.setQueryData(collabKey, prevCollabs);
-        Alert.alert('Error', opError.message || 'No se pudo actualizar a los colaboradores');
+        Alert.alert(t('common.error'), opError.message || t('album_detail.update_collabs_error', { defaultValue: 'No se pudo actualizar a los colaboradores' }));
       } else if (shareRes?.error) {
         console.warn('Error sharing album:', shareRes.error);
       }
     } catch (err: any) {
       console.warn('Error updating album collaborators:', err);
       queryClient.setQueryData(collabKey, prevCollabs);
-      Alert.alert('Error', err?.message || 'No se pudo actualizar a los colaboradores');
+      Alert.alert(t('common.error'), err?.message || t('album_detail.update_collabs_error', { defaultValue: 'No se pudo actualizar a los colaboradores' }));
     } finally {
       void queryClient.invalidateQueries({ queryKey: collabKey });
       void queryClient.invalidateQueries({ queryKey: ['item_participants'] });
@@ -482,7 +482,7 @@ export function useAlbumDetailState() {
       .eq('id', id);
 
     if (error) {
-      toast.error('No se pudo cambiar la visibilidad');
+      toast.error(t('album_detail.change_visibility_error', { defaultValue: 'No se pudo cambiar la visibilidad' }));
       void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
       return;
     }
@@ -503,7 +503,7 @@ export function useAlbumDetailState() {
       .eq('id', id);
 
     if (error) {
-      toast.error('No se pudo cambiar la prioridad');
+      toast.error(t('album_detail.change_priority_error', { defaultValue: 'No se pudo cambiar la prioridad' }));
     }
     void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
     void queryClient.invalidateQueries({ queryKey: ['albums'] });
@@ -524,7 +524,7 @@ export function useAlbumDetailState() {
       .eq('id', id);
 
     if (error) {
-      toast.error(close ? 'No se pudo cerrar el álbum' : 'No se pudo reabrir el álbum');
+      toast.error(close ? t('album_detail.close_album_error', { defaultValue: 'No se pudo cerrar el álbum' }) : t('album_detail.reopen_album_error', { defaultValue: 'No se pudo reabrir el álbum' }));
     }
     void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
     void queryClient.invalidateQueries({ queryKey: ['albums'] });
@@ -612,7 +612,7 @@ export function useAlbumDetailState() {
     try {
       const permission = await ImagePicker.requestCameraPermissionsAsync();
       if (!permission.granted) {
-        toast.error('Necesitamos acceso a la cámara para la portada');
+        toast.error(t('album_detail.cover_camera_perm_error', { defaultValue: 'Necesitamos acceso a la cámara para la portada' }));
         return;
       }
 
@@ -779,9 +779,9 @@ export function useAlbumDetailState() {
       void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
       if (cleanId !== id) void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
       void queryClient.invalidateQueries({ queryKey: ['albums'] });
-      toast.success('Portada eliminada');
+      toast.success(t('album_detail.cover_removed', { defaultValue: 'Portada eliminada' }));
     } catch (err: any) {
-      toast.error(err?.message || 'No se pudo quitar la portada');
+      toast.error(err?.message || t('album_detail.cover_remove_error', { defaultValue: 'No se pudo quitar la portada' }));
     }
   };
 
@@ -888,9 +888,9 @@ export function useAlbumDetailState() {
       void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
       if (cleanId !== id) void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
       void queryClient.invalidateQueries({ queryKey: ['albums'] });
-      toast.success('Formato de portada actualizado');
+      toast.success(t('album_detail.cover_shape_updated', { defaultValue: 'Formato de portada actualizado' }));
     } catch {
-      toast.error('No se pudo cambiar la forma de la portada.');
+      toast.error(t('album_detail.cover_shape_error', { defaultValue: 'No se pudo cambiar la forma de la portada.' }));
     }
   };
 
@@ -969,11 +969,11 @@ export function useAlbumDetailState() {
 
     if (removed.length > 0 && taskIds.length > 0) {
       Alert.alert(
-        'Quitar etiquetas de las tareas',
-        `Has deseleccionado ${removed.map((t) => `«${t.name}»`).join(', ')}. ¿Deseas quitar ${removed.length === 1 ? 'esta etiqueta' : 'estas etiquetas'} también de todas las tareas del álbum?`,
+        t('album_detail.remove_tags_tasks_title', { defaultValue: 'Quitar etiquetas de las tareas' }),
+        t('album_detail.remove_tags_tasks_msg', { tags: removed.map((t) => `«${t.name}»`).join(', '), plural: removed.length === 1 ? 'esta etiqueta' : 'estas etiquetas', defaultValue: `Has deseleccionado ${removed.map((t) => `«${t.name}»`).join(', ')}. ¿Deseas quitar ${removed.length === 1 ? 'esta etiqueta' : 'estas etiquetas'} también de todas las tareas del álbum?` }),
         [
           {
-            text: 'Solo del álbum',
+            text: t('album_detail.remove_tags_only_album', { defaultValue: 'Solo del álbum' }),
             onPress: () => {
               void syncAlbumTags.mutateAsync({
                 albumId: id,
@@ -1104,7 +1104,7 @@ export function useAlbumDetailState() {
       .in('id', taskIds);
 
     if (error) {
-      toast.error('No se pudieron actualizar las tareas');
+      toast.error(t('album_detail.update_tasks_error', { defaultValue: 'No se pudieron actualizar las tareas' }));
       settleTaskCaches(queryClient);
       return;
     }
@@ -1127,22 +1127,22 @@ export function useAlbumDetailState() {
   const handleCopySingleTask = (task: TaskItem, e: any) => {
     e.stopPropagation();
     if (!currentUserId) {
-      toast.info('Debes iniciar sesión para añadir tareas a tu lista.');
+      toast.info(t('album_detail.login_to_add_tasks', { defaultValue: 'Debes iniciar sesión para añadir tareas a tu lista.' }));
       return;
     }
     const alreadyCopied = !!copiedIds?.includes(task.id);
     if (alreadyCopied) {
-      toast.info('Ya tienes esta tarea en tu lista.');
+      toast.info(t('album_detail.task_already_in_list', { defaultValue: 'Ya tienes esta tarea en tu lista.' }));
       return;
     }
     copyBucket.mutate(
       { bucketId: task.id, userId: currentUserId },
       {
         onSuccess: () => {
-          toast.success('Tarea añadida a tu lista 🎉');
+          toast.success(t('album_detail.task_added_to_list', { defaultValue: 'Tarea añadida a tu lista 🎉' }));
         },
         onError: (err: any) => {
-          toast.error(err?.message || 'No se pudo añadir. Inténtalo de nuevo.');
+          toast.error(err?.message || t('album_detail.task_add_error', { defaultValue: 'No se pudo añadir. Inténtalo de nuevo.' }));
         },
       }
     );
@@ -1238,7 +1238,7 @@ export function useAlbumDetailState() {
       });
     } catch (err: any) {
       console.error('Error copying entire album:', err);
-      toast.error(err?.message || 'No se pudo copiar el álbum. Inténtalo de nuevo.');
+      toast.error(err?.message || t('album_detail.copy_album_error', { defaultValue: 'No se pudo copiar el álbum. Inténtalo de nuevo.' }));
     } finally {
       setCopyingAlbum(false);
     }

@@ -243,7 +243,7 @@ export function DailyWeekView({
                     onPress={() => toggleDay(day.dateStr)}
                     hitSlop={8}
                     accessibilityRole="button"
-                    accessibilityLabel={isDayCollapsed ? `Mostrar tareas de ${day.dayName}` : `Ocultar tareas de ${day.dayName}`}
+                    accessibilityLabel={isDayCollapsed ? t('daily.show_day_tasks_a11y', { day: day.dayName, defaultValue: `Mostrar tareas de ${day.dayName}` }) : t('daily.hide_day_tasks_a11y', { day: day.dayName, defaultValue: `Ocultar tareas de ${day.dayName}` })}
                   >
                     {isDayCollapsed ? (
                       <ChevronRight size={15} color={theme.colors.foregroundMuted} />
@@ -330,7 +330,7 @@ export function DailyWeekView({
                               onPress={() => onToggleWeekDayCompleted?.(day.dateStr)}
                               hitSlop={8}
                               accessibilityRole="button"
-                              accessibilityLabel={isCompletedCollapsed ? "Mostrar completadas" : "Ocultar completadas"}
+                              accessibilityLabel={isCompletedCollapsed ? t('daily.show_completed_a11y', { defaultValue: 'Mostrar completadas' }) : t('daily.hide_completed_a11y', { defaultValue: 'Ocultar completadas' })}
                             >
                               {isCompletedCollapsed ? (
                                 <ChevronRight size={14} color={theme.colors.foregroundMuted} />

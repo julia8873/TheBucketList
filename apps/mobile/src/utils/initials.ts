@@ -9,5 +9,5 @@ export function initialsOf(person?: { display_name?: string | null; username?: s
 }
 
 export function displayNameOf(person?: { display_name?: string | null; username?: string | null } | null): string {
-  return person?.display_name || person?.username || 'Usuario';
+  return person?.display_name || person?.username || '';
 }

@@ -1,3 +1,4 @@
+import { i18n } from '@bucketlist/shared';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { supabase } from '../supabase';
 import { base64ToArrayBuffer } from './storage';
@@ -9,7 +10,7 @@ export async function uploadAvatar(userId: string, localUri: string): Promise<st
     [{ resize: { width: 512 } }],
     { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG, base64: true },
   );
-  if (!result.base64) throw new Error('No se pudo procesar la imagen');
+  if (!result.base64) throw new Error(i18n.t('storage.process_error', { defaultValue: 'No se pudo procesar la imagen' }));
 
   // Decodificar base64 de forma fiable sin depender de atob
   const arrayBuffer = base64ToArrayBuffer(result.base64);

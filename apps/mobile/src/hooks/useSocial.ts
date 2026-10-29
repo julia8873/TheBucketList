@@ -1,3 +1,4 @@
+import { i18n } from '@bucketlist/shared';
 import {
   useMutation,
   useQueryClient,
@@ -89,7 +90,7 @@ export function useFollowUser() {
   return useMutation({
     mutationFn: ({ followerId, followingId }: FollowVars) => {
       if (followerId === followingId) {
-        throw new Error('No puedes seguirte a ti mismo');
+        throw new Error(i18n.t('social.cannot_follow_self', { defaultValue: 'No puedes seguirte a ti mismo' }));
       }
       return socialApi.followUser(followerId, followingId);
     },

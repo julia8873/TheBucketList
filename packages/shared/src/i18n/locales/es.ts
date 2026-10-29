@@ -1,5 +1,15 @@
 const es = {
   common: {
+    clear_search: 'Borrar búsqueda',
+    drag_to_reorder: 'Arrastrar para reordenar',
+    official: 'Oficial',
+    verified_official_account: 'Cuenta Oficial Verificada',
+    close_notification: 'Cerrar notificación',
+    undo: 'Deshacer',
+    error_update: 'No se pudo actualizar',
+    days_remaining: '{{count}} días',
+    previous: 'Anterior',
+    unknown_error: 'Error desconocido',
     save: 'Guardar',
     cancel: 'Cancelar',
     delete: 'Eliminar',
@@ -84,6 +94,8 @@ const es = {
   },
 
   auth: {
+    err_unknown: 'Error desconocido',
+    err_not_authenticated: 'Usuario no autenticado',
     welcome_title: 'Tu vida,\ntu bucket list.',
     welcome_subtitle: 'Anota lo que quieres hacer, compártelo con amigos y hazlo de verdad.',
     slogan: 'Para esas personas que dicen que deberían hacerlo, pero luego nunca lo hacen.',
@@ -199,6 +211,12 @@ const es = {
   },
 
   bucket: {
+    creator_cannot_join: 'Ya eres el creador de esta tarea',
+    not_open_collab: 'Esta tarea no permite unirse libremente ni solicitar colaborar',
+    followers_only_collab: 'Solo los seguidores del creador pueden colaborar en esta tarea',
+    must_login_collab: 'Debes iniciar sesión para colaborar',
+    task_not_found: 'No se pudo encontrar la tarea',
+    thumbnail_label: 'Imagen de la tarea: {{label}}',
     new: 'Nuevo objetivo',
     title_placeholder: '¿Qué quieres hacer?',
     description_placeholder: 'Cuéntanos más… (opcional)',
@@ -413,6 +431,8 @@ const es = {
     collab_locked_desc: 'Sigue a @{{username}} para poder {{action}}.',
     collab_join_freely: 'unirte libremente',
     collab_request_to_join: 'solicitar colaborar',
+    copy_success: 'La tarea se ha copiado a tu lista.',
+    copy_error: 'No se pudo copiar la tarea',
   },
 
   complete: {
@@ -515,6 +535,16 @@ const es = {
   },
 
   my_list: {
+    no_tasks_search: 'No se encontraron tareas',
+    empty_tasks: 'No tienes tareas en esta vista',
+    no_albums_search: 'No se encontraron álbumes',
+    empty_albums: 'No tienes álbumes',
+    select_all_label: 'Seleccionar todo',
+    deselect_all_label: 'Deseleccionar todo',
+    select_tasks_a11y: 'Seleccionar tareas',
+    select_albums_a11y: 'Seleccionar álbumes',
+    exit_selection_a11y: 'Salir de selección múltiple',
+    clear_search_label: 'Borrar búsqueda',
     search_placeholder: 'Buscar en tu lista...',
     search_albums_placeholder: 'Buscar en tus álbumes...',
     back_to_profile: 'Volver al perfil',
@@ -636,6 +666,11 @@ const es = {
   },
 
   daily: {
+    edit_task_a11y: 'Editar tarea {{title}}',
+    show_day_tasks_a11y: 'Mostrar tareas de {{day}}',
+    hide_day_tasks_a11y: 'Ocultar tareas de {{day}}',
+    show_completed_a11y: 'Mostrar completadas',
+    hide_completed_a11y: 'Ocultar completadas',
     today: 'Hoy',
     week: 'Semana',
     calendar: 'Calendario',
@@ -875,6 +910,13 @@ const es = {
   },
 
   social: {
+    cannot_follow_self: 'No puedes seguirte a ti mismo',
+    empty_comment: 'El comentario no puede estar vacío',
+    already_yours: 'Esta tarea ya es tuya',
+    already_in_list: 'Ya tienes esta tarea en tu lista',
+    unidentified_task: 'Usuario o tarea no identificada',
+    unidentified_album: 'Usuario o álbum no identificado',
+    unfollow_confirm_title: '¿Dejar de seguir a {{name}}?',
     follow: 'Seguir',
     following: 'Siguiendo',
     requested: 'Solicitado',
@@ -1040,6 +1082,12 @@ const es = {
   },
 
   settings: {
+    notif_perm_disabled_title: 'Permisos desactivados',
+    notif_perm_disabled_msg: 'Las notificaciones están bloqueadas en los ajustes de tu teléfono. Pulsa "Abrir Ajustes" para activarlas.',
+    notif_perm_enabled_title: '¡Notificaciones activadas!',
+    notif_perm_enabled_msg: 'Ahora recibirás avisos en tu móvil cuando haya novedades.',
+    notif_perm_required_title: 'Permisos necesarios',
+    notif_perm_required_msg: 'Para recibir avisos, debes activar las notificaciones en los ajustes de tu dispositivo.',
     title: 'Ajustes',
     language: 'Idioma',
     theme: 'Tema',
@@ -1127,6 +1175,12 @@ const es = {
   },
 
   blocked: {
+    back_label: 'Volver',
+    clear_search_label: 'Borrar búsqueda',
+    err_block_user: 'Error al bloquear usuario',
+    err_unblock_user: 'Error al desbloquear usuario',
+    err_get_blocked: 'Error al obtener usuarios bloqueados',
+    err_delete_user: 'Error al eliminar cuenta de usuario',
     title_gold: 'Usuarios',
     title_rest: ' bloqueados',
     description: 'Los usuarios de esta lista no pueden ver tus objetivos, seguirte ni interactuar contigo.',
@@ -1145,6 +1199,12 @@ const es = {
   },
 
   friends: {
+    error_load: 'Error al cargar amigos',
+    back_label: 'Volver',
+    clear_search_label: 'Borrar búsqueda',
+    error_complete: 'No se pudo completar',
+    unfollow_confirm: '¿Dejar de seguir a {{name}}?',
+    request_not_found: 'La solicitud ya no existe',
     search_placeholder: 'Buscar personas',
     title_gold: 'Mis',
     title_rest: 'amigos',
@@ -1269,6 +1329,12 @@ const es = {
   },
 
   albums: {
+    promote_to_collection: 'Promocionar a Colección (Admin)',
+    promote_to_collection_sub: 'Publica este álbum en la pestaña Colecciones para todos',
+    options_cover_switch_widescreen: 'Cambiar a Panorámica (16:9)',
+    options_cover_switch_square: 'Cambiar a Cuadrada (1:1)',
+    options_cover_widescreen_sub: 'Formato horizontal panorámico',
+    options_cover_square_sub: 'Formato cuadrado 1:1',
     shared: 'Compartido',
     new: 'Nuevo',
     album: 'álbum',
@@ -1454,6 +1520,8 @@ const es = {
   },
 
   tags: {
+    close_label: 'Cerrar',
+    custom_color: 'Color personalizado',
     search_placeholder: 'Buscar etiqueta',
     sort_popular: 'Más usadas',
     sort_az: 'A–Z',
@@ -1575,6 +1643,7 @@ const es = {
   },
 
   map: {
+    default_task: 'Tarea',
     filter_all: 'Todas',
     filter_mine: 'Mis tareas',
     filter_friends: 'Amigos',
@@ -1628,6 +1697,18 @@ const es = {
   },
 
   bulk_actions: {
+    confirm_share_msg: 'Se invitará a {{name}} a colaborar en {{plural}}.',
+    share_error: 'No se pudieron compartir las tareas',
+    assign_tags_error: 'No se pudieron asignar las etiquetas',
+    complete_error: 'Error al completar las tareas',
+    delete_error: 'Error al eliminar las tareas',
+    clear_notif_error: 'Error al vaciar notificaciones',
+    favorites_error: 'Error al marcar como favoritas',
+    reopen_confirm_msg: 'Se volverán a marcar como pendientes {{plural}}.',
+    reopen_error: 'Error al reabrir tareas',
+    priority_error: 'Error al cambiar prioridad',
+    visibility_error: 'Error al cambiar visibilidad',
+    close_label: 'Cerrar selección',
     selected_single: '1 tarea seleccionada',
     selected_plural: '{{count}} tareas seleccionadas',
     select_all: 'Todas',
@@ -1691,6 +1772,18 @@ const es = {
   },
 
   bulk_album_actions: {
+    assign_tags_error: 'No se pudieron asignar las etiquetas',
+    share_error: 'No se pudieron compartir los álbumes',
+    complete_error: 'Error al completar las tareas de los álbumes',
+    close_error: 'Error al cerrar los álbumes',
+    reopen_error: 'Error al reabrir los álbumes',
+    delete_error: 'Error al eliminar los álbumes',
+    clear_notif_error: 'Error al vaciar notificaciones',
+    favorites_error: 'Error al marcar como favoritos',
+    reopen_tasks_error: 'Error al reabrir tareas de álbumes',
+    priority_error: 'Error al cambiar prioridad',
+    visibility_error: 'Error al cambiar visibilidad',
+    close_label: 'Cerrar selección',
     selected_single: '1 álbum seleccionado',
     selected_plural: '{{count}} álbumes seleccionados',
     select_all: 'Todos',
@@ -1876,6 +1969,7 @@ const es = {
   },
 
   add_task: {
+    error_add_tasks: 'No se pudieron añadir las tareas',
     title_gold: 'Añadir',
     title_rest: 'tareas',
     search_user_placeholder: 'Buscar en tus tareas',
@@ -2032,6 +2126,7 @@ const es = {
   },
 
   google_drive_modal: {
+    err_open: 'Error al abrir Google Drive',
     title: 'Google Drive',
     subtitle: 'Carpeta o archivo vinculado a la tarea',
     input_label: 'Enlace de Google Drive',
@@ -2338,6 +2433,110 @@ const es = {
     dark_mode: 'Modo oscuro',
     light_mode: 'Modo claro',
     toggle_theme: 'Cambiar tema',
+  },
+
+  bucket_detail: {
+    follow_error: 'No se pudo seguir al usuario',
+    collab_title: 'Colaboración',
+    collab_process_error: 'No se pudo procesar la solicitud',
+    cancel_request_title: 'Solicitud cancelada',
+    cancel_request_msg: 'Has cancelado tu solicitud de colaboración',
+    cancel_request_error: 'No se pudo cancelar la solicitud',
+    respond_invite_error: 'No se pudo responder a la invitación',
+    remove_collab_error: 'No se pudo quitar al colaborador',
+    change_status_error: 'No se pudo cambiar el estado',
+    change_visibility_error: 'No se pudo cambiar la visibilidad',
+    change_category_error: 'No se pudo cambiar la categoría',
+    change_priority_error: 'No se pudo cambiar la prioridad',
+    update_counter_error: 'No se pudo actualizar el contador',
+    remove_counter_title: 'Quitar contador',
+    remove_counter_msg: 'Se perderá la cuenta actual.',
+    update_step_error: 'No se pudo actualizar el paso',
+    reorder_steps_error: 'No se pudo reorganizar los pasos',
+    update_collabs_error: 'No se pudo actualizar a los colaboradores',
+    fav_add_a11y: 'Marcar como favorita',
+    fav_remove_a11y: 'Quitar de favoritas',
+    save_add_a11y: 'Guardar tarea',
+    save_remove_a11y: 'Quitar de guardados',
+  },
+
+  album_detail: {
+    follow_error: 'No se pudo seguir al usuario',
+    remove_collab_error: 'No se pudo quitar al colaborador',
+    update_collabs_error: 'No se pudo actualizar a los colaboradores',
+    remove_tags_tasks_title: 'Quitar etiquetas de las tareas',
+    remove_tags_tasks_msg: 'Has deseleccionado {{tags}}. ¿Deseas quitar {{plural}} también de todas las tareas del álbum?',
+    remove_tags_only_album: 'Solo del álbum',
+    remove_tags_also_tasks: 'De las tareas también',
+    saved_success: 'Álbum guardado',
+    saved_removed: 'Álbum quitado de guardados',
+    save_error: 'No se pudo guardar el álbum',
+    like_success: 'Te gusta este álbum',
+    like_removed: 'Me gusta eliminado',
+    change_visibility_error: 'No se pudo cambiar la visibilidad',
+    change_priority_error: 'No se pudo cambiar la prioridad',
+    close_album_error: 'No se pudo cerrar el álbum',
+    reopen_album_error: 'No se pudo reabrir el álbum',
+    cover_updated: 'Portada actualizada',
+    cover_update_error: 'No se pudo actualizar la portada',
+    cover_camera_perm_error: 'Necesitamos acceso a la cámara para la portada',
+    cover_recropped: 'Portada reajustada',
+    cover_recrop_error: 'No se pudo reajustar la portada',
+    cover_removed: 'Portada eliminada',
+    cover_remove_error: 'No se pudo quitar la portada',
+    cover_shape_updated: 'Formato de portada actualizado',
+    cover_shape_error: 'No se pudo cambiar la forma de la portada.',
+    update_tasks_error: 'No se pudieron actualizar las tareas',
+    login_to_add_tasks: 'Debes iniciar sesión para añadir tareas a tu lista.',
+    task_already_in_list: 'Ya tienes esta tarea en tu lista.',
+    task_added_to_list: 'Tarea añadida a tu lista 🎉',
+    task_add_error: 'No se pudo añadir. Inténtalo de nuevo.',
+    copy_album_error: 'No se pudo copiar el álbum. Inténtalo de nuevo.',
+    fav_add_a11y: 'Marcar como favorito',
+    fav_remove_a11y: 'Quitar de favoritos',
+    save_add_a11y: 'Guardar álbum',
+    save_remove_a11y: 'Quitar de guardados',
+    view_likes_a11y: 'Ver me gusta',
+    give_like_a11y: 'Dar me gusta',
+    unlike_a11y: 'Quitar me gusta',
+    owner_profile_a11y: 'Perfil de {{name}}',
+    collab_profile_a11y: 'Perfil de {{name}}',
+    tag_a11y: 'Etiqueta {{name}}',
+    select_tasks_a11y: 'Seleccionar tareas',
+    exit_selection_a11y: 'Salir de la selección',
+  },
+
+  manage_collections: {
+    loading: 'Cargando colecciones...',
+    back_label: 'Volver',
+    clear_search_label: 'Borrar búsqueda',
+  },
+
+  report: {
+    title_user: 'Reportar usuario',
+    title_bucket: 'Reportar tarea',
+    title_album: 'Reportar álbum',
+    title_comment: 'Reportar comentario',
+    notice_user: 'Este reporte se enviará de forma confidencial y directa al administrador para evaluar la suspensión o borrado de la cuenta.',
+    notice_bucket: 'Este reporte se enviará de forma confidencial al administrador, que podrá eliminar la tarea o bloquear la cuenta de su autor.',
+    notice_album: 'Este reporte se enviará de forma confidencial al administrador, que podrá eliminar el álbum o bloquear la cuenta de su autor.',
+    notice_comment: 'Este reporte se enviará de forma confidencial al administrador, que podrá eliminar el comentario o bloquear la cuenta de su autor.',
+    reason_spam: 'Spam, bots o publicidad abusiva',
+    reason_harassment: 'Acoso, insultos o intimidación',
+    reason_inappropriate: 'Contenido explícito o inadecuado',
+    reason_impersonation: 'Suplantación de identidad o engaño',
+    reason_hate: 'Discurso o incitación al odio',
+    reason_other: 'Otro motivo',
+    section_reason: '¿CUÁL ES EL MOTIVO DEL REPORTE?',
+    section_details: 'DETALLES ADICIONALES (OPCIONAL)',
+    details_placeholder: 'Añade información o contexto para el administrador...',
+    submit: 'Enviar reporte',
+    submitting: 'Enviando...',
+  },
+
+  storage: {
+    process_error: 'No se pudo procesar la imagen',
+    download_error: 'No se pudo descargar la imagen',
   },
 } as const;
 

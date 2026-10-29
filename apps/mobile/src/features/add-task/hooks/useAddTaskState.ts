@@ -222,7 +222,7 @@ export function useAddTaskState(albumId?: string) {
       });
       handleBack();
     } catch (err: any) {
-      Alert.alert('Error', err?.message || 'No se pudieron añadir las tareas');
+      Alert.alert(t('common.error'), err?.message || t('add_task.error_add_tasks', { defaultValue: 'No se pudieron añadir las tareas' }));
     }
   };
 

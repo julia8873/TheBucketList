@@ -179,7 +179,7 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
             ]}
             onPress={() => setShowColorPicker(true)}
             accessibilityRole="button"
-            accessibilityLabel="Color personalizado"
+            accessibilityLabel={t('tags.custom_color', { defaultValue: 'Color personalizado' })}
           >
             <Pipette
               size={14}
@@ -223,7 +223,7 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
                   Platform.OS === 'web' && ({ cursor: 'pointer' } as any),
                 ]}
                 accessibilityRole="button"
-                accessibilityLabel="Anterior"
+                accessibilityLabel={t('common.previous', { defaultValue: 'Anterior' })}
               >
                 <ChevronLeft size={13} color={theme.colors.foregroundMuted} />
               </Pressable>
@@ -242,7 +242,7 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
                   Platform.OS === 'web' && ({ cursor: 'pointer' } as any),
                 ]}
                 accessibilityRole="button"
-                accessibilityLabel="Siguiente"
+                accessibilityLabel={t('common.next', { defaultValue: 'Siguiente' })}
               >
                 <ChevronRight size={13} color={theme.colors.foregroundMuted} />
               </Pressable>

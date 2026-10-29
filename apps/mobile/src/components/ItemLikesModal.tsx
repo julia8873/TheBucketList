@@ -93,16 +93,16 @@ function ItemLikesModalContent({
       followingId: person.id,
       targetIsPrivate: person.is_private === true || person.visibility === 'private',
     };
-    const fail = (error: any) => Alert.alert('Error', error?.message ?? 'Inténtalo de nuevo.');
+    const fail = (error: any) => Alert.alert(t('common.error'), error?.message ?? t('errors.try_again', { defaultValue: 'Inténtalo de nuevo.' }));
 
     if (currentStatus === 'accepted') {
       Alert.alert(
-        `¿Dejar de seguir a ${displayNameOf(person)}?`,
+        t('social.unfollow_confirm_title', { name: displayNameOf(person), defaultValue: `¿Dejar de seguir a ${displayNameOf(person)}?` }),
         undefined,
         [
           { text: t('comments.cancel', { defaultValue: 'Cancelar' }), style: 'cancel' },
           {
-            text: 'Dejar de seguir',
+            text: t('social.unfollow', { defaultValue: 'Dejar de seguir' }),
             style: 'destructive',
             onPress: () => unfollow.mutate(vars, { onError: fail }),
           },

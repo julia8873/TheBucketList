@@ -11,6 +11,7 @@ import { View, Text, StyleSheet, type ViewStyle } from 'react-native';
 import { fontFamily, fontSize } from '../tokens/typography';
 import { gold, amber, dark } from '../tokens/colors';
 import { useTheme } from '../theme/useTheme';
+import { useTranslation } from '@bucketlist/shared';
 import { differenceInCalendarDays, isPast } from 'date-fns';
 
 // ── Pill ──────────────────────────────────────────────────────────────────────
@@ -73,6 +74,7 @@ interface UrgencyChipProps {
 }
 
 export function UrgencyChip({ deadline, style }: UrgencyChipProps) {
+  const { t } = useTranslation();
   if (!deadline) return null;
 
   const date = typeof deadline === 'string' ? new Date(deadline) : deadline;
@@ -85,9 +87,9 @@ export function UrgencyChip({ deadline, style }: UrgencyChipProps) {
   if (expired) {
     return null; // Expired tasks don't show the badge in this design
   } else if (daysLeft <= 1) {
-    label = daysLeft === 0 ? 'Hoy' : 'Mañana';
+    label = daysLeft === 0 ? t('common.today', { defaultValue: 'Hoy' }) : t('common.tomorrow', { defaultValue: 'Mañana' });
   } else {
-    label = `${daysLeft} días`;
+    label = t('common.days_remaining', { count: daysLeft, defaultValue: `${daysLeft} días` });
   }
 
   return <Pill label={label} variant={variant} style={style} />;

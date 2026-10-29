@@ -1,3 +1,4 @@
+import { i18n } from '@bucketlist/shared';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/auth.store';
 import type { UserFavoritesData } from '../services/api/favorites';
@@ -51,7 +52,7 @@ export function useToggleFavoriteBucket() {
       bucketId: string;
       currentlyFavorite: boolean;
     }) => {
-      if (!userId) throw new Error('Usuario no autenticado');
+      if (!userId) throw new Error(i18n.t('auth.err_not_authenticated', { defaultValue: 'Usuario no autenticado' }));
       return favoritesApi.toggleBucketFavorite(userId, bucketId, currentlyFavorite);
     },
     onMutate: async ({ bucketId, currentlyFavorite }) => {
@@ -100,7 +101,7 @@ export function useToggleFavoriteAlbum() {
       albumId: string;
       currentlyFavorite: boolean;
     }) => {
-      if (!userId) throw new Error('Usuario no autenticado');
+      if (!userId) throw new Error(i18n.t('auth.err_not_authenticated', { defaultValue: 'Usuario no autenticado' }));
       return favoritesApi.toggleAlbumFavorite(userId, albumId, currentlyFavorite);
     },
     onMutate: async ({ albumId, currentlyFavorite }) => {

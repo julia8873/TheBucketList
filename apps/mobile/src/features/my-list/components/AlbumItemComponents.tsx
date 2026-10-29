@@ -164,7 +164,7 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
           {...drag.panHandlers}
           hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
           style={{ marginRight: 8, justifyContent: 'center', alignItems: 'center' }}
-          accessibilityLabel="Arrastrar para reordenar"
+          accessibilityLabel={t('common.drag_to_reorder', { defaultValue: 'Arrastrar para reordenar' })}
         >
           <GripVertical size={18} color={drag.isActive ? theme.colors.primary : theme.colors.foregroundMuted} strokeWidth={2} />
         </View>

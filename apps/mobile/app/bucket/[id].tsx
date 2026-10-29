@@ -209,7 +209,7 @@ export default function BucketDetailScreen() {
                 <Pressable
                   style={styles.navButton}
                   accessibilityRole="button"
-                  accessibilityLabel={state.isFav ? 'Quitar de favoritas' : 'Marcar como favorita'}
+                  accessibilityLabel={state.isFav ? t('bucket_detail.fav_remove_a11y', { defaultValue: 'Quitar de favoritas' }) : t('bucket_detail.fav_add_a11y', { defaultValue: 'Marcar como favorita' })}
                   onPress={() =>
                     state.toggleFavorite.mutate({
                       bucketId: state.id,
@@ -229,7 +229,7 @@ export default function BucketDetailScreen() {
                 <Pressable
                   style={styles.navButton}
                   accessibilityRole="button"
-                  accessibilityLabel={state.isSaved ? 'Quitar de guardados' : 'Guardar tarea'}
+                  accessibilityLabel={state.isSaved ? t('bucket_detail.save_remove_a11y', { defaultValue: 'Quitar de guardados' }) : t('bucket_detail.save_add_a11y', { defaultValue: 'Guardar tarea' })}
                   onPress={state.handleToggleSaveBucket}
                 >
                   <Bookmark
@@ -244,7 +244,7 @@ export default function BucketDetailScreen() {
                 <Pressable
                   style={styles.navButton}
                   accessibilityRole="button"
-                  accessibilityLabel="Notificaciones"
+                  accessibilityLabel={t('common.notifications', { defaultValue: 'Notificaciones' })}
                   onPress={() => state.setShowNotificationModal(true)}
                 >
                   <Bell

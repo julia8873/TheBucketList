@@ -1,3 +1,4 @@
+import { i18n } from '@bucketlist/shared';
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import { processBucketImage } from '@bucketlist/shared';
@@ -151,7 +152,7 @@ export const storageApi = {
         // Fallback: descargar mediante fetch y escribir base64
         const response = await fetch(uri);
         if (!response.ok) {
-          throw new Error(`No se pudo descargar la imagen (${response.status})`);
+          throw new Error(i18n.t('storage.download_error', { defaultValue: 'No se pudo descargar la imagen' }) + ` (${response.status})`);
         }
         const blob = await response.blob();
         const base64Data = await new Promise<string>((resolve, reject) => {

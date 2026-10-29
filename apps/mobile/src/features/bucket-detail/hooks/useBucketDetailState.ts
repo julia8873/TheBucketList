@@ -338,7 +338,7 @@ export function useBucketDetailState() {
       });
       void queryClient.invalidateQueries({ queryKey: ['isFollowerOf', user.id, bucket.user_id] });
     } catch (e: any) {
-      Alert.alert('Error', e?.message || 'No se pudo seguir al usuario');
+      Alert.alert(t('common.error'), e?.message || t('bucket_detail.follow_error', { defaultValue: 'No se pudo seguir al usuario' }));
     }
   };
 
@@ -347,13 +347,13 @@ export function useBucketDetailState() {
     const bucketId = Array.isArray(id) ? id[0] : id;
     try {
       const res = await bucketApi.requestOrJoinCollaboration(bucketId, false);
-      Alert.alert('Colaboración', res.message);
+      Alert.alert(t('bucket_detail.collab_title', { defaultValue: 'Colaboración' }), res.message);
       void refetchCollaborators();
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', bucketId] });
       void queryClient.invalidateQueries({ queryKey: ['bucketCollaborators', bucketId] });
       void queryClient.invalidateQueries({ queryKey: ['buckets'] });
     } catch (e: any) {
-      Alert.alert('Colaboración', e?.message || 'No se pudo procesar la solicitud');
+      Alert.alert(t('bucket_detail.collab_title', { defaultValue: 'Colaboración' }), e?.message || t('bucket_detail.collab_process_error', { defaultValue: 'No se pudo procesar la solicitud' }));
     }
   };
 
@@ -366,13 +366,13 @@ export function useBucketDetailState() {
         .delete()
         .eq('bucket_id', bucketId)
         .eq('user_id', user.id);
-      Alert.alert('Solicitud cancelada', 'Has cancelado tu solicitud de colaboración');
+      Alert.alert(t('bucket_detail.cancel_request_title', { defaultValue: 'Solicitud cancelada' }), t('bucket_detail.cancel_request_msg', { defaultValue: 'Has cancelado tu solicitud de colaboración' }));
       void refetchCollaborators();
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', bucketId] });
       void queryClient.invalidateQueries({ queryKey: ['bucketCollaborators', bucketId] });
       void queryClient.invalidateQueries({ queryKey: ['buckets'] });
     } catch (e: any) {
-      Alert.alert('Error', e?.message || 'No se pudo cancelar la solicitud');
+      Alert.alert(t('common.error'), e?.message || t('bucket_detail.cancel_request_error', { defaultValue: 'No se pudo cancelar la solicitud' }));
     }
   };
 
@@ -413,7 +413,7 @@ export function useBucketDetailState() {
       void queryClient.invalidateQueries({ queryKey: ['bucketParticipants', bucketId] });
       void queryClient.invalidateQueries({ queryKey: ['buckets'] });
     } catch (e: any) {
-      Alert.alert('Colaboración', e?.message || 'No se pudo responder a la invitación');
+      Alert.alert(t('bucket_detail.collab_title', { defaultValue: 'Colaboración' }), e?.message || t('bucket_detail.respond_invite_error', { defaultValue: 'No se pudo responder a la invitación' }));
     }
   };
 
@@ -434,7 +434,7 @@ export function useBucketDetailState() {
       .eq('bucket_id', bucketId)
       .eq('user_id', targetUserId);
     if (error) {
-      Alert.alert('Error', error.message || 'No se pudo quitar al colaborador');
+      Alert.alert(t('common.error'), error.message || t('bucket_detail.remove_collab_error', { defaultValue: 'No se pudo quitar al colaborador' }));
     }
     void refetchCollaborators();
     void queryClient.invalidateQueries({ queryKey: ['bucketCollaborators', bucketId] });
@@ -542,7 +542,7 @@ export function useBucketDetailState() {
       .eq('id', id);
 
     if (error) {
-      Alert.alert('No se pudo cambiar el estado', error.message);
+      Alert.alert(t('bucket_detail.change_status_error', { defaultValue: 'No se pudo cambiar el estado' }), error.message);
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
       settleTaskCaches(queryClient);
       return;
@@ -560,7 +560,7 @@ export function useBucketDetailState() {
       .eq('id', id);
 
     if (error) {
-      Alert.alert('No se pudo cambiar la visibilidad', error.message);
+      Alert.alert(t('bucket_detail.change_visibility_error', { defaultValue: 'No se pudo cambiar la visibilidad' }), error.message);
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
       return;
     }
@@ -580,7 +580,7 @@ export function useBucketDetailState() {
       .eq('id', id);
 
     if (error) {
-      Alert.alert('No se pudo cambiar la categoría', error.message);
+      Alert.alert(t('bucket_detail.change_category_error', { defaultValue: 'No se pudo cambiar la categoría' }), error.message);
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
       return;
     }
@@ -598,7 +598,7 @@ export function useBucketDetailState() {
       .eq('id', id);
 
     if (error) {
-      Alert.alert('No se pudo cambiar la prioridad', error.message);
+      Alert.alert(t('bucket_detail.change_priority_error', { defaultValue: 'No se pudo cambiar la prioridad' }), error.message);
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
       settleTaskCaches(queryClient);
       return;
@@ -1490,7 +1490,7 @@ export function useBucketDetailState() {
 
     const { error } = await supabase.from('buckets').update(patch).eq('id', id);
     if (error) {
-      Alert.alert('No se pudo actualizar el contador', error.message);
+      Alert.alert(t('bucket_detail.update_counter_error', { defaultValue: 'No se pudo actualizar el contador' }), error.message);
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
       return;
     }
@@ -1532,7 +1532,7 @@ export function useBucketDetailState() {
   };
 
   const removeCounter = () => {
-    Alert.alert('Quitar contador', 'Se perderá la cuenta actual.', [
+    Alert.alert(t('bucket_detail.remove_counter_title', { defaultValue: 'Quitar contador' }), t('bucket_detail.remove_counter_msg', { defaultValue: 'Se perderá la cuenta actual.' }), [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Quitar',
@@ -1561,7 +1561,7 @@ export function useBucketDetailState() {
       .eq('id', subtask.id);
 
     if (error) {
-      Alert.alert('No se pudo actualizar el paso', error.message);
+      Alert.alert(t('bucket_detail.update_step_error', { defaultValue: 'No se pudo actualizar el paso' }), error.message);
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
       return;
     }
@@ -1629,7 +1629,7 @@ export function useBucketDetailState() {
 
     const error = results.find((result) => result.error)?.error;
     if (error) {
-      Alert.alert('No se pudo reorganizar los pasos', error.message);
+      Alert.alert(t('bucket_detail.reorder_steps_error', { defaultValue: 'No se pudo reorganizar los pasos' }), error.message);
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
       return;
     }
@@ -1772,13 +1772,13 @@ export function useBucketDetailState() {
         console.warn('Error updating collaborators:', opError);
         queryClient.setQueryData(collabKey, prevCollabs);
         queryClient.setQueryData(partKey, prevParts);
-        Alert.alert('Error', opError.message || 'No se pudo actualizar a los colaboradores');
+        Alert.alert(t('common.error'), opError.message || t('bucket_detail.update_collabs_error', { defaultValue: 'No se pudo actualizar a los colaboradores' }));
       }
     } catch (err: any) {
       console.warn('Error updating collaborators:', err);
       queryClient.setQueryData(collabKey, prevCollabs);
       queryClient.setQueryData(partKey, prevParts);
-      Alert.alert('Error', err?.message || 'No se pudo actualizar a los colaboradores');
+      Alert.alert(t('common.error'), err?.message || t('bucket_detail.update_collabs_error', { defaultValue: 'No se pudo actualizar a los colaboradores' }));
     } finally {
       void queryClient.invalidateQueries({ queryKey: collabKey });
       void queryClient.invalidateQueries({ queryKey: partKey });
