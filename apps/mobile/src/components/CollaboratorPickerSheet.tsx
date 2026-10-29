@@ -6,6 +6,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Search, Check, Users, X, UserMinus } from 'lucide-react-native';
 import { themedStyleSheet, Avatar, fontFamily, useTheme, Alert, Typography } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../stores/auth.store';
 import { blockReportApi } from '../services/api/blockReport';
@@ -44,6 +45,7 @@ interface CollaboratorPickerSheetProps {
 export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, readOnlyIds = [], excludeIds = [], current = [], onRemoveCurrent }: CollaboratorPickerSheetProps) {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const [query, setQuery] = useState('');
   const excludeKey = excludeIds.join(',');
@@ -75,12 +77,14 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
     const name = c.display_name || c.username || '';
     const isPending = c.status === 'pending';
     Alert.alert(
-      isPending ? 'Cancelar invitación' : 'Quitar colaborador',
-      isPending ? `¿Cancelar la invitación a ${name}?` : `¿Quitar a ${name} como colaborador?`,
+      isPending ? t('collab_picker.cancel_invite_title') : t('collab_picker.remove_collaborator_title'),
+      isPending
+        ? t('collab_picker.cancel_invite_msg', { name })
+        : t('collab_picker.remove_collaborator_msg', { name }),
       [
-        { text: 'Volver', style: 'cancel' },
+        { text: t('collab_picker.back'), style: 'cancel' },
         {
-          text: isPending ? 'Cancelar invitación' : 'Quitar',
+          text: isPending ? t('collab_picker.cancel_invite_title') : t('collab_picker.remove'),
           style: 'destructive',
           onPress: async () => {
             setRemovingId(c.id);
@@ -208,7 +212,7 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
     >
       {/* Hoja que sube desde abajo; tocar fuera la cierra */}
       <View style={styles.modalBackdrop}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Cerrar" />
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel={t('collab_picker.close')} />
         <KeyboardAvoidingView
           style={styles.sheetWrap}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -217,7 +221,7 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
           <View style={styles.grabber} />
           {/* Cabecera de la hoja */}
           <View style={styles.header}>
-            <Typography variant="h3" color={theme.colors.foreground}>Buscar colaboradores</Typography>
+            <Typography variant="h3" color={theme.colors.foreground}>{t('collab_picker.title')}</Typography>
           </View>
 
           {/* Buscador */}
@@ -226,7 +230,7 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
               <Search color={theme.colors.foregroundMuted} size={18} />
               <TextInput
                 style={[styles.searchInput, { color: theme.colors.foreground }]}
-                placeholder="Buscar por nombre o @usuario..."
+                placeholder={t('collab_picker.search_placeholder')}
                 placeholderTextColor={theme.colors.foregroundMuted}
                 value={query}
                 onChangeText={setQuery}
@@ -244,7 +248,7 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
           {/* Chips seleccionados */}
           {draft.length > 0 && (
             <View style={styles.chipsSection}>
-              <Text style={styles.chipsSectionLabel}>SELECCIONADOS ({draft.length})</Text>
+              <Text style={styles.chipsSectionLabel}>{t('collab_picker.selected_label', { count: draft.length })}</Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -273,7 +277,7 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
           {/* Colaboradores actuales e invitaciones pendientes (se pueden quitar / cancelar) */}
           {onRemoveCurrent && currentVisible.length > 0 && query.trim().length === 0 && (
             <View style={styles.currentSection}>
-              <Text style={styles.currentSectionLabel}>COLABORADORES E INVITACIONES ({currentVisible.length})</Text>
+              <Text style={styles.currentSectionLabel}>{t('collab_picker.current_label', { count: currentVisible.length })}</Text>
               <ScrollView style={styles.currentList} nestedScrollEnabled keyboardShouldPersistTaps="handled">
                 {currentVisible.map(c => {
                   const isPending = c.status === 'pending';
@@ -289,7 +293,7 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
                           {c.display_name || c.username}
                         </Text>
                         <Text style={styles.usernameHandle} numberOfLines={1}>
-                          @{c.username}{isPending ? ' · Invitación pendiente' : ''}
+                          @{c.username}{isPending ? t('collab_picker.pending_suffix') : ''}
                         </Text>
                       </View>
                       {removingId === c.id ? (
@@ -300,7 +304,7 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
                           hitSlop={8}
                           style={styles.currentRemoveBtn}
                           accessibilityRole="button"
-                          accessibilityLabel={isPending ? 'Cancelar invitación' : 'Quitar colaborador'}
+                          accessibilityLabel={isPending ? t('collab_picker.cancel_invite_title') : t('collab_picker.remove_collaborator_title')}
                         >
                           <UserMinus size={16} color="#EF4444" strokeWidth={2} />
                         </Pressable>
@@ -315,7 +319,7 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
           {/* Listado de usuarios */}
           <View style={styles.listHeader}>
             <Text style={styles.listSectionTitle}>
-              {query.trim().length > 0 ? 'RESULTADOS' : 'SUGERENCIAS'}
+              {query.trim().length > 0 ? t('collab_picker.results') : t('collab_picker.suggestions')}
             </Text>
           </View>
 
@@ -327,12 +331,12 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
             <View style={styles.emptyContainer}>
               <Users color={theme.colors.foregroundMuted} size={48} />
               <Text style={[styles.emptyTitle, { color: theme.colors.foreground }]}>
-                {query.trim().length > 0 ? 'No se encontraron usuarios' : 'No hay usuarios disponibles'}
+                {query.trim().length > 0 ? t('collab_picker.no_users_found') : t('collab_picker.no_users_available')}
               </Text>
               <Text style={[styles.emptySubtitle, { color: theme.colors.foregroundMuted }]}>
                 {query.trim().length > 0
-                  ? `No hay coincidencias para «${query.trim()}»`
-                  : 'Regístrate o invita a amigos para colaborar en tareas conjuntas'}
+                  ? t('collab_picker.no_matches', { query: query.trim() })
+                  : t('collab_picker.invite_friends_hint')}
               </Text>
             </View>
           ) : (
@@ -382,8 +386,10 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
             <Pressable style={styles.confirmButton} onPress={handleSave}>
               <Text style={styles.confirmButtonText}>
                 {draft.length > 0
-                  ? `Añadir ${draft.length} colaborador${draft.length > 1 ? 'es' : ''}`
-                  : excludeIds.length > 0 ? 'Cerrar' : 'Guardar sin colaboradores'}
+                  ? (draft.length === 1
+                      ? t('collab_picker.add_single')
+                      : t('collab_picker.add_plural', { count: draft.length }))
+                  : excludeIds.length > 0 ? t('collab_picker.close') : t('collab_picker.save_without')}
               </Text>
             </Pressable>
           </View>
