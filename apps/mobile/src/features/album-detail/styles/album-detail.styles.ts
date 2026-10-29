@@ -84,9 +84,9 @@ export const styles = themedStyleSheet({
   collaboratorCirclePending: {
     borderColor: 'rgba(212, 177, 58, 0.45)', borderStyle: 'dashed', backgroundColor: '#141414',
   },
-  // Franja inferior: antes cubría todo el círculo (62 % negro) y tapaba la foto del colaborador
+  // Franja centrada en medio del círculo (no cubre toda la foto del colaborador)
   pendingCenterOverlay: {
-    position: 'absolute', left: 0, right: 0, bottom: 0, height: 15,
+    position: 'absolute', left: 0, right: 0, top: '50%', marginTop: -7.5, height: 15,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     alignItems: 'center', justifyContent: 'center', paddingHorizontal: 2,
   },

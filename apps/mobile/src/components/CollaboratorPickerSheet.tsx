@@ -42,6 +42,68 @@ interface CollaboratorPickerSheetProps {
   onRemoveCurrent?: (userId: string) => Promise<void> | void;
 }
 
+type PickerGroup = 'collab' | 'following' | 'other';
+
+interface PickerRelations {
+  /** Personas con las que ya has colaborado: nº de colaboraciones y la más reciente (ms) */
+  collab: Map<string, { count: number; last: number }>;
+  /** Personas a las que sigues (seguimiento aceptado) */
+  following: Set<string>;
+}
+
+const EMPTY_RELATIONS: PickerRelations = { collab: new Map(), following: new Set() };
+
+const firstOf = (v: any) => (Array.isArray(v) ? v[0] : v);
+
+/** Una sola carga por apertura: colaboraciones previas (tareas y álbumes) y personas a las que sigues. */
+async function loadRelations(me: string): Promise<PickerRelations> {
+  const collab = new Map<string, { count: number; last: number }>();
+  const bump = (id: string | undefined | null, ts: number) => {
+    if (!id || id === me) return;
+    const cur = collab.get(id);
+    if (cur) {
+      cur.count += 1;
+      if (ts > cur.last) cur.last = ts;
+    } else {
+      collab.set(id, { count: 1, last: ts });
+    }
+  };
+
+  const [bc, am, fl] = await Promise.all([
+    supabase
+      .from('bucket_collaborators')
+      .select('user_id, status, created_at, buckets!inner(user_id)')
+      .neq('status', 'declined')
+      .order('created_at', { ascending: false })
+      .limit(500),
+    supabase
+      .from('album_members')
+      .select('user_id, status, albums!inner(owner_id)')
+      .limit(500),
+    supabase
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', me)
+      .eq('status', 'accepted')
+      .limit(500),
+  ]);
+
+  for (const row of (bc.data ?? []) as any[]) {
+    const ownerId = firstOf(row.buckets)?.user_id;
+    const ts = row.created_at ? new Date(row.created_at).getTime() : 0;
+    if (ownerId === me) bump(row.user_id, ts);       // yo invité a esa persona
+    else if (row.user_id === me) bump(ownerId, ts);  // esa persona me invitó a mí
+  }
+  for (const row of (am.data ?? []) as any[]) {
+    const ownerId = firstOf(row.albums)?.owner_id;
+    if (ownerId === me) bump(row.user_id, 0);
+    else if (row.user_id === me) bump(ownerId, 0);
+  }
+
+  const following = new Set<string>(((fl.data ?? []) as any[]).map(r => r.following_id));
+  return { collab, following };
+}
+
 export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, readOnlyIds = [], excludeIds = [], current = [], onRemoveCurrent }: CollaboratorPickerSheetProps) {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
@@ -58,6 +120,9 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
   // Los bloqueados se consultan UNA vez por apertura (antes: 2 consultas en serie en cada tecla)
   const blockedRef = useRef<Promise<string[]> | null>(null);
   const hasLoadedRef = useRef(false);
+  // Colaboraciones previas y seguidos: una consulta por apertura
+  const relationsRef = useRef<Promise<PickerRelations> | null>(null);
+  const [groups, setGroups] = useState<Record<string, PickerGroup>>({});
 
   useEffect(() => {
     if (visible) {
@@ -66,6 +131,9 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
       blockedRef.current = user?.id
         ? blockReportApi.getMutualBlockedUserIds(user.id).catch(() => [] as string[])
         : Promise.resolve([] as string[]);
+      relationsRef.current = user?.id
+        ? loadRelations(user.id).catch(() => EMPTY_RELATIONS)
+        : Promise.resolve(EMPTY_RELATIONS);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
@@ -124,46 +192,90 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
 
     const fetchUsers = async () => {
       try {
-        let q = supabase
-          .from('profiles')
-          .select('id, username, display_name, avatar_url')
-          .order('username', { ascending: true })
-          .limit(40);
-
-        if (user?.id) {
-          q = q.neq('id', user.id);
-        }
-
         const trimmed = query.trim().replace(/^@/, '');
-        if (trimmed.length > 0) {
-          q = q.or(`username.ilike.%${trimmed}%,display_name.ilike.%${trimmed}%`);
-        }
-
-        const [res, blockedIds] = await Promise.all([
-          q,
+        const searching = trimmed.length > 0;
+        const [relations, blockedIds] = await Promise.all([
+          relationsRef.current ?? Promise.resolve(EMPTY_RELATIONS),
           blockedRef.current ??
             (user?.id ? blockReportApi.getMutualBlockedUserIds(user.id) : Promise.resolve([] as string[])),
         ]);
         const blockedSet = new Set(blockedIds);
+        const relatedIds = Array.from(new Set([...relations.collab.keys(), ...relations.following]));
 
-        if (!res.error && res.data && isMounted) {
-          const list = res.data
-            .filter((p: any) => p.id !== user?.id && !blockedSet.has(p.id) && !excludedSet.has(p.id))
-            .map((p: any) => ({
-              id: p.id,
-              username: p.username,
-              display_name: p.display_name,
-              avatar_url: p.avatar_url,
-            }));
-          hasLoadedRef.current = true;
-          setProfiles(list);
-          // Precarga las fotos para que aparezcan al instante (también al añadirlas a la tarea)
-          const urls = list
-            .map((p: CollaboratorItem) => normalizeStorageUrl(p.avatar_url))
-            .filter((u: string | null | undefined): u is string => !!u);
-          if (urls.length > 0) {
-            try { void ExpoImage.prefetch(urls); } catch { /* sin precarga */ }
+        const columns = 'id, username, display_name, avatar_url';
+        let results: any[] = [];
+        let failed = false;
+
+        if (searching) {
+          // Al buscar aparece cualquier usuario, aunque no lo sigas ni hayas colaborado con él
+          let q = supabase.from('profiles').select(columns).order('username', { ascending: true }).limit(60);
+          if (user?.id) q = q.neq('id', user.id);
+          q = q.or(`username.ilike.%${trimmed}%,display_name.ilike.%${trimmed}%`);
+          // Las personas cercanas que encajan con la búsqueda no deben quedar fuera por el límite
+          let qRel: any = null;
+          if (relatedIds.length > 0) {
+            qRel = supabase
+              .from('profiles')
+              .select(columns)
+              .in('id', relatedIds.slice(0, 200))
+              .or(`username.ilike.%${trimmed}%,display_name.ilike.%${trimmed}%`);
           }
+          const [res, resRel] = await Promise.all([q, qRel ?? Promise.resolve({ data: [], error: null })]);
+          if (res.error) failed = true;
+          const seen = new Set<string>();
+          for (const p of [...((resRel.data as any[]) ?? []), ...((res.data as any[]) ?? [])]) {
+            if (seen.has(p.id)) continue;
+            seen.add(p.id);
+            results.push(p);
+          }
+        } else if (relatedIds.length > 0) {
+          // Sin búsqueda: solo colaboradores previos y personas a las que sigues
+          const res = await supabase.from('profiles').select(columns).in('id', relatedIds.slice(0, 200));
+          if (res.error) failed = true;
+          results = (res.data as any[]) ?? [];
+        }
+
+        if (failed || !isMounted) return;
+
+        const groupOf = (id: string): PickerGroup =>
+          relations.collab.has(id) ? 'collab' : relations.following.has(id) ? 'following' : 'other';
+        const rank: Record<PickerGroup, number> = { collab: 0, following: 1, other: 2 };
+        const nameOf = (p: any) => (p.username || '').toLowerCase();
+
+        const list = results
+          .filter((p: any) => p.id !== user?.id && !blockedSet.has(p.id) && !excludedSet.has(p.id))
+          .sort((a: any, b: any) => {
+            const ga = groupOf(a.id);
+            const gb = groupOf(b.id);
+            if (ga !== gb) return rank[ga] - rank[gb];
+            if (ga === 'collab') {
+              const ca = relations.collab.get(a.id)!;
+              const cb = relations.collab.get(b.id)!;
+              if (ca.count !== cb.count) return cb.count - ca.count; // más colaboraciones primero
+              if (ca.last !== cb.last) return cb.last - ca.last;     // a igualdad, la más reciente
+            }
+            return nameOf(a).localeCompare(nameOf(b));
+          });
+
+        const groupMap: Record<string, PickerGroup> = {};
+        list.forEach((p: any) => { groupMap[p.id] = groupOf(p.id); });
+
+        const mapped: CollaboratorItem[] = list.map((p: any) => ({
+          id: p.id,
+          username: p.username,
+          display_name: p.display_name,
+          avatar_url: p.avatar_url,
+        }));
+
+        hasLoadedRef.current = true;
+        setGroups(groupMap);
+        setProfiles(mapped);
+        // Precarga las fotos para que aparezcan al instante (también al añadirlas a la tarea)
+        const urls = mapped
+          .map((p: CollaboratorItem) => normalizeStorageUrl(p.avatar_url))
+          .filter((u: string | null | undefined): u is string => !!u);
+        if (urls.length > 0) {
+          try { void ExpoImage.prefetch(urls); } catch { /* sin precarga */ }
         }
       } catch (err) {
         console.warn('Error fetching profiles:', err);
@@ -331,12 +443,12 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
             <View style={styles.emptyContainer}>
               <Users color={theme.colors.foregroundMuted} size={48} />
               <Text style={[styles.emptyTitle, { color: theme.colors.foreground }]}>
-                {query.trim().length > 0 ? t('collab_picker.no_users_found') : t('collab_picker.no_users_available')}
+                {query.trim().length > 0 ? t('collab_picker.no_users_found') : t('collab_picker.no_suggestions')}
               </Text>
               <Text style={[styles.emptySubtitle, { color: theme.colors.foregroundMuted }]}>
                 {query.trim().length > 0
                   ? t('collab_picker.no_matches', { query: query.trim() })
-                  : t('collab_picker.invite_friends_hint')}
+                  : t('collab_picker.search_hint')}
               </Text>
             </View>
           ) : (
@@ -345,12 +457,21 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
               contentContainerStyle={styles.listContent}
               keyboardShouldPersistTaps="handled"
             >
-              {profiles.map(person => {
+              {profiles.map((person, index) => {
                 const isSelected = selectedIds.has(person.id);
                 const isReadOnly = readOnlySet.has(person.id);
+                const isSearching = query.trim().length > 0;
+                const group = groups[person.id];
+                const showGroupHeader =
+                  !isSearching && (index === 0 || groups[profiles[index - 1].id] !== group);
                 return (
+                  <React.Fragment key={person.id}>
+                  {showGroupHeader && (
+                    <Text style={styles.groupLabel}>
+                      {group === 'collab' ? t('collab_picker.group_collab') : t('collab_picker.group_following')}
+                    </Text>
+                  )}
                   <Pressable
-                    key={person.id}
                     style={[styles.userRow, isSelected && styles.userRowSelected, isReadOnly && { opacity: 0.6 }]}
                     onPress={() => togglePerson(person)}
                   >
@@ -376,6 +497,7 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
                       ) : null}
                     </View>
                   </Pressable>
+                  </React.Fragment>
                 );
               })}
             </ScrollView>
@@ -525,6 +647,15 @@ const styles = themedStyleSheet({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(239, 68, 68, 0.12)',
+  },
+  groupLabel: {
+    color: '#D4B13A',
+    fontSize: 11,
+    fontFamily: fontFamily.bold,
+    letterSpacing: 1,
+    marginTop: 4,
+    marginBottom: 8,
+    marginLeft: 4,
   },
   listHeader: {
     paddingHorizontal: 12,
