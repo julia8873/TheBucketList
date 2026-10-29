@@ -202,7 +202,7 @@ export default function ManageCollectionsScreen() {
           accessibilityLabel={t('collections.manage_new_a11y')}
         >
           <Plus size={16} color="#000" strokeWidth={2.5} />
-          <Text style={styles.newBtnText}>Nueva</Text>
+          <Text style={styles.newBtnText}>{t('collections.manage_new')}</Text>
         </Pressable>
       </View>
 

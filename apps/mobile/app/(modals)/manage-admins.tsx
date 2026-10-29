@@ -21,11 +21,13 @@ import {
 } from '../../src/hooks/useAdmins';
 import type { AdminUser } from '../../src/services/api/admins';
 import { useAuthStore } from '../../src/stores/auth.store';
+import { useTranslation } from '@bucketlist/shared';
 
 export default function ManageAdminsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const isAdmin = useIsAdmin();
   const { user } = useAuthStore();
 
@@ -39,17 +41,17 @@ export default function ManageAdminsScreen() {
     Keyboard.dismiss();
     const trimmed = usernameInput.trim().replace(/^@/, '');
     if (!trimmed) {
-      Alert.alert('Atención', 'Introduce el nombre de usuario (ej: @juanperez).');
+      Alert.alert(t('admin_admins.attention'), t('admin_admins.enter_username'));
       return;
     }
 
     Alert.alert(
-      `¿Nombrar administrador a @${trimmed}?`,
-      'Este usuario tendrá permisos para moderar contenido, gestionar denuncias y publicar colecciones oficiales.',
+      t('admin_admins.confirm_add_title', { username: trimmed }),
+      t('admin_admins.confirm_add_msg'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Confirmar',
+          text: t('admin_admins.confirm'),
           onPress: async () => {
             try {
               await addAdminMutation.mutateAsync(trimmed);
@@ -63,22 +65,22 @@ export default function ManageAdminsScreen() {
 
   const handleRemoveAdmin = (targetAdmin: AdminUser) => {
     if (targetAdmin.username?.toLowerCase() === 'juliamiralles8873') {
-      Alert.alert('Acción no permitida', 'No se pueden retirar permisos al administrador principal.');
+      Alert.alert(t('admin_admins.not_allowed'), t('admin_admins.cannot_revoke_primary'));
       return;
     }
 
     if (targetAdmin.id === user?.id) {
-      Alert.alert('Acción no permitida', 'No puedes retirar tus propios permisos de administrador desde aquí.');
+      Alert.alert(t('admin_admins.not_allowed'), t('admin_admins.cannot_revoke_self'));
       return;
     }
 
     Alert.alert(
-      `¿Revocar permisos a @${targetAdmin.username}?`,
-      'El usuario volverá a tener una cuenta estándar y perderá acceso a las herramientas de administración.',
+      t('admin_admins.confirm_revoke_title', { username: targetAdmin.username }),
+      t('admin_admins.confirm_revoke_msg'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Revocar',
+          text: t('admin_admins.revoke'),
           style: 'destructive',
           onPress: () => removeAdminMutation.mutate(targetAdmin.id),
         },
@@ -90,15 +92,15 @@ export default function ManageAdminsScreen() {
     return (
       <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top + 20, justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
         <ShieldAlert color="#EF4444" size={56} />
-        <Text style={[styles.restrictedTitle, { color: theme.colors.foreground }]}>Acceso Restringido</Text>
+        <Text style={[styles.restrictedTitle, { color: theme.colors.foreground }]}>{t('admin_admins.restricted_title')}</Text>
         <Text style={[styles.restrictedText, { color: theme.colors.foregroundMuted }]}>
-          Solo los administradores autorizados pueden acceder a este apartado.
+          {t('admin_admins.restricted_text')}
         </Text>
         <Pressable
           style={[styles.backBtnModal, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderWidth: 1 }]}
           onPress={() => router.back()}
         >
-          <Text style={[styles.backBtnText, { color: theme.colors.foreground }]}>Volver</Text>
+          <Text style={[styles.backBtnText, { color: theme.colors.foreground }]}>{t('common.back')}</Text>
         </Pressable>
       </View>
     );
@@ -117,28 +119,28 @@ export default function ManageAdminsScreen() {
             onPress={() => router.back()}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel="Volver"
+            accessibilityLabel={t('common.back')}
           >
             <ChevronLeft color={theme.colors.foreground} size={24} />
           </Pressable>
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <PageTitle gold="Gestionar" rest=" administradores" />
+              <PageTitle gold={t('admin_admins.title_gold')} rest={t('admin_admins.title_rest')} />
               <View style={styles.adminBadge}>
                 <ShieldCheck size={12} color="#D4AF37" />
-                <Text style={styles.adminBadgeText}>ADMIN</Text>
+                <Text style={styles.adminBadgeText}>{t('admin_admins.badge')}</Text>
               </View>
             </View>
           </View>
         </View>
 
         <Text style={[styles.description, { color: theme.colors.foregroundMuted }]}>
-          Añade a personas de confianza para que te ayuden a moderar reportes y gestionar la comunidad.
+          {t('admin_admins.description')}
         </Text>
 
         {/* Formulario añadir admin */}
         <View style={[styles.addCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-          <Text style={[styles.sectionLabel, { color: theme.colors.foregroundMuted }]}>AÑADIR NUEVO ADMINISTRADOR</Text>
+          <Text style={[styles.sectionLabel, { color: theme.colors.foregroundMuted }]}>{t('admin_admins.add_section')}</Text>
           <View style={styles.inputRow}>
             <TextInput
               style={[
@@ -149,7 +151,7 @@ export default function ManageAdminsScreen() {
                   color: theme.colors.foreground,
                 },
               ]}
-              placeholder="Nombre de usuario (ej: @carlos)"
+              placeholder={t('admin_admins.input_placeholder')}
               placeholderTextColor={theme.colors.foregroundMuted}
               value={usernameInput}
               onChangeText={setUsernameInput}
@@ -168,7 +170,7 @@ export default function ManageAdminsScreen() {
               ) : (
                 <>
                   <UserPlus size={16} color="#0D0D0D" />
-                  <Text style={styles.addBtnText}>Añadir</Text>
+                  <Text style={styles.addBtnText}>{t('admin_admins.add_button')}</Text>
                 </>
               )}
             </Pressable>
@@ -178,7 +180,7 @@ export default function ManageAdminsScreen() {
         {/* Lista de administradores */}
         <View style={{ flex: 1, paddingHorizontal: 12 }}>
           <Text style={[styles.sectionLabel, { color: theme.colors.foregroundMuted, marginTop: 12, marginBottom: 10 }]}>
-            ADMINISTRADORES ACTUALES ({admins.length})
+            {t('admin_admins.current_section', { count: admins.length })}
           </Text>
 
           {isLoading ? (
@@ -210,12 +212,12 @@ export default function ManageAdminsScreen() {
                         {isPrimary && (
                           <View style={styles.primaryPill}>
                             <Crown size={10} color="#D4AF37" />
-                            <Text style={styles.primaryPillText}>Principal</Text>
+                            <Text style={styles.primaryPillText}>{t('admin_admins.primary')}</Text>
                           </View>
                         )}
                         {isMe && !isPrimary && (
                           <View style={[styles.mePill, { backgroundColor: theme.dark ? '#262626' : '#E2DDD4' }]}>
-                            <Text style={[styles.mePillText, { color: theme.colors.foreground }]}>Tú</Text>
+                            <Text style={[styles.mePillText, { color: theme.colors.foreground }]}>{t('admin_admins.me')}</Text>
                           </View>
                         )}
                       </View>

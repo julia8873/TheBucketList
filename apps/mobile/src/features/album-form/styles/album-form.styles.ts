@@ -29,9 +29,9 @@ export const styles = themedStyleSheet({
     color: '#F3EEE3',
   },
   previewContainer: {
-    marginTop: 20,
+    marginTop: 8,
     marginHorizontal: 12,
-    height: 230,
+    height: 150,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#262626',
@@ -39,8 +39,8 @@ export const styles = themedStyleSheet({
   },
   previewBadgesRow: {
     position: 'absolute',
-    top: 14,
-    left: 14,
+    top: 10,
+    left: 10,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
@@ -77,21 +77,21 @@ export const styles = themedStyleSheet({
   },
   previewBottom: {
     position: 'absolute',
-    bottom: 18,
-    left: 22,
-    right: 22,
+    bottom: 12,
+    left: 16,
+    right: 16,
   },
   previewTitle: {
     fontFamily: 'PlayfairDisplay_700Bold',
-    fontSize: 26,
+    fontSize: 22,
     color: '#F3EEE3',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   previewSubtitle: {
     fontFamily: 'Inter_400Regular',
-    fontSize: 15,
+    fontSize: 13,
     color: '#E2DCCF',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   progressBarTrack: {
     height: 4,
@@ -100,7 +100,7 @@ export const styles = themedStyleSheet({
     width: '100%',
   },
   section: {
-    marginTop: 24,
+    marginTop: 16,
     paddingHorizontal: 12,
   },
   sectionTitleRow: {
@@ -229,8 +229,8 @@ export const styles = themedStyleSheet({
     gap: 12,
   },
   coverOption: {
-    width: 60,
-    height: 60,
+    width: 52,
+    height: 52,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#262626',

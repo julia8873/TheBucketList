@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18n from 'i18next';
+import { syncProfileLanguage } from '../services/profileLanguage';
 
 export type AppLanguage = 'es' | 'en';
 
@@ -15,6 +16,7 @@ export const useLanguageStore = create<LanguageStore>((set) => ({
     set({ language: lang });
     void i18n.changeLanguage(lang);
     void AsyncStorage.setItem('@language', lang).catch(() => undefined);
+    void syncProfileLanguage(lang);
   },
 }));
 

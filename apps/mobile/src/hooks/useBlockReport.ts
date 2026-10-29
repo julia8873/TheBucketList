@@ -7,6 +7,7 @@ import {
 } from '../services/api/blockReport';
 import { useAuthStore } from '../stores/auth.store';
 import { useToast } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 
 export const BLOCKED_USERS_KEY = ['blocked_users'];
 export const ADMIN_REPORTS_KEY = ['admin_reports'];
@@ -56,6 +57,7 @@ export function useBlockUser() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const toast = useToast();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (targetUserId: string) => {
@@ -69,16 +71,10 @@ export function useBlockUser() {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       queryClient.invalidateQueries({ queryKey: ['buckets'] });
       queryClient.invalidateQueries({ queryKey: ['albums'] });
-      toast.success(
-        'Has bloqueado a este usuario. Ya no verás su contenido ni podréis interactuar.',
-        'Usuario bloqueado'
-      );
+      toast.success(t('admin_reports.toast_blocked_msg'), t('admin_reports.toast_blocked_title'));
     },
     onError: (err: any) => {
-      toast.error(
-        err.message || 'No se pudo bloquear al usuario',
-        'Error al bloquear'
-      );
+      toast.error(err.message || t('admin_reports.toast_block_error_msg'), t('admin_reports.toast_block_error_title'));
     },
   });
 }
@@ -86,6 +82,7 @@ export function useBlockUser() {
 export function useUnblockUser() {
   const queryClient = useQueryClient();
   const toast = useToast();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (targetUserId: string) => {
@@ -99,22 +96,17 @@ export function useUnblockUser() {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       queryClient.invalidateQueries({ queryKey: ['buckets'] });
       queryClient.invalidateQueries({ queryKey: ['albums'] });
-      toast.success(
-        'Has desbloqueado a este usuario correctamente.',
-        'Usuario desbloqueado'
-      );
+      toast.success(t('admin_reports.toast_unblocked_msg'), t('admin_reports.toast_unblocked_title'));
     },
     onError: (err: any) => {
-      toast.error(
-        err.message || 'No se pudo desbloquear al usuario',
-        'Error al desbloquear'
-      );
+      toast.error(err.message || t('admin_reports.toast_unblock_error_msg'), t('admin_reports.toast_unblock_error_title'));
     },
   });
 }
 
 export function useReportUser() {
   const toast = useToast();
+  const { t } = useTranslation();
   const { user } = useAuthStore();
 
   return useMutation({
@@ -127,7 +119,7 @@ export function useReportUser() {
       reason: string;
       details?: string;
     }) => {
-      if (!user?.id) throw new Error('Debes iniciar sesión para reportar');
+      if (!user?.id) throw new Error(t('admin_reports.login_required'));
       return blockReportApi.reportUser({
         reporterId: user.id,
         reportedUserId,
@@ -137,15 +129,15 @@ export function useReportUser() {
     },
     onSuccess: () => {
       toast.show({
-        title: 'Reporte enviado',
-        message: 'Gracias por avisarnos. El equipo de administración revisará el caso.',
+        title: t('admin_reports.toast_report_sent_title'),
+        message: t('admin_reports.toast_report_sent_msg'),
         type: 'success',
       });
     },
     onError: (err: any) => {
       toast.show({
-        title: 'Error al reportar',
-        message: err.message || 'No se pudo enviar el reporte',
+        title: t('admin_reports.toast_report_error_title'),
+        message: err.message || t('admin_reports.toast_report_error_msg'),
         type: 'error',
       });
     },
@@ -163,6 +155,7 @@ export function useAdminReports() {
 export function useDismissReport() {
   const queryClient = useQueryClient();
   const toast = useToast();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (reportId: string) => {
@@ -171,15 +164,15 @@ export function useDismissReport() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ADMIN_REPORTS_KEY });
       toast.show({
-        title: 'Reporte desestimado',
-        message: 'El reporte ha sido marcado como revisado.',
+        title: t('admin_reports.toast_dismissed_title'),
+        message: t('admin_reports.toast_dismissed_msg'),
         type: 'info',
       });
     },
     onError: (err: any) => {
       toast.show({
-        title: 'Error',
-        message: err.message || 'No se pudo desestimar el reporte',
+        title: t('common.error'),
+        message: err.message || t('admin_reports.toast_dismiss_error_msg'),
         type: 'error',
       });
     },
@@ -189,6 +182,7 @@ export function useDismissReport() {
 export function useAdminDeleteUser() {
   const queryClient = useQueryClient();
   const toast = useToast();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (targetUserId: string) => {
@@ -199,15 +193,15 @@ export function useAdminDeleteUser() {
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       queryClient.invalidateQueries({ queryKey: ['friends'] });
       toast.show({
-        title: 'Cuenta eliminada',
-        message: 'La cuenta del usuario infractor y sus datos han sido eliminados por completo.',
+        title: t('admin_reports.toast_deleted_title'),
+        message: t('admin_reports.toast_deleted_msg'),
         type: 'success',
       });
     },
     onError: (err: any) => {
       toast.show({
-        title: 'Error al eliminar cuenta',
-        message: err.message || 'No se pudo eliminar la cuenta del usuario',
+        title: t('admin_reports.toast_delete_error_title'),
+        message: err.message || t('admin_reports.toast_delete_error_msg'),
         type: 'error',
       });
     },
@@ -217,6 +211,7 @@ export function useAdminDeleteUser() {
 /** Reporta una tarea, un álbum o un comentario al administrador. */
 export function useReportContent() {
   const toast = useToast();
+  const { t } = useTranslation();
   const { user } = useAuthStore();
 
   return useMutation({
@@ -231,7 +226,7 @@ export function useReportContent() {
       reason: string;
       details?: string;
     }) => {
-      if (!user?.id) throw new Error('Debes iniciar sesión para reportar');
+      if (!user?.id) throw new Error(t('admin_reports.login_required'));
       return blockReportApi.reportContent({
         reporterId: user.id,
         targetType,
@@ -242,15 +237,15 @@ export function useReportContent() {
     },
     onSuccess: () => {
       toast.show({
-        title: 'Reporte enviado',
-        message: 'Gracias por avisarnos. El equipo de administración revisará el caso.',
+        title: t('admin_reports.toast_report_sent_title'),
+        message: t('admin_reports.toast_report_sent_msg'),
         type: 'success',
       });
     },
     onError: (err: any) => {
       toast.show({
-        title: 'Error al reportar',
-        message: err.message || 'No se pudo enviar el reporte',
+        title: t('admin_reports.toast_report_error_title'),
+        message: err.message || t('admin_reports.toast_report_error_msg'),
         type: 'error',
       });
     },
@@ -261,6 +256,7 @@ export function useReportContent() {
 export function useAdminRemoveReportedContent() {
   const queryClient = useQueryClient();
   const toast = useToast();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (reportId: string) => blockReportApi.adminRemoveReportedContent(reportId),
@@ -271,15 +267,15 @@ export function useAdminRemoveReportedContent() {
       queryClient.invalidateQueries({ queryKey: ['buckets'] });
       queryClient.invalidateQueries({ queryKey: ['albums'] });
       toast.show({
-        title: 'Contenido eliminado',
-        message: 'El contenido reportado se ha eliminado y el reporte queda cerrado.',
+        title: t('admin_reports.toast_removed_title'),
+        message: t('admin_reports.toast_removed_msg'),
         type: 'success',
       });
     },
     onError: (err: any) => {
       toast.show({
-        title: 'Error al eliminar',
-        message: err.message || 'No se pudo eliminar el contenido reportado',
+        title: t('admin_reports.toast_remove_error_title'),
+        message: err.message || t('admin_reports.toast_remove_error_msg'),
         type: 'error',
       });
     },
@@ -290,6 +286,7 @@ export function useAdminRemoveReportedContent() {
 export function useAdminSuspendUser() {
   const queryClient = useQueryClient();
   const toast = useToast();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async ({ userId, reason }: { userId: string; reason?: string }) =>
@@ -299,15 +296,15 @@ export function useAdminSuspendUser() {
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       queryClient.invalidateQueries({ queryKey: ['friends'] });
       toast.show({
-        title: 'Cuenta bloqueada',
-        message: 'El usuario ya no puede iniciar sesión y su contenido deja de ser visible.',
+        title: t('admin_reports.toast_suspended_title'),
+        message: t('admin_reports.toast_suspended_msg'),
         type: 'success',
       });
     },
     onError: (err: any) => {
       toast.show({
-        title: 'Error al bloquear la cuenta',
-        message: err.message || 'No se pudo bloquear la cuenta del usuario',
+        title: t('admin_reports.toast_suspend_error_title'),
+        message: err.message || t('admin_reports.toast_suspend_error_msg'),
         type: 'error',
       });
     },
@@ -318,6 +315,7 @@ export function useAdminSuspendUser() {
 export function useAdminUnsuspendUser() {
   const queryClient = useQueryClient();
   const toast = useToast();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (userId: string) => blockReportApi.adminUnsuspendUser(userId),
@@ -325,15 +323,15 @@ export function useAdminUnsuspendUser() {
       queryClient.invalidateQueries({ queryKey: ADMIN_REPORTS_KEY });
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       toast.show({
-        title: 'Cuenta reactivada',
-        message: 'El usuario puede volver a iniciar sesión.',
+        title: t('admin_reports.toast_unsuspended_title'),
+        message: t('admin_reports.toast_unsuspended_msg'),
         type: 'success',
       });
     },
     onError: (err: any) => {
       toast.show({
-        title: 'Error al reactivar',
-        message: err.message || 'No se pudo reactivar la cuenta del usuario',
+        title: t('admin_reports.toast_unsuspend_error_title'),
+        message: err.message || t('admin_reports.toast_unsuspend_error_msg'),
         type: 'error',
       });
     },

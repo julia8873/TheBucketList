@@ -10,20 +10,23 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
 import { PageTitle, useTheme } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { CollaboratorPickerSheet } from '../../src/components/CollaboratorPickerSheet';
 import { TagAssignSheet } from '../../src/components/TagAssignSheet';
+import { AlbumTaskPickerSheet } from '../../src/components/AlbumTaskPickerSheet';
 
 import { styles } from '../../src/features/album-form/styles/album-form.styles';
+import { styles as formStyles } from '../../src/features/task-form/styles/task-form.styles';
 import { SectionTitle } from '../../src/features/album-form/components/SectionTitle';
 import { AlbumPreviewCard } from '../../src/features/album-form/components/AlbumPreviewCard';
 import { CoverPickerSection } from '../../src/features/album-form/components/CoverPickerSection';
-import { AlbumTagsSection } from '../../src/features/album-form/components/AlbumTagsSection';
+import { AlbumSettingsCard } from '../../src/features/album-form/components/AlbumSettingsCard';
+import { AlbumTasksSection } from '../../src/features/album-form/components/AlbumTasksSection';
 import { AlbumCollaboratorsSection } from '../../src/features/album-form/components/AlbumCollaboratorsSection';
-import { AlbumMetaSettingsSection } from '../../src/features/album-form/components/AlbumMetaSettingsSection';
+import { TaskPriorityPicker } from '../../src/features/task-form/components/TaskPriorityPicker';
 import { useAlbumFormData } from '../../src/features/album-form/hooks/useAlbumFormData';
 
 export default function CreateAlbumScreen() {
@@ -32,6 +35,8 @@ export default function CreateAlbumScreen() {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const { t } = useTranslation();
+  const [isNameFocused, setIsNameFocused] = React.useState(false);
+  const [isDescFocused, setIsDescFocused] = React.useState(false);
 
   const {
     isEditing,
@@ -58,7 +63,12 @@ export default function CreateAlbumScreen() {
     showTagPicker,
     setShowTagPicker,
     handleTagPickerChange,
-    handleRemoveTag,
+    selectedTasks,
+    toggleTask,
+    removeTask,
+    existingTaskIds,
+    showTaskPicker,
+    setShowTaskPicker,
     loadingInitial,
     isSaving,
     handleSave,
@@ -73,17 +83,21 @@ export default function CreateAlbumScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['top']}>
       <KeyboardAvoidingView
         style={[styles.container, { backgroundColor: theme.colors.background }]}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
-          {/* Cabecera */}
-          <View style={[styles.header, { paddingTop: Math.max(insets.top, 52) }]}>
+        <ScrollView
+          contentContainerStyle={{ paddingTop: 14, paddingBottom: 130 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Cabecera (igual que en tarea) */}
+          <View style={[formStyles.header, { paddingHorizontal: 12 }]}>
             <Pressable
               style={[
-                styles.backBtn,
+                formStyles.backButton,
                 { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
               ]}
               onPress={() => router.back()}
@@ -94,7 +108,7 @@ export default function CreateAlbumScreen() {
             <PageTitle gold={isEditing ? t('common.edit') : t('albums.new')} rest={t('albums.album')} />
           </View>
 
-          {/* Vista previa en vivo */}
+          {/* Portada: vista previa compacta + selector */}
           <AlbumPreviewCard
             selectedCover={selectedCover}
             name={name}
@@ -102,54 +116,56 @@ export default function CreateAlbumScreen() {
             visibility={visibility}
             collaborators={selectedCollaborators}
           />
-
-          {/* Sección Portada */}
           <CoverPickerSection
             selectedCover={selectedCover}
             onSelectCover={setSelectedCover}
             albumTitle={name}
           />
 
-          {/* Sección Nombre */}
+          {/* Nombre */}
           <View style={styles.section}>
             <SectionTitle highlight={t('albums.section_name_highlight')} rest={t('albums.section_name_rest')} />
             <TextInput
               style={[
-                styles.input,
+                formStyles.titleInput,
                 {
+                  height: 56,
                   backgroundColor: theme.colors.surface,
                   borderColor: theme.colors.border,
                   color: theme.colors.foreground,
                 },
+                isNameFocused && { borderColor: '#D4B13A' },
               ]}
               value={name}
               onChangeText={setName}
+              onFocus={() => setIsNameFocused(true)}
+              onBlur={() => setIsNameFocused(false)}
               placeholder={t('albums.name_placeholder')}
               placeholderTextColor={theme.colors.foregroundMuted}
               accessibilityLabel={t('albums.name_label')}
             />
           </View>
 
-          {/* Sección Descripción */}
-          <View style={[styles.section, { marginBottom: 4 }]}>
+          {/* Descripción */}
+          <View style={styles.section}>
             <SectionTitle highlight={t('albums.section_desc_highlight')} rest={t('albums.section_desc_rest')} />
             <TextInput
               style={[
-                styles.input,
+                formStyles.descInput,
                 {
-                  minHeight: 88,
-                  textAlignVertical: 'top',
-                  fontSize: 16,
-                  fontFamily: 'Inter_400Regular',
-                  paddingTop: 16,
-                  paddingBottom: 16,
+                  minHeight: 72,
+                  paddingTop: 12,
+                  paddingBottom: 12,
                   backgroundColor: theme.colors.surface,
                   borderColor: theme.colors.border,
                   color: theme.colors.foreground,
                 },
+                isDescFocused && { borderColor: '#D4B13A' },
               ]}
               value={description}
               onChangeText={setDescription}
+              onFocus={() => setIsDescFocused(true)}
+              onBlur={() => setIsDescFocused(false)}
               placeholder={t('albums.description_placeholder')}
               placeholderTextColor={theme.colors.foregroundMuted}
               accessibilityLabel={t('albums.description_label')}
@@ -157,33 +173,43 @@ export default function CreateAlbumScreen() {
             />
           </View>
 
-          {/* Secciones Prioridad y Visibilidad */}
-          <AlbumMetaSettingsSection
-            priority={priority}
-            onChangePriority={setPriority}
-            visibility={visibility}
-            onChangeVisibility={setVisibility}
+          {/* Prioridad */}
+          <View style={styles.section}>
+            <SectionTitle highlight={t('task_form.section_priority')} rest="" />
+            <TaskPriorityPicker value={priority as any} onChange={setPriority} />
+          </View>
+
+          {/* Ajustes: etiquetas, visibilidad y compartido */}
+          <View style={styles.section}>
+            <AlbumSettingsCard
+              selectedTags={selectedTags}
+              onChangeTags={handleTagPickerChange}
+              visibility={visibility}
+              onChangeVisibility={setVisibility}
+              isShared={isShared}
+              isOwner={isOwner}
+              onToggleShared={() => setIsShared(!isShared)}
+            />
+          </View>
+
+          {/* Tareas del álbum */}
+          <AlbumTasksSection
+            tasks={selectedTasks}
+            onOpenPicker={() => setShowTaskPicker(true)}
+            onRemoveTask={removeTask}
           />
 
-          {/* Sección Etiquetas del Álbum */}
-          <AlbumTagsSection
-            selectedTags={selectedTags}
-            onOpenTagPicker={() => setShowTagPicker(true)}
-            onRemoveTag={handleRemoveTag}
-          />
-
-          {/* Sección Compartir / Colaboradores */}
-          <AlbumCollaboratorsSection
-            isShared={isShared}
-            isOwner={isOwner}
-            onToggleShared={() => setIsShared(!isShared)}
-            selectedCollaborators={selectedCollaborators}
-            readOnlyIds={readOnlyIds}
-            onOpenPicker={() => setShowCollaboratorPicker(true)}
-            onRemoveCollaborator={(collabId) => {
-              setSelectedCollaborators((prev) => prev.filter((x) => x.id !== collabId));
-            }}
-          />
+          {/* Colaboradores (solo si el álbum es compartido) */}
+          {isShared && (
+            <AlbumCollaboratorsSection
+              selectedCollaborators={selectedCollaborators}
+              readOnlyIds={readOnlyIds}
+              onOpenPicker={() => setShowCollaboratorPicker(true)}
+              onRemoveCollaborator={(collabId) => {
+                setSelectedCollaborators((prev) => prev.filter((x) => x.id !== collabId));
+              }}
+            />
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -203,31 +229,39 @@ export default function CreateAlbumScreen() {
         onClose={() => setShowTagPicker(false)}
       />
 
-      {/* Barra inferior fija */}
+      <AlbumTaskPickerSheet
+        visible={showTaskPicker}
+        selected={selectedTasks}
+        excludeIds={existingTaskIds}
+        onToggle={toggleTask}
+        onClose={() => setShowTaskPicker(false)}
+      />
+
+      {/* Barra inferior fija (igual que en tarea) */}
       <View
         style={[
-          styles.bottomBar,
+          formStyles.bottomBar,
           {
             backgroundColor: theme.colors.surface,
             borderTopColor: theme.colors.border,
-            paddingBottom: Math.max(insets.bottom, 24),
+            paddingBottom: Math.max(insets.bottom, 16),
           },
         ]}
       >
         <Pressable
-          style={[styles.createBtn, (!name.trim() || isSaving) && styles.createBtnDisabled]}
+          style={[formStyles.submitButton, (!name.trim() || isSaving) && { opacity: 0.5 }]}
           disabled={!name.trim() || isSaving}
           onPress={handleSave}
         >
           {isSaving ? (
-            <ActivityIndicator color="#0D0D0D" />
+            <ActivityIndicator color="#111" />
           ) : (
-            <Text style={styles.createBtnText}>
+            <Text style={formStyles.submitText}>
               {isEditing ? t('common.save_changes') : t('albums.create_album')}
             </Text>
           )}
         </Pressable>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }

@@ -29,12 +29,13 @@ import {
   useAdminUnsuspendUser,
 } from '../../src/hooks/useBlockReport';
 import type { UserReportItem, ReportTargetType } from '../../src/services/api/blockReport';
+import { useTranslation } from '@bucketlist/shared';
 
-const TARGET_LABEL: Record<ReportTargetType, string> = {
-  user: 'USUARIO',
-  bucket: 'TAREA',
-  album: 'ÁLBUM',
-  comment: 'COMENTARIO',
+const TARGET_LABEL_KEY: Record<ReportTargetType, string> = {
+  user: 'admin_reports.target_user',
+  bucket: 'admin_reports.target_bucket',
+  album: 'admin_reports.target_album',
+  comment: 'admin_reports.target_comment',
 };
 
 function TargetIcon({ type, color }: { type: ReportTargetType; color: string }) {
@@ -48,6 +49,7 @@ export default function AdminReportsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const c = theme.colors;
   const isAdmin = useIsAdmin();
 
@@ -67,22 +69,21 @@ export default function AdminReportsScreen() {
 
   const handleDismiss = async (report: UserReportItem) => {
     const ok = await confirm.ask({
-      title: 'Desestimar reporte',
-      message: '¿Deseas marcar este reporte como revisado sin tomar acciones disciplinarias?',
-      confirmLabel: 'Desestimar',
-      cancelLabel: 'Cancelar',
+      title: t('admin_reports.dismiss_title'),
+      message: t('admin_reports.dismiss_msg'),
+      confirmLabel: t('admin_reports.dismiss'),
+      cancelLabel: t('common.cancel'),
     });
     if (ok) dismissMutation.mutate(report.id);
   };
 
   const handleRemoveContent = async (report: UserReportItem) => {
-    const what =
-      report.target_type === 'bucket' ? 'la tarea' : report.target_type === 'album' ? 'el álbum' : 'el comentario';
+    const kind = report.target_type === 'bucket' ? 'bucket' : report.target_type === 'album' ? 'album' : 'comment';
     const ok = await confirm.ask({
-      title: `¿Eliminar ${what}?`,
-      message: `Se eliminará ${what} reportado de forma permanente y el reporte quedará cerrado. La cuenta del autor no se verá afectada.`,
-      confirmLabel: 'Eliminar',
-      cancelLabel: 'Cancelar',
+      title: t(`admin_reports.remove_title_${kind}`),
+      message: t(`admin_reports.remove_msg_${kind}`),
+      confirmLabel: t('admin_reports.remove_confirm'),
+      cancelLabel: t('common.cancel'),
       destructive: true,
     });
     if (ok) removeContentMutation.mutate(report.id);
@@ -92,11 +93,10 @@ export default function AdminReportsScreen() {
     const reportedId = report.reported?.id;
     if (!reportedId) return;
     const ok = await confirm.ask({
-      title: `¿Bloquear la cuenta de @${report.reported?.username || 'este usuario'}?`,
-      message:
-        'El usuario no podrá iniciar sesión y sus tareas, álbumes y perfil dejarán de ser visibles. Podrás reactivar la cuenta más adelante.',
-      confirmLabel: 'Bloquear cuenta',
-      cancelLabel: 'Cancelar',
+      title: t('admin_reports.suspend_title', { username: report.reported?.username || t('admin_reports.this_user') }),
+      message: t('admin_reports.suspend_msg'),
+      confirmLabel: t('admin_reports.suspend_confirm'),
+      cancelLabel: t('common.cancel'),
       destructive: true,
     });
     if (ok) suspendMutation.mutate({ userId: reportedId, reason: report.reason });
@@ -106,10 +106,10 @@ export default function AdminReportsScreen() {
     const reportedId = report.reported?.id;
     if (!reportedId) return;
     const ok = await confirm.ask({
-      title: `¿Reactivar la cuenta de @${report.reported?.username || 'este usuario'}?`,
-      message: 'El usuario podrá volver a iniciar sesión y su contenido volverá a ser visible.',
-      confirmLabel: 'Reactivar',
-      cancelLabel: 'Cancelar',
+      title: t('admin_reports.unsuspend_title', { username: report.reported?.username || t('admin_reports.this_user') }),
+      message: t('admin_reports.unsuspend_msg'),
+      confirmLabel: t('admin_reports.unsuspend_confirm'),
+      cancelLabel: t('common.cancel'),
     });
     if (ok) unsuspendMutation.mutate(reportedId);
   };
@@ -117,17 +117,16 @@ export default function AdminReportsScreen() {
   const handleDeleteUser = async (report: UserReportItem) => {
     const reportedId = report.reported?.id;
     if (!reportedId) {
-      confirm.show({ title: 'Error', message: 'No se encontró el ID del usuario reportado.', tone: 'error', confirmLabel: 'Aceptar', cancelLabel: 'Cerrar' });
+      confirm.show({ title: t('common.error'), message: t('admin_reports.user_id_missing'), tone: 'error', confirmLabel: t('admin_reports.accept'), cancelLabel: t('admin_reports.close') });
       return;
     }
     const ok = await confirm.ask({
-      title: `¿Eliminar cuenta de @${report.reported?.username || 'este usuario'}?`,
-      message:
-        'Esta acción eliminará de forma PERMANENTE e IRREVERSIBLE la cuenta del usuario infractor, sus tareas, álbumes y acceso a la plataforma.',
-      confirmLabel: 'Eliminar definitivamente',
-      cancelLabel: 'Cancelar',
+      title: t('admin_reports.delete_user_title', { username: report.reported?.username || t('admin_reports.this_user') }),
+      message: t('admin_reports.delete_user_msg'),
+      confirmLabel: t('admin_reports.delete_user_confirm'),
+      cancelLabel: t('common.cancel'),
       destructive: true,
-      requireText: 'ELIMINAR',
+      requireText: t('admin_reports.delete_user_require'),
     });
     if (ok) deleteUserMutation.mutate(reportedId);
   };
@@ -142,26 +141,26 @@ export default function AdminReportsScreen() {
   };
 
   const statusLabel = (r: UserReportItem, pending: boolean) => {
-    if (pending) return 'Pendiente';
-    if (r.status === 'resolved_deleted') return 'Cuenta borrada';
-    if (r.status === 'resolved_suspended') return 'Cuenta bloqueada';
-    if (r.status === 'resolved_content_removed') return 'Contenido eliminado';
-    return 'Revisado';
+    if (pending) return t('admin_reports.status_pending');
+    if (r.status === 'resolved_deleted') return t('admin_reports.status_deleted');
+    if (r.status === 'resolved_suspended') return t('admin_reports.status_suspended');
+    if (r.status === 'resolved_content_removed') return t('admin_reports.status_removed');
+    return t('admin_reports.status_reviewed');
   };
 
   if (!isAdmin) {
     return (
       <View style={[styles.container, styles.restricted, { backgroundColor: c.background, paddingTop: insets.top + 20 }]}>
         <ShieldAlert color={c.error} size={56} />
-        <Text style={[styles.restrictedTitle, { color: c.foreground }]}>Acceso Restringido</Text>
+        <Text style={[styles.restrictedTitle, { color: c.foreground }]}>{t('admin_reports.restricted_title')}</Text>
         <Text style={[styles.restrictedText, { color: c.foregroundMuted }]}>
-          Este panel de moderación solo está disponible para usuarios con rol de administrador.
+          {t('admin_reports.restricted_text')}
         </Text>
         <Pressable
           style={[styles.backBtnModal, { backgroundColor: c.surface, borderColor: c.border }]}
           onPress={() => router.back()}
         >
-          <Text style={[styles.backBtnText, { color: c.foreground }]}>Volver</Text>
+          <Text style={[styles.backBtnText, { color: c.foreground }]}>{t('common.back')}</Text>
         </Pressable>
       </View>
     );
@@ -187,10 +186,10 @@ export default function AdminReportsScreen() {
         />
         <View style={{ marginLeft: 8, flex: 1 }}>
           <Text style={[styles.userName, { color: c.foreground }]} numberOfLines={1}>
-            {person?.display_name || person?.username || 'Usuario'}
+            {person?.display_name || person?.username || t('admin_reports.user_fallback')}
           </Text>
           <Text style={[styles.userHandle, { color: c.foregroundMuted }]} numberOfLines={1}>
-            @{person?.username || 'desconocido'}
+            @{person?.username || t('admin_reports.unknown_handle')}
           </Text>
         </View>
         <ChevronRight size={14} color={c.foregroundMuted} />
@@ -206,17 +205,17 @@ export default function AdminReportsScreen() {
           onPress={() => router.back()}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="Volver"
+          accessibilityLabel={t('common.back')}
         >
           <ChevronLeft color={c.foreground} size={24} />
         </Pressable>
         <View style={{ flex: 1 }}>
-          <PageTitle gold="Reportes" rest=" de moderación" />
+          <PageTitle gold={t('admin_reports.title_gold')} rest={t('admin_reports.title_rest')} />
         </View>
       </View>
 
       <Text style={[styles.description, { color: c.foregroundMuted }]}>
-        Gestiona las denuncias de usuarios, tareas, álbumes y comentarios y decide qué medidas tomar, hasta bloquear la cuenta.
+        {t('admin_reports.description')}
       </Text>
 
       {isLoading ? (
@@ -255,7 +254,7 @@ export default function AdminReportsScreen() {
                     <View style={[styles.typeBadge, { backgroundColor: c.surfaceSunken, borderColor: c.border }]}>
                       <TargetIcon type={item.target_type} color={c.foregroundMuted} />
                       <Text style={[styles.typeBadgeText, { color: c.foregroundMuted }]}>
-                        {TARGET_LABEL[item.target_type]}
+                        {t(TARGET_LABEL_KEY[item.target_type])}
                       </Text>
                     </View>
                   </View>
@@ -271,7 +270,7 @@ export default function AdminReportsScreen() {
                   <View style={[styles.contentBox, { backgroundColor: c.surfaceSunken, borderColor: c.border }]}>
                     {item.target_title ? (
                       <Text style={[styles.contentTitle, { color: c.foreground }]} numberOfLines={2}>
-                        {item.target_type === 'comment' ? `En «${item.target_title}»` : item.target_title}
+                        {item.target_type === 'comment' ? t('admin_reports.comment_on', { title: item.target_title }) : item.target_title}
                       </Text>
                     ) : null}
                     {item.target_excerpt ? (
@@ -285,10 +284,10 @@ export default function AdminReportsScreen() {
                         style={styles.openLink}
                         hitSlop={6}
                         accessibilityRole="button"
-                        accessibilityLabel="Ver contenido reportado"
+                        accessibilityLabel={t('admin_reports.view_content_a11y')}
                       >
                         <Eye size={14} color={c.primary} />
-                        <Text style={[styles.openLinkText, { color: c.primary }]}>Ver contenido</Text>
+                        <Text style={[styles.openLinkText, { color: c.primary }]}>{t('admin_reports.view_content')}</Text>
                       </Pressable>
                     ) : null}
                   </View>
@@ -296,27 +295,27 @@ export default function AdminReportsScreen() {
 
                 <View style={[styles.usersBox, { backgroundColor: c.surfaceSunken }]}>
                   {renderUserRow(
-                    isContent ? 'AUTOR' : 'USUARIO DENUNCIADO',
+                    isContent ? t('admin_reports.author') : t('admin_reports.reported_user'),
                     item.reported,
-                    `Ver perfil de ${item.reported?.username || 'usuario denunciado'}`,
+                    t('admin_reports.view_profile_of', { username: item.reported?.username || t('admin_reports.reported_user_fallback') }),
                   )}
                   {renderUserRow(
-                    'REPORTADO POR',
+                    t('admin_reports.reported_by'),
                     item.reporter,
-                    `Ver perfil de ${item.reporter?.username || 'usuario denunciante'}`,
+                    t('admin_reports.view_profile_of', { username: item.reporter?.username || t('admin_reports.reporter_fallback') }),
                   )}
                 </View>
 
                 {isSuspended ? (
                   <View style={[styles.suspendedBanner, { backgroundColor: c.errorBackground, borderColor: c.error }]}>
                     <Ban size={14} color={c.error} />
-                    <Text style={[styles.suspendedText, { color: c.error }]}>Cuenta bloqueada</Text>
+                    <Text style={[styles.suspendedText, { color: c.error }]}>{t('admin_reports.suspended_banner')}</Text>
                   </View>
                 ) : null}
 
                 {item.details ? (
                   <View style={[styles.detailsBox, { backgroundColor: c.surfaceSunken, borderColor: c.border }]}>
-                    <Text style={[styles.detailsLabel, { color: c.foregroundMuted }]}>Mensaje del denunciante:</Text>
+                    <Text style={[styles.detailsLabel, { color: c.foregroundMuted }]}>{t('admin_reports.reporter_message')}</Text>
                     <Text style={[styles.detailsText, { color: c.foreground }]}>"{item.details}"</Text>
                   </View>
                 ) : null}
@@ -331,7 +330,7 @@ export default function AdminReportsScreen() {
                         disabled={busy}
                       >
                         <CheckCircle size={15} color={c.foregroundMuted} />
-                        <Text style={[styles.dismissBtnText, { color: c.foreground }]}>Desestimar</Text>
+                        <Text style={[styles.dismissBtnText, { color: c.foreground }]}>{t('admin_reports.dismiss')}</Text>
                       </Pressable>
 
                       {isContent ? (
@@ -341,7 +340,7 @@ export default function AdminReportsScreen() {
                           disabled={busy}
                         >
                           <Trash2 size={15} color={c.errorForeground} />
-                          <Text style={[styles.dangerBtnText, { color: c.errorForeground }]}>Eliminar contenido</Text>
+                          <Text style={[styles.dangerBtnText, { color: c.errorForeground }]}>{t('admin_reports.remove_content')}</Text>
                         </Pressable>
                       ) : null}
                     </View>
@@ -354,7 +353,7 @@ export default function AdminReportsScreen() {
                           disabled={busy}
                         >
                           <UserCheck size={15} color={c.primary} />
-                          <Text style={[styles.outlineBtnText, { color: c.primary }]}>Reactivar cuenta</Text>
+                          <Text style={[styles.outlineBtnText, { color: c.primary }]}>{t('admin_reports.unsuspend')}</Text>
                         </Pressable>
                       ) : (
                         <Pressable
@@ -363,7 +362,7 @@ export default function AdminReportsScreen() {
                           disabled={busy}
                         >
                           <Ban size={15} color={c.error} />
-                          <Text style={[styles.outlineBtnText, { color: c.error }]}>Bloquear cuenta</Text>
+                          <Text style={[styles.outlineBtnText, { color: c.error }]}>{t('admin_reports.suspend')}</Text>
                         </Pressable>
                       )}
 
@@ -374,7 +373,7 @@ export default function AdminReportsScreen() {
                           disabled={busy}
                         >
                           <Trash2 size={15} color={c.errorForeground} />
-                          <Text style={[styles.dangerBtnText, { color: c.errorForeground }]}>Borrar cuenta</Text>
+                          <Text style={[styles.dangerBtnText, { color: c.errorForeground }]}>{t('admin_reports.delete_account')}</Text>
                         </Pressable>
                       ) : null}
                     </View>
@@ -388,9 +387,9 @@ export default function AdminReportsScreen() {
               <View style={[styles.emptyIconBox, { backgroundColor: c.successBackground }]}>
                 <ShieldCheck size={36} color={c.success} />
               </View>
-              <Text style={[styles.emptyTitle, { color: c.foreground }]}>Bandeja de moderación limpia</Text>
+              <Text style={[styles.emptyTitle, { color: c.foreground }]}>{t('admin_reports.empty_title')}</Text>
               <Text style={[styles.emptySubtitle, { color: c.foregroundMuted }]}>
-                No hay ningún reporte pendiente de revisión en este momento.
+                {t('admin_reports.empty_sub')}
               </Text>
             </View>
           }

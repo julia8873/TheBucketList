@@ -1,4 +1,5 @@
 import { getSpecificNotificationText } from '../utils/notificationRouting';
+import { syncProfileLanguage } from './profileLanguage';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import * as Linking from 'expo-linking';
@@ -201,6 +202,9 @@ export async function registerForPushNotificationsAsync(userId: string): Promise
       } catch (err) {
         console.warn('Error updating profile push_token:', err);
       }
+
+      // Idioma del usuario: el servidor lo usa para enviar las push en su idioma
+      void syncProfileLanguage(i18n.language);
 
       return { granted: true, token };
     }

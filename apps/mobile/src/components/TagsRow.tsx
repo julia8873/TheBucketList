@@ -9,9 +9,11 @@ import { TagAssignSheet, type TagItem } from './TagAssignSheet';
 interface TagsRowProps {
   selectedTags: TagItem[];
   onChange: (tags: TagItem[]) => void;
+  /** Fila más baja (formulario de álbum). */
+  compact?: boolean;
 }
 
-export function TagsRow({ selectedTags, onChange }: TagsRowProps) {
+export function TagsRow({ selectedTags, onChange, compact = false }: TagsRowProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -30,13 +32,13 @@ export function TagsRow({ selectedTags, onChange }: TagsRowProps) {
   return (
     <>
       <Pressable
-        style={[styles.settingRow, { borderBottomColor: theme.colors.border }]}
+        style={[styles.settingRow, compact && { height: 58 }, { borderBottomColor: theme.colors.border }]}
         onPress={() => setOpen(true)}
         accessibilityRole="button"
         accessibilityLabel={t('tags.tags_label')}
       >
         <Tag color="#D4B13A" size={24} />
-        <Text style={[styles.settingLabel, { color: theme.colors.foreground }]}>{t('tags.tags_label')}</Text>
+        <Text style={[styles.settingLabel, compact && { fontSize: 17 }, { color: theme.colors.foreground }]}>{t('tags.tags_label')}</Text>
         <Text style={[styles.settingValue, { color: textColor }]} numberOfLines={1}>
           {displayValue}
         </Text>

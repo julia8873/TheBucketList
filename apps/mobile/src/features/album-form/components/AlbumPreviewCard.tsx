@@ -28,34 +28,20 @@ export function AlbumPreviewCard({
       ? (selectedCover.colors as [string, string, ...string[]])
       : ['#000000', '#000000'];
 
+  // Vista previa compacta: misma proporción que la portada elegida, pero con altura máxima reducida.
   const ratio = selectedCover.aspectRatio || '1:1';
   const screenWidth = Dimensions.get('window').width;
-
-  let dynamicContainerStyle: any = {};
-  if (ratio === '1:1') {
-    const squareSize = Math.min(screenWidth - 40, 310);
-    dynamicContainerStyle = {
-      width: squareSize,
-      height: squareSize,
-      alignSelf: 'center',
-      marginHorizontal: 0,
-    };
-  } else if (ratio === '3:4') {
-    dynamicContainerStyle = {
-      width: Math.min(screenWidth - 40, 240),
-      height: 310,
-      alignSelf: 'center',
-      marginHorizontal: 0,
-    };
-  } else {
-    // 16:9
-    dynamicContainerStyle = {
-      width: screenWidth - 40,
-      height: Math.round((screenWidth - 40) * (9 / 16)),
-      alignSelf: 'center',
-      marginHorizontal: 0,
-    };
-  }
+  const maxW = Math.min(screenWidth, 620) - 24;
+  const PREVIEW_H = 150;
+  const ratioValue = ratio === '1:1' ? 1 : ratio === '3:4' ? 3 / 4 : 16 / 9;
+  const previewW = Math.min(maxW, Math.round(PREVIEW_H * ratioValue));
+  const dynamicContainerStyle: any = {
+    width: previewW,
+    height: PREVIEW_H,
+    alignSelf: 'center',
+    marginHorizontal: 0,
+    marginTop: 4,
+  };
 
   return (
     <View style={[styles.previewContainer, dynamicContainerStyle]}>

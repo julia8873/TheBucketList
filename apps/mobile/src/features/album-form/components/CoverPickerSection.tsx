@@ -212,7 +212,7 @@ export function CoverPickerSection({
       </ScrollView>
 
       {/* Fila de colores sólidos */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 16 }} contentContainerStyle={styles.coversRow}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }} contentContainerStyle={styles.coversRow}>
         {/* Selector de color personalizado con ColorPickerModal */}
         <Pressable
           style={[
@@ -264,7 +264,7 @@ export function CoverPickerSection({
                   })
                 }
                 accessibilityRole="button"
-                accessibilityLabel={`Color guardado ${sc}`}
+                accessibilityLabel={t('albums.saved_color', { color: sc })}
               >
                 {isSelected && <Check size={18} color={isColorDark(sc) ? '#FFF' : '#000'} strokeWidth={2.8} />}
               </Pressable>

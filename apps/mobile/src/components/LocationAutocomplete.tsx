@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Input, Typography, Icon, useTheme, spacing, radii, shadows } from '@bucketlist/ui';
 import { MapPin } from 'lucide-react-native';
+import { useTranslation } from '@bucketlist/shared';
 
 interface LocationResult {
   place_id: number;
@@ -27,10 +28,13 @@ export function LocationAutocomplete({
   onChangeLocation,
   onTextChange,
   error,
-  label = 'Ubicación',
-  placeholder = 'Buscar ciudad o lugar...',
+  label,
+  placeholder,
 }: LocationAutocompleteProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
+  const resolvedLabel = label ?? t('location_picker.search_label');
+  const resolvedPlaceholder = placeholder ?? t('location_picker.search_placeholder');
   const [query, setQuery] = useState(value);
   const [results, setResults] = useState<LocationResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -151,8 +155,8 @@ export function LocationAutocomplete({
   return (
     <View style={styles.container}>
       <Input
-        label={label}
-        placeholder={placeholder}
+        label={resolvedLabel}
+        placeholder={resolvedPlaceholder}
         value={query}
         onChangeText={handleChangeText}
         onSubmitEditing={() => {
