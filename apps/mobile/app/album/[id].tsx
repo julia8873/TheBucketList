@@ -1,7 +1,7 @@
 import { Alert, HEART_COLOR } from '@bucketlist/ui';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { View, Text, Pressable, ScrollView, RefreshControl, TextInput, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, RefreshControl, TextInput, StyleSheet, Dimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -304,7 +304,9 @@ export default function AlbumDetailScreen() {
     state.taskSortTriggerRef.current?.measureInWindow((x, y, w, h) => {
       state.setTaskSortMenuPos({
         top: y + h + 6,
-        right: 20,
+        // Alinea el menú con el borde derecho del botón (en web la app vive en una
+        // columna centrada, así que 20px fijos lo sacaban fuera del "móvil").
+        right: Math.max(16, Dimensions.get('window').width - (x + w)),
       });
       state.setTaskSortMenuOpen(true);
     });
