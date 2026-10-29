@@ -67,6 +67,7 @@ function TaskItemRowComponent({
   }
 
   const showPriority = customization?.showPriority ?? true;
+  const showFavorite = customization?.showFavorite ?? true;
   const showTags = customization?.showTags ?? true;
   const showDates = customization?.showDates ?? true;
   const showCategoryLoc = customization?.showCategoryLocation ?? true;
@@ -137,7 +138,7 @@ function TaskItemRowComponent({
     </View>
   ) : null;
 
-  const favoriteBadge = isFav ? (
+  const favoriteBadge = isFav && showFavorite ? (
     <View
       key="favorite-badge"
       style={{

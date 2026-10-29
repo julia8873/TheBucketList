@@ -44,6 +44,7 @@ function TaskGalleryItemCardComponent({
   const isImageCover = !!imageValue && !imageValue.startsWith('preset:');
 
   const showPriority = customization?.showPriority ?? true;
+  const showFavorite = customization?.showFavorite ?? true;
   const showTags = customization?.showTags ?? true;
   const showDates = customization?.showDates ?? true;
   const showCategoryLoc = customization?.showCategoryLocation ?? true;
@@ -161,7 +162,7 @@ function TaskGalleryItemCardComponent({
             </View>
           ) : (
             <>
-              {isFav && (
+              {isFav && showFavorite && (
                 <View
                   style={[
                     styles.galleryFavBadge,

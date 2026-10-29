@@ -382,8 +382,9 @@ function TaskCommentsModalContent({
                 backgroundColor: theme.colors.surface,
                 borderTopColor: theme.colors.border,
               },
+              // Con teclado abierto se deja un margen extra para que la caja no quede pegada a él
               isKeyboardVisible
-                ? { paddingBottom: 10 }
+                ? { paddingBottom: 22 }
                 : { paddingBottom: Math.max(insets.bottom, 12) },
             ]}
           >

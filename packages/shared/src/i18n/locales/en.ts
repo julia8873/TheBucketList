@@ -598,6 +598,8 @@ const en = {
     customize_mode_compact: 'Compact',
     customize_opt_priority: 'Priority',
     customize_opt_priority_sub: 'Badge with priority level (High, Medium, Low)',
+    customize_opt_favorite: 'Favorite',
+    customize_opt_favorite_sub: 'Star badge on favorite tasks',
     customize_opt_tags: 'Tags',
     customize_opt_tags_sub: 'Thematic tags assigned to the task',
     customize_opt_dates: 'Deadlines and notices',
@@ -1297,6 +1299,7 @@ const en = {
   },
 
   errors: {
+    try_again: 'Please try again.',
     network: 'No internet connection',
     quota_exceeded: 'Storage quota exceeded. Please delete some photos.',
     quota_warning: 'You have used {{percent}}% of your storage quota.',

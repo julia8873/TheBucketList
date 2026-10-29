@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface TaskViewCustomization {
   showPriority: boolean;
+  showFavorite: boolean;
   showTags: boolean;
   showDates: boolean;
   showCategoryLocation: boolean;
@@ -26,6 +27,7 @@ export type ViewModeType = 'list' | 'gallery' | 'compact';
 export const DEFAULT_TASK_CUSTOMIZATION: Record<ViewModeType, TaskViewCustomization> = {
   list: {
     showPriority: true,
+    showFavorite: true,
     showTags: true,
     showDates: true,
     showCategoryLocation: true,
@@ -35,6 +37,7 @@ export const DEFAULT_TASK_CUSTOMIZATION: Record<ViewModeType, TaskViewCustomizat
   },
   gallery: {
     showPriority: true,
+    showFavorite: true,
     showTags: true,
     showDates: true,
     showCategoryLocation: true,
@@ -44,6 +47,7 @@ export const DEFAULT_TASK_CUSTOMIZATION: Record<ViewModeType, TaskViewCustomizat
   },
   compact: {
     showPriority: true,
+    showFavorite: true,
     showTags: false,
     showDates: false,
     showCategoryLocation: false,

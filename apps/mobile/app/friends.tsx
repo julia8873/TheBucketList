@@ -112,8 +112,8 @@ export default function FriendsScreen() {
 
     if (person.follow_status === 'accepted') {
       Alert.alert(t('friends.unfollow_confirm', { name: displayNameOf(person), defaultValue: `¿Dejar de seguir a ${displayNameOf(person)}?` }), undefined, [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Dejar de seguir', style: 'destructive', onPress: () => unfollow.mutate(vars, { onError: fail }) },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('social.unfollow'), style: 'destructive', onPress: () => unfollow.mutate(vars, { onError: fail }) },
       ]);
     } else if (person.follow_status === 'pending') {
       unfollow.mutate(vars, { onError: fail });

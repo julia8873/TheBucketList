@@ -26,6 +26,7 @@ import {
   LayoutGrid,
   AlignJustify,
   Users,
+  Star,
 } from 'lucide-react-native';
 import { useTheme, gold } from '@bucketlist/ui';
 import { AppSwitch } from '@/components/AppSwitch';
@@ -264,6 +265,14 @@ export function MyListCustomizeModal({
                   subtitle={t('my_list.customize_opt_priority_sub')}
                   value={currentTaskCustomization.showPriority}
                   onChange={(v) => setTaskOption(selectedMode, 'showPriority', v)}
+                  theme={theme}
+                />
+                <CustomizeRow
+                  icon={<Star size={16} color={gold[400]} />}
+                  title={t('my_list.customize_opt_favorite')}
+                  subtitle={t('my_list.customize_opt_favorite_sub')}
+                  value={currentTaskCustomization.showFavorite}
+                  onChange={(v) => setTaskOption(selectedMode, 'showFavorite', v)}
                   theme={theme}
                 />
                 <CustomizeRow

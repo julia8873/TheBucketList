@@ -598,6 +598,8 @@ const es = {
     customize_mode_compact: 'Compacta',
     customize_opt_priority: 'Prioridad',
     customize_opt_priority_sub: 'Badge con nivel de prioridad (Alta, Media, Baja)',
+    customize_opt_favorite: 'Favorita',
+    customize_opt_favorite_sub: 'Estrella que marca las tareas favoritas',
     customize_opt_tags: 'Etiquetas',
     customize_opt_tags_sub: 'Etiquetas temáticas asignadas a la tarea',
     customize_opt_dates: 'Fechas límite y avisos',
@@ -1297,6 +1299,7 @@ const es = {
   },
 
   errors: {
+    try_again: 'Inténtalo de nuevo.',
     network: 'Sin conexión a internet',
     quota_exceeded: 'Cuota de almacenamiento superada. Elimina algunas fotos.',
     quota_warning: 'Has usado el {{percent}}% de tu cuota de almacenamiento.',

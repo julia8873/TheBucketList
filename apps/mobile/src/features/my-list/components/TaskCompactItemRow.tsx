@@ -109,6 +109,7 @@ function TaskCompactItemRowComponent({
 
   // Decide which meta badges to render below the title
   const showPriority = customization?.showPriority ?? true;
+  const showFavorite = customization?.showFavorite ?? true;
   const showTags = customization?.showTags ?? false;
   const showProgress = customization?.showSubtasksProgress ?? true;
   const showDates = customization?.showDates ?? false;
@@ -121,7 +122,7 @@ function TaskCompactItemRowComponent({
     (showTags && itemTags && itemTags.length > 0) ||
     (showProgress && !!progressText) ||
     (showDates && !!(item.deadline || item.completed_at)) ||
-    isFav;
+    (isFav && showFavorite);
 
   const row = (
     <Pressable
@@ -294,7 +295,7 @@ function TaskCompactItemRowComponent({
                 {new Date(item.status === 'completed' && item.completed_at ? item.completed_at : item.deadline).toLocaleDateString(i18n.language?.startsWith('en') ? 'en-US' : 'es-ES', { day: 'numeric', month: 'short' })}
               </Text>
             )}
-            {isFav && (
+            {isFav && showFavorite && (
               <Star
                 size={12}
                 color={theme.colors.primary}
