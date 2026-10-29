@@ -305,8 +305,21 @@ export default function BucketDetailScreen() {
             </Typography>
           )}
 
-          {/* Etiquetas */}
-          <ItemTagsRow bucketId={state.id as string} isOwner={state.canEdit} />
+          {/* Descripción */}
+          {state.canEdit ? (
+            <TextInput
+              style={[styles.description, { color: theme.colors.foregroundMuted, padding: 0 }]}
+              defaultValue={bucket.description || ''}
+              onChangeText={state.handleDescriptionChange}
+              placeholder={t('bucket.add_description_placeholder')}
+              placeholderTextColor={theme.colors.foregroundMuted}
+              multiline
+            />
+          ) : bucket.description ? (
+            <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.description}>
+              {bucket.description}
+            </Typography>
+          ) : null}
 
           {/* Colaboradores */}
           <BucketCollaboratorsRow
@@ -317,6 +330,9 @@ export default function BucketDetailScreen() {
             canEdit={state.canEdit}
             onOpenPicker={() => state.setShowCollaboratorPicker(true)}
           />
+
+          {/* Etiquetas */}
+          <ItemTagsRow bucketId={state.id as string} isOwner={state.canEdit} />
 
           {/* Tarjeta de invitación/solicitud de colaboración para seguidores y otros usuarios */}
           <TaskCollaborationViewerCard
@@ -357,22 +373,6 @@ export default function BucketDetailScreen() {
             }
             onRemoveDriveUrl={() => void state.handleSaveDriveUrl(null)}
           />
-
-          {/* Descripción */}
-          {state.canEdit ? (
-            <TextInput
-              style={[styles.description, { color: theme.colors.foregroundMuted, padding: 0 }]}
-              defaultValue={bucket.description || ''}
-              onChangeText={state.handleDescriptionChange}
-              placeholder={t('bucket.add_description_placeholder')}
-              placeholderTextColor={theme.colors.foregroundMuted}
-              multiline
-            />
-          ) : bucket.description ? (
-            <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.description}>
-              {bucket.description}
-            </Typography>
-          ) : null}
 
           {/* Menciones */}
           {((state.mentionsData?.length ?? 0) > 0 || state.canEdit) && (

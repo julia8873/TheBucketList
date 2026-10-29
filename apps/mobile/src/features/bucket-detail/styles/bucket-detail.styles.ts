@@ -151,7 +151,7 @@ export const styles = themedStyleSheet({
   },
   description: {
     lineHeight: 22,
-    marginBottom: 20,
+    marginBottom: 4,
   },
   statsRow: {
     flexDirection: 'row',
