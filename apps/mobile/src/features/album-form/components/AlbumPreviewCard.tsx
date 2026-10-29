@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { styles } from '../styles/album-form.styles';
@@ -28,23 +28,8 @@ export function AlbumPreviewCard({
       ? (selectedCover.colors as [string, string, ...string[]])
       : ['#000000', '#000000'];
 
-  // Vista previa compacta: misma proporción que la portada elegida, pero con altura máxima reducida.
-  const ratio = selectedCover.aspectRatio || '1:1';
-  const screenWidth = Dimensions.get('window').width;
-  const maxW = Math.min(screenWidth, 620) - 24;
-  const PREVIEW_H = 150;
-  const ratioValue = ratio === '1:1' ? 1 : ratio === '3:4' ? 3 / 4 : 16 / 9;
-  const previewW = Math.min(maxW, Math.round(PREVIEW_H * ratioValue));
-  const dynamicContainerStyle: any = {
-    width: previewW,
-    height: PREVIEW_H,
-    alignSelf: 'center',
-    marginHorizontal: 0,
-    marginTop: 4,
-  };
-
   return (
-    <View style={[styles.previewContainer, dynamicContainerStyle]}>
+    <View style={styles.previewContainer}>
       {selectedCover.type === 'image' && selectedCover.uri ? (
         <ExpoImage source={{ uri: selectedCover.uri }} style={StyleSheet.absoluteFill} contentFit="cover" />
       ) : (

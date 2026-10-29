@@ -1547,6 +1547,31 @@ const es = {
     cancel: 'Cancelar',
     close_tags_accessibility: 'Cerrar etiquetas',
     duplicate_error: 'Ya existe una etiqueta con ese nombre',
+    // Pantalla de gestión de etiquetas
+    manage_title_gold: 'Mis',
+    manage_title_rest: 'etiquetas',
+    sort_unused: 'Sin usar',
+    clear_search_accessibility: 'Borrar búsqueda',
+    count_none: 'Sin tareas',
+    count_one: '1 tarea',
+    count_many: '{{count}} tareas',
+    empty_title_none: 'Aún no tienes etiquetas',
+    empty_title_unused: 'No tienes etiquetas sin usar',
+    empty_title_no_results: 'Sin resultados',
+    empty_text_none: 'Crea la primera para organizar tus tareas.',
+    empty_text_all_used: 'Todas tus etiquetas están en uso.',
+    edit_tag_named: 'Editar etiqueta {{name}}',
+    // Nombres de etiquetas sugeridas
+    suggested_nature: 'Naturaleza',
+    suggested_photography: 'Fotografía',
+    suggested_anniversary: 'Aniversario',
+    suggested_solo: 'En solitario',
+    // Errores
+    error_login_required: 'Debes iniciar sesión',
+    error_create: 'No se pudo crear la etiqueta',
+    error_save: 'No se pudieron guardar los cambios',
+    error_delete: 'No se pudo eliminar la etiqueta',
+    error_emoji_column: 'La base de datos no tiene la columna «emoji» en las etiquetas. Aplica la migración 20261010190000_tags_emoji.sql y recarga el schema cache de Supabase.',
   },
 
   map: {

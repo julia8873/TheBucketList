@@ -3,6 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useTranslation } from '@bucketlist/shared';
 import { ChevronLeft, Pencil, Search, Tag as TagIcon, X } from 'lucide-react-native';
 import { FilterChip, fontFamily, useTheme, PageTitle } from '@bucketlist/ui';
 import { TagBadge } from '../src/components/TagBadge';
@@ -12,15 +13,16 @@ import { sortTags, useTagUsage, useTags, type Tag } from '../src/hooks/useTags';
 const GOLD = '#D4B13A';
 
 type Mode = 'popular' | 'az' | 'recent' | 'unused';
-const MODES: Array<{ key: Mode; label: string }> = [
-  { key: 'popular', label: 'Más usadas' },
-  { key: 'az', label: 'A–Z' },
-  { key: 'recent', label: 'Recientes' },
-  { key: 'unused', label: 'Sin usar' },
+const MODES: Array<{ key: Mode; labelKey: string }> = [
+  { key: 'popular', labelKey: 'tags.sort_popular' },
+  { key: 'az', labelKey: 'tags.sort_az' },
+  { key: 'recent', labelKey: 'tags.sort_recent' },
+  { key: 'unused', labelKey: 'tags.sort_unused' },
 ];
 
 export default function TagsScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -62,7 +64,8 @@ export default function TagsScreen() {
     }
   };
 
-  const countLabel = (n: number) => (n === 0 ? 'Sin tareas' : n === 1 ? '1 tarea' : `${n} tareas`);
+  const countLabel = (n: number) =>
+    n === 0 ? t('tags.count_none') : n === 1 ? t('tags.count_one') : t('tags.count_many', { count: n });
 
   return (
     <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -71,12 +74,12 @@ export default function TagsScreen() {
         <Pressable
           onPress={goBack}
           accessibilityRole="button"
-          accessibilityLabel="Volver"
+          accessibilityLabel={t('common.back')}
           style={[styles.circleBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
         >
           <ChevronLeft size={22} color={theme.colors.foreground} />
         </Pressable>
-        <PageTitle gold="Mis" rest="etiquetas" style={{ flex: 1 }} />
+        <PageTitle gold={t('tags.manage_title_gold')} rest={t('tags.manage_title_rest')} style={{ flex: 1 }} />
       </View>
 
       {/* Buscador */}
@@ -84,7 +87,7 @@ export default function TagsScreen() {
         <Search color={theme.colors.foregroundMuted} size={20} />
         <TextInput
           style={[styles.searchInput, { color: theme.colors.foreground }]}
-          placeholder="Buscar etiqueta"
+          placeholder={t('tags.search_placeholder')}
           placeholderTextColor={theme.colors.foregroundMuted}
           value={query}
           onChangeText={setQuery}
@@ -92,7 +95,7 @@ export default function TagsScreen() {
           returnKeyType="search"
         />
         {query.length > 0 && (
-          <Pressable onPress={() => setQuery('')} hitSlop={10} accessibilityLabel="Borrar búsqueda">
+          <Pressable onPress={() => setQuery('')} hitSlop={10} accessibilityLabel={t('tags.clear_search_accessibility')}>
             <X color={theme.colors.foregroundMuted} size={18} />
           </Pressable>
         )}
@@ -106,7 +109,7 @@ export default function TagsScreen() {
         contentContainerStyle={styles.chips}
       >
         {MODES.map((m) => (
-          <FilterChip key={m.key} label={m.label} active={mode === m.key} onPress={() => setMode(m.key)} />
+          <FilterChip key={m.key} label={t(m.labelKey)} active={mode === m.key} onPress={() => setMode(m.key)} />
         ))}
       </ScrollView>
 
@@ -119,30 +122,34 @@ export default function TagsScreen() {
         refreshControl={<RefreshControl refreshing={manualRefreshing} onRefresh={onRefresh} tintColor={GOLD} />}
       >
         <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
-          <Text style={{ color: GOLD }}>TUS</Text> ETIQUETAS · {list.length}
+          <Text style={{ color: GOLD }}>{t('tags.picker_your_section_gold')}</Text> {t('tags.picker_your_section_rest')} · {list.length}
         </Text>
 
         {tagsQuery.isLoading ? (
           <ActivityIndicator color={GOLD} style={{ marginTop: 32 }} />
         ) : tagsQuery.isError ? (
           <View style={styles.stateBox}>
-            <Text style={styles.errorText}>No se pudieron cargar tus etiquetas.</Text>
+            <Text style={styles.errorText}>{t('tags.error_load')}</Text>
             <Pressable onPress={() => void tagsQuery.refetch()} hitSlop={8}>
-              <Text style={styles.retry}>Reintentar</Text>
+              <Text style={styles.retry}>{t('tags.retry')}</Text>
             </Pressable>
           </View>
         ) : list.length === 0 ? (
           <View style={styles.stateBox}>
             <TagIcon size={34} color={theme.colors.foregroundMuted} strokeWidth={1.5} />
             <Text style={[styles.stateTitle, { color: theme.colors.foreground }]}>
-              {tags.length === 0 ? 'Aún no tienes etiquetas' : mode === 'unused' && !query.trim() ? 'No tienes etiquetas sin usar' : 'Sin resultados'}
+              {tags.length === 0
+                ? t('tags.empty_title_none')
+                : mode === 'unused' && !query.trim()
+                  ? t('tags.empty_title_unused')
+                  : t('tags.empty_title_no_results')}
             </Text>
             <Text style={[styles.stateText, { color: theme.colors.foregroundMuted }]}>
               {tags.length === 0
-                ? 'Crea la primera para organizar tus tareas.'
+                ? t('tags.empty_text_none')
                 : query.trim()
-                  ? `Ninguna etiqueta coincide con «${query.trim()}».`
-                  : 'Todas tus etiquetas están en uso.'}
+                  ? t('tags.no_match', { query: query.trim() })
+                  : t('tags.empty_text_all_used')}
             </Text>
           </View>
         ) : (
@@ -151,7 +158,7 @@ export default function TagsScreen() {
               key={tag.id}
               onPress={() => openEdit(tag)}
               accessibilityRole="button"
-              accessibilityLabel={`Editar etiqueta ${tag.name}`}
+              accessibilityLabel={t('tags.edit_tag_named', { name: tag.name })}
               style={[styles.row, { borderBottomColor: theme.colors.border }]}
             >
               <TagBadge emoji={tag.emoji} color={tag.color} size={42} />
@@ -172,7 +179,7 @@ export default function TagsScreen() {
       {/* Pie */}
       <View style={[styles.footer, { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.border, paddingBottom: Math.max(insets.bottom, 16) + 8 }]}>
         <Pressable style={styles.cta} onPress={openCreate} accessibilityRole="button">
-          <Text style={styles.ctaText}>Nueva etiqueta</Text>
+          <Text style={styles.ctaText}>{t('tags.new_tag')}</Text>
         </Pressable>
       </View>
 

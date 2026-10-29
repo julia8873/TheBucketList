@@ -34,7 +34,12 @@ const SHEET_H = Math.min(690, SCREEN_H * 0.88);
 
 const COLORS = TAG_COLORS;
 
-const SUGGESTED = ['Naturaleza', 'Fotografía', 'Aniversario', 'En solitario'];
+const SUGGESTED_KEYS = [
+    'tags.suggested_nature',
+    'tags.suggested_photography',
+    'tags.suggested_anniversary',
+    'tags.suggested_solo',
+];
 
 const norm = (s: string) => s.trim().toLowerCase();
 
@@ -131,7 +136,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
     const selectedIds = new Set(draft.map((t) => t.id));
     const existingNames = new Set(tags.map((t) => norm(t.name)));
     const available = tags.filter((t) => !selectedIds.has(t.id) && (!q || norm(t.name).includes(q)));
-    const suggestions = SUGGESTED.filter((s) => !existingNames.has(norm(s)) && (!q || norm(s).includes(q)));
+    const suggestions = SUGGESTED_KEYS.map((k) => t(k)).filter((s) => !existingNames.has(norm(s)) && (!q || norm(s).includes(q)));
     const canCreateFromQuery = q.length > 0 && !existingNames.has(q);
 
     const duplicate = name.trim() ? tags.find((t) => norm(t.name) === norm(name)) : undefined;

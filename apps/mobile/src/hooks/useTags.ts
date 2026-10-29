@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tansta
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../stores/auth.store';
 import { DEFAULT_TAG_COLOR } from '../constants/tagPresets';
+import { i18n } from '@bucketlist/shared';
 
 export interface Tag {
   id: string;
@@ -36,11 +37,10 @@ const isMissingEmojiColumn = (e: any) =>
   e?.code === 'PGRST204' || e?.code === '42703' || /column.*emoji|emoji.*column/i.test(e?.message ?? '');
 
 // Antes se reintentaba sin emoji y se daba por guardado: el emoji se perdía en silencio.
-const EMOJI_COLUMN_MESSAGE =
-  'La base de datos no tiene la columna «emoji» en las etiquetas. Aplica la migración 20261010190000_tags_emoji.sql y recarga el schema cache de Supabase.';
+const emojiColumnMessage = () => i18n.t('tags.error_emoji_column');
 
 const toTagError = (e: any, fallback: string) => {
-  if (e?.code === '23505') return new TagError('Ya existe una etiqueta con ese nombre', '23505');
+  if (e?.code === '23505') return new TagError(i18n.t('tags.duplicate_error'), '23505');
   return new TagError(e?.message || fallback, e?.code);
 };
 
@@ -143,15 +143,15 @@ export const useCreateTag = () => {
 
   return useMutation({
     mutationFn: async ({ name, color, emoji }: TagInput): Promise<Tag> => {
-      if (!user) throw new TagError('Debes iniciar sesión');
+      if (!user) throw new TagError(i18n.t('tags.error_login_required'));
       const base = { user_id: user.id, name: name.trim(), color: color || DEFAULT_TAG_COLOR };
 
       let res = await supabase.from('tags').insert({ ...base, emoji: emoji || null }).select().single();
       if (res.error && isMissingEmojiColumn(res.error)) {
-        if (emoji) throw new TagError(EMOJI_COLUMN_MESSAGE, res.error.code);
+        if (emoji) throw new TagError(emojiColumnMessage(), res.error.code);
         res = await supabase.from('tags').insert(base).select().single();
       }
-      if (res.error) throw toTagError(res.error, 'No se pudo crear la etiqueta');
+      if (res.error) throw toTagError(res.error, i18n.t('tags.error_create'));
       return res.data as Tag;
     },
     onSuccess: (saved) => {
@@ -173,10 +173,10 @@ export const useUpdateTag = () => {
 
       let res = await supabase.from('tags').update({ ...base, emoji: emoji || null }).eq('id', id).select().single();
       if (res.error && isMissingEmojiColumn(res.error)) {
-        if (emoji) throw new TagError(EMOJI_COLUMN_MESSAGE, res.error.code);
+        if (emoji) throw new TagError(emojiColumnMessage(), res.error.code);
         res = await supabase.from('tags').update(base).eq('id', id).select().single();
       }
-      if (res.error) throw toTagError(res.error, 'No se pudieron guardar los cambios');
+      if (res.error) throw toTagError(res.error, i18n.t('tags.error_save'));
       return res.data as Tag;
     },
     onSuccess: (saved) => {
@@ -196,7 +196,7 @@ export const useDeleteTag = () => {
     mutationFn: async (id: string) => {
       // item_tags se elimina en cascada (ON DELETE CASCADE)
       const { error } = await supabase.from('tags').delete().eq('id', id);
-      if (error) throw toTagError(error, 'No se pudo eliminar la etiqueta');
+      if (error) throw toTagError(error, i18n.t('tags.error_delete'));
       return id;
     },
     onSuccess: () => invalidateTagQueries(queryClient),

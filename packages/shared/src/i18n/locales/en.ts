@@ -1547,6 +1547,31 @@ const en = {
     cancel: 'Cancel',
     close_tags_accessibility: 'Close tags',
     duplicate_error: 'A tag with this name already exists',
+    // Manage tags screen
+    manage_title_gold: 'My',
+    manage_title_rest: 'tags',
+    sort_unused: 'Unused',
+    clear_search_accessibility: 'Clear search',
+    count_none: 'No tasks',
+    count_one: '1 task',
+    count_many: '{{count}} tasks',
+    empty_title_none: 'You have no tags yet',
+    empty_title_unused: 'You have no unused tags',
+    empty_title_no_results: 'No results',
+    empty_text_none: 'Create the first one to organize your tasks.',
+    empty_text_all_used: 'All your tags are in use.',
+    edit_tag_named: 'Edit tag {{name}}',
+    // Suggested tag names
+    suggested_nature: 'Nature',
+    suggested_photography: 'Photography',
+    suggested_anniversary: 'Anniversary',
+    suggested_solo: 'Solo',
+    // Errors
+    error_login_required: 'You must be signed in',
+    error_create: 'Could not create the tag',
+    error_save: 'Could not save the changes',
+    error_delete: 'Could not delete the tag',
+    error_emoji_column: 'The database has no "emoji" column on tags. Apply migration 20261010190000_tags_emoji.sql and reload the Supabase schema cache.',
   },
 
   map: {
