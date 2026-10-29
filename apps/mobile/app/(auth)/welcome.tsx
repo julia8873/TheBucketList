@@ -37,6 +37,21 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing[6] },
   logo: { fontFamily: fontFamily.serifBold, fontSize: 40, letterSpacing: -0.5 },
-  slogan: { fontFamily: fontFamily.regular, fontStyle: 'italic', fontSize: 17, lineHeight: 24, textAlign: 'center', marginTop: spacing[3], maxWidth: 320 },
+  subtitle: {
+    fontFamily: fontFamily.serif,
+    fontSize: 18,
+    lineHeight: 24,
+    textAlign: 'center',
+    marginTop: spacing[2],
+  },
+  slogan: {
+    fontFamily: fontFamily.regular,
+    fontStyle: 'italic',
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: 'center',
+    marginTop: spacing[6],
+    maxWidth: 320,
+  },
   footer: { paddingHorizontal: spacing[3], paddingBottom: Platform.OS === 'ios' ? 58 : 52, gap: spacing[3] },
 });
