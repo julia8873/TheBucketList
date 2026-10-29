@@ -54,8 +54,8 @@ export function AlbumHeaderBadges({
 
   return (
     <View style={styles.chipsContainer}>
-      {/* Primera fila: Estado y Prioridad */}
-      <View style={styles.chipsRow}>
+      {/* Fila única: Estado, Prioridad y Visibilidad */}
+      <View style={[styles.chipsRow, { flexWrap: 'wrap' }]}>
         {/* Estado */}
         <Pressable
           style={[
@@ -108,10 +108,8 @@ export function AlbumHeaderBadges({
             {priorityLabel}
           </Text>
         </Pressable>
-      </View>
 
-      {/* Segunda fila: Visibilidad */}
-      <View style={styles.chipsRowSecond}>
+        {/* Visibilidad (misma línea que estado y prioridad) */}
         <Pressable
           style={[styles.chip, styles.chipGold, canEdit && styles.chipPressable]}
           onPress={onOpenVisibility}

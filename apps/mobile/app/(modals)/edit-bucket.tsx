@@ -126,7 +126,7 @@ export default function EditBucketModal() {
       .single()
       .then(({ data, error }) => {
         if (error || !data) {
-          Alert.alert('No se pudo cargar la tarea', error?.message || 'Tarea no encontrada.');
+          Alert.alert(t('task_form.alert_load_error_title'), error?.message || t('task_form.alert_task_not_found'));
           router.back();
           return;
         }
@@ -168,7 +168,7 @@ export default function EditBucketModal() {
 
   const handleSave = async () => {
     if (!id || !title.trim()) {
-      Alert.alert('Falta el título', 'Escribe un título para la tarea.');
+      Alert.alert(t('task_form.alert_missing_title'), t('task_form.alert_missing_msg'));
       return;
     }
 
@@ -289,7 +289,7 @@ export default function EditBucketModal() {
   };
 
   const selectedAlbumTitle = albumId
-    ? albums.find((a) => a.id === albumId)?.title || 'Seleccionado'
+    ? albums.find((a) => a.id === albumId)?.title || t('task_form.album_selected_fallback')
     : null;
 
   return (

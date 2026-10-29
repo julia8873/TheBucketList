@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { MapPin, X, Trash2, Check } from 'lucide-react-native';
 import { fontFamily } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { LocationAutocomplete } from './LocationAutocomplete';
 
 interface LocationPickerModalProps {
@@ -27,6 +28,7 @@ export function LocationPickerModal({
   onChangeLocation,
   onClose,
 }: LocationPickerModalProps) {
+  const { t: tr } = useTranslation();
   const [typedText, setTypedText] = useState(value);
   const [selectedLoc, setSelectedLoc] = useState<{ text: string; lat: number; lng: number } | null>(null);
   const [loadingGeocode, setLoadingGeocode] = useState(false);
@@ -108,7 +110,7 @@ export function LocationPickerModal({
             <View style={styles.header}>
               <View style={styles.titleRow}>
                 <MapPin color="#D4B13A" size={20} />
-                <Text style={styles.title}>Ubicación</Text>
+                <Text style={styles.title}>{tr('location_picker.title')}</Text>
               </View>
               <Pressable hitSlop={10} onPress={onClose} style={styles.closeButton}>
                 <X color="#999" size={20} />
@@ -131,8 +133,8 @@ export function LocationPickerModal({
                   setSelectedLoc(null);
                 }
               }}
-              label="Buscar ubicación"
-              placeholder="Escribe una ciudad, país o lugar..."
+              label={tr('location_picker.search_label')}
+              placeholder={tr('location_picker.search_placeholder')}
             />
 
             {/* Confirm Location Button */}
@@ -147,7 +149,7 @@ export function LocationPickerModal({
                 ) : (
                   <>
                     <Check size={16} color="#111" strokeWidth={2.5} />
-                    <Text style={styles.confirmButtonText}>Guardar ubicación</Text>
+                    <Text style={styles.confirmButtonText}>{tr('location_picker.save')}</Text>
                   </>
                 )}
               </Pressable>
@@ -163,7 +165,7 @@ export function LocationPickerModal({
                 }}
               >
                 <Trash2 color="#EF4444" size={16} />
-                <Text style={styles.removeButtonText}>Quitar ubicación</Text>
+                <Text style={styles.removeButtonText}>{tr('location_picker.remove')}</Text>
               </Pressable>
             ) : null}
           </Pressable>

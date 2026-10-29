@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Text, Pressable, StyleSheet } from 'react-native';
 import { Tag, ChevronRight } from 'lucide-react-native';
 import { useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
 import { TagAssignSheet, type TagItem } from './TagAssignSheet';
 
 interface TagsRowProps {
@@ -12,16 +13,17 @@ interface TagsRowProps {
 
 export function TagsRow({ selectedTags, onChange }: TagsRowProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
-  let displayValue = 'Ninguna';
+  let displayValue = t('tags.none');
   let textColor = theme.colors.foregroundMuted;
 
   if (selectedTags.length > 0) {
     textColor = '#D4B13A';
     displayValue =
       selectedTags.length <= 2
-        ? selectedTags.map((t) => t.name).join(', ')
+        ? selectedTags.map((tag) => tag.name).join(', ')
         : `${selectedTags[0]!.name}, ${selectedTags[1]!.name} +${selectedTags.length - 2}`;
   }
 
@@ -31,10 +33,10 @@ export function TagsRow({ selectedTags, onChange }: TagsRowProps) {
         style={[styles.settingRow, { borderBottomColor: theme.colors.border }]}
         onPress={() => setOpen(true)}
         accessibilityRole="button"
-        accessibilityLabel="Etiquetas"
+        accessibilityLabel={t('tags.tags_label')}
       >
         <Tag color="#D4B13A" size={24} />
-        <Text style={[styles.settingLabel, { color: theme.colors.foreground }]}>Etiquetas</Text>
+        <Text style={[styles.settingLabel, { color: theme.colors.foreground }]}>{t('tags.tags_label')}</Text>
         <Text style={[styles.settingValue, { color: textColor }]} numberOfLines={1}>
           {displayValue}
         </Text>

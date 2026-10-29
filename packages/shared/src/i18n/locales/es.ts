@@ -80,6 +80,7 @@ const es = {
     step: 'paso',
     clear: 'Limpiar',
     save_changes: 'Guardar cambios',
+    custom_color: 'Color personalizado',
   },
 
   auth: {
@@ -1365,6 +1366,7 @@ const es = {
     collaborator_pending: 'Pendiente',
     add_collaborator: 'Añadir colaborador',
     add_tag: 'Añadir etiqueta',
+    custom_cover_color: 'Color de portada',
     copy_album_to_list: 'Copiar álbum a mi lista',
     copying_album: 'Copiando álbum…',
     likes_count: '{{count}} me gusta',
@@ -1472,6 +1474,8 @@ const es = {
     view_count_albums_plural: 'Ver {{count}} álbumes',
     new_tag: 'Nueva etiqueta',
     add_tag: 'Añadir etiqueta',
+    tags_label: 'Etiquetas',
+    none: 'Ninguna',
     manage_tags: 'Gestionar etiquetas',
     filter_by_tags: 'Filtrar por etiquetas',
     all_unfiltered: 'Todas (sin filtrar)',
@@ -1968,6 +1972,12 @@ const es = {
     alert_invalid_msg: 'Faltan datos por completar.',
     alert_prepare_error_title: 'Error al preparar la tarea',
     alert_save_error_title: 'No se pudo guardar la tarea',
+    section_desc_rest: ' DE LA TAREA',
+    alert_missing_title: 'Falta el título',
+    alert_missing_msg: 'Escribe un título para la tarea.',
+    alert_load_error_title: 'No se pudo cargar la tarea',
+    alert_task_not_found: 'Tarea no encontrada.',
+    album_selected_fallback: 'Seleccionado',
   },
  
   image_link_modal: {
@@ -2078,6 +2088,13 @@ const es = {
     default_user: 'Usuario',
   },
 
+  location_picker: {
+    title: 'Ubicación',
+    search_label: 'Buscar ubicación',
+    search_placeholder: 'Escribe una ciudad, país o lugar...',
+    save: 'Guardar ubicación',
+    remove: 'Quitar ubicación',
+  },
   collab_picker: {
     title: 'Buscar colaboradores',
     search_placeholder: 'Buscar por nombre o @usuario...',

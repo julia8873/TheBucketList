@@ -207,7 +207,7 @@ export default function CreateBucketModal() {
   };
 
   const selectedAlbumTitle = albumId
-    ? albums.find((a) => a.id === albumId)?.title || 'Seleccionado'
+    ? albums.find((a) => a.id === albumId)?.title || t('task_form.album_selected_fallback')
     : null;
 
   return (

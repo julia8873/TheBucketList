@@ -80,6 +80,7 @@ const en = {
     step: 'step',
     clear: 'Clear',
     save_changes: 'Save changes',
+    custom_color: 'Custom color',
   },
 
   auth: {
@@ -1365,6 +1366,7 @@ const en = {
     collaborator_pending: 'Pending',
     add_collaborator: 'Add collaborator',
     add_tag: 'Add tag',
+    custom_cover_color: 'Cover color',
     copy_album_to_list: 'Copy album to my list',
     copying_album: 'Copying album…',
     likes_count: '{{count}} likes',
@@ -1472,6 +1474,8 @@ const en = {
     view_count_albums_plural: 'View {{count}} albums',
     new_tag: 'New tag',
     add_tag: 'Add tag',
+    tags_label: 'Tags',
+    none: 'None',
     manage_tags: 'Manage tags',
     filter_by_tags: 'Filter by tags',
     all_unfiltered: 'All (unfiltered)',
@@ -1968,6 +1972,12 @@ const en = {
     alert_invalid_msg: 'Missing required fields.',
     alert_prepare_error_title: 'Error preparing task',
     alert_save_error_title: 'Could not save task',
+    section_desc_rest: ' OF THE TASK',
+    alert_missing_title: 'Title missing',
+    alert_missing_msg: 'Enter a title for the task.',
+    alert_load_error_title: 'Could not load task',
+    alert_task_not_found: 'Task not found.',
+    album_selected_fallback: 'Selected',
   },
 
   image_link_modal: {
@@ -2078,6 +2088,13 @@ const en = {
     default_user: 'User',
   },
 
+  location_picker: {
+    title: 'Location',
+    search_label: 'Search location',
+    search_placeholder: 'Type a city, country or place...',
+    save: 'Save location',
+    remove: 'Remove location',
+  },
   collab_picker: {
     title: 'Find collaborators',
     search_placeholder: 'Search by name or @username...',
