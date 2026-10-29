@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Search, Check, Users, X, UserMinus } from 'lucide-react-native';
-import { themedStyleSheet, Avatar, fontFamily, useTheme, Alert } from '@bucketlist/ui';
+import { themedStyleSheet, Avatar, fontFamily, useTheme, Alert, Typography } from '@bucketlist/ui';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../stores/auth.store';
 import { blockReportApi } from '../services/api/blockReport';
@@ -217,12 +217,7 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
           <View style={styles.grabber} />
           {/* Cabecera de la hoja */}
           <View style={styles.header}>
-            <Text style={[styles.headerTitle, { color: theme.colors.foreground }]}>Buscar colaboradores</Text>
-            <Pressable style={[styles.doneButton, styles.doneButtonAbs]} onPress={handleSave}>
-              <Text style={styles.doneText}>
-                {draft.length > 0 ? `Listo (${draft.length})` : 'Listo'}
-              </Text>
-            </Pressable>
+            <Typography variant="h3" color={theme.colors.foreground}>Buscar colaboradores</Typography>
           </View>
 
           {/* Buscador */}
@@ -437,29 +432,6 @@ const styles = themedStyleSheet({
     paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#1E1E1E',
-  },
-  headerTitle: {
-    color: '#FFF',
-    fontSize: 18,
-    fontFamily: fontFamily.bold,
-    textAlign: 'center',
-  },
-  doneButtonAbs: {
-    position: 'absolute',
-    right: 12,
-  },
-  doneButton: {
-    backgroundColor: 'rgba(212, 177, 58, 0.15)',
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#D4B13A',
-  },
-  doneText: {
-    color: '#D4B13A',
-    fontSize: 14,
-    fontFamily: fontFamily.medium,
   },
   searchContainer: {
     paddingHorizontal: 12,
