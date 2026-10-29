@@ -1,12 +1,12 @@
 /**
  * ConfirmDialog, ConfirmProvider y Alert
- * Diálogo de confirmación con la estética de la app (mismo estilo que cerrar sesión /
- * eliminar cuenta en Ajustes). Respeta modo claro y oscuro a través del tema.
+ * DiÃ¡logo de confirmaciÃ³n con la estÃ©tica de la app (mismo estilo que cerrar sesiÃ³n /
+ * eliminar cuenta en Ajustes). Respeta modo claro y oscuro a travÃ©s del tema.
  *
  * Uso:
- *   - `await confirm.ask({...})`            → confirmación sí/no
- *   - `confirm.show({ actions: [...] })`    → diálogo con botones personalizados
- *   - `Alert.alert(title, msg, buttons?)`   → sustituto de Alert de React Native (mismo diálogo)
+ *   - `await confirm.ask({...})`            â†’ confirmaciÃ³n sÃ­/no
+ *   - `confirm.show({ actions: [...] })`    â†’ diÃ¡logo con botones personalizados
+ *   - `Alert.alert(title, msg, buttons?)`   â†’ sustituto de Alert de React Native (mismo diÃ¡logo)
  */
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from 'react';
 import {
@@ -27,10 +27,11 @@ import {
 import { Check, AlertCircle, Info, ShieldAlert } from 'lucide-react-native';
 import { fontFamily } from '../tokens/typography';
 import { useTheme } from '../theme/useTheme';
+import { useTranslation, i18n } from '@bucketlist/shared';
 
 export type DialogTone = 'default' | 'success' | 'error' | 'warning' | 'info';
 
-/** Botón personalizado (equivalente a los botones de Alert.alert de React Native). */
+/** BotÃ³n personalizado (equivalente a los botones de Alert.alert de React Native). */
 export interface ConfirmAction {
   label: string;
   style?: 'default' | 'cancel' | 'destructive';
@@ -47,7 +48,7 @@ export interface ConfirmOptions {
   loading?: boolean;
   /** Si se indica, sustituye a los botones Confirmar/Cancelar por esta lista. */
   actions?: ConfirmAction[];
-  /** Muestra un icono acorde al tono (misma estética que los toasts). */
+  /** Muestra un icono acorde al tono (misma estÃ©tica que los toasts). */
   tone?: DialogTone;
   onConfirm?: () => void;
   onCancel?: () => void;
@@ -57,13 +58,13 @@ export interface DialogProps extends ConfirmOptions {
   visible: boolean;
   onConfirm: () => void;
   onCancel: () => void;
-  /** Se invoca al pulsar un botón de `actions` que no es de cancelar. */
+  /** Se invoca al pulsar un botÃ³n de `actions` que no es de cancelar. */
   onAction?: (action: ConfirmAction) => void;
   /**
-   * Dibuja el diálogo como una capa a pantalla completa en la propia jerarquía de la app
-   * en lugar de usar el `Modal` nativo. En Android el `Modal` recién montado podía medirse
-   * con tamaño 0 (diálogo arriba a la izquierda, sin texto). Solo para diálogos globales
-   * (ConfirmProvider), que se montan en la raíz de la app.
+   * Dibuja el diÃ¡logo como una capa a pantalla completa en la propia jerarquÃ­a de la app
+   * en lugar de usar el `Modal` nativo. En Android el `Modal` reciÃ©n montado podÃ­a medirse
+   * con tamaÃ±o 0 (diÃ¡logo arriba a la izquierda, sin texto). Solo para diÃ¡logos globales
+   * (ConfirmProvider), que se montan en la raÃ­z de la app.
    */
   inline?: boolean;
 }
@@ -74,7 +75,7 @@ export interface ConfirmContextType {
   hide: () => void;
 }
 
-// ── Compatibilidad con Alert.alert de React Native ─────────────────────────────
+// â”€â”€ Compatibilidad con Alert.alert de React Native â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface AlertButton {
   text?: string;
@@ -84,13 +85,13 @@ export interface AlertButton {
 
 function inferTone(title: string): DialogTone {
   const t = title.toLowerCase();
-  if (/error|no se pudo|no se pudieron|no se encontr|fall|inválid|invalid|fail|could not|unable|not found/.test(t)) return 'error';
-  if (/éxito|exito|activadas|enviada|subidas|copiada|convertida|guardad|cancelada|success|done|saved|copied|uploaded|sent|activated|enabled/.test(t)) return 'success';
+  if (/error|no se pudo|no se pudieron|no se encontr|fall|invÃ¡lid|invalid|fail|could not|unable|not found/.test(t)) return 'error';
+  if (/Ã©xito|exito|activadas|enviada|subidas|copiada|convertida|guardad|cancelada|success|done|saved|copied|uploaded|sent|activated|enabled/.test(t)) return 'success';
   if (/atenci|aviso|falta|obligatori|requerid|permiso|revisa|no permitida|necesari|warn|alert|attention|notice|missing|require|permission|caution|cancel|elimin|borr|bloque|delete|remove|block|leave/.test(t)) return 'warning';
   return 'info';
 }
 
-// ── Global Helper ──────────────────────────────────────────────────────────────
+// â”€â”€ Global Helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 let globalConfirm: ConfirmContextType | null = null;
 
@@ -103,17 +104,32 @@ export const confirm = {
 
 /**
  * Sustituto directo de `Alert` de React Native: misma firma
- * `Alert.alert(title, message?, buttons?)`, pero dibujado con el diálogo propio de la app
- * (colores del tema, tipografía y botones redondeados) en lugar del cuadro nativo del sistema.
+ * `Alert.alert(title, message?, buttons?)`, pero dibujado con el diÃ¡logo propio de la app
+ * (colores del tema, tipografÃ­a y botones redondeados) en lugar del cuadro nativo del sistema.
  */
 export const Alert = {
   alert(title: string, message?: string, buttons?: AlertButton[], _options?: unknown): void {
-    const list = buttons && buttons.length > 0 ? buttons : [{ text: 'Aceptar' } as AlertButton];
-    const actions: ConfirmAction[] = list.map((b) => ({
-      label: b.text ?? 'Aceptar',
-      style: b.style ?? 'default',
-      onPress: b.onPress,
-    }));
+    const list = buttons && buttons.length > 0 ? buttons : [{ text: i18n.t('common.accept', { defaultValue: 'Accept' }) } as AlertButton];
+    const actions: ConfirmAction[] = list.map((b) => {
+      let label = b.text ?? i18n.t('common.accept', { defaultValue: 'Accept' });
+      const lower = label.trim().toLowerCase();
+      if (lower === 'cancelar' || lower === 'cancel') {
+        label = i18n.t('common.cancel', { defaultValue: 'Cancel' });
+      } else if (lower === 'confirmar' || lower === 'confirm') {
+        label = i18n.t('common.confirm', { defaultValue: 'Confirm' });
+      } else if (lower === 'aceptar' || lower === 'ok' || lower === 'accept') {
+        label = i18n.t('common.accept', { defaultValue: 'Accept' });
+      } else if (lower === 'quitar' || lower === 'remove') {
+        label = i18n.t('bucket_detail.remove', { defaultValue: 'Remove' });
+      } else if (lower === 'eliminar' || lower === 'delete') {
+        label = i18n.t('common.delete', { defaultValue: 'Delete' });
+      }
+      return {
+        label,
+        style: b.style ?? 'default',
+        onPress: b.onPress,
+      };
+    });
     const hasDestructive = actions.some((a) => a.style === 'destructive');
     globalConfirm?.show({
       title,
@@ -124,7 +140,7 @@ export const Alert = {
   },
 };
 
-// ── Context ───────────────────────────────────────────────────────────────────
+// â”€â”€ Context â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const ConfirmContext = createContext<ConfirmContextType | null>(null);
 
@@ -134,14 +150,14 @@ export function useConfirm() {
   return ctx;
 }
 
-// ── Standalone Component ───────────────────────────────────────────────────────
+// â”€â”€ Standalone Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function ConfirmDialog({
   visible,
   title,
   message,
-  confirmLabel = 'Confirmar',
-  cancelLabel = 'Cancelar',
+  confirmLabel,
+  cancelLabel,
   destructive = false,
   requireText,
   loading = false,
@@ -153,22 +169,25 @@ export function ConfirmDialog({
   inline = false,
 }: DialogProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
+  const resolvedConfirmLabel = confirmLabel ?? t('common.confirm', { defaultValue: 'Confirm' });
+  const resolvedCancelLabel = cancelLabel ?? t('common.cancel', { defaultValue: 'Cancel' });
   const dims = useWindowDimensions();
-  // En Android un Modal recién montado puede medirse con 0 px; en ese caso usamos las
-  // dimensiones reales de la pantalla para que el diálogo nunca colapse arriba a la izquierda.
+  // En Android un Modal reciÃ©n montado puede medirse con 0 px; en ese caso usamos las
+  // dimensiones reales de la pantalla para que el diÃ¡logo nunca colapse arriba a la izquierda.
   const screen = Dimensions.get('window');
   const windowWidth = dims.width > 0 ? dims.width : screen.width;
   const windowHeight = dims.height > 0 ? dims.height : screen.height;
-  // Ancho explícito en píxeles: con `width: '100%'` dentro de un Modal el cuadro podía
-  // colapsar a ~0 px y solo se veían sus dos bordes laterales ("dos rayas verticales").
-  // En pantallas muy pequeñas usamos el máximo espacio disponible menos un margen mínimo de 16px.
+  // Ancho explÃ­cito en pÃ­xeles: con `width: '100%'` dentro de un Modal el cuadro podÃ­a
+  // colapsar a ~0 px y solo se veÃ­an sus dos bordes laterales ("dos rayas verticales").
+  // En pantallas muy pequeÃ±as usamos el mÃ¡ximo espacio disponible menos un margen mÃ­nimo de 16px.
   const hPadding = Math.max(16, Math.min(24, (windowWidth - 260) / 2));
   const dialogWidth = Math.max(260, Math.min(380, windowWidth - hPadding * 2));
-  // Los botones siempre se apilan en vertical (uno encima de otro) y ocupan todo el ancho del diálogo:
-  // así caben y se ven bien en cualquier tamaño de pantalla, con cualquier longitud de texto.
+  // Los botones siempre se apilan en vertical (uno encima de otro) y ocupan todo el ancho del diÃ¡logo:
+  // asÃ­ caben y se ven bien en cualquier tamaÃ±o de pantalla, con cualquier longitud de texto.
   const shouldStackButtons = true;
-  // Altura del teclado (si lo hay). Con el teclado abierto la ventana del Modal es MÁS PEQUEÑA que
-  // la pantalla, así que centramos el diálogo en el área libre y no en la pantalla completa.
+  // Altura del teclado (si lo hay). Con el teclado abierto la ventana del Modal es MÃS PEQUEÃ‘A que
+  // la pantalla, asÃ­ que centramos el diÃ¡logo en el Ã¡rea libre y no en la pantalla completa.
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   useEffect(() => {
     if (!visible) return;
@@ -181,9 +200,9 @@ export function ConfirmDialog({
       hideSub.remove();
     };
   }, [visible]);
-  // Área sobre la que se centra el diálogo. Se usa SIEMPRE como tamaño mínimo de la capa de fondo:
-  // si Android mide el Modal recién montado con 0 px, la capa conserva igualmente el tamaño de la
-  // pantalla y el diálogo queda centrado (antes se quedaba arriba a la izquierda y con los botones
+  // Ãrea sobre la que se centra el diÃ¡logo. Se usa SIEMPRE como tamaÃ±o mÃ­nimo de la capa de fondo:
+  // si Android mide el Modal reciÃ©n montado con 0 px, la capa conserva igualmente el tamaÃ±o de la
+  // pantalla y el diÃ¡logo queda centrado (antes se quedaba arriba a la izquierda y con los botones
   // fuera de su caja).
   const availableWidth = windowWidth;
   const availableHeight = Math.max(160, windowHeight - keyboardHeight);
@@ -195,8 +214,8 @@ export function ConfirmDialog({
       setText('');
       return;
     }
-    // Si había un teclado abierto (p. ej. un campo de texto de la pantalla de atrás),
-    // lo cerramos para que no tape ni desplace el diálogo.
+    // Si habÃ­a un teclado abierto (p. ej. un campo de texto de la pantalla de atrÃ¡s),
+    // lo cerramos para que no tape ni desplace el diÃ¡logo.
     Keyboard.dismiss();
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       onCancel();
@@ -216,7 +235,7 @@ export function ConfirmDialog({
   const ToneIcon =
     tone === 'error' ? AlertCircle : tone === 'warning' ? ShieldAlert : tone === 'info' ? Info : Check;
   const stacked = !!actions && actions.length > 0 && shouldStackButtons;
-  // Los botones confirmar/cancelar también se apilan en pantallas pequeñas
+  // Los botones confirmar/cancelar tambiÃ©n se apilan en pantallas pequeÃ±as
   const stackDefaultButtons = !actions && shouldStackButtons;
 
   const body = (
@@ -225,7 +244,7 @@ export function ConfirmDialog({
       style={[
         styles.backdrop,
         inline ? styles.inlineBackdrop : null,
-        // Tamaño mínimo garantizado: el diálogo siempre se centra en el área visible.
+        // TamaÃ±o mÃ­nimo garantizado: el diÃ¡logo siempre se centra en el Ã¡rea visible.
         { minWidth: availableWidth, minHeight: availableHeight },
         { paddingHorizontal: hPadding },
       ]}
@@ -238,7 +257,7 @@ export function ConfirmDialog({
         ]}
         onPress={onCancel}
         accessibilityRole="button"
-        accessibilityLabel={cancelLabel}
+        accessibilityLabel={resolvedCancelLabel}
       />
       <View
         collapsable={false}
@@ -297,7 +316,7 @@ export function ConfirmDialog({
 
           {actions && actions.length > 0 ? (
             <View style={[styles.dialogActions, stacked && styles.dialogActionsStacked]}>
-              {/* En vertical: primero las acciones principales y al final «Cancelar» */}
+              {/* En vertical: primero las acciones principales y al final Â«CancelarÂ» */}
               {[...actions.filter((a) => a.style !== 'cancel'), ...actions.filter((a) => a.style === 'cancel')].map((action, idx) => {
                 const isCancel = action.style === 'cancel';
                 const isDestructive = action.style === 'destructive';
@@ -346,7 +365,7 @@ export function ConfirmDialog({
             </View>
           ) : (
             <View style={[styles.dialogActions, stackDefaultButtons && styles.dialogActionsStacked]}>
-              {/* En modo apilado el botón de confirmar va primero (más prominente) */}
+              {/* En modo apilado el botÃ³n de confirmar va primero (mÃ¡s prominente) */}
               {stackDefaultButtons ? (
                 <>
                   <Pressable
@@ -366,7 +385,7 @@ export function ConfirmDialog({
                       },
                     ]}
                     accessibilityRole="button"
-                    accessibilityLabel={confirmLabel}
+                    accessibilityLabel={resolvedConfirmLabel}
                   >
                     {loading ? (
                       <ActivityIndicator
@@ -385,9 +404,7 @@ export function ConfirmDialog({
                         numberOfLines={1}
                         adjustsFontSizeToFit
                         minimumFontScale={0.8}
-                      >
-                        {confirmLabel}
-                      </Text>
+                      >{resolvedConfirmLabel}</Text>
                     )}
                   </Pressable>
                   <Pressable
@@ -399,11 +416,9 @@ export function ConfirmDialog({
                     }}
                     style={[styles.dialogBtn, styles.dialogBtnStacked, { borderColor: theme.colors.border, backgroundColor: theme.colors.surfaceSunken }]}
                     accessibilityRole="button"
-                    accessibilityLabel={cancelLabel}
+                    accessibilityLabel={resolvedCancelLabel}
                   >
-                    <Text style={[styles.dialogBtnText, { color: theme.colors.foreground }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-                      {cancelLabel}
-                    </Text>
+                    <Text style={[styles.dialogBtnText, { color: theme.colors.foreground }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{resolvedCancelLabel}</Text>
                   </Pressable>
                 </>
               ) : (
@@ -417,11 +432,9 @@ export function ConfirmDialog({
                     }}
                     style={[styles.dialogBtn, { borderColor: theme.colors.border, backgroundColor: theme.colors.surfaceSunken }]}
                     accessibilityRole="button"
-                    accessibilityLabel={cancelLabel}
+                    accessibilityLabel={resolvedCancelLabel}
                   >
-                    <Text style={[styles.dialogBtnText, { color: theme.colors.foreground }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-                      {cancelLabel}
-                    </Text>
+                    <Text style={[styles.dialogBtnText, { color: theme.colors.foreground }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{resolvedCancelLabel}</Text>
                   </Pressable>
 
                   <Pressable
@@ -440,7 +453,7 @@ export function ConfirmDialog({
                       },
                     ]}
                     accessibilityRole="button"
-                    accessibilityLabel={confirmLabel}
+                    accessibilityLabel={resolvedConfirmLabel}
                   >
                     {loading ? (
                       <ActivityIndicator
@@ -459,9 +472,7 @@ export function ConfirmDialog({
                         numberOfLines={1}
                         adjustsFontSizeToFit
                         minimumFontScale={0.8}
-                      >
-                        {confirmLabel}
-                      </Text>
+                      >{resolvedConfirmLabel}</Text>
                     )}
                   </Pressable>
                 </>
@@ -487,7 +498,7 @@ export function ConfirmDialog({
   );
 }
 
-// ── Provider ──────────────────────────────────────────────────────────────────
+// â”€â”€ Provider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface QueuedDialog {
   opts: ConfirmOptions;
@@ -495,18 +506,18 @@ interface QueuedDialog {
 }
 
 /**
- * En Android se usaba una capa "inline" dentro de la jerarquía de la app, pero al ser una vista
- * semitransparente más, se mezclaba con los elementos de la pantalla de debajo (manchas grises
+ * En Android se usaba una capa "inline" dentro de la jerarquÃ­a de la app, pero al ser una vista
+ * semitransparente mÃ¡s, se mezclaba con los elementos de la pantalla de debajo (manchas grises
  * sobre botones con sombra). El `Modal` nativo vive en su propia ventana y no interfiere. El fallo
- * original del Modal (tamaño 0 al volver del navegador de Google) se evita ahora esperando a que
- * la app esté activa antes de mostrar el diálogo (`afterBrowserReturn` en las pantallas de auth).
+ * original del Modal (tamaÃ±o 0 al volver del navegador de Google) se evita ahora esperando a que
+ * la app estÃ© activa antes de mostrar el diÃ¡logo (`afterBrowserReturn` en las pantallas de auth).
  */
 const USE_INLINE_LAYER = false;
 
 /**
- * Si hay un teclado abierto, lo cierra y espera a que termine de ocultarse (máx. 600 ms).
- * Un diálogo creado mientras el teclado redimensiona la ventana (p. ej. justo tras escribir la
- * contraseña y entrar, o al volver del navegador de Google) se dibujaba arriba y con los botones
+ * Si hay un teclado abierto, lo cierra y espera a que termine de ocultarse (mÃ¡x. 600 ms).
+ * Un diÃ¡logo creado mientras el teclado redimensiona la ventana (p. ej. justo tras escribir la
+ * contraseÃ±a y entrar, o al volver del navegador de Google) se dibujaba arriba y con los botones
  * fuera de la zona visible.
  */
 function waitForKeyboardHidden(): Promise<void> {
@@ -521,7 +532,7 @@ function waitForKeyboardHidden(): Promise<void> {
       done = true;
       if (sub?.remove) sub.remove();
       clearTimeout(timer);
-      // Pequeño margen para que Android termine de re-maquetar la ventana
+      // PequeÃ±o margen para que Android termine de re-maquetar la ventana
       setTimeout(resolve, 80);
     };
     const timer = setTimeout(finish, 600);
@@ -548,7 +559,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
     setCurrent(item);
   }, []);
 
-  /** Cierra el diálogo actual y abre el siguiente de la cola (si lo hay). */
+  /** Cierra el diÃ¡logo actual y abre el siguiente de la cola (si lo hay). */
   const advance = useCallback(() => {
     const next = queueRef.current.shift() ?? null;
     present(next);
@@ -593,7 +604,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   const handleCancel = useCallback(() => {
     const item = currentRef.current;
     if (!item) return;
-    // En un diálogo de botones personalizados, "cancelar" ejecuta el botón de tipo cancel (si existe).
+    // En un diÃ¡logo de botones personalizados, "cancelar" ejecuta el botÃ³n de tipo cancel (si existe).
     item.opts.actions?.find((a) => a.style === 'cancel')?.onPress?.();
     item.opts.onCancel?.();
     item.resolve?.(false);
@@ -604,7 +615,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
     (action: ConfirmAction) => {
       const item = currentRef.current;
       if (!item) return;
-      advance(); // primero cerramos para que un onPress que abra otro diálogo no choque
+      advance(); // primero cerramos para que un onPress que abra otro diÃ¡logo no choque
       action.onPress?.();
       item.resolve?.(true);
     },
@@ -643,8 +654,8 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
     <ConfirmContext.Provider value={ctx}>
       {children}
       {USE_INLINE_LAYER && Platform.OS === 'android' ? (
-        // Contenedor siempre montado y a pantalla completa: el diálogo se inserta en un
-        // contenedor ya maquetado, en vez de crear una capa raíz nueva que Android mide a 0.
+        // Contenedor siempre montado y a pantalla completa: el diÃ¡logo se inserta en un
+        // contenedor ya maquetado, en vez de crear una capa raÃ­z nueva que Android mide a 0.
         <View
           collapsable={false}
           pointerEvents={current ? 'auto' : 'none'}
@@ -669,7 +680,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 24,
-    // paddingHorizontal se sobrescribe dinámicamente según el ancho de pantalla
+    // paddingHorizontal se sobrescribe dinÃ¡micamente segÃºn el ancho de pantalla
     paddingHorizontal: 24,
     ...Platform.select({
       web: {
@@ -686,9 +697,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     zIndex: 10001,
   },
-  // Capa a pantalla completa por encima de todo (incluidas las pantallas modales de navegación)
-  // Sin `elevation`: en Android una capa semitransparente con elevación proyecta su sombra
-  // a través del fondo y deja manchas grises sobre los elementos de debajo.
+  // Capa a pantalla completa por encima de todo (incluidas las pantallas modales de navegaciÃ³n)
+  // Sin `elevation`: en Android una capa semitransparente con elevaciÃ³n proyecta su sombra
+  // a travÃ©s del fondo y deja manchas grises sobre los elementos de debajo.
   inlineBackdrop: {
     position: 'absolute',
     top: 0,
@@ -745,7 +756,7 @@ const styles = StyleSheet.create({
   },
   dialogActionsStacked: {
     flexDirection: 'column',
-    alignItems: 'stretch', // los botones ocupan todo el ancho del diálogo, uno encima de otro
+    alignItems: 'stretch', // los botones ocupan todo el ancho del diÃ¡logo, uno encima de otro
     alignSelf: 'stretch',
     width: '100%',
     gap: 10,
@@ -794,3 +805,4 @@ const styles = StyleSheet.create({
     }),
   },
 });
+

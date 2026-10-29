@@ -56,7 +56,7 @@ export async function openGoogleDriveLink({
     if (canOpen) {
       await Linking.openURL(finalUrl);
     } else {
-      toast.error('No se puede abrir este enlace');
+      toast.error(i18n.t('google_drive_modal.err_open_link', { defaultValue: 'Cannot open this link' }));
     }
   } catch (err) {
     console.warn('[DriveAccess] Error opening URL:', err);

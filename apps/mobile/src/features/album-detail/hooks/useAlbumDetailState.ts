@@ -32,7 +32,7 @@ import type { TagItem } from '@/components/TagAssignSheet';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export function useAlbumDetailState() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const cleanId = Array.isArray(id) ? id[0] : (id ? String(id) : '');
   const router = useRouter();
@@ -600,10 +600,10 @@ export function useAlbumDetailState() {
       void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
       if (cleanId !== id) void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
       void queryClient.invalidateQueries({ queryKey: ['albums'] });
-      toast.success('Portada actualizada');
+      toast.success(t('album_detail.cover_updated'));
     } catch (err: any) {
       setCropRequest(null);
-      toast.error(err?.message || 'No se pudo actualizar la portada');
+      toast.error(err?.message || t('album_detail.cover_update_error'));
     }
   };
 
@@ -682,10 +682,10 @@ export function useAlbumDetailState() {
       void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
       if (cleanId !== id) void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
       void queryClient.invalidateQueries({ queryKey: ['albums'] });
-      toast.success('Portada actualizada');
+      toast.success(t('album_detail.cover_updated'));
     } catch (err: any) {
       setCropRequest(null);
-      toast.error(err?.message || 'No se pudo actualizar la portada');
+      toast.error(err?.message || t('album_detail.cover_update_error'));
     }
   };
 
@@ -755,10 +755,10 @@ export function useAlbumDetailState() {
       void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
       if (cleanId !== id) void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
       void queryClient.invalidateQueries({ queryKey: ['albums'] });
-      toast.success('Portada reajustada');
+      toast.success(t('album_detail.cover_recropped'));
     } catch (err: any) {
       setCropRequest(null);
-      toast.error(err?.message || 'No se pudo reajustar la portada');
+      toast.error(err?.message || t('album_detail.cover_recrop_error'));
     }
   };
 
@@ -855,10 +855,10 @@ export function useAlbumDetailState() {
       void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
       if (cleanId !== id) void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
       void queryClient.invalidateQueries({ queryKey: ['albums'] });
-      toast.success('Portada actualizada');
+      toast.success(t('album_detail.cover_updated'));
     } catch (err: any) {
       console.error('Error saving cover link:', err);
-      toast.error(err?.message || 'No se pudo guardar la portada.');
+      toast.error(err?.message || t('album_detail.cover_update_error'));
     }
   };
 
@@ -922,9 +922,9 @@ export function useAlbumDetailState() {
       void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
       if (cleanId !== id) void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
       void queryClient.invalidateQueries({ queryKey: ['albums'] });
-      toast.success('Portada actualizada');
+      toast.success(t('album_detail.cover_updated'));
     } catch (err: any) {
-      toast.error(err?.message || 'No se pudo cambiar la portada');
+      toast.error(err?.message || t('album_detail.cover_update_error'));
       void queryClient.invalidateQueries({ queryKey: ['album', cleanId, user?.id] });
     }
   };
@@ -970,7 +970,7 @@ export function useAlbumDetailState() {
     if (removed.length > 0 && taskIds.length > 0) {
       Alert.alert(
         t('album_detail.remove_tags_tasks_title', { defaultValue: 'Quitar etiquetas de las tareas' }),
-        t('album_detail.remove_tags_tasks_msg', { tags: removed.map((t) => `«${t.name}»`).join(', '), plural: removed.length === 1 ? 'esta etiqueta' : 'estas etiquetas', defaultValue: `Has deseleccionado ${removed.map((t) => `«${t.name}»`).join(', ')}. ¿Deseas quitar ${removed.length === 1 ? 'esta etiqueta' : 'estas etiquetas'} también de todas las tareas del álbum?` }),
+        t('album_detail.remove_tags_tasks_msg', { tags: removed.map((t) => `«${t.name}»`).join(', '), plural: removed.length === 1 ? (i18n.language === 'en' ? 'this tag' : 'esta etiqueta') : (i18n.language === 'en' ? 'these tags' : 'estas etiquetas'), defaultValue: `Has deseleccionado ${removed.map((t) => `«${t.name}»`).join(', ')}. ¿Deseas quitar ${removed.length === 1 ? 'esta etiqueta' : 'estas etiquetas'} también de todas las tareas del álbum?` }),
         [
           {
             text: t('album_detail.remove_tags_only_album', { defaultValue: 'Solo del álbum' }),
@@ -986,7 +986,7 @@ export function useAlbumDetailState() {
             },
           },
           {
-            text: 'Quitar de todas las tareas',
+            text: t('album_detail.remove_tags_also_tasks'),
             onPress: () => {
               // Optimistamente quitar las etiquetas de las tareas
               const removedIds = new Set(removed.map((t) => t.id));
@@ -1011,9 +1011,7 @@ export function useAlbumDetailState() {
               });
             },
           },
-          {
-            text: 'Cancelar',
-            style: 'cancel',
+          { text: t('common.cancel'), style: 'cancel',
             onPress: () => {
               // Revertir optimismo
               queryClient.setQueryData(['album_tags', cleanId, user?.id], albumTags);

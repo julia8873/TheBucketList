@@ -91,6 +91,15 @@ const es = {
     clear: 'Limpiar',
     save_changes: 'Guardar cambios',
     custom_color: 'Color personalizado',
+    notifications: 'Notificaciones',
+    album: 'Álbum',
+    hue_spectrum: 'Espectro de color',
+    color_tones: 'Tonos e intensidades',
+    saved_colors: 'Tus colores guardados',
+    saved_colors_hint: 'Los colores que apliques se guardarán aquí para reutilizarlos.',
+    preset_colors: 'Preajustes sugeridos',
+    apply: 'Aplicar color',
+    tomorrow: 'Mañana',
   },
 
   auth: {
@@ -433,6 +442,7 @@ const es = {
     collab_request_to_join: 'solicitar colaborar',
     copy_success: 'La tarea se ha copiado a tu lista.',
     copy_error: 'No se pudo copiar la tarea',
+    photo_downloading: 'Descargando...',
   },
 
   complete: {
@@ -665,6 +675,7 @@ const es = {
     section_expired: 'VENCIDAS',
     section_closed: 'CERRADOS',
     bulk_tasks_deleted_toast: 'Tareas eliminadas',
+    drag_to_reorder: 'Arrastrar para reordenar',
   },
 
   daily: {
@@ -882,6 +893,9 @@ const es = {
     task_deleted_toast: 'Tarea diaria eliminada',
     completed_cleared_toast: 'Tareas completadas eliminadas',
     converted_to_bucket_toast: 'Convertida en reto principal',
+    new_task_btn: 'Nueva tarea',
+    delete_task: 'Eliminar tarea',
+    overdue_pick_other_date: 'Elegir otra fecha',
   },
 
   calendar: {
@@ -909,6 +923,7 @@ const es = {
     priority_label_medium: 'Media',
     priority_label_high: 'Alta',
     priority_label_urgent: 'Urgente',
+    tomorrow: 'Mañana',
   },
 
   social: {
@@ -984,6 +999,14 @@ const es = {
     type_album_update: 'ha actualizado un álbum que sigues.',
     type_drive_access: 'ha accedido al enlace de Google Drive en tu tarea.',
     type_default: 'Tienes una nueva notificación.',
+    reaction_title: 'Reacciones',
+    reaction_desc: 'Cuando alguien reacciona a tus tareas o álbumes',
+    comment_title: 'Comentarios',
+    comment_desc: 'Comentarios y menciones en tus tareas o álbumes',
+    follow_title: 'Seguidores y solicitudes',
+    follow_desc: 'Nuevos seguidores y solicitudes de seguimiento',
+    friend_completed_title: 'Tareas completadas por amigos',
+    deadline_title: 'Fechas límite de tareas',
   },
 
   profile: {
@@ -1081,6 +1104,7 @@ const es = {
     user_not_found_desc: 'Puede que este perfil ya no exista.',
     block_notice_title: 'Has bloqueado a este usuario',
     block_notice_desc: 'Sus tareas y álbumes están ocultos. Pulsa en "Bloqueado" si deseas desbloquear a este perfil.',
+    follow: 'Seguir a',
   },
 
   settings: {
@@ -1520,6 +1544,7 @@ const es = {
     delete_album_btn: 'Eliminar álbum',
     album_created_toast: 'Álbum creado con éxito',
     album_deleted_toast: 'Álbum eliminado',
+    tags: 'Etiquetas',
   },
 
   tags: {
@@ -2166,6 +2191,7 @@ const es = {
     paste_label: 'Pegar enlace',
     save_label: 'Guardar enlace',
     remove_label: 'Eliminar enlace',
+    err_open_link: 'No se puede abrir este enlace',
   },
 
   photo_crop: {
@@ -2465,6 +2491,25 @@ const es = {
     fav_remove_a11y: 'Quitar de favoritas',
     save_add_a11y: 'Guardar tarea',
     save_remove_a11y: 'Quitar de guardados',
+    remove: 'Quitar',
+    remove_mention_title: 'Quitar mención',
+    remove_mention_msg: 'Se quitará la relación con "{{title}}" en ambas tareas.',
+    photos_added_single: 'Foto añadida al momento',
+    photos_added_plural: 'Fotos añadidas al momento',
+    upload_photos_error_title: 'No se pudieron subir las fotos',
+    download_photo_error: 'Error al descargar la foto',
+    date_saved: 'Fecha guardada',
+    date_removed: 'Fecha eliminada',
+    cover_updated: 'Portada actualizada',
+    cover_update_error: 'No se pudo actualizar la portada',
+    camera_permission_cover: 'Necesitamos acceso a la cámara para la portada',
+    cover_recrop_error: 'No se pudo reajustar la portada',
+    cover_removed: 'Portada eliminada',
+    cover_remove_error: 'No se pudo quitar la portada',
+    save_link_error: 'No se pudo guardar el enlace',
+    drive_link_saved: 'Enlace de Google Drive guardado',
+    link_removed: 'Enlace eliminado',
+    delete_step_error: 'No se pudo eliminar el paso',
   },
 
   album_detail: {

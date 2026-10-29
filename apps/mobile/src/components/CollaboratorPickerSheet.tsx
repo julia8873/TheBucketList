@@ -463,7 +463,7 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
                 const isSearching = query.trim().length > 0;
                 const group = groups[person.id];
                 const showGroupHeader =
-                  !isSearching && (index === 0 || groups[profiles[index - 1].id] !== group);
+                  !isSearching && (index === 0 || groups[profiles[index - 1]?.id ?? ''] !== group);
                 return (
                   <React.Fragment key={person.id}>
                   {showGroupHeader && (

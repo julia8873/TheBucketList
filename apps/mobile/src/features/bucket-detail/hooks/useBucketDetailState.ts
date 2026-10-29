@@ -106,10 +106,10 @@ export function useBucketDetailState() {
       { userId: user.id, bucketId: cleanId, currentlySaved: isSaved },
       {
         onSuccess: () => {
-          toast.success(isSaved ? 'Tarea quitada de guardados' : 'Tarea guardada');
+          toast.success(isSaved ? t('bucket.saved_removed') : t('bucket.saved_success'));
         },
         onError: (err: any) => {
-          toast.error(err?.message || 'No se pudo guardar la tarea');
+          toast.error(err?.message || t('bucket.save_error'));
         },
       }
     );
@@ -652,9 +652,9 @@ export function useBucketDetailState() {
     );
     const { error } = await supabase.from('buckets').update({ drive_url: newUrl }).eq('id', id);
     if (error) {
-      toast.error('No se pudo guardar el enlace');
+      toast.error(t('bucket_detail.save_link_error'));
     } else {
-      toast.success(newUrl ? 'Enlace de Google Drive guardado' : 'Enlace eliminado');
+      toast.success(newUrl ? t('bucket_detail.drive_link_saved') : t('bucket_detail.link_removed'));
     }
     void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
     void queryClient.invalidateQueries({ queryKey: ['buckets'] });
@@ -678,7 +678,7 @@ export function useBucketDetailState() {
               task: { completedAt: null },
             });
             const { error } = await supabase.from('buckets').update({ completed_at: null }).eq('id', id);
-            if (error) Alert.alert('Error', error.message);
+            if (error) Alert.alert(t('common.error'), error.message);
             void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
             settleTaskCaches(queryClient);
           },
@@ -872,10 +872,7 @@ export function useBucketDetailState() {
 
   const removeMention = (mentionId: string, title: string) => {
     if (mentionId.startsWith('tmp-')) return;
-    Alert.alert('Quitar mención', `Se quitará la relación con "${title}" en ambas tareas.`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Quitar', style: 'destructive', onPress: () => void deleteMention(mentionId) },
-    ]);
+    Alert.alert(t('bucket_detail.remove_mention_title'), t('bucket_detail.remove_mention_msg', { title }), [{ text: t('common.cancel'), style: 'cancel' }, { text: t('bucket_detail.remove'), style: 'destructive', onPress: () => void deleteMention(mentionId) }]);
   };
 
   const requestPhotoEdit = (base: { uri: string; width: number; height: number }, index: number, total: number) =>
@@ -957,10 +954,10 @@ export function useBucketDetailState() {
 
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', cleanId] });
       invalidateBucket();
-      toast.success(editedUris.length > 1 ? 'Fotos añadidas al momento' : 'Foto añadida al momento');
+      toast.success(editedUris.length > 1 ? t('bucket_detail.photos_added_plural') : t('bucket_detail.photos_added_single'));
     } catch (error: any) {
       setCropRequest(null);
-      Alert.alert('No se pudieron subir las fotos', error?.message || 'Inténtalo de nuevo.');
+      Alert.alert(t('bucket_detail.upload_photos_error_title'), error?.message || t('common.retry'));
     }
   };
 
@@ -1008,7 +1005,7 @@ export function useBucketDetailState() {
       }
       await processAndUploadPhotoAssets([{ uri: localUri }]);
     } catch (err: any) {
-      toast.error(err?.message || 'Error al descargar la foto');
+      toast.error(err?.message || t('bucket_detail.download_photo_error'));
     }
   };
 
@@ -1137,7 +1134,7 @@ export function useBucketDetailState() {
       // 3. Invalidación solo tras confirmación de la BD
       await queryClient.invalidateQueries({ queryKey: ['bucketDetail', targetId] });
       void queryClient.invalidateQueries({ queryKey: ['buckets'] });
-      toast.success(date ? 'Fecha guardada' : 'Fecha eliminada');
+      toast.success(date ? t('bucket_detail.date_saved') : t('bucket_detail.date_removed'));
     },
     [cleanId, queryClient]
   );
@@ -1196,9 +1193,9 @@ export function useBucketDetailState() {
         task: { imageValue: nextImage || publicUrl },
       });
       invalidateBucket();
-      toast.success('Portada actualizada');
+      toast.success(t('bucket_detail.cover_updated'));
     } catch (error: any) {
-      toast.error(error?.message || 'No se pudo actualizar la portada');
+      toast.error(error?.message || t('bucket_detail.cover_update_error'));
     }
   };
 
@@ -1207,7 +1204,7 @@ export function useBucketDetailState() {
 
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
-      toast.error('Necesitamos acceso a la cámara para la portada');
+      toast.error(t('bucket_detail.camera_permission_cover'));
       return;
     }
 
@@ -1257,9 +1254,9 @@ export function useBucketDetailState() {
         task: { imageValue: nextImage || publicUrl },
       });
       invalidateBucket();
-      toast.success('Portada actualizada');
+      toast.success(t('bucket_detail.cover_updated'));
     } catch (error: any) {
-      toast.error(error?.message || 'No se pudo actualizar la portada');
+      toast.error(error?.message || t('bucket_detail.cover_update_error'));
     }
   };
 
@@ -1306,9 +1303,9 @@ export function useBucketDetailState() {
         task: { imageValue: nextImage || publicUrl },
       });
       invalidateBucket();
-      toast.success('Portada actualizada');
+      toast.success(t('bucket_detail.cover_updated'));
     } catch (error: any) {
-      toast.error(error?.message || 'No se pudo reajustar la portada');
+      toast.error(error?.message || t('bucket_detail.cover_recrop_error'));
     }
   };
 
@@ -1335,9 +1332,9 @@ export function useBucketDetailState() {
         task: { imageValue: nextImage },
       });
       invalidateBucket();
-      toast.success('Portada eliminada');
+      toast.success(t('bucket_detail.cover_removed'));
     } catch (error: any) {
-      toast.error(error?.message || 'No se pudo quitar la portada');
+      toast.error(error?.message || t('bucket_detail.cover_remove_error'));
     }
   };
 
@@ -1361,9 +1358,9 @@ export function useBucketDetailState() {
         task: { imageValue: nextImage || value },
       });
       invalidateBucket();
-      toast.success('Portada actualizada');
+      toast.success(t('bucket_detail.cover_updated'));
     } catch (error: any) {
-      toast.error(error?.message || 'No se pudo actualizar la portada');
+      toast.error(error?.message || t('bucket_detail.cover_update_error'));
     }
   };
 
@@ -1398,9 +1395,9 @@ export function useBucketDetailState() {
         task: { imageValue: nextImage || url },
       });
       invalidateBucket();
-      toast.success('Portada actualizada');
+      toast.success(t('bucket_detail.cover_updated'));
     } catch (error: any) {
-      toast.error(error?.message || 'No se pudo actualizar la portada');
+      toast.error(error?.message || t('bucket_detail.cover_update_error'));
     }
   };
 
@@ -1532,10 +1529,7 @@ export function useBucketDetailState() {
   };
 
   const removeCounter = () => {
-    Alert.alert(t('bucket_detail.remove_counter_title', { defaultValue: 'Quitar contador' }), t('bucket_detail.remove_counter_msg', { defaultValue: 'Se perderá la cuenta actual.' }), [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Quitar',
+    Alert.alert(t('bucket_detail.remove_counter_title'), t('bucket_detail.remove_counter_msg'), [{ text: t('common.cancel'), style: 'cancel' }, { text: t('bucket_detail.remove'),
         style: 'destructive',
         onPress: () =>
           void updateCounter({ counter_enabled: false, counter_count: 0, counter_label: null, counter_target: null }),
@@ -1600,7 +1594,7 @@ export function useBucketDetailState() {
 
     void supabase.from('item_subtasks').delete().eq('id', st.id).then(({ error }) => {
       if (error) {
-        toast.error(error.message || 'No se pudo eliminar el paso');
+        toast.error(error.message || t('bucket_detail.delete_step_error'));
         void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
         return;
       }

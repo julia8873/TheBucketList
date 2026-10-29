@@ -91,6 +91,15 @@ const en = {
     clear: 'Clear',
     save_changes: 'Save changes',
     custom_color: 'Custom color',
+    notifications: 'Notifications',
+    album: 'Album',
+    hue_spectrum: 'Color spectrum',
+    color_tones: 'Tones & intensities',
+    saved_colors: 'Your saved colors',
+    saved_colors_hint: 'Applied colors will be saved here for reuse.',
+    preset_colors: 'Suggested presets',
+    apply: 'Apply color',
+    tomorrow: 'Tomorrow',
   },
 
   auth: {
@@ -433,6 +442,7 @@ const en = {
     collab_request_to_join: 'request to collaborate',
     copy_success: 'Task copied to your list.',
     copy_error: 'Could not copy task',
+    photo_downloading: 'Downloading...',
   },
 
   complete: {
@@ -665,6 +675,7 @@ const en = {
     section_expired: 'OVERDUE',
     section_closed: 'CLOSED',
     bulk_tasks_deleted_toast: 'Tasks deleted',
+    drag_to_reorder: 'Drag to reorder',
   },
 
   daily: {
@@ -882,6 +893,9 @@ const en = {
     task_deleted_toast: 'Daily task deleted',
     completed_cleared_toast: 'Completed tasks cleared',
     converted_to_bucket_toast: 'Converted to main goal',
+    new_task_btn: 'New task',
+    delete_task: 'Delete task',
+    overdue_pick_other_date: 'Pick another date',
   },
 
   calendar: {
@@ -909,6 +923,7 @@ const en = {
     priority_label_medium: 'Medium',
     priority_label_high: 'High',
     priority_label_urgent: 'Urgent',
+    tomorrow: 'Tomorrow',
   },
 
   social: {
@@ -984,6 +999,14 @@ const en = {
     type_album_update: 'updated an album you follow.',
     type_drive_access: 'accessed the Google Drive link on your task.',
     type_default: 'You have a new notification.',
+    reaction_title: 'Reactions',
+    reaction_desc: 'When someone reacts to your tasks or albums',
+    comment_title: 'Comments',
+    comment_desc: 'Comments and mentions on your tasks or albums',
+    follow_title: 'Followers and requests',
+    follow_desc: 'New followers and follow requests',
+    friend_completed_title: 'Tasks completed by friends',
+    deadline_title: 'Task due dates',
   },
 
   profile: {
@@ -1081,6 +1104,7 @@ const en = {
     user_not_found_desc: 'This profile may no longer exist.',
     block_notice_title: 'You have blocked this user',
     block_notice_desc: 'Their tasks and albums are hidden. Tap "Blocked" if you wish to unblock this profile.',
+    follow: 'Follow',
   },
 
   settings: {
@@ -1520,6 +1544,7 @@ const en = {
     delete_album_btn: 'Delete album',
     album_created_toast: 'Album created successfully',
     album_deleted_toast: 'Album deleted',
+    tags: 'Tags',
   },
 
   tags: {
@@ -2166,6 +2191,7 @@ const en = {
     paste_label: 'Paste link',
     save_label: 'Save link',
     remove_label: 'Remove link',
+    err_open_link: 'Cannot open this link',
   },
 
   photo_crop: {
@@ -2414,6 +2440,16 @@ const en = {
     audience_anyone_desc_open: 'Any The Bucket List user can join directly.',
     audience_anyone_desc_request: 'Any The Bucket List user can request to collaborate.',
     saving: 'Saving settings…',
+    section_people: 'COLLABORATORS',
+    no_collaborators: 'No collaborators on this task yet.',
+    invite_pending: 'Invitation pending',
+    via_album: 'Via shared album',
+    remove_title: 'Remove collaborator',
+    remove_msg: 'Remove {{name}} as a collaborator on this task?',
+    remove_confirm: 'Remove',
+    cancel_invite_title: 'Cancel invitation',
+    cancel_invite_msg: 'Cancel invitation to {{name}}?',
+    cancel_invite_confirm: 'Cancel invitation',
   },
 
   design_system: {
@@ -2455,6 +2491,25 @@ const en = {
     fav_remove_a11y: 'Remove from favorites',
     save_add_a11y: 'Save task',
     save_remove_a11y: 'Remove from saved',
+    remove: 'Remove',
+    remove_mention_title: 'Remove mention',
+    remove_mention_msg: 'The link with "{{title}}" will be removed from both tasks.',
+    photos_added_single: 'Photo added to moments',
+    photos_added_plural: 'Photos added to moments',
+    upload_photos_error_title: 'Could not upload photos',
+    download_photo_error: 'Error downloading photo',
+    date_saved: 'Date saved',
+    date_removed: 'Date removed',
+    cover_updated: 'Cover updated',
+    cover_update_error: 'Could not update cover',
+    camera_permission_cover: 'Camera access is required for the cover',
+    cover_recrop_error: 'Could not readjust cover',
+    cover_removed: 'Cover removed',
+    cover_remove_error: 'Could not remove cover',
+    save_link_error: 'Could not save link',
+    drive_link_saved: 'Google Drive link saved',
+    link_removed: 'Link removed',
+    delete_step_error: 'Could not delete step',
   },
 
   album_detail: {
