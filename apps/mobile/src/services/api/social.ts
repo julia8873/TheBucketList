@@ -166,7 +166,13 @@ export const socialApi = {
     parentId?: string | null,
     targetType: 'bucket' | 'album' = 'bucket'
   ) => {
-    const payload: any = { user_id: userId, body };
+    let authorId = userId;
+    if (!authorId) {
+      const { data: authData } = await supabase.auth.getUser();
+      authorId = authData.user?.id || '';
+    }
+
+    const payload: any = { user_id: authorId, body };
     if (targetType === 'album') {
       payload.album_id = targetId;
     } else {

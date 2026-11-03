@@ -597,7 +597,7 @@ export default function MyListScreen() {
               scrollEnabled={!state.dragging}
             >
               {taskListHeaderElement}
-              {state.sortField === 'status' ? (
+              {state.taskSections.length > 0 ? (
                 state.taskSections.map((sec) => {
                   if (sec.items.length === 0) return null;
                   return (
@@ -640,7 +640,7 @@ export default function MyListScreen() {
               }
             >
               {taskListHeaderElement}
-              {state.sortField === 'status' ? (
+              {state.taskSections.length > 0 ? (
                 state.taskSections.map((sec) => {
                   if (sec.items.length === 0) return null;
                   return (
@@ -723,7 +723,7 @@ export default function MyListScreen() {
               }
             >
               {taskListHeaderElement}
-              {state.sortField === 'status' ? (
+              {state.taskSections.length > 0 ? (
                 state.taskSections.map((sec) => {
                   if (sec.items.length === 0) return null;
                   return (
@@ -862,7 +862,7 @@ export default function MyListScreen() {
               )
             ) : state.isAlbumReordering ? (
               <View>
-                {state.albumSortField === 'status' ? (
+                {state.albumSections.length > 0 ? (
                   state.albumSections.map((sec) => {
                     if (sec.items.length === 0) return null;
                     return (
@@ -898,7 +898,7 @@ export default function MyListScreen() {
               </View>
             ) : state.albumViewMode === 'compact' ? (
               <>
-                {state.albumSortField === 'status' ? (
+                {state.albumSections.length > 0 ? (
                   state.albumSections.map((sec) => {
                     if (sec.items.length === 0) return null;
                     return (
@@ -926,7 +926,7 @@ export default function MyListScreen() {
               </>
             ) : state.albumViewMode === 'list' ? (
               <>
-                {state.albumSortField === 'status' ? (
+                {state.albumSections.length > 0 ? (
                   state.albumSections.map((sec) => {
                     if (sec.items.length === 0) return null;
                     return (
@@ -954,7 +954,7 @@ export default function MyListScreen() {
               </>
             ) : (
               <>
-                {state.albumSortField === 'status' ? (
+                {state.albumSections.length > 0 ? (
                   <>
                     {state.albumSections.map((sec) => {
                       if (sec.items.length === 0) return null;

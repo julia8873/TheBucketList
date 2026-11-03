@@ -90,8 +90,12 @@ export const DEFAULT_ALBUM_CUSTOMIZATION: Record<ViewModeType, AlbumViewCustomiz
 interface MyListCustomizationStore {
   taskViews: Record<ViewModeType, TaskViewCustomization>;
   albumViews: Record<ViewModeType, AlbumViewCustomization>;
+  taskGroupByStatus: boolean;
+  albumGroupByStatus: boolean;
   setTaskOption: (mode: ViewModeType, key: keyof TaskViewCustomization, val: boolean) => void;
   setAlbumOption: (mode: ViewModeType, key: keyof AlbumViewCustomization, val: boolean) => void;
+  setTaskGroupByStatus: (val: boolean) => void;
+  setAlbumGroupByStatus: (val: boolean) => void;
   resetTaskOptions: (mode?: ViewModeType) => void;
   resetAlbumOptions: (mode?: ViewModeType) => void;
 }
@@ -101,6 +105,8 @@ const STORAGE_KEY = '@my_list_customization_v1';
 export const useMyListCustomizationStore = create<MyListCustomizationStore>((set, get) => ({
   taskViews: { ...DEFAULT_TASK_CUSTOMIZATION },
   albumViews: { ...DEFAULT_ALBUM_CUSTOMIZATION },
+  taskGroupByStatus: true,
+  albumGroupByStatus: true,
 
   setTaskOption: (mode, key, val) => {
     set((state) => {
@@ -111,7 +117,7 @@ export const useMyListCustomizationStore = create<MyListCustomizationStore>((set
           [key]: val,
         },
       };
-      void persistState(nextTaskViews, state.albumViews);
+      void persistState(nextTaskViews, state.albumViews, state.taskGroupByStatus, state.albumGroupByStatus);
       return { taskViews: nextTaskViews };
     });
   },
@@ -125,8 +131,22 @@ export const useMyListCustomizationStore = create<MyListCustomizationStore>((set
           [key]: val,
         },
       };
-      void persistState(state.taskViews, nextAlbumViews);
+      void persistState(state.taskViews, nextAlbumViews, state.taskGroupByStatus, state.albumGroupByStatus);
       return { albumViews: nextAlbumViews };
+    });
+  },
+
+  setTaskGroupByStatus: (val) => {
+    set((state) => {
+      void persistState(state.taskViews, state.albumViews, val, state.albumGroupByStatus);
+      return { taskGroupByStatus: val };
+    });
+  },
+
+  setAlbumGroupByStatus: (val) => {
+    set((state) => {
+      void persistState(state.taskViews, state.albumViews, state.taskGroupByStatus, val);
+      return { albumGroupByStatus: val };
     });
   },
 
@@ -135,7 +155,7 @@ export const useMyListCustomizationStore = create<MyListCustomizationStore>((set
       const nextTaskViews = mode
         ? { ...state.taskViews, [mode]: { ...DEFAULT_TASK_CUSTOMIZATION[mode] } }
         : { ...DEFAULT_TASK_CUSTOMIZATION };
-      void persistState(nextTaskViews, state.albumViews);
+      void persistState(nextTaskViews, state.albumViews, state.taskGroupByStatus, state.albumGroupByStatus);
       return { taskViews: nextTaskViews };
     });
   },
@@ -145,15 +165,18 @@ export const useMyListCustomizationStore = create<MyListCustomizationStore>((set
       const nextAlbumViews = mode
         ? { ...state.albumViews, [mode]: { ...DEFAULT_ALBUM_CUSTOMIZATION[mode] } }
         : { ...DEFAULT_ALBUM_CUSTOMIZATION };
-      void persistState(state.taskViews, nextAlbumViews);
+      void persistState(state.taskViews, nextAlbumViews, state.taskGroupByStatus, state.albumGroupByStatus);
       return { albumViews: nextAlbumViews };
     });
   },
 }));
 
-async function persistState(taskViews: any, albumViews: any) {
+async function persistState(taskViews: any, albumViews: any, taskGroupByStatus: boolean, albumGroupByStatus: boolean) {
   try {
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ taskViews, albumViews }));
+    await AsyncStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ taskViews, albumViews, taskGroupByStatus, albumGroupByStatus })
+    );
   } catch {
     // Ignore storage errors
   }
@@ -175,6 +198,8 @@ export async function hydrateMyListCustomization(): Promise<void> {
         gallery: { ...DEFAULT_ALBUM_CUSTOMIZATION.gallery, ...(data.albumViews?.gallery ?? {}) },
         compact: { ...DEFAULT_ALBUM_CUSTOMIZATION.compact, ...(data.albumViews?.compact ?? {}) },
       },
+      taskGroupByStatus: typeof data.taskGroupByStatus === 'boolean' ? data.taskGroupByStatus : true,
+      albumGroupByStatus: typeof data.albumGroupByStatus === 'boolean' ? data.albumGroupByStatus : true,
     });
   } catch {
     // Ignore error

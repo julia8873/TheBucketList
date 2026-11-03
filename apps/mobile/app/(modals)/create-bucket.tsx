@@ -200,9 +200,13 @@ export default function CreateBucketModal() {
   const onInvalid = (errs: Record<string, any>) => {
     console.warn('Formulario inválido:', errs);
     const first = Object.values(errs)[0];
+    let msg = first?.message ?? t('task_form.alert_invalid_msg', { defaultValue: 'Faltan datos por completar.' });
+    if (typeof msg === 'string' && (msg.includes('at most') || msg.includes('max') || msg.includes('characters'))) {
+      msg = t('task_form.title_max_error', { defaultValue: 'El título no puede superar los 200 caracteres.' });
+    }
     Alert.alert(
       t('task_form.alert_invalid_title', { defaultValue: 'Revisa la tarea' }),
-      first?.message ?? t('task_form.alert_invalid_msg', { defaultValue: 'Faltan datos por completar.' })
+      msg
     );
   };
 
@@ -258,30 +262,38 @@ export default function CreateBucketModal() {
               control={control}
               name="title"
               render={({ field: { onChange, value } }) => (
-                <TextInput
-                  style={[
-                    styles.titleInput,
-                    {
-                      backgroundColor: theme.colors.surface,
-                      borderColor: theme.colors.border,
-                      color: theme.colors.foreground,
-                    },
-                    isTitleFocused && { borderColor: '#D4B13A' },
-                  ]}
-                  placeholder={t('task_form.title_placeholder', { defaultValue: 'Ej. Ver auroras boreales' })}
-                  placeholderTextColor={theme.colors.foregroundMuted}
-                  value={value}
-                  onChangeText={onChange}
-                  onFocus={() => {
-                    setIsTitleFocused(true);
-                    // Baja la pantalla para que el título quede por encima del teclado.
-                    setTimeout(() => {
-                      scrollRef.current?.scrollTo({ y: Math.max(0, titleSectionY.current - 12), animated: true });
-                    }, 150);
-                  }}
-                  onBlur={() => setIsTitleFocused(false)}
-                  accessibilityLabel={t('task_form.title_placeholder', { defaultValue: 'Título de la tarea' })}
-                />
+                <View>
+                  <TextInput
+                    style={[
+                      styles.titleInput,
+                      {
+                        backgroundColor: theme.colors.surface,
+                        borderColor: theme.colors.border,
+                        color: theme.colors.foreground,
+                      },
+                      isTitleFocused && { borderColor: '#D4B13A' },
+                    ]}
+                    placeholder={t('task_form.title_placeholder', { defaultValue: 'Ej. Ver auroras boreales' })}
+                    placeholderTextColor={theme.colors.foregroundMuted}
+                    value={value}
+                    onChangeText={onChange}
+                    maxLength={200}
+                    onFocus={() => {
+                      setIsTitleFocused(true);
+                      // Baja la pantalla para que el título quede por encima del teclado.
+                      setTimeout(() => {
+                        scrollRef.current?.scrollTo({ y: Math.max(0, titleSectionY.current - 12), animated: true });
+                      }, 150);
+                    }}
+                    onBlur={() => setIsTitleFocused(false)}
+                    accessibilityLabel={t('task_form.title_placeholder', { defaultValue: 'Título de la tarea' })}
+                  />
+                  {value && value.length > 150 ? (
+                    <Text style={{ alignSelf: 'flex-end', fontSize: 12, color: theme.colors.foregroundMuted, marginTop: 4 }}>
+                      {value.length}/200
+                    </Text>
+                  ) : null}
+                </View>
               )}
             />
           </View>
@@ -314,6 +326,7 @@ export default function CreateBucketModal() {
                   ]}
                   value={value || ''}
                   onChangeText={onChange}
+                  maxLength={1000}
                   placeholder={t('task_form.desc_placeholder', { defaultValue: 'Cuéntanos más sobre esta tarea…' })}
                   placeholderTextColor={theme.colors.foregroundMuted}
                   accessibilityLabel={t('task_form.desc_placeholder', { defaultValue: 'Descripción de la tarea' })}

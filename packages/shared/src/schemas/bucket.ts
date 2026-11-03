@@ -2,14 +2,20 @@ import { z } from 'zod';
 
 export const subtaskSchema = z.object({
   id: z.string().uuid().optional(),
-  title: z.string().min(1, 'Title is required').max(100),
+  title: z
+    .string()
+    .min(1, 'El título del paso es obligatorio')
+    .max(200, 'El paso no puede superar los 200 caracteres'),
   done: z.boolean().default(false),
   position: z.number().default(0),
 });
 
 export const createBucketSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(100),
-  description: z.string().max(500).optional(),
+  title: z
+    .string()
+    .min(1, 'El título de la tarea es obligatorio')
+    .max(200, 'El título no puede superar los 200 caracteres'),
+  description: z.string().max(1000, 'La descripción no puede superar los 1000 caracteres').optional(),
   category_id: z.string().uuid().optional().nullable(),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
   visibility: z.enum(['public', 'followers', 'private']).default('public'),

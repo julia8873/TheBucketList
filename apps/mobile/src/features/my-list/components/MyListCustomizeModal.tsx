@@ -27,6 +27,7 @@ import {
   AlignJustify,
   Users,
   Star,
+  Layers,
 } from 'lucide-react-native';
 import { useTheme, gold } from '@bucketlist/ui';
 import { AppSwitch } from '@/components/AppSwitch';
@@ -60,8 +61,12 @@ export function MyListCustomizeModal({
   const {
     taskViews,
     albumViews,
+    taskGroupByStatus,
+    albumGroupByStatus,
     setTaskOption,
     setAlbumOption,
+    setTaskGroupByStatus,
+    setAlbumGroupByStatus,
     resetTaskOptions,
     resetAlbumOptions,
   } = useMyListCustomizationStore();
@@ -82,8 +87,10 @@ export function MyListCustomizeModal({
   const handleReset = () => {
     if (activeTab === 'tasks') {
       resetTaskOptions(selectedMode);
+      setTaskGroupByStatus(true);
     } else {
       resetAlbumOptions(selectedMode);
+      setAlbumGroupByStatus(true);
     }
   };
 
@@ -257,6 +264,40 @@ export function MyListCustomizeModal({
             contentContainerStyle={styles.optionsContent}
             showsVerticalScrollIndicator={false}
           >
+            {/* Sección General */}
+            <View style={styles.sectionHeaderContainer}>
+              <Text style={[styles.sectionHeaderTitle, { color: theme.colors.foregroundMuted }]}>
+                {t('my_list.customize_section_general')}
+              </Text>
+            </View>
+
+            {activeTab === 'tasks' ? (
+              <CustomizeRow
+                icon={<Layers size={16} color={gold[400]} />}
+                title={t('my_list.customize_opt_group_by_status')}
+                subtitle={t('my_list.customize_opt_group_by_status_sub')}
+                value={taskGroupByStatus}
+                onChange={setTaskGroupByStatus}
+                theme={theme}
+              />
+            ) : (
+              <CustomizeRow
+                icon={<Layers size={16} color={gold[400]} />}
+                title={t('my_list.customize_opt_album_group_by_status')}
+                subtitle={t('my_list.customize_opt_album_group_by_status_sub')}
+                value={albumGroupByStatus}
+                onChange={setAlbumGroupByStatus}
+                theme={theme}
+              />
+            )}
+
+            {/* Sección Elementos Visibles */}
+            <View style={[styles.sectionHeaderContainer, { marginTop: 14 }]}>
+              <Text style={[styles.sectionHeaderTitle, { color: theme.colors.foregroundMuted }]}>
+                {t('my_list.customize_section_elements')}
+              </Text>
+            </View>
+
             {activeTab === 'tasks' ? (
               <>
                 <CustomizeRow
@@ -613,6 +654,19 @@ const styles = StyleSheet.create({
   optionsContent: {
     paddingHorizontal: 12,
     paddingVertical: 4,
+  },
+  sectionHeaderContainer: {
+    paddingVertical: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(150,150,150,0.15)',
+    marginBottom: 4,
+  },
+  sectionHeaderTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    fontFamily: 'Inter_600SemiBold',
   },
   row: {
     flexDirection: 'row',

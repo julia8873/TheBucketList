@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import type { View} from 'react-native';
 import { Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -11,6 +11,7 @@ import { useBuckets, useDeleteBucket, useUpdateBucket } from '@/hooks/useBuckets
 import { useAlbums } from '@/hooks/useAlbums';
 import { useUserFavorites, useToggleFavoriteAlbum } from '@/hooks/useFavorites';
 import { useAuthStore } from '@/stores/auth.store';
+import { useMyListCustomizationStore } from '@/stores/myListCustomization.store';
 import { usePullToRefresh } from '@/hooks/useAutoRefresh';
 import { supabase } from '@/services/supabase';
 import type { Tag } from '@/hooks/useTags';
@@ -32,6 +33,7 @@ export function useMyListState() {
   const { user } = useAuthStore();
   const { t } = useTranslation();
   const toast = useToast();
+  const { taskGroupByStatus, albumGroupByStatus } = useMyListCustomizationStore();
   const params = useLocalSearchParams<{ filter?: string; tab?: string; from?: string }>();
 
   const [activeTab, setActiveTabState] = useState(
@@ -584,45 +586,9 @@ export function useMyListState() {
     return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
   };
 
-  const taskSections = useMemo(() => {
-    if (!filteredBuckets || filteredBuckets.length === 0) return [];
-    if (sortField !== 'status') return [];
-
-    const isExpired = (b: any) => {
-      const deadline = b.deadline ? new Date(b.deadline) : null;
-      return deadline ? isPast(deadline) && differenceInCalendarDays(deadline, new Date()) < 0 && b.status !== 'completed' : false;
-    };
-    const isCompleted = (b: any) => b.status === 'completed';
-    const isInProgress = (b: any) => b.status === 'in_progress' && !isCompleted(b) && !isExpired(b);
-    const isPending = (b: any) => !isCompleted(b) && !isExpired(b) && !isInProgress(b);
-
-    const favorites = filteredBuckets.filter((b: any) => isBucketFavorite(b.id)).sort(byManual);
-    const nonFavorites = filteredBuckets.filter((b: any) => !isBucketFavorite(b.id));
-
-    const inProgress = nonFavorites.filter(isInProgress).sort(byManual);
-    const pending = nonFavorites.filter(isPending).sort(byManual);
-    const completed = nonFavorites.filter(isCompleted).sort(byManual);
-    const expired = nonFavorites.filter(isExpired).sort(byManual);
-
-    const otherSections = [
-      { key: 'in_progress', title: t('my_list.section_in_progress'), items: inProgress },
-      { key: 'pending', title: t('my_list.section_pending'), items: pending },
-      { key: 'completed', title: t('my_list.section_completed_tasks'), items: completed },
-      { key: 'expired', title: t('my_list.section_expired'), items: expired },
-    ];
-
-    if (sortDir === 'asc') {
-      otherSections.reverse();
-    }
-
-    return [{ key: 'favorites', title: t('my_list.section_favorites_tasks'), items: favorites }, ...otherSections];
-  }, [filteredBuckets, sortField, sortDir, isBucketFavorite, manualOrder, t]);
-
-  const sortedFlatBuckets = useMemo(() => {
-    if (!filteredBuckets || filteredBuckets.length === 0) return [];
-
+  const sortComparator = useCallback((a: any, b: any) => {
     if (sortField === 'manual') {
-      return [...filteredBuckets].sort(byManual);
+      return byManual(a, b);
     }
 
     if (sortField === 'priority') {
@@ -636,64 +602,97 @@ export function useMyListState() {
         }
       };
 
-      return [...filteredBuckets].sort((a: any, b: any) => {
-        const wa = priorityWeight(a.priority);
-        const wb = priorityWeight(b.priority);
-        if (wa !== wb) {
-          return sortDir === 'asc' ? wa - wb : wb - wa;
-        }
-        return byManual(a, b);
-      });
+      const wa = priorityWeight(a.priority);
+      const wb = priorityWeight(b.priority);
+      if (wa !== wb) {
+        return sortDir === 'asc' ? wa - wb : wb - wa;
+      }
+      return byManual(a, b);
     }
 
     if (sortField === 'alphabetical') {
-      return [...filteredBuckets].sort((a: any, b: any) => {
-        const cmp = (a.title || '').localeCompare(b.title || '', 'es', { sensitivity: 'base' });
-        return sortDir === 'asc' ? cmp : -cmp;
-      });
+      const cmp = (a.title || '').localeCompare(b.title || '', 'es', { sensitivity: 'base' });
+      return sortDir === 'asc' ? cmp : -cmp;
     }
 
     if (sortField === 'created_at') {
-      return [...filteredBuckets].sort((a: any, b: any) => {
-        const da = new Date(a.created_at || 0).getTime();
-        const db = new Date(b.created_at || 0).getTime();
-        return sortDir === 'asc' ? da - db : db - da;
-      });
+      const da = new Date(a.created_at || 0).getTime();
+      const db = new Date(b.created_at || 0).getTime();
+      if (da !== db) return sortDir === 'asc' ? da - db : db - da;
+      return byManual(a, b);
     }
 
     if (sortField === 'deadline') {
       // Sin fecha límite siempre al final, sea cual sea la dirección.
-      return [...filteredBuckets].sort((a: any, b: any) => {
-        const da = a.deadline ? new Date(a.deadline).getTime() : null;
-        const db = b.deadline ? new Date(b.deadline).getTime() : null;
-        if (da === null && db === null) return byManual(a, b);
-        if (da === null) return 1;
-        if (db === null) return -1;
-        if (da !== db) return sortDir === 'asc' ? da - db : db - da;
-        return byManual(a, b);
-      });
+      const da = a.deadline ? new Date(a.deadline).getTime() : null;
+      const db = b.deadline ? new Date(b.deadline).getTime() : null;
+      if (da === null && db === null) return byManual(a, b);
+      if (da === null) return 1;
+      if (db === null) return -1;
+      if (da !== db) return sortDir === 'asc' ? da - db : db - da;
+      return byManual(a, b);
     }
 
     if (sortField === 'completed_at') {
-      return [...filteredBuckets].sort((a: any, b: any) => {
-        const da = a.completed_at ? new Date(a.completed_at).getTime() : (a.status === 'completed' ? new Date(a.created_at || 0).getTime() : 0);
-        const db = b.completed_at ? new Date(b.completed_at).getTime() : (b.status === 'completed' ? new Date(b.created_at || 0).getTime() : 0);
-        if (da !== db) {
-          return sortDir === 'asc' ? da - db : db - da;
-        }
-        return byManual(a, b);
-      });
+      const da = a.completed_at ? new Date(a.completed_at).getTime() : (a.status === 'completed' ? new Date(a.created_at || 0).getTime() : 0);
+      const db = b.completed_at ? new Date(b.completed_at).getTime() : (b.status === 'completed' ? new Date(b.created_at || 0).getTime() : 0);
+      if (da !== db) {
+        return sortDir === 'asc' ? da - db : db - da;
+      }
+      return byManual(a, b);
     }
 
-    return [...filteredBuckets].sort(byManual);
-  }, [filteredBuckets, sortField, sortDir, manualOrder]);
+    return byManual(a, b);
+  }, [sortField, sortDir, manualOrder]);
+
+  const shouldGroupTasks = taskGroupByStatus || sortField === 'status';
+
+  const taskSections = useMemo(() => {
+    if (!filteredBuckets || filteredBuckets.length === 0 || !shouldGroupTasks) return [];
+
+    const isExpired = (b: any) => {
+      const deadline = b.deadline ? new Date(b.deadline) : null;
+      return deadline ? isPast(deadline) && differenceInCalendarDays(deadline, new Date()) < 0 && b.status !== 'completed' : false;
+    };
+    const isCompleted = (b: any) => b.status === 'completed';
+    const isInProgress = (b: any) => b.status === 'in_progress' && !isCompleted(b) && !isExpired(b);
+    const isPending = (b: any) => !isCompleted(b) && !isExpired(b) && !isInProgress(b);
+
+    const comparator = sortField === 'status' ? byManual : sortComparator;
+
+    const favorites = filteredBuckets.filter((b: any) => isBucketFavorite(b.id)).sort(comparator);
+    const nonFavorites = filteredBuckets.filter((b: any) => !isBucketFavorite(b.id));
+
+    const inProgress = nonFavorites.filter(isInProgress).sort(comparator);
+    const pending = nonFavorites.filter(isPending).sort(comparator);
+    const completed = nonFavorites.filter(isCompleted).sort(comparator);
+    const expired = nonFavorites.filter(isExpired).sort(comparator);
+
+    const otherSections = [
+      { key: 'in_progress', title: t('my_list.section_in_progress'), items: inProgress },
+      { key: 'pending', title: t('my_list.section_pending'), items: pending },
+      { key: 'completed', title: t('my_list.section_completed_tasks'), items: completed },
+      { key: 'expired', title: t('my_list.section_expired'), items: expired },
+    ];
+
+    if (sortField === 'status' && sortDir === 'asc') {
+      otherSections.reverse();
+    }
+
+    return [{ key: 'favorites', title: t('my_list.section_favorites_tasks'), items: favorites }, ...otherSections];
+  }, [filteredBuckets, shouldGroupTasks, sortField, sortDir, isBucketFavorite, byManual, sortComparator, t]);
+
+  const sortedFlatBuckets = useMemo(() => {
+    if (!filteredBuckets || filteredBuckets.length === 0) return [];
+    return [...filteredBuckets].sort(sortComparator);
+  }, [filteredBuckets, sortComparator]);
 
   const manualDragEnabled = !isSearching && isReordering;
 
   const listData = useMemo(() => {
     if (!filteredBuckets || filteredBuckets.length === 0) return [];
 
-    if (sortField === 'status') {
+    if (taskSections.length > 0) {
       const result: any[] = [];
       for (const sec of taskSections) {
         if (sec.items.length > 0) {
@@ -705,7 +704,7 @@ export function useMyListState() {
     }
 
     return sortedFlatBuckets;
-  }, [filteredBuckets, sortField, taskSections, sortedFlatBuckets]);
+  }, [filteredBuckets, taskSections, sortedFlatBuckets]);
 
   const getAlbumStatus = (a: any): 'closed' | 'completed' | 'active' => {
     if (a.is_closed) return 'closed';
@@ -757,55 +756,9 @@ export function useMyListState() {
     return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
   };
 
-  const albumSections = useMemo(() => {
-    if (!filteredAlbums || filteredAlbums.length === 0) return [];
-
-    const favorites = filteredAlbums.filter((a: any) => isAlbumFavorite(a.id)).sort(byAlbumManual);
-    const nonFavorites = filteredAlbums.filter((a: any) => !isAlbumFavorite(a.id));
-
-    const inProgress = nonFavorites
-      .filter((a: any) => {
-        if (getAlbumStatus(a) !== 'active') return false;
-        const total = a.total_tasks ?? 0;
-        const completed = a.completed_tasks ?? 0;
-        return total > 0 && completed > 0 && completed < total;
-      })
-      .sort(byAlbumManual);
-
-    const pending = nonFavorites
-      .filter((a: any) => {
-        if (getAlbumStatus(a) !== 'active') return false;
-        const completed = a.completed_tasks ?? 0;
-        return completed === 0;
-      })
-      .sort(byAlbumManual);
-
-    const completed = nonFavorites.filter((a: any) => getAlbumStatus(a) === 'completed').sort(byAlbumManual);
-    const closed = nonFavorites.filter((a: any) => getAlbumStatus(a) === 'closed').sort(byAlbumManual);
-
-    const otherSections = [
-      { key: 'in_progress', title: t('my_list.section_in_progress'), items: inProgress },
-      { key: 'pending', title: t('my_list.section_pending'), items: pending },
-      { key: 'completed', title: t('my_list.section_completed_albums'), items: completed },
-      { key: 'closed', title: t('my_list.section_closed'), items: closed },
-    ];
-
-    if (albumSortDir === 'asc') {
-      otherSections.reverse();
-    }
-
-    return [{ key: 'favorites', title: t('my_list.section_favorites_albums'), items: favorites }, ...otherSections];
-  }, [filteredAlbums, albumSortDir, isAlbumFavorite, albumManualOrder, t]);
-
-  const sortedAlbumsList = useMemo(() => {
-    if (!filteredAlbums || filteredAlbums.length === 0) return [];
-
-    if (albumSortField === 'status') {
-      return albumSections.flatMap((s) => s.items);
-    }
-
+  const albumSortComparator = useCallback((a: any, b: any) => {
     if (albumSortField === 'manual') {
-      return [...filteredAlbums].sort(byAlbumManual);
+      return byAlbumManual(a, b);
     }
 
     if (albumSortField === 'priority') {
@@ -819,56 +772,98 @@ export function useMyListState() {
         }
       };
 
-      return [...filteredAlbums].sort((a: any, b: any) => {
-        const wa = priorityWeight(a.priority);
-        const wb = priorityWeight(b.priority);
-        if (wa !== wb) {
-          return albumSortDir === 'asc' ? wa - wb : wb - wa;
-        }
-        return byAlbumManual(a, b);
-      });
+      const wa = priorityWeight(a.priority);
+      const wb = priorityWeight(b.priority);
+      if (wa !== wb) {
+        return albumSortDir === 'asc' ? wa - wb : wb - wa;
+      }
+      return byAlbumManual(a, b);
     }
 
     if (albumSortField === 'alphabetical') {
-      return [...filteredAlbums].sort((a: any, b: any) => {
-        const cmp = (a.title || '').localeCompare(b.title || '', 'es', { sensitivity: 'base' });
-        return albumSortDir === 'asc' ? cmp : -cmp;
-      });
+      const cmp = (a.title || '').localeCompare(b.title || '', 'es', { sensitivity: 'base' });
+      return albumSortDir === 'asc' ? cmp : -cmp;
     }
 
     if (albumSortField === 'created_at') {
-      return [...filteredAlbums].sort((a: any, b: any) => {
-        const da = new Date(a.created_at || 0).getTime();
-        const db = new Date(b.created_at || 0).getTime();
-        return albumSortDir === 'asc' ? da - db : db - da;
-      });
+      const da = new Date(a.created_at || 0).getTime();
+      const db = new Date(b.created_at || 0).getTime();
+      if (da !== db) return albumSortDir === 'asc' ? da - db : db - da;
+      return byAlbumManual(a, b);
     }
 
     if (albumSortField === 'completed_at') {
-      return [...filteredAlbums].sort((a: any, b: any) => {
-        const da = a.closed_at
-          ? new Date(a.closed_at).getTime()
-          : a.completed_at
-          ? new Date(a.completed_at).getTime()
-          : getAlbumStatus(a) === 'completed'
-          ? new Date(a.created_at || 0).getTime()
-          : 0;
-        const db = b.closed_at
-          ? new Date(b.closed_at).getTime()
-          : b.completed_at
-          ? new Date(b.completed_at).getTime()
-          : getAlbumStatus(b) === 'completed'
-          ? new Date(b.created_at || 0).getTime()
-          : 0;
-        if (da !== db) {
-          return albumSortDir === 'asc' ? da - db : db - da;
-        }
-        return byAlbumManual(a, b);
-      });
+      const da = a.closed_at
+        ? new Date(a.closed_at).getTime()
+        : a.completed_at
+        ? new Date(a.completed_at).getTime()
+        : getAlbumStatus(a) === 'completed'
+        ? new Date(a.created_at || 0).getTime()
+        : 0;
+      const db = b.closed_at
+        ? new Date(b.closed_at).getTime()
+        : b.completed_at
+        ? new Date(b.completed_at).getTime()
+        : getAlbumStatus(b) === 'completed'
+        ? new Date(b.created_at || 0).getTime()
+        : 0;
+      if (da !== db) {
+        return albumSortDir === 'asc' ? da - db : db - da;
+      }
+      return byAlbumManual(a, b);
     }
 
-    return [...filteredAlbums].sort(byAlbumManual);
-  }, [filteredAlbums, albumSortField, albumSortDir, albumManualOrder, albumSections]);
+    return byAlbumManual(a, b);
+  }, [albumSortField, albumSortDir, albumManualOrder]);
+
+  const shouldGroupAlbums = albumGroupByStatus || albumSortField === 'status';
+
+  const albumSections = useMemo(() => {
+    if (!filteredAlbums || filteredAlbums.length === 0 || !shouldGroupAlbums) return [];
+
+    const comparator = albumSortField === 'status' ? byAlbumManual : albumSortComparator;
+
+    const favorites = filteredAlbums.filter((a: any) => isAlbumFavorite(a.id)).sort(comparator);
+    const nonFavorites = filteredAlbums.filter((a: any) => !isAlbumFavorite(a.id));
+
+    const inProgress = nonFavorites
+      .filter((a: any) => {
+        if (getAlbumStatus(a) !== 'active') return false;
+        const total = a.total_tasks ?? 0;
+        const completed = a.completed_tasks ?? 0;
+        return total > 0 && completed > 0 && completed < total;
+      })
+      .sort(comparator);
+
+    const pending = nonFavorites
+      .filter((a: any) => {
+        if (getAlbumStatus(a) !== 'active') return false;
+        const completed = a.completed_tasks ?? 0;
+        return completed === 0;
+      })
+      .sort(comparator);
+
+    const completed = nonFavorites.filter((a: any) => getAlbumStatus(a) === 'completed').sort(comparator);
+    const closed = nonFavorites.filter((a: any) => getAlbumStatus(a) === 'closed').sort(comparator);
+
+    const otherSections = [
+      { key: 'in_progress', title: t('my_list.section_in_progress'), items: inProgress },
+      { key: 'pending', title: t('my_list.section_pending'), items: pending },
+      { key: 'completed', title: t('my_list.section_completed_albums'), items: completed },
+      { key: 'closed', title: t('my_list.section_closed'), items: closed },
+    ];
+
+    if (albumSortField === 'status' && albumSortDir === 'asc') {
+      otherSections.reverse();
+    }
+
+    return [{ key: 'favorites', title: t('my_list.section_favorites_albums'), items: favorites }, ...otherSections];
+  }, [filteredAlbums, shouldGroupAlbums, albumSortField, albumSortDir, isAlbumFavorite, byAlbumManual, albumSortComparator, t]);
+
+  const sortedAlbumsList = useMemo(() => {
+    if (!filteredAlbums || filteredAlbums.length === 0) return [];
+    return [...filteredAlbums].sort(albumSortComparator);
+  }, [filteredAlbums, albumSortComparator]);
 
   return {
     user,
@@ -954,11 +949,13 @@ export function useMyListState() {
     toggleSearch,
     filteredBuckets,
     taskSections,
+    shouldGroupTasks,
     sortedFlatBuckets,
     manualDragEnabled,
     listData,
     filteredAlbums,
     albumSections,
+    shouldGroupAlbums,
     sortedAlbumsList,
     toast,
     from: params.from,

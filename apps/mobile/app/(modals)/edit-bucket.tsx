@@ -350,10 +350,16 @@ export default function EditBucketModal() {
               placeholderTextColor={theme.colors.foregroundMuted}
               value={title}
               onChangeText={setTitle}
+              maxLength={200}
               onFocus={() => setIsTitleFocused(true)}
               onBlur={() => setIsTitleFocused(false)}
               accessibilityLabel={t('task_form.title_placeholder', { defaultValue: 'Título de la tarea' })}
             />
+            {title && title.length > 150 ? (
+              <Text style={{ alignSelf: 'flex-end', fontSize: 12, color: theme.colors.foregroundMuted, marginTop: 4 }}>
+                {title.length}/200
+              </Text>
+            ) : null}
           </View>
 
           {/* DESCRIPCIÓN */}
@@ -382,6 +388,7 @@ export default function EditBucketModal() {
               placeholderTextColor={theme.colors.foregroundMuted}
               value={description}
               onChangeText={setDescription}
+              maxLength={1000}
               onFocus={() => setIsDescFocused(true)}
               onBlur={() => setIsDescFocused(false)}
               multiline
