@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useNavigation } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { Settings, Users, Globe } from 'lucide-react-native';
+import { Settings, Users } from 'lucide-react-native';
 import { useTranslation } from '@bucketlist/shared';
 import {
   Avatar,
@@ -25,6 +25,7 @@ import type { TaskViewMode } from '../../src/components/ViewModeSelector';
 import { ViewModeSelector } from '../../src/components/ViewModeSelector';
 import { ProfileAlbumsTab, type AlbumFilter } from '../../src/features/public-profile/components/ProfileAlbumsTab';
 import { ProfileTaskFilterButton } from '../../src/features/public-profile/components/ProfileTaskFilterButton';
+import { ProfileVisibilityFilterButton } from '../../src/features/public-profile/components/ProfileVisibilityFilterButton';
 import { usePublicProfileData } from '../../src/features/public-profile/hooks/usePublicProfileData';
 import { initialsOf, displayNameOf } from '../../src/utils/initials';
 import { OfficialBadge } from '../../src/components/OfficialBadge';
@@ -93,22 +94,9 @@ export default function CurrentUserProfileScreen() {
     void AsyncStorage.setItem('@my_profile_show_followers', JSON.stringify(val)).catch(() => undefined);
   };
 
-  const handleTogglePublic = () => {
-    if (showPublic && !showFollowers) {
-      setShowPublic(false);
-      setShowFollowers(true);
-    } else {
-      setShowPublic(!showPublic);
-    }
-  };
-
-  const handleToggleFollowers = () => {
-    if (showFollowers && !showPublic) {
-      setShowFollowers(false);
-      setShowPublic(true);
-    } else {
-      setShowFollowers(!showFollowers);
-    }
+  const handleChangeVisibility = (nextPublic: boolean, nextFollowers: boolean) => {
+    setShowPublic(nextPublic);
+    setShowFollowers(nextFollowers);
   };
 
   useEffect(() => {
@@ -368,80 +356,23 @@ export default function CurrentUserProfileScreen() {
             />
             <ViewModeSelector mode={taskViewMode} onChange={setTaskViewMode} />
           </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 2 }}
-            style={{ marginTop: 14, marginBottom: 16 }}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              marginTop: 14,
+              marginBottom: 16,
+            }}
           >
             <ProfileTaskFilterButton filter={filter} onChangeFilter={setFilter} />
-            <Pressable
-              onPress={handleTogglePublic}
-              accessibilityRole="button"
-              accessibilityState={{ selected: showPublic }}
-              style={[
-                styles.visFilterChip,
-                {
-                  backgroundColor: showPublic
-                    ? (theme.dark ? 'rgba(212, 177, 58, 0.15)' : 'rgba(212, 177, 58, 0.18)')
-                    : (theme.dark ? '#1B1B1B' : '#EAE5DB'),
-                  borderColor: showPublic
-                    ? theme.colors.primary
-                    : (theme.dark ? '#2B2B2B' : '#D9D3C7'),
-                },
-              ]}
-            >
-              <Globe
-                size={13}
-                color={showPublic ? theme.colors.primary : theme.colors.foregroundMuted}
-                strokeWidth={2}
-              />
-              <Text
-                style={[
-                  styles.visFilterChipText,
-                  {
-                    color: showPublic ? theme.colors.primary : theme.colors.foregroundMuted,
-                    fontFamily: showPublic ? fontFamily.semibold : fontFamily.medium,
-                  },
-                ]}
-              >
-                {t('profile.filter_visibility_public')}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={handleToggleFollowers}
-              accessibilityRole="button"
-              accessibilityState={{ selected: showFollowers }}
-              style={[
-                styles.visFilterChip,
-                {
-                  backgroundColor: showFollowers
-                    ? (theme.dark ? 'rgba(212, 177, 58, 0.15)' : 'rgba(212, 177, 58, 0.18)')
-                    : (theme.dark ? '#1B1B1B' : '#EAE5DB'),
-                  borderColor: showFollowers
-                    ? theme.colors.primary
-                    : (theme.dark ? '#2B2B2B' : '#D9D3C7'),
-                },
-              ]}
-            >
-              <Users
-                size={13}
-                color={showFollowers ? theme.colors.primary : theme.colors.foregroundMuted}
-                strokeWidth={2}
-              />
-              <Text
-                style={[
-                  styles.visFilterChipText,
-                  {
-                    color: showFollowers ? theme.colors.primary : theme.colors.foregroundMuted,
-                    fontFamily: showFollowers ? fontFamily.semibold : fontFamily.medium,
-                  },
-                ]}
-              >
-                {t('profile.filter_visibility_followers')}
-              </Text>
-            </Pressable>
-          </ScrollView>
+            <ProfileVisibilityFilterButton
+              showPublic={showPublic}
+              showFollowers={showFollowers}
+              onChangeVisibility={handleChangeVisibility}
+              targetType="tasks"
+            />
+          </View>
         </>
       ) : (
         <ProfileAlbumsTab
@@ -459,8 +390,7 @@ export default function CurrentUserProfileScreen() {
           hasUser={!!user}
           showPublic={showPublic}
           showFollowers={showFollowers}
-          onTogglePublic={handleTogglePublic}
-          onToggleFollowers={handleToggleFollowers}
+          onChangeVisibility={handleChangeVisibility}
         />
       )}
     </View>
@@ -569,17 +499,5 @@ const styles = StyleSheet.create({
   tabsContainer: { marginTop: 20, marginBottom: 4 },
   sectionLabel: { marginTop: 20 },
   filters: { flexDirection: 'row', gap: 10, marginTop: 14, marginBottom: 16, flexWrap: 'wrap' },
-  visFilterChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 13,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  visFilterChipText: {
-    fontSize: 13,
-  },
   empty: { fontFamily: fontFamily.regular, fontSize: 14, color: '#9A9A9A', textAlign: 'center', marginTop: 24 },
 });

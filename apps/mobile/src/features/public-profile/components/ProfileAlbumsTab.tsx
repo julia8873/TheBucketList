@@ -3,7 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, ActivityIndicator, Pressable, Modal, StyleSheet, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { SlidersHorizontal, ChevronDown, Check, Globe, Users } from 'lucide-react-native';
+import { SlidersHorizontal, ChevronDown, Check } from 'lucide-react-native';
 import { useTranslation } from '@bucketlist/shared';
 import { SectionLabel, AlbumCard, gold, useTheme, fontFamily } from '@bucketlist/ui';
 import { AlbumCardSkeleton } from '../../../components/TaskSkeletons';
@@ -11,6 +11,8 @@ import type { AlbumWithProgress } from '../../../hooks/useAlbums';
 import { AlbumCompactItemRow, AlbumListItemRow } from '../../my-list/components/AlbumItemComponents';
 import { ViewModeSelector, type TaskViewMode } from '../../../components/ViewModeSelector';
 import { styles } from '../styles/profile.styles';
+
+import { ProfileVisibilityFilterButton } from './ProfileVisibilityFilterButton';
 
 export type AlbumFilter = 'all' | 'active' | 'completed' | 'closed';
 
@@ -31,6 +33,7 @@ interface ProfileAlbumsTabProps {
   showFollowers?: boolean;
   onTogglePublic?: () => void;
   onToggleFollowers?: () => void;
+  onChangeVisibility?: (showPublic: boolean, showFollowers: boolean) => void;
 }
 
 export function ProfileAlbumsTab({
@@ -50,6 +53,7 @@ export function ProfileAlbumsTab({
   showFollowers,
   onTogglePublic,
   onToggleFollowers,
+  onChangeVisibility,
 }: ProfileAlbumsTabProps) {
   const router = useRouter();
   const { theme } = useTheme();
@@ -82,153 +86,59 @@ export function ProfileAlbumsTab({
         )}
       </View>
 
-      {/* Botón único de filtro con bottom view y chips de visibilidad */}
-      {onTogglePublic && onToggleFollowers ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 2 }}
-          style={{ marginTop: 14, marginBottom: 16 }}
+      {/* Botón de filtro de álbumes y selector de visibilidad */}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+          marginTop: 14,
+          marginBottom: 16,
+        }}
+      >
+        <Pressable
+          onPress={() => setFilterModalVisible(true)}
+          style={[
+            tabStyles.filterButton,
+            {
+              backgroundColor: theme.dark ? '#1B1B1B' : '#EAE5DB',
+              borderColor: albumFilter !== 'all' ? theme.colors.primary : (theme.dark ? '#2B2B2B' : '#D9D3C7'),
+            },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={t('profile.filter_albums_btn_label', { label: activeOption.label })}
         >
-          <Pressable
-            onPress={() => setFilterModalVisible(true)}
+          <SlidersHorizontal
+            size={14}
+            color={albumFilter !== 'all' ? theme.colors.primary : theme.colors.foreground}
+            strokeWidth={2}
+          />
+          <Text
             style={[
-              tabStyles.filterButton,
+              tabStyles.filterButtonText,
               {
-                backgroundColor: theme.dark ? '#1B1B1B' : '#EAE5DB',
-                borderColor: albumFilter !== 'all' ? theme.colors.primary : (theme.dark ? '#2B2B2B' : '#D9D3C7'),
+                color: albumFilter !== 'all' ? theme.colors.primary : theme.colors.foreground,
               },
             ]}
-            accessibilityRole="button"
-            accessibilityLabel={t('profile.filter_albums_btn_label', { label: activeOption.label })}
           >
-            <SlidersHorizontal
-              size={14}
-              color={albumFilter !== 'all' ? theme.colors.primary : theme.colors.foreground}
-              strokeWidth={2}
-            />
-            <Text
-              style={[
-                tabStyles.filterButtonText,
-                {
-                  color: albumFilter !== 'all' ? theme.colors.primary : theme.colors.foreground,
-                },
-              ]}
-            >
-              {activeOption.label}
-            </Text>
-            <ChevronDown
-              size={14}
-              color={albumFilter !== 'all' ? theme.colors.primary : theme.colors.foregroundMuted}
-              strokeWidth={2}
-            />
-          </Pressable>
+            {activeOption.label}
+          </Text>
+          <ChevronDown
+            size={14}
+            color={albumFilter !== 'all' ? theme.colors.primary : theme.colors.foregroundMuted}
+            strokeWidth={2}
+          />
+        </Pressable>
 
-          <Pressable
-            onPress={onTogglePublic}
-            accessibilityRole="button"
-            accessibilityState={{ selected: showPublic }}
-            style={[
-              tabStyles.visFilterChip,
-              {
-                backgroundColor: showPublic
-                  ? (theme.dark ? 'rgba(212, 177, 58, 0.15)' : 'rgba(212, 177, 58, 0.18)')
-                  : (theme.dark ? '#1B1B1B' : '#EAE5DB'),
-                borderColor: showPublic
-                  ? theme.colors.primary
-                  : (theme.dark ? '#2B2B2B' : '#D9D3C7'),
-              },
-            ]}
-          >
-            <Globe
-              size={13}
-              color={showPublic ? theme.colors.primary : theme.colors.foregroundMuted}
-              strokeWidth={2}
-            />
-            <Text
-              style={[
-                tabStyles.visFilterChipText,
-                {
-                  color: showPublic ? theme.colors.primary : theme.colors.foregroundMuted,
-                  fontFamily: showPublic ? fontFamily.semibold : fontFamily.medium,
-                },
-              ]}
-            >
-              {t('profile.filter_visibility_albums_public', { defaultValue: 'Públicos' })}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={onToggleFollowers}
-            accessibilityRole="button"
-            accessibilityState={{ selected: showFollowers }}
-            style={[
-              tabStyles.visFilterChip,
-              {
-                backgroundColor: showFollowers
-                  ? (theme.dark ? 'rgba(212, 177, 58, 0.15)' : 'rgba(212, 177, 58, 0.18)')
-                  : (theme.dark ? '#1B1B1B' : '#EAE5DB'),
-                borderColor: showFollowers
-                  ? theme.colors.primary
-                  : (theme.dark ? '#2B2B2B' : '#D9D3C7'),
-              },
-            ]}
-          >
-            <Users
-              size={13}
-              color={showFollowers ? theme.colors.primary : theme.colors.foregroundMuted}
-              strokeWidth={2}
-            />
-            <Text
-              style={[
-                tabStyles.visFilterChipText,
-                {
-                  color: showFollowers ? theme.colors.primary : theme.colors.foregroundMuted,
-                  fontFamily: showFollowers ? fontFamily.semibold : fontFamily.medium,
-                },
-              ]}
-            >
-              {t('profile.filter_visibility_followers')}
-            </Text>
-          </Pressable>
-        </ScrollView>
-      ) : (
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14, marginBottom: 16 }}>
-          <Pressable
-            onPress={() => setFilterModalVisible(true)}
-            style={[
-              tabStyles.filterButton,
-              {
-                backgroundColor: theme.dark ? '#1B1B1B' : '#EAE5DB',
-                borderColor: albumFilter !== 'all' ? theme.colors.primary : (theme.dark ? '#2B2B2B' : '#D9D3C7'),
-              },
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={t('profile.filter_albums_btn_label', { label: activeOption.label })}
-          >
-            <SlidersHorizontal
-              size={14}
-              color={albumFilter !== 'all' ? theme.colors.primary : theme.colors.foreground}
-              strokeWidth={2}
-            />
-            <Text
-              style={[
-                tabStyles.filterButtonText,
-                {
-                  color: albumFilter !== 'all' ? theme.colors.primary : theme.colors.foreground,
-                },
-              ]}
-            >
-              {activeOption.label}
-            </Text>
-            <ChevronDown
-              size={14}
-              color={albumFilter !== 'all' ? theme.colors.primary : theme.colors.foregroundMuted}
-              strokeWidth={2}
-            />
-          </Pressable>
-        </View>
-      )}
+        {onChangeVisibility && (
+          <ProfileVisibilityFilterButton
+            showPublic={showPublic ?? true}
+            showFollowers={showFollowers ?? true}
+            onChangeVisibility={onChangeVisibility}
+            targetType="albums"
+          />
+        )}
+      </View>
 
       {/* Modal / Bottom Sheet de Filtro */}
       <Modal
@@ -444,18 +354,6 @@ const tabStyles = themedStyleSheet({
   },
   filterButtonText: {
     fontFamily: fontFamily.medium,
-    fontSize: 13,
-  },
-  visFilterChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 13,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  visFilterChipText: {
     fontSize: 13,
   },
   modalOverlay: {
