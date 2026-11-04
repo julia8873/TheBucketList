@@ -56,6 +56,7 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
   const isOwn = !!user && !!bucket && bucket.user_id === user.id;
   const { data: savedBucketIds } = useSavedBucketIds(isOwn ? undefined : user?.id);
   const toggleSaveBucket = useToggleSaveBucket();
+  const participants = useParticipantsOf('task', bucket?.id);
 
   if (!actor || !bucket) return null;
 
@@ -65,7 +66,6 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
     if (!user || isOwn) return;
     toggleSaveBucket.mutate({ userId: user.id, bucketId: bucket.id, currentlySaved: isBucketSaved });
   };
-  const participants = useParticipantsOf('task', bucket?.id);
   // Foto subida más reciente, portada o degradado, según lo que haya elegido el dueño de la tarea.
   const coverValue: string | null = resolveTaskImage(bucket);
   const isImageCover = !!coverValue && !coverValue.startsWith('preset:');
