@@ -637,13 +637,16 @@ export function useBucketDetailState() {
     queryClient.setQueryData(['bucketDetail', id], (old: any) =>
       old ? { ...old, deadline: null } : old
     );
+    patchTasks(queryClient, [id], {
+      bucket: { deadline: null },
+      task: { dueDate: undefined },
+    });
     const { error } = await supabase.from('buckets').update({ deadline: null }).eq('id', id);
     if (error) {
       Alert.alert('No se pudo quitar la fecha límite', error.message);
     }
     void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
-    void queryClient.invalidateQueries({ queryKey: ['buckets'] });
-    void queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
+    settleTaskCaches(queryClient);
   };
 
   const handleSaveDriveUrl = async (newUrl: string | null) => {

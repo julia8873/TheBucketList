@@ -55,6 +55,7 @@ import { GoogleDriveModal } from '@/components/GoogleDriveModal';
 import { TaskCollaborationViewerCard } from '@/features/bucket-detail/components/TaskCollaborationViewerCard';
 import { openGoogleDriveLink } from '@/utils/driveAccess';
 import { timeAgo } from '@/utils/timeAgo';
+import { patchTasks, settleTaskCaches } from '@/utils/optimisticCache';
 
 import { useBucketDetailState } from '@/features/bucket-detail/hooks/useBucketDetailState';
 import {
@@ -716,13 +717,22 @@ export default function BucketDetailScreen() {
           state.queryClient.setQueryData(['bucketDetail', targetBucketId], (oldData: any) =>
             oldData ? { ...oldData, ...patch } : oldData
           );
+
+          // Actualización optimista inmediata en álbumes y listas (la tarea se mueve a completadas al instante sin esperar la red)
+          patchTasks(state.queryClient, [targetBucketId], {
+            bucket: patch,
+            task:
+              type === 'completed_at'
+                ? { isCompleted: true, completedAt: isoString, status: 'completed' }
+                : { dueDate: isoString },
+          });
+
           const { error } = await supabase.from('buckets').update(patch).eq('id', targetBucketId);
           if (error) {
             console.error('No se pudo guardar la fecha', error.message);
           }
-          await state.queryClient.invalidateQueries({ queryKey: ['bucketDetail', targetBucketId] });
-          void state.queryClient.invalidateQueries({ queryKey: ['buckets'] });
-          void state.queryClient.invalidateQueries({ queryKey: ['calendar_month'] });
+          void state.queryClient.invalidateQueries({ queryKey: ['bucketDetail', targetBucketId] });
+          settleTaskCaches(state.queryClient);
         }}
       />
 
