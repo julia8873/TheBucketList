@@ -4,6 +4,7 @@
  *  - ActiveFilterChips: chips de filtros activos (se quitan con ✕)
  *  - ListFiltersSheet: hoja única de filtros (estado, prioridad y etiquetas)
  *  - SheetFrame / SheetGroup / SheetOption / SheetToggle: piezas de hoja inferior unificadas
+ *  - SectionHeader: cabecera de sección plegable (FAVORITAS ★ 3 · Ocultar ⌄)
  */
 import React from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
@@ -12,6 +13,7 @@ import {
   ArrowDown,
   ArrowUp,
   Check,
+  ChevronDown,
   ChevronRight,
   ChevronsDownUp,
   ChevronsUpDown,
@@ -21,6 +23,7 @@ import {
   ListFilter,
   ArrowUpDown,
   Search,
+  Star,
   X,
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -541,6 +544,66 @@ export function SheetOption({
   );
 }
 
+/** Fila con interruptor (mismo aspecto que «Personalizar vista» de Mi lista). */
+export function SheetToggle({
+  label,
+  value,
+  onChange,
+  theme,
+}: {
+  label: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+  theme: any;
+}) {
+  const c = theme.colors;
+  return (
+    <Pressable
+      onPress={() => onChange(!value)}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value }}
+      accessibilityLabel={label}
+      style={({ pressed }) => ({
+        height: 48,
+        paddingHorizontal: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        opacity: pressed ? 0.8 : 1,
+      })}
+    >
+      <Text style={{ color: c.foreground, fontSize: 13, fontFamily: 'Inter_400Regular', flexShrink: 1, paddingRight: 12 }}>
+        {label}
+      </Text>
+      <View
+        style={{
+          width: 40,
+          height: 24,
+          borderRadius: 12,
+          padding: 2,
+          justifyContent: 'center',
+          alignItems: value ? 'flex-end' : 'flex-start',
+          backgroundColor: value ? c.primary : theme.dark ? '#32323C' : '#C9D1DE',
+        }}
+      >
+        <View
+          style={{
+            width: 20,
+            height: 20,
+            borderRadius: 10,
+            backgroundColor: '#FFFFFF',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.4,
+            shadowRadius: 2,
+            elevation: 2,
+          }}
+        />
+      </View>
+    </Pressable>
+  );
+}
+
 export function SheetChip({
   label,
   count,
@@ -753,52 +816,66 @@ export function SectionHeader({
 }) {
   const { t } = useTranslation();
   const c = theme.colors;
+  // Por si algún idioma antiguo aún trae el emoji en el título: la estrella se pinta siempre como icono.
+  const cleanTitle = title.replace(/\s*[⭐★☆]\uFE0F?\s*$/u, '');
+  const actionLabel = collapsed
+    ? t('my_list.show_section', { defaultValue: 'Mostrar' })
+    : t('my_list.hide_section', { defaultValue: 'Ocultar' });
+  const ActionIcon = collapsed ? ChevronRight : ChevronDown;
+
   return (
     <Pressable
       onPress={onToggle}
       accessibilityRole="button"
       accessibilityState={{ expanded: !collapsed }}
-      accessibilityLabel={title}
+      accessibilityLabel={cleanTitle}
       style={{
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingVertical: 8,
-        paddingHorizontal: 4,
-        marginTop: 6,
+        padding: 4,
+        marginTop: 10,
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1 }}>
         <Text
           numberOfLines={1}
           style={{
+            flexShrink: 1,
             color: c.foregroundMuted,
             fontFamily: 'PlayfairDisplay_700Bold',
             fontSize: 12,
             letterSpacing: 1.4,
           }}
         >
-          {title}
-          {isFavorites ? <Text style={{ color: c.primary }}> ★</Text> : null}
+          {cleanTitle}
         </Text>
+        {isFavorites ? (
+          <Star size={13} color={c.primary} fill={c.primary} strokeWidth={2} style={{ marginLeft: 6 }} />
+        ) : null}
         {count > 0 && (
           <View
             style={{
+              marginLeft: 8,
+              minWidth: 24,
+              height: 20,
               paddingHorizontal: 8,
-              paddingVertical: 2,
               borderRadius: 10,
+              alignItems: 'center',
+              justifyContent: 'center',
               backgroundColor: theme.dark ? '#17171D' : c.surface,
               borderWidth: 1,
               borderColor: theme.dark ? '#26262F' : c.border,
             }}
           >
-            <Text style={{ color: c.foregroundMuted, fontSize: 10, fontFamily: 'Inter_500Medium' }}>{count}</Text>
+            <Text style={{ color: c.foregroundSubtle, fontSize: 10, fontFamily: 'Inter_500Medium' }}>{count}</Text>
           </View>
         )}
       </View>
-      <Text style={{ color: c.foregroundSubtle, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
-        {collapsed ? t('my_list.show_section', { defaultValue: 'Mostrar' }) + ' ›' : t('my_list.hide_section', { defaultValue: 'Ocultar' }) + ' ⌄'}
-      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+        <Text style={{ color: c.foregroundSubtle, fontSize: 11, fontFamily: 'Inter_400Regular' }}>{actionLabel}</Text>
+        <ActionIcon size={14} color={c.foregroundSubtle} strokeWidth={2} />
+      </View>
     </Pressable>
   );
 }

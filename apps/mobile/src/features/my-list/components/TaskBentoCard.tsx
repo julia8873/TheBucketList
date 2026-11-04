@@ -1,0 +1,248 @@
+/**
+ * Tarjeta de 2 columnas («bento») de Mi lista — misma estructura que en Mi_lista.html:
+ *   [miniatura 40] Título
+ *   ───────────────────────────
+ *   [etiqueta]            [colaboradores] ★
+ * Se usa en la vista Galería y en la sección FAVORITAS cuando «Favoritas en 2 columnas» está activo.
+ */
+import React from 'react';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { Check, Star } from 'lucide-react-native';
+import { useTheme } from '@bucketlist/ui';
+import { useTranslation } from '@bucketlist/shared';
+import { BucketCover } from '@/components/BucketCover';
+import { resolveTaskImage } from '@/utils/taskImage';
+import { ParticipantsStack, useParticipantsOf } from '@/components/ItemParticipants';
+import { hexToRgba } from '@/constants/tagPresets';
+import type { TaskViewCustomization } from '@/stores/myListCustomization.store';
+import type { Tag } from '@/hooks/useTags';
+
+interface TaskBentoCardProps {
+  item: any;
+  isFav: boolean;
+  isSelected: boolean;
+  isSelectionMode: boolean;
+  itemTags?: Tag[];
+  customization?: TaskViewCustomization;
+  onPress: () => void;
+  onLongPress: () => void;
+}
+
+function TaskBentoCardComponent({
+  item,
+  isFav,
+  isSelected,
+  isSelectionMode,
+  itemTags,
+  customization,
+  onPress,
+  onLongPress,
+}: TaskBentoCardProps) {
+  const { theme } = useTheme();
+  const { t } = useTranslation();
+  const c = theme.colors;
+  const participants = useParticipantsOf('task', item.id);
+
+  const showThumbnails = customization?.showThumbnails ?? true;
+  const showPriority = customization?.showPriority ?? true;
+  const showFavorite = customization?.showFavorite ?? true;
+  const showTags = customization?.showTags ?? true;
+  const showSubtasks = customization?.showSubtasksProgress ?? true;
+  const showDesc = customization?.showDescription ?? false;
+  const visibleParticipants =
+    (customization?.showCollaborators ?? true) && participants && participants.length > 0 ? participants : undefined;
+
+  const isCompleted = item.status === 'completed';
+  const subtasksTotal = item.item_subtasks?.length || 0;
+  const subtasksDone = item.item_subtasks?.filter((s: any) => s.done).length || 0;
+  const counterTarget = item.counter_target ?? 0;
+  const progressText =
+    subtasksTotal > 0
+      ? `${subtasksDone}/${subtasksTotal}`
+      : counterTarget > 0
+      ? `${item.counter_count ?? 0}/${counterTarget}`
+      : null;
+
+  const priority = item.priority || 'medium';
+  const priorityColor =
+    priority === 'urgent' ? '#DC2626' : priority === 'high' ? '#EF4444' : priority === 'low' ? '#10B981' : '#0073CF';
+  const priorityLabel =
+    priority === 'urgent'
+      ? t('common.urgent')
+      : priority === 'high'
+      ? t('common.high')
+      : priority === 'low'
+      ? t('common.low')
+      : t('common.medium');
+
+  const firstTag = showTags && itemTags && itemTags.length > 0 ? itemTags[0] : undefined;
+  const extraTags = showTags && itemTags && itemTags.length > 1 ? itemTags.length - 1 : 0;
+  const showStar = isFav && showFavorite;
+
+  const hasFooter = showPriority || !!firstTag || !!visibleParticipants || showStar;
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      accessibilityRole="button"
+      accessibilityLabel={item.title}
+      style={({ pressed }) => [
+        {
+          padding: 10,
+          gap: 8,
+          borderRadius: 16,
+          borderWidth: 1,
+          backgroundColor: isSelected ? 'rgba(0, 115, 207, 0.10)' : c.surface,
+          borderColor: isSelected ? c.primary : c.border,
+          opacity: pressed ? 0.9 : isCompleted ? 0.8 : 1,
+        },
+      ]}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+        {isSelectionMode ? (
+          <View
+            style={{
+              width: 16,
+              height: 16,
+              marginTop: 2,
+              borderRadius: 4,
+              borderWidth: 1,
+              borderColor: isSelected ? c.primary : '#52525B',
+              backgroundColor: isSelected ? c.primary : 'transparent',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {isSelected ? <Check size={12} color={c.primaryForeground} strokeWidth={3} /> : null}
+          </View>
+        ) : null}
+
+        {showThumbnails ? (
+          <View
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 12,
+              overflow: 'hidden',
+              flexShrink: 0,
+              backgroundColor: c.surfaceSunken,
+              opacity: isCompleted ? 0.55 : 1,
+            }}
+          >
+            <BucketCover
+              value={resolveTaskImage(item, { preferThumb: true })}
+              title={item.title}
+              categorySlug={item.category?.slug}
+              seed={item.id}
+              iconSize={22}
+              style={StyleSheet.absoluteFill}
+            />
+          </View>
+        ) : null}
+
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text
+            numberOfLines={2}
+            style={{
+              color: isCompleted ? c.foregroundSubtle : c.foreground,
+              fontFamily: 'Inter_700Bold',
+              fontSize: 12,
+              lineHeight: 16,
+              textDecorationLine: isCompleted ? 'line-through' : 'none',
+            }}
+          >
+            {item.title}
+          </Text>
+          {showSubtasks && progressText ? (
+            <Text style={{ color: c.foregroundSubtle, fontSize: 11, marginTop: 2 }} numberOfLines={1}>
+              {progressText}
+            </Text>
+          ) : null}
+          {showDesc && item.description ? (
+            <Text style={{ color: c.foregroundSubtle, fontSize: 11, marginTop: 2 }} numberOfLines={1}>
+              {String(item.description).trim()}
+            </Text>
+          ) : null}
+        </View>
+      </View>
+
+      {hasFooter ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 6,
+            paddingTop: 6,
+            borderTopWidth: 1,
+            borderTopColor: theme.dark ? '#1F1F26' : c.border,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 1, minWidth: 0 }}>
+            {showPriority ? (
+              <View
+                accessibilityLabel={priorityLabel}
+                style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: priorityColor }}
+              />
+            ) : null}
+            {firstTag ? (
+              <View
+                style={{
+                  flexShrink: 1,
+                  paddingHorizontal: 8,
+                  paddingVertical: 2,
+                  borderRadius: 99,
+                  backgroundColor: hexToRgba(firstTag.color, 0.1),
+                  borderWidth: 1,
+                  borderColor: hexToRgba(firstTag.color, 0.25),
+                }}
+              >
+                <Text
+                  numberOfLines={1}
+                  style={{ color: firstTag.color, fontSize: 10, fontFamily: 'Inter_500Medium' }}
+                >
+                  {firstTag.emoji ? `${firstTag.emoji} ` : ''}
+                  {firstTag.name}
+                </Text>
+              </View>
+            ) : null}
+            {extraTags > 0 ? (
+              <Text style={{ color: c.foregroundSubtle, fontSize: 10, fontFamily: 'Inter_600SemiBold' }}>
+                +{extraTags}
+              </Text>
+            ) : null}
+          </View>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            {visibleParticipants ? (
+              <ParticipantsStack
+                participants={visibleParticipants}
+                max={2}
+                ringColor={c.surface}
+                disabled={isSelectionMode}
+              />
+            ) : null}
+            {showStar ? <Star size={15} color={c.primary} fill={c.primary} /> : null}
+          </View>
+        </View>
+      ) : null}
+    </Pressable>
+  );
+}
+
+export const TaskBentoCard = React.memo(TaskBentoCardComponent);
+
+/** Rejilla de 2 columnas con 8 px de separación (como `.items.bento` en Mi_lista.html). */
+export function BentoGrid({ children }: { children: React.ReactNode }) {
+  const items = React.Children.toArray(children);
+  return (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4, marginTop: 6 }}>
+      {items.map((child, i) => (
+        <View key={i} style={{ width: '50%', padding: 4 }}>
+          {child}
+        </View>
+      ))}
+    </View>
+  );
+}

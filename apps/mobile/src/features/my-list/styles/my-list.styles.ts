@@ -124,7 +124,7 @@ export const styles = themedStyleSheet({
     flex: 1,
   },
   sectionBlock: {
-    marginBottom: 32,
+    marginBottom: 4,
   },
   sectionHeader: {
     fontFamily: 'PlayfairDisplay_700Bold',
@@ -135,7 +135,8 @@ export const styles = themedStyleSheet({
     marginBottom: 14,
   },
   compactList: {
-    gap: 6,
+    gap: 8,
+    marginTop: 6,
   },
   expiredHeader: {
     fontFamily: 'PlayfairDisplay_700Bold',
@@ -304,8 +305,8 @@ export const styles = themedStyleSheet({
   compactRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 48,
-    paddingHorizontal: 14,
+    height: 44,
+    paddingHorizontal: 10,
     borderRadius: 12,
     borderWidth: 1,
   },
@@ -327,7 +328,7 @@ export const styles = themedStyleSheet({
   compactTitle: {
     flex: 1,
     fontFamily: 'Inter_500Medium',
-    fontSize: 14,
+    fontSize: 12,
     color: '#F5F5F5',
   },
   compactTitleCompleted: {
@@ -384,13 +385,13 @@ export const styles = themedStyleSheet({
   listAlbumCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
-    padding: 10,
+    padding: 12,
   },
   listAlbumTitle: {
-    fontFamily: 'PlayfairDisplay_700Bold',
-    fontSize: 16,
+    fontFamily: 'Inter_700Bold',
+    fontSize: 13,
     color: '#FFF',
     flex: 1,
     marginRight: 8,

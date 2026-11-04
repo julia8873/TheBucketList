@@ -74,6 +74,7 @@ function TaskItemRowComponent({
   const showSubtasks = customization?.showSubtasksProgress ?? true;
   const showDesc = customization?.showDescription ?? false;
   const showCollab = customization?.showCollaborators ?? true;
+  const showThumbnails = customization?.showThumbnails ?? true;
 
   const subtasksTotal = item.item_subtasks?.length || 0;
   const subtasksDone = item.item_subtasks?.filter((s: any) => s.done).length || 0;
@@ -138,33 +139,18 @@ function TaskItemRowComponent({
     </View>
   ) : null;
 
-  const favoriteBadge = isFav && showFavorite ? (
-    <View
-      key="favorite-badge"
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 3,
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 8,
-        backgroundColor: 'rgba(0, 115, 207, 0.18)',
-        borderWidth: 1,
-        borderColor: gold[400],
-      }}
-    >
-      <Star size={11} color={gold[400]} fill={gold[400]} />
-      <Text style={{ fontSize: 11, fontWeight: '700', color: gold[400] }}>{t('common.favorite', { defaultValue: 'Favorita' })}</Text>
-    </View>
-  ) : null;
+  // La favorita se marca con una estrella a la derecha (como en Mi_lista.html), no con un badge de texto.
+  const favoriteStar =
+    isFav && showFavorite ? (
+      <Star size={15} color={gold[400]} fill={gold[400]} accessibilityLabel={t('common.favorite', { defaultValue: 'Favorita' })} />
+    ) : undefined;
 
   const visibleTags = showTags ? itemTags : [];
   const visibleParticipants = showCollab && participants && participants.length > 0 ? participants : undefined;
-  const hasTagsOrBadges = favoriteBadge || priorityBadge || visibleTags.length > 0;
+  const hasTagsOrBadges = priorityBadge || visibleTags.length > 0;
 
   const tagsElement = hasTagsOrBadges ? (
     <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
-      {favoriteBadge}
       {priorityBadge}
       {visibleTags.slice(0, 2).map((t) => (
         <TagChip key={t.id} label={t.name} variant="colored" color={t.color} emoji={t.emoji} size="sm" />
@@ -305,6 +291,9 @@ function TaskItemRowComponent({
         }
         participantsElement={participantsElement}
         tagsElement={tagsElement}
+        dense
+        hideThumbnail={!showThumbnails}
+        trailingElement={favoriteStar}
         description={showDesc && item.description ? item.description.trim() : undefined}
         subtasksDone={showSubtasks ? subtasksDone : 0}
         subtasksTotal={showSubtasks ? subtasksTotal : 0}

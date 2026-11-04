@@ -113,6 +113,7 @@ function TaskCompactItemRowComponent({
   const showTags = customization?.showTags ?? false;
   const showProgress = customization?.showSubtasksProgress ?? true;
   const showDates = customization?.showDates ?? false;
+  const showThumbnails = customization?.showThumbnails ?? true;
   const visibleParticipants =
     (customization?.showCollaborators ?? false) && participants && participants.length > 0 ? participants : undefined;
 
@@ -121,8 +122,7 @@ function TaskCompactItemRowComponent({
     showPriority ||
     (showTags && itemTags && itemTags.length > 0) ||
     (showProgress && !!progressText) ||
-    (showDates && !!(item.deadline || item.completed_at)) ||
-    (isFav && showFavorite);
+    (showDates && !!(item.deadline || item.completed_at));
 
   const row = (
     <Pressable
@@ -177,6 +177,7 @@ function TaskCompactItemRowComponent({
         </Pressable>
       )}
 
+      {showThumbnails ? (
       <View
         style={[
           localStyles.thumbContainer,
@@ -194,10 +195,11 @@ function TaskCompactItemRowComponent({
           title={item.title}
           categorySlug={item.category?.slug}
           seed={item.id}
-          iconSize={22}
+          iconSize={16}
           style={StyleSheet.absoluteFill}
         />
       </View>
+      ) : null}
 
       <View style={{ flex: 1, justifyContent: 'center' }}>
         <Text
@@ -295,13 +297,6 @@ function TaskCompactItemRowComponent({
                 {new Date(item.status === 'completed' && item.completed_at ? item.completed_at : item.deadline).toLocaleDateString(i18n.language?.startsWith('en') ? 'en-US' : 'es-ES', { day: 'numeric', month: 'short' })}
               </Text>
             )}
-            {isFav && showFavorite && (
-              <Star
-                size={12}
-                color={theme.colors.primary}
-                fill={theme.colors.primary}
-              />
-            )}
             {visibleParticipants && (
               <View style={{ marginLeft: 'auto' }}>
                 <ParticipantsStack
@@ -315,6 +310,10 @@ function TaskCompactItemRowComponent({
           </View>
         )}
       </View>
+
+      {isFav && showFavorite ? (
+        <Star size={15} color={theme.colors.primary} fill={theme.colors.primary} style={{ marginLeft: 8 }} />
+      ) : null}
     </Pressable>
   );
 
@@ -359,7 +358,7 @@ function TaskCompactItemRowComponent({
 
   const renderLeftActions = (progress: any) => (
     <Animated.View style={{ opacity: fade(progress), width: 80, justifyContent: 'center' }}>
-      <View style={[localStyles.swipeAction, { backgroundColor: '#34C759', borderTopLeftRadius: 13, borderBottomLeftRadius: 13 }]}>
+      <View style={[localStyles.swipeAction, { backgroundColor: '#34C759', borderTopLeftRadius: 12, borderBottomLeftRadius: 12 }]}>
         <CheckCircle2 color="#FFFFFF" size={22} />
       </View>
     </Animated.View>
@@ -369,7 +368,7 @@ function TaskCompactItemRowComponent({
     if (!isItemOwner || !onDelete) return null;
     return (
       <Animated.View style={{ opacity: fade(progress), width: 80, justifyContent: 'center' }}>
-        <View style={[localStyles.swipeAction, { backgroundColor: theme.colors.error, borderTopRightRadius: 13, borderBottomRightRadius: 13 }]}>
+        <View style={[localStyles.swipeAction, { backgroundColor: theme.colors.error, borderTopRightRadius: 12, borderBottomRightRadius: 12 }]}>
           <Trash2 color={theme.colors.errorForeground} size={22} />
         </View>
       </Animated.View>
@@ -402,10 +401,10 @@ const localStyles = themedStyleSheet({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 52,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 13,
+    minHeight: 44,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 12,
     borderWidth: 1,
   },
   dragContainer: {
@@ -430,17 +429,16 @@ const localStyles = themedStyleSheet({
     borderWidth: 1.6,
   },
   thumbContainer: {
-    width: 34,
-    height: 34,
+    width: 28,
+    height: 28,
     borderRadius: 8,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    marginRight: 11,
+    marginRight: 8,
   },
   title: {
     fontFamily: 'Inter_500Medium',
-    fontSize: 14,
-    letterSpacing: -0.2,
+    fontSize: 12,
   },
   titleCompleted: {
     textDecorationLine: 'line-through',

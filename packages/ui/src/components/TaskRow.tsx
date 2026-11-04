@@ -17,7 +17,7 @@ import { gold, dark } from '../tokens/colors';
 import { useTheme } from '../theme/useTheme';
 import { UrgencyChip } from './Pill';
 import { ProgressBar } from './ProgressBar';
-import { CheckCircle2 } from 'lucide-react-native';
+import { CheckCircle2, ChevronRight } from 'lucide-react-native';
 
 interface TaskRowProps {
   title: string;
@@ -43,6 +43,15 @@ interface TaskRowProps {
   onReschedule?: () => void;
   /** Si la tarea está completada: atenúa la fila y muestra un tick dorado. */
   completed?: boolean;
+  /**
+   * Diseño de «Mi lista» (Mi_lista.html): miniatura 44, título en sans negrita 13,
+   * etiquetas + progreso + colaboradores en una sola línea y chevron a la derecha.
+   */
+  dense?: boolean;
+  /** Elemento a la derecha (p. ej. la estrella de favorita) — solo en `dense`. */
+  trailingElement?: React.ReactNode;
+  /** Oculta la miniatura (opción «Miniaturas de imagen» de Personalizar vista). */
+  hideThumbnail?: boolean;
 }
 
 function TaskRowComponent({
@@ -65,6 +74,9 @@ function TaskRowComponent({
   expiredAction,
   onReschedule,
   completed = false,
+  dense = false,
+  trailingElement,
+  hideThumbnail = false,
 }: TaskRowProps) {
   const { theme } = useTheme();
   const hasSubtaskProgress = subtasksTotal > 0;
@@ -93,9 +105,11 @@ function TaskRowComponent({
       accessibilityLabel={title}
     >
       {/* Thumbnail */}
+      {hideThumbnail ? null : (
       <View
         style={[
           styles.thumbnail,
+          dense && styles.thumbnailDense,
           { backgroundColor: thumbnailColor ?? theme.colors.surface },
           completed && styles.thumbnailCompleted,
         ]}
@@ -107,15 +121,36 @@ function TaskRowComponent({
           <Image source={{ uri: thumbnailUri }} style={styles.thumbnailImg} resizeMode="cover" />
         ) : null}
       </View>
+      )}
 
       {/* Content */}
       <View style={[styles.content, completed && styles.contentCompleted]}>
-        <Text style={[styles.title, { color: completed ? theme.colors.foregroundSubtle : theme.colors.foreground }]} numberOfLines={2}>
+        <Text
+          style={[
+            styles.title,
+            dense && styles.titleDense,
+            { color: completed ? theme.colors.foregroundSubtle : theme.colors.foreground },
+          ]}
+          numberOfLines={dense ? 1 : 2}
+        >
           {title}
         </Text>
-        {participantsElement ? <View style={styles.participants}>{participantsElement}</View> : null}
-        {tagsElement ? <View style={styles.tags}>{tagsElement}</View> : null}
-        {meta ? (
+        {dense ? (
+          (tagsElement || meta || participantsElement) ? (
+            <View style={styles.denseMetaRow}>
+              {tagsElement}
+              {meta ? (
+                <Text style={[styles.metaDense, { color: theme.colors.foregroundSubtle }]} numberOfLines={1}>
+                  {meta}
+                </Text>
+              ) : null}
+              {participantsElement}
+            </View>
+          ) : null
+        ) : null}
+        {!dense && participantsElement ? <View style={styles.participants}>{participantsElement}</View> : null}
+        {!dense && tagsElement ? <View style={styles.tags}>{tagsElement}</View> : null}
+        {!dense && meta ? (
           <Text style={[styles.meta, { color: completed ? theme.colors.foregroundSubtle : theme.colors.foregroundMuted }]} numberOfLines={1}>
             {meta}
           </Text>
@@ -142,6 +177,7 @@ function TaskRowComponent({
       </View>
 
       {/* Urgency chip, completed tick, or Expired Action */}
+      {dense && trailingElement ? trailingElement : null}
       {completed ? (
         <CheckCircle2 size={22} color={theme.colors.primary} strokeWidth={1.8} />
       ) : expiredAction ? (
@@ -159,6 +195,7 @@ function TaskRowComponent({
       ) : deadline ? (
         <UrgencyChip deadline={deadline} style={styles.chip} />
       ) : null}
+      {dense && !expiredAction ? <ChevronRight size={16} color={theme.dark ? '#71717A' : theme.colors.foregroundSubtle} /> : null}
     </Pressable>
   );
 }
@@ -176,6 +213,10 @@ const styles = StyleSheet.create({
   },
   rowCompleted: {
     opacity: 0.8,
+  },
+  thumbnailDense: {
+    width: 44,
+    height: 44,
   },
   thumbnailCompleted: {
     opacity: 0.45,
@@ -202,6 +243,22 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.serif,
     fontSize: 16,
     lineHeight: 22,
+  },
+  titleDense: {
+    fontFamily: fontFamily.bold,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  denseMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 1,
+  },
+  metaDense: {
+    fontFamily: fontFamily.regular,
+    fontSize: 11,
   },
   participants: {
     flexDirection: 'row',

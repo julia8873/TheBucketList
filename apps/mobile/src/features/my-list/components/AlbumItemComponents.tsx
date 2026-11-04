@@ -194,9 +194,11 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
         </Pressable>
       )}
 
-      <View style={{ marginRight: 10 }}>
-        <AlbumCoverThumb coverUri={item.cover_path} colorIndex={0} size={32} />
-      </View>
+      {(customization?.showThumbnails ?? true) && (
+        <View style={{ marginRight: 8 }}>
+          <AlbumCoverThumb coverUri={item.cover_path} colorIndex={0} size={28} />
+        </View>
+      )}
 
       <View style={{ flex: 1, justifyContent: 'center' }}>
         <Text numberOfLines={1} style={[styles.compactTitle, { color: isCompleted ? theme.colors.foregroundMuted : theme.colors.foreground }]}>
@@ -389,7 +391,7 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
     <View
       key={item.id}
       style={[
-        drag ? { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 } : { marginBottom: 10 },
+        drag ? { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 } : { marginBottom: 8 },
       ]}
     >
       {drag && (
@@ -445,9 +447,11 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
           </Pressable>
         )}
 
-        <View style={{ marginRight: 12 }}>
-          <AlbumCoverThumb coverUri={item.cover_path} colorIndex={index} size={54} />
-        </View>
+        {(customization?.showThumbnails ?? true) && (
+          <View style={{ marginRight: 12 }}>
+            <AlbumCoverThumb coverUri={item.cover_path} colorIndex={index} size={52} />
+          </View>
+        )}
 
         <View style={{ flex: 1, justifyContent: 'center' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>

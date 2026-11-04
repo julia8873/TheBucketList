@@ -33,7 +33,7 @@ import { TaskListHeaderControls } from '@/features/my-list/components/TaskListHe
 import { AlbumListHeaderControls } from '@/features/my-list/components/AlbumListHeaderControls';
 import { TaskItemRow } from '@/features/my-list/components/TaskItemRow';
 import { TaskCompactItemRow } from '@/features/my-list/components/TaskCompactItemRow';
-import { TaskGalleryItemCard } from '@/features/my-list/components/TaskGalleryItemCard';
+import { TaskBentoCard, BentoGrid } from '@/features/my-list/components/TaskBentoCard';
 import {
   AlbumCompactItemRow,
   AlbumListItemRow,
@@ -48,7 +48,8 @@ import {
   useParticipantsValue,
 } from '@/components/ItemParticipants';
 
-const TaskSeparator = () => <View style={{ height: 10 }} />;
+// Separación como en Mi_lista.html: 8 px entre tarjetas y 4 px bajo la cabecera de sección.
+const TaskSeparator = ({ leadingItem }: any) => <View style={{ height: leadingItem?.isHeader ? 4 : 8 }} />;
 
 export default function MyListScreen() {
   const { theme } = useTheme();
@@ -58,7 +59,7 @@ export default function MyListScreen() {
   const state = useMyListState();
   const [goldTitle, ...restTitle] = t('nav.my_list', { defaultValue: 'Mi lista' }).split(' ');
   const [customizeModalVisible, setCustomizeModalVisible] = React.useState(false);
-  const { taskViews, albumViews } = useMyListCustomizationStore();
+  const { taskViews, albumViews, taskFavoritesAsGrid, albumFavoritesAsGrid } = useMyListCustomizationStore();
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [collapsed, setCollapsed] = React.useState<Record<string, boolean>>({});
   const toggleSection = useCallback(
@@ -100,18 +101,32 @@ export default function MyListScreen() {
       theme={theme}
     />
   );
+  // Favoritas en 2 columnas (solo vista Lista, con secciones): se agrupan en un único bloque de rejilla.
+  const favGridOn = taskFavoritesAsGrid && state.taskViewMode === 'list' && state.taskSections.length > 0;
   // Lista plana (FlashList): oculta los elementos de las secciones plegadas
   const flatListData = useMemo(() => {
     const out: any[] = [];
     let skip = false;
+    let favBucket: any[] | null = null;
+    const flushFav = () => {
+      if (favBucket && favBucket.length > 0) out.push({ id: 'fav-grid', isFavGrid: true, items: favBucket });
+      favBucket = null;
+    };
     for (const it of state.listData) {
       if (it.isHeader) {
-        skip = !!collapsed[String(it.id).replace('header-', '')];
+        flushFav();
+        const key = String(it.id).replace('header-', '');
+        skip = !!collapsed[key];
         out.push(it);
-      } else if (!skip) out.push(it);
+        if (!skip && key === 'favorites' && favGridOn) favBucket = [];
+      } else if (!skip) {
+        if (favBucket) favBucket.push(it);
+        else out.push(it);
+      }
     }
+    flushFav();
     return out;
-  }, [state.listData, collapsed]);
+  }, [state.listData, collapsed, favGridOn]);
 
   const taskListScrollRef = useRef<ScrollView>(null);
   const taskFlashListRef = useRef<any>(null);
@@ -156,14 +171,60 @@ export default function MyListScreen() {
     albumsEnabled: state.activeTab === 'albums' && !!albumViews[state.albumViewMode]?.showCollaborators,
   });
 
+  /** Tarjeta de 2 columnas (galería y favoritas en rejilla). */
+  const renderBento = useCallback(
+    (item: any, customization: any) => {
+      const tagIds = state.tagUsage?.byItem[item.id] ?? (Array.isArray(item.tags) ? item.tags : []);
+      const itemTagObjs = tagIds.map((tid: string) => state.tagsById.get(tid)).filter(Boolean);
+      return (
+        <TaskBentoCard
+          key={item.id}
+          item={item}
+          isSelected={state.selectedTaskIds.includes(item.id)}
+          isSelectionMode={state.isSelectionMode}
+          isFav={state.isBucketFavorite(item.id)}
+          itemTags={itemTagObjs}
+          customization={customization}
+          onPress={() => {
+            if (state.isSelectionMode) state.toggleSelectTask(item.id);
+            else {
+              if (Date.now() - state.lastExitTaskSelectionTimeRef.current < 450) return;
+              router.push(`/bucket/${item.id}` as any);
+            }
+          }}
+          onLongPress={() => {
+            if (!state.isSelectionMode) {
+              state.setIsSelectionMode(true);
+              state.setSelectedTaskIds([item.id]);
+            }
+          }}
+        />
+      );
+    },
+    [
+      state.tagUsage,
+      state.tagsById,
+      state.selectedTaskIds,
+      state.isSelectionMode,
+      state.isBucketFavorite,
+      state.toggleSelectTask,
+      state.setIsSelectionMode,
+      state.setSelectedTaskIds,
+      router,
+    ],
+  );
+
   const renderTaskItem = useCallback(
     ({ item, drag, index }: { item: any; drag?: any; index?: number }) => {
+      if (item.isFavGrid) {
+        return <BentoGrid>{item.items.map((b: any) => renderBento(b, taskViews.list))}</BentoGrid>;
+      }
       if (item.isHeader) {
         const isFirst = index === 0 || item.id === state.listData[0]?.id;
         const secKey = String(item.id).replace('header-', '');
         const secCount = state.taskSections.find((sc: any) => sc.key === secKey)?.items.length ?? 0;
         return (
-          <View key={item.id} style={{ marginTop: isFirst ? 0 : 8 }}>
+          <View key={item.id} style={{ marginTop: isFirst ? 0 : 0 }}>
             {sectionHeaderEl(secKey, item.title, secCount)}
           </View>
         );
@@ -235,6 +296,7 @@ export default function MyListScreen() {
       router,
       theme,
       taskViews.list,
+      renderBento,
     ]
   );
 
@@ -242,7 +304,7 @@ export default function MyListScreen() {
     ({ item, drag }: { item: any; drag?: any }) => {
       if (item.isHeader) {
         return (
-          <View key={item.id} style={{ marginTop: 12 }}>
+          <View key={item.id} style={{ marginTop: 0 }}>
             {sectionHeaderEl(String(item.id).replace('header-', ''), item.title, 0)}
           </View>
         );
@@ -742,72 +804,16 @@ export default function MyListScreen() {
                   return (
                     <View key={sec.key} style={styles.sectionBlock}>
                       {sectionHeaderEl(sec.key, sec.title, sec.items.length)}
-                      <View style={styles.galleryGrid}>
-                        {visibleItems(sec).map((item: any) => {
-                          const tagIds = state.tagUsage?.byItem[item.id] ?? (Array.isArray(item.tags) ? item.tags : []);
-                          const itemTagObjs = tagIds.map((tid: string) => state.tagsById.get(tid)).filter(Boolean);
-                          return (
-                            <TaskGalleryItemCard
-                              key={item.id}
-                              item={item}
-                              isSingle={sec.items.length === 1}
-                              isSelected={state.selectedTaskIds.includes(item.id)}
-                              isSelectionMode={state.isSelectionMode}
-                              isFav={state.isBucketFavorite(item.id)}
-                              itemTags={itemTagObjs}
-                              customization={taskViews.gallery}
-                              onPress={() => {
-                                if (state.isSelectionMode) state.toggleSelectTask(item.id);
-                                else {
-                                  if (Date.now() - state.lastExitTaskSelectionTimeRef.current < 450) return;
-                                  router.push(`/bucket/${item.id}` as any);
-                                }
-                              }}
-                              onLongPress={() => {
-                                if (!state.isSelectionMode) {
-                                  state.setIsSelectionMode(true);
-                                  state.setSelectedTaskIds([item.id]);
-                                }
-                              }}
-                            />
-                          );
-                        })}
-                      </View>
+                      <BentoGrid>
+                        {visibleItems(sec).map((item: any) => renderBento(item, taskViews.gallery))}
+                      </BentoGrid>
                     </View>
                   );
                 })
               ) : (
-                <View style={styles.galleryGrid}>
-                  {state.sortedFlatBuckets.map((item: any) => {
-                    const tagIds = state.tagUsage?.byItem[item.id] ?? (Array.isArray(item.tags) ? item.tags : []);
-                    const itemTagObjs = tagIds.map((tid: string) => state.tagsById.get(tid)).filter(Boolean);
-                    return (
-                      <TaskGalleryItemCard
-                        key={item.id}
-                        item={item}
-                        isSingle={state.sortedFlatBuckets.length === 1}
-                        isSelected={state.selectedTaskIds.includes(item.id)}
-                        isSelectionMode={state.isSelectionMode}
-                        isFav={state.isBucketFavorite(item.id)}
-                        itemTags={itemTagObjs}
-                        customization={taskViews.gallery}
-                        onPress={() => {
-                          if (state.isSelectionMode) state.toggleSelectTask(item.id);
-                          else {
-                            if (Date.now() - state.lastExitTaskSelectionTimeRef.current < 450) return;
-                            router.push(`/bucket/${item.id}` as any);
-                          }
-                        }}
-                        onLongPress={() => {
-                          if (!state.isSelectionMode) {
-                            state.setIsSelectionMode(true);
-                            state.setSelectedTaskIds([item.id]);
-                          }
-                        }}
-                      />
-                    );
-                  })}
-                </View>
+                <BentoGrid>
+                  {state.sortedFlatBuckets.map((item: any) => renderBento(item, taskViews.gallery))}
+                </BentoGrid>
               )}
             </ScrollView>
           ) : state.taskViewMode === 'compact' ? (
@@ -844,6 +850,7 @@ export default function MyListScreen() {
               extraData={collapsed}
               renderItem={renderTaskItem}
               keyExtractor={(item) => item.id}
+              getItemType={(item: any) => (item.isHeader ? 'header' : item.isFavGrid ? 'grid' : 'row')}
               ItemSeparatorComponent={TaskSeparator}
               contentContainerStyle={listContentStyle}
               ListHeaderComponent={taskListHeaderElement}
@@ -1032,8 +1039,16 @@ export default function MyListScreen() {
                     return (
                       <View key={sec.key} style={styles.sectionBlock}>
                         {sectionHeaderEl(sec.key, sec.title, sec.items.length)}
-                        {visibleItems(sec).map((item: any, idx: number) =>
-                          renderListAlbum({ item, index: idx })
+                        {sec.key === 'favorites' && albumFavoritesAsGrid ? (
+                          <View style={styles.albumGrid}>
+                            {visibleItems(sec).map((item: any, index: number) =>
+                              renderGalleryAlbum({ item, index })
+                            )}
+                          </View>
+                        ) : (
+                          visibleItems(sec).map((item: any, idx: number) =>
+                            renderListAlbum({ item, index: idx })
+                          )
                         )}
                       </View>
                     );
