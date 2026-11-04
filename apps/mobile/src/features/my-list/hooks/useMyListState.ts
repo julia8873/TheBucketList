@@ -503,10 +503,19 @@ export function useMyListState() {
 
   const unassignedCount = useMemo(() => {
     if (!buckets) return 0;
-    if (!albumItems) return buckets.length;
-    const inAnyAlbum = new Set(albumItems.map((i) => i.bucket_id));
-    return buckets.filter((b) => !inAnyAlbum.has(b.id)).length;
-  }, [buckets, albumItems]);
+    const userAlbumIdSet = new Set((albums ?? []).map((a: any) => a.id));
+    return buckets.filter((b: any) => {
+      if (b.album_id && userAlbumIdSet.has(b.album_id)) return false;
+      if (Array.isArray(b.album_items) && b.album_items.some((ai: any) => userAlbumIdSet.has(ai.album_id))) {
+        return false;
+      }
+      if (albumItems && albumItems.length > 0) {
+        const inUserAlbum = albumItems.some((ai: any) => ai.bucket_id === b.id && userAlbumIdSet.has(ai.album_id));
+        if (inUserAlbum) return false;
+      }
+      return true;
+    }).length;
+  }, [buckets, albums, albumItems]);
 
   const totalCount = buckets?.length || 0;
 

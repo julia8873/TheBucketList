@@ -4,11 +4,12 @@ import { Pressable, StyleSheet, Text, View, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { Check, Heart, MessageCircle, Bookmark } from 'lucide-react-native';
+import { Check, CheckCircle2, Heart, MessageCircle, Bookmark } from 'lucide-react-native';
 import { Avatar, fontFamily, gold, useTheme, toast } from '@bucketlist/ui';
 import { BucketCover } from './BucketCover';
 import { TaskCommentsModal } from './TaskCommentsModal';
 import { ItemLikesModal } from './ItemLikesModal';
+import { ParticipantsStack, useParticipantsOf } from './ItemParticipants';
 import { resolveTaskImage } from '../utils/taskImage';
 import { useAuthStore } from '../stores/auth.store';
 import { useCopiedBucketIds, useCopyBucket, useToggleLike, useBatchBucketSaveCounts, useSavedBucketIds, useToggleSaveBucket } from '../hooks/useSocial';
@@ -64,6 +65,7 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
     if (!user || isOwn) return;
     toggleSaveBucket.mutate({ userId: user.id, bucketId: bucket.id, currentlySaved: isBucketSaved });
   };
+  const participants = useParticipantsOf('task', bucket?.id);
   // Foto subida más reciente, portada o degradado, según lo que haya elegido el dueño de la tarea.
   const coverValue: string | null = resolveTaskImage(bucket);
   const isImageCover = !!coverValue && !coverValue.startsWith('preset:');
@@ -100,6 +102,16 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
 
   if (mode === 'gallery') {
     const isLeftColumn = index % 2 === 0;
+    const timeStr = timeAgo(event.created_at ?? bucket.completed_at ?? bucket.created_at);
+    const metaParts: string[] = [];
+    if (bucket.location_text) {
+      metaParts.push(bucket.location_text);
+    }
+    if (timeStr) {
+      metaParts.push(timeStr);
+    }
+    const metaText = metaParts.join(' · ');
+
     return (
       <Animated.View
         entering={index < 6 ? FadeInUp.delay(index * 40).duration(260) : undefined}
@@ -112,19 +124,21 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
           onPress={onPress}
           style={({ pressed }) => [
             styles.galleryCard,
-            { backgroundColor: theme.dark ? '#1E1E1E' : '#F0EDE6', borderColor: theme.colors.border, opacity: pressed ? 0.9 : 1 },
+            { backgroundColor: theme.dark ? '#1E1E1E' : '#F0EDE6', borderColor: theme.colors.border, opacity: pressed ? 0.92 : 1 },
           ]}
           accessibilityRole="button"
           accessibilityLabel={bucket.title}
         >
-          <BucketCover
-            value={coverValue}
-            title={bucket.title}
-            categorySlug={bucket.category?.slug}
-            seed={bucket.id}
-            iconSize={90}
-            style={styles.galleryCover}
-          >
+          <View style={styles.galleryCover}>
+            <BucketCover
+              value={coverValue}
+              title={bucket.title}
+              categorySlug={bucket.category?.slug}
+              seed={bucket.id}
+              iconSize={44}
+              style={StyleSheet.absoluteFill}
+            />
+
             {!isImageCover && (
               <LinearGradient
                 colors={overlay.softBoth as any}
@@ -134,50 +148,121 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
               />
             )}
 
-            {/* Header flotante: autor */}
-            <Pressable onPress={openProfile} style={styles.galleryHeader} hitSlop={6} accessibilityRole="button">
-              <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="xs" goldRing />
-              <Text style={styles.galleryUsername} numberOfLines={1}>
-                @{actor.username}
-              </Text>
-            </Pressable>
+            {/* Badges superiores: Autor a la izquierda, completado a la derecha */}
+            <View style={styles.galleryTopBadges} pointerEvents="box-none">
+              <Pressable
+                onPress={(e) => {
+                  e.stopPropagation();
+                  openProfile();
+                }}
+                style={[
+                  styles.galleryUserBadge,
+                  {
+                    backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(0,0,0,0.6)',
+                    borderColor: 'rgba(255,255,255,0.18)',
+                  },
+                ]}
+                hitSlop={6}
+                accessibilityRole="button"
+              >
+                <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="xs" goldRing />
+                <Text style={styles.galleryUsername} numberOfLines={1}>
+                  @{actor.username}
+                </Text>
+              </Pressable>
 
-            {/* Pie: título y métricas */}
-            <View style={styles.galleryBottom} pointerEvents="box-none">
-              <Text style={styles.galleryTitle} numberOfLines={2}>
+              {bucket.status === 'completed' && (
+                <View style={styles.galleryCompletedBadge}>
+                  <CheckCircle2 size={12} color="#FFFFFF" strokeWidth={2.5} />
+                </View>
+              )}
+            </View>
+
+            {/* Overlay inferior estilo mis tareas: título, meta, acciones y colaboradores */}
+            <View
+              style={[
+                styles.galleryBottomOverlay,
+                { backgroundColor: isImageCover ? 'rgba(0,0,0,0.58)' : overlay.panel },
+              ]}
+              pointerEvents="box-none"
+            >
+              <Text style={[styles.galleryCardTitle, { color: overlay.title }]} numberOfLines={2}>
                 {bucket.title}
               </Text>
-              {bucket.location_text ? (
-                <Text style={styles.galleryLocation} numberOfLines={1}>
-                  {bucket.location_text}
+              {metaText ? (
+                <Text style={[styles.galleryCardMeta, { color: overlay.meta }]} numberOfLines={1}>
+                  {metaText}
                 </Text>
               ) : null}
 
-              <View style={styles.galleryActions}>
-                <View style={styles.galleryActionItem}>
-                  <Pressable onPress={handleLike} hitSlop={6}>
-                    <Heart size={14} color={liked ? HEART_COLOR : '#F2EFE8'} fill={liked ? HEART_COLOR : 'transparent'} strokeWidth={1.8} />
+              <View style={styles.galleryActionRow} pointerEvents="box-none">
+                <View style={styles.galleryActionsGroup}>
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleLike();
+                    }}
+                    hitSlop={6}
+                    style={styles.galleryActionItem}
+                  >
+                    <Heart
+                      size={13}
+                      color={liked ? HEART_COLOR : '#F2EFE8'}
+                      fill={liked ? HEART_COLOR : 'transparent'}
+                      strokeWidth={1.8}
+                    />
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        setShowLikes(true);
+                      }}
+                      hitSlop={4}
+                    >
+                      <Text style={styles.galleryActionText}>{likeCount}</Text>
+                    </Pressable>
                   </Pressable>
-                  <Pressable onPress={() => setShowLikes(true)} hitSlop={6}>
-                    <Text style={styles.galleryActionText}>{likeCount}</Text>
+
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      setShowComments(true);
+                    }}
+                    hitSlop={6}
+                    style={styles.galleryActionItem}
+                  >
+                    <MessageCircle size={13} color="#F2EFE8" strokeWidth={1.8} />
+                    <Text style={styles.galleryActionText}>{commentCount}</Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleSaveBucket();
+                    }}
+                    hitSlop={6}
+                    style={styles.galleryActionItem}
+                    disabled={isOwn}
+                  >
+                    <Bookmark
+                      size={12}
+                      color={isBucketSaved ? gold[400] : '#F2EFE8'}
+                      fill={isBucketSaved ? gold[400] : 'transparent'}
+                      strokeWidth={1.8}
+                    />
+                    <Text style={styles.galleryActionText}>{saveCount}</Text>
                   </Pressable>
                 </View>
-                <Pressable onPress={() => setShowComments(true)} hitSlop={6} style={styles.galleryActionItem}>
-                  <MessageCircle size={14} color="#F2EFE8" strokeWidth={1.8} />
-                  <Text style={styles.galleryActionText}>{commentCount}</Text>
-                </Pressable>
-                <Pressable onPress={handleSaveBucket} hitSlop={6} style={styles.galleryActionItem} disabled={isOwn}>
-                  <Bookmark
-                    size={13}
-                    color={isBucketSaved ? gold[400] : '#F2EFE8'}
-                    fill={isBucketSaved ? gold[400] : 'transparent'}
-                    strokeWidth={1.8}
+
+                {participants && participants.length > 0 && (
+                  <ParticipantsStack
+                    participants={participants}
+                    max={2}
+                    ringColor={isImageCover ? '#222222' : overlay.panel}
                   />
-                  <Text style={styles.galleryActionText}>{saveCount}</Text>
-                </Pressable>
+                )}
               </View>
             </View>
-          </BucketCover>
+          </View>
         </Pressable>
 
         {showComments && (
@@ -243,22 +328,6 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
             <Text style={[styles.compactTitle, { color: theme.colors.foreground }]} numberOfLines={1}>
               {bucket.title}
             </Text>
-          </View>
-
-          <View style={styles.compactActions}>
-            <View style={styles.compactActionBtn}>
-              <Pressable onPress={handleLike} hitSlop={6}>
-                <Heart size={16} color={liked ? HEART_COLOR : theme.colors.foregroundSubtle} fill={liked ? HEART_COLOR : 'transparent'} strokeWidth={1.8} />
-              </Pressable>
-              <Pressable onPress={() => setShowLikes(true)} hitSlop={6}>
-                <Text style={[styles.compactActionCount, { color: liked ? theme.colors.primary : theme.colors.foregroundSubtle }]}>{likeCount}</Text>
-              </Pressable>
-            </View>
-            <Pressable onPress={() => setShowComments(true)} hitSlop={6} style={styles.compactActionBtn}>
-              <MessageCircle size={16} color={theme.colors.foregroundSubtle} strokeWidth={1.8} />
-              <Text style={[styles.compactActionCount, { color: theme.colors.foregroundSubtle }]}>{commentCount}</Text>
-            </Pressable>
-
           </View>
         </Pressable>
 
@@ -521,23 +590,37 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   galleryCard: {
-    borderRadius: 18,
+    borderRadius: 14,
     overflow: 'hidden',
     borderWidth: 1,
   },
   galleryCover: {
     width: '100%',
-    aspectRatio: 0.85,
+    aspectRatio: 1 / 1.3,
   },
-  galleryHeader: {
+  galleryTopBadges: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    right: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    zIndex: 2,
+  },
+  galleryUserBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    padding: 10,
+    gap: 5,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 12,
+    borderWidth: 1,
+    maxWidth: '80%',
   },
   galleryUsername: {
     fontFamily: fontFamily.medium,
-    fontSize: 12,
+    fontSize: 11.5,
     color: '#FFFFFF',
     ...Platform.select({
       web: { textShadow: '0 1px 3px rgba(0,0,0,0.85)' } as any,
@@ -548,16 +631,28 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  galleryBottom: {
-    position: 'absolute',
-    left: 10,
-    right: 10,
-    bottom: 10,
+  galleryCompletedBadge: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(52, 199, 89, 0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  galleryTitle: {
-    fontFamily: fontFamily.serifBold,
-    fontSize: 15,
-    lineHeight: 19,
+  galleryBottomOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderBottomLeftRadius: 14,
+    borderBottomRightRadius: 14,
+  },
+  galleryCardTitle: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 13,
+    lineHeight: 17,
     color: '#FFFFFF',
     ...Platform.select({
       web: { textShadow: '0 1px 4px rgba(0,0,0,0.9)' } as any,
@@ -568,26 +663,34 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  galleryLocation: {
+  galleryCardMeta: {
     fontFamily: fontFamily.regular,
     fontSize: 11,
-    color: 'rgba(255,255,255,0.75)',
+    color: 'rgba(255,255,255,0.72)',
     marginTop: 2,
   },
-  galleryActions: {
+  galleryActionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginTop: 8,
+    justifyContent: 'space-between',
+    marginTop: 6,
+    paddingTop: 6,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.14)',
+  },
+  galleryActionsGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   galleryActionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 3,
   },
   galleryActionText: {
     fontFamily: fontFamily.medium,
-    fontSize: 12,
+    fontSize: 11,
     color: '#F2EFE8',
   },
   // Compacto

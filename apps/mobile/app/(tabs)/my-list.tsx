@@ -347,9 +347,11 @@ export default function MyListScreen() {
   const renderCompactTask = useCallback(
     ({ item, drag }: { item: any; drag?: any }) => {
       if (item.isHeader) {
+        const secKey = String(item.id).replace('header-', '');
+        const secCount = state.taskSections.find((sc: any) => sc.key === secKey)?.items.length ?? 0;
         return (
           <View key={item.id} style={{ marginTop: 0 }}>
-            {sectionHeaderEl(String(item.id).replace('header-', ''), item.title, 0)}
+            {sectionHeaderEl(secKey, item.title, secCount)}
           </View>
         );
       }
@@ -576,7 +578,6 @@ export default function MyListScreen() {
     ]
   );
 
-  const totalBadge = state.activeTab === 'albums' ? (state.albums?.length ?? 0) : state.totalCount ?? 0;
   const isFromProfile = state.from === 'profile';
   const handleGoBackToProfile = useCallback(() => {
     router.navigate('/(tabs)/profile');
@@ -620,21 +621,6 @@ export default function MyListScreen() {
             </Pressable>
           )}
           <PageTitle gold={goldTitle} rest={restTitle.join(' ')} />
-          <View
-            style={{
-              height: 24,
-              paddingHorizontal: 10,
-              borderRadius: 12,
-              backgroundColor: theme.dark ? 'rgba(212, 177, 58, 0.18)' : 'rgba(212, 177, 58, 0.12)',
-              borderWidth: 1,
-              borderColor: 'rgba(212, 177, 58, 0.4)',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            accessibilityLabel={t('my_list.total_count_a11y', { count: totalBadge, defaultValue: `${totalBadge} elementos` })}
-          >
-            <Text style={{ color: theme.colors.primary, fontSize: 12, fontFamily: 'Inter_700Bold' }}>{totalBadge}</Text>
-          </View>
         </View>
         <Pressable
           onPress={() => setCustomizeModalVisible(true)}
@@ -737,6 +723,7 @@ export default function MyListScreen() {
         taskViewMode={state.taskViewMode}
         setTaskViewMode={state.setTaskViewMode}
         tasksCount={state.filteredBuckets.length}
+        totalTasksCount={state.totalCount}
         sortField={state.sortField}
         sortDir={state.sortDir}
         isReordering={state.isReordering}

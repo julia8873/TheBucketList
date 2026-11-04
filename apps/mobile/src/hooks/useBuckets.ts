@@ -19,6 +19,7 @@ export function useBuckets(userId?: string) {
   return useQuery({
     queryKey: [...BUCKETS_QUERY_KEY, userId],
     queryFn: () => bucketApi.getBuckets(userId),
+    enabled: !!userId,
   });
 }
 

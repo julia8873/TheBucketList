@@ -24,6 +24,7 @@ import { useAuthStore } from '../../../stores/auth.store';
 import { useTranslation } from '@bucketlist/shared';
 import { useCollections, useCloneCollection, useToggleCollectionLike } from '../../collections/hooks/useCollections';
 import { CollectionCard } from '../../collections/components/CollectionCard';
+import { FeaturedCollectionsRow } from '../../collections/components/FeaturedCollectionsRow';
 import { CollectionDetailModal } from '../../collections/components/CollectionDetailModal';
 import type { CollectionItem } from '../../collections/types';
 import { FeedSearchResultsView } from './FeedSearchResultsView';
@@ -272,12 +273,22 @@ export function ExploreFeedTab({
         ListHeaderComponent={
           <View>
             {headerElement}
+            {contentFilter !== 'colecciones' && contentFilter !== 'albumes' && collections.length > 0 && (
+              <FeaturedCollectionsRow
+                collections={collections}
+                onSelectCollection={(c) => {
+                  setSelectedCollection(c);
+                  setDetailModalVisible(true);
+                }}
+                onViewAll={onChangeContentFilter ? () => onChangeContentFilter('colecciones') : undefined}
+              />
+            )}
             <Typography variant="h3" style={styles.sectionTitle}>
               {contentFilter === 'colecciones'
                 ? t('feed.section_collections')
                 : contentFilter === 'albumes'
                 ? t('feed.section_albums')
-                : t('feed.section_ideas')}
+                : t('feed.section_community_tasks', { defaultValue: 'Tareas de la comunidad' })}
             </Typography>
           </View>
         }

@@ -115,7 +115,7 @@ export function FeaturedCollectionsRow({
                 {col.description}
               </Text>
 
-              <View style={styles.cardFooter}>
+              <View style={[styles.cardFooter, { borderTopColor: theme.colors.border }]}>
                 <View style={styles.tasksTag}>
                   <Layers size={11} color={gold[400]} />
                   <Text style={[styles.tasksTagText, { color: gold[400] }]}>
@@ -139,7 +139,7 @@ export function FeaturedCollectionsRow({
                   </View>
                 ) : null}
                 <View style={{ flex: 1 }} />
-                <Text style={styles.clonePrompt}>
+                <Text style={[styles.clonePrompt, { color: gold[400] }]}>
                   {t('collections.clone')}
                 </Text>
               </View>
@@ -153,7 +153,8 @@ export function FeaturedCollectionsRow({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 20,
+    marginTop: 10,
+    marginBottom: 8,
   },
   headerRow: {
     flexDirection: 'row',

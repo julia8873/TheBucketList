@@ -193,6 +193,15 @@ export const styles = themedStyleSheet({
     fontFamily: fontFamily.semibold,
     fontSize: 11.5,
   },
+  searchTriggerBtn: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+    flexShrink: 0,
+  },
   sheetContent: {
     paddingHorizontal: 12,
     paddingTop: 8,

@@ -17,15 +17,7 @@ export const bucketApi = {
     const baseSelect = '*, category:categories(*), item_subtasks(*), album_items(album_id), bucket_photos(id, thumb_path, storage_path, created_at, completed_at, title)';
 
     if (!userId) {
-      const { data, error } = await supabase
-        .from('buckets')
-        .select(baseSelect)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return (data ?? []).map((b: any) => ({
-        ...b,
-        album_id: b.album_items?.length > 0 ? b.album_items[0].album_id : null,
-      }));
+      return [];
     }
 
     // 1. Round-trip 1: propias + IDs de colaboraciones + IDs de álbumes en paralelo

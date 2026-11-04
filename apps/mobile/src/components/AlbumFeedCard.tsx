@@ -15,6 +15,7 @@ import { useComments } from '../hooks/useSocial';
 import { timeAgo as getTimeAgo } from '../utils/timeAgo';
 import { TaskCommentsModal } from './TaskCommentsModal';
 import { ItemLikesModal } from './ItemLikesModal';
+import { ParticipantsStack, useParticipantsOf } from './ItemParticipants';
 
 export interface AlbumFeedItem {
   _type: 'album';
@@ -78,6 +79,7 @@ export function AlbumFeedCard({
   const overlay = useCoverOverlay();
   const [showComments, setShowComments] = useState(false);
   const [showLikes, setShowLikes] = useState(false);
+  const participants = useParticipantsOf('album', album?.id);
   const { data: albumComments = [] } = useComments(album.id, 'album');
   const commentCount = propCommentCount !== undefined ? propCommentCount : albumComments.length;
 
@@ -151,7 +153,7 @@ export function AlbumFeedCard({
           onPress={onPress}
           style={({ pressed }) => [
             styles.galleryCard,
-            { backgroundColor: theme.dark ? '#1E1E1E' : '#F0EDE6', borderColor: theme.colors.border, opacity: pressed ? 0.9 : 1 },
+            { backgroundColor: theme.dark ? '#1E1E1E' : '#F0EDE6', borderColor: theme.colors.border, opacity: pressed ? 0.92 : 1 },
           ]}
           accessibilityRole="button"
           accessibilityLabel={album.title}
@@ -165,14 +167,20 @@ export function AlbumFeedCard({
               pointerEvents="none"
             />
 
-            {/* Header flotante: autor y badge de álbum */}
-            <View style={styles.galleryHeaderRow}>
+            {/* Badges superiores: autor y badge de álbum */}
+            <View style={styles.galleryHeaderRow} pointerEvents="box-none">
               <Pressable
                 onPress={(e) => {
                   e.stopPropagation();
                   if (album.owner?.id) router.push(`/profile/${album.owner.id}` as any);
                 }}
-                style={styles.galleryHeader}
+                style={[
+                  styles.galleryHeader,
+                  {
+                    backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(0,0,0,0.6)',
+                    borderColor: 'rgba(255,255,255,0.18)',
+                  },
+                ]}
                 hitSlop={6}
                 accessibilityRole="button"
               >
@@ -192,7 +200,7 @@ export function AlbumFeedCard({
               </View>
             </View>
 
-            {/* Pie: título, progreso y acciones */}
+            {/* Overlay inferior estilo mis tareas: título, meta, acciones y colaboradores */}
             <View style={styles.galleryBottom} pointerEvents="box-none">
               <Text style={styles.galleryTitle} numberOfLines={2}>
                 {album.title}
@@ -201,47 +209,83 @@ export function AlbumFeedCard({
                 {album.completed_tasks}/{album.total_tasks} {t('albums.tasks', { defaultValue: 'tareas' })}
               </Text>
 
-              <View style={styles.galleryActions}>
-                {onToggleLike && (
-                  <View style={styles.galleryActionItem}>
-                    <Pressable onPress={onToggleLike} hitSlop={6}>
+              <View style={styles.galleryActionRow} pointerEvents="box-none">
+                <View style={styles.galleryActionsGroup}>
+                  {onToggleLike && (
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        onToggleLike();
+                      }}
+                      hitSlop={6}
+                      style={styles.galleryActionItem}
+                    >
                       <Heart
-                        size={14}
+                        size={13}
                         color={isLiked ? HEART_COLOR : '#F2EFE8'}
                         fill={isLiked ? HEART_COLOR : 'transparent'}
                         strokeWidth={1.8}
                       />
+                      <Pressable
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          setShowLikes(true);
+                        }}
+                        hitSlop={4}
+                      >
+                        <Text style={styles.galleryActionText}>{likeCount}</Text>
+                      </Pressable>
                     </Pressable>
-                    <Pressable onPress={() => setShowLikes(true)} hitSlop={6}>
-                      <Text style={styles.galleryActionText}>{likeCount}</Text>
-                    </Pressable>
-                  </View>
-                )}
+                  )}
 
-                <Pressable onPress={() => setShowComments(true)} hitSlop={6} style={styles.galleryActionItem}>
-                  <MessageCircle size={14} color="#F2EFE8" strokeWidth={1.8} />
-                  <Text style={styles.galleryActionText}>{commentCount}</Text>
-                </Pressable>
-
-                {handleSave ? (
-                  <Pressable onPress={handleSave} hitSlop={6} style={styles.galleryActionItem} disabled={isOwn}>
-                    <Bookmark
-                      size={13}
-                      color={actualSaved ? gold[400] : '#F2EFE8'}
-                      fill={actualSaved ? gold[400] : 'transparent'}
-                      strokeWidth={1.8}
-                    />
-                    <Text style={styles.galleryActionText}>{saveCount}</Text>
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      setShowComments(true);
+                    }}
+                    hitSlop={6}
+                    style={styles.galleryActionItem}
+                  >
+                    <MessageCircle size={13} color="#F2EFE8" strokeWidth={1.8} />
+                    <Text style={styles.galleryActionText}>{commentCount}</Text>
                   </Pressable>
-                ) : (
-                  <View style={styles.galleryActionItem}>
-                    <Bookmark
-                      size={13}
-                      color="#F2EFE8"
-                      strokeWidth={1.8}
-                    />
-                    <Text style={styles.galleryActionText}>{saveCount}</Text>
-                  </View>
+
+                  {handleSave ? (
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleSave();
+                      }}
+                      hitSlop={6}
+                      style={styles.galleryActionItem}
+                      disabled={isOwn}
+                    >
+                      <Bookmark
+                        size={12}
+                        color={actualSaved ? gold[400] : '#F2EFE8'}
+                        fill={actualSaved ? gold[400] : 'transparent'}
+                        strokeWidth={1.8}
+                      />
+                      <Text style={styles.galleryActionText}>{saveCount}</Text>
+                    </Pressable>
+                  ) : (
+                    <View style={styles.galleryActionItem}>
+                      <Bookmark
+                        size={12}
+                        color="#F2EFE8"
+                        strokeWidth={1.8}
+                      />
+                      <Text style={styles.galleryActionText}>{saveCount}</Text>
+                    </View>
+                  )}
+                </View>
+
+                {participants && participants.length > 0 && (
+                  <ParticipantsStack
+                    participants={participants}
+                    max={2}
+                    ringColor={theme.colors.surface}
+                  />
                 )}
               </View>
             </View>
@@ -313,55 +357,6 @@ export function AlbumFeedCard({
             <Text style={[styles.compactTitle, { color: theme.colors.foreground }]} numberOfLines={1}>
               {album.title}
             </Text>
-          </View>
-
-          <View style={styles.compactActions}>
-            <View style={styles.compactActionBtn}>
-              <Pressable
-                onPress={onToggleLike}
-                hitSlop={6}
-                accessibilityRole="button"
-                accessibilityLabel={isLiked ? 'Quitar me gusta' : 'Me gusta'}
-              >
-                <Heart
-                  size={16}
-                  color={isLiked ? HEART_COLOR : theme.colors.foregroundSubtle}
-                  fill={isLiked ? HEART_COLOR : 'transparent'}
-                  strokeWidth={1.8}
-                />
-              </Pressable>
-              <Pressable onPress={() => setShowLikes(true)} hitSlop={6}>
-                <Text style={[styles.compactActionCount, { color: isLiked ? HEART_COLOR : theme.colors.foregroundSubtle }]}>
-                  {likeCount}
-                </Text>
-              </Pressable>
-            </View>
-            <Pressable
-              onPress={() => setShowComments(true)}
-              hitSlop={6}
-              style={styles.compactActionBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Comentarios"
-            >
-              <MessageCircle size={16} color={theme.colors.foregroundSubtle} strokeWidth={1.8} />
-              <Text style={[styles.compactActionCount, { color: theme.colors.foregroundSubtle }]}>{commentCount}</Text>
-            </Pressable>
-            <Pressable
-              onPress={handleSave}
-              hitSlop={6}
-              style={styles.compactActionBtn}
-              accessibilityRole="button"
-              accessibilityLabel={actualSaved ? 'Quitar de guardados' : 'Guardar álbum'}
-              disabled={isOwn || !handleSave}
-            >
-              <Bookmark
-                size={16}
-                color={actualSaved ? gold[400] : theme.colors.foregroundSubtle}
-                fill={actualSaved ? gold[400] : 'transparent'}
-                strokeWidth={1.8}
-              />
-              <Text style={[styles.compactActionCount, { color: actualSaved ? gold[400] : theme.colors.foregroundSubtle }]}>{saveCount}</Text>
-            </Pressable>
           </View>
         </Pressable>
 
@@ -761,32 +756,38 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   galleryCard: {
-    borderRadius: 18,
+    borderRadius: 14,
     overflow: 'hidden',
     borderWidth: 1,
   },
   galleryCover: {
     width: '100%',
-    aspectRatio: 0.85,
+    aspectRatio: 1 / 1.3,
     position: 'relative',
   },
   galleryHeaderRow: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    right: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 8,
     zIndex: 2,
   },
   galleryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    flex: 1,
-    marginRight: 6,
+    gap: 5,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 12,
+    borderWidth: 1,
+    maxWidth: '75%',
   },
   galleryUsername: {
     fontFamily: fontFamily.medium,
-    fontSize: 12,
+    fontSize: 11.5,
     color: '#FFFFFF',
     ...Platform.select({
       web: { textShadow: '0 1px 3px rgba(0,0,0,0.85)' } as any,
@@ -815,15 +816,20 @@ const styles = StyleSheet.create({
   },
   galleryBottom: {
     position: 'absolute',
-    left: 10,
-    right: 10,
-    bottom: 10,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderBottomLeftRadius: 14,
+    borderBottomRightRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.58)',
     zIndex: 2,
   },
   galleryTitle: {
-    fontFamily: fontFamily.serifBold,
-    fontSize: 14,
-    lineHeight: 18,
+    fontFamily: fontFamily.semibold,
+    fontSize: 13,
+    lineHeight: 17,
     color: '#FFFFFF',
     ...Platform.select({
       web: { textShadow: '0 1px 4px rgba(0,0,0,0.9)' } as any,
@@ -835,33 +841,33 @@ const styles = StyleSheet.create({
     }),
   },
   gallerySubtext: {
-    fontFamily: fontFamily.medium,
+    fontFamily: fontFamily.regular,
     fontSize: 11,
-    color: 'rgba(255,255,255,0.8)',
+    color: 'rgba(255,255,255,0.72)',
     marginTop: 2,
-    ...Platform.select({
-      web: { textShadow: '0 1px 2px rgba(0,0,0,0.8)' } as any,
-      default: {
-        textShadowColor: 'rgba(0,0,0,0.8)',
-        textShadowOffset: { width: 0, height: 1 },
-        textShadowRadius: 2,
-      },
-    }),
   },
-  galleryActions: {
+  galleryActionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    justifyContent: 'space-between',
     marginTop: 6,
+    paddingTop: 6,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.14)',
+  },
+  galleryActionsGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   galleryActionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 3,
   },
   galleryActionText: {
     fontFamily: fontFamily.medium,
-    fontSize: 12,
+    fontSize: 11,
     color: '#F2EFE8',
   },
   // Compact mode styles

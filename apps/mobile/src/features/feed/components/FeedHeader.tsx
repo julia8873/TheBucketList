@@ -50,7 +50,10 @@ export function FeedHeader({
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [filterSheetVisible, setFilterSheetVisible] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
+  const activeSearchText = homeTab === 'friends' ? friendsSearch : exploreSearch;
+  const isSearchActive = searchOpen || activeSearchText.length > 0;
   const isSearching =
     (homeTab === 'explore' && exploreSearch.trim().length >= 2) ||
     (homeTab === 'friends' && friendsSearch.trim().length >= 2);
@@ -142,14 +145,119 @@ export function FeedHeader({
         </Pressable>
       </View>
 
-      {/* Search Bar según pestaña */}
-      {homeTab === 'friends' ? (
+      {/* Barra de controles: Filtrar, Mapa, Buscador y Modo vista en una misma línea (como en mis tareas) */}
+      <View style={styles.feedControlsRow}>
+        {/* Toggle desplegable a la izquierda */}
+        <Pressable
+          onPress={() => setFilterSheetVisible(true)}
+          accessibilityRole="button"
+          accessibilityLabel={t('feed.filter_sheet_title')}
+          style={[
+            styles.filterDropdownBtn,
+            {
+              backgroundColor: contentFilter !== 'todo'
+                ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.18)')
+                : theme.colors.surface,
+              borderColor: contentFilter !== 'todo' ? gold[400] : theme.colors.border,
+            },
+          ]}
+        >
+          <SlidersHorizontal
+            size={13}
+            color={contentFilter !== 'todo' ? gold[400] : theme.colors.foregroundMuted}
+            strokeWidth={2}
+          />
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={[
+              styles.filterDropdownText,
+              { color: contentFilter !== 'todo' ? gold[400] : theme.colors.foreground },
+            ]}
+          >
+            {contentFilter === 'todo'
+              ? t('feed.filter_all')
+              : contentFilter === 'tareas'
+              ? t('feed.filter_tasks')
+              : contentFilter === 'albumes'
+              ? t('feed.filter_albums')
+              : t('feed.filter_collections')}
+          </Text>
+          <ChevronDown
+            size={12}
+            color={contentFilter !== 'todo' ? gold[400] : theme.colors.foregroundMuted}
+            strokeWidth={2}
+          />
+        </Pressable>
+
+        {/* Mapa */}
+        {onOpenMap ? (
+          <Pressable
+            onPress={onOpenMap}
+            style={[
+              styles.mapTriggerBtn,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Ver en mapa"
+          >
+            <Map size={13} color={gold[400]} />
+            <Text
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={[styles.mapTriggerBtnText, { color: theme.colors.foreground }]}
+            >
+              {t('feed.map_btn')}
+            </Text>
+          </Pressable>
+        ) : null}
+
+        {/* Buscador: botón desplegable que comparte línea con los demás controles */}
+        <Pressable
+          onPress={() => {
+            if (isSearchActive) {
+              if (homeTab === 'friends') onChangeFriendsSearch?.('');
+              else onChangeExploreSearch('');
+              setSearchOpen(false);
+            } else {
+              setSearchOpen(true);
+            }
+          }}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.search', { defaultValue: 'Buscar' })}
+          accessibilityState={{ selected: isSearchActive }}
+          style={[
+            styles.searchTriggerBtn,
+            {
+              backgroundColor: isSearchActive ? theme.colors.primary : theme.colors.surface,
+              borderColor: isSearchActive ? theme.colors.primary : theme.colors.border,
+            },
+          ]}
+        >
+          <Search
+            size={15}
+            color={isSearchActive ? theme.colors.primaryForeground : gold[400]}
+            strokeWidth={2}
+          />
+        </Pressable>
+
+        {/* Selector de vista */}
+        <ViewModeSelector mode={viewMode} onChange={onChangeViewMode} style={{ flexShrink: 0 }} />
+      </View>
+
+      {/* Barra de búsqueda desplegable debajo de los controles cuando está activa */}
+      {isSearchActive && (
         <View
           style={[
             styles.exploreSearchContainer,
             {
               backgroundColor: theme.colors.surface,
               borderColor: theme.colors.border,
+              marginBottom: 8,
             },
           ]}
         >
@@ -157,120 +265,32 @@ export function FeedHeader({
           <TextInput
             placeholder={t('feed.search_placeholder')}
             placeholderTextColor={theme.colors.foregroundMuted}
-            value={friendsSearch}
-            onChangeText={onChangeFriendsSearch}
+            value={activeSearchText}
+            onChangeText={homeTab === 'friends' ? onChangeFriendsSearch : onChangeExploreSearch}
             style={[styles.exploreSearchInput, { color: theme.colors.foreground }]}
             returnKeyType="search"
+            autoFocus
           />
-          {friendsSearch.length > 0 ? (
-            <Pressable onPress={() => onChangeFriendsSearch?.('')} hitSlop={8}>
+          {activeSearchText.length > 0 ? (
+            <Pressable
+              onPress={() => {
+                if (homeTab === 'friends') onChangeFriendsSearch?.('');
+                else onChangeExploreSearch('');
+                setSearchOpen(false);
+              }}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.clear_search', { defaultValue: 'Borrar búsqueda' })}
+            >
               <X size={18} color={theme.colors.foregroundMuted} strokeWidth={2} />
             </Pressable>
-          ) : requestCount > 0 ? (
+          ) : (homeTab === 'friends' && requestCount > 0) ? (
             <Pressable onPress={() => onOpenFriends('requests')} hitSlop={8} accessibilityRole="button">
               <Text style={[styles.requests, { color: theme.colors.primary }]}>
                 {requestCount} {requestCount === 1 ? t('feed.friend_request_single') : t('feed.friend_request_plural')}
               </Text>
             </Pressable>
           ) : null}
-        </View>
-      ) : (
-        <View
-          style={[
-            styles.exploreSearchContainer,
-            {
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.border,
-            },
-          ]}
-        >
-          <Search size={18} color={theme.colors.foregroundMuted} strokeWidth={1.8} />
-          <TextInput
-            placeholder={t('feed.search_placeholder')}
-            placeholderTextColor={theme.colors.foregroundMuted}
-            value={exploreSearch}
-            onChangeText={onChangeExploreSearch}
-            style={[styles.exploreSearchInput, { color: theme.colors.foreground }]}
-            returnKeyType="search"
-          />
-          {exploreSearch.length > 0 && (
-            <Pressable onPress={() => onChangeExploreSearch('')} hitSlop={8}>
-              <X size={18} color={theme.colors.foregroundMuted} strokeWidth={2} />
-            </Pressable>
-          )}
-        </View>
-      )}      {!isSearching && (
-        <View style={styles.feedControlsRow}>
-          {/* Toggle desplegable a la izquierda (como los de mi lista) */}
-          <Pressable
-            onPress={() => setFilterSheetVisible(true)}
-            accessibilityRole="button"
-            accessibilityLabel={t('feed.filter_sheet_title')}
-            style={[
-              styles.filterDropdownBtn,
-              {
-                backgroundColor: contentFilter !== 'todo'
-                  ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.18)')
-                  : theme.colors.surface,
-                borderColor: contentFilter !== 'todo' ? gold[400] : theme.colors.border,
-              },
-            ]}
-          >
-            <SlidersHorizontal
-              size={13}
-              color={contentFilter !== 'todo' ? gold[400] : theme.colors.foregroundMuted}
-              strokeWidth={2}
-            />
-            <Text
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              style={[
-                styles.filterDropdownText,
-                { color: contentFilter !== 'todo' ? gold[400] : theme.colors.foreground },
-              ]}
-            >
-              {contentFilter === 'todo'
-                ? t('feed.filter_all')
-                : contentFilter === 'tareas'
-                ? t('feed.filter_tasks')
-                : contentFilter === 'albumes'
-                ? t('feed.filter_albums')
-                : t('feed.filter_collections')}
-            </Text>
-            <ChevronDown
-              size={12}
-              color={contentFilter !== 'todo' ? gold[400] : theme.colors.foregroundMuted}
-              strokeWidth={2}
-            />
-          </Pressable>
-
-          {/* Mapa */}
-          {onOpenMap ? (
-            <Pressable
-              onPress={onOpenMap}
-              style={[
-                styles.mapTriggerBtn,
-                {
-                  backgroundColor: theme.colors.surface,
-                  borderColor: theme.colors.border,
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Ver en mapa"
-            >
-              <Map size={13} color={gold[400]} />
-              <Text
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={[styles.mapTriggerBtnText, { color: theme.colors.foreground }]}
-              >
-                {t('feed.map_btn')}
-              </Text>
-            </Pressable>
-          ) : null}
-
-          {/* Selector de vista */}
-          <ViewModeSelector mode={viewMode} onChange={onChangeViewMode} style={{ flexShrink: 0 }} />
         </View>
       )}
       {!isSearching && homeTab === 'explore' ? (

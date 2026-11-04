@@ -13,6 +13,8 @@ import { FeedHeader, type ContentFilter } from '../../src/features/feed/componen
 import { FriendsFeedTab } from '../../src/features/feed/components/FriendsFeedTab';
 import { ExploreFeedTab } from '../../src/features/feed/components/ExploreFeedTab';
 import { FeedCardSkeleton } from '../../src/components/FeedCardSkeleton';
+import { ItemParticipantsProvider, useParticipantsValue } from '../../src/components/ItemParticipants';
+import type { ParticipantsSource } from '../../src/hooks/useItemParticipants';
 
 import type { TaskViewMode } from '../../src/components/ViewModeSelector';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -248,6 +250,50 @@ export default function FeedScreen() {
     return exploreAlbumsData?.pages.flatMap((page) => page.items) ?? [];
   }, [exploreAlbumsData]);
 
+  const participantTaskSources = useMemo(() => {
+    const list: ParticipantsSource[] = [];
+    const seen = new Set<string>();
+    for (const item of friendsItems) {
+      const b = item.bucket;
+      if (b?.id && !seen.has(b.id)) {
+        seen.add(b.id);
+        list.push({ id: b.id, ownerId: (b.user_id as string | undefined) ?? null });
+      }
+    }
+    for (const b of exploreBuckets) {
+      if (b?.id && !seen.has(b.id)) {
+        seen.add(b.id);
+        list.push({ id: b.id, ownerId: (b.user_id as string | undefined) ?? null });
+      }
+    }
+    return list;
+  }, [friendsItems, exploreBuckets]);
+
+  const participantAlbumSources = useMemo(() => {
+    const list: ParticipantsSource[] = [];
+    const seen = new Set<string>();
+    for (const a of friendsAlbums) {
+      if (a?.id && !seen.has(a.id)) {
+        seen.add(a.id);
+        list.push({ id: a.id, ownerId: (a.owner?.id as string | undefined) ?? null });
+      }
+    }
+    for (const a of exploreAlbums) {
+      if (a?.id && !seen.has(a.id)) {
+        seen.add(a.id);
+        list.push({ id: a.id, ownerId: (a.owner?.id as string | undefined) ?? null });
+      }
+    }
+    return list;
+  }, [friendsAlbums, exploreAlbums]);
+
+  const participantsValue = useParticipantsValue({
+    taskSources: participantTaskSources,
+    albumSources: participantAlbumSources,
+    tasksEnabled: true,
+    albumsEnabled: true,
+  });
+
   const openFriends = (tab?: 'requests') =>
     router.push((tab ? `/friends?tab=${tab}` : '/friends') as any);
 
@@ -272,65 +318,67 @@ export default function FeedScreen() {
   );
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {!listReady ? (
-        // Mientras tanto se ve la cabecera con esqueletos (nunca una pantalla en negro)
-        <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 72 }} showsVerticalScrollIndicator={false}>
-          {headerElement}
-          <FeedCardSkeleton />
-          <FeedCardSkeleton />
-        </ScrollView>
-      ) : homeTab === 'friends' ? (
-        <FriendsFeedTab
-          headerElement={headerElement}
-          isLoading={isFriendsLoading}
-          isError={isFriendsError}
-          friendsItems={friendsItems}
-          friendsAlbums={friendsAlbums}
-          isAlbumsLoading={isFriendsAlbumsLoading}
-          contentFilter={contentFilter}
-          manualRefreshing={manualRefreshingFriends}
-          onRefresh={handleRefreshFriends}
-          hasNextPage={hasNextFriends}
-          isFetchingNextPage={isFetchingNextFriends}
-          fetchNextPage={fetchNextFriends}
-          hasNextAlbumsPage={hasNextFriendsAlbums}
-          isFetchingNextAlbumsPage={isFetchingNextFriendsAlbums}
-          fetchNextAlbumsPage={fetchNextFriendsAlbums}
-          windowHeight={windowHeight}
-          onOpenFriends={() => openFriends()}
-          onRetry={() => void refetchFriends()}
-          listRef={friendsListRef}
-          viewMode={viewMode}
-          debouncedSearch={debouncedFriendsSearch}
-          isSearchLoading={isFriendsSearchLoading}
-          searchResults={friendsSearchResults}
-        />
-      ) : (
-        <ExploreFeedTab
-          headerElement={headerElement}
-          debouncedSearch={debouncedExploreSearch}
-          isSearchLoading={isExploreSearchLoading}
-          searchResults={exploreSearchResults}
-          isExploreLoading={isExploreLoading}
-          isAlbumsLoading={isExploreAlbumsLoading}
-          exploreBuckets={exploreBuckets}
-          exploreAlbums={exploreAlbums}
-          contentFilter={contentFilter}
-          onChangeContentFilter={setContentFilter}
-          manualRefreshing={manualRefreshingExplore}
-          onRefresh={handleRefreshExplore}
-          hasNextPage={hasNextExplore}
-          isFetchingNextPage={isFetchingNextExplore}
-          fetchNextPage={fetchNextExplore}
-          hasNextAlbumsPage={hasNextExploreAlbums}
-          isFetchingNextAlbumsPage={isFetchingNextExploreAlbums}
-          fetchNextAlbumsPage={fetchNextExploreAlbums}
-          windowHeight={windowHeight}
-          listRef={exploreListRef}
-          viewMode={viewMode}
-        />
-      )}
-    </SafeAreaView>
+    <ItemParticipantsProvider value={participantsValue}>
+      <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        {!listReady ? (
+          // Mientras tanto se ve la cabecera con esqueletos (nunca una pantalla en negro)
+          <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 72 }} showsVerticalScrollIndicator={false}>
+            {headerElement}
+            <FeedCardSkeleton />
+            <FeedCardSkeleton />
+          </ScrollView>
+        ) : homeTab === 'friends' ? (
+          <FriendsFeedTab
+            headerElement={headerElement}
+            isLoading={isFriendsLoading}
+            isError={isFriendsError}
+            friendsItems={friendsItems}
+            friendsAlbums={friendsAlbums}
+            isAlbumsLoading={isFriendsAlbumsLoading}
+            contentFilter={contentFilter}
+            manualRefreshing={manualRefreshingFriends}
+            onRefresh={handleRefreshFriends}
+            hasNextPage={hasNextFriends}
+            isFetchingNextPage={isFetchingNextFriends}
+            fetchNextPage={fetchNextFriends}
+            hasNextAlbumsPage={hasNextFriendsAlbums}
+            isFetchingNextAlbumsPage={isFetchingNextFriendsAlbums}
+            fetchNextAlbumsPage={fetchNextFriendsAlbums}
+            windowHeight={windowHeight}
+            onOpenFriends={() => openFriends()}
+            onRetry={() => void refetchFriends()}
+            listRef={friendsListRef}
+            viewMode={viewMode}
+            debouncedSearch={debouncedFriendsSearch}
+            isSearchLoading={isFriendsSearchLoading}
+            searchResults={friendsSearchResults}
+          />
+        ) : (
+          <ExploreFeedTab
+            headerElement={headerElement}
+            debouncedSearch={debouncedExploreSearch}
+            isSearchLoading={isExploreSearchLoading}
+            searchResults={exploreSearchResults}
+            isExploreLoading={isExploreLoading}
+            isAlbumsLoading={isExploreAlbumsLoading}
+            exploreBuckets={exploreBuckets}
+            exploreAlbums={exploreAlbums}
+            contentFilter={contentFilter}
+            onChangeContentFilter={setContentFilter}
+            manualRefreshing={manualRefreshingExplore}
+            onRefresh={handleRefreshExplore}
+            hasNextPage={hasNextExplore}
+            isFetchingNextPage={isFetchingNextExplore}
+            fetchNextPage={fetchNextExplore}
+            hasNextAlbumsPage={hasNextExploreAlbums}
+            isFetchingNextAlbumsPage={isFetchingNextExploreAlbums}
+            fetchNextAlbumsPage={fetchNextExploreAlbums}
+            windowHeight={windowHeight}
+            listRef={exploreListRef}
+            viewMode={viewMode}
+          />
+        )}
+      </SafeAreaView>
+    </ItemParticipantsProvider>
   );
 }
