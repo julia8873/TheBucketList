@@ -221,7 +221,6 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
           />
         )}
         {(customization?.showBadges ?? true) && item.is_closed ? <Lock size={12} color={theme.colors.foregroundMuted} /> : null}
-        {(customization?.showBadges ?? true) && item.is_shared ? <Users size={12} color={theme.colors.primary} /> : null}
         {(customization?.showPriority ?? false) && item.priority && (
           <View
             style={{
@@ -500,16 +499,6 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
               <Text style={[styles.listAlbumMeta, { color: theme.colors.foregroundMuted }]}>
                 {new Date(item.created_at).toLocaleDateString(i18n.language?.startsWith('en') ? 'en-US' : 'es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
               </Text>
-            )}
-
-            {showBadges && item.is_shared && (
-              <View style={[styles.listAlbumBadge, {
-                backgroundColor: theme.dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-                borderColor: theme.dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)',
-              }]}>
-                <Users size={10} color={theme.colors.foregroundMuted} />
-                <Text style={[styles.listAlbumBadgeText, { color: theme.colors.foregroundMuted }]}>{t('albums.shared')}</Text>
-              </View>
             )}
 
             {showBadges && item.is_closed && (

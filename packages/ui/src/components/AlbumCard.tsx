@@ -285,12 +285,6 @@ export function AlbumCard({
             </View>
           )}
 
-          {isShared && (
-            <View style={styles.sharedBadge}>
-              <Text style={styles.sharedText}>{t('albums.shared')}</Text>
-            </View>
-          )}
-
           {isClosed && (
             <View style={styles.closedBadge}>
               <Lock size={10} color="#D4B13A" />

@@ -409,19 +409,12 @@ export function AlbumFeedCard({
           </View>
         </Pressable>
 
-        {/* Top Badges (columna a la izquierda con Álbum y debajo Compartido) */}
+        {/* Top Badges (columna a la izquierda con Álbum) */}
         <View style={styles.topBadgesContainer} pointerEvents="none">
           <View style={styles.topBadge}>
             <Images size={12} color="rgba(255,255,255,0.9)" strokeWidth={2} />
             <Text style={styles.topBadgeText}>Álbum</Text>
           </View>
-
-          {album.is_shared && (
-            <View style={styles.sharedBadge}>
-              <Users size={10} color="#FFF" strokeWidth={2} />
-              <Text style={styles.sharedText}>Compartido</Text>
-            </View>
-          )}
 
           {album.is_closed && (
             <View style={styles.closedBadge}>

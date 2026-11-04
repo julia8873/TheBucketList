@@ -46,11 +46,6 @@ export function AlbumPreviewCard({
       />
 
       <View style={styles.previewBadgesRow}>
-        {isShared && (
-          <View style={styles.previewSharedBadge}>
-            <Text style={[styles.previewSharedText, { color: '#D4B13A' }]}>{t('albums.shared')}</Text>
-          </View>
-        )}
         <View style={styles.previewVisibilityBadge}>
           <Text style={[styles.previewVisibilityText, { color: '#E2DCCF' }]}>
             {visibility === 'public'
