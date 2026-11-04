@@ -49,8 +49,8 @@ import {
   useParticipantsValue,
 } from '@/components/ItemParticipants';
 
-// Separación como en Mi_lista.html: 8 px entre tarjetas y 4 px bajo la cabecera de sección.
-const TaskSeparator = ({ leadingItem }: any) => <View style={{ height: leadingItem?.isHeader ? 4 : 8 }} />;
+// Separación entre tarjetas (8 px) y espacio adicional bajo la cabecera de sección.
+const TaskSeparator = ({ leadingItem }: any) => <View style={{ height: leadingItem?.isHeader ? 8 : 8 }} />;
 
 export default function MyListScreen() {
   const { theme } = useTheme();

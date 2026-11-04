@@ -847,8 +847,11 @@ export function SectionHeader({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: 4,
-        marginTop: 10,
+        paddingHorizontal: 4,
+        paddingTop: 6,
+        paddingBottom: 6,
+        marginTop: 14,
+        marginBottom: collapsed ? 2 : 10,
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1 }}>
