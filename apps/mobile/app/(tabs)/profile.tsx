@@ -1,10 +1,10 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useNavigation } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { Settings, Users } from 'lucide-react-native';
+import { Settings, Users, Globe } from 'lucide-react-native';
 import { useTranslation } from '@bucketlist/shared';
 import {
   Avatar,
@@ -80,6 +80,37 @@ export default function CurrentUserProfileScreen() {
     void AsyncStorage.setItem('@my_profile_album_view_mode', mode).catch(() => undefined);
   };
 
+  const [showPublic, setShowPublicState] = useState(true);
+  const [showFollowers, setShowFollowersState] = useState(true);
+
+  const setShowPublic = (val: boolean) => {
+    setShowPublicState(val);
+    void AsyncStorage.setItem('@my_profile_show_public', JSON.stringify(val)).catch(() => undefined);
+  };
+
+  const setShowFollowers = (val: boolean) => {
+    setShowFollowersState(val);
+    void AsyncStorage.setItem('@my_profile_show_followers', JSON.stringify(val)).catch(() => undefined);
+  };
+
+  const handleTogglePublic = () => {
+    if (showPublic && !showFollowers) {
+      setShowPublic(false);
+      setShowFollowers(true);
+    } else {
+      setShowPublic(!showPublic);
+    }
+  };
+
+  const handleToggleFollowers = () => {
+    if (showFollowers && !showPublic) {
+      setShowFollowers(false);
+      setShowPublic(true);
+    } else {
+      setShowFollowers(!showFollowers);
+    }
+  };
+
   useEffect(() => {
     AsyncStorage.getItem('@my_profile_tab')
       .then((saved) => {
@@ -111,6 +142,22 @@ export default function CurrentUserProfileScreen() {
       .then((saved) => {
         if (saved && ['all', 'active', 'completed', 'closed'].includes(saved)) {
           setAlbumFilterState(saved as AlbumFilter);
+        }
+      })
+      .catch(() => undefined);
+    Promise.all([
+      AsyncStorage.getItem('@my_profile_show_public'),
+      AsyncStorage.getItem('@my_profile_show_followers'),
+    ])
+      .then(([savedPub, savedFoll]) => {
+        const pub = savedPub !== null ? JSON.parse(savedPub) : true;
+        const foll = savedFoll !== null ? JSON.parse(savedFoll) : true;
+        if (!pub && !foll) {
+          setShowPublicState(true);
+          setShowFollowersState(true);
+        } else {
+          setShowPublicState(pub);
+          setShowFollowersState(foll);
         }
       })
       .catch(() => undefined);
@@ -160,6 +207,13 @@ export default function CurrentUserProfileScreen() {
     if (filter === 'completed') res = list.filter((b: any) => b.status === 'completed');
     else if (filter === 'active') res = list.filter((b: any) => b.status === 'pending' || b.status === 'in_progress');
 
+    res = res.filter((b: any) => {
+      const vis = b.visibility || 'public';
+      if (vis === 'public') return showPublic;
+      if (vis === 'followers') return showFollowers;
+      return true;
+    });
+
     // Favoritos primero
     return [...res].sort((a: any, b: any) => {
       const favA = isBucketFavorite(a.id) ? 1 : 0;
@@ -167,7 +221,7 @@ export default function CurrentUserProfileScreen() {
       if (favA !== favB) return favB - favA;
       return 0;
     });
-  }, [publicBuckets, filter, isBucketFavorite]);
+  }, [publicBuckets, filter, isBucketFavorite, showPublic, showFollowers]);
 
   const filteredAlbums = useMemo(() => {
     const list = publicAlbums ?? [];
@@ -179,6 +233,13 @@ export default function CurrentUserProfileScreen() {
       res = list.filter((a) => !a.is_closed && (a.total_tasks === 0 || a.completed_tasks < a.total_tasks));
     }
 
+    res = res.filter((a: any) => {
+      const vis = a.visibility || 'public';
+      if (vis === 'public') return showPublic;
+      if (vis === 'followers') return showFollowers;
+      return true;
+    });
+
     // Favoritos primero
     return [...res].sort((a, b) => {
       const favA = isAlbumFavorite(a.id) ? 1 : 0;
@@ -186,9 +247,9 @@ export default function CurrentUserProfileScreen() {
       if (favA !== favB) return favB - favA;
       return 0;
     });
-  }, [publicAlbums, albumFilter, isAlbumFavorite]);
+  }, [publicAlbums, albumFilter, isAlbumFavorite, showPublic, showFollowers]);
 
-  const taskCount = publicBuckets?.length ?? 0;
+  const taskCount = filteredTasks.length;
 
   const headerTop = (
     <View style={[styles.header, { marginHorizontal: -12 }]}>
@@ -307,13 +368,84 @@ export default function CurrentUserProfileScreen() {
             />
             <ViewModeSelector mode={taskViewMode} onChange={setTaskViewMode} />
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14, marginBottom: 16 }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 2 }}
+            style={{ marginTop: 14, marginBottom: 16 }}
+          >
             <ProfileTaskFilterButton filter={filter} onChangeFilter={setFilter} />
-          </View>
+            <Pressable
+              onPress={handleTogglePublic}
+              accessibilityRole="button"
+              accessibilityState={{ selected: showPublic }}
+              style={[
+                styles.visFilterChip,
+                {
+                  backgroundColor: showPublic
+                    ? (theme.dark ? 'rgba(212, 177, 58, 0.15)' : 'rgba(212, 177, 58, 0.18)')
+                    : (theme.dark ? '#1B1B1B' : '#EAE5DB'),
+                  borderColor: showPublic
+                    ? theme.colors.primary
+                    : (theme.dark ? '#2B2B2B' : '#D9D3C7'),
+                },
+              ]}
+            >
+              <Globe
+                size={13}
+                color={showPublic ? theme.colors.primary : theme.colors.foregroundMuted}
+                strokeWidth={2}
+              />
+              <Text
+                style={[
+                  styles.visFilterChipText,
+                  {
+                    color: showPublic ? theme.colors.primary : theme.colors.foregroundMuted,
+                    fontFamily: showPublic ? fontFamily.semibold : fontFamily.medium,
+                  },
+                ]}
+              >
+                {t('profile.filter_visibility_public')}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={handleToggleFollowers}
+              accessibilityRole="button"
+              accessibilityState={{ selected: showFollowers }}
+              style={[
+                styles.visFilterChip,
+                {
+                  backgroundColor: showFollowers
+                    ? (theme.dark ? 'rgba(212, 177, 58, 0.15)' : 'rgba(212, 177, 58, 0.18)')
+                    : (theme.dark ? '#1B1B1B' : '#EAE5DB'),
+                  borderColor: showFollowers
+                    ? theme.colors.primary
+                    : (theme.dark ? '#2B2B2B' : '#D9D3C7'),
+                },
+              ]}
+            >
+              <Users
+                size={13}
+                color={showFollowers ? theme.colors.primary : theme.colors.foregroundMuted}
+                strokeWidth={2}
+              />
+              <Text
+                style={[
+                  styles.visFilterChipText,
+                  {
+                    color: showFollowers ? theme.colors.primary : theme.colors.foregroundMuted,
+                    fontFamily: showFollowers ? fontFamily.semibold : fontFamily.medium,
+                  },
+                ]}
+              >
+                {t('profile.filter_visibility_followers')}
+              </Text>
+            </Pressable>
+          </ScrollView>
         </>
       ) : (
         <ProfileAlbumsTab
-          totalCount={publicAlbums?.length ?? 0}
+          totalCount={filteredAlbums.length}
           albumFilter={albumFilter}
           onChangeFilter={setAlbumFilter}
           albumViewMode={albumViewMode}
@@ -325,6 +457,10 @@ export default function CurrentUserProfileScreen() {
             toggleFavoriteAlbum.mutate({ albumId, currentlyFavorite: isFav })
           }
           hasUser={!!user}
+          showPublic={showPublic}
+          showFollowers={showFollowers}
+          onTogglePublic={handleTogglePublic}
+          onToggleFollowers={handleToggleFollowers}
         />
       )}
     </View>
@@ -433,5 +569,17 @@ const styles = StyleSheet.create({
   tabsContainer: { marginTop: 20, marginBottom: 4 },
   sectionLabel: { marginTop: 20 },
   filters: { flexDirection: 'row', gap: 10, marginTop: 14, marginBottom: 16, flexWrap: 'wrap' },
+  visFilterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  visFilterChipText: {
+    fontSize: 13,
+  },
   empty: { fontFamily: fontFamily.regular, fontSize: 14, color: '#9A9A9A', textAlign: 'center', marginTop: 24 },
 });
