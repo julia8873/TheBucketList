@@ -422,6 +422,9 @@ export function useAlbumDetailState() {
     if (lastSavedTitle.current !== null && titleToSave.trim() === lastSavedTitle.current) return;
 
     lastSavedTitle.current = titleToSave.trim();
+    queryClient.setQueryData(['album', id, user?.id], (old: any) =>
+      old ? { ...old, title: titleToSave.trim() } : old
+    );
     const { error } = await supabase
       .from('albums')
       .update({ title: titleToSave.trim() })
@@ -434,9 +437,6 @@ export function useAlbumDetailState() {
 
   const handleTitleChange = (newTitle: string) => {
     pendingTitle.current = newTitle;
-    queryClient.setQueryData(['album', id, user?.id], (old: any) =>
-      old ? { ...old, title: newTitle } : old
-    );
     if (titleTimeout.current) clearTimeout(titleTimeout.current);
     titleTimeout.current = setTimeout(flushTitleChange, 1500);
   };
@@ -451,6 +451,9 @@ export function useAlbumDetailState() {
     if (lastSavedDesc.current !== null && descToSave.trim() === (lastSavedDesc.current || '').trim()) return;
 
     lastSavedDesc.current = descToSave.trim();
+    queryClient.setQueryData(['album', id, user?.id], (old: any) =>
+      old ? { ...old, description: descToSave.trim() } : old
+    );
     const { error } = await supabase
       .from('albums')
       .update({ description: descToSave.trim() })
@@ -463,12 +466,24 @@ export function useAlbumDetailState() {
 
   const handleDescriptionChange = (newDesc: string) => {
     pendingDesc.current = newDesc;
-    queryClient.setQueryData(['album', id, user?.id], (old: any) =>
-      old ? { ...old, description: newDesc } : old
-    );
     if (descTimeout.current) clearTimeout(descTimeout.current);
     descTimeout.current = setTimeout(flushDescriptionChange, 1500);
   };
+
+  useEffect(() => {
+    return () => {
+      if (titleTimeout.current) {
+        clearTimeout(titleTimeout.current);
+        titleTimeout.current = null;
+        void flushTitleChange();
+      }
+      if (descTimeout.current) {
+        clearTimeout(descTimeout.current);
+        descTimeout.current = null;
+        void flushDescriptionChange();
+      }
+    };
+  }, []);
 
   const handleChangeVisibility = async (newVisibility: 'public' | 'followers' | 'private') => {
     queryClient.setQueryData(['album', id, user?.id], (old: any) =>

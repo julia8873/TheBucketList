@@ -1646,6 +1646,9 @@ export function useBucketDetailState() {
     if (lastSavedTitle.current !== null && titleToSave.trim() === lastSavedTitle.current) return;
 
     lastSavedTitle.current = titleToSave.trim();
+    queryClient.setQueryData(['bucketDetail', id], (oldData: any) =>
+      oldData ? { ...oldData, title: titleToSave.trim() } : oldData
+    );
     const { error } = await supabase.from('buckets').update({ title: titleToSave.trim() }).eq('id', id);
     if (!error) {
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
@@ -1655,7 +1658,6 @@ export function useBucketDetailState() {
 
   const handleTitleChange = (newTitle: string) => {
     pendingTitle.current = newTitle;
-    queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, title: newTitle } : oldData);
     if (titleTimeout.current) clearTimeout(titleTimeout.current);
     titleTimeout.current = setTimeout(flushTitleChange, 1500);
   };
@@ -1670,6 +1672,9 @@ export function useBucketDetailState() {
     if (lastSavedDesc.current !== null && descToSave.trim() === (lastSavedDesc.current || '').trim()) return;
 
     lastSavedDesc.current = descToSave.trim();
+    queryClient.setQueryData(['bucketDetail', id], (oldData: any) =>
+      oldData ? { ...oldData, description: descToSave.trim() } : oldData
+    );
     const { error } = await supabase.from('buckets').update({ description: descToSave.trim() }).eq('id', id);
     if (!error) {
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
@@ -1679,10 +1684,24 @@ export function useBucketDetailState() {
 
   const handleDescriptionChange = (newDesc: string) => {
     pendingDesc.current = newDesc;
-    queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, description: newDesc } : oldData);
     if (descTimeout.current) clearTimeout(descTimeout.current);
     descTimeout.current = setTimeout(flushDescriptionChange, 1500);
   };
+
+  useEffect(() => {
+    return () => {
+      if (titleTimeout.current) {
+        clearTimeout(titleTimeout.current);
+        titleTimeout.current = null;
+        void flushTitleChange();
+      }
+      if (descTimeout.current) {
+        clearTimeout(descTimeout.current);
+        descTimeout.current = null;
+        void flushDescriptionChange();
+      }
+    };
+  }, []);
 
   const handleAddSubtask = async () => {
     const text = newSubtaskText.trim();
