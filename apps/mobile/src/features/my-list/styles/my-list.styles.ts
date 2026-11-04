@@ -222,6 +222,7 @@ export const styles = themedStyleSheet({
       web: {
         width: 'calc(50% - 7px)',
         aspectRatio: 1 / 1.3,
+        maxHeight: 320,
       } as any,
       default: {
         width: (SCREEN_WIDTH - 40 - 14) / 2,
@@ -230,11 +231,23 @@ export const styles = themedStyleSheet({
     }),
     borderRadius: 14,
     overflow: 'hidden',
+    position: 'relative',
   },
   galleryCardSingle: {
-    width: '100%',
-    height: (SCREEN_WIDTH - 40) * 0.85,
-    marginBottom: 14,
+    ...Platform.select({
+      web: {
+        width: '100%',
+        aspectRatio: 16 / 9,
+        maxHeight: 280,
+        marginBottom: 14,
+      } as any,
+      default: {
+        width: '100%',
+        height: (SCREEN_WIDTH - 40) * 0.85,
+        marginBottom: 14,
+      },
+    }),
+    position: 'relative',
   },
   galleryTopBadges: {
     position: 'absolute',

@@ -571,6 +571,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     overflow: 'hidden',
     borderWidth: 1,
+    position: 'relative',
   },
   galleryCover: {
     width: '100%',
@@ -578,6 +579,9 @@ const styles = StyleSheet.create({
     position: 'relative',
     justifyContent: 'space-between',
     padding: 10,
+    ...Platform.select({
+      web: { maxHeight: 260 } as any,
+    }),
   },
   galleryHeaderRow: {
     flexDirection: 'row',

@@ -142,6 +142,7 @@ function TaskBentoCardComponent({
               flexShrink: 0,
               backgroundColor: c.surfaceSunken,
               opacity: isCompleted ? 0.55 : 1,
+              position: 'relative',
             }}
           >
             <BucketCover

@@ -172,8 +172,8 @@ export const styles = themedStyleSheet({
     backgroundColor: '#151515', padding: 10, paddingRight: 16,
     flexDirection: 'row', alignItems: 'center', gap: 14,
   },
-  taskThumbContainer: { width: 56, height: 56, borderRadius: 14, overflow: 'hidden' },
-  taskThumb: { flex: 1 },
+  taskThumbContainer: { width: 56, height: 56, borderRadius: 14, overflow: 'hidden', position: 'relative' },
+  taskThumb: { flex: 1, position: 'relative' },
   taskContent: { flex: 1, justifyContent: 'center' },
   taskTitle: {
     fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 18, lineHeight: 22, color: '#F3EEE3',
@@ -213,6 +213,10 @@ export const styles = themedStyleSheet({
   galleryCard: {
     width: '48.5%', aspectRatio: 1 / 1.3, borderRadius: 14, overflow: 'hidden',
     backgroundColor: '#151515', borderWidth: 1, borderColor: '#262626',
+    position: 'relative',
+    ...Platform.select({
+      web: { maxHeight: 320 } as any,
+    }),
   },
   galleryTopBadges: {
     position: 'absolute', top: 8, left: 8, right: 8,

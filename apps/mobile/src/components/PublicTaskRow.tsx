@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: 12,
   },
-  thumb: { width: 56, height: 56, borderRadius: 10 },
+  thumb: { width: 56, height: 56, borderRadius: 10, overflow: 'hidden', position: 'relative' },
   content: { flex: 1, gap: 3 },
   title: { fontFamily: fontFamily.serif, fontSize: 16, lineHeight: 22 },
   meta: { fontFamily: fontFamily.regular, fontSize: 13 },
@@ -272,10 +272,16 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
+    position: 'relative',
   },
   galleryCover: {
     width: '100%',
     aspectRatio: 0.85,
+    overflow: 'hidden',
+    position: 'relative',
+    ...Platform.select({
+      web: { maxHeight: 260 } as any,
+    }),
   },
   galleryTopChip: {
     position: 'absolute',

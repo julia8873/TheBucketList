@@ -745,11 +745,15 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: 1,
+    position: 'relative',
   },
   galleryCover: {
     width: '100%',
     aspectRatio: 1 / 1.3,
     position: 'relative',
+    ...Platform.select({
+      web: { maxHeight: 320 } as any,
+    }),
   },
   galleryHeaderRow: {
     position: 'absolute',

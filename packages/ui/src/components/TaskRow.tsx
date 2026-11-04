@@ -220,6 +220,7 @@ const styles = StyleSheet.create({
   thumbnailDense: {
     width: 44,
     height: 44,
+    position: 'relative',
   },
   thumbnailCompleted: {
     opacity: 0.45,
@@ -233,6 +234,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     flexShrink: 0,
+    position: 'relative',
   },
   thumbnailImg: {
     width: '100%',

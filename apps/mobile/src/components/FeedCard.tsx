@@ -588,10 +588,15 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: 1,
+    position: 'relative',
   },
   galleryCover: {
     width: '100%',
     aspectRatio: 1 / 1.3,
+    position: 'relative',
+    ...Platform.select({
+      web: { maxHeight: 320 } as any,
+    }),
   },
   galleryTopBadges: {
     position: 'absolute',
@@ -714,6 +719,7 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 10,
     overflow: 'hidden',
+    position: 'relative',
   },
   compactInfo: {
     flex: 1,

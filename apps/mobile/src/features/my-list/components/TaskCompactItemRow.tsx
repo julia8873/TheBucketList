@@ -478,6 +478,7 @@ const localStyles = themedStyleSheet({
     borderRadius: 8,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
+    position: 'relative',
     marginRight: 8,
   },
   title: {

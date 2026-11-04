@@ -45,7 +45,7 @@ const PresetArt = memo(function PresetArt({
       {preset.image ? (
         <ExpoImage
           source={preset.image}
-          style={StyleSheet.absoluteFill}
+          style={[StyleSheet.absoluteFill, styles.coverImage]}
           contentFit="cover"
           cachePolicy="memory-disk"
         />
@@ -124,7 +124,7 @@ function BucketCoverComponent({
       {imageUri && (
         <ExpoImage
           source={{ uri: imageUri }}
-          style={StyleSheet.absoluteFill}
+          style={[StyleSheet.absoluteFill, styles.coverImage]}
           contentFit="cover"
           cachePolicy="memory-disk"
           transition={150}
@@ -140,6 +140,12 @@ export const BucketCover = memo(BucketCoverComponent);
 const styles = themedStyleSheet({
   container: {
     overflow: 'hidden',
+    position: 'relative',
+  },
+  coverImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
   },
   circle: {
     position: 'absolute',

@@ -265,6 +265,7 @@ export const styles = themedStyleSheet({
     height: 56,
     borderRadius: 14,
     overflow: 'hidden',
+    position: 'relative',
   },
   taskThumb: {
     flex: 1,
