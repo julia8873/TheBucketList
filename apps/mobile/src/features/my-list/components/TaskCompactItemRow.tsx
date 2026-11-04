@@ -75,12 +75,15 @@ function TaskCompactItemRowComponent({
   const subtasksDone = item.item_subtasks?.filter((s: any) => s.done).length || 0;
   const counterTarget = (item).counter_target ?? 0;
   const counterCount = (item).counter_count ?? 0;
+  const counterLabel = item.counter_label?.trim() || t('bucket.counter_default_label', { defaultValue: 'counts' });
 
   const progressText =
     subtasksTotal > 0
       ? `${subtasksDone}/${subtasksTotal}`
       : counterTarget > 0
-      ? `${counterCount}/${counterTarget}`
+      ? `${counterCount}/${counterTarget} ${counterLabel}`
+      : counterCount > 0
+      ? `${counterCount} ${counterLabel}`
       : null;
 
   const itemPriority = item.priority || 'medium';

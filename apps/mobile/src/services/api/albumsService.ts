@@ -18,6 +18,10 @@ export interface TaskItem {
   position?: number | null;
   stepsTotal?: number;
   stepsCompleted?: number;
+  counterCount?: number;
+  counterTarget?: number | null;
+  counterLabel?: string | null;
+  counterEnabled?: boolean;
   location?: string;
   /** Valor para `BucketCover` (foto elegida/última, portada o null = degradado automático). */
   imageValue?: string | null;
@@ -58,7 +62,7 @@ export const albumsService = {
     if (id === 'unassigned') {
       const selectCols = `
           id, title, deadline, created_at, completed_at, cover_image, thumbnail_mode, thumbnail_photo_id, status, priority,
-          category_id, counter_count, counter_target,
+          category_id, counter_count, counter_target, counter_label, counter_enabled,
           categories ( name_es, color, slug ),
           item_subtasks ( id, done ),
           bucket_photos ( id, storage_path, thumb_path, created_at, completed_at, title ),
@@ -99,13 +103,12 @@ export const albumsService = {
         const cat = b.categories;
         const subtasks = b.item_subtasks as any[];
         
-        let stepsTotal = subtasks ? subtasks.length : 0;
-        let stepsCompleted = subtasks ? subtasks.filter(s => s.done).length : 0;
-        
-        if (stepsTotal === 0 && b.counter_target && b.counter_target > 0) {
-           stepsTotal = b.counter_target;
-           stepsCompleted = b.counter_count || 0;
-        }
+        const stepsTotal = subtasks ? subtasks.length : 0;
+        const stepsCompleted = subtasks ? subtasks.filter(s => s.done).length : 0;
+        const counterCount = b.counter_count ?? 0;
+        const counterTarget = b.counter_target ?? null;
+        const counterLabel = b.counter_label ?? null;
+        const counterEnabled = b.counter_enabled ?? (counterTarget !== null || counterCount > 0);
 
         return {
           id: b.id,
@@ -122,6 +125,10 @@ export const albumsService = {
           priority: b.priority || 'medium',
           stepsTotal,
           stepsCompleted,
+          counterCount,
+          counterTarget,
+          counterLabel,
+          counterEnabled,
         };
       });
 
@@ -184,7 +191,7 @@ export const albumsService = {
         .from('buckets')
         .select(`
           id, title, deadline, created_at, completed_at, cover_image, thumbnail_mode, thumbnail_photo_id, status, priority,
-          category_id, counter_count, counter_target,
+          category_id, counter_count, counter_target, counter_label, counter_enabled,
           categories ( name_es, color, slug ),
           item_subtasks ( id, done ),
           bucket_photos ( id, storage_path, thumb_path, created_at, completed_at, title )
@@ -214,14 +221,12 @@ export const albumsService = {
         const cat = b.categories as any;
         const subtasks = b.item_subtasks as any[];
         
-        let stepsTotal = subtasks ? subtasks.length : 0;
-        let stepsCompleted = subtasks ? subtasks.filter(s => s.done).length : 0;
-        
-        // Use counter if it's not a list of subtasks and has a target
-        if (stepsTotal === 0 && b.counter_target && b.counter_target > 0) {
-           stepsTotal = b.counter_target;
-           stepsCompleted = b.counter_count || 0;
-        }
+        const stepsTotal = subtasks ? subtasks.length : 0;
+        const stepsCompleted = subtasks ? subtasks.filter(s => s.done).length : 0;
+        const counterCount = b.counter_count ?? 0;
+        const counterTarget = b.counter_target ?? null;
+        const counterLabel = b.counter_label ?? null;
+        const counterEnabled = b.counter_enabled ?? (counterTarget !== null || counterCount > 0);
 
         return {
           id: b.id,
@@ -238,6 +243,10 @@ export const albumsService = {
           priority: b.priority || 'medium',
           stepsTotal,
           stepsCompleted,
+          counterCount,
+          counterTarget,
+          counterLabel,
+          counterEnabled,
           tags: tagsByTask.get(b.id) || [],
         };
       });

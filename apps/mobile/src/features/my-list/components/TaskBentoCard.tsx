@@ -64,11 +64,14 @@ function TaskBentoCardComponent({
   const subtasksTotal = item.item_subtasks?.length || 0;
   const subtasksDone = item.item_subtasks?.filter((s: any) => s.done).length || 0;
   const counterTarget = item.counter_target ?? 0;
+  const counterLabel = item.counter_label?.trim() || t('bucket.counter_default_label', { defaultValue: 'counts' });
   const progressText =
     subtasksTotal > 0
       ? `${subtasksDone}/${subtasksTotal}`
       : counterTarget > 0
-      ? `${item.counter_count ?? 0}/${counterTarget}`
+      ? `${item.counter_count ?? 0}/${counterTarget} ${counterLabel}`
+      : (item.counter_count ?? 0) > 0
+      ? `${item.counter_count} ${counterLabel}`
       : null;
 
   const priority = item.priority || 'medium';

@@ -34,6 +34,12 @@ function buildMeta(bucket: any, t: (key: any, options?: any) => string, locale: 
     }
   } else if (subtasks.length > 0) {
     detail = t('tasks.steps_count', { done, total: subtasks.length });
+  } else if (bucket.counter_target && bucket.counter_target > 0) {
+    const label = bucket.counter_label?.trim() || t('bucket.counter_default_label', { defaultValue: 'counts' });
+    detail = `${bucket.counter_count ?? 0} / ${bucket.counter_target} ${label}`;
+  } else if (bucket.counter_count && bucket.counter_count > 0) {
+    const label = bucket.counter_label?.trim() || t('bucket.counter_default_label', { defaultValue: 'counts' });
+    detail = `${bucket.counter_count} ${label}`;
   } else if (bucket.location_text) {
     detail = bucket.location_text;
   } else if (bucket.deadline) {

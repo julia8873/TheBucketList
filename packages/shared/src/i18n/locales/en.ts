@@ -313,6 +313,7 @@ const en = {
     counter_target: 'Target',
     counter_add: 'Add counter',
     counter_desc: 'Track repetitions, miles, books…',
+    counter_default_label: 'counts',
     photos_title: 'PHOTOS',
     sort_by: 'Sort by:',
     sort_date: 'Date',

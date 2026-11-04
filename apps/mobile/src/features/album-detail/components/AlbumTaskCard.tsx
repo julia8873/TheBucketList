@@ -31,6 +31,12 @@ function getSubTitle(task: TaskItem, t?: (k: any, o?: any) => string): string {
   if (cat) parts.push(cat);
   if (task.stepsTotal && task.stepsTotal > 0) {
     parts.push(t ? t('tasks.steps_count', { done: task.stepsCompleted ?? 0, total: task.stepsTotal }) : `${task.stepsCompleted ?? 0} de ${task.stepsTotal} pasos`);
+  } else if (task.counterTarget && task.counterTarget > 0) {
+    const label = task.counterLabel?.trim() || (t ? t('bucket.counter_default_label', { defaultValue: 'counts' }) : 'counts');
+    parts.push(`${task.counterCount ?? 0} / ${task.counterTarget} ${label}`);
+  } else if (task.counterCount && task.counterCount > 0) {
+    const label = task.counterLabel?.trim() || (t ? t('bucket.counter_default_label', { defaultValue: 'counts' }) : 'counts');
+    parts.push(`${task.counterCount} ${label}`);
   } else if (task.location) {
     parts.push(task.location);
   }
@@ -332,15 +338,26 @@ export function AlbumTaskCard({
             })}
           </Text>
         )}
-        {!isDone && task.stepsTotal !== undefined && task.stepsTotal > 0 && (
-          <View style={styles.taskStepsTrack}>
-            <View
-              style={[
-                styles.taskStepsFill,
-                { width: `${Math.round(((task.stepsCompleted ?? 0) / task.stepsTotal) * 100)}%` },
-              ]}
-            />
-          </View>
+        {!isDone && (
+          (task.stepsTotal !== undefined && task.stepsTotal > 0) ? (
+            <View style={styles.taskStepsTrack}>
+              <View
+                style={[
+                  styles.taskStepsFill,
+                  { width: `${Math.round(((task.stepsCompleted ?? 0) / task.stepsTotal) * 100)}%` },
+                ]}
+              />
+            </View>
+          ) : (task.counterTarget !== undefined && task.counterTarget !== null && task.counterTarget > 0) ? (
+            <View style={styles.taskStepsTrack}>
+              <View
+                style={[
+                  styles.taskStepsFill,
+                  { width: `${Math.min(100, Math.round(((task.counterCount ?? 0) / task.counterTarget) * 100))}%` },
+                ]}
+              />
+            </View>
+          ) : null
         )}
         <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 5 }}>
           {priorityBadge}

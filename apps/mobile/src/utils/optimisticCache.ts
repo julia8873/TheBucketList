@@ -312,6 +312,10 @@ export function applyAddToAlbum(qc: QueryClient, taskIds: string[], albumId: str
         priority: b.priority || 'medium',
         stepsTotal: subtasks.length,
         stepsCompleted: subtasks.filter((s: any) => s.done).length,
+        counterCount: b.counter_count ?? 0,
+        counterTarget: b.counter_target ?? null,
+        counterLabel: b.counter_label ?? null,
+        counterEnabled: b.counter_enabled ?? false,
         tags: [],
       });
     });

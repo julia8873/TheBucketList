@@ -1505,6 +1505,15 @@ export function useBucketDetailState() {
 
   const updateCounter = async (patch: Record<string, any>) => {
     queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, ...patch } : oldData);
+    patchTasks(queryClient, [id], {
+      bucket: patch,
+      task: {
+        ...(patch.counter_count !== undefined ? { counterCount: patch.counter_count } : {}),
+        ...(patch.counter_target !== undefined ? { counterTarget: patch.counter_target } : {}),
+        ...(patch.counter_label !== undefined ? { counterLabel: patch.counter_label } : {}),
+        ...(patch.counter_enabled !== undefined ? { counterEnabled: patch.counter_enabled } : {}),
+      },
+    });
 
     const { error } = await supabase.from('buckets').update(patch).eq('id', id);
     if (error) {
@@ -1513,15 +1522,22 @@ export function useBucketDetailState() {
       return;
     }
     void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+    void queryClient.invalidateQueries({ queryKey: ['album'] });
+    void queryClient.invalidateQueries({ queryKey: ['albums'] });
   };
 
   const changeCounter = (delta: number) => {
     const current = queryClient.getQueryData<any>(['bucketDetail', id])?.counter_count ?? 0;
-    void updateCounter({ counter_count: Math.max(0, current + delta) });
+    const nextVal = Math.max(0, current + delta);
+    void updateCounter({ counter_count: nextVal });
   };
 
   const handleCounterCountChange = (n: number) => {
     queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, counter_count: n } : oldData);
+    patchTasks(queryClient, [id], {
+      bucket: { counter_count: n },
+      task: { counterCount: n },
+    });
     if (counterCountTimeout.current) clearTimeout(counterCountTimeout.current);
     counterCountTimeout.current = setTimeout(() => {
       void updateCounter({ counter_count: n });
@@ -1529,10 +1545,15 @@ export function useBucketDetailState() {
   };
 
   const handleCounterLabelChange = (text: string) => {
+    const trimmed = text.trim() || null;
     queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, counter_label: text } : oldData);
+    patchTasks(queryClient, [id], {
+      bucket: { counter_label: trimmed },
+      task: { counterLabel: trimmed },
+    });
     if (counterLabelTimeout.current) clearTimeout(counterLabelTimeout.current);
     counterLabelTimeout.current = setTimeout(() => {
-      void supabase.from('buckets').update({ counter_label: text.trim() || null }).eq('id', id);
+      void updateCounter({ counter_label: trimmed });
     }, 500);
   };
 
@@ -1541,11 +1562,13 @@ export function useBucketDetailState() {
     const value = Number.isFinite(n) && n > 0 ? n : null;
 
     queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, counter_target: value } : oldData);
+    patchTasks(queryClient, [id], {
+      bucket: { counter_target: value },
+      task: { counterTarget: value },
+    });
     if (counterTargetTimeout.current) clearTimeout(counterTargetTimeout.current);
     counterTargetTimeout.current = setTimeout(() => {
-      void supabase.from('buckets').update({ counter_target: value }).eq('id', id).then(({ error }) => {
-        if (error) console.error('Failed to update counter_target:', error);
-      });
+      void updateCounter({ counter_target: value });
     }, 500);
   };
 
@@ -1760,6 +1783,9 @@ export function useBucketDetailState() {
       Object.keys(pendingSubtasks.current).forEach((stId) => {
         void flushSubtaskChange(stId);
       });
+      if (counterCountTimeout.current) clearTimeout(counterCountTimeout.current);
+      if (counterLabelTimeout.current) clearTimeout(counterLabelTimeout.current);
+      if (counterTargetTimeout.current) clearTimeout(counterTargetTimeout.current);
     };
   }, []);
 

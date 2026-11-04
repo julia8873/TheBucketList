@@ -39,6 +39,33 @@ export function BucketCounterSection({
   updateCounter,
 }: BucketCounterSectionProps) {
   const { t } = useTranslation();
+
+  const [localLabel, setLocalLabel] = React.useState(bucket.counter_label || '');
+  const [localCount, setLocalCount] = React.useState(String(bucket.counter_count ?? 0));
+  const [localTarget, setLocalTarget] = React.useState(bucket.counter_target ? String(bucket.counter_target) : '');
+
+  const isLabelFocused = React.useRef(false);
+  const isCountFocused = React.useRef(false);
+  const isTargetFocused = React.useRef(false);
+
+  React.useEffect(() => {
+    if (!isLabelFocused.current) {
+      setLocalLabel(bucket.counter_label || '');
+    }
+  }, [bucket.counter_label]);
+
+  React.useEffect(() => {
+    if (!isCountFocused.current) {
+      setLocalCount(String(bucket.counter_count ?? 0));
+    }
+  }, [bucket.counter_count]);
+
+  React.useEffect(() => {
+    if (!isTargetFocused.current) {
+      setLocalTarget(bucket.counter_target ? String(bucket.counter_target) : '');
+    }
+  }, [bucket.counter_target]);
+
   if (!bucket.counter_enabled && !canEdit) return null;
 
   return (
@@ -91,8 +118,18 @@ export function BucketCounterSection({
               <View style={{ flex: 1, paddingRight: 12 }}>
                 {canEdit ? (
                   <TextInput
-                    defaultValue={bucket.counter_label || ''}
-                    onChangeText={handleCounterLabelChange}
+                    value={localLabel}
+                    onFocus={() => {
+                      isLabelFocused.current = true;
+                    }}
+                    onBlur={() => {
+                      isLabelFocused.current = false;
+                      handleCounterLabelChange(localLabel);
+                    }}
+                    onChangeText={(text) => {
+                      setLocalLabel(text);
+                      handleCounterLabelChange(text);
+                    }}
                     placeholder={t('bucket.counter_what')}
                     placeholderTextColor={theme.colors.foregroundMuted}
                     style={{ padding: 0, color: theme.colors.foregroundMuted, marginBottom: 4 }}
@@ -105,12 +142,22 @@ export function BucketCounterSection({
 
                 {canEdit ? (
                   <TextInput
-                    defaultValue={String(bucket.counter_count ?? 0)}
+                    value={localCount}
+                    onFocus={() => {
+                      isCountFocused.current = true;
+                    }}
+                    onBlur={() => {
+                      isCountFocused.current = false;
+                      const n = parseInt(localCount.replace(/[^0-9]/g, ''), 10);
+                      const safe = Number.isNaN(n) ? 0 : n;
+                      setLocalCount(String(safe));
+                      handleCounterCountChange(safe);
+                    }}
                     onChangeText={(text) => {
-                      const n = parseInt(text.replace(/[^0-9]/g, ''), 10);
-                      if (!Number.isNaN(n)) {
-                        handleCounterCountChange(n);
-                      }
+                      setLocalCount(text);
+                      const clean = text.replace(/[^0-9]/g, '');
+                      const n = parseInt(clean, 10);
+                      handleCounterCountChange(Number.isNaN(n) ? 0 : n);
                     }}
                     keyboardType="number-pad"
                     style={{
@@ -183,8 +230,18 @@ export function BucketCounterSection({
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       <Typography variant="body" color={theme.colors.foreground}>{t('bucket.counter_target')}</Typography>
                       <TextInput
-                        defaultValue={bucket.counter_target ? String(bucket.counter_target) : ''}
-                        onChangeText={handleCounterTargetChange}
+                        value={localTarget}
+                        onFocus={() => {
+                          isTargetFocused.current = true;
+                        }}
+                        onBlur={() => {
+                          isTargetFocused.current = false;
+                          handleCounterTargetChange(localTarget);
+                        }}
+                        onChangeText={(text) => {
+                          setLocalTarget(text);
+                          handleCounterTargetChange(text);
+                        }}
                         keyboardType="number-pad"
                         placeholder="0"
                         placeholderTextColor={theme.colors.foregroundMuted}

@@ -92,6 +92,12 @@ function TaskItemRowComponent({
     meta = t('tasks.expired_days_ago', { days: daysAgo, defaultValue: `Caducó hace ${daysAgo} días` });
   } else if (showSubtasks && subtasksTotal > 0) {
     meta = t('tasks.steps_count', { done: subtasksDone, total: subtasksTotal, defaultValue: `${subtasksDone} de ${subtasksTotal} pasos` });
+  } else if (showSubtasks && item.counter_target && item.counter_target > 0) {
+    const label = item.counter_label?.trim() || t('bucket.counter_default_label', { defaultValue: 'counts' });
+    meta = `${item.counter_count ?? 0} / ${item.counter_target} ${label}`;
+  } else if (showSubtasks && item.counter_count && item.counter_count > 0) {
+    const label = item.counter_label?.trim() || t('bucket.counter_default_label', { defaultValue: 'counts' });
+    meta = `${item.counter_count} ${label}`;
   } else if (showCategoryLoc) {
     const isEn = i18n.language?.startsWith('en');
     const categoryName = isEn

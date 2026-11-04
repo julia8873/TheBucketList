@@ -79,7 +79,11 @@ function TaskGalleryItemCardComponent({
     if (subtasksTotal > 0) {
       metaParts.push(`${subtasksDone}/${subtasksTotal} ${t('common.steps', { defaultValue: 'pasos' })}`);
     } else if (item.counter_target > 0) {
-      metaParts.push(`${item.counter_count ?? 0}/${item.counter_target}`);
+      const label = item.counter_label?.trim() || t('bucket.counter_default_label', { defaultValue: 'counts' });
+      metaParts.push(`${item.counter_count ?? 0}/${item.counter_target} ${label}`);
+    } else if ((item.counter_count ?? 0) > 0) {
+      const label = item.counter_label?.trim() || t('bucket.counter_default_label', { defaultValue: 'counts' });
+      metaParts.push(`${item.counter_count} ${label}`);
     }
   }
   if (showCategoryLoc) {
