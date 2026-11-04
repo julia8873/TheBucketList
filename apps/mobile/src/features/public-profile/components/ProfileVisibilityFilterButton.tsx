@@ -8,7 +8,7 @@ import {
   StyleSheet,
   Platform,
 } from 'react-native';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '@bucketlist/shared';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Globe, Users, ChevronDown, Check, Eye } from 'lucide-react-native';
 import { useTheme, fontFamily } from '@bucketlist/ui';
@@ -369,3 +369,4 @@ const styles = themedStyleSheet({
     fontSize: 12,
   },
 });
+
