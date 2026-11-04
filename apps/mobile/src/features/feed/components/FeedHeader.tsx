@@ -206,7 +206,15 @@ export function FeedHeader({
             returnKeyType="search"
             autoFocus
           />
-          {activeSearchText.length > 0 ? (
+          {/* Acciones a la derecha del input: solicitudes y botón X para cerrar el buscador */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {homeTab === 'friends' && requestCount > 0 && (
+              <Pressable onPress={() => onOpenFriends('requests')} hitSlop={8} accessibilityRole="button">
+                <Text style={[styles.requests, { color: theme.colors.primary }]}>
+                  {requestCount} {requestCount === 1 ? t('feed.friend_request_single') : t('feed.friend_request_plural')}
+                </Text>
+              </Pressable>
+            )}
             <Pressable
               onPress={() => {
                 if (homeTab === 'friends') onChangeFriendsSearch?.('');
@@ -215,17 +223,11 @@ export function FeedHeader({
               }}
               hitSlop={8}
               accessibilityRole="button"
-              accessibilityLabel={t('common.clear_search', { defaultValue: 'Borrar búsqueda' })}
+              accessibilityLabel={t('common.close', { defaultValue: 'Cerrar' })}
             >
               <X size={18} color={theme.colors.foregroundMuted} strokeWidth={2} />
             </Pressable>
-          ) : (homeTab === 'friends' && requestCount > 0) ? (
-            <Pressable onPress={() => onOpenFriends('requests')} hitSlop={8} accessibilityRole="button">
-              <Text style={[styles.requests, { color: theme.colors.primary }]}>
-                {requestCount} {requestCount === 1 ? t('feed.friend_request_single') : t('feed.friend_request_plural')}
-              </Text>
-            </Pressable>
-          ) : null}
+          </View>
         </View>
       )}
       {!isSearching && homeTab === 'explore' ? (

@@ -683,19 +683,18 @@ export default function MyListScreen() {
             returnKeyType="search"
             autoFocus={searchOpen && state.searchQuery.length === 0}
           />
-          {state.searchQuery.length > 0 && (
-            <Pressable
-              onPress={() => {
-                state.setSearchQuery('');
-                state.setIsSearching(false);
-              }}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.clear_search', { defaultValue: 'Borrar búsqueda' })}
-            >
-              <X size={18} color={theme.colors.foregroundMuted} strokeWidth={2} />
-            </Pressable>
-          )}
+          <Pressable
+            onPress={() => {
+              state.setSearchQuery('');
+              state.setIsSearching(false);
+              setSearchOpen(false);
+            }}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close', { defaultValue: 'Cerrar' })}
+          >
+            <X size={18} color={theme.colors.foregroundMuted} strokeWidth={2} />
+          </Pressable>
         </View>
       )}
     </View>
