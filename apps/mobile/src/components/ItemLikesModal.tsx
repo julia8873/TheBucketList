@@ -145,7 +145,7 @@ function ItemLikesModalContent({
               <View style={styles.headerIconCircle}>
                 <Heart size={18} color={HEART_COLOR} fill={HEART_COLOR} />
               </View>
-              <View style={{ alignItems: 'center' }}>
+              <View style={{ alignItems: 'center', flexShrink: 1, minWidth: 0, maxWidth: '82%' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text
                     style={[
@@ -168,8 +168,9 @@ function ItemLikesModalContent({
                       { color: theme.dark ? 'rgba(255,255,255,0.5)' : theme.colors.foregroundMuted },
                     ]}
                     numberOfLines={1}
+                    ellipsizeMode="tail"
                   >
-                    {title}
+                    {title.length > 55 ? `${title.slice(0, 52).trim()}...` : title}
                   </Text>
                 ) : null}
               </View>
@@ -345,6 +346,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
+    flex: 1,
+    minWidth: 0,
+    paddingHorizontal: 12,
   },
   headerIconCircle: {
     width: 36,
@@ -366,6 +370,7 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.regular,
     marginTop: 1,
     textAlign: 'center',
+    maxWidth: '100%',
   },
   countBadge: {
     paddingHorizontal: 7,

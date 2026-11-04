@@ -230,7 +230,7 @@ function TaskCommentsModalContent({
               <View style={styles.headerIconCircle}>
                 <MessageCircle size={18} color={gold[400]} />
               </View>
-              <View style={{ alignItems: 'center' }}>
+              <View style={{ alignItems: 'center', flexShrink: 1, minWidth: 0, maxWidth: '82%' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text style={[styles.headerTitle, { color: theme.colors.foreground }]}>{t('comments.modal_title')}</Text>
                   {comments.length > 0 && (
@@ -240,8 +240,12 @@ function TaskCommentsModalContent({
                   )}
                 </View>
                 {effectiveTitle ? (
-                  <Text style={[styles.headerSubtitle, { color: theme.colors.foregroundMuted, textAlign: 'center' }]} numberOfLines={1}>
-                    {effectiveTitle}
+                  <Text
+                    style={[styles.headerSubtitle, { color: theme.colors.foregroundMuted, textAlign: 'center' }]}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {effectiveTitle.length > 55 ? `${effectiveTitle.slice(0, 52).trim()}...` : effectiveTitle}
                   </Text>
                 ) : null}
               </View>
@@ -505,6 +509,9 @@ const styles = themedStyleSheet({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
+    flex: 1,
+    minWidth: 0,
+    paddingHorizontal: 12,
   },
   headerIconCircle: {
     width: 36,
@@ -527,6 +534,7 @@ const styles = themedStyleSheet({
     fontSize: 12,
     fontFamily: fontFamily.regular,
     marginTop: 1,
+    maxWidth: '100%',
   },
   countBadge: {
     paddingHorizontal: 7,
