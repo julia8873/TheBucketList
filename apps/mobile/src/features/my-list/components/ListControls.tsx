@@ -169,18 +169,22 @@ export function ListControlsBar({
         marginBottom: 12,
       }}
     >
-      <Text
-        numberOfLines={1}
-        style={{
-          flexShrink: 1,
-          color: muted,
-          fontFamily: 'Inter_600SemiBold',
-          fontSize: 11,
-          letterSpacing: 0.9,
-        }}
-      >
-        {countLabel}
-      </Text>
+      {countLabel ? (
+        <Text
+          numberOfLines={1}
+          style={{
+            flexShrink: 1,
+            color: muted,
+            fontFamily: 'Inter_600SemiBold',
+            fontSize: 11,
+            letterSpacing: 0.9,
+          }}
+        >
+          {countLabel}
+        </Text>
+      ) : (
+        <View style={{ flex: 1 }} />
+      )}
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0 }}>
         {/* Modos de vista */}

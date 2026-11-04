@@ -87,16 +87,6 @@ export function TaskListHeaderControls({
   };
 
   const filtersCount = (filter !== 'all' ? 1 : 0) + (priorityFilter !== 'all' ? 1 : 0) + selectedTagIds.length;
-  const isFiltered = totalTasksCount !== undefined && totalTasksCount !== tasksCount;
-  const countLabel = isFiltered
-    ? t('my_list.tasks_count_filtered', {
-        count: tasksCount,
-        total: totalTasksCount,
-        defaultValue: `${tasksCount} de ${totalTasksCount} TAREAS`,
-      })
-    : tasksCount === 1
-    ? t('my_list.tasks_count_single', { count: tasksCount })
-    : t('my_list.tasks_count_plural', { count: tasksCount });
 
   const reset = () => {
     setFilter('all');
@@ -108,7 +98,7 @@ export function TaskListHeaderControls({
     <View>
       <ListControlsBar
         theme={theme}
-        countLabel={countLabel}
+        countLabel=""
         viewMode={taskViewMode}
         setViewMode={setTaskViewMode}
         isSelectionMode={isSelectionMode}
