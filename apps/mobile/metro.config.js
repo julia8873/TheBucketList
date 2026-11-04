@@ -49,31 +49,53 @@ const previousResolveRequest = config.resolver && config.resolver.resolveRequest
 config.resolver = {
   ...(config.resolver || {}),
   resolveRequest: (context, moduleName, platform) => {
+    // 1. Normalizar barras invertidas de Windows (\ -> /)
+    let normalized = (moduleName || '').replace(/\\/g, '/');
+
+    // 2. Si viene como './apps/mobile/...' o 'apps/mobile/...', limpiar a './...'
+    normalized = normalized.replace(/^(?:\.?\/)*apps\/mobile\//, './');
+
+    // 3. Forzar única instancia de React / React-DOM desde apps/mobile
     if (
-      moduleName === 'react' ||
-      moduleName.startsWith('react/') ||
-      moduleName === 'react-dom' ||
-      moduleName.startsWith('react-dom/')
+      normalized === 'react' ||
+      normalized.startsWith('react/') ||
+      normalized === 'react-dom' ||
+      normalized.startsWith('react-dom/')
     ) {
       return context.resolveRequest(
         { ...context, originModulePath: path.resolve(__dirname, 'package.json') },
-        moduleName,
+        normalized,
+        platform
+      );
+    }
+
+    // 4. Si es la entrada del proyecto (ej: '.\index', './index', 'index', 'index.js')
+    if (
+      normalized === './index' ||
+      normalized === './index.js' ||
+      normalized === 'index' ||
+      normalized === 'index.js'
+    ) {
+      return context.resolveRequest(
+        { ...context, originModulePath: path.resolve(__dirname, 'package.json') },
+        './index',
         platform
       );
     }
 
     try {
       if (previousResolveRequest) {
-        return previousResolveRequest(context, moduleName, platform);
+        return previousResolveRequest(context, normalized, platform);
       }
-      return context.resolveRequest(context, moduleName, platform);
+      return context.resolveRequest(context, normalized, platform);
     } catch (err) {
-      const cleaned = moduleName.replace(/^(?:\.?[\/\\])*apps[\/\\]mobile[\/\\]/, './');
-      if (cleaned !== moduleName) {
-        if (previousResolveRequest) {
-          return previousResolveRequest(context, cleaned, platform);
-        }
-        return context.resolveRequest(context, cleaned, platform);
+      if (normalized !== moduleName) {
+        try {
+          if (previousResolveRequest) {
+            return previousResolveRequest(context, moduleName, platform);
+          }
+          return context.resolveRequest(context, moduleName, platform);
+        } catch (_) {}
       }
       throw err;
     }
