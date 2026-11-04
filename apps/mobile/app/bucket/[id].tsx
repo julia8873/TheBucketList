@@ -361,6 +361,7 @@ export default function BucketDetailScreen() {
             onOpenDatePicker={(config) => state.setDatePickerConfig(config)}
             onRemoveCompletedAt={() => void state.handleRemoveCompletedAt()}
             onRemoveDeadline={() => void state.handleRemoveDeadline()}
+            onMarkCompleted={() => void state.handleChangeStatus('completed')}
             onOpenDriveModal={() => state.setDriveModalVisible(true)}
             onOpenDriveLink={() =>
               void openGoogleDriveLink({

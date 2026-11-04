@@ -1059,7 +1059,7 @@ export function useAlbumDetailState() {
     if (!canEdit) return;
     const nextCompleted = !task.isCompleted;
     const nextStatus = nextCompleted ? 'completed' : 'pending';
-    const nextCompletedAt = nextCompleted ? new Date().toISOString() : null;
+    const nextCompletedAt = nextCompleted ? (task.completedAt || null) : null;
 
     // Optimista: tarea + contador de progreso del álbum + listas, todo al instante.
     patchTasks(queryClient, [task.id], {
@@ -1090,7 +1090,6 @@ export function useAlbumDetailState() {
     const areAllCompleted = album.tasks.every((t) => t.isCompleted);
     const nextCompleted = !areAllCompleted;
     const nextStatus = nextCompleted ? 'completed' : 'pending';
-    const nextCompletedAt = nextCompleted ? new Date().toISOString() : null;
     const taskIds = album.tasks.map((t) => t.id);
 
     closeSheet();
@@ -1105,15 +1104,20 @@ export function useAlbumDetailState() {
     if (!confirmedToggle) return;
 
     patchTasks(queryClient, taskIds, {
-      bucket: { status: nextStatus, completed_at: nextCompletedAt },
-      task: { isCompleted: nextCompleted, completedAt: nextCompletedAt },
+      bucket: nextCompleted ? { status: nextStatus } : { status: nextStatus, completed_at: null },
+      task: nextCompleted ? { isCompleted: true } : { isCompleted: false, completedAt: null },
     });
 
     closeSheet();
 
+    const updatePayload: Record<string, any> = { status: nextStatus };
+    if (!nextCompleted) {
+      updatePayload.completed_at = null;
+    }
+
     const { error } = await supabase
       .from('buckets')
-      .update({ status: nextStatus, completed_at: nextCompletedAt })
+      .update(updatePayload)
       .in('id', taskIds);
 
     if (error) {

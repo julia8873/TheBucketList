@@ -237,7 +237,7 @@ export const bucketApi = {
       location_lat: payload.location_lat,
       location_lng: payload.location_lng,
       status: payload.status,
-      completed_at: payload.completed_at ? payload.completed_at.toISOString() : undefined,
+      completed_at: payload.completed_at === null ? null : payload.completed_at ? payload.completed_at.toISOString() : undefined,
       drive_url: payload.drive_url !== undefined ? payload.drive_url : undefined,
     };
 

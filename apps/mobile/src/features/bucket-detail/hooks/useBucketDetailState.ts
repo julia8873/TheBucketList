@@ -528,7 +528,7 @@ export function useBucketDetailState() {
     if (status !== 'completed') {
       patch.completed_at = null;
     } else {
-      patch.completed_at = bucket?.completed_at || new Date().toISOString();
+      patch.completed_at = bucket?.completed_at || null;
     }
     queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, ...patch } : oldData);
     // Refleja el estado al instante también en las listas y en los álbumes.
@@ -664,6 +664,22 @@ export function useBucketDetailState() {
   };
 
   const handleRemoveCompletedAt = async () => {
+    if (!bucket?.completed_at) {
+      Alert.alert(
+        t('bucket.mark_as_pending_title', { defaultValue: 'Marcar como pendiente' }),
+        t('bucket.mark_as_pending_msg', { defaultValue: '¿Deseas volver a marcar esta tarea como pendiente?' }),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('bucket.mark_pending', { defaultValue: 'Marcar como pendiente' }),
+            style: 'destructive',
+            onPress: () => void handleChangeStatus('pending'),
+          },
+        ]
+      );
+      return;
+    }
+
     Alert.alert(
       t('bucket.remove_completed_date_title'),
       t('bucket.remove_completed_date_msg'),

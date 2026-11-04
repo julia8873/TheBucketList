@@ -21,6 +21,7 @@ interface BucketMetaSectionProps {
   onOpenDriveModal?: () => void;
   onOpenDriveLink?: () => void;
   onRemoveDriveUrl?: () => void;
+  onMarkCompleted?: () => void;
 }
 
 export function BucketMetaSection({
@@ -35,6 +36,7 @@ export function BucketMetaSection({
   onOpenDriveModal,
   onOpenDriveLink,
   onRemoveDriveUrl,
+  onMarkCompleted,
 }: BucketMetaSectionProps) {
   const router = useRouter();
   const { t, i18n } = useTranslation();
@@ -87,7 +89,7 @@ export function BucketMetaSection({
       ) : null}
 
       {/* Fecha completada */}
-      {bucket.completed_at || bucket.status === 'completed' ? (
+      {bucket.completed_at ? (
         <View style={styles.metaRowBetween}>
           <Pressable
             style={styles.metaRowClickable}
@@ -96,7 +98,7 @@ export function BucketMetaSection({
               onOpenDatePicker({
                 visible: true,
                 type: 'completed_at',
-                date: new Date(bucket.completed_at || bucket.updated_at || new Date()),
+                date: new Date(bucket.completed_at),
               })
             }
             disabled={!canEdit}
@@ -104,7 +106,7 @@ export function BucketMetaSection({
             <CheckCircle2 color={gold[400]} size={16} strokeWidth={1.8} />
             <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText}>
               {t('bucket.completed_on', {
-                date: format(new Date(bucket.completed_at || bucket.updated_at || new Date()), t('bucket.date_format_long'), { locale: dateFnsLocale }),
+                date: format(new Date(bucket.completed_at), t('bucket.date_format_long'), { locale: dateFnsLocale }),
               })}
             </Typography>
           </Pressable>
@@ -118,22 +120,69 @@ export function BucketMetaSection({
             </Pressable>
           )}
         </View>
+      ) : bucket.status === 'completed' ? (
+        <View style={styles.metaRowBetween}>
+          <Pressable
+            style={styles.metaRowClickable}
+            onPress={() =>
+              canEdit &&
+              onOpenDatePicker({
+                visible: true,
+                type: 'completed_at',
+                date: new Date(),
+              })
+            }
+            disabled={!canEdit}
+          >
+            <CheckCircle2 color={gold[400]} size={16} strokeWidth={1.8} />
+            <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText}>
+              {t('bucket.status_completed', { defaultValue: 'Completada' })}
+            </Typography>
+            {canEdit && (
+              <Typography variant="caption" color={gold[400]} style={{ marginLeft: 8 }}>
+                {t('bucket.add_date_action', { defaultValue: '+ Añadir fecha' })}
+              </Typography>
+            )}
+          </Pressable>
+          {canEdit && (
+            <Pressable
+              onPress={onRemoveCompletedAt}
+              hitSlop={8}
+              style={styles.metaRemoveBtn}
+            >
+              <X color={theme.colors.foregroundMuted} size={14} />
+            </Pressable>
+          )}
+        </View>
       ) : canEdit ? (
-        <Pressable
-          style={styles.metaRowClickable}
-          onPress={() =>
-            onOpenDatePicker({
-              visible: true,
-              type: 'completed_at',
-              date: new Date(),
-            })
-          }
-        >
-          <CheckCircle2 color={gold[400]} size={16} strokeWidth={1.8} />
-          <Typography variant="body" color={gold[400]} style={styles.metaText}>
-            {t('bucket.add_completed_date')}
-          </Typography>
-        </Pressable>
+        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
+          {onMarkCompleted && (
+            <Pressable
+              style={[styles.metaRowClickable, { flex: 0 }]}
+              onPress={onMarkCompleted}
+            >
+              <CheckCircle2 color={gold[400]} size={16} strokeWidth={1.8} />
+              <Typography variant="body" color={gold[400]} style={styles.metaText}>
+                {t('bucket.mark_as_completed', { defaultValue: 'Marcar completada' })}
+              </Typography>
+            </Pressable>
+          )}
+          <Pressable
+            style={[styles.metaRowClickable, { flex: 0 }]}
+            onPress={() =>
+              onOpenDatePicker({
+                visible: true,
+                type: 'completed_at',
+                date: new Date(),
+              })
+            }
+          >
+            <Calendar color={gold[400]} size={15} strokeWidth={1.8} />
+            <Typography variant="body" color={gold[400]} style={styles.metaText}>
+              {t('bucket.complete_with_date', { defaultValue: '+ Con fecha' })}
+            </Typography>
+          </Pressable>
+        </View>
       ) : null}
 
       {/* Fecha límite */}

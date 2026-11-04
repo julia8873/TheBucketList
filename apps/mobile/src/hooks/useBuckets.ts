@@ -75,13 +75,11 @@ export function useUpdateBucket() {
       Object.entries(data as Record<string, any>).forEach(([k, v]) => {
         if (v !== undefined) patch[k] = v instanceof Date ? v.toISOString() : v;
       });
-      if (data.status === 'completed' && !(data as any).completed_at) {
-        patch.completed_at = new Date().toISOString();
-      }
       patchTasks(queryClient, [id], {
         bucket: patch,
         task: {
           ...(data.status !== undefined ? { isCompleted: data.status === 'completed' } : {}),
+          ...((data as any).completed_at !== undefined ? { completedAt: (data as any).completed_at ? ((data as any).completed_at instanceof Date ? (data as any).completed_at.toISOString() : (data as any).completed_at) : null } : {}),
           ...(data.title !== undefined ? { title: data.title } : {}),
           ...((data as any).priority !== undefined ? { priority: (data as any).priority } : {}),
           ...((data as any).cover_image !== undefined ? { imageValue: (data as any).cover_image } : {}),

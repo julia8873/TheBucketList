@@ -58,7 +58,7 @@ export const CalendarTab = React.forwardRef<ScrollView, CalendarTabProps>(functi
       let targetDate: string | null = null;
 
       if (item.status === 'completed') {
-        const d = item.completed_at || item.updated_at || item.created_at;
+        const d = item.completed_at;
         if (d) {
           try {
             targetDate = format(new Date(d), 'yyyy-MM-dd');
@@ -108,14 +108,16 @@ export const CalendarTab = React.forwardRef<ScrollView, CalendarTabProps>(functi
 
   const unscheduledTasks = useMemo(() => {
     return (buckets || []).filter(
-      (item: any) => item.status !== 'completed' && !item.deadline
+      (item: any) =>
+        (item.status !== 'completed' && !item.deadline) ||
+        (item.status === 'completed' && !item.completed_at)
     );
   }, [buckets]);
 
   const completedThisMonth = useMemo(() => {
     return (buckets || []).filter((b: any) => {
       if (b.status !== 'completed') return false;
-      const d = b.completed_at || b.updated_at;
+      const d = b.completed_at;
       if (!d) return false;
       try {
         return isSameMonth(new Date(d), currentDate);
