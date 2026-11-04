@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, TextInput } from 'react-native';
-import { Bell, Search, Users, X, Map, ChevronDown, SlidersHorizontal, Check, Sparkles } from 'lucide-react-native';
+import { Bell, Search, Users, X, Map, ListFilter, Check, Sparkles } from 'lucide-react-native';
 import { useTranslation } from '@bucketlist/shared';
-import { PageTitle, useTheme, gold, fontFamily } from '@bucketlist/ui';
+import { PageTitle, useTheme, gold, fontFamily, SegmentedControl } from '@bucketlist/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { TaskViewMode } from '../../../components/ViewModeSelector';
 import { ViewModeSelector } from '../../../components/ViewModeSelector';
@@ -90,107 +90,23 @@ export function FeedHeader({
       </View>
 
       {/* Segmented Control: Amigos | Explorar */}
-      <View
-        style={[
-          styles.toggleContainer,
-          {
-            backgroundColor: theme.dark ? '#161616' : '#EDE8DE',
-            borderColor: theme.colors.border,
-          },
-        ]}
-      >
-        <Pressable
-          style={[
-            styles.toggleBtn,
-            homeTab === 'friends' && { backgroundColor: theme.colors.primary },
+      <View style={styles.tabsContainer}>
+        <SegmentedControl
+          options={[
+            { key: 'friends', label: t('feed.tab_friends') },
+            { key: 'explore', label: t('feed.tab_explore') },
           ]}
-          onPress={() => onChangeHomeTab('friends')}
-          accessibilityRole="tab"
-          accessibilityState={{ selected: homeTab === 'friends' }}
-        >
-          <Text
-            style={[
-              styles.toggleText,
-              {
-                color: homeTab === 'friends' ? theme.colors.primaryForeground : theme.colors.foregroundMuted,
-                fontWeight: 'bold',
-                fontFamily: fontFamily.bold,
-              },
-            ]}
-          >
-            {t('feed.tab_friends')}
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[
-            styles.toggleBtn,
-            homeTab === 'explore' && { backgroundColor: theme.colors.primary },
-          ]}
-          onPress={() => onChangeHomeTab('explore')}
-          accessibilityRole="tab"
-          accessibilityState={{ selected: homeTab === 'explore' }}
-        >
-          <Text
-            style={[
-              styles.toggleText,
-              {
-                color: homeTab === 'explore' ? theme.colors.primaryForeground : theme.colors.foregroundMuted,
-                fontWeight: 'bold',
-                fontFamily: fontFamily.bold,
-              },
-            ]}
-          >
-            {t('feed.tab_explore')}
-          </Text>
-        </Pressable>
+          selected={homeTab}
+          onChange={(tab) => onChangeHomeTab(tab as 'friends' | 'explore')}
+        />
       </View>
 
-      {/* Barra de controles: Filtrar, Mapa, Buscador y Modo vista en una misma línea (como en mis tareas) */}
+      {/* Barra de controles: Modo vista, Mapa alargado, Buscador y Filtrar (mismo orden e iconos que en mi lista) */}
       <View style={styles.feedControlsRow}>
-        {/* Toggle desplegable a la izquierda */}
-        <Pressable
-          onPress={() => setFilterSheetVisible(true)}
-          accessibilityRole="button"
-          accessibilityLabel={t('feed.filter_sheet_title')}
-          style={[
-            styles.filterDropdownBtn,
-            {
-              backgroundColor: contentFilter !== 'todo'
-                ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.18)')
-                : theme.colors.surface,
-              borderColor: contentFilter !== 'todo' ? gold[400] : theme.colors.border,
-            },
-          ]}
-        >
-          <SlidersHorizontal
-            size={13}
-            color={contentFilter !== 'todo' ? gold[400] : theme.colors.foregroundMuted}
-            strokeWidth={2}
-          />
-          <Text
-            numberOfLines={1}
-            ellipsizeMode="tail"
-            style={[
-              styles.filterDropdownText,
-              { color: contentFilter !== 'todo' ? gold[400] : theme.colors.foreground },
-            ]}
-          >
-            {contentFilter === 'todo'
-              ? t('feed.filter_all')
-              : contentFilter === 'tareas'
-              ? t('feed.filter_tasks')
-              : contentFilter === 'albumes'
-              ? t('feed.filter_albums')
-              : t('feed.filter_collections')}
-          </Text>
-          <ChevronDown
-            size={12}
-            color={contentFilter !== 'todo' ? gold[400] : theme.colors.foregroundMuted}
-            strokeWidth={2}
-          />
-        </Pressable>
+        {/* Selector de vista (al inicio, como en mi lista) */}
+        <ViewModeSelector mode={viewMode} onChange={onChangeViewMode} style={{ flexShrink: 0 }} />
 
-        {/* Mapa */}
+        {/* Mapa (alargado, ocupando el espacio disponible) */}
         {onOpenMap ? (
           <Pressable
             onPress={onOpenMap}
@@ -202,9 +118,9 @@ export function FeedHeader({
               },
             ]}
             accessibilityRole="button"
-            accessibilityLabel="Ver en mapa"
+            accessibilityLabel={t('feed.map_btn')}
           >
-            <Map size={13} color={gold[400]} />
+            <Map size={14} color={gold[400]} />
             <Text
               numberOfLines={1}
               ellipsizeMode="tail"
@@ -215,7 +131,7 @@ export function FeedHeader({
           </Pressable>
         ) : null}
 
-        {/* Buscador: botón desplegable que comparte línea con los demás controles */}
+        {/* Buscador: botón icono */}
         <Pressable
           onPress={() => {
             if (isSearchActive) {
@@ -231,7 +147,7 @@ export function FeedHeader({
           accessibilityLabel={t('common.search', { defaultValue: 'Buscar' })}
           accessibilityState={{ selected: isSearchActive }}
           style={[
-            styles.searchTriggerBtn,
+            styles.iconBtn,
             {
               backgroundColor: isSearchActive ? theme.colors.primary : theme.colors.surface,
               borderColor: isSearchActive ? theme.colors.primary : theme.colors.border,
@@ -245,8 +161,27 @@ export function FeedHeader({
           />
         </Pressable>
 
-        {/* Selector de vista */}
-        <ViewModeSelector mode={viewMode} onChange={onChangeViewMode} style={{ flexShrink: 0 }} />
+        {/* Filtrar: botón icono con el mismo icono que en mi lista (ListFilter) */}
+        <Pressable
+          onPress={() => setFilterSheetVisible(true)}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel={t('feed.filter_sheet_title')}
+          accessibilityState={{ selected: contentFilter !== 'todo' }}
+          style={[
+            styles.iconBtn,
+            {
+              backgroundColor: contentFilter !== 'todo' ? theme.colors.primary : theme.colors.surface,
+              borderColor: contentFilter !== 'todo' ? theme.colors.primary : theme.colors.border,
+            },
+          ]}
+        >
+          <ListFilter
+            size={15}
+            color={contentFilter !== 'todo' ? theme.colors.primaryForeground : gold[400]}
+            strokeWidth={2}
+          />
+        </Pressable>
       </View>
 
       {/* Barra de búsqueda desplegable debajo de los controles cuando está activa */}

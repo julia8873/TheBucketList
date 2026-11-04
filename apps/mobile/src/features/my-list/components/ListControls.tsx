@@ -188,10 +188,12 @@ export function ListControlsBar({
           style={{
             flexDirection: 'row',
             padding: 2,
-            borderRadius: 12,
+            borderRadius: 14,
             backgroundColor: theme.dark ? '#1A1A1A' : c.surface,
             borderWidth: 1,
             borderColor: theme.dark ? '#2A2A2A' : c.border,
+            height: 30,
+            alignItems: 'center',
           }}
         >
           {views.map((v) => {
@@ -208,7 +210,7 @@ export function ListControlsBar({
                 style={{
                   width: 26,
                   height: 24,
-                  borderRadius: 9,
+                  borderRadius: 10,
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor: on ? c.primary : 'transparent',

@@ -28,38 +28,38 @@ export function ViewModeSelector({ mode, onChange, style }: ViewModeSelectorProp
       style={[
         styles.container,
         {
-          backgroundColor: theme.colors.surfaceElevated ?? (isDark ? '#181818' : '#EAE5DB'),
-          borderColor: theme.colors.border,
+          backgroundColor: theme.dark ? '#1A1A1A' : theme.colors.surface,
+          borderColor: theme.dark ? '#2A2A2A' : theme.colors.border,
         },
         style,
       ]}
     >
       <Pressable
-        onPress={() => onChange('list')}
-        style={[styles.btn, mode === 'list' && { backgroundColor: activeBg }]}
+        onPress={() => onChange('compact')}
+        style={[styles.btn, mode === 'compact' && { backgroundColor: activeBg }]}
         hitSlop={4}
         accessibilityRole="button"
-        accessibilityLabel={t('common.list')}
+        accessibilityLabel={t('common.compact', { defaultValue: 'Compacto' })}
       >
-        <LayoutList size={15} color={mode === 'list' ? activeIconColor : inactiveIconColor} />
+        <AlignJustify size={14} color={mode === 'compact' ? activeIconColor : inactiveIconColor} />
       </Pressable>
       <Pressable
         onPress={() => onChange('gallery')}
         style={[styles.btn, mode === 'gallery' && { backgroundColor: activeBg }]}
         hitSlop={4}
         accessibilityRole="button"
-        accessibilityLabel={t('common.gallery')}
+        accessibilityLabel={t('common.gallery', { defaultValue: 'Galería' })}
       >
-        <LayoutGrid size={15} color={mode === 'gallery' ? activeIconColor : inactiveIconColor} />
+        <LayoutGrid size={14} color={mode === 'gallery' ? activeIconColor : inactiveIconColor} />
       </Pressable>
       <Pressable
-        onPress={() => onChange('compact')}
-        style={[styles.btn, mode === 'compact' && { backgroundColor: activeBg }]}
+        onPress={() => onChange('list')}
+        style={[styles.btn, mode === 'list' && { backgroundColor: activeBg }]}
         hitSlop={4}
         accessibilityRole="button"
-        accessibilityLabel={t('common.compact')}
+        accessibilityLabel={t('common.list', { defaultValue: 'Lista' })}
       >
-        <AlignJustify size={15} color={mode === 'compact' ? activeIconColor : inactiveIconColor} />
+        <LayoutList size={14} color={mode === 'list' ? activeIconColor : inactiveIconColor} />
       </Pressable>
     </View>
   );
@@ -69,17 +69,16 @@ const styles = themedStyleSheet({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: 14,
     padding: 2,
-    gap: 2,
     borderWidth: 1,
-    height: 32,
+    height: 30,
   },
   btn: {
-    paddingHorizontal: 6,
-    height: '100%',
+    width: 26,
+    height: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 6,
+    borderRadius: 10,
   },
 });
