@@ -159,47 +159,48 @@ export function ListControlsBar({
     { key: 'list', icon: LayoutList, label: t('my_list.view_detailed') },
   ];
 
-  const controlsContent = (
-    <>
-      {/* Modos de vista */}
-      <View
-        style={{
-          flexDirection: 'row',
-          padding: 2,
-          borderRadius: 14,
-          backgroundColor: theme.dark ? '#1A1A1A' : c.surface,
-          borderWidth: 1,
-          borderColor: theme.dark ? '#2A2A2A' : c.border,
-          height: 30,
-          alignItems: 'center',
-        }}
-      >
-        {views.map((v) => {
-          const Icon = v.icon;
-          const on = viewMode === v.key;
-          return (
-            <Pressable
-              key={v.key}
-              onPress={() => setViewMode(v.key)}
-              hitSlop={4}
-              accessibilityRole="button"
-              accessibilityLabel={v.label}
-              accessibilityState={{ selected: on }}
-              style={{
-                width: 26,
-                height: 24,
-                borderRadius: 10,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: on ? c.primary : 'transparent',
-              }}
-            >
-              <Icon size={14} color={on ? c.primaryForeground : muted} />
-            </Pressable>
-          );
-        })}
-      </View>
+  const viewModesEl = (
+    <View
+      style={{
+        flexDirection: 'row',
+        padding: 2,
+        borderRadius: 14,
+        backgroundColor: theme.dark ? '#1A1A1A' : c.surface,
+        borderWidth: 1,
+        borderColor: theme.dark ? '#2A2A2A' : c.border,
+        height: 30,
+        alignItems: 'center',
+      }}
+    >
+      {views.map((v) => {
+        const Icon = v.icon;
+        const on = viewMode === v.key;
+        return (
+          <Pressable
+            key={v.key}
+            onPress={() => setViewMode(v.key)}
+            hitSlop={4}
+            accessibilityRole="button"
+            accessibilityLabel={v.label}
+            accessibilityState={{ selected: on }}
+            style={{
+              width: 26,
+              height: 24,
+              borderRadius: 10,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: on ? c.primary : 'transparent',
+            }}
+          >
+            <Icon size={14} color={on ? c.primaryForeground : muted} />
+          </Pressable>
+        );
+      })}
+    </View>
+  );
 
+  const actionButtonsEl = (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
       {onToggleSelectionMode && (
         <IconBtn
           theme={theme}
@@ -277,24 +278,8 @@ export function ListControlsBar({
           <Text style={{ fontSize: 11, fontFamily: 'Inter_700Bold', color: c.primaryForeground }}>OK</Text>
         </Pressable>
       )}
-    </>
+    </View>
   );
-
-  if (!countLabel) {
-    return (
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          width: '100%',
-          marginBottom: 12,
-        }}
-      >
-        {controlsContent}
-      </View>
-    );
-  }
 
   return (
     <View
@@ -302,26 +287,30 @@ export function ListControlsBar({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: 8,
         width: '100%',
         marginBottom: 12,
       }}
     >
-      <Text
-        numberOfLines={1}
-        style={{
-          flexShrink: 1,
-          color: muted,
-          fontFamily: 'Inter_600SemiBold',
-          fontSize: 11,
-          letterSpacing: 0.9,
-        }}
-      >
-        {countLabel}
-      </Text>
+      {countLabel ? (
+        <Text
+          numberOfLines={1}
+          style={{
+            flexShrink: 1,
+            color: muted,
+            fontFamily: 'Inter_600SemiBold',
+            fontSize: 11,
+            letterSpacing: 0.9,
+          }}
+        >
+          {countLabel}
+        </Text>
+      ) : (
+        viewModesEl
+      )}
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-        {controlsContent}
+        {countLabel ? viewModesEl : null}
+        {actionButtonsEl}
       </View>
     </View>
   );
