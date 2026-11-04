@@ -26,6 +26,10 @@ interface TaskBentoCardProps {
   customization?: TaskViewCustomization;
   onPress: () => void;
   onLongPress: () => void;
+  onToggleFavorite?: () => void;
+  onPressTag?: (tagId: string) => void;
+  onLongPressTag?: (tagId: string) => void;
+  onManageTags?: () => void;
 }
 
 function TaskBentoCardComponent({
@@ -37,6 +41,10 @@ function TaskBentoCardComponent({
   customization,
   onPress,
   onLongPress,
+  onToggleFavorite,
+  onPressTag,
+  onLongPressTag,
+  onManageTags,
 }: TaskBentoCardProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
@@ -187,16 +195,28 @@ function TaskBentoCardComponent({
               />
             ) : null}
             {firstTag ? (
-              <View
-                style={{
-                  flexShrink: 1,
-                  paddingHorizontal: 8,
-                  paddingVertical: 2,
-                  borderRadius: 99,
-                  backgroundColor: hexToRgba(firstTag.color, 0.1),
-                  borderWidth: 1,
-                  borderColor: hexToRgba(firstTag.color, 0.25),
+              <Pressable
+                disabled={isSelectionMode || !onPressTag}
+                onPress={(e) => {
+                  (e as any)?.stopPropagation?.();
+                  onPressTag?.(firstTag.id);
                 }}
+                onLongPress={onLongPressTag ? (e) => {
+                  (e as any)?.stopPropagation?.();
+                  onLongPressTag(firstTag.id);
+                } : undefined}
+                style={({ pressed }) => [
+                  {
+                    flexShrink: 1,
+                    paddingHorizontal: 8,
+                    paddingVertical: 2,
+                    borderRadius: 99,
+                    backgroundColor: hexToRgba(firstTag.color, 0.1),
+                    borderWidth: 1,
+                    borderColor: hexToRgba(firstTag.color, 0.25),
+                    opacity: pressed ? 0.7 : 1,
+                  },
+                ]}
               >
                 <Text
                   numberOfLines={1}
@@ -205,12 +225,21 @@ function TaskBentoCardComponent({
                   {firstTag.emoji ? `${firstTag.emoji} ` : ''}
                   {firstTag.name}
                 </Text>
-              </View>
+              </Pressable>
             ) : null}
             {extraTags > 0 ? (
-              <Text style={{ color: c.foregroundSubtle, fontSize: 10, fontFamily: 'Inter_600SemiBold' }}>
-                +{extraTags}
-              </Text>
+              <Pressable
+                disabled={isSelectionMode || !onManageTags}
+                onPress={(e) => {
+                  (e as any)?.stopPropagation?.();
+                  onManageTags?.();
+                }}
+                style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
+              >
+                <Text style={{ color: c.foregroundSubtle, fontSize: 10, fontFamily: 'Inter_600SemiBold' }}>
+                  +{extraTags}
+                </Text>
+              </Pressable>
             ) : null}
           </View>
 
@@ -223,7 +252,21 @@ function TaskBentoCardComponent({
                 disabled={isSelectionMode}
               />
             ) : null}
-            {showStar ? <Star size={15} color={c.primary} fill={c.primary} /> : null}
+            {showStar ? (
+              <Pressable
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                disabled={isSelectionMode || !onToggleFavorite}
+                onPress={(e) => {
+                  (e as any)?.stopPropagation?.();
+                  onToggleFavorite?.();
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.favorite', { defaultValue: 'Favorita' })}
+                style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
+              >
+                <Star size={15} color={c.primary} fill={c.primary} />
+              </Pressable>
+            ) : null}
           </View>
         </View>
       ) : null}

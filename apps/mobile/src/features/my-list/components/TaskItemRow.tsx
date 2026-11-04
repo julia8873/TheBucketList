@@ -30,6 +30,10 @@ interface TaskItemRowProps {
   onPress: () => void;
   onLongPress: () => void;
   onToggleSelect: () => void;
+  onToggleFavorite?: () => void;
+  onPressTag?: (tagId: string) => void;
+  onLongPressTag?: (tagId: string) => void;
+  onManageTags?: () => void;
   swipeableRefSetter: (ref: any) => void;
   theme: any;
 }
@@ -51,6 +55,10 @@ function TaskItemRowComponent({
   onPress,
   onLongPress,
   onToggleSelect,
+  onToggleFavorite,
+  onPressTag,
+  onLongPressTag,
+  onManageTags,
   swipeableRefSetter,
   theme,
 }: TaskItemRowProps) {
@@ -142,7 +150,19 @@ function TaskItemRowComponent({
   // La favorita se marca con una estrella a la derecha (como en Mi_lista.html), no con un badge de texto.
   const favoriteStar =
     isFav && showFavorite ? (
-      <Star size={15} color={gold[400]} fill={gold[400]} accessibilityLabel={t('common.favorite', { defaultValue: 'Favorita' })} />
+      <Pressable
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        disabled={isSelectionMode || !onToggleFavorite}
+        onPress={(e) => {
+          (e as any)?.stopPropagation?.();
+          onToggleFavorite?.();
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={t('common.favorite', { defaultValue: 'Favorita' })}
+        style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
+      >
+        <Star size={15} color={gold[400]} fill={gold[400]} />
+      </Pressable>
     ) : undefined;
 
   const visibleTags = showTags ? itemTags : [];
@@ -153,10 +173,25 @@ function TaskItemRowComponent({
     <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
       {priorityBadge}
       {visibleTags.slice(0, 2).map((t) => (
-        <TagChip key={t.id} label={t.name} variant="colored" color={t.color} emoji={t.emoji} size="sm" />
+        <TagChip
+          key={t.id}
+          label={t.name}
+          variant="colored"
+          color={t.color}
+          emoji={t.emoji}
+          size="sm"
+          onPress={onPressTag ? () => onPressTag(t.id) : undefined}
+          onLongPress={onLongPressTag ? () => onLongPressTag(t.id) : undefined}
+        />
       ))}
       {visibleTags.length > 2 && (
-        <TagChip label={`+${visibleTags.length - 2}`} variant="colored" color="#8A8A8A" size="sm" />
+        <TagChip
+          label={`+${visibleTags.length - 2}`}
+          variant="colored"
+          color="#8A8A8A"
+          size="sm"
+          onPress={onManageTags}
+        />
       )}
     </View>
   ) : null;

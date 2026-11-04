@@ -14,6 +14,7 @@ interface TagChipProps {
   /** `sm` = chip compacto para las tarjetas de la lista. */
   size?: 'md' | 'sm';
   onPress?: () => void;
+  onLongPress?: () => void;
   onRemove?: () => void;
   style?: StyleProp<ViewStyle>;
 }
@@ -26,7 +27,7 @@ function tint(hex: string | undefined, alpha: number): string {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
 }
 
-export function TagChip({ label, variant = 'default', color, emoji, size = 'md', onPress, onRemove, style }: TagChipProps) {
+export function TagChip({ label, variant = 'default', color, emoji, size = 'md', onPress, onLongPress, onRemove, style }: TagChipProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const isCreate = variant === 'create';
@@ -58,8 +59,15 @@ export function TagChip({ label, variant = 'default', color, emoji, size = 'md',
         coloredStyle,
         style,
       ]}
-      onPress={onPress}
-      disabled={!onPress && !onRemove}
+      onPress={onPress ? (e) => {
+        (e as any)?.stopPropagation?.();
+        onPress();
+      } : undefined}
+      onLongPress={onLongPress ? (e) => {
+        (e as any)?.stopPropagation?.();
+        onLongPress();
+      } : undefined}
+      disabled={!onPress && !onRemove && !onLongPress}
     >
       {isColored && color && emoji ? (
         <View

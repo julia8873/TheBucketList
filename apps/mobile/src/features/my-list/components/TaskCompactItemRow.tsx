@@ -25,6 +25,10 @@ interface TaskCompactItemRowProps {
   onLongPress: () => void;
   onToggleSelect: () => void;
   onToggleComplete: () => void;
+  onToggleFavorite?: () => void;
+  onPressTag?: (tagId: string) => void;
+  onLongPressTag?: (tagId: string) => void;
+  onManageTags?: () => void;
   /** Si es false (colaboración) no se puede borrar deslizando. */
   isItemOwner?: boolean;
   onDelete?: () => void;
@@ -43,6 +47,10 @@ function TaskCompactItemRowComponent({
   onLongPress,
   onToggleSelect,
   onToggleComplete,
+  onToggleFavorite,
+  onPressTag,
+  onLongPressTag,
+  onManageTags,
   isItemOwner = true,
   onDelete,
   swipeableRefSetter,
@@ -248,26 +256,47 @@ function TaskCompactItemRowComponent({
             {showTags && itemTags && itemTags.length > 0 && (
               <>
                 {itemTags.slice(0, 2).map((t) => (
-                  <View
+                  <Pressable
                     key={t.id}
-                    style={{
-                      paddingHorizontal: 6,
-                      paddingVertical: 1.5,
-                      borderRadius: 6,
-                      backgroundColor: theme.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                      borderWidth: 1,
-                      borderColor: t.color || theme.colors.border,
+                    disabled={isSelectionMode || !onPressTag}
+                    onPress={(e) => {
+                      (e as any)?.stopPropagation?.();
+                      onPressTag?.(t.id);
                     }}
+                    onLongPress={onLongPressTag ? (e) => {
+                      (e as any)?.stopPropagation?.();
+                      onLongPressTag(t.id);
+                    } : undefined}
+                    style={({ pressed }) => [
+                      {
+                        paddingHorizontal: 6,
+                        paddingVertical: 1.5,
+                        borderRadius: 6,
+                        backgroundColor: theme.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                        borderWidth: 1,
+                        borderColor: t.color || theme.colors.border,
+                        opacity: pressed ? 0.7 : 1,
+                      },
+                    ]}
                   >
                     <Text style={{ fontSize: 10, color: t.color || theme.colors.foreground, fontWeight: '600' }}>
                       {t.emoji ? `${t.emoji} ` : ''}{t.name}
                     </Text>
-                  </View>
+                  </Pressable>
                 ))}
                 {itemTags.length > 2 && (
-                  <Text style={{ fontSize: 10, color: theme.colors.foregroundMuted, fontWeight: '600' }}>
-                    +{itemTags.length - 2}
-                  </Text>
+                  <Pressable
+                    disabled={isSelectionMode || !onManageTags}
+                    onPress={(e) => {
+                      (e as any)?.stopPropagation?.();
+                      onManageTags?.();
+                    }}
+                    style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
+                  >
+                    <Text style={{ fontSize: 10, color: theme.colors.foregroundMuted, fontWeight: '600' }}>
+                      +{itemTags.length - 2}
+                    </Text>
+                  </Pressable>
                 )}
               </>
             )}
@@ -312,7 +341,19 @@ function TaskCompactItemRowComponent({
       </View>
 
       {isFav && showFavorite ? (
-        <Star size={15} color={theme.colors.primary} fill={theme.colors.primary} style={{ marginLeft: 8 }} />
+        <Pressable
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          disabled={isSelectionMode || !onToggleFavorite}
+          onPress={(e) => {
+            (e as any)?.stopPropagation?.();
+            onToggleFavorite?.();
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.favorite', { defaultValue: 'Favorita' })}
+          style={({ pressed }) => [{ marginLeft: 8, opacity: pressed ? 0.6 : 1 }]}
+        >
+          <Star size={15} color={theme.colors.primary} fill={theme.colors.primary} />
+        </Pressable>
       ) : null}
     </Pressable>
   );

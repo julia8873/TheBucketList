@@ -91,6 +91,8 @@ interface StackProps {
 export function ParticipantsStack({ participants, max = 4, ringColor, disabled, style }: StackProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
+  const router = useRouter();
+  const myId = useAuthStore((s) => s.user?.id);
   const [open, setOpen] = useState(false);
 
   if (!participants || participants.length === 0) return null;
@@ -100,31 +102,47 @@ export function ParticipantsStack({ participants, max = 4, ringColor, disabled, 
   const extra = participants.length - visible.length;
   const bubble = AVATAR + RING * 2;
 
+  const openProfile = (id: string) => {
+    if (disabled) return;
+    if (id === myId) router.push('/(tabs)/profile' as any);
+    else router.push(`/profile/${id}` as any);
+  };
+
   return (
     <>
-      <Pressable
-        onPress={() => setOpen(true)}
-        disabled={disabled}
-        hitSlop={8}
-        accessibilityRole="button"
-        accessibilityLabel={t('participants.open', { count: participants.length })}
-        style={[styles.stack, style]}
-      >
+      <View style={[styles.stack, style]}>
         {visible.map((p, i) => (
-          <View
+          <Pressable
             key={p.id}
-            style={[
+            disabled={disabled}
+            hitSlop={4}
+            onPress={(e) => {
+              (e as any)?.stopPropagation?.();
+              openProfile(p.id);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={p.display_name || p.username || t('profile.title_rest', { defaultValue: 'Perfil' })}
+            style={({ pressed }) => [
               styles.ring,
               { width: bubble, height: bubble, borderRadius: bubble / 2, borderColor: ring },
               i > 0 && { marginLeft: -OVERLAP },
+              pressed && { opacity: 0.7 },
             ]}
           >
             <Avatar uri={p.avatar_url} initials={initialsOf(p)} size="xs" />
-          </View>
+          </Pressable>
         ))}
         {extra > 0 && (
-          <View
-            style={[
+          <Pressable
+            disabled={disabled}
+            hitSlop={4}
+            onPress={(e) => {
+              (e as any)?.stopPropagation?.();
+              setOpen(true);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={t('participants.open', { count: participants.length })}
+            style={({ pressed }) => [
               styles.ring,
               styles.more,
               {
@@ -135,12 +153,13 @@ export function ParticipantsStack({ participants, max = 4, ringColor, disabled, 
                 marginLeft: -OVERLAP,
                 backgroundColor: theme.dark ? '#2B2B2B' : '#E8E3D8',
               },
+              pressed && { opacity: 0.7 },
             ]}
           >
             <Text style={[styles.moreText, { color: theme.colors.foreground }]}>+{extra}</Text>
-          </View>
+          </Pressable>
         )}
-      </Pressable>
+      </View>
 
       <ParticipantsSheet visible={open} participants={participants} onClose={() => setOpen(false)} />
     </>

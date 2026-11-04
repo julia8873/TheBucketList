@@ -9,7 +9,7 @@ import type { Swipeable } from 'react-native-gesture-handler';
 
 import { useBuckets, useDeleteBucket, useUpdateBucket } from '@/hooks/useBuckets';
 import { useAlbums } from '@/hooks/useAlbums';
-import { useUserFavorites, useToggleFavoriteAlbum } from '@/hooks/useFavorites';
+import { useUserFavorites, useToggleFavoriteAlbum, useToggleFavoriteBucket } from '@/hooks/useFavorites';
 import { useAuthStore } from '@/stores/auth.store';
 import { useMyListCustomizationStore } from '@/stores/myListCustomization.store';
 import { usePullToRefresh } from '@/hooks/useAutoRefresh';
@@ -414,6 +414,7 @@ export function useMyListState() {
   const { data: buckets, isLoading } = useBuckets(user?.id);
   const { isBucketFavorite, isAlbumFavorite, bucketIds: favBucketIds } = useUserFavorites(user?.id);
   const toggleFavoriteAlbum = useToggleFavoriteAlbum();
+  const toggleFavoriteBucket = useToggleFavoriteBucket();
   const { data: allTags } = useTags();
   const { data: tagUsage } = useTagUsage();
   const deleteBucket = useDeleteBucket();
@@ -931,6 +932,7 @@ export function useMyListState() {
     isAlbumFavorite,
     favBucketIds,
     toggleFavoriteAlbum,
+    toggleFavoriteBucket,
     allTags,
     tagUsage,
     deleteBucket,

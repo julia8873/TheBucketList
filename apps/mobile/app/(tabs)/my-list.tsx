@@ -171,6 +171,27 @@ export default function MyListScreen() {
     albumsEnabled: state.activeTab === 'albums' && !!albumViews[state.albumViewMode]?.showCollaborators,
   });
 
+  const handlePressTag = useCallback(
+    (tagId: string) => {
+      if (state.isSelectionMode) return;
+      state.setSelectedTagIds((prev) => (prev.includes(tagId) ? [] : [tagId]));
+    },
+    [state.isSelectionMode, state.setSelectedTagIds],
+  );
+
+  const handleLongPressTag = useCallback(
+    (_tagId: string) => {
+      if (state.isSelectionMode) return;
+      router.push('/tags' as any);
+    },
+    [state.isSelectionMode, router],
+  );
+
+  const handleOpenTagSheet = useCallback(() => {
+    if (state.isSelectionMode) return;
+    state.setTagSheetOpen(true);
+  }, [state.isSelectionMode, state.setTagSheetOpen]);
+
   /** Tarjeta de 2 columnas (galería y favoritas en rejilla). */
   const renderBento = useCallback(
     (item: any, customization: any) => {
@@ -198,6 +219,15 @@ export default function MyListScreen() {
               state.setSelectedTaskIds([item.id]);
             }
           }}
+          onToggleFavorite={() =>
+            state.toggleFavoriteBucket.mutate({
+              bucketId: item.id,
+              currentlyFavorite: state.isBucketFavorite(item.id),
+            })
+          }
+          onPressTag={handlePressTag}
+          onLongPressTag={handleLongPressTag}
+          onManageTags={handleOpenTagSheet}
         />
       );
     },
@@ -210,6 +240,10 @@ export default function MyListScreen() {
       state.toggleSelectTask,
       state.setIsSelectionMode,
       state.setSelectedTaskIds,
+      state.toggleFavoriteBucket,
+      handlePressTag,
+      handleLongPressTag,
+      handleOpenTagSheet,
       router,
     ],
   );
@@ -268,6 +302,12 @@ export default function MyListScreen() {
             }
           }}
           onToggleSelect={() => state.toggleSelectTask(item.id)}
+          onToggleFavorite={() =>
+            state.toggleFavoriteBucket.mutate({ bucketId: item.id, currentlyFavorite: isFav })
+          }
+          onPressTag={handlePressTag}
+          onLongPressTag={handleLongPressTag}
+          onManageTags={handleOpenTagSheet}
           swipeableRefSetter={(ref) => {
             if (ref) state.swipeableRefs.current.set(item.id, ref);
             else state.swipeableRefs.current.delete(item.id);
@@ -292,6 +332,10 @@ export default function MyListScreen() {
       state.toggleSelectTask,
       state.setIsSelectionMode,
       state.setSelectedTaskIds,
+      state.toggleFavoriteBucket,
+      handlePressTag,
+      handleLongPressTag,
+      handleOpenTagSheet,
       state.swipeableRefs,
       router,
       theme,
@@ -340,6 +384,15 @@ export default function MyListScreen() {
             const next = item.status === 'completed' ? 'in_progress' : 'completed';
             state.updateBucket.mutate({ id: item.id, data: { status: next } });
           }}
+          onToggleFavorite={() =>
+            state.toggleFavoriteBucket.mutate({
+              bucketId: item.id,
+              currentlyFavorite: state.isBucketFavorite(item.id),
+            })
+          }
+          onPressTag={handlePressTag}
+          onLongPressTag={handleLongPressTag}
+          onManageTags={handleOpenTagSheet}
           isItemOwner={!item.user_id || item.user_id === state.user?.id}
           onDelete={() => state.deleteBucket.mutate(item.id)}
           swipeableRefSetter={(ref) => {
@@ -361,6 +414,10 @@ export default function MyListScreen() {
       state.updateBucket,
       state.deleteBucket,
       state.user?.id,
+      state.toggleFavoriteBucket,
+      handlePressTag,
+      handleLongPressTag,
+      handleOpenTagSheet,
       state.swipeableRefs,
       router,
       taskViews.compact,
