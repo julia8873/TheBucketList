@@ -65,7 +65,7 @@ export const COLLECTION_BASES: Record<DefaultCollectionId, CollectionBase> = {
   'collection-viajes': {
     category: 'travel',
     emoji: '✈️',
-    gradientColors: ['#0B2545', '#134074', '#0073CF'],
+    gradientColors: ['#0B2545', '#134074', '#D4AF37'],
     cover: ['#0B2545', '#134074', '#3E78B2'],
   },
   'collection-espana': {
@@ -77,7 +77,7 @@ export const COLLECTION_BASES: Record<DefaultCollectionId, CollectionBase> = {
   'collection-libros': {
     category: 'culture',
     emoji: '📚',
-    gradientColors: ['#3A1C0A', '#6B3E26', '#0073CF'],
+    gradientColors: ['#3A1C0A', '#6B3E26', '#D4B13A'],
     cover: ['#2B1408', '#4E2B16', '#A3683A'],
   },
   'collection-cine': {
@@ -119,7 +119,7 @@ export const COLLECTION_BASES: Record<DefaultCollectionId, CollectionBase> = {
   'collection-dinero': {
     category: 'lifestyle',
     emoji: '💶',
-    gradientColors: ['#0B3B2E', '#16795B', '#0073CF'],
+    gradientColors: ['#0B3B2E', '#16795B', '#D4AF37'],
     cover: ['#08291F', '#0F5640', '#A38A2B'],
   },
   'collection-habilidades': {

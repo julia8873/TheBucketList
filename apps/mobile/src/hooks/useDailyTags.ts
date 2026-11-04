@@ -18,7 +18,7 @@ const STORAGE_PREFIX = '@bucketlist_daily_tags_v2';
 export const DAILY_TAGS_QUERY_KEY = ['daily_tags'];
 
 const DEFAULT_DAILY_PRESETS: Array<Omit<DailyTag, 'id'>> = [
-  { name: 'Trabajo', color: '#0073CF', emoji: '💼' },
+  { name: 'Trabajo', color: '#D4B13A', emoji: '💼' },
   { name: 'Personal', color: '#3B82F6', emoji: '🏠' },
   { name: 'Salud', color: '#10B981', emoji: '🏃' },
   { name: 'Compras', color: '#EC4899', emoji: '🛒' },
@@ -103,7 +103,7 @@ export function useCreateDailyTag() {
 
       const storageKey = getStorageKey(userId);
       const name = payload.name.trim();
-      const color = payload.color || '#0073CF';
+      const color = payload.color || '#D4B13A';
       const emoji = payload.emoji?.trim() || null;
 
       // 1. Insertar exclusivamente en daily_tags
@@ -165,7 +165,7 @@ export function useUpdateDailyTag() {
 
       const storageKey = getStorageKey(userId);
       const name = payload.name.trim();
-      const color = payload.color || '#0073CF';
+      const color = payload.color || '#D4B13A';
       const emoji = payload.emoji?.trim() || null;
 
       // 1. Actualizar en daily_tags

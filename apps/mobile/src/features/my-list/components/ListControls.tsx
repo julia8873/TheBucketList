@@ -70,9 +70,9 @@ export function IconBtn({
           borderRadius: 10,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: active ? theme.colors.primary : theme.dark ? '#151519' : theme.colors.surface,
+          backgroundColor: active ? theme.colors.primary : theme.dark ? '#141414' : theme.colors.surface,
           borderWidth: 1,
-          borderColor: active ? theme.colors.primary : theme.dark ? '#26262E' : theme.colors.border,
+          borderColor: active ? theme.colors.primary : theme.dark ? '#2A2A2A' : theme.colors.border,
         },
         style,
       ]}
@@ -189,9 +189,9 @@ export function ListControlsBar({
             flexDirection: 'row',
             padding: 2,
             borderRadius: 12,
-            backgroundColor: theme.dark ? '#1E1E24' : c.surface,
+            backgroundColor: theme.dark ? '#1A1A1A' : c.surface,
             borderWidth: 1,
-            borderColor: theme.dark ? '#2C2C35' : c.border,
+            borderColor: theme.dark ? '#2A2A2A' : c.border,
           }}
         >
           {views.map((v) => {
@@ -485,15 +485,15 @@ export function SheetGroup({ children, theme }: { children: React.ReactNode; the
       style={{
         borderRadius: 16,
         overflow: 'hidden',
-        backgroundColor: theme.dark ? '#1E1E24' : theme.colors.surface,
+        backgroundColor: theme.dark ? '#1A1A1A' : theme.colors.surface,
         borderWidth: 1,
-        borderColor: theme.dark ? '#2C2C35' : theme.colors.border,
+        borderColor: theme.dark ? '#2A2A2A' : theme.colors.border,
       }}
     >
       {items.map((child, i) => (
         <View
           key={i}
-          style={i > 0 ? { borderTopWidth: 1, borderTopColor: theme.dark ? '#2C2C35' : theme.colors.border } : undefined}
+          style={i > 0 ? { borderTopWidth: 1, borderTopColor: theme.dark ? '#2A2A2A' : theme.colors.border } : undefined}
         >
           {child}
         </View>
@@ -583,7 +583,7 @@ export function SheetToggle({
           padding: 2,
           justifyContent: 'center',
           alignItems: value ? 'flex-end' : 'flex-start',
-          backgroundColor: value ? c.primary : theme.dark ? '#32323C' : '#C9D1DE',
+          backgroundColor: value ? c.primary : theme.dark ? '#2A2A2A' : '#EDE8DE',
         }}
       >
         <View
@@ -630,9 +630,9 @@ export function SheetChip({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        backgroundColor: on ? c.primary : theme.dark ? '#1E1E24' : c.surface,
+        backgroundColor: on ? c.primary : theme.dark ? '#1A1A1A' : c.surface,
         borderWidth: 1,
-        borderColor: on ? c.primary : theme.dark ? '#2C2C35' : c.border,
+        borderColor: on ? c.primary : theme.dark ? '#2A2A2A' : c.border,
       }}
     >
       <Text
@@ -670,9 +670,9 @@ export function SheetSegment<K extends string>({
         flexDirection: 'row',
         padding: 3,
         borderRadius: 12,
-        backgroundColor: theme.dark ? '#1E1E24' : c.surface,
+        backgroundColor: theme.dark ? '#1A1A1A' : c.surface,
         borderWidth: 1,
-        borderColor: theme.dark ? '#2C2C35' : c.border,
+        borderColor: theme.dark ? '#2A2A2A' : c.border,
       }}
     >
       {options.map((o) => {
@@ -863,9 +863,9 @@ export function SectionHeader({
               borderRadius: 10,
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: theme.dark ? '#17171D' : c.surface,
+              backgroundColor: theme.dark ? '#141414' : c.surface,
               borderWidth: 1,
-              borderColor: theme.dark ? '#26262F' : c.border,
+              borderColor: theme.dark ? '#2A2A2A' : c.border,
             }}
           >
             <Text style={{ color: c.foregroundSubtle, fontSize: 10, fontFamily: 'Inter_500Medium' }}>{count}</Text>

@@ -59,7 +59,7 @@ export function TaskCollaborationViewerCard({
       <View style={[styles.card, styles.pendingCard]}>
         <View style={styles.cardHeader}>
           <View style={styles.iconCirclePending}>
-            <UserPlus size={18} color="#0073CF" strokeWidth={2.2} />
+            <UserPlus size={18} color="#D4B13A" strokeWidth={2.2} />
           </View>
           <View style={styles.cardTexts}>
             <Text style={styles.cardTitle}>{t('bucket.collab_invite_received_title')}</Text>
@@ -129,7 +129,7 @@ export function TaskCollaborationViewerCard({
       <View style={[styles.card, styles.pendingCard]}>
         <View style={styles.cardHeader}>
           <View style={styles.iconCirclePending}>
-            <Clock size={18} color="#0073CF" strokeWidth={2.2} />
+            <Clock size={18} color="#D4B13A" strokeWidth={2.2} />
           </View>
           <View style={styles.cardTexts}>
             <Text style={styles.cardTitle}>{t('bucket.collab_req_sent')}</Text>
@@ -168,7 +168,7 @@ export function TaskCollaborationViewerCard({
             {isOpen ? (
               <Zap size={18} color="#0D0D0D" strokeWidth={2.5} />
             ) : (
-              <UserPlus size={18} color="#0073CF" strokeWidth={2.2} />
+              <UserPlus size={18} color="#D4B13A" strokeWidth={2.2} />
             )}
           </View>
           <View style={styles.cardTexts}>
@@ -254,16 +254,16 @@ const styles = themedStyleSheet({
     borderWidth: 1,
   },
   openCard: {
-    backgroundColor: 'rgba(0, 115, 207, 0.08)',
-    borderColor: '#0073CF',
+    backgroundColor: 'rgba(212, 177, 58, 0.08)',
+    borderColor: '#D4B13A',
   },
   requestCard: {
     backgroundColor: '#181818',
     borderColor: '#2F2F2F',
   },
   pendingCard: {
-    backgroundColor: 'rgba(0, 115, 207, 0.05)',
-    borderColor: 'rgba(0, 115, 207, 0.3)',
+    backgroundColor: 'rgba(212, 177, 58, 0.05)',
+    borderColor: 'rgba(212, 177, 58, 0.3)',
   },
   lockedCard: {
     backgroundColor: '#161616',
@@ -282,7 +282,7 @@ const styles = themedStyleSheet({
     justifyContent: 'center',
   },
   iconCircleOpen: {
-    backgroundColor: '#0073CF',
+    backgroundColor: '#D4B13A',
   },
   iconCircleRequest: {
     backgroundColor: '#262626',
@@ -291,7 +291,7 @@ const styles = themedStyleSheet({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(0, 115, 207, 0.15)',
+    backgroundColor: 'rgba(212, 177, 58, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -329,10 +329,10 @@ const styles = themedStyleSheet({
     marginTop: 12,
   },
   joinBtn: {
-    backgroundColor: '#0073CF',
+    backgroundColor: '#D4B13A',
   },
   requestBtn: {
-    backgroundColor: '#0073CF',
+    backgroundColor: '#D4B13A',
   },
   btnText: {
     color: '#0D0D0D',
@@ -362,7 +362,7 @@ const styles = themedStyleSheet({
     borderColor: '#383838',
   },
   followBtnText: {
-    color: '#0073CF',
+    color: '#D4B13A',
     fontSize: 12,
     fontFamily: 'Inter_600SemiBold',
   },

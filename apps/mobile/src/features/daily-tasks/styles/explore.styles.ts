@@ -507,7 +507,7 @@ export const styles = themedStyleSheet({
   },
   weekDaySectionDropTarget: {
     borderColor: gold[400],
-    backgroundColor: 'rgba(0, 115, 207, 0.08)',
+    backgroundColor: 'rgba(212, 177, 58, 0.08)',
   },
   weekDropIndicator: {
     flexDirection: 'row',
@@ -741,7 +741,7 @@ export const styles = themedStyleSheet({
   calendarDayAddBtnText: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 11.5,
-    color: '#FFFFFF',
+    color: '#0E0E0E',
   },
   emptyContainer: {
     alignItems: 'center',
@@ -959,7 +959,7 @@ export const styles = themedStyleSheet({
   modalSubmitBtnText: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 14,
-    color: '#FFFFFF',
+    color: '#0E0E0E',
   },
   pickerWrapper: {
     alignItems: 'center',
@@ -976,7 +976,7 @@ export const styles = themedStyleSheet({
   modalConfirmText: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 13,
-    color: '#FFFFFF',
+    color: '#0E0E0E',
   },
   tagModalItem: {
     flexDirection: 'row',
@@ -1313,16 +1313,16 @@ export const styles = themedStyleSheet({
     borderColor: '#3D2A10',
   },
   overdueMovePillToday: {
-    backgroundColor: '#0073CF',
-    borderColor: '#0073CF',
+    backgroundColor: '#D4B13A',
+    borderColor: '#D4B13A',
   },
   overdueMovePillText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 11,
-    color: '#0073CF',
+    color: '#D4B13A',
   },
   overdueMovePillTextToday: {
-    color: '#FFFFFF',
+    color: '#0E0E0E',
     fontFamily: 'Inter_700Bold',
   },
   overdueMovePillCal: {
@@ -1339,7 +1339,7 @@ export const styles = themedStyleSheet({
   overdueMovePillCalText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 11,
-    color: '#0073CF',
+    color: '#D4B13A',
   },
   priorityChip: {
     flexDirection: 'row',
@@ -1405,7 +1405,7 @@ export const styles = themedStyleSheet({
   convertBucketTitle: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 13,
-    color: '#0073CF',
+    color: '#D4B13A',
     marginBottom: 2,
   },
   convertBucketSubtitle: {
@@ -1428,7 +1428,7 @@ export const styles = themedStyleSheet({
     fontFamily: 'Inter_600SemiBold',
   },
   tagFilterMainBtnTextActive: {
-    color: '#FFFFFF',
+    color: '#0E0E0E',
   },
   sheetOverlay: {
     flex: 1,
@@ -1488,7 +1488,7 @@ export const styles = themedStyleSheet({
   sheetCountBadgeText: {
     fontFamily: 'Inter_700Bold',
     fontSize: 11,
-    color: '#FFFFFF',
+    color: '#0E0E0E',
   },
   sheetQuickActions: {
     flexDirection: 'row',
@@ -1603,7 +1603,7 @@ export const styles = themedStyleSheet({
   sheetCreateFirstBtnText: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 13,
-    color: '#FFFFFF',
+    color: '#0E0E0E',
   },
   sheetFooter: {
     marginTop: 16,
@@ -1618,7 +1618,7 @@ export const styles = themedStyleSheet({
   sheetApplyBtnText: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 14,
-    color: '#FFFFFF',
+    color: '#0E0E0E',
   },
   toolbarRow: {
     flexDirection: 'row',
@@ -1931,7 +1931,7 @@ export const styles = themedStyleSheet({
     color: '#888',
   },
   sortTogglePillTextActive: {
-    color: '#FFFFFF',
+    color: '#0E0E0E',
     fontFamily: 'Inter_600SemiBold',
   },
   sortDirectionRow: {
@@ -1997,7 +1997,7 @@ export const styles = themedStyleSheet({
   sortApplyBtnText: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 13.5,
-    color: '#FFFFFF',
+    color: '#0E0E0E',
   },
   subtasksHeaderRow: {
     flexDirection: 'row',

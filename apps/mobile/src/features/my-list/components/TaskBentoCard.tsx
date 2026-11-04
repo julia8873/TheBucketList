@@ -65,7 +65,7 @@ function TaskBentoCardComponent({
 
   const priority = item.priority || 'medium';
   const priorityColor =
-    priority === 'urgent' ? '#DC2626' : priority === 'high' ? '#EF4444' : priority === 'low' ? '#10B981' : '#0073CF';
+    priority === 'urgent' ? '#DC2626' : priority === 'high' ? '#EF4444' : priority === 'low' ? '#10B981' : '#D4B13A';
   const priorityLabel =
     priority === 'urgent'
       ? t('common.urgent')
@@ -93,7 +93,7 @@ function TaskBentoCardComponent({
           gap: 8,
           borderRadius: 16,
           borderWidth: 1,
-          backgroundColor: isSelected ? 'rgba(0, 115, 207, 0.10)' : c.surface,
+          backgroundColor: isSelected ? 'rgba(212, 177, 58, 0.10)' : c.surface,
           borderColor: isSelected ? c.primary : c.border,
           opacity: pressed ? 0.9 : isCompleted ? 0.8 : 1,
         },

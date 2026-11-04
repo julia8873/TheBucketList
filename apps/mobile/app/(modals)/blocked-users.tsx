@@ -42,7 +42,7 @@ export default function BlockedUsersScreen() {
     <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top }]}>
       {isLoading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#0073CF" />
+          <ActivityIndicator size="large" color="#D4AF37" />
         </View>
       ) : (
         <FlatList

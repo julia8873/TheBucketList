@@ -54,7 +54,7 @@ const LEGACY_CATEGORY_IDS: Record<string, string> = {
 };
 
 const GRADIENT_PRESETS: { id: string; colors: [string, string, ...string[]] }[] = [
-  { id: 'gold', colors: ['#2A2006', '#59440D', '#0073CF'] },
+  { id: 'gold', colors: ['#2A2006', '#59440D', '#D4AF37'] },
   { id: 'emerald', colors: ['#04261B', '#0E4B43', '#1F8560'] },
   { id: 'midnight', colors: ['#0B132B', '#1C2541', '#3A506B'] },
   { id: 'sunset', colors: ['#3A0CA3', '#7209B7', '#F72585'] },
@@ -310,7 +310,7 @@ export default function CreateCollectionModal() {
                   {isEditing ? t('collections.form_title_edit') : t('collections.form_title_new')}
                 </Typography>
                 <View style={styles.adminBadge}>
-                  <ShieldCheck size={12} color="#0073CF" />
+                  <ShieldCheck size={12} color="#D4AF37" />
                   <Text style={styles.adminBadgeText}>ADMIN</Text>
                 </View>
               </View>
@@ -328,7 +328,7 @@ export default function CreateCollectionModal() {
           {/* Vista previa en tiempo real */}
           <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
-              <Sparkles size={16} color="#0073CF" />
+              <Sparkles size={16} color="#D4AF37" />
               <Text style={styles.sectionLabel}>{t('collections.form_preview_label').toUpperCase()}</Text>
             </View>
             <CollectionCard
@@ -441,7 +441,7 @@ export default function CreateCollectionModal() {
           {/* Tareas de la Colección */}
           <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
-              <Layers size={16} color="#0073CF" />
+              <Layers size={16} color="#D4AF37" />
               <Text style={styles.sectionLabel}>{t('collections.form_tasks_label', { count: tasks.length }).toUpperCase()}</Text>
             </View>
 
@@ -487,7 +487,7 @@ export default function CreateCollectionModal() {
                   {(['low', 'medium', 'high'] as const).map((p) => {
                     const isSelected = newTaskPriority === p;
                     const label = t(`common.${p}`);
-                    const color = p === 'high' ? '#EF4444' : p === 'medium' ? '#0073CF' : '#10B981';
+                    const color = p === 'high' ? '#EF4444' : p === 'medium' ? '#D4AF37' : '#10B981';
                     return (
                       <Pressable
                         key={p}
@@ -511,12 +511,12 @@ export default function CreateCollectionModal() {
                 >
                   {editingTaskIndex !== null ? (
                     <>
-                      <Check size={16} color="#FFFFFF" strokeWidth={3} />
+                      <Check size={16} color="#000" strokeWidth={3} />
                       <Text style={styles.addTaskBtnText}>{t('common.save')}</Text>
                     </>
                   ) : (
                     <>
-                      <Plus size={16} color="#FFFFFF" strokeWidth={3} />
+                      <Plus size={16} color="#000" strokeWidth={3} />
                       <Text style={styles.addTaskBtnText}>{t('common.add')}</Text>
                     </>
                   )}
@@ -552,7 +552,7 @@ export default function CreateCollectionModal() {
                                 ? 'rgba(239, 68, 68, 0.15)'
                                 : task.priority === 'low'
                                 ? 'rgba(16, 185, 129, 0.15)'
-                                : 'rgba(0, 115, 207, 0.15)',
+                                : 'rgba(212, 175, 55, 0.15)',
                           },
                         ]}
                       >
@@ -565,7 +565,7 @@ export default function CreateCollectionModal() {
                                   ? '#EF4444'
                                   : task.priority === 'low'
                                   ? '#10B981'
-                                  : '#0073CF',
+                                  : '#D4AF37',
                             },
                           ]}
                         >
@@ -580,7 +580,7 @@ export default function CreateCollectionModal() {
                       style={styles.editTaskBtn}
                       hitSlop={8}
                     >
-                      <Pencil size={15} color="#0073CF" />
+                      <Pencil size={15} color="#D4AF37" />
                     </Pressable>
                     <Pressable
                       onPress={() => handleRemoveTask(idx)}
@@ -610,10 +610,10 @@ export default function CreateCollectionModal() {
             disabled={createMutation.isPending || updateMutation.isPending || deleteMutation.isPending}
           >
             {createMutation.isPending || updateMutation.isPending ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color="#000" />
             ) : (
               <>
-                <Sparkles size={18} color="#FFFFFF" />
+                <Sparkles size={18} color="#000" />
                 <Text style={styles.submitBtnText}>
                   {isEditing ? t('collections.form_submit_save') : t('collections.form_submit_publish')}
                 </Text>
@@ -664,12 +664,12 @@ const getStyles = (theme: any) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
-      backgroundColor: theme.dark ? 'rgba(0, 115, 207, 0.15)' : 'rgba(0, 115, 207, 0.12)',
+      backgroundColor: theme.dark ? 'rgba(212, 175, 55, 0.15)' : 'rgba(212, 175, 55, 0.12)',
       paddingHorizontal: 8,
       paddingVertical: 2,
       borderRadius: 6,
       borderWidth: 1,
-      borderColor: theme.dark ? 'rgba(0, 115, 207, 0.4)' : 'rgba(0, 115, 207, 0.3)',
+      borderColor: theme.dark ? 'rgba(212, 175, 55, 0.4)' : 'rgba(212, 175, 55, 0.3)',
     },
     adminBadgeText: {
       color: gold[400],
@@ -724,7 +724,7 @@ const getStyles = (theme: any) =>
       borderRadius: 20,
     },
     chipActive: {
-      backgroundColor: theme.dark ? 'rgba(0, 115, 207, 0.15)' : 'rgba(0, 115, 207, 0.12)',
+      backgroundColor: theme.dark ? 'rgba(212, 175, 55, 0.15)' : 'rgba(212, 175, 55, 0.12)',
       borderColor: gold[400],
     },
     chipEmoji: {
@@ -754,7 +754,7 @@ const getStyles = (theme: any) =>
     },
     badgePresetChipActive: {
       borderColor: gold[400],
-      backgroundColor: theme.dark ? 'rgba(0, 115, 207, 0.12)' : 'rgba(0, 115, 207, 0.1)',
+      backgroundColor: theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.1)',
     },
     badgePresetText: {
       color: theme.colors.foregroundMuted,
@@ -792,7 +792,7 @@ const getStyles = (theme: any) =>
     },
     addTaskCardEditing: {
       borderColor: gold[400],
-      backgroundColor: theme.dark ? '#0C1722' : '#F2F8FF',
+      backgroundColor: theme.dark ? '#1A1710' : '#FFFDF5',
     },
     taskFormHeader: {
       flexDirection: 'row',
@@ -865,7 +865,7 @@ const getStyles = (theme: any) =>
       borderRadius: 16,
     },
     addTaskBtnText: {
-      color: '#FFFFFF',
+      color: '#000',
       fontSize: 13,
       fontWeight: '700',
     },
@@ -882,7 +882,7 @@ const getStyles = (theme: any) =>
     },
     taskItemActiveEdit: {
       borderColor: gold[400],
-      backgroundColor: theme.dark ? '#0C1722' : '#F2F8FF',
+      backgroundColor: theme.dark ? '#1A1810' : '#FFFDF5',
     },
     taskItemIndex: {
       width: 26,
@@ -932,7 +932,7 @@ const getStyles = (theme: any) =>
       width: 32,
       height: 32,
       borderRadius: 16,
-      backgroundColor: theme.dark ? 'rgba(0, 115, 207, 0.1)' : 'rgba(0, 115, 207, 0.12)',
+      backgroundColor: theme.dark ? 'rgba(212, 175, 55, 0.1)' : 'rgba(212, 175, 55, 0.12)',
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -972,7 +972,7 @@ const getStyles = (theme: any) =>
       gap: 8,
     },
     submitBtnText: {
-      color: '#FFFFFF',
+      color: '#000',
       fontSize: 16,
       fontWeight: 'bold',
     },

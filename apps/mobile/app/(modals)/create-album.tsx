@@ -77,7 +77,7 @@ export default function CreateAlbumScreen() {
   if (loadingInitial) {
     return (
       <View style={[styles.container, { backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#0073CF" />
+        <ActivityIndicator size="large" color="#D4B13A" />
       </View>
     );
   }
@@ -134,7 +134,7 @@ export default function CreateAlbumScreen() {
                   borderColor: theme.colors.border,
                   color: theme.colors.foreground,
                 },
-                isNameFocused && { borderColor: '#0073CF' },
+                isNameFocused && { borderColor: '#D4B13A' },
               ]}
               value={name}
               onChangeText={setName}
@@ -160,7 +160,7 @@ export default function CreateAlbumScreen() {
                   borderColor: theme.colors.border,
                   color: theme.colors.foreground,
                 },
-                isDescFocused && { borderColor: '#0073CF' },
+                isDescFocused && { borderColor: '#D4B13A' },
               ]}
               value={description}
               onChangeText={setDescription}
@@ -254,7 +254,7 @@ export default function CreateAlbumScreen() {
           onPress={handleSave}
         >
           {isSaving ? (
-            <ActivityIndicator color="#FFFFFF" />
+            <ActivityIndicator color="#111" />
           ) : (
             <Text style={formStyles.submitText}>
               {isEditing ? t('common.save_changes') : t('albums.create_album')}

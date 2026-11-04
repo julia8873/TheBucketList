@@ -52,8 +52,8 @@
       "name": "TheBucketList",
       "shortName": "BucketList",
       "description": "Your life, your bucket list.",
-      "themeColor": "#0073CF",
-      "backgroundColor": "#F6F8FB"
+      "themeColor": "#E8652A",
+      "backgroundColor": "#FAF8F5"
     },
     "plugins": [
       "expo-router",
@@ -78,7 +78,7 @@
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#0073CF",
+          "color": "#D4B13A",
           "sounds": []
         }
       ],

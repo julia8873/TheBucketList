@@ -597,7 +597,6 @@ const es = {
     view_gallery: 'Vista galería',
     view_compact: 'Vista compacta',
     sort_tasks: 'Ordenar tareas',
-    sort_albums: 'Ordenar álbumes',
     sort_manual: 'Manual',
     sort_status: 'Estado',
     sort_status_manual: 'Estado (manual)',

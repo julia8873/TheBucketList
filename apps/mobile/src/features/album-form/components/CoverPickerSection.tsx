@@ -144,7 +144,7 @@ export function CoverPickerSection({
           accessibilityRole="button"
           accessibilityLabel={t('albums.recrop_photo')}
         >
-          <Crop size={15} color="#0073CF" strokeWidth={2} />
+          <Crop size={15} color="#D4B13A" strokeWidth={2} />
           <Text style={styles.recropBtnText}>{t('albums.recrop_photo')}</Text>
         </Pressable>
       )}
@@ -162,7 +162,7 @@ export function CoverPickerSection({
           accessibilityRole="button"
           accessibilityLabel={t('albums.pick_gallery')}
         >
-          <ImageIcon color={selectedCover.type === 'image' && !selectedCover.uri?.startsWith('http') ? '#0073CF' : theme.colors.foregroundMuted} size={24} />
+          <ImageIcon color={selectedCover.type === 'image' && !selectedCover.uri?.startsWith('http') ? '#D4B13A' : theme.colors.foregroundMuted} size={24} />
         </Pressable>
 
         {/* Cámara */}
@@ -189,7 +189,7 @@ export function CoverPickerSection({
           accessibilityRole="button"
           accessibilityLabel={t('albums.paste_link')}
         >
-          <Link2 color={selectedCover.type === 'image' && Boolean(selectedCover.uri?.startsWith('http')) ? '#0073CF' : theme.colors.foregroundMuted} size={24} />
+          <Link2 color={selectedCover.type === 'image' && Boolean(selectedCover.uri?.startsWith('http')) ? '#D4B13A' : theme.colors.foregroundMuted} size={24} />
         </Pressable>
 
         {COVERS.map((cover) => {
@@ -224,7 +224,7 @@ export function CoverPickerSection({
               backgroundColor: selectedCover.id === 'custom-color' && selectedCover.colors?.[0]
                 ? selectedCover.colors[0]
                 : theme.colors.surface,
-              borderColor: selectedCover.id === 'custom-color' ? '#0073CF' : theme.colors.border,
+              borderColor: selectedCover.id === 'custom-color' ? '#D4B13A' : theme.colors.border,
             },
           ]}
           onPress={() => setShowColorPicker(true)}
@@ -235,7 +235,7 @@ export function CoverPickerSection({
             color={
               selectedCover.id === 'custom-color' && selectedCover.colors?.[0]
                 ? isColorDark(selectedCover.colors[0]) ? '#FFF' : '#000'
-                : '#0073CF'
+                : '#D4B13A'
             }
             size={22}
           />
@@ -292,7 +292,7 @@ export function CoverPickerSection({
       {/* ColorPickerModal para portadas */}
       <ColorPickerModal
         visible={showColorPicker}
-        initialColor={selectedCover.colors?.[0] || '#0073CF'}
+        initialColor={selectedCover.colors?.[0] || '#D4B13A'}
         onSelectColor={(color) => {
           onSelectCover({
             id: 'custom-color',

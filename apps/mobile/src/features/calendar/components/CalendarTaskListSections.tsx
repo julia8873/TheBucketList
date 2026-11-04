@@ -84,7 +84,7 @@ export function CalendarTaskListSections({
       {/* ── SECCIÓN: Tareas del Día Seleccionado ── */}
       <View style={styles.sectionHeader}>
         <Text style={[styles.sectionTitle, { color: theme.colors.foreground }]}>
-          <Text style={{ color: '#0073CF' }}>
+          <Text style={{ color: '#D4B13A' }}>
             {format(selectedDate, t('calendar.date_format_day_month'), { locale: dateFnsLocale }).toUpperCase()}
           </Text>
           {selectedTasks.length > 0 ? ` · ${selectedTasks.length}` : ''}

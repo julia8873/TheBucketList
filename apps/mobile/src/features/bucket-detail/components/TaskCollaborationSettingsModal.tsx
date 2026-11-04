@@ -193,7 +193,7 @@ export function TaskCollaborationSettingsModal({
                         </Text>
                       </View>
                       {removing ? (
-                        <ActivityIndicator size="small" color="#0073CF" />
+                        <ActivityIndicator size="small" color="#D4B13A" />
                       ) : canRemove ? (
                         <Pressable
                           onPress={() => confirmRemove(c)}
@@ -224,15 +224,15 @@ export function TaskCollaborationSettingsModal({
                 styles.optionCard,
                 {
                   backgroundColor: mode === 'invite_only'
-                    ? (theme.dark ? 'rgba(0, 115, 207, 0.08)' : '#FDF7E7')
+                    ? (theme.dark ? 'rgba(212, 177, 58, 0.08)' : '#FDF7E7')
                     : (theme.colors.surfaceElevated ?? (theme.dark ? '#1C1C1C' : '#F7F5F0')),
-                  borderColor: mode === 'invite_only' ? '#0073CF' : theme.colors.border,
+                  borderColor: mode === 'invite_only' ? '#D4B13A' : theme.colors.border,
                 },
               ]}
               onPress={() => handleSelectMode('invite_only')}
             >
               <View style={[styles.optionIconContainer, { backgroundColor: theme.dark ? '#262626' : '#ECE8DF' }]}>
-                <Lock size={20} color={mode === 'invite_only' ? '#0073CF' : theme.colors.foregroundMuted} />
+                <Lock size={20} color={mode === 'invite_only' ? '#D4B13A' : theme.colors.foregroundMuted} />
               </View>
               <View style={styles.optionContent}>
                 <Text style={[styles.optionTitle, { color: theme.colors.foreground }]}>
@@ -253,15 +253,15 @@ export function TaskCollaborationSettingsModal({
                 styles.optionCard,
                 {
                   backgroundColor: mode === 'request'
-                    ? (theme.dark ? 'rgba(0, 115, 207, 0.08)' : '#FDF7E7')
+                    ? (theme.dark ? 'rgba(212, 177, 58, 0.08)' : '#FDF7E7')
                     : (theme.colors.surfaceElevated ?? (theme.dark ? '#1C1C1C' : '#F7F5F0')),
-                  borderColor: mode === 'request' ? '#0073CF' : theme.colors.border,
+                  borderColor: mode === 'request' ? '#D4B13A' : theme.colors.border,
                 },
               ]}
               onPress={() => handleSelectMode('request')}
             >
               <View style={[styles.optionIconContainer, { backgroundColor: theme.dark ? '#262626' : '#ECE8DF' }]}>
-                <UserCheck size={20} color={mode === 'request' ? '#0073CF' : theme.colors.foregroundMuted} />
+                <UserCheck size={20} color={mode === 'request' ? '#D4B13A' : theme.colors.foregroundMuted} />
               </View>
               <View style={styles.optionContent}>
                 <Text style={[styles.optionTitle, { color: theme.colors.foreground }]}>
@@ -282,15 +282,15 @@ export function TaskCollaborationSettingsModal({
                 styles.optionCard,
                 {
                   backgroundColor: mode === 'open'
-                    ? (theme.dark ? 'rgba(0, 115, 207, 0.08)' : '#FDF7E7')
+                    ? (theme.dark ? 'rgba(212, 177, 58, 0.08)' : '#FDF7E7')
                     : (theme.colors.surfaceElevated ?? (theme.dark ? '#1C1C1C' : '#F7F5F0')),
-                  borderColor: mode === 'open' ? '#0073CF' : theme.colors.border,
+                  borderColor: mode === 'open' ? '#D4B13A' : theme.colors.border,
                 },
               ]}
               onPress={() => handleSelectMode('open')}
             >
               <View style={[styles.optionIconContainer, { backgroundColor: theme.dark ? '#262626' : '#ECE8DF' }]}>
-                <Zap size={20} color={mode === 'open' ? '#0073CF' : theme.colors.foregroundMuted} />
+                <Zap size={20} color={mode === 'open' ? '#D4B13A' : theme.colors.foregroundMuted} />
               </View>
               <View style={styles.optionContent}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -321,15 +321,15 @@ export function TaskCollaborationSettingsModal({
                     styles.optionCard,
                     {
                       backgroundColor: audience === 'followers'
-                        ? (theme.dark ? 'rgba(0, 115, 207, 0.08)' : '#FDF7E7')
+                        ? (theme.dark ? 'rgba(212, 177, 58, 0.08)' : '#FDF7E7')
                         : (theme.colors.surfaceElevated ?? (theme.dark ? '#1C1C1C' : '#F7F5F0')),
-                      borderColor: audience === 'followers' ? '#0073CF' : theme.colors.border,
+                      borderColor: audience === 'followers' ? '#D4B13A' : theme.colors.border,
                     },
                   ]}
                   onPress={() => handleSelectAudience('followers')}
                 >
                   <View style={[styles.optionIconContainer, { backgroundColor: theme.dark ? '#262626' : '#ECE8DF' }]}>
-                    <Users size={20} color={audience === 'followers' ? '#0073CF' : theme.colors.foregroundMuted} />
+                    <Users size={20} color={audience === 'followers' ? '#D4B13A' : theme.colors.foregroundMuted} />
                   </View>
                   <View style={styles.optionContent}>
                     <Text style={[styles.optionTitle, { color: theme.colors.foreground }]}>
@@ -350,15 +350,15 @@ export function TaskCollaborationSettingsModal({
                     styles.optionCard,
                     {
                       backgroundColor: audience === 'anyone'
-                        ? (theme.dark ? 'rgba(0, 115, 207, 0.08)' : '#FDF7E7')
+                        ? (theme.dark ? 'rgba(212, 177, 58, 0.08)' : '#FDF7E7')
                         : (theme.colors.surfaceElevated ?? (theme.dark ? '#1C1C1C' : '#F7F5F0')),
-                      borderColor: audience === 'anyone' ? '#0073CF' : theme.colors.border,
+                      borderColor: audience === 'anyone' ? '#D4B13A' : theme.colors.border,
                     },
                   ]}
                   onPress={() => handleSelectAudience('anyone')}
                 >
                   <View style={[styles.optionIconContainer, { backgroundColor: theme.dark ? '#262626' : '#ECE8DF' }]}>
-                    <Globe size={20} color={audience === 'anyone' ? '#0073CF' : theme.colors.foregroundMuted} />
+                    <Globe size={20} color={audience === 'anyone' ? '#D4B13A' : theme.colors.foregroundMuted} />
                   </View>
                   <View style={styles.optionContent}>
                     <Text style={[styles.optionTitle, { color: theme.colors.foreground }]}>
@@ -377,8 +377,8 @@ export function TaskCollaborationSettingsModal({
 
             {saving && (
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 16 }}>
-                <ActivityIndicator size="small" color="#0073CF" />
-                <Text style={{ color: '#0073CF', fontSize: 13, fontFamily: 'Inter_500Medium' }}>
+                <ActivityIndicator size="small" color="#D4B13A" />
+                <Text style={{ color: '#D4B13A', fontSize: 13, fontFamily: 'Inter_500Medium' }}>
                   {t('collab_settings.saving')}
                 </Text>
               </View>
@@ -481,7 +481,7 @@ const styles = themedStyleSheet({
     justifyContent: 'center',
   },
   initialsText: {
-    color: '#0073CF',
+    color: '#D4B13A',
     fontSize: 13,
     fontFamily: 'Inter_600SemiBold',
   },
@@ -523,8 +523,8 @@ const styles = themedStyleSheet({
     marginBottom: 10,
   },
   optionCardActive: {
-    borderColor: '#0073CF',
-    backgroundColor: 'rgba(0, 115, 207, 0.06)',
+    borderColor: '#D4B13A',
+    backgroundColor: 'rgba(212, 177, 58, 0.06)',
   },
   optionIconContainer: {
     width: 38,
@@ -554,13 +554,13 @@ const styles = themedStyleSheet({
     lineHeight: 16,
   },
   openBadge: {
-    backgroundColor: 'rgba(0, 115, 207, 0.2)',
+    backgroundColor: 'rgba(212, 177, 58, 0.2)',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
   },
   openBadgeText: {
-    color: '#0073CF',
+    color: '#D4B13A',
     fontSize: 10,
     fontFamily: 'Inter_700Bold',
   },
@@ -575,12 +575,12 @@ const styles = themedStyleSheet({
     marginLeft: 8,
   },
   radioActive: {
-    borderColor: '#0073CF',
+    borderColor: '#D4B13A',
   },
   radioDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#0073CF',
+    backgroundColor: '#D4B13A',
   },
 });

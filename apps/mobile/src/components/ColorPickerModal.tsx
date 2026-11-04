@@ -30,7 +30,7 @@ const HUE_GRADIENT = [
 ] as const;
 
 const POPULAR_PRESETS = [
-  '#0073CF',
+  '#D4B13A',
   '#F59E0B',
   '#EF4444',
   '#EC4899',
@@ -121,7 +121,7 @@ interface ColorPickerModalProps {
 
 export const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
   visible,
-  initialColor = '#0073CF',
+  initialColor = '#D4B13A',
   onSelectColor,
   onClose,
   title,
@@ -137,7 +137,7 @@ export const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
 
   useEffect(() => {
     if (visible) {
-      const valid = normalizeHexColor(initialColor) || '#0073CF';
+      const valid = normalizeHexColor(initialColor) || '#D4B13A';
       setCurrentColor(valid);
       setHexInput(valid.replace('#', ''));
       const hsl = hexToHsl(valid);
@@ -191,7 +191,7 @@ export const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
   ).current;
 
   const handleApply = () => {
-    const finalColor = normalizeHexColor(currentColor) || '#0073CF';
+    const finalColor = normalizeHexColor(currentColor) || '#D4B13A';
     void addCustomColor(finalColor);
     onSelectColor(finalColor);
     onClose();

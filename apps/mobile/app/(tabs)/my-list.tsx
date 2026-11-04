@@ -568,9 +568,9 @@ export default function MyListScreen() {
               height: 24,
               paddingHorizontal: 10,
               borderRadius: 12,
-              backgroundColor: theme.dark ? 'rgba(0, 115, 207, 0.18)' : 'rgba(0, 115, 207, 0.12)',
+              backgroundColor: theme.dark ? 'rgba(212, 177, 58, 0.18)' : 'rgba(212, 177, 58, 0.12)',
               borderWidth: 1,
-              borderColor: 'rgba(0, 115, 207, 0.4)',
+              borderColor: 'rgba(212, 177, 58, 0.4)',
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -1119,7 +1119,7 @@ export default function MyListScreen() {
                 styles.exploreCollectionsBanner,
                 {
                   backgroundColor: theme.dark ? '#181818' : '#F2F8FF',
-                  borderColor: theme.dark ? 'rgba(0, 115, 207,0.25)' : 'rgba(0, 115, 207,0.35)',
+                  borderColor: theme.dark ? 'rgba(212, 177, 58,0.25)' : 'rgba(212, 177, 58,0.35)',
                 },
                 pressed && { opacity: 0.85, transform: [{ scale: 0.99 }] },
               ]}
@@ -1135,7 +1135,7 @@ export default function MyListScreen() {
               <View
                 style={[
                   styles.exploreCollectionsIconWrap,
-                  { backgroundColor: theme.dark ? 'rgba(0, 115, 207,0.15)' : 'rgba(0, 115, 207,0.18)' },
+                  { backgroundColor: theme.dark ? 'rgba(212, 177, 58,0.15)' : 'rgba(212, 177, 58,0.18)' },
                 ]}
               >
                 <Sparkles size={20} color={gold[400]} />

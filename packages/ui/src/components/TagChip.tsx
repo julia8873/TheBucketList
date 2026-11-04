@@ -90,7 +90,7 @@ export function TagChip({ label, variant = 'default', color, emoji, size = 'md',
 
       {isSelected && onRemove && (
         <Pressable onPress={onRemove} style={styles.removeIcon} hitSlop={10} accessibilityLabel={t('tags.delete_this_tag', { defaultValue: 'Eliminar etiqueta' })}>
-          <X color="#0073CF" size={14} />
+          <X color="#D4B13A" size={14} />
         </Pressable>
       )}
     </Pressable>
@@ -115,13 +115,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   chipSelected: {
-    borderColor: '#0073CF',
-    backgroundColor: 'rgba(0, 115, 207, 0.12)',
+    borderColor: '#D4B13A',
+    backgroundColor: 'rgba(212, 177, 58, 0.12)',
   },
   chipCreate: {
     backgroundColor: 'transparent',
     borderStyle: 'dashed',
-    borderColor: '#0073CF',
+    borderColor: '#D4B13A',
   },
   colorDot: {
     width: 10,
@@ -169,10 +169,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   textSelected: {
-    color: '#0073CF',
+    color: '#D4B13A',
   },
   textCreate: {
-    color: '#0073CF',
+    color: '#D4B13A',
     fontFamily: 'Inter_600SemiBold',
   },
   removeIcon: {

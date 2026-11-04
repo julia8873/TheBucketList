@@ -5,27 +5,27 @@ export const lightTheme: Theme = {
   dark: false,
   colors: {
     // ── Backgrounds ──────────────────────────────────────────────────────
-    background:      warm[50],           // #F6F8FB
+    background:      warm[50],           // #FAF8F3
     surface:         dark[1000],         // #FFFFFF
     surfaceElevated: dark[1000],
     surfaceSunken:   warm[100],
 
     // ── Brand ────────────────────────────────────────────────────────────
-    primary:           gold[400],        // brand blue #0073CF (AA on white)
-    primaryHover:      gold[500],
-    primaryForeground: '#FFFFFF',
+    primary:           gold[500],        // darkened gold for AA contrast on light bg
+    primaryHover:      gold[600],
+    primaryForeground: dark[1000],
 
     secondary:           warm[200],
     secondaryForeground: warm[700],
 
     // ── Text ─────────────────────────────────────────────────────────────
-    foreground:       '#0F1623',         // very dark cool
+    foreground:       '#1A1410',         // very dark warm
     foregroundMuted:  warm[600],
     foregroundSubtle: warm[500],
 
     // ── Borders ──────────────────────────────────────────────────────────
     border:      warm[200],
-    borderFocus: gold[400],
+    borderFocus: gold[500],
 
     // ── Semantic ─────────────────────────────────────────────────────────
     success:           green[500],

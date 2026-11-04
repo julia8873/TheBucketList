@@ -65,10 +65,10 @@ export function isUserAdmin(userOrProfile?: any): boolean {
 
 const styles = StyleSheet.create({
   circleBadge: {
-    backgroundColor: '#0073CF',
+    backgroundColor: '#D4AF37',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#0073CF',
+    shadowColor: '#D4AF37',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.35,
     shadowRadius: 2,
@@ -78,15 +78,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: 'rgba(0, 115, 207, 0.15)',
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(0, 115, 207, 0.45)',
+    borderColor: 'rgba(212, 175, 55, 0.45)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 12,
   },
   pillText: {
-    color: '#0073CF',
+    color: '#D4AF37',
     fontSize: 11,
     fontFamily: fontFamily.bold,
     letterSpacing: 0.3,

@@ -323,7 +323,7 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
       align-items: center;
       justify-content: center;
       border-radius: 50%;
-      background: radial-gradient(circle at 35% 35%, #F5DE7A 0%, #0073CF 55%, #A17F19 100%);
+      background: radial-gradient(circle at 35% 35%, #F5DE7A 0%, #D4AF37 55%, #A17F19 100%);
       color: #000000;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       font-weight: 800;
@@ -345,7 +345,7 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
       width: 20px;
       height: 20px;
       border-radius: 50%;
-      background: #0073CF;
+      background: #D4AF37;
       border: 2.5px solid ${theme.dark ? '#0F172A' : '#FFFFFF'};
       box-shadow: 0 2px 7px rgba(0,0,0,0.4);
       cursor: pointer;
@@ -361,7 +361,7 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
     .point-marker.selected {
       transform: scale(1.35);
       border-color: #FFFFFF;
-      box-shadow: 0 0 0 4px rgba(0, 115, 207, 0.55);
+      box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.55);
     }
     .point-core {
       width: 5px;
@@ -373,7 +373,7 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
       position: absolute;
       top: -8px;
       right: -10px;
-      background: #0073CF;
+      background: #D4AF37;
       color: #000000;
       font-size: 9.5px;
       font-weight: 800;
@@ -413,8 +413,8 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
       position: relative;
     }
     .hub-card.selected {
-      border-color: #0073CF;
-      box-shadow: 0 0 0 3px rgba(0, 115, 207, 0.35);
+      border-color: #D4AF37;
+      box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.35);
     }
     .hub-card.completed {
       border-color: rgba(16, 185, 129, 0.6);
@@ -448,8 +448,8 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
       width: 28px;
       height: 28px;
       border-radius: 8px;
-      background: rgba(0, 115, 207, 0.15);
-      color: #0073CF;
+      background: rgba(212, 175, 55, 0.15);
+      color: #D4AF37;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -494,7 +494,7 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
       text-overflow: ellipsis;
     }
     .hub-badge {
-      background: #0073CF;
+      background: #D4AF37;
       color: #000000;
       font-size: 9.5px;
       font-weight: 800;
@@ -523,7 +523,7 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
       margin-top: -1px;
     }
     .hub-card.selected + .hub-arrow {
-      border-top-color: #0073CF;
+      border-top-color: #D4AF37;
     }
   </style>
 </head>

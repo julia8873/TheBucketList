@@ -151,7 +151,7 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
         },
         isSelected && {
           borderColor: theme.colors.primary,
-          backgroundColor: 'rgba(0, 115, 207, 0.08)',
+          backgroundColor: 'rgba(212, 177, 58, 0.08)',
         },
         drag?.isActive && { borderColor: theme.colors.primary },
         { marginBottom: drag ? 6 : 0 },
@@ -236,7 +236,7 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
                   ? 'rgba(239, 68, 68, 0.14)'
                   : item.priority === 'low'
                   ? 'rgba(16, 185, 129, 0.14)'
-                  : 'rgba(0, 115, 207, 0.14)',
+                  : 'rgba(212, 177, 58, 0.14)',
               borderWidth: 1,
               borderColor:
                 item.priority === 'high' || item.priority === 'urgent'
@@ -415,7 +415,7 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
           },
           isSelected && {
             borderColor: theme.colors.primary,
-            backgroundColor: 'rgba(0, 115, 207, 0.08)',
+            backgroundColor: 'rgba(212, 177, 58, 0.08)',
           },
           drag && { flex: 1 },
           drag?.isActive && { borderColor: theme.colors.primary },

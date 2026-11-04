@@ -10,7 +10,7 @@ import { TagBadge } from '../src/components/TagBadge';
 import { TagEditSheet } from '../src/components/TagEditSheet';
 import { sortTags, useTagUsage, useTags, type Tag } from '../src/hooks/useTags';
 
-const GOLD = '#0073CF';
+const GOLD = '#D4B13A';
 
 type Mode = 'popular' | 'az' | 'recent' | 'unused';
 const MODES: Array<{ key: Mode; labelKey: string }> = [
@@ -258,5 +258,5 @@ const styles = themedStyleSheet({
     backgroundColor: '#0E0E0E',
   },
   cta: { height: 54, borderRadius: 27, backgroundColor: GOLD, alignItems: 'center', justifyContent: 'center' },
-  ctaText: { fontFamily: fontFamily.bold, fontSize: 18, color: '#FFFFFF' },
+  ctaText: { fontFamily: fontFamily.bold, fontSize: 18, color: '#111111' },
 });

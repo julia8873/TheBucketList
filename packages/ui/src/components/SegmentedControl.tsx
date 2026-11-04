@@ -1,6 +1,6 @@
 /**
  * SegmentedControl — tab navigation
- * Matches the reference design: flat labels with a brand-blue underline
+ * Matches the reference design: flat labels with a gold underline
  * for the active tab (no pill/background).
  */
 import React, { useRef } from 'react';
@@ -47,8 +47,8 @@ export function SegmentedControl({
       style={[
         styles.container,
         {
-          backgroundColor: theme.dark ? '#1E1E24' : '#EBEFF5',
-          borderColor: theme.dark ? '#2C2C35' : theme.colors.border,
+          backgroundColor: theme.dark ? '#141414' : '#EDE8DE',
+          borderColor: theme.colors.border,
         },
         style,
       ]}
@@ -93,8 +93,8 @@ export function SegmentedControl({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    height: 42,
-    borderRadius: 14,
+    height: 40,
+    borderRadius: 20,
     borderWidth: 1,
     padding: 3,
   },
@@ -102,10 +102,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 11,
+    borderRadius: 18,
     backgroundColor: 'transparent',
   },
   label: {
-    fontSize: 13,
+    fontSize: 14,
   },
 });

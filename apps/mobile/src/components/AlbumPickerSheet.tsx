@@ -98,7 +98,7 @@ export function AlbumPickerSheet({
               <View style={styles.dragIndicator} />
               <View style={styles.headerRow}>
                 <View style={styles.headerTitleContainer}>
-                  <Folder color="#0073CF" size={20} />
+                  <Folder color="#D4B13A" size={20} />
                   <Text style={styles.headerTitle}>{t('album_picker.title')}</Text>
                 </View>
               </View>
@@ -127,7 +127,7 @@ export function AlbumPickerSheet({
             {/* Content */}
             {isLoading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator color="#0073CF" size="large" />
+                <ActivityIndicator color="#D4B13A" size="large" />
               </View>
             ) : (
               <ScrollView
@@ -144,14 +144,14 @@ export function AlbumPickerSheet({
                   onPress={() => handleSelect(null)}
                 >
                   <View style={[styles.folderIconContainer, selectedAlbumId === null && styles.folderIconSelected]}>
-                    <FolderOpen color={selectedAlbumId === null ? '#111' : '#0073CF'} size={20} />
+                    <FolderOpen color={selectedAlbumId === null ? '#111' : '#D4B13A'} size={20} />
                   </View>
                   <View style={styles.albumInfo}>
                     <Text style={styles.albumTitle}>{t('album_picker.no_album')}</Text>
                     <Text style={styles.albumSubtitle}>{t('album_picker.no_album_desc')}</Text>
                   </View>
                   <View style={[styles.checkCircle, selectedAlbumId === null && styles.checkCircleSelected]}>
-                    {selectedAlbumId === null && <Check color="#FFFFFF" size={14} strokeWidth={3} />}
+                    {selectedAlbumId === null && <Check color="#111" size={14} strokeWidth={3} />}
                   </View>
                 </Pressable>
 
@@ -165,7 +165,7 @@ export function AlbumPickerSheet({
                       onPress={() => handleSelect(album.id)}
                     >
                       <View style={[styles.folderIconContainer, isSelected && styles.folderIconSelected]}>
-                        <Folder color={isSelected ? '#111' : '#0073CF'} size={20} />
+                        <Folder color={isSelected ? '#111' : '#D4B13A'} size={20} />
                       </View>
                       <View style={styles.albumInfo}>
                         <Text style={styles.albumTitle} numberOfLines={1}>
@@ -186,7 +186,7 @@ export function AlbumPickerSheet({
                         </View>
                       </View>
                       <View style={[styles.checkCircle, isSelected && styles.checkCircleSelected]}>
-                        {isSelected && <Check color="#FFFFFF" size={14} strokeWidth={3} />}
+                        {isSelected && <Check color="#111" size={14} strokeWidth={3} />}
                       </View>
                     </Pressable>
                   );
@@ -339,18 +339,18 @@ const styles = themedStyleSheet({
   },
   albumRowSelected: {
     backgroundColor: '#201E17',
-    borderColor: 'rgba(0, 115, 207, 0.45)',
+    borderColor: 'rgba(212, 177, 58, 0.45)',
   },
   folderIconContainer: {
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: 'rgba(0, 115, 207, 0.12)',
+    backgroundColor: 'rgba(212, 177, 58, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   folderIconSelected: {
-    backgroundColor: '#0073CF',
+    backgroundColor: '#D4B13A',
   },
   albumInfo: {
     flex: 1,
@@ -399,8 +399,8 @@ const styles = themedStyleSheet({
     justifyContent: 'center',
   },
   checkCircleSelected: {
-    backgroundColor: '#0073CF',
-    borderColor: '#0073CF',
+    backgroundColor: '#D4B13A',
+    borderColor: '#D4B13A',
   },
   loadingContainer: {
     paddingVertical: 60,

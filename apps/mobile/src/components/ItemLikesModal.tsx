@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 10,
-    backgroundColor: 'rgba(0, 115, 207, 0.16)',
+    backgroundColor: 'rgba(250, 204, 21, 0.16)',
   },
   countBadgeText: {
     color: HEART_COLOR,

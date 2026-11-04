@@ -7,7 +7,7 @@ import { ColorPickerModal, isColorDark } from '@/components/ColorPickerModal';
 import { useCustomColors } from '@/hooks/useCustomColors';
 import { COVERS, SOLID_COVERS } from '@/features/album-form/types';
 
-const GOLD = '#0073CF';
+const GOLD = '#D4B13A';
 
 interface CoverColorPickerProps {
   /**
@@ -32,7 +32,7 @@ export function CoverColorPicker({ onSelectGradient, onSelectSolid }: CoverColor
   const [editorOpen, setEditorOpen] = useState(false);
   const [pickerTarget, setPickerTarget] = useState<PickerTarget>(null);
   const [fromColor, setFromColor] = useState('#3A78C4');
-  const [toColor, setToColor] = useState('#0073CF');
+  const [toColor, setToColor] = useState('#D4B13A');
 
   const extraSaved = savedColors
     .filter((sc) => !SOLID_COVERS.some((soc) => soc.colors?.[0]?.toLowerCase() === sc.toLowerCase()))
@@ -204,7 +204,7 @@ const localStyles = StyleSheet.create({
   addSwatch: {
     borderStyle: 'dashed',
     borderColor: GOLD,
-    backgroundColor: 'rgba(0, 115, 207,0.06)',
+    backgroundColor: 'rgba(212,177,58,0.06)',
   },
   overlay: {
     flex: 1,

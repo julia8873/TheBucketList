@@ -38,7 +38,7 @@ export function TaskCollaboratorsSection({
               : t('task_form.collaborator_count_plural', { count: selectedCollaborators.length, defaultValue: `${selectedCollaborators.length} colaboradores añadidos` })
         }
       >
-        <Users color="#0073CF" size={22} />
+        <Users color="#D4B13A" size={22} />
         <Text
           style={[formStyles.collaboratorPlaceholder, { color: theme.colors.foregroundMuted }]}
           numberOfLines={1}
@@ -49,7 +49,7 @@ export function TaskCollaboratorsSection({
               ? t('task_form.collaborator_count_single', { defaultValue: '1 colaborador añadido' })
               : t('task_form.collaborator_count_plural', { count: selectedCollaborators.length, defaultValue: `${selectedCollaborators.length} colaboradores añadidos` })}
         </Text>
-        <Plus color="#0073CF" size={20} />
+        <Plus color="#D4B13A" size={20} />
       </Pressable>
 
       {selectedCollaborators.length > 0 && (
@@ -65,7 +65,7 @@ export function TaskCollaboratorsSection({
               <Text style={formStyles.collaboratorChipText}>
                 {c.display_name || `@${c.username}`}
               </Text>
-              <X color="#0073CF" size={14} />
+              <X color="#D4B13A" size={14} />
             </Pressable>
           ))}
         </View>

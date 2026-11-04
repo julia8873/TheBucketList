@@ -117,7 +117,7 @@ export function DailyQuickAddBar({
           accessibilityRole="button"
           accessibilityLabel={t('daily.quick_add_placeholder')}
         >
-          <Plus size={16} color="#FFFFFF" strokeWidth={2.4} />
+          <Plus size={16} color="#0E0E0E" strokeWidth={2.4} />
         </Pressable>
       </View>
     </View>
@@ -332,7 +332,7 @@ export function DailyTasksScrollControls({
               justifyContent: 'center',
               paddingHorizontal: 10,
               backgroundColor: isStatusActive
-                ? (theme.dark ? 'transparent' : 'rgba(0, 115, 207, 0.12)')
+                ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
                 : theme.colors.surface,
               borderColor: isStatusActive ? gold[400] : theme.colors.border,
             },
@@ -370,7 +370,7 @@ export function DailyTasksScrollControls({
               justifyContent: 'center',
               paddingHorizontal: 10,
               backgroundColor: isPriorityActive
-                ? (theme.dark ? 'transparent' : 'rgba(0, 115, 207, 0.12)')
+                ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
                 : theme.colors.surface,
               borderColor: isPriorityActive ? gold[400] : theme.colors.border,
             },
@@ -402,7 +402,7 @@ export function DailyTasksScrollControls({
               justifyContent: 'center',
               paddingHorizontal: 10,
               backgroundColor: selectedTagFilters.length > 0
-                ? (theme.dark ? 'transparent' : 'rgba(0, 115, 207, 0.12)')
+                ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
                 : theme.colors.surface,
               borderColor: selectedTagFilters.length > 0 ? gold[400] : theme.colors.border,
             },
@@ -464,8 +464,8 @@ export function DailyTasksScrollControls({
                       backgroundColor: tag.color
                         ? `${tag.color}33`
                         : theme.dark
-                          ? 'rgba(0, 115, 207, 0.2)'
-                          : 'rgba(0, 115, 207, 0.15)',
+                          ? 'rgba(212, 175, 55, 0.2)'
+                          : 'rgba(212, 175, 55, 0.15)',
                     },
                   ]}
                 >
@@ -475,7 +475,7 @@ export function DailyTasksScrollControls({
                 <View
                   style={[
                     styles.activeTagDot,
-                    { backgroundColor: tag.color || '#0073CF' },
+                    { backgroundColor: tag.color || '#D4B13A' },
                   ]}
                 />
               )}
@@ -539,7 +539,7 @@ export function DailyTasksScrollControls({
                   paddingHorizontal: 8,
                   borderRadius: 8,
                   backgroundColor: isCustomized
-                    ? (theme.dark ? 'rgba(0, 115, 207, 0.12)' : 'rgba(0, 115, 207, 0.14)')
+                    ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.14)')
                     : theme.colors.surface,
                   borderWidth: 1,
                   borderColor: isCustomized ? gold[400] : theme.colors.border,
@@ -632,7 +632,7 @@ export function DailyTasksScrollControls({
                     dailySheetStyles.sheetOptionRow,
                     {
                       backgroundColor: isSelected
-                        ? (theme.dark ? 'rgba(0, 115, 207, 0.08)' : 'rgba(0, 115, 207, 0.12)')
+                        ? (theme.dark ? 'rgba(212, 177, 58, 0.08)' : 'rgba(212, 177, 58, 0.12)')
                         : theme.colors.surface,
                       borderColor: isSelected ? gold[400] : theme.colors.border,
                     },
@@ -681,7 +681,7 @@ export function DailyTasksScrollControls({
                     dailySheetStyles.sheetOptionRow,
                     {
                       backgroundColor: isSelected
-                        ? (theme.dark ? 'rgba(0, 115, 207, 0.08)' : 'rgba(0, 115, 207, 0.12)')
+                        ? (theme.dark ? 'rgba(212, 177, 58, 0.08)' : 'rgba(212, 177, 58, 0.12)')
                         : theme.colors.surface,
                       borderColor: isSelected ? gold[400] : theme.colors.border,
                     },

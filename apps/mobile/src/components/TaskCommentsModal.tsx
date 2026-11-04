@@ -430,7 +430,7 @@ function TaskCommentsModalContent({
                 accessibilityLabel={t('comments.post_comment')}
               >
                 {ctrl.isSending ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <ActivityIndicator size="small" color="#000" />
                 ) : (
                   <Send size={15} color={text.trim() ? '#000' : (theme.dark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)')} />
                 )}
@@ -510,11 +510,11 @@ const styles = themedStyleSheet({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(0, 115, 207, 0.12)',
+    backgroundColor: 'rgba(212, 175, 55, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(0, 115, 207, 0.25)',
+    borderColor: 'rgba(212, 175, 55, 0.25)',
   },
   headerTitle: {
     color: '#FFF',
@@ -532,7 +532,7 @@ const styles = themedStyleSheet({
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 10,
-    backgroundColor: 'rgba(0, 115, 207, 0.16)',
+    backgroundColor: 'rgba(212, 175, 55, 0.16)',
   },
   countBadgeText: {
     color: gold[400],
@@ -609,8 +609,8 @@ const styles = themedStyleSheet({
     width: 12,
     borderLeftWidth: 1.5,
     borderBottomWidth: 1.5,
-    borderLeftColor: 'rgba(0, 115, 207, 0.35)',
-    borderBottomColor: 'rgba(0, 115, 207, 0.35)',
+    borderLeftColor: 'rgba(212, 175, 55, 0.35)',
+    borderBottomColor: 'rgba(212, 175, 55, 0.35)',
     borderBottomLeftRadius: 8,
   },
   commentContent: {
@@ -628,7 +628,7 @@ const styles = themedStyleSheet({
     fontFamily: fontFamily.semibold,
   },
   creatorTag: {
-    backgroundColor: 'rgba(0, 115, 207, 0.15)',
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 4,
@@ -728,7 +728,7 @@ const styles = themedStyleSheet({
     borderRadius: 8,
   },
   editSaveBtnText: {
-    color: '#FFFFFF',
+    color: '#000',
     fontSize: 12,
     fontFamily: fontFamily.semibold,
   },
@@ -745,7 +745,7 @@ const styles = themedStyleSheet({
     maxHeight: 180,
     backgroundColor: '#19191D',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 115, 207, 0.3)',
+    borderTopColor: 'rgba(212, 175, 55, 0.3)',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(255,255,255,0.1)',
   },
@@ -779,7 +779,7 @@ const styles = themedStyleSheet({
     paddingVertical: 8,
   },
   mentionItemPressed: {
-    backgroundColor: 'rgba(0, 115, 207, 0.1)',
+    backgroundColor: 'rgba(212, 175, 55, 0.1)',
   },
   mentionItemTextCol: {
     flex: 1,
@@ -810,9 +810,9 @@ const styles = themedStyleSheet({
     justifyContent: 'space-between',
     paddingHorizontal: 12,
     paddingVertical: 7,
-    backgroundColor: 'rgba(0, 115, 207, 0.08)',
+    backgroundColor: 'rgba(212, 175, 55, 0.08)',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 115, 207, 0.2)',
+    borderTopColor: 'rgba(212, 175, 55, 0.2)',
   },
   replyBannerLeft: {
     flexDirection: 'row',

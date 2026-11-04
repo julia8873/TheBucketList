@@ -10,7 +10,7 @@ import { ConfirmDialog } from './SettingsParts';
 import { TAG_COLORS, TAG_NAME_MAX, hexToRgba } from '../constants/tagPresets';
 import { useCreateTag, useDeleteTag, useTags, useUpdateTag, type Tag } from '../hooks/useTags';
 
-const GOLD = '#0073CF';
+const GOLD = '#D4B13A';
 const norm = (s: string) => s.trim().toLowerCase();
 
 interface TagEditSheetProps {
@@ -289,7 +289,7 @@ const styles = themedStyleSheet({
     backgroundColor: '#141414',
   },
   cta: { height: 54, borderRadius: 27, backgroundColor: GOLD, alignItems: 'center', justifyContent: 'center' },
-  ctaText: { fontFamily: 'Inter_700Bold', fontSize: 18, color: '#FFFFFF' },
+  ctaText: { fontFamily: 'Inter_700Bold', fontSize: 18, color: '#111111' },
   deleteBtn: { alignItems: 'center', justifyContent: 'center', marginTop: 18 },
   deleteText: { fontFamily: 'Inter_600SemiBold', fontSize: 16, color: '#E5877D' },
 });

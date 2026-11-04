@@ -378,7 +378,7 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
                     </Text>
                     {readOnlySet.has(c.id)
                       ? <Text style={{ fontSize: 12, color: '#666' }}>🔒</Text>
-                      : <X color="#0073CF" size={14} />
+                      : <X color="#D4B13A" size={14} />
                     }
                   </Pressable>
                 ))}
@@ -409,7 +409,7 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
                         </Text>
                       </View>
                       {removingId === c.id ? (
-                        <ActivityIndicator size="small" color="#0073CF" />
+                        <ActivityIndicator size="small" color="#D4B13A" />
                       ) : (
                         <Pressable
                           onPress={() => confirmRemoveCurrent(c)}
@@ -437,7 +437,7 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
 
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator color="#0073CF" size="large" />
+              <ActivityIndicator color="#D4B13A" size="large" />
             </View>
           ) : profiles.length === 0 ? (
             <View style={styles.emptyContainer}>
@@ -493,7 +493,7 @@ export function CollaboratorPickerSheet({ visible, selected, onChange, onClose, 
                       {isReadOnly ? (
                         <Text style={{ fontSize: 13 }}>🔒</Text>
                       ) : isSelected ? (
-                        <Check size={14} color="#FFFFFF" strokeWidth={3} />
+                        <Check size={14} color="#111" strokeWidth={3} />
                       ) : null}
                     </View>
                   </Pressable>
@@ -590,7 +590,7 @@ const styles = themedStyleSheet({
     borderBottomColor: '#1E1E1E',
   },
   chipsSectionLabel: {
-    color: '#0073CF',
+    color: '#D4B13A',
     fontSize: 11,
     fontFamily: fontFamily.bold,
     letterSpacing: 1,
@@ -604,8 +604,8 @@ const styles = themedStyleSheet({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 115, 207, 0.15)',
-    borderColor: '#0073CF',
+    backgroundColor: 'rgba(212, 177, 58, 0.15)',
+    borderColor: '#D4B13A',
     borderWidth: 1,
     borderRadius: 20,
     paddingVertical: 5,
@@ -626,7 +626,7 @@ const styles = themedStyleSheet({
     borderBottomColor: '#1E1E1E',
   },
   currentSectionLabel: {
-    color: '#0073CF',
+    color: '#D4B13A',
     fontSize: 11,
     fontFamily: fontFamily.bold,
     letterSpacing: 1,
@@ -649,7 +649,7 @@ const styles = themedStyleSheet({
     backgroundColor: 'rgba(239, 68, 68, 0.12)',
   },
   groupLabel: {
-    color: '#0073CF',
+    color: '#D4B13A',
     fontSize: 11,
     fontFamily: fontFamily.bold,
     letterSpacing: 1,
@@ -714,7 +714,7 @@ const styles = themedStyleSheet({
   },
   userRowSelected: {
     backgroundColor: '#201E17',
-    borderColor: 'rgba(0, 115, 207, 0.4)',
+    borderColor: 'rgba(212, 177, 58, 0.4)',
   },
   userInfo: {
     flex: 1,
@@ -741,8 +741,8 @@ const styles = themedStyleSheet({
     justifyContent: 'center',
   },
   checkCircleSelected: {
-    backgroundColor: '#0073CF',
-    borderColor: '#0073CF',
+    backgroundColor: '#D4B13A',
+    borderColor: '#D4B13A',
   },
   footer: {
     paddingHorizontal: 12,
@@ -751,14 +751,14 @@ const styles = themedStyleSheet({
     borderTopColor: '#1E1E1E',
   },
   confirmButton: {
-    backgroundColor: '#0073CF',
+    backgroundColor: '#D4B13A',
     borderRadius: 26,
     height: 50,
     alignItems: 'center',
     justifyContent: 'center',
   },
   confirmButtonText: {
-    color: '#FFFFFF',
+    color: '#111',
     fontSize: 16,
     fontFamily: fontFamily.bold,
   },

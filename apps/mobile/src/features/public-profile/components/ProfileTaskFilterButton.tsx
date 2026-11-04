@@ -131,8 +131,8 @@ export function ProfileTaskFilterButton({ filter, onChangeFilter }: ProfileTaskF
                       {
                         backgroundColor: isSelected
                           ? theme.dark
-                            ? 'rgba(0, 115, 207,0.08)'
-                            : 'rgba(0, 115, 207,0.08)'
+                            ? 'rgba(212,175,55,0.08)'
+                            : 'rgba(184,134,11,0.08)'
                           : pressed
                           ? theme.dark
                             ? '#202020'
@@ -140,8 +140,8 @@ export function ProfileTaskFilterButton({ filter, onChangeFilter }: ProfileTaskF
                           : 'transparent',
                         borderColor: isSelected
                           ? theme.dark
-                            ? 'rgba(0, 115, 207,0.35)'
-                            : 'rgba(0, 115, 207,0.35)'
+                            ? 'rgba(212,175,55,0.35)'
+                            : 'rgba(184,134,11,0.35)'
                           : 'transparent',
                       },
                     ]}

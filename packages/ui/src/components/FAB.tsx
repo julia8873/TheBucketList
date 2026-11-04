@@ -1,5 +1,5 @@
 /**
- * FAB — Floating Action Button (brand blue, 52px)
+ * FAB — Floating Action Button (gold, 56px)
  * Positioned bottom-right above tab bar.
  */
 import React, { useRef } from 'react';
@@ -69,26 +69,26 @@ export function FAB({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    right: 16,
+    right: 20,
     zIndex: 100,
   },
   button: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#0073CF',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#D4B13A',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#0073CF',
+    shadowColor: '#D4B13A',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
     elevation: 8,
   },
   icon: {
     fontFamily: fontFamily.regular,
     fontSize: 26,
-    color: '#FFFFFF',
+    color: '#000000',
     lineHeight: 30,
     marginTop: Platform.OS === 'android' ? -2 : 0,
   },

@@ -13,7 +13,7 @@ interface AddTaskSyncSheetProps {
   single?: boolean;
 }
 
-const GOLD = '#0073CF';
+const GOLD = '#D4B13A';
 
 /**
  * Menú inferior que aparece al añadir tareas a un álbum cuando su prioridad o visibilidad
@@ -196,7 +196,7 @@ const localStyles = StyleSheet.create({
     borderColor: '#262626',
     backgroundColor: '#1A1A1A',
   },
-  rowActive: { borderColor: '#6B5A22', backgroundColor: 'rgba(0, 115, 207,0.08)' },
+  rowActive: { borderColor: '#6B5A22', backgroundColor: 'rgba(212,177,58,0.08)' },
   rowIcon: {
     width: 38,
     height: 38,

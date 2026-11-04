@@ -17,7 +17,7 @@ export const PRIORITY_CONFIG: Record<
   { label: string; color: string; bgColor: string; borderColor: string }
 > = {
   low: { label: 'Baja', color: '#10B981', bgColor: '#0F261B', borderColor: '#194D31' },
-  medium: { label: 'Media', color: '#0073CF', bgColor: '#262010', borderColor: '#3D3310' },
+  medium: { label: 'Media', color: '#D4B13A', bgColor: '#262010', borderColor: '#3D3310' },
   high: { label: 'Alta', color: '#F97316', bgColor: '#2B190E', borderColor: '#5C2D13' },
   urgent: { label: 'Urgente', color: '#EF4444', bgColor: '#2A1111', borderColor: '#592020' },
 };

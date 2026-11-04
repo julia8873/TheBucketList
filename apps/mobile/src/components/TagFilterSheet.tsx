@@ -9,7 +9,7 @@ import { TagSheetShell, TAG_SHEET_H } from './TagSheetShell';
 import { sortTags, useTags, useTagUsage, type TagSort } from '../hooks/useTags';
 import { hexToRgba } from '../constants/tagPresets';
 
-const GOLD = '#0073CF';
+const GOLD = '#D4B13A';
 
 interface TagFilterSheetProps {
   visible: boolean;
@@ -348,7 +348,7 @@ const styles = themedStyleSheet({
     backgroundColor: '#141414',
   },
   cta: { height: 54, borderRadius: 27, backgroundColor: GOLD, alignItems: 'center', justifyContent: 'center' },
-  ctaText: { fontFamily: 'Inter_700Bold', fontSize: 18, color: '#FFFFFF' },
+  ctaText: { fontFamily: 'Inter_700Bold', fontSize: 18, color: '#111111' },
   manage: {
     flexDirection: 'row',
     alignItems: 'center',

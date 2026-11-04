@@ -660,11 +660,11 @@ export function BucketPhotoViewer({
                 }}
               >
                 {isDownloading ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <ActivityIndicator size="small" color="#000" />
                 ) : (
-                  <Download color="#FFFFFF" size={18} strokeWidth={2} />
+                  <Download color="#000" size={18} strokeWidth={2} />
                 )}
-                <Typography variant="bodySemibold" color="#FFFFFF" style={{ marginLeft: 8 }}>
+                <Typography variant="bodySemibold" color="#000" style={{ marginLeft: 8 }}>
                   {isDownloading
                     ? t('bucket.photo_downloading', { defaultValue: 'Descargando...' })
                     : t('bucket.photo_download')}
@@ -874,9 +874,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
-    backgroundColor: 'rgba(0, 115, 207, 0.1)',
+    backgroundColor: 'rgba(212, 177, 58, 0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(0, 115, 207, 0.25)',
+    borderColor: 'rgba(212, 177, 58, 0.25)',
   },
   arrowLeft: {
     position: 'absolute',
@@ -977,7 +977,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: 'rgba(0, 115, 207,0.4)',
+    borderColor: 'rgba(212,175,55,0.4)',
     gap: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },

@@ -194,12 +194,12 @@ export default function NotificationsScreen() {
       case 'collaboration_invite':
       case 'collaboration_request':
       case 'collaborator_joined':
-      case 'collaboration_accepted': return <Users size={16} color="#0073CF" />;
-      case 'album_invite': return <Folder size={16} color="#0073CF" />;
+      case 'collaboration_accepted': return <Users size={16} color="#D4B13A" />;
+      case 'album_invite': return <Folder size={16} color="#D4B13A" />;
       case 'notification_request':
       case 'notification_accepted':
       case 'bucket_update':
-      case 'album_update': return <Bell size={16} color="#0073CF" />;
+      case 'album_update': return <Bell size={16} color="#D4B13A" />;
       case 'drive_access': return <HardDrive size={16} color={gold[400]} />;
       default: return <Bell size={16} color={theme.dark ? '#FFFFFF' : theme.colors.foregroundMuted} />;
     }
@@ -399,7 +399,7 @@ export default function NotificationsScreen() {
                     disabled={respondingId === item.id}
                     onPress={() => handleCollaborationResponse(item, true)}
                   >
-                    <Check size={14} color="#FFFFFF" strokeWidth={3} />
+                    <Check size={14} color="#111" strokeWidth={3} />
                     <Text style={styles.inviteBtnTextAccept}>{t('common.accept')}</Text>
                   </Pressable>
                   <Pressable
@@ -465,9 +465,9 @@ const styles = themedStyleSheet({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
-    backgroundColor: 'rgba(0, 115, 207, 0.12)',
+    backgroundColor: 'rgba(212, 175, 55, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(0, 115, 207, 0.35)',
+    borderColor: 'rgba(212, 175, 55, 0.35)',
   },
   markAllText: {
     fontFamily: 'Inter_600SemiBold',
@@ -536,9 +536,9 @@ const styles = themedStyleSheet({
     paddingVertical: 7,
     borderRadius: 20,
   },
-  inviteBtnAccept: { backgroundColor: '#0073CF' },
+  inviteBtnAccept: { backgroundColor: '#D4B13A' },
   inviteBtnDecline: { backgroundColor: '#1E1E1E', borderWidth: 1, borderColor: '#3A3A3A' },
-  inviteBtnTextAccept: { fontFamily: 'Inter_600SemiBold', fontSize: 13, color: '#FFFFFF' },
+  inviteBtnTextAccept: { fontFamily: 'Inter_600SemiBold', fontSize: 13, color: '#111' },
   inviteBtnTextDecline: { fontFamily: 'Inter_400Regular', fontSize: 13, color: '#9A9A9A' },
   permBanner: {
     flexDirection: 'row',

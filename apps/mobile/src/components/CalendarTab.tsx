@@ -133,7 +133,7 @@ export const CalendarTab = React.forwardRef<ScrollView, CalendarTabProps>(functi
         <RefreshControl
           refreshing={refreshing}
           onRefresh={() => void onRefresh()}
-          tintColor="#0073CF"
+          tintColor="#D4B13A"
         />
       }
     >

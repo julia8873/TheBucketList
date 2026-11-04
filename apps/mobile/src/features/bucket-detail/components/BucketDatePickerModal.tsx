@@ -62,7 +62,7 @@ function BucketDatePickerModalInner({
                 <Typography variant="body" color={theme.colors.foregroundMuted}>{t('common.cancel')}</Typography>
               </Pressable>
               <Pressable onPress={handleConfirm} hitSlop={10}>
-                <Typography variant="bodySemibold" color="#0073CF">{t('common.save')}</Typography>
+                <Typography variant="bodySemibold" color="#D4B13A">{t('common.save')}</Typography>
               </Pressable>
             </View>
             <DateTimePicker

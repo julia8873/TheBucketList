@@ -102,7 +102,7 @@ function TaskItemRowComponent({
       ? '#EF4444'
       : itemPriority === 'low'
       ? '#10B981'
-      : '#0073CF';
+      : '#D4B13A';
   const itemPriorityLabel =
     itemPriority === 'urgent'
       ? t('common.urgent')
@@ -127,7 +127,7 @@ function TaskItemRowComponent({
             ? 'rgba(239, 68, 68, 0.16)'
             : itemPriority === 'low'
             ? 'rgba(16, 185, 129, 0.16)'
-            : 'rgba(0, 115, 207, 0.16)',
+            : 'rgba(212, 177, 58, 0.16)',
         borderWidth: 1,
         borderColor: itemPriorityColor,
       }}

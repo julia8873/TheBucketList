@@ -364,7 +364,7 @@ export function useDailyTasksState() {
   const [showTagModal, setShowTagModal] = useState(false);
   const [editingDailyTag, setEditingDailyTag] = useState<DailyTag | null>(null);
   const [tagFormName, setTagFormName] = useState('');
-  const [tagFormColor, setTagFormColor] = useState('#0073CF');
+  const [tagFormColor, setTagFormColor] = useState('#D4B13A');
   const [tagFormEmoji, setTagFormEmoji] = useState('📌');
   const [tagCreatedTarget, setTagCreatedTarget] = useState<'create' | 'edit' | 'quick' | 'sheet'>('create');
 
@@ -962,7 +962,7 @@ export function useDailyTasksState() {
     setTagCreatedTarget(target);
     setEditingDailyTag(null);
     setTagFormName('');
-    setTagFormColor('#0073CF');
+    setTagFormColor('#D4B13A');
     setTagFormEmoji('📌');
     setShowTagModal(true);
   };
@@ -970,7 +970,7 @@ export function useDailyTasksState() {
   const openEditTag = (tag: DailyTag) => {
     setEditingDailyTag(tag);
     setTagFormName(tag.name);
-    setTagFormColor(tag.color || '#0073CF');
+    setTagFormColor(tag.color || '#D4B13A');
     setTagFormEmoji(tag.emoji || '📌');
     setShowTagModal(true);
   };

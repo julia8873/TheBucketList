@@ -127,7 +127,7 @@ export default function ManageAdminsScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <PageTitle gold={t('admin_admins.title_gold')} rest={t('admin_admins.title_rest')} />
               <View style={styles.adminBadge}>
-                <ShieldCheck size={12} color="#0073CF" />
+                <ShieldCheck size={12} color="#D4AF37" />
                 <Text style={styles.adminBadgeText}>{t('admin_admins.badge')}</Text>
               </View>
             </View>
@@ -185,7 +185,7 @@ export default function ManageAdminsScreen() {
 
           {isLoading ? (
             <View style={styles.centered}>
-              <ActivityIndicator size="large" color="#0073CF" />
+              <ActivityIndicator size="large" color="#D4AF37" />
             </View>
           ) : (
             <FlatList
@@ -211,7 +211,7 @@ export default function ManageAdminsScreen() {
                         </Text>
                         {isPrimary && (
                           <View style={styles.primaryPill}>
-                            <Crown size={10} color="#0073CF" />
+                            <Crown size={10} color="#D4AF37" />
                             <Text style={styles.primaryPillText}>{t('admin_admins.primary')}</Text>
                           </View>
                         )}
@@ -274,15 +274,15 @@ const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(0, 115, 207, 0.15)',
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: 'rgba(0, 115, 207, 0.4)',
+    borderColor: 'rgba(212, 175, 55, 0.4)',
   },
   adminBadgeText: {
-    color: '#0073CF',
+    color: '#D4AF37',
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -331,7 +331,7 @@ const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#0073CF',
+    backgroundColor: '#D4AF37',
     paddingHorizontal: 12,
     paddingVertical: 12,
     borderRadius: 12,
@@ -378,15 +378,15 @@ const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: 'rgba(0, 115, 207, 0.15)',
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: 'rgba(0, 115, 207, 0.35)',
+    borderColor: 'rgba(212, 175, 55, 0.35)',
   },
   primaryPillText: {
-    color: '#0073CF',
+    color: '#D4AF37',
     fontSize: 9,
     fontFamily: fontFamily.bold,
   },

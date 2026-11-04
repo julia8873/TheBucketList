@@ -37,7 +37,7 @@ export const styles = themedStyleSheet({
     justifyContent: 'center',
   },
   searchIconButtonActive: {
-    backgroundColor: 'rgba(0, 115, 207, 0.15)',
+    backgroundColor: 'rgba(212, 177, 58, 0.15)',
   },
   searchBarContainer: {
     paddingHorizontal: 12,
@@ -374,7 +374,7 @@ export const styles = themedStyleSheet({
     borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: gold[400],
-    backgroundColor: 'rgba(0, 115, 207, 0.06)',
+    backgroundColor: 'rgba(212, 177, 58, 0.06)',
     marginBottom: 12,
   },
   compactNewAlbumText: {

@@ -105,7 +105,7 @@ export function BucketCollaboratorsRow({
               style={[
                 styles.collaboratorCircle,
                 isPending && styles.collaboratorCirclePending,
-                c.isOwner && { borderColor: '#0073CF', borderWidth: 2.5 },
+                c.isOwner && { borderColor: '#D4B13A', borderWidth: 2.5 },
               ]}
             >
               {c.avatar_url && !imgErrors[c.id] ? (
@@ -138,7 +138,7 @@ export function BucketCollaboratorsRow({
             accessibilityRole="button"
             accessibilityLabel={t('bucket.add_collaborator')}
           >
-            <UserPlus size={22} color="#0073CF" strokeWidth={1.8} />
+            <UserPlus size={22} color="#D4B13A" strokeWidth={1.8} />
           </Pressable>
         )}
       </ScrollView>

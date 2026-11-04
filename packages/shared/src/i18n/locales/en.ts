@@ -597,7 +597,6 @@ const en = {
     view_gallery: 'Gallery view',
     view_compact: 'Compact view',
     sort_tasks: 'Sort tasks',
-    sort_albums: 'Sort albums',
     sort_manual: 'Manual',
     sort_status: 'Status',
     sort_status_manual: 'Status (manual)',

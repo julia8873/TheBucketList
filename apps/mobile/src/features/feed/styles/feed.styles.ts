@@ -47,7 +47,7 @@ export const styles = themedStyleSheet({
     justifyContent: 'center',
   },
   toggleBtnActive: {
-    backgroundColor: '#0073CF',
+    backgroundColor: '#D4B13A',
   },
   toggleText: {
     fontFamily: fontFamily.bold,
@@ -58,7 +58,7 @@ export const styles = themedStyleSheet({
   toggleTextActive: {
     fontFamily: fontFamily.bold,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#0E0E0E',
   },
   searchBar: {
     flexDirection: 'row',

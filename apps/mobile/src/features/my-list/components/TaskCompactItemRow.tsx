@@ -83,7 +83,7 @@ function TaskCompactItemRowComponent({
       ? '#EF4444'
       : itemPriority === 'low'
       ? '#10B981'
-      : '#0073CF';
+      : '#D4B13A';
   const itemPriorityLabel =
     itemPriority === 'urgent'
       ? t('common.urgent')
@@ -138,7 +138,7 @@ function TaskCompactItemRowComponent({
         },
         isSelected && {
           borderColor: theme.colors.primary,
-          backgroundColor: 'rgba(0, 115, 207, 0.08)',
+          backgroundColor: 'rgba(212, 177, 58, 0.08)',
         },
         drag?.isActive && { borderColor: theme.colors.primary },
         { marginBottom: drag ? 6 : 0 },
@@ -234,7 +234,7 @@ function TaskCompactItemRowComponent({
                       ? 'rgba(239, 68, 68, 0.14)'
                       : itemPriority === 'low'
                       ? 'rgba(16, 185, 129, 0.14)'
-                      : 'rgba(0, 115, 207, 0.14)',
+                      : 'rgba(212, 177, 58, 0.14)',
                   borderWidth: 1,
                   borderColor: itemPriorityColor,
                 }}

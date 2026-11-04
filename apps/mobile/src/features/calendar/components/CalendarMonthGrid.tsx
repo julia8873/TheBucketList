@@ -161,7 +161,7 @@ export function CalendarMonthGrid({
 
                 {/* Dots indicator below day number */}
                 <View style={styles.dotsRow}>
-                  {hasCompleted && <View style={[styles.dot, { backgroundColor: isSelected ? '#FFFFFF' : '#0073CF' }]} />}
+                  {hasCompleted && <View style={[styles.dot, { backgroundColor: isSelected ? '#FFFFFF' : '#D4B13A' }]} />}
                   {hasPending && <View style={[styles.dot, { backgroundColor: '#A1A1AA' }]} />}
                   {hasExpired && <View style={[styles.dot, { backgroundColor: '#EF4444' }]} />}
                 </View>
@@ -174,7 +174,7 @@ export function CalendarMonthGrid({
       {/* Legend */}
       <View style={styles.legendRow}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#0073CF' }]} />
+          <View style={[styles.legendDot, { backgroundColor: '#D4B13A' }]} />
           <Text style={[styles.legendText, { color: theme.colors.foregroundMuted }]}>{t('common.status_completed')}</Text>
         </View>
         <View style={styles.legendItem}>

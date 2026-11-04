@@ -164,12 +164,12 @@ export function ProfileAlbumsTab({
                       tabStyles.optionRow,
                       {
                         backgroundColor: isSelected
-                          ? (theme.dark ? 'rgba(0, 115, 207,0.08)' : 'rgba(0, 115, 207,0.08)')
+                          ? (theme.dark ? 'rgba(212,175,55,0.08)' : 'rgba(184,134,11,0.08)')
                           : pressed
                           ? (theme.dark ? '#202020' : '#F5F0E6')
                           : 'transparent',
                         borderColor: isSelected
-                          ? (theme.dark ? 'rgba(0, 115, 207,0.35)' : 'rgba(0, 115, 207,0.35)')
+                          ? (theme.dark ? 'rgba(212,175,55,0.35)' : 'rgba(184,134,11,0.35)')
                           : 'transparent',
                       },
                     ]}

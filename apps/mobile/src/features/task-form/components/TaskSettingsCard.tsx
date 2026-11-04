@@ -101,7 +101,7 @@ export function TaskSettingsCard({
     <View style={[styles.settingsCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
       {/* Ubicación */}
       <Pressable style={[styles.settingRow, { borderBottomColor: theme.colors.border }]} onPress={onOpenLocationPicker}>
-        <MapPin color="#0073CF" size={24} />
+        <MapPin color="#D4B13A" size={24} />
         <Text style={[styles.settingLabel, { color: theme.colors.foreground }]}>{t('task_form.location', { defaultValue: 'Ubicación' })}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, justifyContent: 'flex-end' }}>
           <Text
@@ -129,7 +129,7 @@ export function TaskSettingsCard({
 
       {/* Fecha Límite */}
       <Pressable style={[styles.settingRow, { borderBottomColor: theme.colors.border }]} onPress={onOpenDatePicker}>
-        <Calendar color="#0073CF" size={24} />
+        <Calendar color="#D4B13A" size={24} />
         <Text style={[styles.settingLabel, { color: theme.colors.foreground }]}>{t('task_form.deadline', { defaultValue: 'Fecha límite' })}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Text style={[styles.settingValue, !deadline && { color: '#6B6B6B' }]}>
@@ -161,7 +161,7 @@ export function TaskSettingsCard({
 
       {/* Álbum */}
       <Pressable style={[styles.settingRow, { borderBottomColor: theme.colors.border }]} onPress={onOpenAlbumPicker}>
-        <Folder color="#0073CF" size={24} />
+        <Folder color="#D4B13A" size={24} />
         <Text style={[styles.settingLabel, { color: theme.colors.foreground }]}>{t('task_form.album', { defaultValue: 'Álbum' })}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <Text style={[styles.settingValue, !albumTitle && { color: '#6B6B6B' }]}>
@@ -174,7 +174,7 @@ export function TaskSettingsCard({
       {/* Google Drive */}
       {onOpenDriveModal && (
         <Pressable style={[styles.settingRow, { borderBottomColor: theme.colors.border }]} onPress={onOpenDriveModal}>
-          <HardDrive color="#0073CF" size={24} />
+          <HardDrive color="#D4B13A" size={24} />
           <Text style={[styles.settingLabel, { color: theme.colors.foreground }]}>{t('task_form.drive', { defaultValue: 'Google Drive' })}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, justifyContent: 'flex-end' }}>
             <Text
@@ -209,7 +209,7 @@ export function TaskSettingsCard({
         style={[styles.settingRow, { borderBottomColor: theme.colors.border, borderBottomWidth: 0 }]}
         onPress={() => setShowVisibilityModal(true)}
       >
-        <CurrentVisibilityIcon color="#0073CF" size={24} />
+        <CurrentVisibilityIcon color="#D4B13A" size={24} />
         <Text style={[styles.settingLabel, { color: theme.colors.foreground }]}>{t('task_form.visibility', { defaultValue: 'Visibilidad' })}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Text style={styles.settingValue}>{currentVisibilityConfig.title}</Text>
@@ -265,7 +265,7 @@ export function TaskSettingsCard({
                         styles.visibilitySheetIcon,
                         {
                           backgroundColor: isSelected
-                            ? 'rgba(0, 115, 207, 0.15)'
+                            ? 'rgba(212, 177, 58, 0.15)'
                             : (theme.dark ? '#262626' : '#ECE8DF'),
                         },
                       ]}

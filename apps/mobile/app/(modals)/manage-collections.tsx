@@ -153,7 +153,7 @@ export default function ManageCollectionsScreen() {
               accessibilityRole="button"
               accessibilityLabel={t('collections.edit_a11y', { title: item.title })}
             >
-              <Edit3 size={15} color="#FFFFFF" strokeWidth={2} />
+              <Edit3 size={15} color="#000" strokeWidth={2} />
               <Text style={styles.editBtnText}>{t('common.edit')}</Text>
             </Pressable>
 
@@ -201,7 +201,7 @@ export default function ManageCollectionsScreen() {
           accessibilityRole="button"
           accessibilityLabel={t('collections.manage_new_a11y')}
         >
-          <Plus size={16} color="#FFFFFF" strokeWidth={2.5} />
+          <Plus size={16} color="#000" strokeWidth={2.5} />
           <Text style={styles.newBtnText}>{t('collections.manage_new')}</Text>
         </Pressable>
       </View>
@@ -291,13 +291,13 @@ const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#0073CF',
+    backgroundColor: '#D4AF37',
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderRadius: 20,
   },
   newBtnText: {
-    color: '#FFFFFF',
+    color: '#000',
     fontFamily: fontFamily.bold,
     fontSize: 13,
   },
@@ -400,12 +400,12 @@ const styles = themedStyleSheet({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#0073CF',
+    backgroundColor: '#D4AF37',
     paddingVertical: 10,
     borderRadius: 10,
   },
   editBtnText: {
-    color: '#FFFFFF',
+    color: '#000',
     fontFamily: fontFamily.semibold,
     fontSize: 13,
   },
@@ -457,7 +457,7 @@ const styles = themedStyleSheet({
     lineHeight: 18,
   },
   backBtn: {
-    backgroundColor: '#0073CF',
+    backgroundColor: '#D4AF37',
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 20,

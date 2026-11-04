@@ -28,9 +28,9 @@ export function TaskPriorityPicker({
     {
       id: 'medium' as const,
       label: t('task_form.priority_medium', { defaultValue: 'Media' }),
-      color: '#0073CF',
-      bgActive: 'rgba(0, 115, 207, 0.14)',
-      borderActive: '#0073CF',
+      color: '#D4B13A',
+      bgActive: 'rgba(212, 177, 58, 0.14)',
+      borderActive: '#D4B13A',
     },
     {
       id: 'high' as const,

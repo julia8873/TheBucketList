@@ -38,7 +38,7 @@ export function BulkPriorityModal({
 
           {(['high', 'medium', 'low'] as const).map((p) => {
             const label = p === 'high' ? t('common.high') : p === 'medium' ? t('common.medium') : t('common.low');
-            const col = p === 'high' ? '#EF4444' : p === 'medium' ? '#0073CF' : '#10B981';
+            const col = p === 'high' ? '#EF4444' : p === 'medium' ? '#D4B13A' : '#10B981';
             return (
               <Pressable
                 key={p}

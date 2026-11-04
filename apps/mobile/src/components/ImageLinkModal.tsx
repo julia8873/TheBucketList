@@ -271,7 +271,7 @@ export function ImageLinkModal({
                   accessibilityRole="button"
                   accessibilityLabel={t('image_link_modal.paste_label')}
                 >
-                  <ClipboardIcon size={16} color="#FFFFFF" strokeWidth={2.4} />
+                  <ClipboardIcon size={16} color="#0E0E0E" strokeWidth={2.4} />
                   <Text style={styles.pasteBtnText}>{t('image_link_modal.paste_button')}</Text>
                 </Pressable>
               </View>
@@ -489,7 +489,7 @@ const styles = themedStyleSheet({
     padding: 12,
     borderRadius: 14,
     borderWidth: 1,
-    backgroundColor: 'rgba(0, 115, 207, 0.08)',
+    backgroundColor: 'rgba(212, 177, 58, 0.08)',
     marginBottom: 16,
   },
   googleSearchText: {
@@ -550,7 +550,7 @@ const styles = themedStyleSheet({
   pasteBtnText: {
     fontSize: 14,
     fontFamily: 'Inter_700Bold',
-    color: '#FFFFFF',
+    color: '#0E0E0E',
   },
   pasteHintText: {
     fontSize: 11,
