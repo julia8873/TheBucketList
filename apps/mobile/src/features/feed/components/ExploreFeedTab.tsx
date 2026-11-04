@@ -218,7 +218,7 @@ export function ExploreFeedTab({
 
   const loading = (isExploreLoading || isAlbumsLoading) && contentFilter !== 'colecciones';
   if (loading && combinedItems.length === 0) {
-    if (viewMode === 'gallery') {
+    if (viewMode === 'gallery' || viewMode === 'gallery-compact') {
       return (
         <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 72 }} showsVerticalScrollIndicator={false}>
           {headerElement}
@@ -267,7 +267,7 @@ export function ExploreFeedTab({
         data={combinedItems}
         extraData={extraData}
         keyExtractor={(item) => `${item._type ?? 'task'}-${item.id}`}
-        numColumns={viewMode === 'gallery' ? 2 : 1}
+        numColumns={viewMode === 'gallery' || viewMode === 'gallery-compact' ? 2 : 1}
         renderItem={renderItem}
         contentContainerStyle={{ paddingBottom: 72 }}
         ListHeaderComponent={

@@ -152,6 +152,156 @@ export function AlbumFeedCard({
         <Pressable
           onPress={onPress}
           style={({ pressed }) => [
+            styles.galleryClassicCard,
+            { backgroundColor: theme.dark ? '#1E1E1E' : '#F0EDE6', borderColor: theme.colors.border, opacity: pressed ? 0.92 : 1 },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={album.title}
+        >
+          <View style={styles.galleryClassicCover}>
+            {backgroundContent}
+            <LinearGradient
+              colors={overlay.softBoth}
+              locations={[0, 0.45, 1]}
+              style={StyleSheet.absoluteFill}
+              pointerEvents="none"
+            />
+
+            {/* Badges superiores: autor y badge de álbum */}
+            <View style={styles.galleryHeaderRow} pointerEvents="box-none">
+              <Pressable
+                onPress={(e) => {
+                  e.stopPropagation();
+                  if (album.owner?.id) router.push(`/profile/${album.owner.id}` as any);
+                }}
+                style={styles.galleryHeader}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={album.owner?.username || ownerName}
+              >
+                <Avatar
+                  source={album.owner?.avatar_url ? { uri: album.owner.avatar_url } : undefined}
+                  fallback={ownerName.charAt(0).toUpperCase() || '?'}
+                  size="xs"
+                  goldRing
+                />
+              </Pressable>
+
+              <View style={styles.galleryAlbumBadge}>
+                <Images size={10} color="rgba(255,255,255,0.95)" />
+                <Text style={styles.galleryAlbumBadgeText}>{t('common.album', { defaultValue: 'Álbum' })}</Text>
+              </View>
+            </View>
+
+            {/* Pie clásico flotante: fotos más grandes sin overlay opaco */}
+            <View style={styles.galleryClassicBottom} pointerEvents="box-none">
+              <Text style={styles.galleryClassicTitle} numberOfLines={2}>
+                {album.title}
+              </Text>
+              <Text style={styles.galleryClassicSubtext} numberOfLines={1}>
+                {album.completed_tasks}/{album.total_tasks} {t('albums.tasks', { defaultValue: 'tareas' })}
+              </Text>
+
+              <View style={styles.galleryClassicActions}>
+                {onToggleLike && (
+                  <View style={styles.galleryClassicActionItem}>
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        onToggleLike();
+                      }}
+                      hitSlop={6}
+                    >
+                      <Heart
+                        size={14}
+                        color={isLiked ? HEART_COLOR : '#F2EFE8'}
+                        fill={isLiked ? HEART_COLOR : 'transparent'}
+                        strokeWidth={1.8}
+                      />
+                    </Pressable>
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        setShowLikes(true);
+                      }}
+                      hitSlop={4}
+                    >
+                      <Text style={styles.galleryClassicActionText}>{likeCount}</Text>
+                    </Pressable>
+                  </View>
+                )}
+
+                <Pressable
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    setShowComments(true);
+                  }}
+                  hitSlop={6}
+                  style={styles.galleryClassicActionItem}
+                >
+                  <MessageCircle size={14} color="#F2EFE8" strokeWidth={1.8} />
+                  <Text style={styles.galleryClassicActionText}>{commentCount}</Text>
+                </Pressable>
+
+                {handleSave ? (
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleSave();
+                    }}
+                    hitSlop={6}
+                    style={styles.galleryClassicActionItem}
+                    disabled={isOwn}
+                  >
+                    <Bookmark
+                      size={13}
+                      color={actualSaved ? gold[400] : '#F2EFE8'}
+                      fill={actualSaved ? gold[400] : 'transparent'}
+                      strokeWidth={1.8}
+                    />
+                    <Text style={styles.galleryClassicActionText}>{saveCount}</Text>
+                  </Pressable>
+                ) : (
+                  <View style={styles.galleryClassicActionItem}>
+                    <Bookmark
+                      size={13}
+                      color="#F2EFE8"
+                      strokeWidth={1.8}
+                    />
+                    <Text style={styles.galleryClassicActionText}>{saveCount}</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          </View>
+        </Pressable>
+
+        {showComments && (
+          <TaskCommentsModal
+            visible={showComments}
+            onClose={() => setShowComments(false)}
+            albumId={album.id}
+            targetType="album"
+            albumTitle={album.title}
+            albumOwnerId={album.owner?.id}
+          />
+        )}
+      </View>
+    );
+  }
+
+  if (mode === 'gallery-compact') {
+    const isLeftColumn = index % 2 === 0;
+    return (
+      <View
+        style={[
+          styles.galleryCardWrapper,
+          isLeftColumn ? styles.galleryLeftCol : styles.galleryRightCol,
+        ]}
+      >
+        <Pressable
+          onPress={onPress}
+          style={({ pressed }) => [
             styles.galleryCard,
             { backgroundColor: theme.dark ? '#1E1E1E' : '#F0EDE6', borderColor: theme.colors.border, opacity: pressed ? 0.92 : 1 },
           ]}
@@ -757,6 +907,68 @@ const styles = StyleSheet.create({
     width: '100%',
     aspectRatio: 1 / 1.3,
     position: 'relative',
+  },
+  // Galería clásica con fotos más grandes
+  galleryClassicCard: {
+    borderRadius: 18,
+    overflow: 'hidden',
+    borderWidth: 1,
+  },
+  galleryClassicCover: {
+    width: '100%',
+    aspectRatio: 0.85,
+    position: 'relative',
+  },
+  galleryClassicBottom: {
+    position: 'absolute',
+    left: 10,
+    right: 10,
+    bottom: 10,
+    zIndex: 2,
+  },
+  galleryClassicTitle: {
+    fontFamily: fontFamily.serifBold,
+    fontSize: 14,
+    lineHeight: 18,
+    color: '#FFFFFF',
+    ...Platform.select({
+      web: { textShadow: '0 1px 4px rgba(0,0,0,0.9)' } as any,
+      default: {
+        textShadowColor: 'rgba(0,0,0,0.9)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 4,
+      },
+    }),
+  },
+  galleryClassicSubtext: {
+    fontFamily: fontFamily.medium,
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 2,
+    ...Platform.select({
+      web: { textShadow: '0 1px 2px rgba(0,0,0,0.8)' } as any,
+      default: {
+        textShadowColor: 'rgba(0,0,0,0.8)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
+      },
+    }),
+  },
+  galleryClassicActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 6,
+  },
+  galleryClassicActionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  galleryClassicActionText: {
+    fontFamily: fontFamily.medium,
+    fontSize: 12,
+    color: '#F2EFE8',
   },
   galleryHeaderRow: {
     position: 'absolute',

@@ -1,12 +1,12 @@
 import { themedStyleSheet } from '@bucketlist/ui';
 import React from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { View, Pressable, StyleSheet } from 'react-native';
-import { LayoutList, LayoutGrid, AlignJustify } from 'lucide-react-native';
-import { gold, useTheme } from '@bucketlist/ui';
+import { View, Pressable } from 'react-native';
+import { LayoutList, LayoutGrid, Grid3x3, AlignJustify } from 'lucide-react-native';
+import { useTheme } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 
-export type TaskViewMode = 'list' | 'gallery' | 'compact';
+export type TaskViewMode = 'list' | 'gallery' | 'gallery-compact' | 'compact';
 
 interface ViewModeSelectorProps {
   mode: TaskViewMode;
@@ -42,6 +42,15 @@ export function ViewModeSelector({ mode, onChange, style }: ViewModeSelectorProp
         accessibilityLabel={t('common.compact', { defaultValue: 'Compacto' })}
       >
         <AlignJustify size={14} color={mode === 'compact' ? activeIconColor : inactiveIconColor} />
+      </Pressable>
+      <Pressable
+        onPress={() => onChange('gallery-compact')}
+        style={[styles.btn, mode === 'gallery-compact' && { backgroundColor: activeBg }]}
+        hitSlop={4}
+        accessibilityRole="button"
+        accessibilityLabel={t('common.gallery_compact', { defaultValue: 'Galería compacta' })}
+      >
+        <Grid3x3 size={14} color={mode === 'gallery-compact' ? activeIconColor : inactiveIconColor} />
       </Pressable>
       <Pressable
         onPress={() => onChange('gallery')}

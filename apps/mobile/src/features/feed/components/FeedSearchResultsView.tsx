@@ -142,7 +142,7 @@ export function FeedSearchResultsView({
               ) : (
                 <View
                   style={
-                    viewMode === 'gallery'
+                    viewMode === 'gallery' || viewMode === 'gallery-compact'
                       ? { flexDirection: 'row', flexWrap: 'wrap', gap: 10 }
                       : undefined
                   }
