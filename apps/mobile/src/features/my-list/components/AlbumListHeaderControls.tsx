@@ -83,10 +83,6 @@ export function AlbumListHeaderControls({
   };
 
   const filtersCount = (albumFilter !== 'all' ? 1 : 0) + (albumPriorityFilter !== 'all' ? 1 : 0) + selectedTagIds.length;
-  const countLabel =
-    albumsCount === 1
-      ? t('my_list.albums_count_single', { count: albumsCount, defaultValue: '1 ÁLBUM' })
-      : t('my_list.albums_count_plural', { count: albumsCount, defaultValue: `${albumsCount} ÁLBUMES` });
 
   const reset = () => {
     setAlbumFilter('all');
@@ -98,7 +94,7 @@ export function AlbumListHeaderControls({
     <View>
       <ListControlsBar
         theme={theme}
-        countLabel={countLabel}
+        countLabel=""
         viewMode={albumViewMode}
         setViewMode={setAlbumViewMode}
         isSelectionMode={isSelectionMode}
