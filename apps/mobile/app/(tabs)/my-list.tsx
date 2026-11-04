@@ -658,51 +658,57 @@ export default function MyListScreen() {
           onChange={state.setActiveTab}
         />
       </View>
-
-      {/* Barra de búsqueda debajo del toggle (mismo diseño que en momentos de amigos) */}
-      {state.activeTab !== 'calendar' && (searchOpen || state.searchQuery.length > 0) && (
-        <View
-          style={[
-            styles.exploreSearchContainer,
-            {
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.border,
-            },
-          ]}
-        >
-          <Search size={18} color={theme.colors.foregroundMuted} strokeWidth={1.8} />
-          <TextInput
-            placeholder={
-              state.activeTab === 'albums'
-                ? t('my_list.search_albums_placeholder', { defaultValue: 'Buscar en tus álbumes...' })
-                : t('my_list.search_placeholder', { defaultValue: 'Buscar en tu lista...' })
-            }
-            placeholderTextColor={theme.colors.foregroundMuted}
-            value={state.searchQuery}
-            onChangeText={(text) => {
-              state.setSearchQuery(text);
-              state.setIsSearching(text.trim().length > 0);
-            }}
-            style={[styles.exploreSearchInput, { color: theme.colors.foreground }]}
-            returnKeyType="search"
-            autoFocus={searchOpen && state.searchQuery.length === 0}
-          />
-          <Pressable
-            onPress={() => {
-              state.setSearchQuery('');
-              state.setIsSearching(false);
-              setSearchOpen(false);
-            }}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={t('common.close', { defaultValue: 'Cerrar' })}
-          >
-            <X size={18} color={theme.colors.foregroundMuted} strokeWidth={2} />
-          </Pressable>
-        </View>
-      )}
     </View>
   );
+
+  const renderSearchBar = () => {
+    if (state.activeTab === 'calendar' || (!searchOpen && state.searchQuery.length === 0)) {
+      return null;
+    }
+    return (
+      <View
+        style={[
+          styles.exploreSearchContainer,
+          {
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.border,
+            marginTop: 4,
+            marginBottom: 10,
+          },
+        ]}
+      >
+        <Search size={18} color={theme.colors.foregroundMuted} strokeWidth={1.8} />
+        <TextInput
+          placeholder={
+            state.activeTab === 'albums'
+              ? t('my_list.search_albums_placeholder', { defaultValue: 'Buscar en tus álbumes...' })
+              : t('my_list.search_placeholder', { defaultValue: 'Buscar en tu lista...' })
+          }
+          placeholderTextColor={theme.colors.foregroundMuted}
+          value={state.searchQuery}
+          onChangeText={(text) => {
+            state.setSearchQuery(text);
+            state.setIsSearching(text.trim().length > 0);
+          }}
+          style={[styles.exploreSearchInput, { color: theme.colors.foreground }]}
+          returnKeyType="search"
+          autoFocus={searchOpen && state.searchQuery.length === 0}
+        />
+        <Pressable
+          onPress={() => {
+            state.setSearchQuery('');
+            state.setIsSearching(false);
+            setSearchOpen(false);
+          }}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.close', { defaultValue: 'Cerrar' })}
+        >
+          <X size={18} color={theme.colors.foregroundMuted} strokeWidth={2} />
+        </Pressable>
+      </View>
+    );
+  };
 
   const taskListHeaderElement = (
     <View style={{ marginBottom: 12 }}>
@@ -740,6 +746,7 @@ export default function MyListScreen() {
         onToggleAllCollapsed={toggleAllSections}
         theme={theme}
       />
+      {renderSearchBar()}
     </View>
   );
 
@@ -1035,6 +1042,7 @@ export default function MyListScreen() {
               onToggleAllCollapsed={toggleAllSections}
               theme={theme}
             />
+            {renderSearchBar()}
 
             {state.isLoadingAlbums ? (
               <View style={styles.albumGrid}>
