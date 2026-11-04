@@ -628,7 +628,7 @@ export default function MyListScreen() {
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={t('my_list.customize_view')}
-          style={{
+          style={({ pressed }) => ({
             width: 34,
             height: 34,
             borderRadius: 12,
@@ -637,7 +637,8 @@ export default function MyListScreen() {
             backgroundColor: theme.dark ? '#151519' : theme.colors.surface,
             borderWidth: 1,
             borderColor: theme.dark ? '#26262E' : theme.colors.border,
-          }}
+            opacity: pressed ? 0.7 : 1,
+          })}
         >
           <Settings size={17} color={theme.colors.primary} />
         </Pressable>

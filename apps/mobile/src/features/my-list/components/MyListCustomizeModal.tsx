@@ -3,9 +3,9 @@
  *  hoja inferior con asa, título, grupos de interruptores («Secciones» y «Elementos visibles»)
  *  y botón principal «Listo». Se aplica a la pestaña (Tareas / Álbumes) y al modo de vista actuales.
  */
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View } from 'react-native';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '@bucketlist/shared';
 import { useTheme } from '@bucketlist/ui';
 import {
   useMyListCustomizationStore,
@@ -25,7 +25,7 @@ interface MyListCustomizeModalProps {
 type TaskKey = keyof TaskViewCustomization;
 type AlbumKey = keyof AlbumViewCustomization;
 
-export function MyListCustomizeModal({
+function MyListCustomizeModalComponent({
   visible,
   onClose,
   initialTab = 'tasks',
@@ -72,7 +72,7 @@ export function MyListCustomizeModal({
   const groupByStatus = isTasks ? taskGroupByStatus : albumGroupByStatus;
   const favoritesAsGrid = isTasks ? taskFavoritesAsGrid : albumFavoritesAsGrid;
 
-  const taskOptions: Array<{ key: TaskKey; label: string }> = [
+  const taskOptions: Array<{ key: TaskKey; label: string }> = useMemo(() => [
     { key: 'showThumbnails', label: t('my_list.customize_opt_thumbnails', { defaultValue: 'Miniaturas de imagen' }) },
     { key: 'showPriority', label: t('my_list.customize_opt_priority') },
     { key: 'showFavorite', label: t('my_list.customize_opt_favorite') },
@@ -82,9 +82,9 @@ export function MyListCustomizeModal({
     { key: 'showSubtasksProgress', label: t('my_list.customize_opt_subtasks') },
     { key: 'showCollaborators', label: t('my_list.customize_opt_collaborators') },
     { key: 'showDescription', label: t('my_list.customize_opt_desc') },
-  ];
+  ], [t]);
 
-  const albumOptions: Array<{ key: AlbumKey; label: string }> = [
+  const albumOptions: Array<{ key: AlbumKey; label: string }> = useMemo(() => [
     // En la vista de galería el álbum siempre se pinta con su portada.
     ...(mode === 'gallery'
       ? []
@@ -101,7 +101,7 @@ export function MyListCustomizeModal({
     { key: 'showDate', label: t('my_list.customize_opt_album_date') },
     { key: 'showCollaborators', label: t('my_list.customize_opt_album_collaborators') },
     { key: 'showDescription', label: t('my_list.customize_opt_album_desc') },
-  ];
+  ], [t, mode]);
 
   return (
     <SheetFrame
@@ -162,3 +162,6 @@ export function MyListCustomizeModal({
     </SheetFrame>
   );
 }
+
+export const MyListCustomizeModal = React.memo(MyListCustomizeModalComponent);
+

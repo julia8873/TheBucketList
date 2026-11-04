@@ -37,8 +37,14 @@ export function TagSheetShell({
   const { theme } = useTheme();
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(visible);
-  const sheetH = fixedHeight ?? MAX_H;
-  const translateY = useRef(new Animated.Value(sheetH)).current;
+
+  if (visible && !mounted) {
+    setMounted(true);
+  }
+
+  const initialOffset = fixedHeight ?? 380;
+  const [measuredHeight, setMeasuredHeight] = useState(initialOffset);
+  const translateY = useRef(new Animated.Value(initialOffset)).current;
   const backdrop = useRef(new Animated.Value(0)).current;
 
   const closeRef = useRef(onClose);
@@ -46,16 +52,33 @@ export function TagSheetShell({
 
   useEffect(() => {
     if (visible) {
-      translateY.setValue(sheetH);
-      setMounted(true);
+      translateY.setValue(measuredHeight || initialOffset);
       Animated.parallel([
-        Animated.spring(translateY, { toValue: 0, useNativeDriver: true, damping: 20, stiffness: 200 }),
-        Animated.timing(backdrop, { toValue: 1, duration: 250, useNativeDriver: true }),
+        Animated.spring(translateY, {
+          toValue: 0,
+          useNativeDriver: true,
+          damping: 28,
+          stiffness: 320,
+          mass: 0.8,
+        }),
+        Animated.timing(backdrop, {
+          toValue: 1,
+          duration: 180,
+          useNativeDriver: true,
+        }),
       ]).start();
     } else {
       Animated.parallel([
-        Animated.timing(translateY, { toValue: sheetH, duration: 220, useNativeDriver: true }),
-        Animated.timing(backdrop, { toValue: 0, duration: 220, useNativeDriver: true }),
+        Animated.timing(translateY, {
+          toValue: measuredHeight || initialOffset,
+          duration: 180,
+          useNativeDriver: true,
+        }),
+        Animated.timing(backdrop, {
+          toValue: 0,
+          duration: 180,
+          useNativeDriver: true,
+        }),
       ]).start(({ finished }) => {
         if (finished) setMounted(false);
       });
@@ -72,7 +95,15 @@ export function TagSheetShell({
       },
       onPanResponderRelease: (_, g) => {
         if (g.dy > 120 || g.vy > 1.2) closeRef.current();
-        else Animated.spring(translateY, { toValue: 0, useNativeDriver: true }).start();
+        else {
+          Animated.spring(translateY, {
+            toValue: 0,
+            useNativeDriver: true,
+            damping: 28,
+            stiffness: 320,
+            mass: 0.8,
+          }).start();
+        }
       },
     }),
   ).current;
@@ -87,6 +118,12 @@ export function TagSheetShell({
         </Animated.View>
 
         <Animated.View
+          onLayout={(e) => {
+            const h = e.nativeEvent.layout.height;
+            if (h > 60 && Math.abs(h - measuredHeight) > 20) {
+              setMeasuredHeight(h);
+            }
+          }}
           style={[
             styles.sheet,
             { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.dark ? '#2C2C35' : theme.colors.border },
