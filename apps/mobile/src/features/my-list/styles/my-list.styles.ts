@@ -289,12 +289,15 @@ export const styles = themedStyleSheet({
     paddingVertical: 8,
     borderBottomLeftRadius: 14,
     borderBottomRightRadius: 14,
+    minHeight: 68,
+    justifyContent: 'center',
   },
   galleryCardTitle: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 13,
     color: '#FFFFFF',
     lineHeight: 18,
+    minHeight: 36,
   },
   galleryCardMeta: {
     fontFamily: 'Inter_400Regular',

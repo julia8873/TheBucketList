@@ -646,11 +646,13 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderBottomLeftRadius: 14,
     borderBottomRightRadius: 14,
+    minHeight: 96,
   },
   galleryCardTitle: {
     fontFamily: fontFamily.semibold,
     fontSize: 13,
     lineHeight: 17,
+    minHeight: 34,
     color: '#FFFFFF',
     ...Platform.select({
       web: { textShadow: '0 1px 4px rgba(0,0,0,0.9)' } as any,

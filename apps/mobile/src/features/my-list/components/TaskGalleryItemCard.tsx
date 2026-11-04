@@ -246,7 +246,7 @@ function TaskGalleryItemCardComponent({
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
           <View style={{ flex: 1 }}>
             <Text
-              style={[styles.galleryCardTitle, { color: overlay.title }, isSingle && { fontSize: 16 }]}
+              style={[styles.galleryCardTitle, { color: overlay.title }, isSingle && { fontSize: 16, lineHeight: 22, minHeight: 44 }]}
               numberOfLines={showDesc && item.description ? 1 : 2}
             >
               {item.title}

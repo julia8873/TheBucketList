@@ -814,11 +814,13 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 14,
     backgroundColor: 'rgba(0,0,0,0.58)',
     zIndex: 2,
+    minHeight: 96,
   },
   galleryTitle: {
     fontFamily: fontFamily.semibold,
     fontSize: 13,
     lineHeight: 17,
+    minHeight: 34,
     color: '#FFFFFF',
     ...Platform.select({
       web: { textShadow: '0 1px 4px rgba(0,0,0,0.9)' } as any,

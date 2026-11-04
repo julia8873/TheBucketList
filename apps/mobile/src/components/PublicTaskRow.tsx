@@ -299,6 +299,7 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.serifBold,
     fontSize: 14,
     lineHeight: 18,
+    minHeight: 36,
     color: '#FFFFFF',
     ...Platform.select({
       web: { textShadow: '0 1px 3px rgba(0,0,0,0.85)' } as any,

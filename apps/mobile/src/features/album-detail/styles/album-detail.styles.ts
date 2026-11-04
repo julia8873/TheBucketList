@@ -225,8 +225,10 @@ export const styles = themedStyleSheet({
   galleryBottomOverlay: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     paddingHorizontal: 10, paddingVertical: 8,
+    minHeight: 68,
+    justifyContent: 'center',
   },
-  galleryCardTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 13, lineHeight: 18, color: '#FFFFFF' },
+  galleryCardTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 13, lineHeight: 18, minHeight: 36, color: '#FFFFFF' },
   galleryCardMeta: { fontFamily: 'Inter_400Regular', fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
   galleryAddBtn: {
     width: 24, height: 24, borderRadius: 12, backgroundColor: '#D4B13A',
