@@ -159,6 +159,143 @@ export function ListControlsBar({
     { key: 'list', icon: LayoutList, label: t('my_list.view_detailed') },
   ];
 
+  const controlsContent = (
+    <>
+      {/* Modos de vista */}
+      <View
+        style={{
+          flexDirection: 'row',
+          padding: 2,
+          borderRadius: 14,
+          backgroundColor: theme.dark ? '#1A1A1A' : c.surface,
+          borderWidth: 1,
+          borderColor: theme.dark ? '#2A2A2A' : c.border,
+          height: 30,
+          alignItems: 'center',
+        }}
+      >
+        {views.map((v) => {
+          const Icon = v.icon;
+          const on = viewMode === v.key;
+          return (
+            <Pressable
+              key={v.key}
+              onPress={() => setViewMode(v.key)}
+              hitSlop={4}
+              accessibilityRole="button"
+              accessibilityLabel={v.label}
+              accessibilityState={{ selected: on }}
+              style={{
+                width: 26,
+                height: 24,
+                borderRadius: 10,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: on ? c.primary : 'transparent',
+              }}
+            >
+              <Icon size={14} color={on ? c.primaryForeground : muted} />
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {onToggleSelectionMode && (
+        <IconBtn
+          theme={theme}
+          active={!!isSelectionMode}
+          onPress={onToggleSelectionMode}
+          label={
+            isSelectionMode
+              ? t('my_list.exit_selection_a11y', { defaultValue: 'Salir de selección múltiple' })
+              : t('my_list.select_tasks_a11y', { defaultValue: 'Seleccionar' })
+          }
+        >
+          <ListChecks size={15} color={isSelectionMode ? c.primaryForeground : c.primary} />
+        </IconBtn>
+      )}
+
+      <IconBtn
+        theme={theme}
+        active={searchActive}
+        onPress={onToggleSearch}
+        label={t('common.search', { defaultValue: 'Buscar' })}
+      >
+        <Search size={15} color={searchActive ? c.primaryForeground : c.primary} />
+      </IconBtn>
+
+      <IconBtn
+        theme={theme}
+        active={filtersCount > 0}
+        badge={filtersCount}
+        onPress={onOpenFilters}
+        label={t('my_list.filters', { defaultValue: 'Filtros' })}
+      >
+        <ListFilter size={15} color={filtersCount > 0 ? c.primaryForeground : c.primary} />
+      </IconBtn>
+
+      <IconBtn
+        theme={theme}
+        innerRef={sortTriggerRef}
+        onPress={onOpenSort}
+        label={t('my_list.sort_tasks', { defaultValue: 'Ordenar' })}
+      >
+        {showSortDir && sortDir ? (
+          sortDir === 'desc' ? (
+            <ArrowDown size={15} color={c.primary} />
+          ) : (
+            <ArrowUp size={15} color={c.primary} />
+          )
+        ) : (
+          <ArrowUpDown size={15} color={c.primary} />
+        )}
+      </IconBtn>
+
+      {onToggleAllCollapsed && (
+        <IconBtn
+          theme={theme}
+          onPress={onToggleAllCollapsed}
+          label={t('my_list.collapse_sections', { defaultValue: 'Compactar secciones' })}
+        >
+          {allCollapsed ? <ChevronsUpDown size={15} color={c.primary} /> : <ChevronsDownUp size={15} color={c.primary} />}
+        </IconBtn>
+      )}
+
+      {!isSearching && isReordering && onFinishReordering && (
+        <Pressable
+          onPress={onFinishReordering}
+          hitSlop={8}
+          style={{
+            height: 30,
+            paddingHorizontal: 10,
+            borderRadius: 10,
+            backgroundColor: c.primary,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ fontSize: 11, fontFamily: 'Inter_700Bold', color: c.primaryForeground }}>OK</Text>
+        </Pressable>
+      )}
+    </>
+  );
+
+  if (!countLabel) {
+    return (
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          width: '100%',
+          marginBottom: 12,
+        }}
+      >
+        {controlsContent}
+      </View>
+    );
+  }
+
   return (
     <View
       style={{
@@ -166,143 +303,25 @@ export function ListControlsBar({
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: 8,
+        width: '100%',
         marginBottom: 12,
       }}
     >
-      {countLabel ? (
-        <Text
-          numberOfLines={1}
-          style={{
-            flexShrink: 1,
-            color: muted,
-            fontFamily: 'Inter_600SemiBold',
-            fontSize: 11,
-            letterSpacing: 0.9,
-          }}
-        >
-          {countLabel}
-        </Text>
-      ) : (
-        <View style={{ flex: 1 }} />
-      )}
+      <Text
+        numberOfLines={1}
+        style={{
+          flexShrink: 1,
+          color: muted,
+          fontFamily: 'Inter_600SemiBold',
+          fontSize: 11,
+          letterSpacing: 0.9,
+        }}
+      >
+        {countLabel}
+      </Text>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-        {/* Modos de vista */}
-        <View
-          style={{
-            flexDirection: 'row',
-            padding: 2,
-            borderRadius: 14,
-            backgroundColor: theme.dark ? '#1A1A1A' : c.surface,
-            borderWidth: 1,
-            borderColor: theme.dark ? '#2A2A2A' : c.border,
-            height: 30,
-            alignItems: 'center',
-          }}
-        >
-          {views.map((v) => {
-            const Icon = v.icon;
-            const on = viewMode === v.key;
-            return (
-              <Pressable
-                key={v.key}
-                onPress={() => setViewMode(v.key)}
-                hitSlop={4}
-                accessibilityRole="button"
-                accessibilityLabel={v.label}
-                accessibilityState={{ selected: on }}
-                style={{
-                  width: 26,
-                  height: 24,
-                  borderRadius: 10,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: on ? c.primary : 'transparent',
-                }}
-              >
-                <Icon size={14} color={on ? c.primaryForeground : muted} />
-              </Pressable>
-            );
-          })}
-        </View>
-
-        {onToggleSelectionMode && (
-          <IconBtn
-            theme={theme}
-            active={!!isSelectionMode}
-            onPress={onToggleSelectionMode}
-            label={
-              isSelectionMode
-                ? t('my_list.exit_selection_a11y', { defaultValue: 'Salir de selección múltiple' })
-                : t('my_list.select_tasks_a11y', { defaultValue: 'Seleccionar' })
-            }
-          >
-            <ListChecks size={15} color={isSelectionMode ? c.primaryForeground : c.primary} />
-          </IconBtn>
-        )}
-
-        <IconBtn
-          theme={theme}
-          active={searchActive}
-          onPress={onToggleSearch}
-          label={t('common.search', { defaultValue: 'Buscar' })}
-        >
-          <Search size={15} color={searchActive ? c.primaryForeground : c.primary} />
-        </IconBtn>
-
-        <IconBtn
-          theme={theme}
-          active={filtersCount > 0}
-          badge={filtersCount}
-          onPress={onOpenFilters}
-          label={t('my_list.filters', { defaultValue: 'Filtros' })}
-        >
-          <ListFilter size={15} color={filtersCount > 0 ? c.primaryForeground : c.primary} />
-        </IconBtn>
-
-        <IconBtn
-          theme={theme}
-          innerRef={sortTriggerRef}
-          onPress={onOpenSort}
-          label={t('my_list.sort_tasks', { defaultValue: 'Ordenar' })}
-        >
-          {showSortDir && sortDir ? (
-            sortDir === 'desc' ? (
-              <ArrowDown size={15} color={c.primary} />
-            ) : (
-              <ArrowUp size={15} color={c.primary} />
-            )
-          ) : (
-            <ArrowUpDown size={15} color={c.primary} />
-          )}
-        </IconBtn>
-
-        {onToggleAllCollapsed && (
-          <IconBtn
-            theme={theme}
-            onPress={onToggleAllCollapsed}
-            label={t('my_list.collapse_sections', { defaultValue: 'Compactar secciones' })}
-          >
-            {allCollapsed ? <ChevronsUpDown size={15} color={c.primary} /> : <ChevronsDownUp size={15} color={c.primary} />}
-          </IconBtn>
-        )}
-
-        {!isSearching && isReordering && onFinishReordering && (
-          <Pressable
-            onPress={onFinishReordering}
-            hitSlop={8}
-            style={{
-              height: 30,
-              paddingHorizontal: 10,
-              borderRadius: 10,
-              backgroundColor: c.primary,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text style={{ fontSize: 11, fontFamily: 'Inter_700Bold', color: c.primaryForeground }}>OK</Text>
-          </Pressable>
-        )}
+        {controlsContent}
       </View>
     </View>
   );
