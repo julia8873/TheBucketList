@@ -83,11 +83,19 @@ config.resolver = {
     }
 
     // 4. Si es la entrada del proyecto (ej: '.\index', './index', 'index', 'index.js')
+    // Solo aplicar cuando se pide desde la raíz o el bundler, nunca dentro de node_modules o paquetes
+    const isInsidePackage =
+      context.originModulePath &&
+      (/[\\/]node_modules[\\/]/.test(context.originModulePath) ||
+       /[\\/]packages[\\/]/.test(context.originModulePath) ||
+       /[\\/]src[\\/]/.test(context.originModulePath));
+
     if (
-      normalized === './index' ||
-      normalized === './index.js' ||
-      normalized === 'index' ||
-      normalized === 'index.js'
+      !isInsidePackage &&
+      (normalized === './index' ||
+       normalized === './index.js' ||
+       normalized === 'index' ||
+       normalized === 'index.js')
     ) {
       try {
         const filePath = path.resolve(__dirname, 'index.js');
