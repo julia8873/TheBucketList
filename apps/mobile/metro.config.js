@@ -1,6 +1,5 @@
 const { getDefaultConfig } = require('expo/metro-config');
 const path = require('path');
-const MetroResolver = require('metro-resolver');
 
 const config = getDefaultConfig(__dirname);
 
@@ -46,8 +45,6 @@ config.server = {
 const mobileNodeModules = path.resolve(__dirname, 'node_modules');
 const rootNodeModules = path.resolve(__dirname, '../../node_modules');
 
-const previousResolveRequest = config.resolver && config.resolver.resolveRequest;
-
 config.resolver = {
   ...(config.resolver || {}),
   nodeModulesPaths: [
@@ -56,6 +53,7 @@ config.resolver = {
   ],
   extraNodeModules: {
     ...(config.resolver && config.resolver.extraNodeModules),
+    '@': path.resolve(__dirname, 'src'),
     react: path.resolve(mobileNodeModules, 'react'),
     'react-dom': path.resolve(mobileNodeModules, 'react-dom'),
   },
@@ -100,11 +98,21 @@ config.resolver = {
       } catch (_) {}
     }
 
-    if (previousResolveRequest) {
-      return previousResolveRequest(context, normalized, platform);
+    // 5. Delegar en la cadena de resolvers de Expo (tsconfig paths, etc.)
+    try {
+      return context.resolveRequest(context, normalized, platform);
+    } catch (err) {
+      // Fallback directo para alias '@/...' hacia 'apps/mobile/src/...'
+      if (normalized.startsWith('@/')) {
+        const subPath = normalized.slice(2);
+        const resolvedPath = path.resolve(__dirname, 'src', subPath);
+        return context.resolveRequest(context, resolvedPath, platform);
+      }
+      if (normalized !== moduleName) {
+        return context.resolveRequest(context, moduleName, platform);
+      }
+      throw err;
     }
-    const cleanContext = { ...context, resolveRequest: null };
-    return MetroResolver.resolve(cleanContext, normalized, platform);
   },
 };
 
