@@ -283,7 +283,7 @@ export const TaskBentoCard = React.memo(TaskBentoCardComponent);
 export function BentoGrid({ children }: { children: React.ReactNode }) {
   const items = React.Children.toArray(children);
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4, marginTop: 6 }}>
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4, marginTop: 0 }}>
       {items.map((child, i) => (
         <View key={i} style={{ width: '50%', padding: 4, display: 'flex' }}>
           {child}

@@ -49,8 +49,10 @@ import {
   useParticipantsValue,
 } from '@/components/ItemParticipants';
 
-// Separación entre tarjetas (8 px) y espacio adicional bajo la cabecera de sección.
-const TaskSeparator = ({ leadingItem }: any) => <View style={{ height: leadingItem?.isHeader ? 8 : 8 }} />;
+// Separación entre tarjetas (8 px) y espacio bajo la cabecera de sección (más ajustado en favoritos).
+const TaskSeparator = ({ leadingItem }: any) => (
+  <View style={{ height: leadingItem?.id === 'header-favorites' ? 2 : leadingItem?.isHeader ? 6 : 8 }} />
+);
 
 export default function MyListScreen() {
   const { theme } = useTheme();

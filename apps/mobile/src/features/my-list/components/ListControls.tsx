@@ -851,7 +851,7 @@ export function SectionHeader({
         paddingTop: 6,
         paddingBottom: 6,
         marginTop: 14,
-        marginBottom: collapsed ? 2 : 10,
+        marginBottom: collapsed ? 2 : (isFavorites ? 4 : 8),
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1 }}>
