@@ -89,7 +89,7 @@ export function TagSheetShell({
         <Animated.View
           style={[
             styles.sheet,
-            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+            { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.dark ? '#2C2C35' : theme.colors.border },
             fixedHeight ? { height: fixedHeight } : { maxHeight: MAX_H },
             { transform: [{ translateY }] },
           ]}
@@ -116,9 +116,9 @@ const styles = themedStyleSheet({
   },
   backdrop: { backgroundColor: 'rgba(0,0,0,0.7)' },
   sheet: {
-    backgroundColor: '#141414',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    backgroundColor: '#16161B',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     borderWidth: 1,
     borderBottomWidth: 0,
     borderColor: '#2A2A2A',

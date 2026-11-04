@@ -109,7 +109,7 @@ export function LocationPickerModal({
             {/* Header */}
             <View style={styles.header}>
               <View style={styles.titleRow}>
-                <MapPin color="#D4B13A" size={20} />
+                <MapPin color="#0073CF" size={20} />
                 <Text style={styles.title}>{tr('location_picker.title')}</Text>
               </View>
               <Pressable hitSlop={10} onPress={onClose} style={styles.closeButton}>
@@ -145,10 +145,10 @@ export function LocationPickerModal({
                 disabled={loadingGeocode}
               >
                 {loadingGeocode ? (
-                  <ActivityIndicator size="small" color="#111" />
+                  <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
                   <>
-                    <Check size={16} color="#111" strokeWidth={2.5} />
+                    <Check size={16} color="#FFFFFF" strokeWidth={2.5} />
                     <Text style={styles.confirmButtonText}>{tr('location_picker.save')}</Text>
                   </>
                 )}
@@ -228,10 +228,10 @@ const styles = themedStyleSheet({
     marginTop: 14,
     paddingVertical: 12,
     borderRadius: 12,
-    backgroundColor: '#D4B13A',
+    backgroundColor: '#0073CF',
   },
   confirmButtonText: {
-    color: '#111',
+    color: '#FFFFFF',
     fontSize: 14,
     fontFamily: fontFamily.semibold,
   },

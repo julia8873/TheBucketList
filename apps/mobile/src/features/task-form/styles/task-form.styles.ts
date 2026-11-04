@@ -25,7 +25,7 @@ export const styles = themedStyleSheet({
   sectionTitleHighlight: {
     fontFamily: 'PlayfairDisplay_700Bold',
     fontSize: 15,
-    color: '#D4B13A',
+    color: '#0073CF',
     letterSpacing: 0.6,
   },
   sectionTitleRest: {
@@ -76,7 +76,7 @@ export const styles = themedStyleSheet({
     overflow: 'hidden',
     position: 'relative',
     borderWidth: 1.5,
-    borderColor: '#D4B13A',
+    borderColor: '#0073CF',
     backgroundColor: '#161616',
   },
   coverPreviewImage: {
@@ -105,8 +105,8 @@ export const styles = themedStyleSheet({
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   coverChangeBtnActive: {
-    borderColor: '#D4B13A',
-    backgroundColor: 'rgba(212, 177, 58, 0.15)',
+    borderColor: '#0073CF',
+    backgroundColor: 'rgba(0, 115, 207, 0.15)',
   },
   coverChangeBtnText: {
     color: '#FFF',
@@ -155,16 +155,16 @@ export const styles = themedStyleSheet({
     gap: 12,
   },
   uploadCoverBtnActive: {
-    borderColor: '#D4B13A',
+    borderColor: '#0073CF',
     backgroundColor: '#1C1912',
   },
   uploadCoverIconCircle: {
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: 'rgba(212, 177, 58, 0.15)',
+    backgroundColor: 'rgba(0, 115, 207, 0.15)',
     borderWidth: 1,
-    borderColor: '#D4B13A',
+    borderColor: '#0073CF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -204,7 +204,7 @@ export const styles = themedStyleSheet({
     borderColor: 'transparent',
   },
   coverPresetTileSelected: {
-    borderColor: '#D4B13A',
+    borderColor: '#0073CF',
   },
   coverRow: { flexDirection: 'row', gap: 15 },
   coversRow: {
@@ -221,7 +221,7 @@ export const styles = themedStyleSheet({
   },
   coverOptionSelected: {
     borderWidth: 2,
-    borderColor: '#D4B13A',
+    borderColor: '#0073CF',
   },
   recropBtn: {
     flexDirection: 'row',
@@ -239,14 +239,14 @@ export const styles = themedStyleSheet({
   recropBtnText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 12,
-    color: '#D4B13A',
+    color: '#0073CF',
   },
   coverTile: { width: 70, height: 70, borderRadius: 14, overflow: 'hidden' },
-  coverSelected: { borderWidth: 2, borderColor: '#D4B13A' },
+  coverSelected: { borderWidth: 2, borderColor: '#0073CF' },
   coverImageTile: {
     backgroundColor: '#161616',
     borderWidth: 1,
-    borderColor: '#D4B13A',
+    borderColor: '#0073CF',
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
@@ -297,7 +297,7 @@ export const styles = themedStyleSheet({
   stepCircle: { width: 30, height: 30, borderRadius: 15, borderWidth: 1.5, borderColor: '#555' },
   stepInput: { flex: 1, marginLeft: 16, fontFamily: 'Inter_400Regular', fontSize: 18 },
   addStepRow: { height: 58, flexDirection: 'row', alignItems: 'center', gap: 16 },
-  addStepText: { fontFamily: 'Inter_600SemiBold', fontSize: 18, color: '#D4B13A' },
+  addStepText: { fontFamily: 'Inter_600SemiBold', fontSize: 18, color: '#0073CF' },
   bottomBar: {
     position: 'absolute',
     bottom: 0,
@@ -309,15 +309,15 @@ export const styles = themedStyleSheet({
   submitButton: {
     height: 62,
     borderRadius: 31,
-    backgroundColor: '#D4B13A',
+    backgroundColor: '#0073CF',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#D4B13A',
+    shadowColor: '#0073CF',
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 8,
   },
-  submitText: { fontFamily: 'Inter_700Bold', fontSize: 20, color: '#111' },
+  submitText: { fontFamily: 'Inter_700Bold', fontSize: 20, color: '#FFFFFF' },
   collaboratorsContainer: { paddingBottom: 10 },
   collaboratorRow: {
     flexDirection: 'row',
@@ -335,14 +335,14 @@ export const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(212,177,58,0.12)',
+    backgroundColor: 'rgba(0, 115, 207,0.12)',
     borderWidth: 1,
-    borderColor: '#D4B13A',
+    borderColor: '#0073CF',
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  collaboratorChipText: { fontFamily: 'Inter_500Medium', fontSize: 13, color: '#D4B13A' },
+  collaboratorChipText: { fontFamily: 'Inter_500Medium', fontSize: 13, color: '#0073CF' },
   visibilityModalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',

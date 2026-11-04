@@ -44,7 +44,7 @@ export const styles = themedStyleSheet({
     }),
   },
   chipGold: {
-    borderColor: 'rgba(212, 175, 55, 0.55)',
+    borderColor: 'rgba(0, 115, 207, 0.55)',
     backgroundColor: '#1E1910',
   },
   chipCompleted: {
@@ -56,11 +56,11 @@ export const styles = themedStyleSheet({
     backgroundColor: '#181818',
   },
   chipPressable: { borderColor: '#383838' },
-  chipStatus: { borderColor: 'rgba(212, 175, 55, 0.55)', backgroundColor: '#1E1910' },
-  chipShared: { borderColor: '#6B5A22', backgroundColor: 'rgba(212, 177, 58, 0.12)' },
+  chipStatus: { borderColor: 'rgba(0, 115, 207, 0.55)', backgroundColor: '#1E1910' },
+  chipShared: { borderColor: '#6B5A22', backgroundColor: 'rgba(0, 115, 207, 0.12)' },
   chipText: { fontFamily: 'Inter_500Medium', fontSize: 12, color: '#F2EFE8' },
   chipStatusText: { fontFamily: 'Inter_500Medium', fontSize: 12 },
-  chipSharedText: { fontFamily: 'Inter_500Medium', fontSize: 12, color: '#D4B13A' },
+  chipSharedText: { fontFamily: 'Inter_500Medium', fontSize: 12, color: '#0073CF' },
   title: {
     fontFamily: 'PlayfairDisplay_700Bold', fontSize: 34, lineHeight: 40,
     color: '#F3EEE3', marginTop: 18, marginHorizontal: 12,
@@ -78,11 +78,11 @@ export const styles = themedStyleSheet({
   collaboratorsSection: { marginHorizontal: 12, marginTop: 14 },
   collaboratorsRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   collaboratorCircle: {
-    width: 50, height: 50, borderRadius: 25, borderWidth: 2, borderColor: '#D4B13A',
+    width: 50, height: 50, borderRadius: 25, borderWidth: 2, borderColor: '#0073CF',
     backgroundColor: '#181818', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
   collaboratorCirclePending: {
-    borderColor: 'rgba(212, 177, 58, 0.45)', borderStyle: 'dashed', backgroundColor: '#141414',
+    borderColor: 'rgba(0, 115, 207, 0.45)', borderStyle: 'dashed', backgroundColor: '#141414',
   },
   // Franja centrada en medio del círculo (no cubre toda la foto del colaborador)
   pendingCenterOverlay: {
@@ -91,39 +91,39 @@ export const styles = themedStyleSheet({
     alignItems: 'center', justifyContent: 'center', paddingHorizontal: 2,
   },
   pendingCenterText: {
-    fontSize: 6.5, fontFamily: 'Inter_600SemiBold', color: '#D4B13A',
+    fontSize: 6.5, fontFamily: 'Inter_600SemiBold', color: '#0073CF',
     letterSpacing: 0.2, textAlign: 'center', textTransform: 'uppercase',
   },
   collaboratorAvatarImg: { width: 46, height: 46, borderRadius: 23 },
-  collaboratorInitials: { color: '#D4B13A', fontSize: 18, fontWeight: '700', letterSpacing: 0.5 },
+  collaboratorInitials: { color: '#0073CF', fontSize: 18, fontWeight: '700', letterSpacing: 0.5 },
   addCollaboratorCircle: {
-    width: 50, height: 50, borderRadius: 25, borderWidth: 1.8, borderColor: '#D4B13A',
+    width: 50, height: 50, borderRadius: 25, borderWidth: 1.8, borderColor: '#0073CF',
     borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(212, 177, 58, 0.04)',
+    backgroundColor: 'rgba(0, 115, 207, 0.04)',
   },
   addCollabIconRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   addCollabEmoji: { fontSize: 18 },
-  addCollabPlus: { fontSize: 16, fontWeight: '800', color: '#D4B13A', marginLeft: 1 },
+  addCollabPlus: { fontSize: 16, fontWeight: '800', color: '#0073CF', marginLeft: 1 },
   progressCard: {
     marginTop: 18, marginHorizontal: 12, paddingVertical: 16, paddingHorizontal: 18,
     backgroundColor: '#151515', borderWidth: 1, borderColor: '#262626', borderRadius: 16,
     flexDirection: 'row', alignItems: 'center', gap: 18,
   },
-  progressPercent: { fontFamily: 'PlayfairDisplay_700Bold', fontSize: 36, lineHeight: 40, color: '#D4B13A' },
+  progressPercent: { fontFamily: 'PlayfairDisplay_700Bold', fontSize: 36, lineHeight: 40, color: '#0073CF' },
   progressRight: { flex: 1 },
   progressTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 16, color: '#F3EEE3' },
   progressBarTrack: {
     height: 6, borderRadius: 3, backgroundColor: '#2A2A2A', marginTop: 8, marginBottom: 6, width: '100%',
   },
-  progressBarFill: { height: '100%', borderRadius: 3, backgroundColor: '#D4B13A' },
+  progressBarFill: { height: '100%', borderRadius: 3, backgroundColor: '#0073CF' },
   progressSub: { fontFamily: 'Inter_400Regular', fontSize: 14, color: '#A0A0A0' },
   toggleAllBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     marginHorizontal: 12, marginTop: 12, paddingVertical: 10, borderRadius: 14,
-    borderWidth: 1, borderColor: '#383218', backgroundColor: 'rgba(212, 177, 58, 0.08)',
+    borderWidth: 1, borderColor: '#383218', backgroundColor: 'rgba(0, 115, 207, 0.08)',
   },
-  toggleAllBtnActive: { borderColor: '#423719', backgroundColor: 'rgba(212, 177, 58, 0.12)' },
-  toggleAllBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#D4B13A' },
+  toggleAllBtnActive: { borderColor: '#423719', backgroundColor: 'rgba(0, 115, 207, 0.12)' },
+  toggleAllBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#0073CF' },
   sectionContainer: { marginTop: 24 },
   sectionHeader: {
     paddingHorizontal: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
@@ -132,7 +132,7 @@ export const styles = themedStyleSheet({
     fontFamily: 'PlayfairDisplay_700Bold', fontSize: 15, letterSpacing: 0.6, textTransform: 'uppercase',
   },
   addBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  addBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#D4B13A' },
+  addBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#0073CF' },
   taskList: { paddingHorizontal: 12, paddingTop: 10, gap: 10 },
   taskListDraggable: { paddingHorizontal: 12, paddingTop: 10 },
   tasksToolbarWrap: { marginTop: 20, paddingHorizontal: 12 },
@@ -146,7 +146,7 @@ export const styles = themedStyleSheet({
     flex: 1, minWidth: 0, height: 32, paddingHorizontal: 8, borderRadius: 8, borderWidth: 1,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4,
   },
-  toolbarSortText: { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#D4B13A' },
+  toolbarSortText: { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#0073CF' },
   taskSearchBox: {
     marginTop: 12, height: 44, borderRadius: 999, backgroundColor: '#151515',
     borderWidth: 1, borderColor: '#262626', paddingHorizontal: 12,
@@ -180,14 +180,14 @@ export const styles = themedStyleSheet({
   },
   taskSub: { fontFamily: 'Inter_400Regular', fontSize: 14, color: '#A0A0A0', marginTop: 3 },
   taskStepsTrack: { height: 4, borderRadius: 2, backgroundColor: '#2A2A2A', marginTop: 8, width: '100%' },
-  taskStepsFill: { height: '100%', borderRadius: 2, backgroundColor: '#D4B13A' },
+  taskStepsFill: { height: '100%', borderRadius: 2, backgroundColor: '#0073CF' },
   taskBadge: {
     height: 30, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1,
     borderColor: '#6B5A22', justifyContent: 'center', alignItems: 'center',
   },
-  taskBadgeText: { fontFamily: 'Inter_500Medium', fontSize: 13, color: '#D4B13A' },
+  taskBadgeText: { fontFamily: 'Inter_500Medium', fontSize: 13, color: '#0073CF' },
   checkCircleTouch: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  checkCircleDone: { backgroundColor: '#D4B13A' },
+  checkCircleDone: { backgroundColor: '#0073CF' },
   checkCircleEmpty: {
     borderWidth: 1.5, borderColor: '#4A4A4A', backgroundColor: 'rgba(255, 255, 255, 0.03)',
   },
@@ -203,7 +203,7 @@ export const styles = themedStyleSheet({
   taskCompactCheck: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   taskCompactTitle: { flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 15, color: '#F3EEE3' },
   taskCompactAdd: {
-    width: 26, height: 26, borderRadius: 13, backgroundColor: '#D4B13A',
+    width: 26, height: 26, borderRadius: 13, backgroundColor: '#0073CF',
     alignItems: 'center', justifyContent: 'center',
   },
   taskGalleryGrid: {
@@ -229,7 +229,7 @@ export const styles = themedStyleSheet({
   galleryCardTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 13, lineHeight: 18, color: '#FFFFFF' },
   galleryCardMeta: { fontFamily: 'Inter_400Regular', fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
   galleryAddBtn: {
-    width: 24, height: 24, borderRadius: 12, backgroundColor: '#D4B13A',
+    width: 24, height: 24, borderRadius: 12, backgroundColor: '#0073CF',
     alignItems: 'center', justifyContent: 'center',
   },
   bottomBar: {
@@ -250,17 +250,17 @@ export const styles = themedStyleSheet({
     }),
   },
   btnEdit: {
-    height: 56, borderRadius: 999, borderWidth: 1, borderColor: '#D4B13A',
+    height: 56, borderRadius: 999, borderWidth: 1, borderColor: '#0073CF',
     flex: 1, justifyContent: 'center', alignItems: 'center',
   },
-  btnEditText: { fontFamily: 'Inter_600SemiBold', fontSize: 17, color: '#D4B13A' },
+  btnEditText: { fontFamily: 'Inter_600SemiBold', fontSize: 17, color: '#0073CF' },
   btnAdd: {
-    height: 56, borderRadius: 999, backgroundColor: '#D4B13A',
+    height: 56, borderRadius: 999, backgroundColor: '#0073CF',
     flex: 1.4, justifyContent: 'center', alignItems: 'center',
   },
   btnAddText: { fontFamily: 'Inter_700Bold', fontSize: 17, color: '#0D0D0D' },
   btnCopyAlbum: {
-    height: 56, borderRadius: 999, backgroundColor: '#D4B13A', flex: 1,
+    height: 56, borderRadius: 999, backgroundColor: '#0073CF', flex: 1,
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8,
   },
   btnCopyAlbumText: { fontFamily: 'Inter_700Bold', fontSize: 16, color: '#0D0D0D' },
@@ -270,13 +270,13 @@ export const styles = themedStyleSheet({
   },
   taskAddedBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6,
-    borderRadius: 16, backgroundColor: 'rgba(212, 177, 58, 0.12)',
-    borderWidth: 1, borderColor: 'rgba(212, 177, 58, 0.35)',
+    borderRadius: 16, backgroundColor: 'rgba(0, 115, 207, 0.12)',
+    borderWidth: 1, borderColor: 'rgba(0, 115, 207, 0.35)',
   },
-  taskAddedText: { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#D4B13A' },
+  taskAddedText: { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#0073CF' },
   taskAddBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12,
-    paddingVertical: 7, borderRadius: 16, backgroundColor: '#D4B13A',
+    paddingVertical: 7, borderRadius: 16, backgroundColor: '#0073CF',
   },
   taskAddBtnText: { fontFamily: 'Inter_700Bold', fontSize: 12, color: '#0D0D0D' },
   // Bottom Sheet
@@ -327,7 +327,7 @@ export const styles = themedStyleSheet({
   },
   sheetIconBox: {
     width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(212,177,58,0.10)', marginRight: 14,
+    backgroundColor: 'rgba(0, 115, 207,0.10)', marginRight: 14,
   },
   sheetOptionTexts: { flex: 1 },
   sheetOptionTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 16, color: '#F3EEE3', marginBottom: 2 },

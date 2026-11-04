@@ -279,7 +279,7 @@ export function DailyWeekView({
                       styles.weekDropIndicator,
                       {
                         borderColor: gold[400],
-                        backgroundColor: theme.dark ? 'rgba(212,177,58,0.15)' : 'rgba(212,177,58,0.2)',
+                        backgroundColor: theme.dark ? 'rgba(0, 115, 207,0.15)' : 'rgba(0, 115, 207,0.2)',
                       },
                     ]}
                   >

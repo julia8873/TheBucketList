@@ -334,7 +334,7 @@ export function BigAvatar({
           <View
             style={[
               s.avatarFallback,
-              { width: inner, height: inner, borderRadius: inner / 2, backgroundColor: '#201B0E' },
+              { width: inner, height: inner, borderRadius: inner / 2, backgroundColor: '#0A1B2E' },
             ]}
           >
             <Text

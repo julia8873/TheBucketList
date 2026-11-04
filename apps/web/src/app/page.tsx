@@ -4,8 +4,8 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-8">
       <div className="max-w-4xl w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-8 border-b border-gray-100 bg-[#FAF8F5]">
-          <h1 className="text-3xl font-serif text-[#D4AF37] mb-2">TheBucketList Admin</h1>
+        <div className="p-8 border-b border-gray-100 bg-[#F6F8FB]">
+          <h1 className="text-3xl font-serif text-[#0073CF] mb-2">TheBucketList Admin</h1>
           <p className="text-gray-500">Manage users, view storage metrics, and moderate content.</p>
         </div>
         

@@ -546,6 +546,17 @@ const es = {
   },
 
   my_list: {
+    filters: 'Filtros',
+    filters_status: 'Estado',
+    reset_filters: 'Restablecer',
+    apply_filters_tasks: 'Aplicar ({{count}} tareas)',
+    apply_filters_albums: 'Aplicar ({{count}} álbumes)',
+    collapse_sections: 'Compactar secciones',
+    show_section: 'Mostrar',
+    hide_section: 'Ocultar',
+    sort_criteria: 'Criterio',
+    sort_albums: 'Ordenar álbumes',
+    total_count_a11y: '{{count}} elementos',
     no_tasks_search: 'No se encontraron tareas',
     empty_tasks: 'No tienes tareas en esta vista',
     no_albums_search: 'No se encontraron álbumes',
@@ -906,6 +917,10 @@ const es = {
   },
 
   calendar: {
+    reschedule: 'Reprogramar',
+    new_date: 'Nueva fecha',
+    in_3_days: 'En 3 días',
+    in_a_week: 'En una semana',
     title: 'Calendario',
     completed_this_month_zero: '0 completadas este mes',
     completed_this_month_single: '1 completada este mes',

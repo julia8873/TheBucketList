@@ -11,11 +11,11 @@ export const styles = themedStyleSheet({
   header: {
     paddingHorizontal: 12,
     paddingTop: 12,
-    paddingBottom: 16,
+    paddingBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 60,
+    minHeight: 56,
   },
   headerTitle: {
     fontFamily: 'PlayfairDisplay_700Bold',
@@ -37,7 +37,7 @@ export const styles = themedStyleSheet({
     justifyContent: 'center',
   },
   searchIconButtonActive: {
-    backgroundColor: 'rgba(212, 177, 58, 0.15)',
+    backgroundColor: 'rgba(0, 115, 207, 0.15)',
   },
   searchBarContainer: {
     paddingHorizontal: 12,
@@ -98,14 +98,14 @@ export const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    height: 48,
+    height: 42,
     marginHorizontal: 12,
-    marginBottom: 14,
+    marginBottom: 12,
     paddingHorizontal: 12,
-    borderRadius: 24,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#2A2A2A',
-    backgroundColor: '#141414',
+    borderColor: '#25252C',
+    backgroundColor: '#141418',
   },
   exploreSearchInput: {
     flex: 1,
@@ -167,9 +167,9 @@ export const styles = themedStyleSheet({
     height: 32,
     paddingHorizontal: 9,
     borderRadius: 8,
-    backgroundColor: '#181818',
+    backgroundColor: '#151519',
     borderWidth: 1,
-    borderColor: '#2A2A2A',
+    borderColor: '#26262E',
   },
   selectionBtnActive: {
     backgroundColor: gold[400],
@@ -373,7 +373,7 @@ export const styles = themedStyleSheet({
     borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: gold[400],
-    backgroundColor: 'rgba(212, 177, 58, 0.06)',
+    backgroundColor: 'rgba(0, 115, 207, 0.06)',
     marginBottom: 12,
   },
   compactNewAlbumText: {

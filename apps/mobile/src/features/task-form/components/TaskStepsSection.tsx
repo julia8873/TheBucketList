@@ -50,7 +50,7 @@ export function TaskStepsSection({
         </View>
       ))}
       <Pressable style={styles.addStepRow} onPress={onAddStep} accessibilityRole="button">
-        <Plus color="#D4B13A" size={24} />
+        <Plus color="#0073CF" size={24} />
         <Text style={styles.addStepText}>{t('task_form.add_step', { defaultValue: 'Añadir paso' })}</Text>
       </Pressable>
     </View>

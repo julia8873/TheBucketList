@@ -51,7 +51,7 @@ export const styles = themedStyleSheet({
   badgeCountText: {
     fontFamily: 'Inter_700Bold',
     fontSize: 12,
-    color: '#0E0E0E',
+    color: '#FFFFFF',
   },
   infoTitle: {
     fontFamily: 'Inter_600SemiBold',
@@ -202,7 +202,7 @@ export const styles = themedStyleSheet({
   applyBtnText: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 13.5,
-    color: '#0E0E0E',
+    color: '#FFFFFF',
   },
   menuItem: {
     flexDirection: 'row',

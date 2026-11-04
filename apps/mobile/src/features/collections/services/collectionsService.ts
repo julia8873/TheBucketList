@@ -251,7 +251,7 @@ export const collectionsService = {
         const tagItems = collection.tags.map((name, i) => ({
           id: `tag-${i}-${Date.now()}`,
           name,
-          color: '#D4AF37',
+          color: '#0073CF',
           emoji: null,
         }));
         await AsyncStorage.setItem(storageKey, JSON.stringify(tagItems));

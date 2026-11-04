@@ -89,7 +89,7 @@ export function CollectionDetailModal({
                 hitSlop={8}
                 style={[
                   styles.likeTopBtn,
-                  collection.isLiked && { backgroundColor: 'rgba(250, 204, 21, 0.25)', borderColor: HEART_COLOR },
+                  collection.isLiked && { backgroundColor: 'rgba(0, 115, 207, 0.25)', borderColor: HEART_COLOR },
                 ]}
                 accessibilityRole="button"
                 accessibilityLabel={
@@ -257,14 +257,14 @@ export function CollectionDetailModal({
             >
               {cloneMutation.isPending ? (
                 <>
-                  <ActivityIndicator size="small" color="#0E0E0E" />
+                  <ActivityIndicator size="small" color="#FFFFFF" />
                   <Text style={styles.cloneMainBtnText}>
                     {t('collections.cloning_account')}
                   </Text>
                 </>
               ) : (
                 <>
-                  <Sparkles size={18} color="#0E0E0E" strokeWidth={2.2} />
+                  <Sparkles size={18} color="#FFFFFF" strokeWidth={2.2} />
                   <Text style={styles.cloneMainBtnText}>
                     {t('collections.clone_collection_btn', {
                       count: collection.tasks.length,
@@ -493,6 +493,6 @@ const styles = StyleSheet.create({
   cloneMainBtnText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0E0E0E',
+    color: '#FFFFFF',
   },
 });

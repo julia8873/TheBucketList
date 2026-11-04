@@ -36,7 +36,7 @@ interface DailyTagFormModalProps {
 }
 
 const TAG_COLOR_PALETTE = [
-  '#D4B13A',
+  '#0073CF',
   '#3B82F6',
   '#10B981',
   '#EC4899',
@@ -356,7 +356,7 @@ export const DailyTagFormModal: React.FC<DailyTagFormModalProps> = ({
             accessibilityRole="button"
           >
             {isSavingTag ? (
-              <ActivityIndicator size="small" color="#000" />
+              <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
               <Text style={styles.modalSubmitBtnText}>
                 {editingDailyTag ? t('common.save') : t('tags.create_tag')}

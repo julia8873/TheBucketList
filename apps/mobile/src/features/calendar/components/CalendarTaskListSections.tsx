@@ -9,6 +9,8 @@ import { useRouter } from 'expo-router';
 import { BucketCover } from '../../../components/BucketCover';
 import { resolveTaskImage } from '../../../utils/taskImage';
 import { styles } from '../styles/calendar.styles';
+import { useUpdateBucket } from '@/hooks/useBuckets';
+import { SheetFrame, SheetGroup, SheetLabel, SheetOption } from '@/features/my-list/components/ListControls';
 
 interface CalendarTaskListSectionsProps {
   selectedDate: Date;
@@ -31,6 +33,17 @@ export function CalendarTaskListSections({
   const { theme } = useTheme();
   const { t, i18n } = useTranslation();
   const dateFnsLocale = getDateFnsLocale(i18n.language);
+  const updateBucket = useUpdateBucket();
+  const [rescheduleId, setRescheduleId] = React.useState<string | null>(null);
+
+  const applyReschedule = (days: number) => {
+    if (!rescheduleId) return;
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    d.setHours(12, 0, 0, 0);
+    updateBucket.mutate({ id: rescheduleId, data: { deadline: d } as any });
+    setRescheduleId(null);
+  };
 
   const renderThumbnail = (task: any) => (
     <BucketCover
@@ -71,7 +84,7 @@ export function CalendarTaskListSections({
       {/* ── SECCIÓN: Tareas del Día Seleccionado ── */}
       <View style={styles.sectionHeader}>
         <Text style={[styles.sectionTitle, { color: theme.colors.foreground }]}>
-          <Text style={{ color: '#D4B13A' }}>
+          <Text style={{ color: '#0073CF' }}>
             {format(selectedDate, t('calendar.date_format_day_month'), { locale: dateFnsLocale }).toUpperCase()}
           </Text>
           {selectedTasks.length > 0 ? ` · ${selectedTasks.length}` : ''}
@@ -102,6 +115,7 @@ export function CalendarTaskListSections({
                   thumbnailElement={renderThumbnail(task)}
                   completed={task.status === 'completed'}
                   expiredAction={isExpired}
+                  onReschedule={isExpired ? () => setRescheduleId(task.id) : undefined}
                   onPress={() => router.push(`/bucket/${task.id}`)}
                 />
               </View>
@@ -137,6 +151,7 @@ export function CalendarTaskListSections({
                   thumbnailElement={renderThumbnail(task)}
                   completed={false}
                   expiredAction={true}
+                  onReschedule={() => setRescheduleId(task.id)}
                   onPress={() => router.push(`/bucket/${task.id}`)}
                 />
               </View>
@@ -179,6 +194,24 @@ export function CalendarTaskListSections({
           )}
         </View>
       )}
+
+      <SheetFrame
+        visible={rescheduleId !== null}
+        onClose={() => setRescheduleId(null)}
+        theme={theme}
+        title={t('calendar.reschedule', { defaultValue: 'Reprogramar' })}
+        footerLabel={t('common.cancel', { defaultValue: 'Cancelar' })}
+      >
+        <View>
+          <SheetLabel theme={theme}>{t('calendar.new_date', { defaultValue: 'Nueva fecha' })}</SheetLabel>
+          <SheetGroup theme={theme}>
+            <SheetOption theme={theme} label={t('common.today', { defaultValue: 'Hoy' })} onPress={() => applyReschedule(0)} />
+            <SheetOption theme={theme} label={t('common.tomorrow', { defaultValue: 'Mañana' })} onPress={() => applyReschedule(1)} />
+            <SheetOption theme={theme} label={t('calendar.in_3_days', { defaultValue: 'En 3 días' })} onPress={() => applyReschedule(3)} />
+            <SheetOption theme={theme} label={t('calendar.in_a_week', { defaultValue: 'En una semana' })} onPress={() => applyReschedule(7)} />
+          </SheetGroup>
+        </View>
+      </SheetFrame>
     </>
   );
 }

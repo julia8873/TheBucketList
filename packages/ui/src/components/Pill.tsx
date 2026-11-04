@@ -44,8 +44,8 @@ function getPillColors(
   switch (variant) {
     case 'gold':
       return {
-        bg: isDark ? '#201B0E' : 'rgba(212, 175, 55, 0.12)',
-        border: isDark ? '#5A4A1C' : 'rgba(212, 175, 55, 0.4)',
+        bg: isDark ? '#0A1B2E' : 'rgba(0, 115, 207, 0.12)',
+        border: isDark ? '#0F4A80' : 'rgba(0, 115, 207, 0.4)',
         text: theme.colors.primary,
       };
     case 'outline-gold':

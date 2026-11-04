@@ -22,7 +22,7 @@ export function TagsRow({ selectedTags, onChange, compact = false }: TagsRowProp
   let textColor = theme.colors.foregroundMuted;
 
   if (selectedTags.length > 0) {
-    textColor = '#D4B13A';
+    textColor = '#0073CF';
     displayValue =
       selectedTags.length <= 2
         ? selectedTags.map((tag) => tag.name).join(', ')
@@ -37,7 +37,7 @@ export function TagsRow({ selectedTags, onChange, compact = false }: TagsRowProp
         accessibilityRole="button"
         accessibilityLabel={t('tags.tags_label')}
       >
-        <Tag color="#D4B13A" size={24} />
+        <Tag color="#0073CF" size={24} />
         <Text style={[styles.settingLabel, compact && { fontSize: 17 }, { color: theme.colors.foreground }]}>{t('tags.tags_label')}</Text>
         <Text style={[styles.settingValue, { color: textColor }]} numberOfLines={1}>
           {displayValue}

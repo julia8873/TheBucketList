@@ -69,7 +69,7 @@ export function DailyTasksCustomizeModal({
               <View
                 style={[
                   styles.headerIconWrap,
-                  { backgroundColor: theme.dark ? 'rgba(212,177,58,0.15)' : 'rgba(212,177,58,0.2)' },
+                  { backgroundColor: theme.dark ? 'rgba(0, 115, 207,0.15)' : 'rgba(0, 115, 207,0.2)' },
                 ]}
               >
                 <SlidersHorizontal size={18} color={gold[400]} />
@@ -203,7 +203,7 @@ function CustomizeRow({
         style={[
           styles.rowIconBox,
           {
-            backgroundColor: theme.dark ? '#222222' : '#EDE8DE',
+            backgroundColor: theme.dark ? '#222222' : '#EBEFF5',
             borderColor: theme.dark ? '#333333' : '#DDD7CB',
           },
         ]}
@@ -359,6 +359,6 @@ const styles = StyleSheet.create({
   doneBtnText: {
     fontSize: 14,
     fontFamily: 'Inter_600SemiBold',
-    color: '#000000',
+    color: '#FFFFFF',
   },
 });

@@ -21,7 +21,7 @@ export function FilterChip({ label, active = false, onPress, style, accessibilit
 
   const isLightActive = !theme.dark && active;
   const chipBg = active 
-    ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)') 
+    ? (theme.dark ? 'transparent' : 'rgba(0, 115, 207, 0.12)') 
     : theme.colors.surface;
   const chipBorder = active ? theme.colors.primary : theme.colors.border;
   const chipText = active ? theme.colors.primary : theme.colors.foregroundMuted;

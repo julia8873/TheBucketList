@@ -351,7 +351,7 @@ export function PhotoCropModal({ visible, uri, width, height, index, total, onCa
                   onPress={() => selectRatio(r.key)}
                   style={[styles.ratioChip, active && styles.ratioChipActive]}
                 >
-                  <Text style={[styles.ratioText, active && { color: '#000' }]}>{label}</Text>
+                  <Text style={[styles.ratioText, active && { color: '#FFFFFF' }]}>{label}</Text>
                 </Pressable>
               );
             })}

@@ -184,7 +184,7 @@ export function GoogleDriveModal({
                       accessibilityRole="button"
                       accessibilityLabel={t('google_drive_modal.paste_label')}
                     >
-                      <ClipboardIcon size={16} color="#0E0E0E" strokeWidth={2.2} />
+                      <ClipboardIcon size={16} color="#FFFFFF" strokeWidth={2.2} />
                       <Text style={styles.pasteBtnText}>{t('google_drive_modal.paste')}</Text>
                     </Pressable>
                   </View>
@@ -320,7 +320,7 @@ export function GoogleDriveModal({
                     </View>
 
                     {/* Notificación de acceso */}
-                    <View style={[styles.infoBanner, { backgroundColor: 'rgba(212, 177, 58, 0.08)' }]}>
+                    <View style={[styles.infoBanner, { backgroundColor: 'rgba(0, 115, 207, 0.08)' }]}>
                       <Eye size={16} color={gold[400]} />
                       <Text style={[styles.infoBannerText, { color: theme.colors.foreground }]}>
                         {t('google_drive_modal.notify_banner')}
@@ -351,7 +351,7 @@ export function GoogleDriveModal({
                     accessibilityRole="button"
                     accessibilityLabel={t('google_drive_modal.save_label')}
                   >
-                    <Check size={18} color="#0E0E0E" strokeWidth={2.4} />
+                    <Check size={18} color="#FFFFFF" strokeWidth={2.4} />
                     <Text style={styles.saveBtnText}>{t('google_drive_modal.save')}</Text>
                   </Pressable>
                 </View>
@@ -379,7 +379,7 @@ const styles = themedStyleSheet({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(212, 177, 58, 0.15)',
+    backgroundColor: 'rgba(0, 115, 207, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -443,7 +443,7 @@ const styles = themedStyleSheet({
   pasteBtnText: {
     fontSize: 13,
     fontFamily: 'Inter_700Bold',
-    color: '#0E0E0E',
+    color: '#FFFFFF',
   },
   warningNote: {
     color: '#EAB308',
@@ -470,7 +470,7 @@ const styles = themedStyleSheet({
     height: 46,
     borderRadius: 12,
     borderWidth: 1.5,
-    backgroundColor: 'rgba(212, 177, 58, 0.08)',
+    backgroundColor: 'rgba(0, 115, 207, 0.08)',
     marginBottom: 16,
   },
   openLinkText: {
@@ -507,7 +507,7 @@ const styles = themedStyleSheet({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: 'rgba(212, 177, 58, 0.2)',
+    backgroundColor: 'rgba(0, 115, 207, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 1,
@@ -531,7 +531,7 @@ const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
-    backgroundColor: 'rgba(234, 179, 8, 0.1)',
+    backgroundColor: 'rgba(0, 115, 207, 0.1)',
     borderRadius: 12,
     padding: 12,
     borderLeftWidth: 3,
@@ -553,7 +553,7 @@ const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
-    backgroundColor: 'rgba(212, 177, 58, 0.06)',
+    backgroundColor: 'rgba(0, 115, 207, 0.06)',
     borderRadius: 12,
     padding: 12,
   },
@@ -610,7 +610,7 @@ const styles = themedStyleSheet({
     borderRadius: 12,
   },
   saveBtnText: {
-    color: '#0E0E0E',
+    color: '#FFFFFF',
     fontSize: 14,
     fontFamily: 'Inter_700Bold',
   },

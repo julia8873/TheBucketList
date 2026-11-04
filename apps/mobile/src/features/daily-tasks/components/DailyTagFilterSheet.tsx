@@ -114,7 +114,7 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
                   style={styles.sheetCreateFirstBtn}
                   onPress={openCreateTag}
                 >
-                  <Plus size={14} color="#0E0E0E" strokeWidth={2.4} />
+                  <Plus size={14} color="#FFFFFF" strokeWidth={2.4} />
                   <Text style={styles.sheetCreateFirstBtnText}>{t('tags.create_first_tag')}</Text>
                 </Pressable>
               </View>
@@ -144,7 +144,7 @@ export const DailyTagFilterSheet: React.FC<DailyTagFilterSheetProps> = ({
                           },
                         ]}
                       >
-                        {isSelected && <Check size={13} color="#0E0E0E" strokeWidth={3} />}
+                        {isSelected && <Check size={13} color="#FFFFFF" strokeWidth={3} />}
                       </View>
 
                       <View

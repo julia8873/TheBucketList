@@ -546,6 +546,17 @@ const en = {
   },
 
   my_list: {
+    filters: 'Filters',
+    filters_status: 'Status',
+    reset_filters: 'Reset',
+    apply_filters_tasks: 'Apply ({{count}} tasks)',
+    apply_filters_albums: 'Apply ({{count}} albums)',
+    collapse_sections: 'Collapse sections',
+    show_section: 'Show',
+    hide_section: 'Hide',
+    sort_criteria: 'Criteria',
+    sort_albums: 'Sort albums',
+    total_count_a11y: '{{count}} items',
     no_tasks_search: 'No tasks found',
     empty_tasks: 'You have no tasks in this view',
     no_albums_search: 'No albums found',
@@ -906,6 +917,10 @@ const en = {
   },
 
   calendar: {
+    reschedule: 'Reschedule',
+    new_date: 'New date',
+    in_3_days: 'In 3 days',
+    in_a_week: 'In a week',
     title: 'Calendar',
     completed_this_month_zero: '0 completed this month',
     completed_this_month_single: '1 completed this month',

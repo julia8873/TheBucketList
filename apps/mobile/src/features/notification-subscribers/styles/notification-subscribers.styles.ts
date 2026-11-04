@@ -103,7 +103,7 @@ export const styles = themedStyleSheet({
   requestBtnText: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 14,
-    color: '#0E0E0E',
+    color: '#FFFFFF',
   },
   pendingCard: {
     flexDirection: 'row',

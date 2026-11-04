@@ -5,7 +5,7 @@
  */
 
 export const TAG_COLORS = [
-  { name: 'Dorado', value: '#D4B13B' },
+  { name: 'Dorado', value: '#0073CF' },
   { name: 'Naranja', value: '#E17B3B' },
   { name: 'Rojo', value: '#E1553C' },
   { name: 'Rosa', value: '#DA69A7' },
@@ -33,13 +33,13 @@ export const TAG_EMOJIS: TagEmojiPreset[] = [
   { emoji: '👯', color: '#8D5BD6' },
   { emoji: '👨‍👩‍👧', color: '#DA69A7' },
   { emoji: '🌿', color: '#4CB06A' },
-  { emoji: '☀️', color: '#D4B13B' },
+  { emoji: '☀️', color: '#0073CF' },
   { emoji: '🎵', color: '#8D5BD6' },
   { emoji: '📸', color: '#8A8A8A' },
   { emoji: '🎨', color: '#DA69A7' },
   { emoji: '📚', color: '#4B8FE0' },
   { emoji: '🏖️', color: '#31B19A' },
-  { emoji: '🎉', color: '#D4B13B' },
+  { emoji: '🎉', color: '#0073CF' },
   { emoji: '💛', color: '#FACC15' },
   { emoji: '🚀', color: '#4B8FE0' },
   { emoji: '🍷', color: '#E1553C' },
@@ -47,7 +47,7 @@ export const TAG_EMOJIS: TagEmojiPreset[] = [
   { emoji: '🎬', color: '#8A8A8A' },
   { emoji: '💼', color: '#8A8A8A' },
   { emoji: '🐾', color: '#4CB06A' },
-  { emoji: '⭐', color: '#D4B13B' },
+  { emoji: '⭐', color: '#0073CF' },
 ];
 
 /** Emoji por defecto según el nombre de la etiqueta (si no hay coincidencia → null). */

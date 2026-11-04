@@ -18,6 +18,7 @@ interface CalendarMonthGridProps {
   tasksByDay: Map<string, any[]>;
   completedThisMonth: number;
   isLoading: boolean;
+  onGoToday?: () => void;
 }
 
 export function CalendarMonthGrid({
@@ -30,6 +31,7 @@ export function CalendarMonthGrid({
   tasksByDay,
   completedThisMonth,
   isLoading,
+  onGoToday,
 }: CalendarMonthGridProps) {
   const { theme } = useTheme();
   const { t, i18n } = useTranslation();
@@ -43,7 +45,7 @@ export function CalendarMonthGrid({
           <Typography
             variant="h1"
             color={theme.colors.foreground}
-            style={{ textTransform: 'capitalize', fontSize: 26 }}
+            style={{ textTransform: 'capitalize', fontSize: 22 }}
           >
             {format(currentDate, 'MMMM yyyy', { locale: dateFnsLocale })}
           </Typography>
@@ -55,7 +57,7 @@ export function CalendarMonthGrid({
               : t('calendar.completed_this_month_plural', { count: completedThisMonth })}
           </Typography>
         </View>
-        <View style={{ flexDirection: 'row', gap: 12 }}>
+        <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
           <Pressable
             onPress={onPrevMonth}
             style={[styles.navButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
@@ -63,8 +65,19 @@ export function CalendarMonthGrid({
             accessibilityRole="button"
             accessibilityLabel={t('calendar.prev_month')}
           >
-            <ChevronLeft color={theme.colors.foreground} size={22} />
+            <ChevronLeft color={theme.colors.primary} size={18} />
           </Pressable>
+          {onGoToday && (
+            <Pressable
+              onPress={onGoToday}
+              style={[styles.navButton, { width: undefined, paddingHorizontal: 10, backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.today', { defaultValue: 'Hoy' })}
+            >
+              <Text style={{ color: theme.colors.primary, fontSize: 11, fontFamily: 'Inter_600SemiBold' }}>{t('common.today', { defaultValue: 'Hoy' })}</Text>
+            </Pressable>
+          )}
           <Pressable
             onPress={onNextMonth}
             style={[styles.navButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
@@ -72,7 +85,7 @@ export function CalendarMonthGrid({
             accessibilityRole="button"
             accessibilityLabel={t('calendar.next_month')}
           >
-            <ChevronRight color={theme.colors.foreground} size={22} />
+            <ChevronRight color={theme.colors.primary} size={18} />
           </Pressable>
         </View>
       </View>
@@ -130,7 +143,7 @@ export function CalendarMonthGrid({
                   style={[
                     styles.dayCircle,
                     isSelected && styles.dayCircleSelected,
-                    isToday && !isSelected && [styles.dayCircleToday, { borderColor: theme.colors.border }],
+                    isToday && !isSelected && styles.dayCircleToday,
                   ]}
                 >
                   <Text
@@ -148,8 +161,8 @@ export function CalendarMonthGrid({
 
                 {/* Dots indicator below day number */}
                 <View style={styles.dotsRow}>
-                  {hasCompleted && <View style={[styles.dot, { backgroundColor: '#D4B13A' }]} />}
-                  {hasPending && <View style={[styles.dot, { backgroundColor: '#3A78C4' }]} />}
+                  {hasCompleted && <View style={[styles.dot, { backgroundColor: isSelected ? '#FFFFFF' : '#0073CF' }]} />}
+                  {hasPending && <View style={[styles.dot, { backgroundColor: '#A1A1AA' }]} />}
                   {hasExpired && <View style={[styles.dot, { backgroundColor: '#EF4444' }]} />}
                 </View>
               </Pressable>
@@ -161,11 +174,11 @@ export function CalendarMonthGrid({
       {/* Legend */}
       <View style={styles.legendRow}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#D4B13A' }]} />
+          <View style={[styles.legendDot, { backgroundColor: '#0073CF' }]} />
           <Text style={[styles.legendText, { color: theme.colors.foregroundMuted }]}>{t('common.status_completed')}</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#3A78C4' }]} />
+          <View style={[styles.legendDot, { backgroundColor: '#A1A1AA' }]} />
           <Text style={[styles.legendText, { color: theme.colors.foregroundMuted }]}>{t('common.status_pending')}</Text>
         </View>
         <View style={styles.legendItem}>

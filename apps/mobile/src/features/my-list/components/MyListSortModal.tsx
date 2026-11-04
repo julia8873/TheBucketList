@@ -1,12 +1,9 @@
 import React from 'react';
-import { View, StyleSheet, Pressable, Modal, Dimensions } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Typography } from '@bucketlist/ui';
-import { dark, gold } from '@bucketlist/ui/src/tokens/colors';
 import { ArrowDown, ArrowUp, Check, GripVertical } from 'lucide-react-native';
 import type { SortField, SortDir } from '../types';
-
-const MENU_WIDTH = 220;
+import { SheetFrame, SheetGroup, SheetLabel, SheetOption } from './ListControls';
 
 interface MyListSortModalProps {
   visible: boolean;
@@ -38,7 +35,6 @@ export function MyListSortModal({
   onSelectOption,
 }: MyListSortModalProps) {
   const { t } = useTranslation();
-  if (!visible) return null;
 
   const options =
     activeTab === 'albums'
@@ -85,87 +81,45 @@ export function MyListSortModal({
   const currentDir = activeTab === 'albums' ? albumSortDir : sortDir;
   const isCurrentlyReordering = activeTab === 'albums' ? isAlbumReordering : isReordering;
 
+  const primary = theme.colors.primary;
+
   return (
-    <Modal
+    <SheetFrame
       visible={visible}
-      transparent
-      animationType="fade"
-      statusBarTranslucent
-      onRequestClose={onClose}
+      onClose={onClose}
+      theme={theme}
+      title={activeTab === 'albums' ? t('my_list.sort_albums', { defaultValue: 'Ordenar álbumes' }) : t('my_list.sort_tasks', { defaultValue: 'Ordenar tareas' })}
+      footerLabel={t('common.done', { defaultValue: 'Listo' })}
     >
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
-        <View
-          style={{
-            position: 'absolute',
-            top: position.top,
-            // Centrado respecto al botón de ordenar (acotado a los bordes de la pantalla)
-            ...(position.centerX
-              ? {
-                  width: MENU_WIDTH,
-                  left: Math.min(
-                    Math.max(12, position.centerX - MENU_WIDTH / 2),
-                    Dimensions.get('window').width - MENU_WIDTH - 12
-                  ),
-                }
-              : { right: position.right, minWidth: 160 }),
-            backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: theme.colors.border,
-            overflow: 'hidden',
-            elevation: 8,
-            shadowColor: '#000',
-            shadowOpacity: theme.dark ? 0.35 : 0.15,
-            shadowRadius: 10,
-            shadowOffset: { width: 0, height: 4 },
-          }}
-        >
-          {options.map((option, i) => {
+      <View>
+        <SheetLabel theme={theme}>{t('my_list.sort_criteria', { defaultValue: 'Criterio' })}</SheetLabel>
+        <SheetGroup theme={theme}>
+          {options.map((option) => {
             const selected =
-              option.field === 'reorder_status'
-                ? isCurrentlyReordering
-                : currentField === option.field;
+              option.field === 'reorder_status' ? isCurrentlyReordering : currentField === option.field;
+            let right: React.ReactNode = undefined;
+            if (selected && option.field !== 'manual' && option.field !== 'reorder_status') {
+              right = currentDir === 'desc' ? <ArrowDown color={primary} size={16} /> : <ArrowUp color={primary} size={16} />;
+            } else if (option.field === 'reorder_status') {
+              right = isCurrentlyReordering ? (
+                <Check color={primary} size={16} strokeWidth={2.5} />
+              ) : (
+                <GripVertical color={theme.colors.foregroundMuted} size={16} />
+              );
+            }
             return (
-              <Pressable
+              <SheetOption
                 key={option.field}
+                theme={theme}
+                label={option.label}
+                selected={selected}
+                right={right}
                 onPress={() => onSelectOption(option.field)}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 12,
-                  paddingHorizontal: 14,
-                  paddingVertical: 12,
-                  borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth,
-                  borderTopColor: theme.colors.borderSubtle ?? theme.colors.border,
-                }}
-              >
-                <Typography
-                  variant={selected ? 'bodySemibold' : 'body'}
-                  color={selected ? gold[400] : theme.colors.foreground}
-                >
-                  {option.label}
-                </Typography>
-                {selected && option.field !== 'manual' && option.field !== 'reorder_status' &&
-                  (currentDir === 'desc' ? (
-                    <ArrowDown color={gold[400]} size={16} />
-                  ) : (
-                    <ArrowUp color={gold[400]} size={16} />
-                  ))}
-                {option.field === 'reorder_status' &&
-                  (isCurrentlyReordering ? (
-                    <Check color={gold[400]} size={16} strokeWidth={2.5} />
-                  ) : (
-                    <GripVertical color={gold[400]} size={16} />
-                  ))}
-                {selected && option.field === 'manual' && (
-                  <Check color={gold[400]} size={16} strokeWidth={2.5} />
-                )}
-              </Pressable>
+              />
             );
           })}
-        </View>
-      </Pressable>
-    </Modal>
+        </SheetGroup>
+      </View>
+    </SheetFrame>
   );
 }

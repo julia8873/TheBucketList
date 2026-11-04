@@ -91,7 +91,7 @@ export function FeedHeader({
         style={[
           styles.toggleContainer,
           {
-            backgroundColor: theme.dark ? '#161616' : '#EDE8DE',
+            backgroundColor: theme.dark ? '#161616' : '#EBEFF5',
             borderColor: theme.colors.border,
           },
         ]}
@@ -210,7 +210,7 @@ export function FeedHeader({
               styles.filterDropdownBtn,
               {
                 backgroundColor: contentFilter !== 'todo'
-                  ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.18)')
+                  ? (theme.dark ? 'rgba(0, 115, 207, 0.12)' : 'rgba(0, 115, 207, 0.18)')
                   : theme.colors.surface,
                 borderColor: contentFilter !== 'todo' ? gold[400] : theme.colors.border,
               },
@@ -282,7 +282,7 @@ export function FeedHeader({
                 styles.collectionsTriggerBtnFull,
                 {
                   backgroundColor: contentFilter === 'colecciones'
-                    ? (theme.dark ? 'rgba(212, 175, 55, 0.16)' : 'rgba(212, 175, 55, 0.22)')
+                    ? (theme.dark ? 'rgba(0, 115, 207, 0.16)' : 'rgba(0, 115, 207, 0.22)')
                     : theme.colors.surface,
                   borderColor: contentFilter === 'colecciones' ? gold[400] : theme.colors.border,
                 },
@@ -337,7 +337,7 @@ export function FeedHeader({
                     styles.sheetOptionRow,
                     {
                       backgroundColor: isSelected
-                        ? (theme.dark ? 'rgba(212, 177, 58, 0.08)' : 'rgba(212, 177, 58, 0.12)')
+                        ? (theme.dark ? 'rgba(0, 115, 207, 0.08)' : 'rgba(0, 115, 207, 0.12)')
                         : theme.colors.surface,
                       borderColor: isSelected ? gold[400] : theme.colors.border,
                     },

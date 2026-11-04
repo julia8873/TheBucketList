@@ -65,7 +65,7 @@ const rgba = (r: number, g: number, b: number, a: number) =>
   `rgba(${r}, ${g}, ${b}, ${Math.round(a * 1000) / 1000})`;
 
 const L = lightTheme.colors;
-const FG_RGB = { r: 26, g: 20, b: 16 }; // lightTheme.colors.foreground (#1A1410)
+const FG_RGB = { r: 15, g: 22, b: 35 }; // lightTheme.colors.foreground (#0F1623)
 
 type Kind = 'background' | 'border' | 'text';
 
@@ -83,7 +83,7 @@ function mapToLight(kind: Kind, value: string, keepWhite = false): string {
       if (kind === 'text') return rgba(FG_RGB.r, FG_RGB.g, FG_RGB.b, Math.min(1, c.a + 0.1));
       return rgba(0, 0, 0, Math.max(0.03, c.a * 0.75));
     }
-    return value; // acentos (dorado, rojo, verde…) funcionan en ambos temas
+    return value; // acentos (azul de marca, rojo, verde…) funcionan en ambos temas
   }
 
   const l = luma(c);
@@ -102,7 +102,8 @@ function mapToLight(kind: Kind, value: string, keepWhite = false): string {
   // ── Fondos y bordes oscuros ───────────────────────────────────────────────
   if (l > 80) return value; // ya es claro / color medio
   if (sat >= 14) {
-    // Oscuros con tinte (p. ej. #201B0E dorado, #3A1A00 naranja)
+    // Oscuros con tinte (p. ej. #0A1B2E azul de marca, #3A1A00 naranja)
+    if (c.b >= c.r + 10 && c.b >= c.g) return kind === 'border' ? '#B6D6F2' : '#E6F2FC';
     if (c.r >= c.b + 10 && c.g >= c.b) return kind === 'border' ? '#E6D79A' : '#F5EDCA';
     return value; // azules / verdes / granates profundos: acentos intencionados
   }

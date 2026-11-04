@@ -421,7 +421,7 @@ export default function AlbumDetailScreen() {
         }}
         refreshControl={
           manualDragEnabled || state.dragging ? undefined : (
-            <RefreshControl refreshing={state.manualRefreshing} onRefresh={state.handleRefresh} tintColor="#D4B13A" />
+            <RefreshControl refreshing={state.manualRefreshing} onRefresh={state.handleRefresh} tintColor="#0073CF" />
           )
         }
       >
@@ -492,8 +492,8 @@ export default function AlbumDetailScreen() {
                     >
                       <Star
                         size={20}
-                        color={state.isFav ? '#D4B13A' : '#F3EEE3'}
-                        fill={state.isFav ? '#D4B13A' : 'transparent'}
+                        color={state.isFav ? '#0073CF' : '#F3EEE3'}
+                        fill={state.isFav ? '#0073CF' : 'transparent'}
                         strokeWidth={1.8}
                       />
                     </Pressable>
@@ -538,8 +538,8 @@ export default function AlbumDetailScreen() {
                     >
                       <Bookmark
                         size={20}
-                        color={state.isSaved ? '#D4B13A' : '#F3EEE3'}
-                        fill={state.isSaved ? '#D4B13A' : 'transparent'}
+                        color={state.isSaved ? '#0073CF' : '#F3EEE3'}
+                        fill={state.isSaved ? '#0073CF' : 'transparent'}
                         strokeWidth={1.8}
                       />
                     </Pressable>
@@ -554,8 +554,8 @@ export default function AlbumDetailScreen() {
                   >
                     <Bell
                       size={20}
-                      color={state.subStatus === 'accepted' ? '#D4B13A' : '#F3EEE3'}
-                      fill={state.subStatus === 'accepted' ? '#D4B13A' : 'transparent'}
+                      color={state.subStatus === 'accepted' ? '#0073CF' : '#F3EEE3'}
+                      fill={state.subStatus === 'accepted' ? '#0073CF' : 'transparent'}
                       strokeWidth={1.8}
                     />
                   </Pressable>
@@ -647,7 +647,7 @@ export default function AlbumDetailScreen() {
                 <Pressable
                   key={`owner-${album.owner.id}`}
                   onPress={() => state.router.push(`/profile/${album.owner!.id}` as any)}
-                  style={[styles.collaboratorCircle, { borderColor: '#D4B13A', borderWidth: 2.5 }]}
+                  style={[styles.collaboratorCircle, { borderColor: '#0073CF', borderWidth: 2.5 }]}
                   accessibilityRole="button"
                   accessibilityLabel={t('album_detail.owner_profile_a11y', { name: album.owner.display_name || album.owner.username || '', defaultValue: `Perfil de ${album.owner.display_name || album.owner.username || ''}` })}
                 >
@@ -683,7 +683,7 @@ export default function AlbumDetailScreen() {
                       }}
                       style={[
                         styles.collaboratorCircle,
-                        { borderColor: isPending ? 'rgba(212, 177, 58, 0.45)' : 'rgba(255, 255, 255, 0.15)', borderWidth: 2 },
+                        { borderColor: isPending ? 'rgba(0, 115, 207, 0.45)' : 'rgba(255, 255, 255, 0.15)', borderWidth: 2 },
                         isPending && styles.collaboratorCirclePending,
                       ]}
                       accessibilityRole="button"
@@ -721,7 +721,7 @@ export default function AlbumDetailScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={t('albums.add_collaborator', { defaultValue: 'Añadir colaborador' })}
                 >
-                  <UserPlus size={22} color="#D4B13A" strokeWidth={1.8} />
+                  <UserPlus size={22} color="#0073CF" strokeWidth={1.8} />
                 </Pressable>
               )}
             </ScrollView>
@@ -743,8 +743,8 @@ export default function AlbumDetailScreen() {
                     paddingVertical: 5,
                     borderRadius: 20,
                     borderWidth: 1,
-                    borderColor: tItem.color || '#D4B13A',
-                    backgroundColor: hexToRgba(tItem.color || '#D4B13A', 0.15),
+                    borderColor: tItem.color || '#0073CF',
+                    backgroundColor: hexToRgba(tItem.color || '#0073CF', 0.15),
                   }}
                   onPress={() => {
                     if (state.canEdit) {
@@ -755,7 +755,7 @@ export default function AlbumDetailScreen() {
                   accessibilityLabel={t('album_detail.tag_a11y', { name: tItem.name, defaultValue: `Etiqueta ${tItem.name}` })}
                 >
                   {tItem.emoji ? <Text style={{ fontSize: 13 }}>{tItem.emoji}</Text> : null}
-                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: tItem.color || '#D4B13A' }}>
+                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: tItem.color || '#0073CF' }}>
                     {tItem.name}
                   </Text>
                 </Pressable>
@@ -823,14 +823,14 @@ export default function AlbumDetailScreen() {
           >
             {areAllCompleted ? (
               <>
-                <RotateCcw size={16} color="#D4B13A" />
+                <RotateCcw size={16} color="#0073CF" />
                 <Text style={styles.toggleAllBtnText}>
                   {t('albums.mark_all_pending', { defaultValue: 'Marcar todas como pendientes' })}
                 </Text>
               </>
             ) : (
               <>
-                <CheckCircle2 size={16} color="#D4B13A" />
+                <CheckCircle2 size={16} color="#0073CF" />
                 <Text style={styles.toggleAllBtnText}>
                   {t('albums.mark_all_completed', { defaultValue: 'Marcar todas como completadas' })}
                 </Text>
@@ -881,9 +881,9 @@ export default function AlbumDetailScreen() {
                   </Text>
                   {state.taskSortField !== 'manual' &&
                     (state.taskSortDir === 'desc' ? (
-                      <ArrowDown size={13} color="#D4B13A" />
+                      <ArrowDown size={13} color="#0073CF" />
                     ) : (
-                      <ArrowUp size={13} color="#D4B13A" />
+                      <ArrowUp size={13} color="#0073CF" />
                     ))}
                 </Pressable>
               </View>
@@ -894,7 +894,7 @@ export default function AlbumDetailScreen() {
                   onPress={() => (state.isSelectionMode ? state.handleExitSelection() : state.startSelection())}
                   accessibilityLabel={state.isSelectionMode ? t('album_detail.exit_selection_a11y', { defaultValue: 'Salir de la selección' }) : t('album_detail.select_tasks_a11y', { defaultValue: 'Seleccionar tareas' })}
                 >
-                  <ListChecks size={16} color={state.isSelectionMode ? '#D4B13A' : '#8F8F8F'} />
+                  <ListChecks size={16} color={state.isSelectionMode ? '#0073CF' : '#8F8F8F'} />
                 </Pressable>
               )}
 
@@ -905,7 +905,7 @@ export default function AlbumDetailScreen() {
                   state.setTaskSearchOpen(!state.taskSearchOpen);
                 }}
               >
-                <Search size={16} color={state.taskSearchOpen ? '#D4B13A' : '#8F8F8F'} />
+                <Search size={16} color={state.taskSearchOpen ? '#0073CF' : '#8F8F8F'} />
               </Pressable>
             </View>
 
@@ -946,7 +946,7 @@ export default function AlbumDetailScreen() {
         {pendientes.length > 0 && (
           <View style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitleLeft, { color: '#D4B13A' }]}>
+              <Text style={[styles.sectionTitleLeft, { color: '#0073CF' }]}>
                 {t('albums.pending_section', {
                   count: pendientes.length,
                   defaultValue: `PENDIENTES · ${pendientes.length}`,

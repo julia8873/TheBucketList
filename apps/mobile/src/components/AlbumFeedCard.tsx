@@ -737,7 +737,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 8,
-    backgroundColor: 'rgba(212, 177, 58, 0.12)',
+    backgroundColor: 'rgba(0, 115, 207, 0.12)',
   },
   saveBadgeText: {
     fontFamily: fontFamily.semibold,

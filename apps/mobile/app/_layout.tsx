@@ -87,12 +87,12 @@ if (Platform.OS === 'web' && typeof window !== 'undefined') {
         }
         div[style*="overflow-x: auto"]::-webkit-scrollbar-thumb,
         div[style*="overflow-x: scroll"]::-webkit-scrollbar-thumb {
-          background: rgba(212, 175, 55, 0.45) !important;
+          background: rgba(0, 115, 207, 0.45) !important;
           border-radius: 4px !important;
         }
         div[style*="overflow-x: auto"]::-webkit-scrollbar-thumb:hover,
         div[style*="overflow-x: scroll"]::-webkit-scrollbar-thumb:hover {
-          background: rgba(212, 175, 55, 0.85) !important;
+          background: rgba(0, 115, 207, 0.85) !important;
         }
       `;
       document.head.appendChild(style);

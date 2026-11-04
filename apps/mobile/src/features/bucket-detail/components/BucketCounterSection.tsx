@@ -156,7 +156,7 @@ export function BucketCounterSection({
                       backgroundColor: gold[400],
                     }}
                   >
-                    <Plus color="#000" size={20} strokeWidth={2.4} />
+                    <Plus color="#FFFFFF" size={20} strokeWidth={2.4} />
                   </Pressable>
                 </View>
               )}
@@ -233,7 +233,7 @@ export function BucketCounterSection({
                   justifyContent: 'center',
                 }}
               >
-                <Plus color="#000" size={22} strokeWidth={2.4} />
+                <Plus color="#FFFFFF" size={22} strokeWidth={2.4} />
               </View>
               <View style={{ flex: 1 }}>
                 <Typography variant="bodySemibold" color={gold[400]}>

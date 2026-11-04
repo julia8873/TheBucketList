@@ -362,8 +362,8 @@ export default function MapScreen() {
                     styles.layerOptionRow,
                     isSelected && {
                       backgroundColor: theme.dark
-                        ? 'rgba(212, 175, 55, 0.15)'
-                        : 'rgba(212, 175, 55, 0.12)',
+                        ? 'rgba(0, 115, 207, 0.15)'
+                        : 'rgba(0, 115, 207, 0.12)',
                     },
                   ]}
                   onPress={() => selectMapType(mode.id)}
@@ -577,7 +577,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: 12,
-    backgroundColor: 'rgba(212, 177, 58, 0.15)',
+    backgroundColor: 'rgba(0, 115, 207, 0.15)',
   },
   taskCountText: {
     fontFamily: 'Inter_700Bold',

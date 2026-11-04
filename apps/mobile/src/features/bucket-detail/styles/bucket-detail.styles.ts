@@ -106,7 +106,7 @@ export const styles = themedStyleSheet({
     elevation: 4,
   },
   badgeGold: {
-    borderColor: 'rgba(212, 175, 55, 0.55)',
+    borderColor: 'rgba(0, 115, 207, 0.55)',
     backgroundColor: '#1E1910',
   },
   badgeCompleted: {
@@ -369,16 +369,16 @@ export const styles = themedStyleSheet({
     height: 50,
     borderRadius: 25,
     borderWidth: 2,
-    borderColor: '#D4B13A',
-    backgroundColor: 'rgba(212, 177, 58, 0.12)',
+    borderColor: '#0073CF',
+    backgroundColor: 'rgba(0, 115, 207, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   collaboratorCirclePending: {
-    borderColor: 'rgba(212, 177, 58, 0.45)',
+    borderColor: 'rgba(0, 115, 207, 0.45)',
     borderStyle: 'dashed',
-    backgroundColor: 'rgba(212, 177, 58, 0.06)',
+    backgroundColor: 'rgba(0, 115, 207, 0.06)',
   },
   // Franja centrada en medio del círculo (no cubre toda la foto del colaborador)
   pendingCenterOverlay: {
@@ -396,7 +396,7 @@ export const styles = themedStyleSheet({
   pendingCenterText: {
     fontSize: 6.5,
     fontFamily: 'Inter_600SemiBold',
-    color: '#D4B13A',
+    color: '#0073CF',
     letterSpacing: 0.2,
     textAlign: 'center',
     textTransform: 'uppercase',
@@ -407,7 +407,7 @@ export const styles = themedStyleSheet({
     borderRadius: 23,
   },
   collaboratorInitials: {
-    color: '#D4B13A',
+    color: '#0073CF',
     fontSize: 18,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -417,11 +417,11 @@ export const styles = themedStyleSheet({
     height: 50,
     borderRadius: 25,
     borderWidth: 1.8,
-    borderColor: '#D4B13A',
+    borderColor: '#0073CF',
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(212, 177, 58, 0.04)',
+    backgroundColor: 'rgba(0, 115, 207, 0.04)',
   },
   addCollabIconRow: {
     flexDirection: 'row',
@@ -434,7 +434,7 @@ export const styles = themedStyleSheet({
   addCollabPlus: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#D4B13A',
+    color: '#0073CF',
     marginLeft: 1,
   },
 });

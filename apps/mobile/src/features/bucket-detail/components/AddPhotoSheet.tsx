@@ -53,7 +53,7 @@ export function AddPhotoSheet({
             accessibilityRole="button"
             accessibilityLabel={t('bucket.camera_desc')}
           >
-            <View style={[styles.iconCircle, { backgroundColor: 'rgba(212, 177, 58, 0.12)' }]}>
+            <View style={[styles.iconCircle, { backgroundColor: 'rgba(0, 115, 207, 0.12)' }]}>
               <Camera size={22} color={gold[400]} strokeWidth={2} />
             </View>
             <View style={styles.textWrap}>
@@ -83,7 +83,7 @@ export function AddPhotoSheet({
             accessibilityRole="button"
             accessibilityLabel={t('bucket.gallery_desc')}
           >
-            <View style={[styles.iconCircle, { backgroundColor: 'rgba(212, 177, 58, 0.12)' }]}>
+            <View style={[styles.iconCircle, { backgroundColor: 'rgba(0, 115, 207, 0.12)' }]}>
               <ImageIcon size={22} color={gold[400]} strokeWidth={2} />
             </View>
             <View style={styles.textWrap}>
@@ -113,7 +113,7 @@ export function AddPhotoSheet({
             accessibilityRole="button"
             accessibilityLabel={t('bucket.web_link_desc')}
           >
-            <View style={[styles.iconCircle, { backgroundColor: 'rgba(212, 177, 58, 0.12)' }]}>
+            <View style={[styles.iconCircle, { backgroundColor: 'rgba(0, 115, 207, 0.12)' }]}>
               <Globe size={22} color={gold[400]} strokeWidth={2} />
             </View>
             <View style={styles.textWrap}>

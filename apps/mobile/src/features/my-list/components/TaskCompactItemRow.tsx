@@ -83,7 +83,7 @@ function TaskCompactItemRowComponent({
       ? '#EF4444'
       : itemPriority === 'low'
       ? '#10B981'
-      : '#D4B13A';
+      : '#0073CF';
   const itemPriorityLabel =
     itemPriority === 'urgent'
       ? t('common.urgent')
@@ -132,13 +132,13 @@ function TaskCompactItemRowComponent({
         localStyles.row,
         {
           backgroundColor: isCompleted
-            ? (theme.dark ? '#121212' : '#EDE8DE')
+            ? (theme.dark ? '#121212' : '#EBEFF5')
             : theme.colors.surface,
           borderColor: theme.colors.border,
         },
         isSelected && {
           borderColor: theme.colors.primary,
-          backgroundColor: 'rgba(212, 177, 58, 0.08)',
+          backgroundColor: 'rgba(0, 115, 207, 0.08)',
         },
         drag?.isActive && { borderColor: theme.colors.primary },
         { marginBottom: drag ? 6 : 0 },
@@ -183,7 +183,7 @@ function TaskCompactItemRowComponent({
           {
             borderColor: theme.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
             backgroundColor: isCompleted
-              ? (theme.dark ? '#121212' : '#EDE8DE')
+              ? (theme.dark ? '#121212' : '#EBEFF5')
               : theme.colors.surface,
           },
           isCompleted && { opacity: 0.55 },
@@ -232,7 +232,7 @@ function TaskCompactItemRowComponent({
                       ? 'rgba(239, 68, 68, 0.14)'
                       : itemPriority === 'low'
                       ? 'rgba(16, 185, 129, 0.14)'
-                      : 'rgba(212, 177, 58, 0.14)',
+                      : 'rgba(0, 115, 207, 0.14)',
                   borderWidth: 1,
                   borderColor: itemPriorityColor,
                 }}
@@ -307,7 +307,7 @@ function TaskCompactItemRowComponent({
                 <ParticipantsStack
                   participants={visibleParticipants}
                   max={3}
-                  ringColor={isCompleted ? (theme.dark ? '#121212' : '#EDE8DE') : theme.colors.surface}
+                  ringColor={isCompleted ? (theme.dark ? '#121212' : '#EBEFF5') : theme.colors.surface}
                   disabled={isSelectionMode || !!drag}
                 />
               </View>

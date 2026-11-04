@@ -8,14 +8,13 @@ import {
   NoAlbumRow,
   NoAlbumCard,
   FAB,
-  Input,
   PageTitle,
 } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
 import { useTranslation } from '@bucketlist/shared';
-import { Search, X, Plus, ChevronLeft, Sparkles, ChevronRight } from 'lucide-react-native';
+import { Search, X, ChevronLeft, Sparkles, ChevronRight, Settings } from 'lucide-react-native';
 import { DraggableTaskList } from '@/components/DraggableTaskList';
 import { BulkTaskActionBar } from '@/components/BulkTaskActionBar';
 import { BulkAlbumActionBar } from '@/components/BulkAlbumActionBar';
@@ -40,6 +39,7 @@ import {
   AlbumListItemRow,
 } from '@/features/my-list/components/AlbumItemComponents';
 import { MyListSortModal } from '@/features/my-list/components/MyListSortModal';
+import { SectionHeader } from '@/features/my-list/components/ListControls';
 import { MyListCustomizeModal } from '@/features/my-list/components/MyListCustomizeModal';
 import { useMyListCustomizationStore } from '@/stores/myListCustomization.store';
 import {
@@ -59,6 +59,59 @@ export default function MyListScreen() {
   const [goldTitle, ...restTitle] = t('nav.my_list', { defaultValue: 'Mi lista' }).split(' ');
   const [customizeModalVisible, setCustomizeModalVisible] = React.useState(false);
   const { taskViews, albumViews } = useMyListCustomizationStore();
+  const [searchOpen, setSearchOpen] = React.useState(false);
+  const [collapsed, setCollapsed] = React.useState<Record<string, boolean>>({});
+  const toggleSection = useCallback(
+    (key: string) => setCollapsed((prev) => ({ ...prev, [key]: !prev[key] })),
+    [],
+  );
+  const sectionKeys: string[] = (state.activeTab === 'albums' ? state.albumSections : state.taskSections)
+    .filter((sec: any) => sec.items.length > 0)
+    .map((sec: any) => sec.key);
+  const allCollapsed = sectionKeys.length > 0 && sectionKeys.every((k) => collapsed[k]);
+  const toggleAllSections = useCallback(() => {
+    setCollapsed((prev) => {
+      const next = !(sectionKeys.length > 0 && sectionKeys.every((k) => prev[k]));
+      const out = { ...prev };
+      sectionKeys.forEach((k) => {
+        out[k] = next;
+      });
+      return out;
+    });
+  }, [sectionKeys.join('|')]); // eslint-disable-line react-hooks/exhaustive-deps
+  const visibleItems = (sec: any): any[] => (collapsed[sec.key] ? [] : sec.items);
+  const toggleSearchBar = () => {
+    if (searchOpen || state.searchQuery.length > 0) {
+      state.setSearchQuery('');
+      state.setIsSearching(false);
+      setSearchOpen(false);
+    } else {
+      setSearchOpen(true);
+    }
+  };
+  const sectionHeaderEl = (key: string, title: string, count: number) => (
+    <SectionHeader
+      key={`sec-h-${key}`}
+      title={title}
+      count={count}
+      collapsed={!!collapsed[key]}
+      isFavorites={key === 'favorites'}
+      onToggle={() => toggleSection(key)}
+      theme={theme}
+    />
+  );
+  // Lista plana (FlashList): oculta los elementos de las secciones plegadas
+  const flatListData = useMemo(() => {
+    const out: any[] = [];
+    let skip = false;
+    for (const it of state.listData) {
+      if (it.isHeader) {
+        skip = !!collapsed[String(it.id).replace('header-', '')];
+        out.push(it);
+      } else if (!skip) out.push(it);
+    }
+    return out;
+  }, [state.listData, collapsed]);
 
   const taskListScrollRef = useRef<ScrollView>(null);
   const taskFlashListRef = useRef<any>(null);
@@ -107,9 +160,11 @@ export default function MyListScreen() {
     ({ item, drag, index }: { item: any; drag?: any; index?: number }) => {
       if (item.isHeader) {
         const isFirst = index === 0 || item.id === state.listData[0]?.id;
+        const secKey = String(item.id).replace('header-', '');
+        const secCount = state.taskSections.find((sc: any) => sc.key === secKey)?.items.length ?? 0;
         return (
-          <View key={item.id} style={{ marginTop: isFirst ? 0 : 20, marginBottom: 0 }}>
-            <Text style={[styles.sectionHeader, { marginTop: 8, marginBottom: 4 }]}>{item.title}</Text>
+          <View key={item.id} style={{ marginTop: isFirst ? 0 : 8 }}>
+            {sectionHeaderEl(secKey, item.title, secCount)}
           </View>
         );
       }
@@ -162,6 +217,9 @@ export default function MyListScreen() {
     },
     [
       state.listData,
+      state.taskSections,
+      collapsed,
+      theme,
       state.user?.id,
       state.isBucketFavorite,
       state.selectedTaskIds,
@@ -184,8 +242,8 @@ export default function MyListScreen() {
     ({ item, drag }: { item: any; drag?: any }) => {
       if (item.isHeader) {
         return (
-          <View key={item.id} style={{ marginTop: 24, marginBottom: 12 }}>
-            <Text style={styles.sectionHeader}>{item.title}</Text>
+          <View key={item.id} style={{ marginTop: 12 }}>
+            {sectionHeaderEl(String(item.id).replace('header-', ''), item.title, 0)}
           </View>
         );
       }
@@ -399,6 +457,7 @@ export default function MyListScreen() {
     ]
   );
 
+  const totalBadge = state.activeTab === 'albums' ? (state.albums?.length ?? 0) : state.totalCount ?? 0;
   const isFromProfile = state.from === 'profile';
   const handleGoBackToProfile = useCallback(() => {
     router.navigate('/(tabs)/profile');
@@ -442,7 +501,40 @@ export default function MyListScreen() {
             </Pressable>
           )}
           <PageTitle gold={goldTitle} rest={restTitle.join(' ')} />
+          <View
+            style={{
+              height: 24,
+              paddingHorizontal: 10,
+              borderRadius: 12,
+              backgroundColor: theme.dark ? 'rgba(0, 115, 207, 0.18)' : 'rgba(0, 115, 207, 0.12)',
+              borderWidth: 1,
+              borderColor: 'rgba(0, 115, 207, 0.4)',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            accessibilityLabel={t('my_list.total_count_a11y', { count: totalBadge, defaultValue: `${totalBadge} elementos` })}
+          >
+            <Text style={{ color: theme.colors.primary, fontSize: 12, fontFamily: 'Inter_700Bold' }}>{totalBadge}</Text>
+          </View>
         </View>
+        <Pressable
+          onPress={() => setCustomizeModalVisible(true)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={t('my_list.customize_view')}
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 12,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: theme.dark ? '#151519' : theme.colors.surface,
+            borderWidth: 1,
+            borderColor: theme.dark ? '#26262E' : theme.colors.border,
+          }}
+        >
+          <Settings size={17} color={theme.colors.primary} />
+        </Pressable>
       </View>
 
       {/* Tabs */}
@@ -459,7 +551,7 @@ export default function MyListScreen() {
       </View>
 
       {/* Barra de búsqueda debajo del toggle (mismo diseño que en momentos de amigos) */}
-      {state.activeTab !== 'calendar' && (
+      {state.activeTab !== 'calendar' && (searchOpen || state.searchQuery.length > 0) && (
         <View
           style={[
             styles.exploreSearchContainer,
@@ -484,6 +576,7 @@ export default function MyListScreen() {
             }}
             style={[styles.exploreSearchInput, { color: theme.colors.foreground }]}
             returnKeyType="search"
+            autoFocus={searchOpen && state.searchQuery.length === 0}
           />
           {state.searchQuery.length > 0 && (
             <Pressable
@@ -532,7 +625,10 @@ export default function MyListScreen() {
         isSearching={state.isSearching}
         sortTriggerRef={state.sortTriggerRef}
         openSortMenu={state.openSortMenu}
-        onOpenCustomize={() => setCustomizeModalVisible(true)}
+        searchOpen={searchOpen}
+        onToggleSearch={toggleSearchBar}
+        allCollapsed={allCollapsed}
+        onToggleAllCollapsed={toggleAllSections}
         theme={theme}
       />
     </View>
@@ -602,9 +698,9 @@ export default function MyListScreen() {
                   if (sec.items.length === 0) return null;
                   return (
                     <View key={sec.key} style={styles.sectionBlock}>
-                      <Text style={styles.sectionHeader}>{sec.title}</Text>
+                      {sectionHeaderEl(sec.key, sec.title, sec.items.length)}
                       <DraggableTaskList
-                        items={sec.items}
+                        items={visibleItems(sec)}
                         gap={state.taskViewMode === 'compact' ? 6 : 10}
                         renderItem={(item, drag) =>
                           state.taskViewMode === 'compact'
@@ -645,9 +741,9 @@ export default function MyListScreen() {
                   if (sec.items.length === 0) return null;
                   return (
                     <View key={sec.key} style={styles.sectionBlock}>
-                      <Text style={styles.sectionHeader}>{sec.title}</Text>
+                      {sectionHeaderEl(sec.key, sec.title, sec.items.length)}
                       <View style={styles.galleryGrid}>
-                        {sec.items.map((item: any) => {
+                        {visibleItems(sec).map((item: any) => {
                           const tagIds = state.tagUsage?.byItem[item.id] ?? (Array.isArray(item.tags) ? item.tags : []);
                           const itemTagObjs = tagIds.map((tid: string) => state.tagsById.get(tid)).filter(Boolean);
                           return (
@@ -728,9 +824,9 @@ export default function MyListScreen() {
                   if (sec.items.length === 0) return null;
                   return (
                     <View key={sec.key} style={styles.sectionBlock}>
-                      <Text style={styles.sectionHeader}>{sec.title}</Text>
+                      {sectionHeaderEl(sec.key, sec.title, sec.items.length)}
                       <View style={styles.compactList}>
-                        {sec.items.map((item: any) => renderCompactTask({ item }))}
+                        {visibleItems(sec).map((item: any) => renderCompactTask({ item }))}
                       </View>
                     </View>
                   );
@@ -744,7 +840,8 @@ export default function MyListScreen() {
           ) : (
             <FlashList
               ref={taskFlashListRef}
-              data={state.listData}
+              data={flatListData}
+              extraData={collapsed}
               renderItem={renderTaskItem}
               keyExtractor={(item) => item.id}
               ItemSeparatorComponent={TaskSeparator}
@@ -822,7 +919,10 @@ export default function MyListScreen() {
               isSearching={state.isSearching}
               albumSortTriggerRef={state.albumSortTriggerRef}
               openSortMenu={state.openSortMenu}
-              onOpenCustomize={() => setCustomizeModalVisible(true)}
+              searchOpen={searchOpen}
+              onToggleSearch={toggleSearchBar}
+              allCollapsed={allCollapsed}
+              onToggleAllCollapsed={toggleAllSections}
               theme={theme}
             />
 
@@ -867,9 +967,9 @@ export default function MyListScreen() {
                     if (sec.items.length === 0) return null;
                     return (
                       <View key={sec.key} style={styles.sectionBlock}>
-                        <Text style={styles.sectionHeader}>{sec.title}</Text>
+                        {sectionHeaderEl(sec.key, sec.title, sec.items.length)}
                         <DraggableTaskList
-                          items={sec.items}
+                          items={visibleItems(sec)}
                           gap={state.albumViewMode === 'compact' ? 6 : 10}
                           renderItem={(item, drag) =>
                             state.albumViewMode === 'compact'
@@ -903,9 +1003,9 @@ export default function MyListScreen() {
                     if (sec.items.length === 0) return null;
                     return (
                       <View key={sec.key} style={styles.sectionBlock}>
-                        <Text style={styles.sectionHeader}>{sec.title}</Text>
+                        {sectionHeaderEl(sec.key, sec.title, sec.items.length)}
                         <View style={styles.compactList}>
-                          {sec.items.map((item: any) => renderCompactAlbum({ item }))}
+                          {visibleItems(sec).map((item: any) => renderCompactAlbum({ item }))}
                         </View>
                       </View>
                     );
@@ -931,8 +1031,8 @@ export default function MyListScreen() {
                     if (sec.items.length === 0) return null;
                     return (
                       <View key={sec.key} style={styles.sectionBlock}>
-                        <Text style={styles.sectionHeader}>{sec.title}</Text>
-                        {sec.items.map((item: any, idx: number) =>
+                        {sectionHeaderEl(sec.key, sec.title, sec.items.length)}
+                        {visibleItems(sec).map((item: any, idx: number) =>
                           renderListAlbum({ item, index: idx })
                         )}
                       </View>
@@ -960,9 +1060,9 @@ export default function MyListScreen() {
                       if (sec.items.length === 0) return null;
                       return (
                         <View key={sec.key} style={styles.sectionBlock}>
-                          <Text style={styles.sectionHeader}>{sec.title}</Text>
+                          {sectionHeaderEl(sec.key, sec.title, sec.items.length)}
                           <View style={styles.albumGrid}>
-                            {sec.items.map((item: any, index: number) =>
+                            {visibleItems(sec).map((item: any, index: number) =>
                               renderGalleryAlbum({ item, index })
                             )}
                           </View>
@@ -1003,8 +1103,8 @@ export default function MyListScreen() {
               style={({ pressed }) => [
                 styles.exploreCollectionsBanner,
                 {
-                  backgroundColor: theme.dark ? '#181818' : '#FAF6EE',
-                  borderColor: theme.dark ? 'rgba(212,177,58,0.25)' : 'rgba(212,177,58,0.35)',
+                  backgroundColor: theme.dark ? '#181818' : '#F2F8FF',
+                  borderColor: theme.dark ? 'rgba(0, 115, 207,0.25)' : 'rgba(0, 115, 207,0.35)',
                 },
                 pressed && { opacity: 0.85, transform: [{ scale: 0.99 }] },
               ]}
@@ -1020,7 +1120,7 @@ export default function MyListScreen() {
               <View
                 style={[
                   styles.exploreCollectionsIconWrap,
-                  { backgroundColor: theme.dark ? 'rgba(212,177,58,0.15)' : 'rgba(212,177,58,0.18)' },
+                  { backgroundColor: theme.dark ? 'rgba(0, 115, 207,0.15)' : 'rgba(0, 115, 207,0.18)' },
                 ]}
               >
                 <Sparkles size={20} color={gold[400]} />

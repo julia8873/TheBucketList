@@ -405,8 +405,8 @@ export function TaskMapPreviewCard({
                             styles.compactStatusPending,
                             {
                               backgroundColor: theme.dark
-                                ? 'rgba(212, 177, 58, 0.15)'
-                                : 'rgba(212, 177, 58, 0.2)',
+                                ? 'rgba(0, 115, 207, 0.15)'
+                                : 'rgba(0, 115, 207, 0.2)',
                             },
                           ]}
                         >
@@ -507,7 +507,7 @@ export function TaskMapPreviewCard({
                       onPress={() => handleOpenTask(item)}
                     >
                       <Text style={styles.actionBtnText}>{t('map.view_task_details')}</Text>
-                      <ArrowUpRight size={17} color="#000000" strokeWidth={2.5} />
+                      <ArrowUpRight size={17} color="#FFFFFF" strokeWidth={2.5} />
                     </Pressable>
                   </View>
                 );
@@ -800,8 +800,8 @@ export function TaskMapPreviewCard({
                               styles.pendingBadge,
                               {
                                 backgroundColor: theme.dark
-                                  ? 'rgba(212, 177, 58, 0.15)'
-                                  : 'rgba(212, 177, 58, 0.2)',
+                                  ? 'rgba(0, 115, 207, 0.15)'
+                                  : 'rgba(0, 115, 207, 0.2)',
                               },
                             ]}
                           >
@@ -837,7 +837,7 @@ export function TaskMapPreviewCard({
                     onPress={() => handleOpenTask(item)}
                   >
                     <Text style={styles.actionBtnText}>{t('map.view_task_details')}</Text>
-                    <ArrowUpRight size={17} color="#000000" strokeWidth={2.5} />
+                    <ArrowUpRight size={17} color="#FFFFFF" strokeWidth={2.5} />
                   </Pressable>
                 </View>
               );
@@ -1095,8 +1095,8 @@ export function TaskMapPreviewCard({
                           styles.compactStatusPending,
                           {
                             backgroundColor: theme.dark
-                              ? 'rgba(212, 177, 58, 0.15)'
-                              : 'rgba(212, 177, 58, 0.2)',
+                              ? 'rgba(0, 115, 207, 0.15)'
+                              : 'rgba(0, 115, 207, 0.2)',
                           },
                         ]}
                       >
@@ -1396,7 +1396,7 @@ const styles = StyleSheet.create({
   actionBtnText: {
     fontFamily: 'Inter_700Bold',
     fontSize: 13.5,
-    color: '#000000',
+    color: '#FFFFFF',
   },
   dotsRow: {
     flexDirection: 'row',

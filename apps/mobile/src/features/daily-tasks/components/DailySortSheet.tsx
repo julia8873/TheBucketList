@@ -152,7 +152,7 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
                 </View>
                 {sortField === 'manual' && (
                   <View style={styles.sortCheckCircle}>
-                    <Check size={14} color="#0E0E0E" strokeWidth={3} />
+                    <Check size={14} color="#FFFFFF" strokeWidth={3} />
                   </View>
                 )}
               </Pressable>
@@ -195,9 +195,9 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
                 {sortField === 'priority' && (
                   <View style={styles.sortCheckCircle}>
                     {sortDirection === 'desc' ? (
-                      <ArrowDown size={14} color="#0E0E0E" strokeWidth={2.8} />
+                      <ArrowDown size={14} color="#FFFFFF" strokeWidth={2.8} />
                     ) : (
-                      <ArrowUp size={14} color="#0E0E0E" strokeWidth={2.8} />
+                      <ArrowUp size={14} color="#FFFFFF" strokeWidth={2.8} />
                     )}
                   </View>
                 )}
@@ -241,9 +241,9 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
                 {sortField === 'name' && (
                   <View style={styles.sortCheckCircle}>
                     {sortDirection === 'asc' ? (
-                      <ArrowUp size={14} color="#0E0E0E" strokeWidth={2.8} />
+                      <ArrowUp size={14} color="#FFFFFF" strokeWidth={2.8} />
                     ) : (
-                      <ArrowDown size={14} color="#0E0E0E" strokeWidth={2.8} />
+                      <ArrowDown size={14} color="#FFFFFF" strokeWidth={2.8} />
                     )}
                   </View>
                 )}
@@ -287,9 +287,9 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
                 {sortField === 'date' && (
                   <View style={styles.sortCheckCircle}>
                     {sortDirection === 'asc' ? (
-                      <ArrowUp size={14} color="#0E0E0E" strokeWidth={2.8} />
+                      <ArrowUp size={14} color="#FFFFFF" strokeWidth={2.8} />
                     ) : (
-                      <ArrowDown size={14} color="#0E0E0E" strokeWidth={2.8} />
+                      <ArrowDown size={14} color="#FFFFFF" strokeWidth={2.8} />
                     )}
                   </View>
                 )}
@@ -333,9 +333,9 @@ export const DailySortSheet: React.FC<DailySortSheetProps> = ({
                 {sortField === 'created_at' && (
                   <View style={styles.sortCheckCircle}>
                     {sortDirection === 'asc' ? (
-                      <ArrowUp size={14} color="#0E0E0E" strokeWidth={2.8} />
+                      <ArrowUp size={14} color="#FFFFFF" strokeWidth={2.8} />
                     ) : (
-                      <ArrowDown size={14} color="#0E0E0E" strokeWidth={2.8} />
+                      <ArrowDown size={14} color="#FFFFFF" strokeWidth={2.8} />
                     )}
                   </View>
                 )}

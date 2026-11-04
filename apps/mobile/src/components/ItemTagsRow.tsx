@@ -49,8 +49,8 @@ export function ItemTagsRow({ bucketId, isOwner }: ItemTagsRowProps) {
                             paddingVertical: 5,
                             borderRadius: 20,
                             borderWidth: 1,
-                            borderColor: tItem.color || '#D4B13A',
-                            backgroundColor: hexToRgba(tItem.color || '#D4B13A', 0.15),
+                            borderColor: tItem.color || '#0073CF',
+                            backgroundColor: hexToRgba(tItem.color || '#0073CF', 0.15),
                         }}
                         onPress={() => {
                             if (isOwner) setOpen(true);
@@ -66,7 +66,7 @@ export function ItemTagsRow({ bucketId, isOwner }: ItemTagsRowProps) {
                             style={{
                                 fontFamily: 'Inter_600SemiBold',
                                 fontSize: 13,
-                                color: tItem.color || '#D4B13A',
+                                color: tItem.color || '#0073CF',
                             }}
                         >
                             {tItem.name}

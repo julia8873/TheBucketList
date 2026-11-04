@@ -54,7 +54,7 @@ export function AlbumSettingsCard({
         onPress={() => setShowVisibilityModal(true)}
         accessibilityRole="button"
       >
-        <CurrentIcon color="#D4B13A" size={24} />
+        <CurrentIcon color="#0073CF" size={24} />
         <Text style={[formStyles.settingLabel, { fontSize: 17, color: theme.colors.foreground }]}>
           {t('task_form.visibility')}
         </Text>
@@ -66,14 +66,14 @@ export function AlbumSettingsCard({
 
       {/* Álbum compartido */}
       <View style={[formStyles.settingRow, { height: ROW_HEIGHT, borderBottomWidth: 0 }]}>
-        <Users color="#D4B13A" size={24} />
+        <Users color="#0073CF" size={24} />
         <Text style={[formStyles.settingLabel, { fontSize: 17, color: theme.colors.foreground }]} numberOfLines={1}>
           {t('albums.shared_album')}
         </Text>
         <Pressable
           style={[
             styles.switchTrack,
-            { backgroundColor: isShared ? '#D4B13A' : theme.dark ? '#262626' : '#E5E5E5' },
+            { backgroundColor: isShared ? '#0073CF' : theme.dark ? '#262626' : '#E5E5E5' },
             !isOwner && { opacity: 0.6 },
           ]}
           onPress={() => {
@@ -140,7 +140,7 @@ export function AlbumSettingsCard({
                         formStyles.visibilitySheetIcon,
                         {
                           backgroundColor: isSelected
-                            ? 'rgba(212, 177, 58, 0.15)'
+                            ? 'rgba(0, 115, 207, 0.15)'
                             : theme.dark ? '#262626' : '#ECE8DF',
                         },
                       ]}

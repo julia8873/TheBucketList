@@ -39,6 +39,8 @@ interface TaskRowProps {
   onLongPress?: () => void;
   style?: ViewStyle;
   expiredAction?: boolean;
+  /** Si se indica, «Reprogramar» es un botón propio (no abre la tarea). */
+  onReschedule?: () => void;
   /** Si la tarea está completada: atenúa la fila y muestra un tick dorado. */
   completed?: boolean;
 }
@@ -61,6 +63,7 @@ function TaskRowComponent({
   onLongPress,
   style,
   expiredAction,
+  onReschedule,
   completed = false,
 }: TaskRowProps) {
   const { theme } = useTheme();
@@ -142,9 +145,17 @@ function TaskRowComponent({
       {completed ? (
         <CheckCircle2 size={22} color={theme.colors.primary} strokeWidth={1.8} />
       ) : expiredAction ? (
-        <Text style={{ color: theme.colors.primary, fontFamily: fontFamily.semibold, fontSize: 14 }}>
-          Reprogramar
-        </Text>
+        onReschedule ? (
+          <Pressable onPress={onReschedule} hitSlop={10} accessibilityRole="button" accessibilityLabel="Reprogramar">
+            <Text style={{ color: theme.colors.primary, fontFamily: fontFamily.semibold, fontSize: 13 }}>
+              Reprogramar
+            </Text>
+          </Pressable>
+        ) : (
+          <Text style={{ color: theme.colors.primary, fontFamily: fontFamily.semibold, fontSize: 14 }}>
+            Reprogramar
+          </Text>
+        )
       ) : deadline ? (
         <UrgencyChip deadline={deadline} style={styles.chip} />
       ) : null}
@@ -159,7 +170,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     gap: 12,
   },
@@ -175,7 +186,7 @@ const styles = StyleSheet.create({
   thumbnail: {
     width: 56,
     height: 56,
-    borderRadius: 10,
+    borderRadius: 12,
     overflow: 'hidden',
     flexShrink: 0,
   },

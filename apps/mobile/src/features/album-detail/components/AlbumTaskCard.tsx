@@ -83,7 +83,7 @@ export function AlbumTaskCard({
         ? '#EF4444'
         : itemPriority === 'low'
           ? '#10B981'
-          : '#D4B13A';
+          : '#0073CF';
   const itemPriorityLabel =
     itemPriority === 'urgent'
       ? t('common.urgent')
@@ -108,7 +108,7 @@ export function AlbumTaskCard({
             ? 'rgba(239, 68, 68, 0.16)'
             : itemPriority === 'low'
               ? 'rgba(16, 185, 129, 0.16)'
-              : 'rgba(212, 177, 58, 0.16)',
+              : 'rgba(0, 115, 207, 0.16)',
         borderWidth: 1,
         borderColor: itemPriorityColor,
       }}
@@ -132,7 +132,7 @@ export function AlbumTaskCard({
   if (viewMode === 'compact') {
     return (
       <Pressable
-        style={[styles.taskCompactRow, isSelectionMode && isSelected && { borderColor: '#D4B13A' }]}
+        style={[styles.taskCompactRow, isSelectionMode && isSelected && { borderColor: '#0073CF' }]}
         onPress={handlePress}
         onLongPress={handleLongPress}
         delayLongPress={350}
@@ -141,7 +141,7 @@ export function AlbumTaskCard({
       >
         {isSelectionMode ? (
           isSelected ? (
-            <CheckCircle2 size={22} color="#D4B13A" fill="#D4B13A" />
+            <CheckCircle2 size={22} color="#0073CF" fill="#0073CF" />
           ) : (
             <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: '#555555' }} />
           )
@@ -166,7 +166,7 @@ export function AlbumTaskCard({
           {task.title}
         </Text>
         {!isDone && badge && (
-          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: '#D4B13A' }}>{badge}</Text>
+          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: '#0073CF' }}>{badge}</Text>
         )}
         {drag && !isSelectionMode && (
           <View {...drag.panHandlers} hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }} accessibilityLabel={t('albums.drag_reorder')}>
@@ -175,7 +175,7 @@ export function AlbumTaskCard({
         )}
         {!canEdit && !isSelectionMode && (
           isCopied ? (
-            <Check size={16} color="#D4B13A" strokeWidth={2.5} />
+            <Check size={16} color="#0073CF" strokeWidth={2.5} />
           ) : (
             <Pressable hitSlop={8} onPress={(e) => onCopySingleTask(task, e)} style={styles.taskCompactAdd}>
               <Plus size={14} color="#0D0D0D" strokeWidth={2.5} />
@@ -192,7 +192,7 @@ export function AlbumTaskCard({
     const isImageCover = !!imageValue && !imageValue.startsWith('preset:');
     return (
       <Pressable
-        style={[styles.galleryCard, isSelectionMode && isSelected && { borderColor: '#D4B13A', borderWidth: 2.5 }]}
+        style={[styles.galleryCard, isSelectionMode && isSelected && { borderColor: '#0073CF', borderWidth: 2.5 }]}
         onPress={handlePress}
         onLongPress={handleLongPress}
         delayLongPress={350}
@@ -215,7 +215,7 @@ export function AlbumTaskCard({
               style={[
                 styles.galleryCheck,
                 isSelected
-                  ? { backgroundColor: '#D4B13A', borderWidth: 0 }
+                  ? { backgroundColor: '#0073CF', borderWidth: 0 }
                   : { backgroundColor: 'rgba(0,0,0,0.6)', borderColor: '#FFFFFF' },
               ]}
             >
@@ -228,7 +228,7 @@ export function AlbumTaskCard({
               style={[
                 styles.galleryCheck,
                 isDone
-                  ? { backgroundColor: '#D4B13A', borderWidth: 0 }
+                  ? { backgroundColor: '#0073CF', borderWidth: 0 }
                   : { backgroundColor: 'rgba(0,0,0,0.55)', borderColor: '#FFFFFF' },
               ]}
             >
@@ -298,7 +298,7 @@ export function AlbumTaskCard({
 
   return (
     <Pressable
-      style={[styles.taskCard, isSelectionMode && isSelected && { borderColor: '#D4B13A', borderWidth: 1 }]}
+      style={[styles.taskCard, isSelectionMode && isSelected && { borderColor: '#0073CF', borderWidth: 1 }]}
       onPress={() => {
         if (isSelectionMode) onToggleSelect?.(task);
         else router.push(`/bucket/${task.id}`);
@@ -311,7 +311,7 @@ export function AlbumTaskCard({
       {isSelectionMode && (
         <View style={{ marginRight: 10 }}>
           {isSelected ? (
-            <CheckCircle2 size={24} color="#D4B13A" fill="#D4B13A" />
+            <CheckCircle2 size={24} color="#0073CF" fill="#0073CF" />
           ) : (
             <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: '#555555' }} />
           )}
@@ -365,13 +365,13 @@ export function AlbumTaskCard({
                   paddingHorizontal: 6,
                   paddingVertical: 1.5,
                   borderRadius: 6,
-                  backgroundColor: hexToRgba(t.color || '#D4B13A', 0.16),
+                  backgroundColor: hexToRgba(t.color || '#0073CF', 0.16),
                   borderWidth: 0.5,
-                  borderColor: t.color || '#D4B13A',
+                  borderColor: t.color || '#0073CF',
                 }}
               >
                 {t.emoji ? <Text style={{ fontSize: 9 }}>{t.emoji}</Text> : null}
-                <Text style={{ fontSize: 10, fontWeight: '600', color: t.color || '#D4B13A' }}>
+                <Text style={{ fontSize: 10, fontWeight: '600', color: t.color || '#0073CF' }}>
                   {t.name}
                 </Text>
               </View>
@@ -412,7 +412,7 @@ export function AlbumTaskCard({
             )}
             {copiedIds?.includes(task.id) ? (
               <View style={styles.taskAddedBadge}>
-                <Check size={12} color="#D4B13A" strokeWidth={2.5} />
+                <Check size={12} color="#0073CF" strokeWidth={2.5} />
                 <Text style={styles.taskAddedText}>{t('common.saved')}</Text>
               </View>
             ) : (

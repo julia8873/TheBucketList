@@ -75,7 +75,7 @@ export function AlbumSortModal({
                 <Text
                   style={[
                     styles.sortMenuText,
-                    { color: selected ? '#D4B13A' : theme.colors.foreground },
+                    { color: selected ? '#0073CF' : theme.colors.foreground },
                     selected && { fontFamily: 'Inter_600SemiBold' },
                   ]}
                 >
@@ -83,15 +83,15 @@ export function AlbumSortModal({
                 </Text>
                 {selected && opt.field !== 'manual' &&
                   (taskSortDir === 'desc' ? (
-                    <ArrowDown size={14} color="#D4B13A" />
+                    <ArrowDown size={14} color="#0073CF" />
                   ) : (
-                    <ArrowUp size={14} color="#D4B13A" />
+                    <ArrowUp size={14} color="#0073CF" />
                   ))}
                 {opt.field === 'manual' &&
                   (isReorderingTasks ? (
-                    <Check size={14} color="#D4B13A" strokeWidth={2.5} />
+                    <Check size={14} color="#0073CF" strokeWidth={2.5} />
                   ) : (
-                    <GripVertical size={14} color="#D4B13A" />
+                    <GripVertical size={14} color="#0073CF" />
                   ))}
               </Pressable>
             );

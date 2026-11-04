@@ -162,7 +162,7 @@ export default function BucketDetailScreen() {
           <RefreshControl
             refreshing={state.refreshing}
             onRefresh={() => void state.onRefresh()}
-            tintColor="#D4B13A"
+            tintColor="#0073CF"
           />
         }
       >
@@ -616,7 +616,7 @@ export default function BucketDetailScreen() {
             {bucket.status === 'completed' ? (
               <X color={theme.colors.foreground} size={18} strokeWidth={2} />
             ) : (
-              <CheckCircle2 color="#000" size={18} strokeWidth={2} />
+              <CheckCircle2 color="#FFFFFF" size={18} strokeWidth={2} />
             )}
             <Typography
               variant="bodySemibold"

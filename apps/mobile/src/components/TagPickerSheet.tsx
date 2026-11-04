@@ -53,7 +53,7 @@ interface TagPickerSheetProps {
 function SectionLabel({ gold, rest }: { gold: string; rest?: string }) {
     return (
         <Text style={styles.label}>
-            <Text style={{ color: '#D4B13A' }}>{gold}</Text>
+            <Text style={{ color: '#0073CF' }}>{gold}</Text>
             {rest ? ` ${rest}` : ''}
         </Text>
     );
@@ -391,7 +391,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
 
                 <View style={styles.btnRow}>
                     <Pressable style={[styles.cta, styles.ctaGhost]} onPress={() => switchMode('list')}>
-                        <Text style={[styles.ctaText, { color: '#D4B13A' }]}>{t('common.cancel')}</Text>
+                        <Text style={[styles.ctaText, { color: '#0073CF' }]}>{t('common.cancel')}</Text>
                     </Pressable>
                     <Pressable
                         style={[styles.cta, { flex: 1.4 }, !canSubmit && { opacity: 0.5 }]}
@@ -399,7 +399,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
                         disabled={!canSubmit}
                     >
                         {createTag.isPending ? (
-                            <ActivityIndicator color="#111" />
+                            <ActivityIndicator color="#FFFFFF" />
                         ) : (
                             <Text style={styles.ctaText}>{t('tags.create_btn')}</Text>
                         )}
@@ -503,7 +503,7 @@ const styles = themedStyleSheet({
     skeleton: { height: 42, borderRadius: 21, backgroundColor: '#1F1F1F' },
     errorBox: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     errorText: { fontFamily: 'Inter_400Regular', fontSize: 14, color: '#E5877D' },
-    retryText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#D4B13A', marginTop: 4 },
+    retryText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#0073CF', marginTop: 4 },
     footer: {
         paddingHorizontal: 12,
         paddingTop: 14,
@@ -515,10 +515,10 @@ const styles = themedStyleSheet({
     cta: {
         height: 58,
         borderRadius: 29,
-        backgroundColor: '#D4B13A',
+        backgroundColor: '#0073CF',
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: '#D4B13A',
+        shadowColor: '#0073CF',
         shadowOpacity: 0.3,
         shadowRadius: 14,
         elevation: 6,
@@ -527,17 +527,17 @@ const styles = themedStyleSheet({
         flex: 1,
         backgroundColor: 'transparent',
         borderWidth: 1,
-        borderColor: '#D4B13A',
+        borderColor: '#0073CF',
         shadowOpacity: 0,
         elevation: 0,
     },
-    ctaText: { fontFamily: 'Inter_700Bold', fontSize: 18, color: '#111' },
+    ctaText: { fontFamily: 'Inter_700Bold', fontSize: 18, color: '#FFFFFF' },
     nameInput: {
         height: 56,
         borderRadius: 16,
         backgroundColor: '#0E0E0E',
         borderWidth: 1,
-        borderColor: '#D4B13A',
+        borderColor: '#0073CF',
         paddingHorizontal: 18,
         fontFamily: 'PlayfairDisplay_700Bold',
         fontSize: 20,
@@ -562,11 +562,11 @@ const styles = themedStyleSheet({
         paddingHorizontal: 18,
         borderRadius: 21,
         borderWidth: 1,
-        borderColor: '#D4B13A',
-        backgroundColor: 'rgba(212, 177, 58, 0.12)',
+        borderColor: '#0073CF',
+        backgroundColor: 'rgba(0, 115, 207, 0.12)',
     },
     previewDot: { width: 10, height: 10, borderRadius: 5, marginRight: 8 },
     previewEmoji: { fontSize: 16, marginRight: 8 },
-    previewText: { fontFamily: 'Inter_500Medium', fontSize: 15, color: '#D4B13A' },
+    previewText: { fontFamily: 'Inter_500Medium', fontSize: 15, color: '#0073CF' },
     btnRow: { flexDirection: 'row', gap: 12, marginTop: 28, paddingBottom: 16 },
 });

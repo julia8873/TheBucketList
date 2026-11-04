@@ -107,7 +107,7 @@ export function CommentRow({ comment, ctrl, isReply = false }: CommentRowProps) 
                 hitSlop={4}
               >
                 {ctrl.isSavingEdit ? (
-                  <ActivityIndicator size="small" color="#000" />
+                  <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
                   <Text style={styles.editSaveText}>{t('comments.save', { defaultValue: 'Guardar' })}</Text>
                 )}
@@ -262,15 +262,15 @@ const styles = StyleSheet.create({
     width: 12,
     borderLeftWidth: 1.5,
     borderBottomWidth: 1.5,
-    borderLeftColor: 'rgba(212, 175, 55, 0.35)',
-    borderBottomColor: 'rgba(212, 175, 55, 0.35)',
+    borderLeftColor: 'rgba(0, 115, 207, 0.35)',
+    borderBottomColor: 'rgba(0, 115, 207, 0.35)',
     borderBottomLeftRadius: 8,
   },
   content: { flex: 1 },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 3 },
   authorName: { fontSize: 13, fontFamily: fontFamily.semibold },
   creatorTag: {
-    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    backgroundColor: 'rgba(0, 115, 207, 0.15)',
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 4,
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   },
   editActions: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 },
   editSaveBtn: { backgroundColor: gold[400], paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8 },
-  editSaveText: { color: '#000', fontSize: 12, fontFamily: fontFamily.semibold },
+  editSaveText: { color: '#FFFFFF', fontSize: 12, fontFamily: fontFamily.semibold },
   editCancelBtn: { paddingHorizontal: 10, paddingVertical: 5 },
   editCancelText: { fontSize: 12, fontFamily: fontFamily.regular },
 });

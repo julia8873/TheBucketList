@@ -55,7 +55,7 @@ export function BucketHeaderBadges({
       case 'high': return '#EF4444';
       case 'low': return isDark ? '#10B981' : '#059669';
       case 'medium':
-      default: return isDark ? '#D4B13A' : '#A17808';
+      default: return isDark ? '#0073CF' : '#A17808';
     }
   };
 
@@ -74,7 +74,7 @@ export function BucketHeaderBadges({
     : (isDark ? '#1E1910' : '#FDF6E2');
   const statusBorder = isCompleted
     ? (isDark ? 'rgba(52, 199, 89, 0.55)' : '#A3E3B6')
-    : (isDark ? 'rgba(212, 175, 55, 0.55)' : '#EAD58B');
+    : (isDark ? 'rgba(0, 115, 207, 0.55)' : '#EAD58B');
   const statusColor = isCompleted
     ? (isDark ? '#34C759' : '#15803D')
     : (isDark ? gold[400] : '#997300');

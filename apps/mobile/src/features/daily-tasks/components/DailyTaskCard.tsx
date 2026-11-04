@@ -589,12 +589,12 @@ export function DailyOverdueTaskCard({
 
           {/* Custom calendar date picker button */}
           <Pressable
-            style={[styles.overdueMovePillCal, { backgroundColor: theme.dark ? 'rgba(212,177,58,0.1)' : 'rgba(212,177,58,0.15)', borderColor: theme.colors.border }]}
+            style={[styles.overdueMovePillCal, { backgroundColor: theme.dark ? 'rgba(0, 115, 207,0.1)' : 'rgba(0, 115, 207,0.15)', borderColor: theme.colors.border }]}
             onPress={() => onOpenRescheduleDatePicker(item)}
             hitSlop={4}
             accessibilityLabel={t('daily.overdue_pick_other_date', 'Elegir otra fecha')}
           >
-            <Calendar size={12} color="#D4B13A" />
+            <Calendar size={12} color="#0073CF" />
             <Text style={styles.overdueMovePillCalText}>{t('daily.overdue_other_day')}</Text>
           </Pressable>
         </ScrollView>

@@ -434,6 +434,6 @@ const styles = StyleSheet.create({
   confirmBtnText: {
     fontFamily: fontFamily.semibold,
     fontSize: 13,
-    color: '#000000',
+    color: '#FFFFFF',
   },
 });

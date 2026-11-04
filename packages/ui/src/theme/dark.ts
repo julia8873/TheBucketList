@@ -11,17 +11,17 @@ export const darkTheme: Theme = {
     surfaceSunken:   dark[50],           // #0A0A0A
 
     // ── Brand ────────────────────────────────────────────────────────────
-    primary:           gold[400],        // #D4AF37
+    primary:           gold[400],        // #0073CF
     primaryHover:      gold[300],
-    primaryForeground: dark[100],        // black text on gold bg
+    primaryForeground: '#FFFFFF',        // white text on brand blue
 
     secondary:           dark[300],      // #1A1A1A
-    secondaryForeground: dark[900],      // #F2EFE8
+    secondaryForeground: dark[900],      // #F2F2F7
 
     // ── Text ─────────────────────────────────────────────────────────────
-    foreground:       dark[900],         // #F2EFE8
-    foregroundMuted:  dark[800],         // #CFCABD
-    foregroundSubtle: dark[700],         // #9A968C
+    foreground:       dark[900],         // #F2F2F7
+    foregroundMuted:  dark[800],         // #D4D4D8
+    foregroundSubtle: dark[700],         // #A1A1AA
 
     // ── Borders ──────────────────────────────────────────────────────────
     border:      dark[400],              // #2A2A2A

@@ -133,7 +133,7 @@ export const CalendarTab = React.forwardRef<ScrollView, CalendarTabProps>(functi
         <RefreshControl
           refreshing={refreshing}
           onRefresh={() => void onRefresh()}
-          tintColor="#D4B13A"
+          tintColor="#0073CF"
         />
       }
     >
@@ -148,6 +148,11 @@ export const CalendarTab = React.forwardRef<ScrollView, CalendarTabProps>(functi
         tasksByDay={tasksByDay}
         completedThisMonth={completedThisMonth}
         isLoading={isLoading}
+        onGoToday={() => {
+          const now = new Date();
+          setCurrentDate(now);
+          setSelectedDate(now);
+        }}
       />
 
       <CalendarTaskListSections

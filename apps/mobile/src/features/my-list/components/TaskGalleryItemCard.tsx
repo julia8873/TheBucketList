@@ -63,7 +63,7 @@ function TaskGalleryItemCardComponent({
       ? '#EF4444'
       : itemPriority === 'low'
       ? '#10B981'
-      : '#D4B13A';
+      : '#0073CF';
   const itemPriorityLabel =
     itemPriority === 'urgent'
       ? t('common.urgent')
@@ -158,7 +158,7 @@ function TaskGalleryItemCardComponent({
                 justifyContent: 'center',
               }}
             >
-              {isSelected && <Check size={14} color="#0E0E0E" strokeWidth={3} />}
+              {isSelected && <Check size={14} color="#FFFFFF" strokeWidth={3} />}
             </View>
           ) : (
             <>

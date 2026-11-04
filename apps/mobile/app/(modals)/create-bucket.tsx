@@ -271,7 +271,7 @@ export default function CreateBucketModal() {
                         borderColor: theme.colors.border,
                         color: theme.colors.foreground,
                       },
-                      isTitleFocused && { borderColor: '#D4B13A' },
+                      isTitleFocused && { borderColor: '#0073CF' },
                     ]}
                     placeholder={t('task_form.title_placeholder', { defaultValue: 'Ej. Ver auroras boreales' })}
                     placeholderTextColor={theme.colors.foregroundMuted}
@@ -322,7 +322,7 @@ export default function CreateBucketModal() {
                       borderColor: theme.colors.border,
                       color: theme.colors.foreground,
                     },
-                    isDescFocused && { borderColor: '#D4B13A' },
+                    isDescFocused && { borderColor: '#0073CF' },
                   ]}
                   value={value || ''}
                   onChangeText={onChange}
@@ -382,7 +382,7 @@ export default function CreateBucketModal() {
 
           {/* PASOS */}
           <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
-            <Text style={{ color: '#D4B13A' }}>{t('task_form.section_steps', { defaultValue: 'PASOS' })}</Text> · {steps.length}
+            <Text style={{ color: '#0073CF' }}>{t('task_form.section_steps', { defaultValue: 'PASOS' })}</Text> · {steps.length}
           </Text>
           <TaskStepsSection
             steps={steps}
@@ -395,7 +395,7 @@ export default function CreateBucketModal() {
 
           {/* COLABORADORES */}
           <Text style={[styles.sectionLabel, { color: theme.colors.foreground }]}>
-            <Text style={{ color: '#D4B13A' }}>{t('task_form.section_collaborators', { defaultValue: 'COLABORADORES' })}</Text>
+            <Text style={{ color: '#0073CF' }}>{t('task_form.section_collaborators', { defaultValue: 'COLABORADORES' })}</Text>
             {selectedCollaborators.length > 0 ? ` · ${selectedCollaborators.length}` : ''}
           </Text>
           <TaskCollaboratorsSection
@@ -462,7 +462,7 @@ export default function CreateBucketModal() {
             disabled={!titleValue || createBucket.isPending || isUploadingCover}
           >
             {createBucket.isPending || isUploadingCover ? (
-              <ActivityIndicator color="#111" />
+              <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={styles.submitText}>{t('task_form.btn_add_to_list', { defaultValue: 'Añadir a mi lista' })}</Text>
             )}

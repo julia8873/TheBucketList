@@ -90,7 +90,7 @@ export function FriendsRequestsTab({
                       accessibilityRole="button"
                       accessibilityLabel={t('friends.requests_accept_label')}
                     >
-                      <Check size={18} color="#111111" strokeWidth={2.4} />
+                      <Check size={18} color="#FFFFFF" strokeWidth={2.4} />
                     </Pressable>
                   </>
                 )

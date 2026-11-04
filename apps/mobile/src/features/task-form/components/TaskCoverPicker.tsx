@@ -304,7 +304,7 @@ export function TaskCoverPicker({
           accessibilityRole="button"
           accessibilityLabel={t('albums.recrop_photo', { defaultValue: 'Reajustar recorte de la foto' })}
         >
-          <Crop size={15} color="#D4B13A" strokeWidth={2} />
+          <Crop size={15} color="#0073CF" strokeWidth={2} />
           <Text style={styles.recropBtnText}>{t('albums.recrop_photo', { defaultValue: 'Reajustar recorte de la foto' })}</Text>
         </Pressable>
       )}
@@ -320,7 +320,7 @@ export function TaskCoverPicker({
               justifyContent: 'center',
               alignItems: 'center',
               backgroundColor: theme.colors.surface,
-              borderColor: isLocalImage ? '#D4B13A' : theme.colors.border,
+              borderColor: isLocalImage ? '#0073CF' : theme.colors.border,
             },
           ]}
           onPress={() => void pickFromGallery()}
@@ -328,7 +328,7 @@ export function TaskCoverPicker({
           accessibilityLabel={t('albums.pick_gallery', { defaultValue: 'Galería' })}
         >
           <ImageIcon
-            color={isLocalImage ? '#D4B13A' : theme.colors.foregroundMuted}
+            color={isLocalImage ? '#0073CF' : theme.colors.foregroundMuted}
             size={24}
           />
         </Pressable>
@@ -360,7 +360,7 @@ export function TaskCoverPicker({
               justifyContent: 'center',
               alignItems: 'center',
               backgroundColor: theme.colors.surface,
-              borderColor: isWebLink ? '#D4B13A' : theme.colors.border,
+              borderColor: isWebLink ? '#0073CF' : theme.colors.border,
             },
           ]}
           onPress={() => setShowLinkModal(true)}
@@ -368,7 +368,7 @@ export function TaskCoverPicker({
           accessibilityLabel={t('albums.paste_link', { defaultValue: 'Pegar enlace' })}
         >
           <Link2
-            color={isWebLink ? '#D4B13A' : theme.colors.foregroundMuted}
+            color={isWebLink ? '#0073CF' : theme.colors.foregroundMuted}
             size={24}
           />
         </Pressable>
@@ -416,7 +416,7 @@ export function TaskCoverPicker({
               backgroundColor: isCustomColor && currentSolidHex
                 ? currentSolidHex
                 : theme.colors.surface,
-              borderColor: isCustomColor ? '#D4B13A' : theme.colors.border,
+              borderColor: isCustomColor ? '#0073CF' : theme.colors.border,
             },
           ]}
           onPress={() => setShowColorPicker(true)}
@@ -429,7 +429,7 @@ export function TaskCoverPicker({
                 ? isColorDark(currentSolidHex)
                   ? '#FFF'
                   : '#000'
-                : '#D4B13A'
+                : '#0073CF'
             }
             size={22}
           />
@@ -502,7 +502,7 @@ export function TaskCoverPicker({
       {/* ColorPickerModal para portadas */}
       <ColorPickerModal
         visible={showColorPicker}
-        initialColor={currentSolidHex || '#D4B13A'}
+        initialColor={currentSolidHex || '#0073CF'}
         onSelectColor={(color) => {
           setIsSquare(false);
           onChangeCover(`preset:color:${color}`);

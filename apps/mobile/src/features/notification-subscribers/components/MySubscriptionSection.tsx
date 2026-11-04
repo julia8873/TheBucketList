@@ -85,9 +85,9 @@ export function MySubscriptionSection({
           disabled={isRequestPending}
         >
           {isRequestPending ? (
-            <ActivityIndicator size="small" color="#0E0E0E" />
+            <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
-            <BellPlus size={18} color="#0E0E0E" strokeWidth={2.4} />
+            <BellPlus size={18} color="#FFFFFF" strokeWidth={2.4} />
           )}
           <Text style={styles.requestBtnText}>
             {isRequestPending ? t('common.loading') : t('notification_subscribers.activate_title')}

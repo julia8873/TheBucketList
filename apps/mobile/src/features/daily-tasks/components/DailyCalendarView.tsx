@@ -248,7 +248,7 @@ export function DailyCalendarView({
             style={styles.calendarDayAddBtn}
             onPress={() => onOpenCreateTask(toDateString(selectedCalendarDate))}
           >
-            <Plus size={14} color="#0E0E0E" strokeWidth={2.5} />
+            <Plus size={14} color="#FFFFFF" strokeWidth={2.5} />
             <Text style={styles.calendarDayAddBtnText}>{t('daily.add_btn')}</Text>
           </Pressable>
         </View>

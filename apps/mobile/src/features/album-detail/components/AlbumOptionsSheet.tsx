@@ -323,7 +323,7 @@ export function AlbumOptionsSheet({
               <View style={styles.sheetOptions}>
                 {([
                   { value: 'high' as const, title: t('bucket.priority_high'), subtitle: t('bucket.priority_high_desc'), color: '#EF4444' },
-                  { value: 'medium' as const, title: t('bucket.priority_medium'), subtitle: t('bucket.priority_medium_desc'), color: '#D4B13A' },
+                  { value: 'medium' as const, title: t('bucket.priority_medium'), subtitle: t('bucket.priority_medium_desc'), color: '#0073CF' },
                   { value: 'low' as const, title: t('bucket.priority_low'), subtitle: t('bucket.priority_low_desc'), color: '#10B981' },
                 ]).map((item) => {
                   const current = albumPriority === 'urgent' ? 'high' : (albumPriority || 'medium');

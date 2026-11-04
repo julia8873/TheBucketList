@@ -101,7 +101,7 @@ function TaskItemRowComponent({
       ? '#EF4444'
       : itemPriority === 'low'
       ? '#10B981'
-      : '#D4B13A';
+      : '#0073CF';
   const itemPriorityLabel =
     itemPriority === 'urgent'
       ? t('common.urgent')
@@ -126,7 +126,7 @@ function TaskItemRowComponent({
             ? 'rgba(239, 68, 68, 0.16)'
             : itemPriority === 'low'
             ? 'rgba(16, 185, 129, 0.16)'
-            : 'rgba(212, 177, 58, 0.16)',
+            : 'rgba(0, 115, 207, 0.16)',
         borderWidth: 1,
         borderColor: itemPriorityColor,
       }}
@@ -148,7 +148,7 @@ function TaskItemRowComponent({
         paddingHorizontal: 6,
         paddingVertical: 2,
         borderRadius: 8,
-        backgroundColor: 'rgba(212, 177, 58, 0.18)',
+        backgroundColor: 'rgba(0, 115, 207, 0.18)',
         borderWidth: 1,
         borderColor: gold[400],
       }}
@@ -213,8 +213,8 @@ function TaskItemRowComponent({
             width: 90,
             height: '100%',
             backgroundColor: theme.colors.error,
-            borderTopRightRadius: 14,
-            borderBottomRightRadius: 14,
+            borderTopRightRadius: 16,
+            borderBottomRightRadius: 16,
             alignItems: 'center',
             justifyContent: 'center',
           }}
@@ -240,8 +240,8 @@ function TaskItemRowComponent({
             width: 90,
             height: '100%',
             backgroundColor: '#34C759',
-            borderTopLeftRadius: 14,
-            borderBottomLeftRadius: 14,
+            borderTopLeftRadius: 16,
+            borderBottomLeftRadius: 16,
             alignItems: 'center',
             justifyContent: 'center',
           }}
@@ -260,8 +260,8 @@ function TaskItemRowComponent({
         swipeableRefSetter(r);
       }}
       enabled={!drag && !isSelectionMode}
-      containerStyle={{ backgroundColor: theme.colors.surface, borderRadius: 14 }}
-      childrenContainerStyle={{ backgroundColor: theme.colors.surface, borderRadius: 14 }}
+      containerStyle={{ backgroundColor: theme.colors.surface, borderRadius: 16 }}
+      childrenContainerStyle={{ backgroundColor: theme.colors.surface, borderRadius: 16 }}
       renderRightActions={renderRightActions}
       renderLeftActions={renderLeftActions}
       overshootRight={false}

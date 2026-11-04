@@ -18,8 +18,8 @@ import {
 import { ColorPickerModal } from './ColorPickerModal';
 import { useCustomColors } from '../hooks/useCustomColors';
 
-const GOLD = '#D4B13A';
-const RAINBOW = ['#E1553C', '#D4B13B', '#4CB06A', '#4B8FE0', '#8D5BD6'] as const;
+const GOLD = '#0073CF';
+const RAINBOW = ['#E1553C', '#0073CF', '#4CB06A', '#4B8FE0', '#8D5BD6'] as const;
 
 interface Props {
   /** Nombre de la etiqueta: con `autoColor` se usa para sugerir un emoji por defecto. */

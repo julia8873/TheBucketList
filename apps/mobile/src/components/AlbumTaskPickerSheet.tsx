@@ -239,7 +239,7 @@ export function AlbumTaskPickerSheet({ visible, selected, excludeIds = [], onTog
 
             <Pressable
               style={{
-                backgroundColor: '#D4B13A',
+                backgroundColor: '#0073CF',
                 borderRadius: 26,
                 height: 50,
                 alignItems: 'center',
@@ -249,7 +249,7 @@ export function AlbumTaskPickerSheet({ visible, selected, excludeIds = [], onTog
               onPress={onClose}
               accessibilityRole="button"
             >
-              <Text style={{ color: '#111', fontSize: 16, fontFamily: 'Inter_700Bold' }}>
+              <Text style={{ color: '#FFFFFF', fontSize: 16, fontFamily: 'Inter_700Bold' }}>
                 {selected.length === 0
                   ? t('common.done')
                   : selected.length === 1

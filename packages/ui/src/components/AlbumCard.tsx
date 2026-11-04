@@ -273,7 +273,7 @@ export function AlbumCard({
               justifyContent: 'center',
             }}
           >
-            {isSelected && <Check size={14} color="#0E0E0E" strokeWidth={3} />}
+            {isSelected && <Check size={14} color="#FFFFFF" strokeWidth={3} />}
           </View>
         </View>
       ) : showBadges && (
@@ -293,7 +293,7 @@ export function AlbumCard({
 
           {isClosed && (
             <View style={styles.closedBadge}>
-              <Lock size={10} color="#D4B13A" />
+              <Lock size={10} color="#0073CF" />
               <Text style={styles.closedText}>{t('common.closed')}</Text>
             </View>
           )}
@@ -390,7 +390,7 @@ export function AlbumCard({
                         ? '#EF4444'
                         : priority === 'low'
                           ? '#10B981'
-                          : '#D4B13A',
+                          : '#0073CF',
                   },
                 ]}
               />
@@ -403,7 +403,7 @@ export function AlbumCard({
                         ? '#EF4444'
                         : priority === 'low'
                           ? '#10B981'
-                          : '#D4B13A',
+                          : '#0073CF',
                   },
                 ]}
               >
@@ -580,8 +580,8 @@ export function NewAlbumRow({ onPress, style }: { onPress?: () => void; style?: 
         {
           borderColor: theme.colors.primary,
           backgroundColor: pressed
-            ? (theme.dark ? 'rgba(212, 177, 58, 0.14)' : 'rgba(212, 177, 58, 0.18)')
-            : (theme.dark ? 'rgba(212, 177, 58, 0.05)' : 'rgba(212, 177, 58, 0.08)'),
+            ? (theme.dark ? 'rgba(0, 115, 207, 0.14)' : 'rgba(0, 115, 207, 0.18)')
+            : (theme.dark ? 'rgba(0, 115, 207, 0.05)' : 'rgba(0, 115, 207, 0.08)'),
           opacity: pressed ? 0.8 : 1,
         },
         style,
@@ -633,9 +633,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: 'rgba(212, 177, 58, 0.25)',
+    backgroundColor: 'rgba(0, 115, 207, 0.25)',
     borderWidth: 1,
-    borderColor: '#D4B13A',
+    borderColor: '#0073CF',
     paddingHorizontal: 7,
     paddingVertical: 3,
     borderRadius: 20,
@@ -643,7 +643,7 @@ const styles = StyleSheet.create({
   closedText: {
     fontFamily: fontFamily.semibold,
     fontSize: 10,
-    color: '#D4B13A',
+    color: '#0073CF',
   },
   completedBadge: {
     flexDirection: 'row',

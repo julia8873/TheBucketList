@@ -32,7 +32,7 @@ export function AlbumHeaderBadges({
       ? '#EF4444'
       : album.priority === 'low'
         ? '#10B981'
-        : '#D4B13A';
+        : '#0073CF';
 
   const priorityLabel =
     album.priority === 'urgent'

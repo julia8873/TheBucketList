@@ -46,7 +46,7 @@ export const styles = themedStyleSheet({
   albumPillText: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 14,
-    color: '#D4B13A',
+    color: '#0073CF',
   },
   searchContainer: {
     marginTop: 20,
@@ -73,7 +73,7 @@ export const styles = themedStyleSheet({
     height: 48,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#D4B13A',
+    borderColor: '#0073CF',
     borderStyle: 'dashed',
     backgroundColor: '#1A1708',
     paddingHorizontal: 18,
@@ -85,7 +85,7 @@ export const styles = themedStyleSheet({
   createTaskBtnText: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 15,
-    color: '#D4B13A',
+    color: '#0073CF',
     flexShrink: 1,
   },
   segmentedControl: {
@@ -110,7 +110,7 @@ export const styles = themedStyleSheet({
     backgroundColor: 'transparent',
   },
   segmentBtnActive: {
-    backgroundColor: '#D4B13A',
+    backgroundColor: '#0073CF',
   },
   segmentText: {
     fontFamily: 'Inter_500Medium',
@@ -133,14 +133,14 @@ export const styles = themedStyleSheet({
     backgroundColor: '#0D0D0D',
   },
   badgeInactive: {
-    backgroundColor: '#D4B13A',
+    backgroundColor: '#0073CF',
   },
   badgeText: {
     fontFamily: 'Inter_700Bold',
     fontSize: 13,
   },
   badgeTextActive: {
-    color: '#D4B13A',
+    color: '#0073CF',
   },
   badgeTextInactive: {
     color: '#0D0D0D',
@@ -167,7 +167,7 @@ export const styles = themedStyleSheet({
     gap: 8,
   },
   tagFilterBtnActive: {
-    borderColor: '#D4B13A',
+    borderColor: '#0073CF',
     backgroundColor: '#2C2512',
   },
   tagFilterText: {
@@ -225,7 +225,7 @@ export const styles = themedStyleSheet({
   selectAllText: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 14,
-    color: '#D4B13A',
+    color: '#0073CF',
   },
   list: {
     flex: 1,
@@ -258,7 +258,7 @@ export const styles = themedStyleSheet({
   },
   taskCardSelected: {
     backgroundColor: '#1A170D',
-    borderColor: '#D4B13A',
+    borderColor: '#0073CF',
   },
   taskThumbContainer: {
     width: 56,
@@ -296,7 +296,7 @@ export const styles = themedStyleSheet({
   },
   circleSelected: {
     borderWidth: 0,
-    backgroundColor: '#D4B13A',
+    backgroundColor: '#0073CF',
   },
   bottomBar: {
     position: 'absolute',
@@ -312,10 +312,10 @@ export const styles = themedStyleSheet({
   btnAdd: {
     height: 56,
     borderRadius: 999,
-    backgroundColor: '#D4B13A',
+    backgroundColor: '#0073CF',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: 'rgba(212,177,58,0.2)',
+    shadowColor: 'rgba(0, 115, 207,0.2)',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 1,
     shadowRadius: 24,

@@ -29,7 +29,7 @@ export function AlbumTasksSection({ tasks, onOpenPicker, onRemoveTask }: AlbumTa
   return (
     <View style={styles.section}>
       <Text style={[formStyles.sectionLabel, { color: theme.colors.foreground, marginTop: 0 }]}>
-        <Text style={{ color: '#D4B13A' }}>{t('album_form.section_tasks')}</Text>
+        <Text style={{ color: '#0073CF' }}>{t('album_form.section_tasks')}</Text>
         {tasks.length > 0 ? ` · ${tasks.length}` : ''}
       </Text>
 
@@ -42,11 +42,11 @@ export function AlbumTasksSection({ tasks, onOpenPicker, onRemoveTask }: AlbumTa
         accessibilityRole="button"
         accessibilityLabel={label}
       >
-        <ListChecks color="#D4B13A" size={22} />
+        <ListChecks color="#0073CF" size={22} />
         <Text style={[formStyles.collaboratorPlaceholder, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
           {label}
         </Text>
-        <Plus color="#D4B13A" size={20} />
+        <Plus color="#0073CF" size={20} />
       </Pressable>
 
       {tasks.length > 0 && (
@@ -80,7 +80,7 @@ export function AlbumTasksSection({ tasks, onOpenPicker, onRemoveTask }: AlbumTa
                 accessibilityRole="button"
                 accessibilityLabel={t('album_form.remove_task')}
               >
-                <X color="#D4B13A" size={16} />
+                <X color="#0073CF" size={16} />
               </Pressable>
             </View>
           ))}

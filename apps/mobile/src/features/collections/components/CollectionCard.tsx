@@ -239,7 +239,7 @@ export function CollectionCard({
               accessibilityRole="button"
               accessibilityLabel={t('collections.clone_a11y', { title: collection.title })}
             >
-              <Copy size={12} color="#000" strokeWidth={2.2} />
+              <Copy size={12} color="#FFFFFF" strokeWidth={2.2} />
               <Text style={styles.compactCloneBtnText}>
                 {isCloning ? '...' : t('collections.clone')}
               </Text>
@@ -391,7 +391,7 @@ export function CollectionCard({
               accessibilityRole="button"
               accessibilityLabel={t('collections.clone_a11y', { title: collection.title })}
             >
-              <Copy size={13} color="#0E0E0E" strokeWidth={2.2} />
+              <Copy size={13} color="#FFFFFF" strokeWidth={2.2} />
               <Text style={styles.cloneBtnText}>
                 {isCloning
                   ? t('collections.cloning')
@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
   cloneBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#0E0E0E',
+    color: '#FFFFFF',
   },
 
   // ── MODO GALERÍA ──────────────────────────────────────────
@@ -747,6 +747,6 @@ const styles = StyleSheet.create({
   compactCloneBtnText: {
     fontSize: 11,
     fontFamily: fontFamily.bold,
-    color: '#000',
+    color: '#FFFFFF',
   },
 });

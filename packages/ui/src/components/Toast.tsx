@@ -188,7 +188,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                   ? 'rgba(239, 68, 68, 0.45)'
                   : type === 'warning'
                   ? 'rgba(245, 158, 11, 0.45)'
-                  : 'rgba(212, 177, 58, 0.4)',
+                  : 'rgba(0, 115, 207, 0.4)',
               opacity,
               transform: [{ translateY }],
             },
@@ -310,8 +310,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   iconBadgeSuccess: {
-    backgroundColor: 'rgba(212, 177, 58, 0.15)',
-    borderColor: '#D4B13A',
+    backgroundColor: 'rgba(0, 115, 207, 0.15)',
+    borderColor: '#0073CF',
   },
   iconBadgeError: {
     backgroundColor: 'rgba(239, 68, 68, 0.15)',
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
   undoText: {
     fontFamily: fontFamily.bold,
     fontSize: 12.5,
-    color: '#0E0E0E',
+    color: '#FFFFFF',
   },
   closeBtn: {
     width: 28,

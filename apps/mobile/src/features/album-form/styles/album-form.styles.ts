@@ -58,7 +58,7 @@ export const styles = themedStyleSheet({
   previewSharedText: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 13,
-    color: '#D4B13A',
+    color: '#0073CF',
   },
   previewVisibilityBadge: {
     height: 30,
@@ -111,7 +111,7 @@ export const styles = themedStyleSheet({
   sectionTitleHighlight: {
     fontFamily: 'PlayfairDisplay_700Bold',
     fontSize: 15,
-    color: '#D4B13A',
+    color: '#0073CF',
     letterSpacing: 0.6,
   },
   sectionTitleRest: {
@@ -144,8 +144,8 @@ export const styles = themedStyleSheet({
     borderColor: '#262626',
   },
   visibilityOptionActive: {
-    borderColor: '#D4B13A',
-    backgroundColor: 'rgba(212, 177, 58, 0.06)',
+    borderColor: '#0073CF',
+    backgroundColor: 'rgba(0, 115, 207, 0.06)',
   },
   visibilityIconBox: {
     width: 40,
@@ -157,7 +157,7 @@ export const styles = themedStyleSheet({
     marginRight: 14,
   },
   visibilityIconBoxActive: {
-    backgroundColor: 'rgba(212, 177, 58, 0.16)',
+    backgroundColor: 'rgba(0, 115, 207, 0.16)',
   },
   visibilityTexts: {
     flex: 1,
@@ -169,7 +169,7 @@ export const styles = themedStyleSheet({
     marginBottom: 2,
   },
   visibilityTitleActive: {
-    color: '#D4B13A',
+    color: '#0073CF',
   },
   visibilitySubtitle: {
     fontFamily: 'Inter_400Regular',
@@ -194,8 +194,8 @@ export const styles = themedStyleSheet({
     backgroundColor: '#151515',
   },
   shapePillActive: {
-    borderColor: '#D4B13A',
-    backgroundColor: 'rgba(212, 177, 58, 0.12)',
+    borderColor: '#0073CF',
+    backgroundColor: 'rgba(0, 115, 207, 0.12)',
   },
   shapePillText: {
     fontFamily: 'Inter_500Medium',
@@ -204,7 +204,7 @@ export const styles = themedStyleSheet({
   },
   shapePillTextActive: {
     fontFamily: 'Inter_600SemiBold',
-    color: '#D4B13A',
+    color: '#0073CF',
   },
   recropBtn: {
     flexDirection: 'row',
@@ -222,7 +222,7 @@ export const styles = themedStyleSheet({
   recropBtnText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 12,
-    color: '#D4B13A',
+    color: '#0073CF',
   },
   coversRow: {
     flexDirection: 'row',
@@ -238,7 +238,7 @@ export const styles = themedStyleSheet({
   },
   coverOptionSelected: {
     borderWidth: 2,
-    borderColor: '#D4B13A',
+    borderColor: '#0073CF',
   },
   card: {
     backgroundColor: '#151515',
@@ -283,7 +283,7 @@ export const styles = themedStyleSheet({
     justifyContent: 'center',
   },
   switchTrackActive: {
-    backgroundColor: '#D4B13A',
+    backgroundColor: '#0073CF',
   },
   switchKnob: {
     width: 22,
@@ -329,9 +329,9 @@ export const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(212, 177, 58, 0.12)',
+    backgroundColor: 'rgba(0, 115, 207, 0.12)',
     borderWidth: 1,
-    borderColor: '#D4B13A',
+    borderColor: '#0073CF',
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -339,7 +339,7 @@ export const styles = themedStyleSheet({
   collaboratorChipText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 13,
-    color: '#D4B13A',
+    color: '#0073CF',
   },
   bottomBar: {
     backgroundColor: '#0D0D0D',
@@ -351,10 +351,10 @@ export const styles = themedStyleSheet({
   createBtn: {
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#D4B13A',
+    backgroundColor: '#0073CF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#D4B13A',
+    shadowColor: '#0073CF',
     shadowOpacity: 0.2,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 8 },

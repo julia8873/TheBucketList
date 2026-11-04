@@ -262,7 +262,7 @@ export default function EditBucketModal() {
   if (loading) {
     return (
       <View style={[styles.container, styles.center]}>
-        <ActivityIndicator size="large" color="#D4B13A" />
+        <ActivityIndicator size="large" color="#0073CF" />
       </View>
     );
   }
@@ -344,7 +344,7 @@ export default function EditBucketModal() {
                   borderColor: theme.colors.border,
                   color: theme.colors.foreground,
                 },
-                isTitleFocused && { borderColor: '#D4B13A' },
+                isTitleFocused && { borderColor: '#0073CF' },
               ]}
               placeholder={t('task_form.title_placeholder', { defaultValue: 'Ej. Ver auroras boreales' })}
               placeholderTextColor={theme.colors.foregroundMuted}
@@ -382,7 +382,7 @@ export default function EditBucketModal() {
                   borderColor: theme.colors.border,
                   color: theme.colors.foreground,
                 },
-                isDescFocused && { borderColor: '#D4B13A' },
+                isDescFocused && { borderColor: '#0073CF' },
               ]}
               placeholder={t('task_form.desc_placeholder', { defaultValue: 'Cuéntanos más sobre esta tarea…' })}
               placeholderTextColor={theme.colors.foregroundMuted}
@@ -427,7 +427,7 @@ export default function EditBucketModal() {
 
           {/* COLABORADORES */}
           <Text style={styles.sectionLabel}>
-            <Text style={{ color: '#D4B13A' }}>{t('task_form.section_collaborators', { defaultValue: 'COLABORADORES' })}</Text>
+            <Text style={{ color: '#0073CF' }}>{t('task_form.section_collaborators', { defaultValue: 'COLABORADORES' })}</Text>
             {selectedCollaborators.length > 0 ? ` · ${selectedCollaborators.length}` : ''}
           </Text>
           <TaskCollaboratorsSection
@@ -492,7 +492,7 @@ export default function EditBucketModal() {
             disabled={!title.trim() || isSaving}
           >
             {isSaving ? (
-              <ActivityIndicator color="#111" />
+              <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={styles.submitText}>{t('task_form.btn_save_changes', { defaultValue: 'Guardar cambios' })}</Text>
             )}

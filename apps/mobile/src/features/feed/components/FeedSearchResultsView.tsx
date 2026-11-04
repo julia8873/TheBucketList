@@ -89,7 +89,7 @@ export function FeedSearchResultsView({
                 style={[
                   styles.contentFilterPill,
                   isSelected && {
-                    backgroundColor: theme.dark ? 'rgba(212,177,58,0.18)' : 'rgba(212,177,58,0.22)',
+                    backgroundColor: theme.dark ? 'rgba(0, 115, 207,0.18)' : 'rgba(0, 115, 207,0.22)',
                     borderColor: gold[400],
                   },
                   !isSelected && {

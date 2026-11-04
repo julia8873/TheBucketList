@@ -36,7 +36,7 @@ export function AlbumCollaboratorsSection({
   return (
     <View style={styles.section}>
       <Text style={[formStyles.sectionLabel, { color: theme.colors.foreground, marginTop: 0 }]}>
-        <Text style={{ color: '#D4B13A' }}>{t('task_form.section_collaborators')}</Text>
+        <Text style={{ color: '#0073CF' }}>{t('task_form.section_collaborators')}</Text>
         {selectedCollaborators.length > 0 ? ` · ${selectedCollaborators.length}` : ''}
       </Text>
 
@@ -49,11 +49,11 @@ export function AlbumCollaboratorsSection({
         accessibilityRole="button"
         accessibilityLabel={label}
       >
-        <Users color="#D4B13A" size={22} />
+        <Users color="#0073CF" size={22} />
         <Text style={[formStyles.collaboratorPlaceholder, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
           {label}
         </Text>
-        <Plus color="#D4B13A" size={20} />
+        <Plus color="#0073CF" size={20} />
       </Pressable>
 
       {selectedCollaborators.length > 0 && (
@@ -70,7 +70,7 @@ export function AlbumCollaboratorsSection({
                 accessibilityRole="button"
               >
                 <Text style={formStyles.collaboratorChipText}>{c.display_name || `@${c.username}`}</Text>
-                {isReadOnly ? <Lock color="#D4B13A" size={13} style={{ marginLeft: 4 }} /> : <X color="#D4B13A" size={14} />}
+                {isReadOnly ? <Lock color="#0073CF" size={13} style={{ marginLeft: 4 }} /> : <X color="#0073CF" size={14} />}
               </Pressable>
             );
           })}

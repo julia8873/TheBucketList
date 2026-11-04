@@ -90,7 +90,7 @@ export default function AddTaskScreen() {
       {albumName && (
         <View style={styles.albumPillContainer}>
           <View style={styles.albumPill}>
-            <Folder size={18} color="#D4B13A" strokeWidth={1.8} />
+            <Folder size={18} color="#0073CF" strokeWidth={1.8} />
             <Text style={styles.albumPillText}>{albumName}</Text>
           </View>
         </View>
@@ -119,7 +119,7 @@ export default function AddTaskScreen() {
         style={styles.createTaskBtn}
         onPress={handleCreateTask}
       >
-        <Plus size={18} color="#D4B13A" strokeWidth={2.2} />
+        <Plus size={18} color="#0073CF" strokeWidth={2.2} />
         <Text style={styles.createTaskBtnText}>
           {search.trim()
             ? t('add_task.create_named', { name: search.trim(), defaultValue: `Crear «${search.trim()}»` })
@@ -166,7 +166,7 @@ export default function AddTaskScreen() {
         contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 120 }]}
       >
         {isLoading ? (
-          <ActivityIndicator color="#D4B13A" style={{ marginTop: 40 }} />
+          <ActivityIndicator color="#0073CF" style={{ marginTop: 40 }} />
         ) : currentVisibleTasks.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>
