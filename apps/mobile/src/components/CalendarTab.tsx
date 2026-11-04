@@ -4,6 +4,8 @@ import {
   format,
   addMonths,
   subMonths,
+  addYears,
+  subYears,
   startOfWeek,
   endOfWeek,
   eachDayOfInterval,
@@ -39,6 +41,8 @@ export const CalendarTab = React.forwardRef<ScrollView, CalendarTabProps>(functi
 
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
+  const prevYear = () => setCurrentDate(subYears(currentDate, 1));
+  const nextYear = () => setCurrentDate(addYears(currentDate, 1));
 
   // Generate grid
   const monthStart = startOfMonth(currentDate);
@@ -144,6 +148,12 @@ export const CalendarTab = React.forwardRef<ScrollView, CalendarTabProps>(functi
         onSelectDate={setSelectedDate}
         onPrevMonth={prevMonth}
         onNextMonth={nextMonth}
+        onPrevYear={prevYear}
+        onNextYear={nextYear}
+        onSelectMonthYear={(newDate) => {
+          setCurrentDate(newDate);
+          setSelectedDate(newDate);
+        }}
         daysInGrid={daysInGrid}
         tasksByDay={tasksByDay}
         completedThisMonth={completedThisMonth}

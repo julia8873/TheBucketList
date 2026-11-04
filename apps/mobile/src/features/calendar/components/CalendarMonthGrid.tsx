@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { Typography, useTheme } from '@bucketlist/ui';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronDown } from 'lucide-react-native';
 import { format, isSameMonth, isSameDay } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { getDateFnsLocale } from '@/utils/dateLocale';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
+import { MonthYearPickerModal } from '@/components/MonthYearPickerModal';
 import { styles } from '../styles/calendar.styles';
 
 interface CalendarMonthGridProps {
@@ -14,6 +15,9 @@ interface CalendarMonthGridProps {
   onSelectDate: (date: Date) => void;
   onPrevMonth: () => void;
   onNextMonth: () => void;
+  onPrevYear?: () => void;
+  onNextYear?: () => void;
+  onSelectMonthYear?: (date: Date) => void;
   daysInGrid: Date[];
   tasksByDay: Map<string, any[]>;
   completedThisMonth: number;
@@ -27,6 +31,9 @@ export function CalendarMonthGrid({
   onSelectDate,
   onPrevMonth,
   onNextMonth,
+  onPrevYear,
+  onNextYear,
+  onSelectMonthYear,
   daysInGrid,
   tasksByDay,
   completedThisMonth,
@@ -36,19 +43,30 @@ export function CalendarMonthGrid({
   const { theme } = useTheme();
   const { t, i18n } = useTranslation();
   const dateFnsLocale = getDateFnsLocale(i18n.language);
+  const [showMonthYearPicker, setShowMonthYearPicker] = useState(false);
 
   return (
     <>
       {/* Month Navigation */}
       <View style={styles.header}>
-        <View>
-          <Typography
-            variant="h1"
-            color={theme.colors.foreground}
-            style={{ textTransform: 'capitalize', fontSize: 22 }}
+        <View style={{ flex: 1, marginRight: 8 }}>
+          <Pressable
+            onPress={() => setShowMonthYearPicker(true)}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('calendar.select_month_year', { defaultValue: 'Seleccionar mes y año' })}
           >
-            {format(currentDate, 'MMMM yyyy', { locale: dateFnsLocale })}
-          </Typography>
+            <Typography
+              variant="h1"
+              color={theme.colors.foreground}
+              style={{ textTransform: 'capitalize', fontSize: 20 }}
+              numberOfLines={1}
+            >
+              {format(currentDate, 'MMMM yyyy', { locale: dateFnsLocale })}
+            </Typography>
+            <ChevronDown color={gold[400]} size={18} />
+          </Pressable>
           <Typography variant="body" color={theme.colors.foregroundMuted} style={{ marginTop: 2 }}>
             {completedThisMonth === 0
               ? t('calendar.completed_this_month_zero')
@@ -57,21 +75,32 @@ export function CalendarMonthGrid({
               : t('calendar.completed_this_month_plural', { count: completedThisMonth })}
           </Typography>
         </View>
-        <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+        <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center' }}>
+          {onPrevYear && (
+            <Pressable
+              onPress={onPrevYear}
+              style={[styles.navButton, { width: 30, backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+              hitSlop={6}
+              accessibilityRole="button"
+              accessibilityLabel={t('calendar.prev_year', { defaultValue: 'Año anterior' })}
+            >
+              <ChevronsLeft color={theme.colors.primary} size={15} />
+            </Pressable>
+          )}
           <Pressable
             onPress={onPrevMonth}
-            style={[styles.navButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
-            hitSlop={8}
+            style={[styles.navButton, { width: 30, backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+            hitSlop={6}
             accessibilityRole="button"
             accessibilityLabel={t('calendar.prev_month')}
           >
-            <ChevronLeft color={theme.colors.primary} size={18} />
+            <ChevronLeft color={theme.colors.primary} size={16} />
           </Pressable>
           {onGoToday && (
             <Pressable
               onPress={onGoToday}
-              style={[styles.navButton, { width: undefined, paddingHorizontal: 10, backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
-              hitSlop={8}
+              style={[styles.navButton, { width: undefined, paddingHorizontal: 8, backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+              hitSlop={6}
               accessibilityRole="button"
               accessibilityLabel={t('common.today', { defaultValue: 'Hoy' })}
             >
@@ -80,15 +109,36 @@ export function CalendarMonthGrid({
           )}
           <Pressable
             onPress={onNextMonth}
-            style={[styles.navButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
-            hitSlop={8}
+            style={[styles.navButton, { width: 30, backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+            hitSlop={6}
             accessibilityRole="button"
             accessibilityLabel={t('calendar.next_month')}
           >
-            <ChevronRight color={theme.colors.primary} size={18} />
+            <ChevronRight color={theme.colors.primary} size={16} />
           </Pressable>
+          {onNextYear && (
+            <Pressable
+              onPress={onNextYear}
+              style={[styles.navButton, { width: 30, backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+              hitSlop={6}
+              accessibilityRole="button"
+              accessibilityLabel={t('calendar.next_year', { defaultValue: 'Año siguiente' })}
+            >
+              <ChevronsRight color={theme.colors.primary} size={15} />
+            </Pressable>
+          )}
         </View>
       </View>
+
+      <MonthYearPickerModal
+        visible={showMonthYearPicker}
+        currentDate={currentDate}
+        onSelect={(newDate) => {
+          onSelectMonthYear?.(newDate);
+          setShowMonthYearPicker(false);
+        }}
+        onClose={() => setShowMonthYearPicker(false)}
+      />
 
       {/* Weekdays */}
       <View style={styles.weekdaysRow}>

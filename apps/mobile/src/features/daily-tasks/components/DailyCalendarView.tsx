@@ -1,10 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { ChevronLeft, ChevronRight, ChevronDown, Plus, CheckCircle2 } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronsLeft, ChevronsRight, Plus, CheckCircle2 } from 'lucide-react-native';
 import {
   format,
   addMonths,
   subMonths,
+  addYears,
+  subYears,
   startOfMonth,
   endOfMonth,
   startOfWeek,
@@ -18,6 +20,7 @@ import { getDateFnsLocale } from '@/utils/dateLocale';
 
 import { useTheme, gold } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
+import { MonthYearPickerModal } from '@/components/MonthYearPickerModal';
 import { styles } from '../styles/explore.styles';
 import type { DailyTask } from '../types';
 import { toDateString } from '../utils/dailyTaskDateUtils';
@@ -56,6 +59,7 @@ export function DailyCalendarView({
   const { theme } = useTheme();
   const { t, i18n } = useTranslation();
   const [isCalendarCompletedCollapsed, setIsCalendarCompletedCollapsed] = useState(false);
+  const [showMonthYearPicker, setShowMonthYearPicker] = useState(false);
   const dateFnsLocale = getDateFnsLocale(i18n.language);
 
   // Calendar Grid calculation
@@ -126,19 +130,38 @@ export function DailyCalendarView({
       {/* Calendar Navigation Card */}
       <View style={[styles.calendarCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
         <View style={styles.calendarHeaderRow}>
-          <Pressable
-            style={[styles.calendarNavBtn, { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border }]}
-            onPress={() => onSetCalendarMonth((prev) => subMonths(prev, 1))}
-            hitSlop={8}
-            accessibilityLabel={t('calendar.prev_month')}
-          >
-            <ChevronLeft size={20} color={theme.colors.foreground} />
-          </Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Pressable
+              style={[styles.calendarNavBtn, { width: 32, backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border }]}
+              onPress={() => onSetCalendarMonth((prev) => subYears(prev, 1))}
+              hitSlop={6}
+              accessibilityLabel={t('calendar.prev_year', { defaultValue: 'Año anterior' })}
+            >
+              <ChevronsLeft size={16} color={theme.colors.foreground} />
+            </Pressable>
+            <Pressable
+              style={[styles.calendarNavBtn, { width: 32, backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border }]}
+              onPress={() => onSetCalendarMonth((prev) => subMonths(prev, 1))}
+              hitSlop={6}
+              accessibilityLabel={t('calendar.prev_month')}
+            >
+              <ChevronLeft size={18} color={theme.colors.foreground} />
+            </Pressable>
+          </View>
 
           <View style={{ alignItems: 'center' }}>
-            <Text style={[styles.calendarMonthTitle, { color: theme.colors.foreground }]}>
-              {calendarGrid.monthLabel.toUpperCase()}
-            </Text>
+            <Pressable
+              onPress={() => setShowMonthYearPicker(true)}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4, paddingHorizontal: 8, borderRadius: 8 }}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={t('calendar.select_month_year', { defaultValue: 'Seleccionar mes y año' })}
+            >
+              <Text style={[styles.calendarMonthTitle, { color: theme.colors.foreground }]}>
+                {calendarGrid.monthLabel.toUpperCase()}
+              </Text>
+              <ChevronDown size={16} color={gold[400]} />
+            </Pressable>
             {!isSameMonth(calendarMonth, new Date()) && (
               <Pressable
                 style={[
@@ -159,15 +182,36 @@ export function DailyCalendarView({
             )}
           </View>
 
-          <Pressable
-            style={[styles.calendarNavBtn, { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border }]}
-            onPress={() => onSetCalendarMonth((prev) => addMonths(prev, 1))}
-            hitSlop={8}
-            accessibilityLabel={t('calendar.next_month')}
-          >
-            <ChevronRight size={20} color={theme.colors.foreground} />
-          </Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Pressable
+              style={[styles.calendarNavBtn, { width: 32, backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border }]}
+              onPress={() => onSetCalendarMonth((prev) => addMonths(prev, 1))}
+              hitSlop={6}
+              accessibilityLabel={t('calendar.next_month')}
+            >
+              <ChevronRight size={18} color={theme.colors.foreground} />
+            </Pressable>
+            <Pressable
+              style={[styles.calendarNavBtn, { width: 32, backgroundColor: theme.colors.surfaceElevated ?? theme.colors.surface, borderColor: theme.colors.border }]}
+              onPress={() => onSetCalendarMonth((prev) => addYears(prev, 1))}
+              hitSlop={6}
+              accessibilityLabel={t('calendar.next_year', { defaultValue: 'Año siguiente' })}
+            >
+              <ChevronsRight size={16} color={theme.colors.foreground} />
+            </Pressable>
+          </View>
         </View>
+
+        <MonthYearPickerModal
+          visible={showMonthYearPicker}
+          currentDate={calendarMonth}
+          onSelect={(newDate) => {
+            onSetCalendarMonth(newDate);
+            onSelectCalendarDate(newDate);
+            setShowMonthYearPicker(false);
+          }}
+          onClose={() => setShowMonthYearPicker(false)}
+        />
 
         {/* Day of Week Headers */}
         <View style={[styles.calendarDaysOfWeekRow, { borderBottomColor: theme.colors.border }]}>

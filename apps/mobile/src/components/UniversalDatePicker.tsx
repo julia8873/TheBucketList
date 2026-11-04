@@ -12,6 +12,8 @@ import {
   format,
   addMonths,
   subMonths,
+  addYears,
+  subYears,
   startOfMonth,
   endOfMonth,
   startOfWeek,
@@ -21,10 +23,11 @@ import {
   isToday,
   isSameDay,
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, X, Calendar as CalendarIcon } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronDown, X, Calendar as CalendarIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { getDateFnsLocale } from '@/utils/dateLocale';
 import { useTheme, gold, fontFamily } from '@bucketlist/ui';
+import { MonthYearPickerModal } from '@/components/MonthYearPickerModal';
 
 export interface UniversalDatePickerProps {
   value: Date;
@@ -105,6 +108,7 @@ function WebCalendarPickerModal({
 
   const [selectedDate, setSelectedDate] = useState<Date>(value || new Date());
   const [currentMonth, setCurrentMonth] = useState<Date>(value || new Date());
+  const [showMonthYearPicker, setShowMonthYearPicker] = useState(false);
 
   const daysOfWeek = i18n.language.startsWith('en')
     ? ['M', 'T', 'W', 'T', 'F', 'S', 'S']
@@ -191,32 +195,83 @@ function WebCalendarPickerModal({
             </Pressable>
           </View>
 
-          {/* Month Navigation */}
+          {/* Month & Year Navigation */}
           <View style={styles.navRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Pressable
+                onPress={() => setCurrentMonth((prev) => subYears(prev, 1))}
+                hitSlop={6}
+                style={[
+                  styles.navBtn,
+                  { width: 30, backgroundColor: theme.dark ? '#262626' : '#F0F0F0' },
+                ]}
+                accessibilityLabel="Año anterior"
+              >
+                <ChevronsLeft size={15} color={theme.colors.foreground} />
+              </Pressable>
+              <Pressable
+                onPress={() => setCurrentMonth((prev) => subMonths(prev, 1))}
+                hitSlop={6}
+                style={[
+                  styles.navBtn,
+                  { width: 30, backgroundColor: theme.dark ? '#262626' : '#F0F0F0' },
+                ]}
+                accessibilityLabel="Mes anterior"
+              >
+                <ChevronLeft size={16} color={theme.colors.foreground} />
+              </Pressable>
+            </View>
+
             <Pressable
-              onPress={() => setCurrentMonth((prev) => subMonths(prev, 1))}
+              onPress={() => setShowMonthYearPicker(true)}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4, paddingHorizontal: 6, borderRadius: 8 }}
               hitSlop={8}
-              style={[
-                styles.navBtn,
-                { backgroundColor: theme.dark ? '#262626' : '#F0F0F0' },
-              ]}
+              accessibilityRole="button"
             >
-              <ChevronLeft size={16} color={theme.colors.foreground} />
+              <Text style={[styles.monthText, { color: theme.colors.foreground }]}>
+                {monthLabel}
+              </Text>
+              <ChevronDown size={14} color={gold[400]} />
             </Pressable>
-            <Text style={[styles.monthText, { color: theme.colors.foreground }]}>
-              {monthLabel}
-            </Text>
-            <Pressable
-              onPress={() => setCurrentMonth((prev) => addMonths(prev, 1))}
-              hitSlop={8}
-              style={[
-                styles.navBtn,
-                { backgroundColor: theme.dark ? '#262626' : '#F0F0F0' },
-              ]}
-            >
-              <ChevronRight size={16} color={theme.colors.foreground} />
-            </Pressable>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Pressable
+                onPress={() => setCurrentMonth((prev) => addMonths(prev, 1))}
+                hitSlop={6}
+                style={[
+                  styles.navBtn,
+                  { width: 30, backgroundColor: theme.dark ? '#262626' : '#F0F0F0' },
+                ]}
+                accessibilityLabel="Mes siguiente"
+              >
+                <ChevronRight size={16} color={theme.colors.foreground} />
+              </Pressable>
+              <Pressable
+                onPress={() => setCurrentMonth((prev) => addYears(prev, 1))}
+                hitSlop={6}
+                style={[
+                  styles.navBtn,
+                  { width: 30, backgroundColor: theme.dark ? '#262626' : '#F0F0F0' },
+                ]}
+                accessibilityLabel="Año siguiente"
+              >
+                <ChevronsRight size={15} color={theme.colors.foreground} />
+              </Pressable>
+            </View>
           </View>
+
+          <MonthYearPickerModal
+            visible={showMonthYearPicker}
+            currentDate={currentMonth}
+            minDate={minimumDate}
+            maxDate={maximumDate}
+            onSelect={(newDate) => {
+              setCurrentMonth(newDate);
+              setSelectedDate(newDate);
+              setShowMonthYearPicker(false);
+            }}
+            onClose={() => setShowMonthYearPicker(false)}
+          />
 
           {/* Days of Week Header */}
           <View style={styles.daysOfWeekRow}>
