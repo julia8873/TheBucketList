@@ -251,6 +251,43 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
                     />
                     <Text style={styles.galleryActionText}>{saveCount}</Text>
                   </Pressable>
+
+                  {!isOwn && (
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleCopy();
+                      }}
+                      disabled={alreadyCopied || copyBucket.isPending}
+                      hitSlop={6}
+                      style={[
+                        styles.galleryActionItem,
+                        styles.galleryMeTooBtn,
+                        alreadyCopied && styles.galleryMeTooBtnDone,
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        alreadyCopied
+                          ? t('feed.already_in_list', { defaultValue: 'Ya está en tu lista' })
+                          : t('feed.me_too', { defaultValue: 'Yo también' })
+                      }
+                    >
+                      {alreadyCopied && (
+                        <Check size={10} color={theme.colors.foregroundSubtle} strokeWidth={2.4} />
+                      )}
+                      <Text
+                        style={[
+                          styles.galleryMeTooText,
+                          { color: alreadyCopied ? theme.colors.foregroundSubtle : gold[400] },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {alreadyCopied
+                          ? t('feed.in_your_list', { defaultValue: 'En tu lista' })
+                          : t('feed.me_too', { defaultValue: 'Yo también' })}
+                      </Text>
+                    </Pressable>
+                  )}
                 </View>
 
                 {participants && participants.length > 0 && (
@@ -681,17 +718,38 @@ const styles = StyleSheet.create({
   galleryActionsGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 7,
+    flexShrink: 1,
+    minWidth: 0,
   },
   galleryActionItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
+    flexShrink: 0,
   },
   galleryActionText: {
     fontFamily: fontFamily.medium,
     fontSize: 11,
     color: '#F2EFE8',
+  },
+  galleryMeTooBtn: {
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.45)',
+    backgroundColor: 'rgba(212, 175, 55, 0.12)',
+    flexShrink: 1,
+  },
+  galleryMeTooBtnDone: {
+    borderColor: 'rgba(255, 255, 255, 0.16)',
+    backgroundColor: 'rgba(0, 0, 0, 0.28)',
+  },
+  galleryMeTooText: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 9.5,
+    letterSpacing: -0.2,
   },
   // Compacto
   compactCardWrapper: {
