@@ -255,44 +255,6 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
                     <Text style={styles.galleryActionText}>{saveCount}</Text>
                   </Pressable>
                 </View>
-
-                {/* A la derecha del flashcard: Yo también */}
-                {!isOwn && (
-                  <Pressable
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleCopy();
-                    }}
-                    disabled={alreadyCopied || copyBucket.isPending}
-                    hitSlop={6}
-                    style={[
-                      styles.galleryActionItem,
-                      styles.galleryMeTooBtn,
-                      alreadyCopied && styles.galleryMeTooBtnDone,
-                    ]}
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      alreadyCopied
-                        ? t('feed.already_in_list', { defaultValue: 'Ya está en tu lista' })
-                        : t('feed.me_too', { defaultValue: 'Yo también' })
-                    }
-                  >
-                    {alreadyCopied && (
-                      <Check size={10} color={theme.colors.foregroundSubtle} strokeWidth={2.4} />
-                    )}
-                    <Text
-                      style={[
-                        styles.galleryMeTooText,
-                        { color: alreadyCopied ? theme.colors.foregroundSubtle : gold[400] },
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {alreadyCopied
-                        ? t('feed.in_your_list', { defaultValue: 'En tu lista' })
-                        : t('feed.me_too', { defaultValue: 'Yo también' })}
-                    </Text>
-                  </Pressable>
-                )}
               </View>
             </View>
           </View>
@@ -731,25 +693,6 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.medium,
     fontSize: 11,
     color: '#F2EFE8',
-  },
-  galleryMeTooBtn: {
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.5)',
-    backgroundColor: 'rgba(212, 175, 55, 0.15)',
-    flexShrink: 0,
-    alignSelf: 'center',
-  },
-  galleryMeTooBtnDone: {
-    borderColor: 'rgba(255, 255, 255, 0.16)',
-    backgroundColor: 'rgba(0, 0, 0, 0.28)',
-  },
-  galleryMeTooText: {
-    fontFamily: fontFamily.semibold,
-    fontSize: 10,
-    letterSpacing: -0.2,
   },
   // Compacto
   compactCardWrapper: {
