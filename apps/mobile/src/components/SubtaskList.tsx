@@ -19,6 +19,7 @@ type RowProps = {
   onDragEnd: (from: number, to: number) => void;
   onToggle: (st: any) => void;
   onChange: (st: any, text: string) => void;
+  onBlur?: (st: any, text: string) => void;
   onDelete: (st: any) => void;
 };
 
@@ -28,6 +29,16 @@ function Row(props: RowProps) {
   // Siempre apunta a las props más recientes (los PanResponder se crean una sola vez)
   const latest = useRef(props);
   latest.current = props;
+
+  const [localTitle, setLocalTitle] = useState(st.title ?? '');
+  const isFocused = useRef(false);
+
+  // Mantener sincronizado solo cuando el usuario NO esta editando activamente este paso
+  useEffect(() => {
+    if (!isFocused.current) {
+      setLocalTitle(st.title ?? '');
+    }
+  }, [st.title]);
 
   const y = useRef(new Animated.Value(index * ROW_HEIGHT)).current; // posición vertical absoluta
   const scale = useRef(new Animated.Value(1)).current;
@@ -104,7 +115,7 @@ function Row(props: RowProps) {
     PanResponder.create({
       // Solo gestos claramente horizontales, para no pelear con el scroll vertical
       onMoveShouldSetPanResponderCapture: (_, g) =>
-        latest.current.isOwner && Math.abs(g.dx) > 10 && Math.abs(g.dx) > Math.abs(g.dy) * 2,
+        latest.current.isOwner && !isFocused.current && Math.abs(g.dx) > 10 && Math.abs(g.dx) > Math.abs(g.dy) * 2,
       onPanResponderTerminationRequest: () => false,
       onPanResponderMove: (_, g) => {
         const base = swipeOpen.current ? -DELETE_WIDTH : 0;
@@ -192,9 +203,19 @@ function Row(props: RowProps) {
         </Pressable>
 
         <TextInput
-          value={st.title}
+          value={localTitle}
           editable={isOwner}
-          onChangeText={(t) => props.onChange(st, t)}
+          onFocus={() => {
+            isFocused.current = true;
+          }}
+          onBlur={() => {
+            isFocused.current = false;
+            props.onBlur?.(st, localTitle);
+          }}
+          onChangeText={(t) => {
+            setLocalTitle(t);
+            props.onChange(st, t);
+          }}
           numberOfLines={1}
           style={{
             flex: 1,
@@ -221,6 +242,7 @@ type ListProps = {
   theme: any;
   onToggle: (st: any) => void;
   onChange: (st: any, text: string) => void;
+  onBlur?: (st: any, text: string) => void;
   onDelete: (st: any) => void;
   onMove: (from: number, to: number) => void;
   onDraggingChange?: (dragging: boolean) => void;
@@ -232,6 +254,7 @@ export function SubtaskList({
   theme,
   onToggle,
   onChange,
+  onBlur,
   onDelete,
   onMove,
   onDraggingChange,
@@ -317,6 +340,7 @@ export function SubtaskList({
             onDragEnd={handleDragEnd}
             onToggle={onToggle}
             onChange={onChange}
+            onBlur={onBlur}
             onDelete={onDelete}
           />
         );

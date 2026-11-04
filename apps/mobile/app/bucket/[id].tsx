@@ -501,6 +501,7 @@ export default function BucketDetailScreen() {
                 theme={theme}
                 onToggle={(subtask) => void state.toggleSubtask(subtask)}
                 onChange={state.handleSubtaskChange}
+                onBlur={(st) => void state.flushSubtaskChange(st.id)}
                 onDelete={state.handleDeleteSubtask}
                 onMove={(from, to) => void state.handleMoveSubtask(from, to)}
                 onDraggingChange={(dragging) => state.setScrollEnabled(!dragging)}

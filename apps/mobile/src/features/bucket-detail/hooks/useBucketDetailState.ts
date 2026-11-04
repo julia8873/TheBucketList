@@ -81,6 +81,8 @@ export function useBucketDetailState() {
   const sheetTranslateY = useRef(new Animated.Value(420)).current;
 
   const subtaskTimeouts = useRef<Record<string, any>>({});
+  const pendingSubtasks = useRef<Record<string, string>>({});
+  const lastSavedSubtasks = useRef<Record<string, string>>({});
   const titleTimeout = useRef<any>(null);
   const descTimeout = useRef<any>(null);
   const counterLabelTimeout = useRef<any>(null);
@@ -1579,11 +1581,47 @@ export function useBucketDetailState() {
       return;
     }
 
-    void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
     void queryClient.invalidateQueries({ queryKey: ['buckets'] });
   };
 
+  const flushSubtaskChange = async (stId: string) => {
+    if (subtaskTimeouts.current[stId]) {
+      clearTimeout(subtaskTimeouts.current[stId]);
+      delete subtaskTimeouts.current[stId];
+    }
+    const textToSave = pendingSubtasks.current[stId];
+    if (textToSave === undefined) return;
+    delete pendingSubtasks.current[stId];
+
+    if (lastSavedSubtasks.current[stId] !== undefined && lastSavedSubtasks.current[stId] === textToSave.trim()) {
+      return;
+    }
+    lastSavedSubtasks.current[stId] = textToSave.trim();
+
+    queryClient.setQueryData(['bucketDetail', id], (oldData: any) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        item_subtasks: (oldData.item_subtasks || []).map((s: any) =>
+          s.id === stId ? { ...s, title: textToSave } : s
+        ),
+      };
+    });
+
+    const { error } = await supabase
+      .from('item_subtasks')
+      .update({ title: textToSave.trim() })
+      .eq('id', stId);
+
+    if (error) {
+      console.error('Error updating subtask title:', error.message);
+      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+    }
+  };
+
   const handleSubtaskChange = (st: any, newText: string) => {
+    pendingSubtasks.current[st.id] = newText;
+
     queryClient.setQueryData(['bucketDetail', id], (oldData: any) => {
       if (!oldData) return oldData;
       return {
@@ -1598,14 +1636,18 @@ export function useBucketDetailState() {
       clearTimeout(subtaskTimeouts.current[st.id]);
     }
 
-    subtaskTimeouts.current[st.id] = setTimeout(async () => {
-      if (!newText.trim()) return;
-      const { error } = await supabase.from('item_subtasks').update({ title: newText.trim() }).eq('id', st.id);
-      if (!error) void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
-    }, 500);
+    subtaskTimeouts.current[st.id] = setTimeout(() => {
+      void flushSubtaskChange(st.id);
+    }, 1200);
   };
 
   const handleDeleteSubtask = (st: any) => {
+    if (subtaskTimeouts.current[st.id]) {
+      clearTimeout(subtaskTimeouts.current[st.id]);
+      delete subtaskTimeouts.current[st.id];
+    }
+    delete pendingSubtasks.current[st.id];
+
     queryClient.setQueryData(['bucketDetail', id], (oldData: any) => {
       if (!oldData) return oldData;
       return { ...oldData, item_subtasks: (oldData.item_subtasks || []).filter((s: any) => s.id !== st.id) };
@@ -1617,7 +1659,6 @@ export function useBucketDetailState() {
         void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
         return;
       }
-      void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
       void queryClient.invalidateQueries({ queryKey: ['buckets'] });
     });
   };
@@ -1644,10 +1685,7 @@ export function useBucketDetailState() {
     if (error) {
       Alert.alert(t('bucket_detail.reorder_steps_error', { defaultValue: 'No se pudo reorganizar los pasos' }), error.message);
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
-      return;
     }
-
-    void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
   };
 
   const pendingTitle = useRef<string | null>(null);
@@ -1719,6 +1757,9 @@ export function useBucketDetailState() {
         descTimeout.current = null;
         void flushDescriptionChange();
       }
+      Object.keys(pendingSubtasks.current).forEach((stId) => {
+        void flushSubtaskChange(stId);
+      });
     };
   }, []);
 
@@ -1726,16 +1767,29 @@ export function useBucketDetailState() {
     const text = newSubtaskText.trim();
     if (!text) return;
     setNewSubtaskText('');
-    const { error } = await supabase.from('item_subtasks').insert({
-      bucket_id: id,
-      title: text,
-      done: false,
-      position: subtasks.length,
-    });
+    const { data: inserted, error } = await supabase
+      .from('item_subtasks')
+      .insert({
+        bucket_id: id,
+        title: text,
+        done: false,
+        position: subtasks.length,
+      })
+      .select()
+      .single();
+
     if (error) {
       Alert.alert('Error', error.message);
-    } else {
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
+    } else if (inserted) {
+      queryClient.setQueryData(['bucketDetail', id], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          item_subtasks: [...(oldData.item_subtasks || []), inserted],
+        };
+      });
+      void queryClient.invalidateQueries({ queryKey: ['buckets'] });
     }
   };
 
@@ -1942,6 +1996,7 @@ export function useBucketDetailState() {
     removeCounter,
     toggleSubtask,
     handleSubtaskChange,
+    flushSubtaskChange,
     handleDeleteSubtask,
     handleMoveSubtask,
     handleTitleChange,
