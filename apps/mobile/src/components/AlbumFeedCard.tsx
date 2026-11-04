@@ -174,24 +174,17 @@ export function AlbumFeedCard({
                   e.stopPropagation();
                   if (album.owner?.id) router.push(`/profile/${album.owner.id}` as any);
                 }}
-                style={[
-                  styles.galleryHeader,
-                  {
-                    backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(0,0,0,0.6)',
-                    borderColor: 'rgba(255,255,255,0.18)',
-                  },
-                ]}
-                hitSlop={6}
+                style={styles.galleryHeader}
+                hitSlop={8}
                 accessibilityRole="button"
+                accessibilityLabel={album.owner?.username || ownerName}
               >
                 <Avatar
                   source={album.owner?.avatar_url ? { uri: album.owner.avatar_url } : undefined}
                   fallback={ownerName.charAt(0).toUpperCase() || '?'}
                   size="xs"
+                  goldRing
                 />
-                <Text style={styles.galleryUsername} numberOfLines={1}>
-                  @{album.owner?.username || ownerName}
-                </Text>
               </Pressable>
 
               <View style={styles.galleryAlbumBadge}>
@@ -776,14 +769,17 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   galleryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 12,
-    borderWidth: 1,
-    maxWidth: '75%',
+    borderRadius: 999,
+    ...Platform.select({
+      web: { filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' } as any,
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.35,
+        shadowRadius: 3,
+        elevation: 3,
+      },
+    }),
   },
   galleryUsername: {
     fontFamily: fontFamily.medium,

@@ -155,20 +155,12 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
                   e.stopPropagation();
                   openProfile();
                 }}
-                style={[
-                  styles.galleryUserBadge,
-                  {
-                    backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(0,0,0,0.6)',
-                    borderColor: 'rgba(255,255,255,0.18)',
-                  },
-                ]}
-                hitSlop={6}
+                style={styles.galleryUserBadge}
+                hitSlop={8}
                 accessibilityRole="button"
+                accessibilityLabel={actor.username}
               >
                 <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="xs" goldRing />
-                <Text style={styles.galleryUsername} numberOfLines={1}>
-                  @{actor.username}
-                </Text>
               </Pressable>
 
               {bucket.status === 'completed' && (
@@ -650,14 +642,17 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   galleryUserBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 12,
-    borderWidth: 1,
-    maxWidth: '80%',
+    borderRadius: 999,
+    ...Platform.select({
+      web: { filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' } as any,
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.35,
+        shadowRadius: 3,
+        elevation: 3,
+      },
+    }),
   },
   galleryUsername: {
     fontFamily: fontFamily.medium,
