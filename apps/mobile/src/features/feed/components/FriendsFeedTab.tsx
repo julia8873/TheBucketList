@@ -186,7 +186,7 @@ export function FriendsFeedTab({
   const loading = isLoading || isAlbumsLoading;
 
   if (loading && combinedItems.length === 0) {
-    if (viewMode === 'gallery' || viewMode === 'gallery-compact') {
+    if (viewMode === 'gallery') {
       return (
         <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 72 }} showsVerticalScrollIndicator={false}>
           {headerElement}
@@ -244,7 +244,7 @@ export function FriendsFeedTab({
       data={combinedItems}
       extraData={extraData}
       keyExtractor={(item) => `${item._type ?? 'task'}-${item.id}`}
-      numColumns={viewMode === 'gallery' || viewMode === 'gallery-compact' ? 2 : 1}
+      numColumns={viewMode === 'gallery' ? 2 : 1}
       renderItem={renderItem}
       contentContainerStyle={{ paddingBottom: 72 }}
       ListHeaderComponent={headerElement}

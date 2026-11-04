@@ -64,7 +64,7 @@ export default function FeedScreen() {
       if (!params.tab && (saved === 'friends' || saved === 'explore')) setHomeTabState(saved);
     }).catch(() => undefined);
     AsyncStorage.getItem('@feed_view_mode').then((saved) => {
-      if (saved === 'list' || saved === 'gallery' || saved === 'gallery-compact' || saved === 'compact') setViewModeState(saved as TaskViewMode);
+      if (saved === 'list' || saved === 'gallery' || saved === 'compact') setViewModeState(saved as TaskViewMode);
     }).catch(() => undefined);
     AsyncStorage.getItem('@feed_content_filter').then((saved) => {
       if (!params.filter && (saved === 'todo' || saved === 'tareas' || saved === 'albumes' || saved === 'colecciones')) {

@@ -34,6 +34,7 @@ import { AlbumListHeaderControls } from '@/features/my-list/components/AlbumList
 import { TaskItemRow } from '@/features/my-list/components/TaskItemRow';
 import { TaskCompactItemRow } from '@/features/my-list/components/TaskCompactItemRow';
 import { TaskBentoCard, BentoGrid } from '@/features/my-list/components/TaskBentoCard';
+import { TaskGalleryItemCard } from '@/features/my-list/components/TaskGalleryItemCard';
 import {
   AlbumCompactItemRow,
   AlbumListItemRow,
@@ -847,16 +848,72 @@ export default function MyListScreen() {
                   return (
                     <View key={sec.key} style={styles.sectionBlock}>
                       {sectionHeaderEl(sec.key, sec.title, sec.items.length)}
-                      <BentoGrid>
-                        {visibleItems(sec).map((item: any) => renderBento(item, taskViews.gallery))}
-                      </BentoGrid>
+                      <View style={styles.galleryGrid}>
+                        {visibleItems(sec).map((item: any) => {
+                          const tagIds = state.tagUsage?.byItem[item.id] ?? (Array.isArray(item.tags) ? item.tags : []);
+                          const itemTagObjs = tagIds.map((tid: string) => state.tagsById.get(tid)).filter(Boolean);
+                          return (
+                            <TaskGalleryItemCard
+                              key={item.id}
+                              item={item}
+                              isSingle={sec.items.length === 1}
+                              isSelected={state.selectedTaskIds.includes(item.id)}
+                              isSelectionMode={state.isSelectionMode}
+                              isFav={state.isBucketFavorite(item.id)}
+                              itemTags={itemTagObjs}
+                              customization={taskViews.gallery}
+                              onPress={() => {
+                                if (state.isSelectionMode) state.toggleSelectTask(item.id);
+                                else {
+                                  if (Date.now() - state.lastExitTaskSelectionTimeRef.current < 450) return;
+                                  router.push(`/bucket/${item.id}` as any);
+                                }
+                              }}
+                              onLongPress={() => {
+                                if (!state.isSelectionMode) {
+                                  state.setIsSelectionMode(true);
+                                  state.setSelectedTaskIds([item.id]);
+                                }
+                              }}
+                            />
+                          );
+                        })}
+                      </View>
                     </View>
                   );
                 })
               ) : (
-                <BentoGrid>
-                  {state.sortedFlatBuckets.map((item: any) => renderBento(item, taskViews.gallery))}
-                </BentoGrid>
+                <View style={styles.galleryGrid}>
+                  {state.sortedFlatBuckets.map((item: any) => {
+                    const tagIds = state.tagUsage?.byItem[item.id] ?? (Array.isArray(item.tags) ? item.tags : []);
+                    const itemTagObjs = tagIds.map((tid: string) => state.tagsById.get(tid)).filter(Boolean);
+                    return (
+                      <TaskGalleryItemCard
+                        key={item.id}
+                        item={item}
+                        isSingle={state.sortedFlatBuckets.length === 1}
+                        isSelected={state.selectedTaskIds.includes(item.id)}
+                        isSelectionMode={state.isSelectionMode}
+                        isFav={state.isBucketFavorite(item.id)}
+                        itemTags={itemTagObjs}
+                        customization={taskViews.gallery}
+                        onPress={() => {
+                          if (state.isSelectionMode) state.toggleSelectTask(item.id);
+                          else {
+                            if (Date.now() - state.lastExitTaskSelectionTimeRef.current < 450) return;
+                            router.push(`/bucket/${item.id}` as any);
+                          }
+                        }}
+                        onLongPress={() => {
+                          if (!state.isSelectionMode) {
+                            state.setIsSelectionMode(true);
+                            state.setSelectedTaskIds([item.id]);
+                          }
+                        }}
+                      />
+                    );
+                  })}
+                </View>
               )}
             </ScrollView>
           ) : state.taskViewMode === 'compact' ? (

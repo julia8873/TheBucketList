@@ -37,7 +37,7 @@ function getSubTitle(task: TaskItem, t?: (k: any, o?: any) => string): string {
   return parts.join(' · ');
 }
 
-export type AlbumTaskViewMode = 'list' | 'gallery' | 'gallery-compact' | 'compact';
+export type AlbumTaskViewMode = 'list' | 'gallery' | 'compact';
 
 interface AlbumTaskCardProps {
   task: TaskItem;
