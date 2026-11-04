@@ -15,7 +15,13 @@ interface ThemeContextValue {
   setColorScheme: (scheme: ColorScheme | 'system') => void;
 }
 
-const ThemeContext = createContext<ThemeContextValue | null>(null);
+const defaultThemeValue: ThemeContextValue = {
+  theme: darkTheme,
+  colorScheme: 'dark',
+  setColorScheme: () => {},
+};
+
+const ThemeContext = createContext<ThemeContextValue>(defaultThemeValue);
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
@@ -57,7 +63,7 @@ export function ThemeProvider({
 export function useTheme(): ThemeContextValue {
   const ctx = useContext(ThemeContext);
   if (!ctx) {
-    throw new Error('useTheme must be used inside <ThemeProvider>');
+    return defaultThemeValue;
   }
   return ctx;
 }

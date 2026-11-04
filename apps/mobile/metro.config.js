@@ -1,4 +1,6 @@
 const { getDefaultConfig } = require('expo/metro-config');
+const path = require('path');
+const MetroResolver = require('metro-resolver');
 
 const config = getDefaultConfig(__dirname);
 
@@ -41,13 +43,22 @@ config.server = {
   },
 };
 
-const path = require('path');
+const mobileNodeModules = path.resolve(__dirname, 'node_modules');
+const rootNodeModules = path.resolve(__dirname, '../../node_modules');
 
-// Fallback en el resolver por si la entrada o algún módulo intenta resolver `./apps/mobile/...`
-// y forzar una única instancia de React / React-DOM desde apps/mobile en todo el monorepo.
 const previousResolveRequest = config.resolver && config.resolver.resolveRequest;
+
 config.resolver = {
   ...(config.resolver || {}),
+  nodeModulesPaths: [
+    mobileNodeModules,
+    rootNodeModules,
+  ],
+  extraNodeModules: {
+    ...(config.resolver && config.resolver.extraNodeModules),
+    react: path.resolve(mobileNodeModules, 'react'),
+    'react-dom': path.resolve(mobileNodeModules, 'react-dom'),
+  },
   resolveRequest: (context, moduleName, platform) => {
     // 1. Normalizar barras invertidas de Windows (\ -> /)
     let normalized = (moduleName || '').replace(/\\/g, '/');
@@ -62,11 +73,15 @@ config.resolver = {
       normalized === 'react-dom' ||
       normalized.startsWith('react-dom/')
     ) {
-      return context.resolveRequest(
-        { ...context, originModulePath: path.resolve(__dirname, 'package.json') },
-        normalized,
-        platform
-      );
+      try {
+        const filePath = require.resolve(normalized, {
+          paths: [mobileNodeModules],
+        });
+        return {
+          type: 'sourceFile',
+          filePath,
+        };
+      } catch (_) {}
     }
 
     // 4. Si es la entrada del proyecto (ej: '.\index', './index', 'index', 'index.js')
@@ -76,29 +91,20 @@ config.resolver = {
       normalized === 'index' ||
       normalized === 'index.js'
     ) {
-      return context.resolveRequest(
-        { ...context, originModulePath: path.resolve(__dirname, 'package.json') },
-        './index',
-        platform
-      );
+      try {
+        const filePath = path.resolve(__dirname, 'index.js');
+        return {
+          type: 'sourceFile',
+          filePath,
+        };
+      } catch (_) {}
     }
 
-    try {
-      if (previousResolveRequest) {
-        return previousResolveRequest(context, normalized, platform);
-      }
-      return context.resolveRequest(context, normalized, platform);
-    } catch (err) {
-      if (normalized !== moduleName) {
-        try {
-          if (previousResolveRequest) {
-            return previousResolveRequest(context, moduleName, platform);
-          }
-          return context.resolveRequest(context, moduleName, platform);
-        } catch (_) {}
-      }
-      throw err;
+    if (previousResolveRequest) {
+      return previousResolveRequest(context, normalized, platform);
     }
+    const cleanContext = { ...context, resolveRequest: null };
+    return MetroResolver.resolve(cleanContext, normalized, platform);
   },
 };
 
