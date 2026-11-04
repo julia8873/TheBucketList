@@ -160,7 +160,6 @@ function TaskBentoCardComponent({
               fontFamily: 'Inter_700Bold',
               fontSize: 12,
               lineHeight: 16,
-              textDecorationLine: isCompleted ? 'line-through' : 'none',
             }}
           >
             {item.title}

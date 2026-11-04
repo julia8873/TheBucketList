@@ -132,39 +132,36 @@ export function AlbumTaskCard({
   if (viewMode === 'compact') {
     return (
       <Pressable
-        style={[styles.taskCompactRow, isSelectionMode && isSelected && { borderColor: '#D4B13A' }]}
+        style={[
+          styles.taskCompactRow,
+          isSelectionMode && isSelected && { borderColor: '#D4B13A' },
+          isDone && { opacity: 0.72 },
+        ]}
         onPress={handlePress}
         onLongPress={handleLongPress}
         delayLongPress={350}
         accessibilityRole={isSelectionMode ? 'checkbox' : 'button'}
         accessibilityState={isSelectionMode ? { checked: isSelected } : undefined}
       >
-        {isSelectionMode ? (
+        {isSelectionMode && (
           isSelected ? (
             <CheckCircle2 size={22} color="#D4B13A" fill="#D4B13A" />
           ) : (
             <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: '#555555' }} />
           )
-        ) : canEdit ? (
-          <Pressable
-            hitSlop={8}
-            onPress={(e) => onToggleCompleted(task, e)}
-            style={[styles.taskCompactCheck, isDone ? styles.checkCircleDone : styles.checkCircleEmpty]}
-          >
-            {isDone && <Check size={13} color="#0D0D0D" strokeWidth={3} />}
-          </Pressable>
-        ) : (
-          <View style={[styles.taskCompactCheck, isDone ? styles.checkCircleDone : styles.checkCircleEmpty]}>
-            {isDone && <Check size={13} color="#0D0D0D" strokeWidth={3} />}
-          </View>
         )}
         <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: itemPriorityColor }} />
         <Text
-          style={[styles.taskCompactTitle, isDone && { color: '#BDB7AA', textDecorationLine: 'line-through' }]}
+          style={[styles.taskCompactTitle, isDone && { color: '#8A8A80' }]}
           numberOfLines={1}
         >
           {task.title}
         </Text>
+        {isDone && (
+          <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: 'rgba(52,199,89,0.15)', alignItems: 'center', justifyContent: 'center' }}>
+            <Check size={12} color="#22C55E" strokeWidth={2.5} />
+          </View>
+        )}
         {!isDone && badge && (
           <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: '#D4B13A' }}>{badge}</Text>
         )}
@@ -192,7 +189,11 @@ export function AlbumTaskCard({
     const isImageCover = !!imageValue && !imageValue.startsWith('preset:');
     return (
       <Pressable
-        style={[styles.galleryCard, isSelectionMode && isSelected && { borderColor: '#D4B13A', borderWidth: 2.5 }]}
+        style={[
+          styles.galleryCard,
+          isSelectionMode && isSelected && { borderColor: '#D4B13A', borderWidth: 2.5 },
+          isDone && { opacity: 0.72 },
+        ]}
         onPress={handlePress}
         onLongPress={handleLongPress}
         delayLongPress={350}
@@ -221,26 +222,11 @@ export function AlbumTaskCard({
             >
               {isSelected && <Check size={14} color="#0D0D0D" strokeWidth={3} />}
             </View>
-          ) : canEdit ? (
-            <Pressable
-              hitSlop={8}
-              onPress={(e) => onToggleCompleted(task, e)}
-              style={[
-                styles.galleryCheck,
-                isDone
-                  ? { backgroundColor: '#D4B13A', borderWidth: 0 }
-                  : { backgroundColor: 'rgba(0,0,0,0.55)', borderColor: '#FFFFFF' },
-              ]}
-            >
-              {isDone && <Check size={14} color="#0D0D0D" strokeWidth={3} />}
-            </Pressable>
           ) : isDone ? (
             <View style={[styles.galleryCheck, { backgroundColor: 'rgba(52,199,89,0.9)', borderWidth: 0 }]}>
               <Check size={14} color="#FFFFFF" strokeWidth={3} />
             </View>
-          ) : (
-            <View />
-          )}
+          ) : null}
           <View
             style={{
               flexDirection: 'row',
@@ -268,7 +254,7 @@ export function AlbumTaskCard({
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
             <View style={{ flex: 1 }}>
               <Text
-                style={[styles.galleryCardTitle, isDone && { textDecorationLine: 'line-through', opacity: 0.7 }]}
+                style={[styles.galleryCardTitle, isDone && { opacity: 0.72, color: '#8A8A80' }]}
                 numberOfLines={2}
               >
                 {task.title}
@@ -298,7 +284,11 @@ export function AlbumTaskCard({
 
   return (
     <Pressable
-      style={[styles.taskCard, isSelectionMode && isSelected && { borderColor: '#D4B13A', borderWidth: 1 }]}
+      style={[
+        styles.taskCard,
+        isSelectionMode && isSelected && { borderColor: '#D4B13A', borderWidth: 1 },
+        isDone && { opacity: 0.72 },
+      ]}
       onPress={() => {
         if (isSelectionMode) onToggleSelect?.(task);
         else router.push(`/bucket/${task.id}`);
@@ -329,7 +319,7 @@ export function AlbumTaskCard({
       </View>
       <View style={styles.taskContent}>
         <Text
-          style={[styles.taskTitle, isDone && { color: '#BDB7AA', textDecorationLine: 'line-through' }]}
+          style={[styles.taskTitle, isDone && { color: '#8A8A80' }]}
           numberOfLines={2}
         >
           {task.title}
@@ -396,13 +386,11 @@ export function AlbumTaskCard({
         )}
 
         {isSelectionMode ? null : canEdit ? (
-          <Pressable
-            hitSlop={8}
-            onPress={(e) => onToggleCompleted(task, e)}
-            style={[styles.checkCircleTouch, isDone ? styles.checkCircleDone : styles.checkCircleEmpty]}
-          >
-            {isDone && <Check size={16} color="#0D0D0D" strokeWidth={3} />}
-          </Pressable>
+          isDone ? (
+            <View style={styles.readOnlyDoneBadge}>
+              <Check size={14} color="#10B981" strokeWidth={2.5} />
+            </View>
+          ) : null
         ) : (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             {isDone && (

@@ -336,7 +336,7 @@ export const styles = themedStyleSheet({
   },
   compactTitleCompleted: {
     color: '#707070',
-    textDecorationLine: 'line-through',
+    opacity: 0.72,
   },
   listContent: {
     paddingHorizontal: 12,

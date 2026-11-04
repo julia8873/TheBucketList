@@ -22,6 +22,8 @@ import {
   UserPlus,
   ListChecks,
   X,
+  ChevronsUpDown,
+  ChevronsDownUp,
 } from 'lucide-react-native';
 import { Skeleton, Avatar, useTheme } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
@@ -43,6 +45,7 @@ import { TaskCommentsModal } from '@/components/TaskCommentsModal';
 import { ItemCommentsSection } from '@/components/ItemCommentsSection';
 import { ItemLikesModal } from '@/components/ItemLikesModal';
 import { useItemLikes } from '@/hooks/useSocial';
+import { SectionHeader } from '@/features/my-list/components/ListControls';
 
 import { styles } from '@/features/album-detail/styles/album-detail.styles';
 import { AlbumTaskCard } from '@/features/album-detail/components/AlbumTaskCard';
@@ -84,6 +87,10 @@ export default function AlbumDetailScreen() {
   const state = useAlbumDetailState();
   // Vista de las tareas dentro del álbum: normal (lista), galería (2 columnas) o compacta
   const [taskViewMode, setTaskViewMode] = useState<AlbumTaskViewMode>('list');
+  const [collapsedSections, setCollapsedSections] = useState<{ pendientes?: boolean; completadas?: boolean }>({});
+  const toggleSection = (key: 'pendientes' | 'completadas') => {
+    setCollapsedSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
   const isAdmin = useIsAdmin();
   const promoteMutation = usePromoteAlbumToCollection();
   const [showCommentsModal, setShowCommentsModal] = useState(false);
@@ -256,6 +263,16 @@ export default function AlbumDetailScreen() {
   const pendientes = visibleTasks.filter((t) => !t.isCompleted).sort(compareTasks);
   const completadas = visibleTasks.filter((t) => t.isCompleted).sort(compareTasks);
   const allDone = tasks.filter((t) => t.isCompleted);
+
+  const isPendientesCollapsed = !!collapsedSections.pendientes;
+  const isCompletadasCollapsed = !!collapsedSections.completadas;
+  const allCollapsed =
+    (pendientes.length === 0 || isPendientesCollapsed) &&
+    (completadas.length === 0 || isCompletadasCollapsed);
+  const toggleAllSections = () => {
+    const next = !allCollapsed;
+    setCollapsedSections({ pendientes: next, completadas: next });
+  };
 
   const manualDragEnabled =
     state.canEdit &&
@@ -907,6 +924,20 @@ export default function AlbumDetailScreen() {
               >
                 <Search size={16} color={state.taskSearchOpen ? '#D4B13A' : '#8F8F8F'} />
               </Pressable>
+
+              {(pendientes.length > 0 || completadas.length > 0) && (
+                <Pressable
+                  style={styles.toolbarIconBtn}
+                  onPress={toggleAllSections}
+                  accessibilityLabel={t('my_list.collapse_sections', { defaultValue: 'Compactar secciones' })}
+                >
+                  {allCollapsed ? (
+                    <ChevronsUpDown size={16} color="#D4B13A" />
+                  ) : (
+                    <ChevronsDownUp size={16} color="#8F8F8F" />
+                  )}
+                </Pressable>
+              )}
             </View>
 
             {state.taskSearchOpen && (
@@ -944,64 +975,70 @@ export default function AlbumDetailScreen() {
 
         {/* Tareas pendientes */}
         {pendientes.length > 0 && (
-          <View style={styles.sectionContainer}>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitleLeft, { color: '#D4B13A' }]}>
-                {t('albums.pending_section', {
-                  count: pendientes.length,
-                  defaultValue: `PENDIENTES · ${pendientes.length}`,
-                })}
-              </Text>
+          <View style={[styles.sectionContainer, { marginTop: 8 }]}>
+            <View style={{ paddingHorizontal: 12 }}>
+              <SectionHeader
+                title={t('common.pending', { defaultValue: 'Pendientes' }).toUpperCase()}
+                count={pendientes.length}
+                collapsed={isPendientesCollapsed}
+                onToggle={() => toggleSection('pendientes')}
+                theme={theme}
+              />
             </View>
-            {manualDragEnabled ? (
-              <View style={styles.taskListDraggable}>
-                <DraggableTaskList
-                  items={pendientes}
-                  onReorder={(ids) => handleReorderSection('pendientes', ids)}
-                  onDraggingChange={state.setDragging}
-                  renderItem={(item, drag) => renderTaskCard(item, drag)}
-                />
-              </View>
-            ) : taskViewMode === 'gallery' ? (
-              <View style={styles.taskGalleryGrid}>
-                {pendientes.map((task) => renderTaskCard(task))}
-              </View>
-            ) : (
-              <View style={styles.taskList}>
-                {pendientes.map((task) => renderTaskCard(task))}
-              </View>
+            {!isPendientesCollapsed && (
+              manualDragEnabled ? (
+                <View style={styles.taskListDraggable}>
+                  <DraggableTaskList
+                    items={pendientes}
+                    onReorder={(ids) => handleReorderSection('pendientes', ids)}
+                    onDraggingChange={state.setDragging}
+                    renderItem={(item, drag) => renderTaskCard(item, drag)}
+                  />
+                </View>
+              ) : taskViewMode === 'gallery' ? (
+                <View style={styles.taskGalleryGrid}>
+                  {pendientes.map((task) => renderTaskCard(task))}
+                </View>
+              ) : (
+                <View style={styles.taskList}>
+                  {pendientes.map((task) => renderTaskCard(task))}
+                </View>
+              )
             )}
           </View>
         )}
 
         {/* Tareas completadas */}
         {completadas.length > 0 && (
-          <View style={styles.sectionContainer}>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitleLeft, { color: '#22C55E' }]}>
-                {t('albums.completed_section', {
-                  count: completadas.length,
-                  defaultValue: `COMPLETADAS · ${completadas.length}`,
-                })}
-              </Text>
+          <View style={[styles.sectionContainer, { marginTop: 8 }]}>
+            <View style={{ paddingHorizontal: 12 }}>
+              <SectionHeader
+                title={t('common.completed', { defaultValue: 'Completadas' }).toUpperCase()}
+                count={completadas.length}
+                collapsed={isCompletadasCollapsed}
+                onToggle={() => toggleSection('completadas')}
+                theme={theme}
+              />
             </View>
-            {manualDragEnabled ? (
-              <View style={styles.taskListDraggable}>
-                <DraggableTaskList
-                  items={completadas}
-                  onReorder={(ids) => handleReorderSection('completadas', ids)}
-                  onDraggingChange={state.setDragging}
-                  renderItem={(item, drag) => renderTaskCard(item, drag)}
-                />
-              </View>
-            ) : taskViewMode === 'gallery' ? (
-              <View style={styles.taskGalleryGrid}>
-                {completadas.map((task) => renderTaskCard(task))}
-              </View>
-            ) : (
-              <View style={styles.taskList}>
-                {completadas.map((task) => renderTaskCard(task))}
-              </View>
+            {!isCompletadasCollapsed && (
+              manualDragEnabled ? (
+                <View style={styles.taskListDraggable}>
+                  <DraggableTaskList
+                    items={completadas}
+                    onReorder={(ids) => handleReorderSection('completadas', ids)}
+                    onDraggingChange={state.setDragging}
+                    renderItem={(item, drag) => renderTaskCard(item, drag)}
+                  />
+                </View>
+              ) : taskViewMode === 'gallery' ? (
+                <View style={styles.taskGalleryGrid}>
+                  {completadas.map((task) => renderTaskCard(task))}
+                </View>
+              ) : (
+                <View style={styles.taskList}>
+                  {completadas.map((task) => renderTaskCard(task))}
+                </View>
+              )
             )}
           </View>
         )}

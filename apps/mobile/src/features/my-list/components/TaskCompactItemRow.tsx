@@ -482,8 +482,7 @@ const localStyles = themedStyleSheet({
     fontSize: 12,
   },
   titleCompleted: {
-    textDecorationLine: 'line-through',
-    opacity: 0.75,
+    opacity: 0.72,
   },
   rightContainer: {
     flexDirection: 'row',
