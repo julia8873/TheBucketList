@@ -104,6 +104,9 @@ function TaskBentoCardComponent({
           backgroundColor: isSelected ? 'rgba(212, 177, 58, 0.10)' : c.surface,
           borderColor: isSelected ? c.primary : c.border,
           opacity: pressed ? 0.9 : isCompleted ? 0.8 : 1,
+          minHeight: 96,
+          justifyContent: 'space-between',
+          flex: 1,
         },
       ]}
     >
@@ -175,101 +178,101 @@ function TaskBentoCardComponent({
         </View>
       </View>
 
-      {hasFooter ? (
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 6,
-            paddingTop: 6,
-            borderTopWidth: 1,
-            borderTopColor: theme.dark ? '#1F1F26' : c.border,
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 1, minWidth: 0 }}>
-            {showPriority ? (
-              <View
-                accessibilityLabel={priorityLabel}
-                style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: priorityColor }}
-              />
-            ) : null}
-            {firstTag ? (
-              <Pressable
-                disabled={isSelectionMode || !onPressTag}
-                onPress={(e) => {
-                  (e as any)?.stopPropagation?.();
-                  onPressTag?.(firstTag.id);
-                }}
-                onLongPress={onLongPressTag ? (e) => {
-                  (e as any)?.stopPropagation?.();
-                  onLongPressTag(firstTag.id);
-                } : undefined}
-                style={({ pressed }) => [
-                  {
-                    flexShrink: 1,
-                    paddingHorizontal: 8,
-                    paddingVertical: 2,
-                    borderRadius: 99,
-                    backgroundColor: hexToRgba(firstTag.color, 0.1),
-                    borderWidth: 1,
-                    borderColor: hexToRgba(firstTag.color, 0.25),
-                    opacity: pressed ? 0.7 : 1,
-                  },
-                ]}
+      {/* Pie con etiquetas y colaboradores: siempre mantiene la misma altura (minHeight: 28) */}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 6,
+          paddingTop: 6,
+          minHeight: 28,
+          borderTopWidth: 1,
+          borderTopColor: theme.dark ? '#1F1F26' : c.border,
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 1, minWidth: 0, minHeight: 20 }}>
+          {showPriority ? (
+            <View
+              accessibilityLabel={priorityLabel}
+              style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: priorityColor }}
+            />
+          ) : null}
+          {firstTag ? (
+            <Pressable
+              disabled={isSelectionMode || !onPressTag}
+              onPress={(e) => {
+                (e as any)?.stopPropagation?.();
+                onPressTag?.(firstTag.id);
+              }}
+              onLongPress={onLongPressTag ? (e) => {
+                (e as any)?.stopPropagation?.();
+                onLongPressTag(firstTag.id);
+              } : undefined}
+              style={({ pressed }) => [
+                {
+                  flexShrink: 1,
+                  paddingHorizontal: 8,
+                  paddingVertical: 2,
+                  borderRadius: 99,
+                  backgroundColor: hexToRgba(firstTag.color, 0.1),
+                  borderWidth: 1,
+                  borderColor: hexToRgba(firstTag.color, 0.25),
+                  opacity: pressed ? 0.7 : 1,
+                },
+              ]}
+            >
+              <Text
+                numberOfLines={1}
+                style={{ color: firstTag.color, fontSize: 10, fontFamily: 'Inter_500Medium' }}
               >
-                <Text
-                  numberOfLines={1}
-                  style={{ color: firstTag.color, fontSize: 10, fontFamily: 'Inter_500Medium' }}
-                >
-                  {firstTag.emoji ? `${firstTag.emoji} ` : ''}
-                  {firstTag.name}
-                </Text>
-              </Pressable>
-            ) : null}
-            {extraTags > 0 ? (
-              <Pressable
-                disabled={isSelectionMode || !onManageTags}
-                onPress={(e) => {
-                  (e as any)?.stopPropagation?.();
-                  onManageTags?.();
-                }}
-                style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-              >
-                <Text style={{ color: c.foregroundSubtle, fontSize: 10, fontFamily: 'Inter_600SemiBold' }}>
-                  +{extraTags}
-                </Text>
-              </Pressable>
-            ) : null}
-          </View>
-
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-            {visibleParticipants ? (
-              <ParticipantsStack
-                participants={visibleParticipants}
-                max={2}
-                ringColor={c.surface}
-                disabled={isSelectionMode}
-              />
-            ) : null}
-            {showStar ? (
-              <Pressable
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                disabled={isSelectionMode || !onToggleFavorite}
-                onPress={(e) => {
-                  (e as any)?.stopPropagation?.();
-                  onToggleFavorite?.();
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={t('common.favorite', { defaultValue: 'Favorita' })}
-                style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
-              >
-                <Star size={15} color={c.primary} fill={c.primary} />
-              </Pressable>
-            ) : null}
-          </View>
+                {firstTag.emoji ? `${firstTag.emoji} ` : ''}
+                {firstTag.name}
+              </Text>
+            </Pressable>
+          ) : null}
+          {extraTags > 0 ? (
+            <Pressable
+              disabled={isSelectionMode || !onManageTags}
+              onPress={(e) => {
+                (e as any)?.stopPropagation?.();
+                onManageTags?.();
+              }}
+              style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
+            >
+              <Text style={{ color: c.foregroundSubtle, fontSize: 10, fontFamily: 'Inter_600SemiBold' }}>
+                +{extraTags}
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
-      ) : null}
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0, minHeight: 20 }}>
+          {visibleParticipants ? (
+            <ParticipantsStack
+              participants={visibleParticipants}
+              max={2}
+              ringColor={c.surface}
+              disabled={isSelectionMode}
+            />
+          ) : null}
+          {showStar ? (
+            <Pressable
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              disabled={isSelectionMode || !onToggleFavorite}
+              onPress={(e) => {
+                (e as any)?.stopPropagation?.();
+                onToggleFavorite?.();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.favorite', { defaultValue: 'Favorita' })}
+              style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
+            >
+              <Star size={15} color={c.primary} fill={c.primary} />
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
     </Pressable>
   );
 }
@@ -282,7 +285,7 @@ export function BentoGrid({ children }: { children: React.ReactNode }) {
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4, marginTop: 6 }}>
       {items.map((child, i) => (
-        <View key={i} style={{ width: '50%', padding: 4 }}>
+        <View key={i} style={{ width: '50%', padding: 4, display: 'flex' }}>
           {child}
         </View>
       ))}

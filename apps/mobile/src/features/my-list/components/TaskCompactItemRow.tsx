@@ -209,7 +209,7 @@ function TaskCompactItemRowComponent({
       </View>
       ) : null}
 
-      <View style={{ flex: 1, justifyContent: 'center' }}>
+      <View style={{ flex: 1, justifyContent: 'center', minHeight: 38 }}>
         <Text
           numberOfLines={2}
           style={[
@@ -442,7 +442,7 @@ const localStyles = themedStyleSheet({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 44,
+    minHeight: 52,
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 12,

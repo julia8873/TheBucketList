@@ -146,7 +146,9 @@ function TaskRowComponent({
               ) : null}
               {participantsElement}
             </View>
-          ) : null
+          ) : (
+            <View style={[styles.denseMetaRow, { minHeight: 22 }]} />
+          )
         ) : null}
         {!dense && participantsElement ? <View style={styles.participants}>{participantsElement}</View> : null}
         {!dense && tagsElement ? <View style={styles.tags}>{tagsElement}</View> : null}
@@ -210,6 +212,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     gap: 12,
+    minHeight: 72,
   },
   rowCompleted: {
     opacity: 0.8,
@@ -238,6 +241,8 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     gap: 3,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   title: {
     fontFamily: fontFamily.serif,
