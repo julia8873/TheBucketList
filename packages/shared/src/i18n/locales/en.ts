@@ -1027,7 +1027,7 @@ const en = {
     type_bucket_update: 'updated a task you follow.',
     type_album_update: 'updated an album you follow.',
     type_drive_access: 'accessed the Google Drive link on your task.',
-    type_default: 'You have a new notification.',
+    type_default: 'New activity in The Bucket List',
     reaction_title: 'Reactions',
     reaction_desc: 'When someone reacts to your tasks or albums',
     comment_title: 'Comments',

@@ -1027,7 +1027,7 @@ const es = {
     type_bucket_update: 'ha actualizado una tarea que sigues.',
     type_album_update: 'ha actualizado un álbum que sigues.',
     type_drive_access: 'ha accedido al enlace de Google Drive en tu tarea.',
-    type_default: 'Tienes una nueva notificación.',
+    type_default: 'Nueva actividad en The Bucket List',
     reaction_title: 'Reacciones',
     reaction_desc: 'Cuando alguien reacciona a tus tareas o álbumes',
     comment_title: 'Comentarios',

@@ -101,6 +101,16 @@ export function getSpecificNotificationText(
       return isEn
         ? `${actorName} liked your comment on ${target}`
         : `A ${actorName} le ha gustado tu comentario en ${target}`;
+    case 'friend_completed':
+      return isEn
+        ? `${actorName} completed ${target}!`
+        : `¡${actorName} ha completado ${target}!`;
+    case 'deadline':
+    case 'deadline_reminder':
+      return isEn
+        ? `The deadline for ${target} is approaching`
+        : `La fecha límite para ${target} está cerca`;
+    case 'collaborator_invite':
     case 'collaboration_invite':
       return isEn
         ? `${actorName} invited you to collaborate on ${target}`
@@ -141,6 +151,14 @@ export function getSpecificNotificationText(
       return isEn
         ? `${actorName} accessed the Google Drive link on ${target}`
         : `${actorName} ha accedido al enlace de Google Drive de ${target}`;
+    case 'user_reported':
+      return isEn
+        ? `${actorName} submitted a user report`
+        : `${actorName} ha enviado un reporte de usuario`;
+    case 'content_reported':
+      return isEn
+        ? `${actorName} reported content`
+        : `${actorName} ha reportado un contenido`;
     default:
       return null;
   }

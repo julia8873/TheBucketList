@@ -17,7 +17,8 @@ const TITLES: Record<string, { es: string; en: string }> = {
   follow_accepted: { es: 'Solicitud aceptada', en: 'Request accepted' },
   friend_completed: { es: '¡Objetivo cumplido!', en: 'Goal achieved!' },
   deadline: { es: 'Fecha límite próxima', en: 'Deadline approaching' },
-  collaborator_invite: { es: 'Invitación de colaborador', en: 'Collaborator invite' },
+  deadline_reminder: { es: 'Fecha límite próxima', en: 'Deadline approaching' },
+  collaborator_invite: { es: 'Invitación a colaborar', en: 'Collaboration invite' },
   collaboration_invite: { es: 'Invitación a colaborar', en: 'Collaboration invite' },
   collaboration_request: { es: 'Solicitud de colaboración', en: 'Collaboration request' },
   collaborator_joined: { es: 'Nuevo colaborador', en: 'New collaborator' },
@@ -28,6 +29,8 @@ const TITLES: Record<string, { es: string; en: string }> = {
   bucket_update: { es: 'Actualización de tarea', en: 'Task update' },
   album_update: { es: 'Actualización de álbum', en: 'Album update' },
   drive_access: { es: 'Acceso a Google Drive', en: 'Google Drive access' },
+  user_reported: { es: 'Reporte de usuario', en: 'User report' },
+  content_reported: { es: 'Reporte de contenido', en: 'Content report' },
 };
 
 /**
@@ -89,9 +92,10 @@ function buildPushText(
     follow: { es: `${who} ha empezado a seguirte.`, en: `${who} started following you.` },
     follow_request: { es: `${who} quiere seguirte.`, en: `${who} wants to follow you.` },
     follow_accepted: { es: `${who} aceptó tu solicitud de seguimiento.`, en: `${who} accepted your follow request.` },
-    friend_completed: { es: `¡${who} ha completado una tarea de su bucket list!`, en: `${who} completed a task from their bucket list!` },
-    deadline: { es: 'Tienes una tarea cuya fecha límite está cerca.', en: 'A task deadline is approaching.' },
-    collaborator_invite: { es: `${who} te ha invitado como colaborador.`, en: `${who} invited you as a collaborator.` },
+    friend_completed: { es: `¡${who} ha completado ${target}!`, en: `${who} completed ${target}!` },
+    deadline: { es: `La fecha límite para ${target} está cerca.`, en: `The deadline for ${target} is approaching.` },
+    deadline_reminder: { es: `La fecha límite para ${target} está cerca.`, en: `The deadline for ${target} is approaching.` },
+    collaborator_invite: { es: `${who} te ha invitado a colaborar en ${target}`, en: `${who} invited you to collaborate on ${target}` },
     collaboration_invite: { es: `${who} te ha invitado a colaborar en ${target}`, en: `${who} invited you to collaborate on ${target}` },
     collaboration_request: { es: `${who} ha solicitado colaborar en ${target}`, en: `${who} requested to collaborate on ${target}` },
     collaborator_joined: { es: `${who} se ha unido como colaborador a ${target}`, en: `${who} joined as a collaborator on ${target}` },
@@ -102,9 +106,13 @@ function buildPushText(
     bucket_update: { es: `${who} ha actualizado ${target}`, en: `${who} updated ${target}` },
     album_update: { es: `${who} ha actualizado ${target}`, en: `${who} updated ${target}` },
     drive_access: { es: `${who} ha accedido al enlace de Google Drive de ${target}`, en: `${who} accessed the Google Drive link on ${target}` },
+    user_reported: { es: `${who} ha enviado un reporte de usuario.`, en: `${who} submitted a user report.` },
+    content_reported: { es: `${who} ha reportado un contenido.`, en: `${who} reported content.` },
   };
 
-  const fallback = en ? 'You have a new notification.' : 'Tienes una nueva notificación.';
+  const fallback = en
+    ? (who && who !== 'Someone' ? `${who} interacted with your account.` : 'New activity in The Bucket List.')
+    : (who && who !== 'Alguien' ? `${who} ha interactuado con tu cuenta.` : 'Nueva actividad en The Bucket List.');
   const content: string | null = record.content || null;
 
   if (!en) {

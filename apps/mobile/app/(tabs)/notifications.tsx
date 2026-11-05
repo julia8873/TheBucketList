@@ -218,15 +218,20 @@ export default function NotificationsScreen() {
       case 'user_reported': return `${actorName} ${t('notifications.type_user_reported')}`;
       case 'content_reported': return `${actorName} ${t('notifications.type_content_reported')}`;
       case 'reaction':
+        return isEn ? `${actorName} reacted to your task.` : (notification.content || `${actorName} ha reaccionado a tu tarea.`);
       case 'comment':
+        return isEn ? `${actorName} commented on your task.` : (notification.content || `${actorName} ha dejado un comentario.`);
       case 'mention':
+        return isEn ? `${actorName} mentioned you in a comment.` : (notification.content || `${actorName} te ha mencionado en un comentario.`);
       case 'comment_like':
-        return isEn ? `${actorName} interacted with your post.` : (notification.content || t('notifications.type_default'));
+        return isEn ? `${actorName} liked your comment.` : (notification.content || `A ${actorName} le ha gustado tu comentario.`);
       case 'follow': return `${actorName} ${t('notifications.type_follow')}`;
       case 'follow_request': return `${actorName} ${t('notifications.type_follow_request')}`;
       case 'follow_accepted': return `${actorName} ${t('notifications.type_follow_accepted')}`;
       case 'friend_completed': return `${actorName} ${t('notifications.type_friend_completed')}`;
-      case 'deadline': return t('notifications.type_deadline');
+      case 'deadline':
+      case 'deadline_reminder': return t('notifications.type_deadline');
+      case 'collaborator_invite':
       case 'collaboration_invite': return `${actorName} ${t('notifications.type_collaboration_invite')}`;
       case 'collaboration_request': return `${actorName} ${t('notifications.type_collaboration_request')}`;
       case 'collaborator_joined': return `${actorName} ${t('notifications.type_collaborator_joined')}`;
@@ -234,10 +239,15 @@ export default function NotificationsScreen() {
       case 'album_invite': return `${actorName} ${t('notifications.type_album_invite')}`;
       case 'notification_request': return `${actorName} ${t('notifications.type_notification_request')}`;
       case 'notification_accepted': return `${actorName} ${t('notifications.type_notification_accepted')}`;
-      case 'bucket_update': return `${actorName} ${t('notifications.type_bucket_update')}`;
-      case 'album_update': return `${actorName} ${t('notifications.type_album_update')}`;
+      case 'bucket_update': return notification.content || `${actorName} ${t('notifications.type_bucket_update')}`;
+      case 'album_update': return notification.content || `${actorName} ${t('notifications.type_album_update')}`;
       case 'drive_access': return `${actorName} ${t('notifications.type_drive_access')}`;
-      default: return isEn ? t('notifications.type_default') : (notification.content || t('notifications.type_default'));
+      default:
+        if (notification.content) return notification.content;
+        if (actorName && actorName !== 'Someone' && actorName !== 'Alguien') {
+          return isEn ? `${actorName} interacted with your account.` : `${actorName} ha interactuado con tu cuenta.`;
+        }
+        return isEn ? 'New activity in The Bucket List' : 'Nueva actividad en The Bucket List';
     }
   };
 
