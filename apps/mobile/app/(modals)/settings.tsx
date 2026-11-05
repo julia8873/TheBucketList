@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import Constants from 'expo-constants';
 import { Check, ChevronLeft, Heart, Bookmark } from 'lucide-react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { fontFamily, useTheme, PageTitle } from '@bucketlist/ui';
+import { fontFamily, useTheme, PageTitle, toast } from '@bucketlist/ui';
 import { supabase } from '../../src/services/supabase';
 import { LEGAL_URLS } from '../../src/constants/urls';
 import { useAuthStore } from '../../src/stores/auth.store';
@@ -19,6 +19,7 @@ import {
   requestNotificationPermissionsAsync,
   openAppNotificationSettings,
   registerForPushNotificationsAsync,
+  sendLocalTestNotification,
   type NotificationPermissionStatus,
 } from '../../src/services/notifications';
 import {
@@ -299,6 +300,18 @@ export default function SettingsScreen() {
           <Row
             title={t('settings.notifications_advanced')}
             onPress={() => router.push('/(modals)/notification-prefs' as any)}
+          />
+          <Row
+            title={t('settings.test_notification', { defaultValue: 'Enviar notificación de prueba' })}
+            subtitle={t('settings.test_notification_desc', { defaultValue: 'Comprueba el banner y sonido en este teléfono' })}
+            onPress={async () => {
+              try {
+                await sendLocalTestNotification();
+                toast.success(t('settings.test_notification_sent', { defaultValue: 'Notificación de prueba enviada' }));
+              } catch (e) {
+                toast.error(t('settings.test_notification_error', { defaultValue: 'Error al enviar la notificación' }));
+              }
+            }}
             last
           />
         </Card>

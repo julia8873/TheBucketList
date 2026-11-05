@@ -21,7 +21,9 @@ if (Platform.OS !== 'web') {
 }
 
 export const EAS_PROJECT_ID =
-  Constants.expoConfig?.extra?.eas?.projectId ?? 'bcb60c8e-f88c-486d-84fa-20af0d452f8a';
+  Constants.expoConfig?.extra?.eas?.projectId ??
+  (Constants as any).easConfig?.projectId ??
+  '602d3623-83d5-44e4-ada1-06414cb05f69';
 
 export async function setupNotificationChannelAsync() {
   if (Platform.OS === 'android') {
