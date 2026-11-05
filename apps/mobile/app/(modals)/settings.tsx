@@ -300,20 +300,23 @@ export default function SettingsScreen() {
           <Row
             title={t('settings.notifications_advanced')}
             onPress={() => router.push('/(modals)/notification-prefs' as any)}
+            last={!isAdmin}
           />
-          <Row
-            title={t('settings.test_notification', { defaultValue: 'Enviar notificación de prueba' })}
-            subtitle={t('settings.test_notification_desc', { defaultValue: 'Comprueba el banner y sonido en este teléfono' })}
-            onPress={async () => {
-              try {
-                await sendLocalTestNotification();
-                toast.success(t('settings.test_notification_sent', { defaultValue: 'Notificación de prueba enviada' }));
-              } catch (e) {
-                toast.error(t('settings.test_notification_error', { defaultValue: 'Error al enviar la notificación' }));
-              }
-            }}
-            last
-          />
+          {isAdmin && (
+            <Row
+              title={t('settings.test_notification', { defaultValue: 'Enviar notificación de prueba' })}
+              subtitle={t('settings.test_notification_desc', { defaultValue: 'Comprueba el banner y sonido en este teléfono' })}
+              onPress={async () => {
+                try {
+                  await sendLocalTestNotification();
+                  toast.success(t('settings.test_notification_sent', { defaultValue: 'Notificación de prueba enviada' }));
+                } catch (e) {
+                  toast.error(t('settings.test_notification_error', { defaultValue: 'Error al enviar la notificación' }));
+                }
+              }}
+              last
+            />
+          )}
         </Card>
 
         <SectionTitle gold={t('settings.preferences')} />
