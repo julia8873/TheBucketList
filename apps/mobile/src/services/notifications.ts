@@ -531,11 +531,11 @@ export async function sendPushNotification(
 export async function scheduleDeadlineReminder(bucketId: string, title: string, deadline: string) {
   const isEn = i18n.language === 'en';
   const deadlineDate = new Date(deadline);
-  
+
   // Schedule 3 days before
   const threeDaysBefore = new Date(deadlineDate);
   threeDaysBefore.setDate(threeDaysBefore.getDate() - 3);
-  
+
   if (threeDaysBefore > new Date()) {
     await Notifications.scheduleNotificationAsync({
       content: {
