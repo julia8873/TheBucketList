@@ -143,7 +143,7 @@ function TaskCompactItemRowComponent({
         localStyles.row,
         {
           backgroundColor: isCompleted
-            ? (theme.dark ? '#121212' : '#EBEFF5')
+            ? theme.colors.surfaceSunken
             : theme.colors.surface,
           borderColor: theme.colors.border,
         },
@@ -195,7 +195,7 @@ function TaskCompactItemRowComponent({
           {
             borderColor: theme.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
             backgroundColor: isCompleted
-              ? (theme.dark ? '#121212' : '#EBEFF5')
+              ? theme.colors.surfaceSunken
               : theme.colors.surface,
           },
           isCompleted && { opacity: 0.55 },
@@ -334,7 +334,7 @@ function TaskCompactItemRowComponent({
                 <ParticipantsStack
                   participants={visibleParticipants}
                   max={3}
-                  ringColor={isCompleted ? (theme.dark ? '#121212' : '#EBEFF5') : theme.colors.surface}
+                  ringColor={isCompleted ? theme.colors.surfaceSunken : theme.colors.surface}
                   disabled={isSelectionMode || !!drag}
                 />
               </View>

@@ -229,9 +229,11 @@ export function ConfirmDialog({
       ? theme.colors.error
       : tone === 'warning'
         ? theme.colors.warning
-        : tone === 'info' || tone === 'success'
-          ? theme.colors.primary
-          : null;
+        : tone === 'success'
+          ? theme.colors.success
+          : tone === 'info'
+            ? theme.colors.primary
+            : null;
   const ToneIcon =
     tone === 'error' ? AlertCircle : tone === 'warning' ? ShieldAlert : tone === 'info' ? Info : Check;
   const stacked = !!actions && actions.length > 0 && shouldStackButtons;

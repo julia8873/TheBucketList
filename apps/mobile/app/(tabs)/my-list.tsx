@@ -1229,7 +1229,7 @@ export default function MyListScreen() {
               style={({ pressed }) => [
                 styles.exploreCollectionsBanner,
                 {
-                  backgroundColor: theme.dark ? '#181818' : '#F2F8FF',
+                  backgroundColor: theme.dark ? '#181818' : theme.colors.surfaceSunken,
                   borderColor: theme.dark ? 'rgba(212, 177, 58,0.25)' : 'rgba(212, 177, 58,0.35)',
                 },
                 pressed && { opacity: 0.85, transform: [{ scale: 0.99 }] },

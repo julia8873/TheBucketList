@@ -181,7 +181,7 @@ function TaskRowComponent({
       {/* Urgency chip, completed tick, or Expired Action */}
       {dense && trailingElement ? trailingElement : null}
       {completed ? (
-        <CheckCircle2 size={22} color={theme.colors.primary} strokeWidth={1.8} />
+        <CheckCircle2 size={22} color={theme.colors.success} strokeWidth={1.8} />
       ) : expiredAction ? (
         onReschedule ? (
           <Pressable onPress={onReschedule} hitSlop={10} accessibilityRole="button" accessibilityLabel="Reprogramar">
