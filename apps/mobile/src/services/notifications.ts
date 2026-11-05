@@ -1,4 +1,4 @@
-import { getSpecificNotificationText } from '../utils/notificationRouting';
+import { getSpecificNotificationText, translateContentToEn } from '../utils/notificationRouting';
 import { syncProfileLanguage } from './profileLanguage';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
@@ -293,7 +293,8 @@ export async function displayInAppNotification(record: any, currentUserId: strin
 
     // 4. Formatear título y mensaje descriptivo
     let title = 'The Bucket List 🎯';
-    let body = record.content || '';
+    const translatedContent = isEn && record.content ? translateContentToEn(record.content) : null;
+    let body = translatedContent || (isEn ? '' : (record.content || ''));
 
     const specific = getSpecificNotificationText(record, who, entityInfo, currentUserId, i18n.language);
 
@@ -384,13 +385,13 @@ export async function displayInAppNotification(record: any, currentUserId: strin
         break;
       case 'bucket_update':
         title = isEn ? 'Task update 🎯' : 'Actualización de tarea 🎯';
-        body = specific ?? record.content ?? (entityTitle
+        body = specific ?? translatedContent ?? (isEn ? null : record.content) ?? (entityTitle
           ? (isEn ? `${who} updated "${entityTitle}".` : `${who} ha actualizado "${entityTitle}".`)
           : (isEn ? `${who} updated a task you follow.` : `${who} ha actualizado una tarea que sigues.`));
         break;
       case 'album_update':
         title = isEn ? 'Album update 📁' : 'Actualización de álbum 📁';
-        body = specific ?? record.content ?? (entityTitle
+        body = specific ?? translatedContent ?? (isEn ? null : record.content) ?? (entityTitle
           ? (isEn ? `${who} updated "${entityTitle}".` : `${who} ha actualizado "${entityTitle}".`)
           : (isEn ? `${who} updated an album you follow.` : `${who} ha actualizado un álbum que sigues.`));
         break;
@@ -411,12 +412,14 @@ export async function displayInAppNotification(record: any, currentUserId: strin
       default:
         if (specific) {
           body = specific;
-        } else if (record.content) {
+        } else if (translatedContent) {
+          body = translatedContent;
+        } else if (!isEn && record.content) {
           body = record.content;
         } else if (who && who !== 'Someone' && who !== 'Alguien') {
           body = isEn ? `${who} interacted with your account.` : `${who} ha interactuado con tu cuenta.`;
         } else {
-          body = isEn ? 'You have a new update in The Bucket List.' : 'Tienes una nueva actividad en The Bucket List.';
+          body = isEn ? 'New activity in The Bucket List.' : 'Tienes una nueva actividad en The Bucket List.';
         }
         break;
     }
@@ -460,7 +463,7 @@ export async function sendPushNotification(
     const [rpcRes, ptRes, profRes] = await Promise.all([
       Promise.resolve(supabase.rpc('get_user_push_tokens', { p_user_id: tokenOrUserId })).catch(() => ({ data: null })),
       Promise.resolve(supabase.from('push_tokens').select('token').eq('user_id', tokenOrUserId)).catch(() => ({ data: null })),
-      Promise.resolve(supabase.from('profiles').select('push_token').eq('id', tokenOrUserId).maybeSingle()).catch(() => ({ data: null })),
+      Promise.resolve(supabase.from('profiles').select('push_token, language').eq('id', tokenOrUserId).maybeSingle()).catch(() => ({ data: null })),
     ]);
 
     const set = new Set<string>();
@@ -475,6 +478,27 @@ export async function sendPushNotification(
       if (r?.token) set.add(r.token);
     });
     targetTokens = Array.from(set);
+
+    const userLang = profRes.data?.language || 'es';
+    if (userLang === 'en') {
+      const titleMap: Record<string, string> = {
+        'Nuevo seguidor 👋': 'New follower 👋',
+        'Nueva reacción 💛': 'New reaction 💛',
+        'Nuevo comentario 💬': 'New comment 💬',
+        'Nueva mención 🏷️': 'New mention 🏷️',
+        'Solicitud de seguimiento 👥': 'Follow request 👥',
+        'Solicitud aceptada ✨': 'Request accepted ✨',
+        '¡Objetivo cumplido! 🎉': 'Goal achieved! 🎉',
+        'Fecha límite próxima ⏳': 'Deadline approaching ⏳',
+        'Invitación a colaborar 🤝': 'Collaboration invite 🤝',
+        'Actualización de tarea 🎯': 'Task update 🎯',
+        'Actualización de álbum 📁': 'Album update 📁',
+      };
+      const mappedTitle = titleMap[title];
+      if (mappedTitle) title = mappedTitle;
+      const translated = translateContentToEn(body);
+      if (translated) body = translated;
+    }
   }
 
   if (targetTokens.length === 0) return;

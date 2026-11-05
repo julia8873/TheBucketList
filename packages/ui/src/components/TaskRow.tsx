@@ -94,8 +94,8 @@ function TaskRowComponent({
           backgroundColor: pressed
             ? theme.colors.surfaceSunken
             : completed
-            ? (theme.dark ? theme.colors.surfaceSunken : theme.colors.surface)
-            : theme.colors.surface,
+              ? (theme.dark ? theme.colors.surfaceSunken : theme.colors.surface)
+              : theme.colors.surface,
           borderColor: theme.colors.border,
         },
         completed && styles.rowCompleted,
@@ -106,21 +106,21 @@ function TaskRowComponent({
     >
       {/* Thumbnail */}
       {hideThumbnail ? null : (
-      <View
-        style={[
-          styles.thumbnail,
-          dense && styles.thumbnailDense,
-          { backgroundColor: thumbnailColor ?? theme.colors.surface },
-          completed && styles.thumbnailCompleted,
-        ]}
-      >
-        {thumbnailElement ? (
-          thumbnailElement
-        ) : thumbnailUri ? (
-          // Use cover resize mode so the image fills the square nicely
-          <Image source={{ uri: thumbnailUri }} style={styles.thumbnailImg} resizeMode="cover" />
-        ) : null}
-      </View>
+        <View
+          style={[
+            styles.thumbnail,
+            dense && styles.thumbnailDense,
+            { backgroundColor: thumbnailColor ?? theme.colors.surface },
+            completed && styles.thumbnailCompleted,
+          ]}
+        >
+          {thumbnailElement ? (
+            thumbnailElement
+          ) : thumbnailUri ? (
+            // Use cover resize mode so the image fills the square nicely
+            <Image source={{ uri: thumbnailUri }} style={styles.thumbnailImg} resizeMode="cover" />
+          ) : null}
+        </View>
       )}
 
       {/* Content */}

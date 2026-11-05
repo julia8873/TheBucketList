@@ -137,7 +137,7 @@ export function getSpecificNotificationText(
         : `${actorName} ha solicitado activar notificaciones para ${target}`;
     case 'notification_accepted':
       return isEn
-        ? `${actorName} accepted notification request for ${target}`
+        ? `${actorName} accepted the notification request for ${target}`
         : `${actorName} ha aceptado la solicitud de notificaciones para ${target}`;
     case 'bucket_update':
       return isEn
@@ -162,4 +162,51 @@ export function getSpecificNotificationText(
     default:
       return null;
   }
+}
+
+/**
+ * Traduce al inglés las plantillas comunes guardadas en español en el campo `content` de notifications.
+ * Devuelve null si no reconoce el formato o no hay traducción aplicable.
+ */
+export function translateContentToEn(content?: string | null): string | null {
+  if (!content) return null;
+  const rules: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
+    [/^(.+?) ha completado la tarea: "(.*)"$/s, (m) => `${m[1]} completed the task: "${m[2]}"`],
+    [/^(.+?) ha cambiado el estado de la tarea "(.*)" a: (.*)$/s, (m) => `${m[1]} changed the status of the task "${m[2]}" to: ${m[3]}`],
+    [/^(.+?) ha renombrado la tarea a: "(.*)"$/s, (m) => `${m[1]} renamed the task to: "${m[2]}"`],
+    [/^(.+?) ha actualizado las notas de la tarea: "(.*)"$/s, (m) => `${m[1]} updated the notes of the task: "${m[2]}"`],
+    [/^(.+?) ha actualizado la fecha límite de la tarea: "(.*)"$/s, (m) => `${m[1]} updated the deadline of the task: "${m[2]}"`],
+    [/^(.+?) ha actualizado la tarea "(.*)" en el [aá]lbum "(.*)"$/s, (m) => `${m[1]} updated the task "${m[2]}" in the album "${m[3]}"`],
+    [/^(.+?) ha actualizado la tarea: "(.*)"$/s, (m) => `${m[1]} updated the task: "${m[2]}"`],
+    [/^(.+?) ha añadido fotos a la tarea "(.*)" en el [aá]lbum "(.*)"$/s, (m) => `${m[1]} added photos to the task "${m[2]}" in the album "${m[3]}"`],
+    [/^(.+?) ha añadido fotos a la tarea: "(.*)"$/s, (m) => `${m[1]} added photos to the task: "${m[2]}"`],
+    [/^(.+?) ha añadido un paso a la tarea "(.*)": "(.*)"$/s, (m) => `${m[1]} added a step to the task "${m[2]}": "${m[3]}"`],
+    [/^(.+?) ha completado un paso en la tarea "(.*)": "(.*)"$/s, (m) => `${m[1]} completed a step in the task "${m[2]}": "${m[3]}"`],
+    [/^(.+?) ha añadido la tarea "(.*)" al [aá]lbum "(.*)"$/s, (m) => `${m[1]} added the task "${m[2]}" to the album "${m[3]}"`],
+    [/^(.+?) ha eliminado la tarea "(.*)" del [aá]lbum "(.*)"$/s, (m) => `${m[1]} removed the task "${m[2]}" from the album "${m[3]}"`],
+    [/^(.+?) ha cambiado el nombre del [aá]lbum a: "(.*)"$/s, (m) => `${m[1]} renamed the album to: "${m[2]}"`],
+    [/^(.+?) ha cerrado el [aá]lbum: "(.*)"$/s, (m) => `${m[1]} closed the album: "${m[2]}"`],
+    [/^(.+?) ha reabierto el [aá]lbum: "(.*)"$/s, (m) => `${m[1]} reopened the album: "${m[2]}"`],
+    [/^(.+?) ha cambiado la portada del [aá]lbum: "(.*)"$/s, (m) => `${m[1]} changed the cover of the album: "${m[2]}"`],
+    [/^(.+?) ha actualizado la descripci[oó]n del [aá]lbum: "(.*)"$/s, (m) => `${m[1]} updated the description of the album: "${m[2]}"`],
+    [/^(.+?) ha actualizado el [aá]lbum: "(.*)"$/s, (m) => `${m[1]} updated the album: "${m[2]}"`],
+    [/^(.+?) ha comentado: "(.*)" en la tarea "(.*)"$/s, (m) => `${m[1]} commented: "${m[2]}" on task "${m[3]}"`],
+    [/^(.+?) ha comentado en tu publicación "(.*)": "(.*)"$/s, (m) => `${m[1]} commented on your post "${m[2]}": "${m[3]}"`],
+    [/^(.+?) ha dejado un comentario en tu (álbum|tarea) "(.*)"$/s, (m) => `${m[1]} left a comment on your ${m[2] === 'álbum' ? 'album' : 'task'} "${m[3]}"`],
+    [/^(.+?) te ha mencionado en un comentario en la publicación "(.*)"$/s, (m) => `${m[1]} mentioned you in a comment on "${m[2]}"`],
+    [/^(.+?) te ha mencionado en un comentario en "(.*)"$/s, (m) => `${m[1]} mentioned you in a comment on "${m[2]}"`],
+    [/^(.+?) ha reaccionado a tu tarea "(.*)"$/s, (m) => `${m[1]} reacted to your task "${m[2]}"`],
+    [/^(.+?) le ha dado me gusta a tu tarea "(.*)"$/s, (m) => `${m[1]} liked your task "${m[2]}"`],
+    [/^(.+?) ha empezado a seguirte$/s, (m) => `${m[1]} started following you`],
+    [/^(.+?) quiere seguirte$/s, (m) => `${m[1]} wants to follow you`],
+    [/^(.+?) aceptó tu solicitud$/s, (m) => `${m[1]} accepted your follow request`],
+    [/^(.+?) ha solicitado activar las notificaciones para (.*)$/s, (m) => `${m[1]} requested to turn on notifications for ${m[2]}`],
+    [/^(.+?) quiere que recibas notificaciones de su (.*)$/s, (m) => `${m[1]} wants you to receive notifications for their ${m[2]}`],
+    [/^Te ha invitado a colaborar en la tarea "(.*)"$/s, (m) => `Invited you to collaborate on the task "${m[1]}"`],
+  ];
+  for (const [re, fn] of rules) {
+    const m = content.match(re);
+    if (m) return fn(m);
+  }
+  return null;
 }

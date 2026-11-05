@@ -10,7 +10,7 @@ import { useAuthStore } from '../../src/stores/auth.store';
 import { usePullToRefresh } from '../../src/hooks/useAutoRefresh';
 import { supabase } from '../../src/services/supabase';
 import { bucketApi } from '../../src/services/api/bucket';
-import { getNotificationRoute, getSpecificNotificationText, isActionableNotification } from '../../src/utils/notificationRouting';
+import { getNotificationRoute, getSpecificNotificationText, translateContentToEn, isActionableNotification } from '../../src/utils/notificationRouting';
 import { prefetchBucketDetail } from '../../src/features/bucket-detail/bucketDetailQueries';
 import { useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
@@ -213,6 +213,12 @@ export default function NotificationsScreen() {
     const specific = getSpecificNotificationText(notification, actorName, notification, user?.id, i18n.language);
     if (specific) return specific;
 
+    // Si el usuario tiene la app en inglés y la BD guardó contenido en español, traducir las plantillas conocidas
+    if (isEn && notification.content) {
+      const translated = translateContentToEn(notification.content);
+      if (translated) return translated;
+    }
+
     // Cuando el idioma es inglés, NO usar notification.content de la BD ya que fue insertado en español por triggers de PostgreSQL
     switch (notification.type) {
       case 'user_reported': return `${actorName} ${t('notifications.type_user_reported')}`;
@@ -239,11 +245,11 @@ export default function NotificationsScreen() {
       case 'album_invite': return `${actorName} ${t('notifications.type_album_invite')}`;
       case 'notification_request': return `${actorName} ${t('notifications.type_notification_request')}`;
       case 'notification_accepted': return `${actorName} ${t('notifications.type_notification_accepted')}`;
-      case 'bucket_update': return notification.content || `${actorName} ${t('notifications.type_bucket_update')}`;
-      case 'album_update': return notification.content || `${actorName} ${t('notifications.type_album_update')}`;
+      case 'bucket_update': return isEn ? `${actorName} ${t('notifications.type_bucket_update')}` : (notification.content || `${actorName} ${t('notifications.type_bucket_update')}`);
+      case 'album_update': return isEn ? `${actorName} ${t('notifications.type_album_update')}` : (notification.content || `${actorName} ${t('notifications.type_album_update')}`);
       case 'drive_access': return `${actorName} ${t('notifications.type_drive_access')}`;
       default:
-        if (notification.content) return notification.content;
+        if (!isEn && notification.content) return notification.content;
         if (actorName && actorName !== 'Someone' && actorName !== 'Alguien') {
           return isEn ? `${actorName} interacted with your account.` : `${actorName} ha interactuado con tu cuenta.`;
         }
