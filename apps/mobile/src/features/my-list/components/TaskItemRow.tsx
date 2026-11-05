@@ -3,7 +3,7 @@ import { View, Text, Pressable, Animated, StyleSheet, Alert } from 'react-native
 import { Swipeable } from 'react-native-gesture-handler';
 import { CheckCircle2, GripVertical, Star, Trash2 } from 'lucide-react-native';
 import { TaskRow, TagChip, confirm } from '@bucketlist/ui';
-import { useTranslation } from '@bucketlist/shared';
+import { useTranslation, resolveCounterLabel } from '@bucketlist/shared';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { BucketCover } from '@/components/BucketCover';
 import { resolveTaskImage } from '@/utils/taskImage';
@@ -93,10 +93,10 @@ function TaskItemRowComponent({
   } else if (showSubtasks && subtasksTotal > 0) {
     meta = t('tasks.steps_count', { done: subtasksDone, total: subtasksTotal, defaultValue: `${subtasksDone} de ${subtasksTotal} pasos` });
   } else if (showSubtasks && item.counter_target && item.counter_target > 0) {
-    const label = item.counter_label?.trim() || t('bucket.counter_default_label', { defaultValue: 'counts' });
+    const label = resolveCounterLabel(item.counter_label, item.counter_target, i18n.language);
     meta = `${item.counter_count ?? 0} / ${item.counter_target} ${label}`;
   } else if (showSubtasks && item.counter_count && item.counter_count > 0) {
-    const label = item.counter_label?.trim() || t('bucket.counter_default_label', { defaultValue: 'counts' });
+    const label = resolveCounterLabel(item.counter_label, item.counter_count, i18n.language);
     meta = `${item.counter_count} ${label}`;
   } else if (showCategoryLoc) {
     const isEn = i18n.language?.startsWith('en');

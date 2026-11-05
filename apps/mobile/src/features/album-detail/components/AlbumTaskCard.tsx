@@ -7,7 +7,7 @@ import { BucketCover } from '@/components/BucketCover';
 import { hexToRgba } from '@/constants/tagPresets';
 import { styles } from '../styles/album-detail.styles';
 
-import { useTranslation } from '@bucketlist/shared';
+import { useTranslation, resolveCounterLabel } from '@bucketlist/shared';
 
 function getBadgeText(dateStr?: string, t?: (k: any, o?: any) => string): string | null {
   if (!dateStr) return null;
@@ -32,10 +32,10 @@ function getSubTitle(task: TaskItem, t?: (k: any, o?: any) => string): string {
   if (task.stepsTotal && task.stepsTotal > 0) {
     parts.push(t ? t('tasks.steps_count', { done: task.stepsCompleted ?? 0, total: task.stepsTotal }) : `${task.stepsCompleted ?? 0} de ${task.stepsTotal} pasos`);
   } else if (task.counterTarget && task.counterTarget > 0) {
-    const label = task.counterLabel?.trim() || (t ? t('bucket.counter_default_label', { defaultValue: 'counts' }) : 'counts');
+    const label = resolveCounterLabel(task.counterLabel, task.counterTarget);
     parts.push(`${task.counterCount ?? 0} / ${task.counterTarget} ${label}`);
   } else if (task.counterCount && task.counterCount > 0) {
-    const label = task.counterLabel?.trim() || (t ? t('bucket.counter_default_label', { defaultValue: 'counts' }) : 'counts');
+    const label = resolveCounterLabel(task.counterLabel, task.counterCount);
     parts.push(`${task.counterCount} ${label}`);
   } else if (task.location) {
     parts.push(task.location);

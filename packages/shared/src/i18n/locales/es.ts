@@ -313,7 +313,7 @@ const es = {
     counter_target: 'Objetivo',
     counter_add: 'Añadir contador',
     counter_desc: 'Cuenta repeticiones, kilómetros, libros…',
-    counter_default_label: 'counts',
+    counter_default_label: 'veces',
     photos_title: 'FOTOS',
     sort_by: 'Ordenar por:',
     sort_date: 'Fecha',

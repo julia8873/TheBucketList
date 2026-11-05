@@ -9,7 +9,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Check, Star } from 'lucide-react-native';
 import { useTheme } from '@bucketlist/ui';
-import { useTranslation } from '@bucketlist/shared';
+import { useTranslation, resolveCounterLabel } from '@bucketlist/shared';
 import { BucketCover } from '@/components/BucketCover';
 import { resolveTaskImage } from '@/utils/taskImage';
 import { ParticipantsStack, useParticipantsOf } from '@/components/ItemParticipants';
@@ -47,7 +47,7 @@ function TaskBentoCardComponent({
   onManageTags,
 }: TaskBentoCardProps) {
   const { theme } = useTheme();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const c = theme.colors;
   const participants = useParticipantsOf('task', item.id);
 
@@ -64,14 +64,15 @@ function TaskBentoCardComponent({
   const subtasksTotal = item.item_subtasks?.length || 0;
   const subtasksDone = item.item_subtasks?.filter((s: any) => s.done).length || 0;
   const counterTarget = item.counter_target ?? 0;
-  const counterLabel = item.counter_label?.trim() || t('bucket.counter_default_label', { defaultValue: 'counts' });
+  const counterCount = item.counter_count ?? 0;
+  const counterLabel = resolveCounterLabel(item.counter_label, counterTarget || counterCount, i18n.language);
   const progressText =
     subtasksTotal > 0
       ? `${subtasksDone}/${subtasksTotal}`
       : counterTarget > 0
-      ? `${item.counter_count ?? 0}/${counterTarget} ${counterLabel}`
-      : (item.counter_count ?? 0) > 0
-      ? `${item.counter_count} ${counterLabel}`
+      ? `${counterCount}/${counterTarget} ${counterLabel}`
+      : counterCount > 0
+      ? `${counterCount} ${counterLabel}`
       : null;
 
   const priority = item.priority || 'medium';

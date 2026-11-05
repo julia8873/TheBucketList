@@ -8,7 +8,7 @@ import { BucketCover } from './BucketCover';
 import { resolveTaskImage } from '../utils/taskImage';
 import { useAuthStore } from '../stores/auth.store';
 import { useCopiedBucketIds, useCopyBucket } from '../hooks/useSocial';
-import { useTranslation } from '@bucketlist/shared';
+import { useTranslation, resolveCounterLabel } from '@bucketlist/shared';
 import type { TaskViewMode } from './ViewModeSelector';
 
 interface PublicTaskRowProps {
@@ -35,10 +35,10 @@ function buildMeta(bucket: any, t: (key: any, options?: any) => string, locale: 
   } else if (subtasks.length > 0) {
     detail = t('tasks.steps_count', { done, total: subtasks.length });
   } else if (bucket.counter_target && bucket.counter_target > 0) {
-    const label = bucket.counter_label?.trim() || t('bucket.counter_default_label', { defaultValue: 'counts' });
+    const label = resolveCounterLabel(bucket.counter_label, bucket.counter_target, locale);
     detail = `${bucket.counter_count ?? 0} / ${bucket.counter_target} ${label}`;
   } else if (bucket.counter_count && bucket.counter_count > 0) {
-    const label = bucket.counter_label?.trim() || t('bucket.counter_default_label', { defaultValue: 'counts' });
+    const label = resolveCounterLabel(bucket.counter_label, bucket.counter_count, locale);
     detail = `${bucket.counter_count} ${label}`;
   } else if (bucket.location_text) {
     detail = bucket.location_text;

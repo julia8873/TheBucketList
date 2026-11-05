@@ -4,7 +4,7 @@ import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { CheckCircle2, GripVertical, Star, Trash2, Users } from 'lucide-react-native';
 import { useTheme, confirm } from '@bucketlist/ui';
-import { useTranslation } from '@bucketlist/shared';
+import { useTranslation, resolveCounterLabel } from '@bucketlist/shared';
 import { styles } from '../styles/my-list.styles';
 import type { DragHandle } from '@/components/DraggableTaskList';
 import { BucketCover } from '@/components/BucketCover';
@@ -75,7 +75,7 @@ function TaskCompactItemRowComponent({
   const subtasksDone = item.item_subtasks?.filter((s: any) => s.done).length || 0;
   const counterTarget = (item).counter_target ?? 0;
   const counterCount = (item).counter_count ?? 0;
-  const counterLabel = item.counter_label?.trim() || t('bucket.counter_default_label', { defaultValue: 'counts' });
+  const counterLabel = resolveCounterLabel(item.counter_label, counterTarget || counterCount, i18n.language);
 
   const progressText =
     subtasksTotal > 0

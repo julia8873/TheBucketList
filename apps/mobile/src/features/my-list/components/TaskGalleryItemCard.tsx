@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Check, CheckCircle2, Star } from 'lucide-react-native';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { useTheme, useCoverOverlay } from '@bucketlist/ui';
-import { useTranslation } from '@bucketlist/shared';
+import { useTranslation, resolveCounterLabel } from '@bucketlist/shared';
 import { BucketCover } from '@/components/BucketCover';
 import { resolveTaskImage } from '@/utils/taskImage';
 import { styles } from '../styles/my-list.styles';
@@ -79,10 +79,10 @@ function TaskGalleryItemCardComponent({
     if (subtasksTotal > 0) {
       metaParts.push(`${subtasksDone}/${subtasksTotal} ${t('common.steps', { defaultValue: 'pasos' })}`);
     } else if (item.counter_target > 0) {
-      const label = item.counter_label?.trim() || t('bucket.counter_default_label', { defaultValue: 'counts' });
+      const label = resolveCounterLabel(item.counter_label, item.counter_target, i18n.language);
       metaParts.push(`${item.counter_count ?? 0}/${item.counter_target} ${label}`);
     } else if ((item.counter_count ?? 0) > 0) {
-      const label = item.counter_label?.trim() || t('bucket.counter_default_label', { defaultValue: 'counts' });
+      const label = resolveCounterLabel(item.counter_label, item.counter_count, i18n.language);
       metaParts.push(`${item.counter_count} ${label}`);
     }
   }
