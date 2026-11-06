@@ -42,7 +42,7 @@ import {
 import { MyListSortModal } from '@/features/my-list/components/MyListSortModal';
 import { SectionHeader } from '@/features/my-list/components/ListControls';
 import { MyListCustomizeModal } from '@/features/my-list/components/MyListCustomizeModal';
-import { useMyListCustomizationStore } from '@/stores/myListCustomization.store';
+import { useMyListCustomizationStore, type GalleryColumns } from '@/stores/myListCustomization.store';
 import {
   ItemParticipantsProvider,
   ParticipantsStack,
@@ -68,7 +68,9 @@ export default function MyListScreen() {
     taskFavoritesAsGrid,
     albumFavoritesAsGrid,
     taskGalleryColumns,
+    albumGalleryColumns,
     setTaskGalleryColumns,
+    setAlbumGalleryColumns,
   } = useMyListCustomizationStore();
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [collapsed, setCollapsed] = React.useState<Record<string, boolean>>({});
@@ -521,7 +523,7 @@ export default function MyListScreen() {
   );
 
   const renderGalleryAlbum = useCallback(
-    ({ item, index = 0 }: { item: any; index?: number }) => (
+    ({ item, index = 0, columns = albumGalleryColumns }: { item: any; index?: number; columns?: GalleryColumns }) => (
       <AlbumCard
         key={item.id}
         title={item.title}
@@ -541,6 +543,7 @@ export default function MyListScreen() {
         priority={item.priority}
         isClosed={item.is_closed}
         colorIndex={index}
+        columns={columns}
         showPriority={albumViews.gallery.showPriority}
         showTaskCount={albumViews.gallery.showTaskCount}
         showProgress={albumViews.gallery.showProgress}
@@ -576,6 +579,7 @@ export default function MyListScreen() {
       />
     ),
     [
+      albumGalleryColumns,
       state.isAlbumFavorite,
       state.selectedAlbumIds,
       state.isAlbumSelectionMode,
@@ -721,6 +725,10 @@ export default function MyListScreen() {
   const handleCycleGalleryColumns = useCallback(() => {
     setTaskGalleryColumns(taskGalleryColumns === 2 ? 3 : taskGalleryColumns === 3 ? 4 : 2);
   }, [taskGalleryColumns, setTaskGalleryColumns]);
+
+  const handleCycleAlbumGalleryColumns = useCallback(() => {
+    setAlbumGalleryColumns(albumGalleryColumns === 2 ? 3 : albumGalleryColumns === 3 ? 4 : 2);
+  }, [albumGalleryColumns, setAlbumGalleryColumns]);
 
   const taskListHeaderElement = (
     <View style={{ marginBottom: 12 }}>
@@ -1062,22 +1070,24 @@ export default function MyListScreen() {
               onToggleSearch={toggleSearchBar}
               allCollapsed={allCollapsed}
               onToggleAllCollapsed={toggleAllSections}
+              galleryColumns={albumGalleryColumns}
+              onCycleGalleryColumns={handleCycleAlbumGalleryColumns}
               theme={theme}
             />
             {renderSearchBar()}
 
             {state.isLoadingAlbums ? (
-              <View style={styles.albumGrid}>
-                <AlbumCardSkeleton />
-                <AlbumCardSkeleton />
-                <AlbumCardSkeleton />
-                <AlbumCardSkeleton />
+              <View style={[styles.albumGrid, albumGalleryColumns === 3 && styles.albumGrid3, albumGalleryColumns === 4 && styles.albumGrid4]}>
+                {Array.from({ length: albumGalleryColumns * 2 }).map((_, i) => (
+                  <AlbumCardSkeleton key={i} columns={albumGalleryColumns} />
+                ))}
               </View>
             ) : state.filteredAlbums.length === 0 ? (
               state.albumViewMode === 'gallery' ? (
-                <View style={styles.albumGrid}>
+                <View style={[styles.albumGrid, albumGalleryColumns === 3 && styles.albumGrid3, albumGalleryColumns === 4 && styles.albumGrid4]}>
                   <NoAlbumCard
                     count={state.unassignedCount}
+                    columns={albumGalleryColumns}
                     onPress={() => {
                       if (state.isAlbumSelectionMode) return;
                       if (Date.now() - state.lastExitAlbumSelectionTimeRef.current < 450) return;
@@ -1175,7 +1185,7 @@ export default function MyListScreen() {
                         {sec.key === 'favorites' && albumFavoritesAsGrid ? (
                           <View style={styles.albumGrid}>
                             {visibleItems(sec).map((item: any, index: number) =>
-                              renderGalleryAlbum({ item, index })
+                              renderGalleryAlbum({ item, index, columns: 2 })
                             )}
                           </View>
                         ) : (
@@ -1209,17 +1219,18 @@ export default function MyListScreen() {
                       return (
                         <View key={sec.key} style={styles.sectionBlock}>
                           {sectionHeaderEl(sec.key, sec.title, sec.items.length)}
-                          <View style={styles.albumGrid}>
+                          <View style={[styles.albumGrid, albumGalleryColumns === 3 && styles.albumGrid3, albumGalleryColumns === 4 && styles.albumGrid4]}>
                             {visibleItems(sec).map((item: any, index: number) =>
-                              renderGalleryAlbum({ item, index })
+                              renderGalleryAlbum({ item, index, columns: albumGalleryColumns })
                             )}
                           </View>
                         </View>
                       );
                     })}
-                    <View style={styles.albumGrid}>
+                    <View style={[styles.albumGrid, albumGalleryColumns === 3 && styles.albumGrid3, albumGalleryColumns === 4 && styles.albumGrid4]}>
                       <NoAlbumCard
                         count={state.unassignedCount}
+                        columns={albumGalleryColumns}
                         onPress={() => {
                           if (state.isAlbumSelectionMode) return;
                           if (Date.now() - state.lastExitAlbumSelectionTimeRef.current < 450) return;
@@ -1229,12 +1240,13 @@ export default function MyListScreen() {
                     </View>
                   </>
                 ) : (
-                  <View style={styles.albumGrid}>
+                  <View style={[styles.albumGrid, albumGalleryColumns === 3 && styles.albumGrid3, albumGalleryColumns === 4 && styles.albumGrid4]}>
                     {state.sortedAlbumsList.map((item: any, index: number) =>
-                      renderGalleryAlbum({ item, index })
+                      renderGalleryAlbum({ item, index, columns: albumGalleryColumns })
                     )}
                     <NoAlbumCard
                       count={state.unassignedCount}
+                      columns={albumGalleryColumns}
                       onPress={() => {
                         if (state.isAlbumSelectionMode) return;
                         if (Date.now() - state.lastExitAlbumSelectionTimeRef.current < 450) return;

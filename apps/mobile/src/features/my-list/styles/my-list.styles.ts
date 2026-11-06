@@ -419,6 +419,12 @@ export const styles = themedStyleSheet({
     gap: 12,
     marginBottom: 16,
   },
+  albumGrid3: {
+    gap: 6,
+  },
+  albumGrid4: {
+    gap: 4,
+  },
   compactNewAlbumBtn: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -87,25 +87,27 @@ export function TaskGallerySkeleton({ columns = 2 }: { columns?: 2 | 3 | 4 } = {
 /**
  * Skeleton para tarjetas de álbumes en Mis Tareas.
  */
-export function AlbumCardSkeleton() {
+export function AlbumCardSkeleton({ columns = 2 }: { columns?: 2 | 3 | 4 } = {}) {
   const { width } = useWindowDimensions();
-  const { cardWidth, cardHeight } = getAlbumCardDimensions(width);
+  const { cardWidth, cardHeight } = getAlbumCardDimensions(width, columns);
 
   return (
     <View
       style={[
         styles.albumCard,
         Platform.select({
-          web: { width: 'calc(50% - 7px)' } as any,
+          web: { width: columns === 4 ? 'calc(25% - 3px)' : columns === 3 ? 'calc(33.333% - 4px)' : 'calc(50% - 7px)' } as any,
           default: { width: cardWidth },
         }),
       ]}
     >
-      <Skeleton width="100%" height={cardHeight} borderRadius={20} />
-      <View style={{ paddingHorizontal: 4, paddingTop: 8 }}>
-        <Skeleton width="75%" height={14} borderRadius={5} style={{ marginBottom: 6 }} />
-        <Skeleton width="40%" height={11} borderRadius={4} />
-      </View>
+      <Skeleton width="100%" height={cardHeight} borderRadius={columns === 4 ? 8 : columns === 3 ? 12 : 20} />
+      {columns !== 4 && (
+        <View style={{ paddingHorizontal: 4, paddingTop: 6 }}>
+          <Skeleton width="75%" height={columns === 3 ? 11 : 14} borderRadius={5} style={{ marginBottom: 4 }} />
+          <Skeleton width="40%" height={columns === 3 ? 9 : 11} borderRadius={4} />
+        </View>
+      )}
     </View>
   );
 }

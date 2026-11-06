@@ -31,6 +31,8 @@ interface AlbumListHeaderControlsProps {
   onToggleSearch: () => void;
   allCollapsed: boolean;
   onToggleAllCollapsed: () => void;
+  galleryColumns?: 2 | 3 | 4;
+  onCycleGalleryColumns?: () => void;
   /** Se mantiene por compatibilidad: la personalización se abre desde el engranaje de la cabecera. */
   onOpenCustomize?: () => void;
   theme: any;
@@ -61,6 +63,8 @@ export function AlbumListHeaderControls({
   onToggleSearch,
   allCollapsed,
   onToggleAllCollapsed,
+  galleryColumns,
+  onCycleGalleryColumns,
   theme,
 }: AlbumListHeaderControlsProps) {
   const { t } = useTranslation();
@@ -109,6 +113,8 @@ export function AlbumListHeaderControls({
         showSortDir={albumSortField !== 'manual' && !isAlbumReordering}
         allCollapsed={allCollapsed}
         onToggleAllCollapsed={onToggleAllCollapsed}
+        galleryColumns={galleryColumns}
+        onCycleGalleryColumns={onCycleGalleryColumns}
         isReordering={isAlbumReordering}
         onFinishReordering={() => setIsAlbumReordering(false)}
         isSearching={isSearching}

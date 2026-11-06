@@ -25,12 +25,15 @@ import { fontFamily, fontSize } from '../tokens/typography';
 import { gold, dark, green } from '../tokens/colors';
 import { radii } from '../tokens/radii';
 
-export function getAlbumCardDimensions(windowWidth: number) {
+export function getAlbumCardDimensions(windowWidth: number, columns: 2 | 3 | 4 = 2) {
   // En web el contenedor principal tiene un maxWidth de 620px
   const effectiveWidth = Platform.OS === 'web' ? Math.min(windowWidth, 620) : windowWidth;
-  // Padding horizontal en listas (20 * 2 = 40) + gap (12) + 2px de margen contra subpíxeles
-  const cardWidth = Math.floor((effectiveWidth - 40 - 12 - 2) / 2);
-  const cardHeight = Math.round(cardWidth * 1.45);
+  // Padding horizontal en listas (20 * 2 = 40) + gaps según columnas + margen contra subpíxeles
+  const gap = columns === 4 ? 4 : columns === 3 ? 6 : 12;
+  const totalGap = gap * (columns - 1);
+  const cardWidth = Math.floor((effectiveWidth - 40 - totalGap - 2) / columns);
+  const ratio = columns === 4 ? 1.15 : columns === 3 ? 1.25 : 1.45;
+  const cardHeight = Math.round(cardWidth * ratio);
   return { cardWidth, cardHeight };
 }
 
@@ -67,6 +70,7 @@ interface AlbumCardProps {
   description?: string;
   /** Elemento extra (p. ej. fotos de colaboradores) sobre la barra de progreso. */
   participantsElement?: React.ReactNode;
+  columns?: 2 | 3 | 4;
 }
 
 const PRESET_COVERS: Record<string, { type: 'gradient' | 'solid'; colors: [string, string, ...string[]]; diagonal?: boolean }> = {
@@ -152,14 +156,22 @@ export function AlbumCard({
   deadline,
   description,
   participantsElement,
+  columns = 2,
 }: AlbumCardProps) {
   const { theme } = useTheme();
   const overlay = useCoverOverlay();
   const { t, i18n } = useTranslation();
   const { width } = useWindowDimensions();
-  const { cardWidth, cardHeight } = getAlbumCardDimensions(width);
+  const { cardWidth, cardHeight } = getAlbumCardDimensions(width, columns);
   const progress = totalTasks > 0 ? completedTasks / totalTasks : 0;
   const [g1, g2] = overlay.placeholders[colorIndex % overlay.placeholders.length] ?? overlay.placeholders[0]!;
+
+  const is4Cols = columns === 4;
+  const is3Cols = columns === 3;
+  const badgeSize = is4Cols ? 18 : is3Cols ? 20 : 22;
+  const statusIconSize = is4Cols ? 10 : is3Cols ? 11 : 12;
+  const starIconSize = is4Cols ? 10 : is3Cols ? 12 : 14;
+  const cardBorderRadius = is4Cols ? radii.md : is3Cols ? radii.lg : radii.xl;
 
   const parsedCover = parseAlbumCover(coverUri);
 
@@ -221,14 +233,15 @@ export function AlbumCard({
         {
           ...Platform.select({
             web: {
-              width: 'calc(50% - 7px)',
-              aspectRatio: 1 / 1.45,
+              width: is4Cols ? 'calc(25% - 3px)' : is3Cols ? 'calc(33.333% - 4px)' : 'calc(50% - 7px)',
+              aspectRatio: is4Cols ? 1 / 1.15 : is3Cols ? 1 / 1.25 : 1 / 1.45,
             } as any,
             default: {
               width: cardWidth,
               height: cardHeight,
             },
           }),
+          borderRadius: cardBorderRadius,
           backgroundColor: theme.dark ? dark[900] : dark[800],
           opacity: pressed ? 0.85 : 1,
         },
@@ -245,8 +258,8 @@ export function AlbumCard({
           style={[
             StyleSheet.absoluteFill,
             {
-              borderRadius: radii.xl,
-              borderWidth: 2.5,
+              borderRadius: cardBorderRadius,
+              borderWidth: is4Cols ? 1.5 : 2.5,
               borderColor: gold[400],
               zIndex: 10,
             },
@@ -264,12 +277,12 @@ export function AlbumCard({
 
       {/* Top left badges */}
       {isSelectionMode ? (
-        <View style={styles.topLeftBadges}>
+        <View style={[styles.topLeftBadges, is4Cols && { top: 4, left: 4 }, is3Cols && { top: 6, left: 6 }]}>
           <View
             style={{
-              width: 24,
-              height: 24,
-              borderRadius: 12,
+              width: badgeSize,
+              height: badgeSize,
+              borderRadius: badgeSize / 2,
               backgroundColor: isSelected ? gold[400] : 'rgba(0,0,0,0.6)',
               borderWidth: isSelected ? 0 : 1.5,
               borderColor: '#FFFFFF',
@@ -277,35 +290,35 @@ export function AlbumCard({
               justifyContent: 'center',
             }}
           >
-            {isSelected && <Check size={14} color="#0E0E0E" strokeWidth={3} />}
+            {isSelected && <Check size={statusIconSize} color="#0E0E0E" strokeWidth={3} />}
           </View>
         </View>
       ) : showBadges && (
-        <View style={styles.topLeftBadges}>
+        <View style={[styles.topLeftBadges, is4Cols && { top: 4, left: 4 }, is3Cols && { top: 6, left: 6 }]}>
           {!isClosed && (
             isCompleted ? (
-              <View style={[styles.completedBadge, { backgroundColor: 'rgba(52, 199, 89, 0.9)' }]}>
-                <CheckCircle2 size={12} color="#FFFFFF" strokeWidth={2.4} />
+              <View style={[styles.completedBadge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2, backgroundColor: 'rgba(52, 199, 89, 0.9)' }]}>
+                <CheckCircle2 size={statusIconSize} color="#FFFFFF" strokeWidth={2.4} />
               </View>
             ) : isExpired ? (
-              <View style={[styles.completedBadge, { backgroundColor: 'rgba(239, 68, 68, 0.9)' }]}>
-                <AlertCircle size={12} color="#FFFFFF" strokeWidth={2.4} />
+              <View style={[styles.completedBadge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2, backgroundColor: 'rgba(239, 68, 68, 0.9)' }]}>
+                <AlertCircle size={statusIconSize} color="#FFFFFF" strokeWidth={2.4} />
               </View>
             ) : isInProgress ? (
-              <View style={[styles.completedBadge, { backgroundColor: 'rgba(0, 122, 255, 0.9)' }]}>
-                <MoreHorizontal size={13} color="#FFFFFF" strokeWidth={2.4} />
+              <View style={[styles.completedBadge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2, backgroundColor: 'rgba(0, 122, 255, 0.9)' }]}>
+                <MoreHorizontal size={statusIconSize + 1} color="#FFFFFF" strokeWidth={2.4} />
               </View>
             ) : (
-              <View style={[styles.completedBadge, { backgroundColor: 'rgba(142, 142, 147, 0.9)' }]}>
-                <Clock size={11} color="#FFFFFF" strokeWidth={2.2} />
+              <View style={[styles.completedBadge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2, backgroundColor: 'rgba(142, 142, 147, 0.9)' }]}>
+                <Clock size={statusIconSize - 1} color="#FFFFFF" strokeWidth={2.2} />
               </View>
             )
           )}
 
           {isClosed && (
-            <View style={styles.closedBadge}>
-              <Lock size={10} color="#D4B13A" />
-              <Text style={styles.closedText}>{t('common.closed')}</Text>
+            <View style={[styles.closedBadge, is4Cols && { paddingHorizontal: 4, paddingVertical: 1 }]}>
+              <Lock size={statusIconSize - 2} color="#D4B13A" />
+              {!is4Cols && <Text style={[styles.closedText, is3Cols && { fontSize: 9 }]}>{t('common.closed')}</Text>}
             </View>
           )}
         </View>
@@ -314,13 +327,15 @@ export function AlbumCard({
       {/* Save or Favorite badge / button */}
       {onToggleSave ? (
         <Pressable
-          hitSlop={10}
+          hitSlop={8}
           onPress={(e) => {
             e.stopPropagation();
             onToggleSave();
           }}
           style={[
             styles.favoriteBadge,
+            is4Cols && { top: 4, right: 4, padding: 3 },
+            is3Cols && { top: 6, right: 6, padding: 4 },
             { backgroundColor: floatingBadgeBg },
             !theme.dark && { borderWidth: 1, borderColor: gold[400] },
           ]}
@@ -328,7 +343,7 @@ export function AlbumCard({
           accessibilityLabel={isSaved ? t('common.unsave') : t('common.save_album')}
         >
           <Bookmark
-            size={14}
+            size={starIconSize}
             color={isSaved ? gold[500] : (theme.dark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.45)')}
             fill={isSaved ? gold[500] : 'transparent'}
           />
@@ -337,21 +352,25 @@ export function AlbumCard({
         <View
           style={[
             styles.favoriteBadge,
+            is4Cols && { top: 4, right: 4, padding: 3 },
+            is3Cols && { top: 6, right: 6, padding: 4 },
             { backgroundColor: floatingBadgeBg },
             !theme.dark && { borderWidth: 1, borderColor: gold[400] },
           ]}
         >
-          <Bookmark size={14} color={gold[500]} fill={gold[500]} />
+          <Bookmark size={starIconSize} color={gold[500]} fill={gold[500]} />
         </View>
       ) : onToggleFavorite ? (
         <Pressable
-          hitSlop={10}
+          hitSlop={8}
           onPress={(e) => {
             e.stopPropagation();
             onToggleFavorite();
           }}
           style={[
             styles.favoriteBadge,
+            is4Cols && { top: 4, right: 4, padding: 3 },
+            is3Cols && { top: 6, right: 6, padding: 4 },
             { backgroundColor: floatingBadgeBg },
             !theme.dark && { borderWidth: 1, borderColor: gold[400] },
           ]}
@@ -359,7 +378,7 @@ export function AlbumCard({
           accessibilityLabel={isFavorite ? t('common.unfavorite') : t('common.add_favorite')}
         >
           <Star
-            size={14}
+            size={starIconSize}
             color={isFavorite ? gold[500] : (theme.dark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.45)')}
             fill={isFavorite ? gold[500] : 'transparent'}
           />
@@ -368,82 +387,104 @@ export function AlbumCard({
         <View
           style={[
             styles.favoriteBadge,
+            is4Cols && { top: 4, right: 4, padding: 3 },
+            is3Cols && { top: 6, right: 6, padding: 4 },
             { backgroundColor: floatingBadgeBg },
             !theme.dark && { borderWidth: 1, borderColor: gold[400] },
           ]}
         >
-          <Star size={14} color={gold[500]} fill={gold[500]} />
+          <Star size={starIconSize} color={gold[500]} fill={gold[500]} />
         </View>
       ) : null}
 
       {/* Bottom content */}
-      <View style={styles.bottom}>
-        <Text style={[styles.title, { color: titleColor }]} numberOfLines={showDescription && description ? 1 : 2}>{title}</Text>
-        <View style={styles.metaRow}>
-          {showTaskCount && (
-            <Text style={[styles.meta, { color: metaColor }]}>
-              {totalTasks} {totalTasks === 1 ? t('albums.task_single') : t('albums.task_plural')} · {completedTasks} {completedTasks === 1 ? t('albums.done_single') : t('albums.done_plural')}
-            </Text>
-          )}
-          {showDate && createdAt && (
-            <Text style={[styles.meta, { color: metaColor }]}>
-              {new Date(createdAt).toLocaleDateString(i18n.language?.startsWith('en') ? 'en-US' : 'es-ES', { day: 'numeric', month: 'short' })}
-            </Text>
-          )}
-          {showPriority && priority && (
-            <View style={[styles.priorityIndicator, { backgroundColor: chipBg }]}>
-              <View
-                style={[
-                  styles.priorityDot,
-                  {
-                    backgroundColor:
-                      priority === 'high' || priority === 'urgent'
-                        ? '#EF4444'
-                        : priority === 'low'
-                          ? '#10B981'
-                          : '#D4B13A',
-                  },
-                ]}
-              />
-              <Text
-                style={[
-                  styles.priorityText,
-                  {
-                    color:
-                      priority === 'high' || priority === 'urgent'
-                        ? '#EF4444'
-                        : priority === 'low'
-                          ? '#10B981'
-                          : '#D4B13A',
-                  },
-                ]}
-              >
-                {priority === 'high' || priority === 'urgent'
-                  ? t('common.high')
-                  : priority === 'low'
-                  ? t('common.low')
-                  : t('common.medium')}
+      <View style={[styles.bottom, is4Cols && { padding: 5 }, is3Cols && { padding: 8 }]}>
+        <Text
+          style={[
+            styles.title,
+            { color: titleColor },
+            is4Cols && { fontSize: 11, lineHeight: 13, marginBottom: 1 },
+            is3Cols && { fontSize: 13, lineHeight: 16, marginBottom: 2 },
+          ]}
+          numberOfLines={is4Cols ? 1 : showDescription && description ? 1 : 2}
+        >
+          {title}
+        </Text>
+        {!is4Cols && (
+          <View style={[styles.metaRow, is3Cols && { marginBottom: 3 }]}>
+            {showTaskCount && (
+              <Text style={[styles.meta, { color: metaColor }, is3Cols && { fontSize: 9 }]}>
+                {totalTasks} {totalTasks === 1 ? t('albums.task_single') : t('albums.task_plural')} · {completedTasks} {completedTasks === 1 ? t('albums.done_single') : t('albums.done_plural')}
               </Text>
-            </View>
-          )}
-        </View>
+            )}
+            {showDate && createdAt && (
+              <Text style={[styles.meta, { color: metaColor }, is3Cols && { fontSize: 9 }]}>
+                {new Date(createdAt).toLocaleDateString(i18n.language?.startsWith('en') ? 'en-US' : 'es-ES', { day: 'numeric', month: 'short' })}
+              </Text>
+            )}
+            {showPriority && priority && (
+              <View style={[styles.priorityIndicator, { backgroundColor: chipBg }, is3Cols && { paddingHorizontal: 4, paddingVertical: 1 }]}>
+                <View
+                  style={[
+                    styles.priorityDot,
+                    is3Cols && { width: 4, height: 4, borderRadius: 2 },
+                    {
+                      backgroundColor:
+                        priority === 'high' || priority === 'urgent'
+                          ? '#EF4444'
+                          : priority === 'low'
+                            ? '#10B981'
+                            : '#D4B13A',
+                    },
+                  ]}
+                />
+                <Text
+                  style={[
+                    styles.priorityText,
+                    is3Cols && { fontSize: 8 },
+                    {
+                      color:
+                        priority === 'high' || priority === 'urgent'
+                          ? '#EF4444'
+                          : priority === 'low'
+                            ? '#10B981'
+                            : '#D4B13A',
+                    },
+                  ]}
+                >
+                  {priority === 'high' || priority === 'urgent'
+                    ? t('common.high')
+                    : priority === 'low'
+                    ? t('common.low')
+                    : t('common.medium')}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
 
-        {showDescription && description ? (
+        {is4Cols && showTaskCount && (
+          <Text style={[styles.meta, { color: metaColor, fontSize: 8, marginBottom: 2 }]} numberOfLines={1}>
+            {completedTasks}/{totalTasks}
+          </Text>
+        )}
+
+        {!is4Cols && showDescription && description ? (
           <Text
-            style={[styles.meta, { color: metaColor, fontSize: 11, marginTop: 2 }]}
+            style={[styles.meta, { color: metaColor, fontSize: is3Cols ? 9 : 11, marginTop: 1 }]}
             numberOfLines={1}
           >
             {description.trim()}
           </Text>
         ) : null}
 
-        {participantsElement ? (
-          <View style={{ alignItems: 'flex-start', marginBottom: 6 }}>{participantsElement}</View>
+        {participantsElement && !is4Cols ? (
+          <View style={{ alignItems: 'flex-start', marginBottom: is3Cols ? 3 : 6 }}>{participantsElement}</View>
         ) : null}
 
         {/* Progress bar */}
         {showProgress && (
-          <View style={[styles.progressTrack, { backgroundColor: trackBgColor }]}>
+          <View style={[styles.progressTrack, { backgroundColor: trackBgColor }, is4Cols && { height: 2 }]}>
             <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` as any }]} />
           </View>
         )}
@@ -454,11 +495,15 @@ export function AlbumCard({
 
 // ── NewAlbumCard ────────────────────────────────────────────────────────────
 
-export function NewAlbumCard({ onPress, style }: { onPress?: () => void; style?: ViewStyle }) {
+export function NewAlbumCard({ onPress, style, columns = 2 }: { onPress?: () => void; style?: ViewStyle; columns?: 2 | 3 | 4 }) {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
-  const { cardWidth, cardHeight } = getAlbumCardDimensions(width);
+  const { cardWidth, cardHeight } = getAlbumCardDimensions(width, columns);
+  const is4Cols = columns === 4;
+  const is3Cols = columns === 3;
+  const cardBorderRadius = is4Cols ? radii.md : is3Cols ? radii.lg : radii.xl;
+
   return (
     <Pressable
       onPress={onPress}
@@ -468,22 +513,28 @@ export function NewAlbumCard({ onPress, style }: { onPress?: () => void; style?:
         {
           ...Platform.select({
             web: {
-              width: 'calc(50% - 7px)',
-              aspectRatio: 1 / 1.45,
+              width: is4Cols ? 'calc(25% - 3px)' : is3Cols ? 'calc(33.333% - 4px)' : 'calc(50% - 7px)',
+              aspectRatio: is4Cols ? 1 / 1.15 : is3Cols ? 1 / 1.25 : 1 / 1.45,
             } as any,
             default: {
               width: cardWidth,
               height: cardHeight,
             },
           }),
+          borderRadius: cardBorderRadius,
           borderColor: theme.colors.primary,
           opacity: pressed ? 0.7 : 1,
+          gap: is4Cols ? 4 : is3Cols ? 6 : 10,
         },
         style,
       ]}
     >
-      <Plus size={28} color={theme.colors.primary} strokeWidth={2} />
-      <Text style={[styles.newLabel, { color: theme.colors.primary }]}>{t('albums.new_album')}</Text>
+      <Plus size={is4Cols ? 18 : is3Cols ? 22 : 28} color={theme.colors.primary} strokeWidth={2} />
+      {!is4Cols && (
+        <Text style={[styles.newLabel, { color: theme.colors.primary }, is3Cols && { fontSize: 11 }]}>
+          {t('albums.new_album')}
+        </Text>
+      )}
     </Pressable>
   );
 }
@@ -528,13 +579,18 @@ interface NoAlbumCardProps {
   count: number;
   onPress?: () => void;
   style?: ViewStyle;
+  columns?: 2 | 3 | 4;
 }
 
-export function NoAlbumCard({ count, onPress, style }: NoAlbumCardProps) {
+export function NoAlbumCard({ count, onPress, style, columns = 2 }: NoAlbumCardProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
-  const { cardWidth, cardHeight } = getAlbumCardDimensions(width);
+  const { cardWidth, cardHeight } = getAlbumCardDimensions(width, columns);
+  const is4Cols = columns === 4;
+  const is3Cols = columns === 3;
+  const cardBorderRadius = is4Cols ? radii.md : is3Cols ? radii.lg : radii.xl;
+
   return (
     <Pressable
       onPress={onPress}
@@ -544,17 +600,19 @@ export function NoAlbumCard({ count, onPress, style }: NoAlbumCardProps) {
         {
           ...Platform.select({
             web: {
-              width: 'calc(50% - 7px)',
-              aspectRatio: 1 / 1.45,
+              width: is4Cols ? 'calc(25% - 3px)' : is3Cols ? 'calc(33.333% - 4px)' : 'calc(50% - 7px)',
+              aspectRatio: is4Cols ? 1 / 1.15 : is3Cols ? 1 / 1.25 : 1 / 1.45,
             } as any,
             default: {
               width: cardWidth,
               height: cardHeight,
             },
           }),
+          borderRadius: cardBorderRadius,
           borderColor: theme.colors.border,
           backgroundColor: pressed ? theme.colors.secondary : theme.colors.surfaceSunken,
           opacity: pressed ? 0.75 : 1,
+          padding: is4Cols ? 6 : is3Cols ? 10 : 16,
         },
         style,
       ]}
@@ -563,14 +621,34 @@ export function NoAlbumCard({ count, onPress, style }: NoAlbumCardProps) {
         style={[
           styles.noAlbumCardIconWrap,
           { backgroundColor: theme.colors.secondary },
+          is4Cols && { width: 30, height: 30, borderRadius: 15, marginBottom: 4 },
+          is3Cols && { width: 40, height: 40, borderRadius: 20, marginBottom: 8 },
         ]}
       >
-        <FolderOpen color={theme.colors.foregroundMuted} size={28} strokeWidth={1.8} />
+        <FolderOpen color={theme.colors.foregroundMuted} size={is4Cols ? 14 : is3Cols ? 18 : 28} strokeWidth={1.8} />
       </View>
       <View style={styles.noAlbumCardTextWrap}>
-        <Text style={[styles.noAlbumCardTitle, { color: theme.colors.foreground }]}>{t('albums.no_album')}</Text>
-        <Text style={[styles.noAlbumCardMeta, { color: theme.colors.foregroundMuted }]}>
-          {count} {count === 1 ? t('albums.unassigned_task_single') : t('albums.unassigned_task_plural')}
+        <Text
+          style={[
+            styles.noAlbumCardTitle,
+            { color: theme.colors.foreground },
+            is4Cols && { fontSize: 10 },
+            is3Cols && { fontSize: 12 },
+          ]}
+          numberOfLines={1}
+        >
+          {t('albums.no_album')}
+        </Text>
+        <Text
+          style={[
+            styles.noAlbumCardMeta,
+            { color: theme.colors.foregroundMuted },
+            is4Cols && { fontSize: 8 },
+            is3Cols && { fontSize: 10 },
+          ]}
+          numberOfLines={1}
+        >
+          {is4Cols ? `${count}` : `${count} ${count === 1 ? t('albums.unassigned_task_single') : t('albums.unassigned_task_plural')}`}
         </Text>
       </View>
     </Pressable>

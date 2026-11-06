@@ -45,7 +45,9 @@ function MyListCustomizeModalComponent({
     taskFavoritesAsGrid,
     albumFavoritesAsGrid,
     taskGalleryColumns,
+    albumGalleryColumns,
     setTaskGalleryColumns,
+    setAlbumGalleryColumns,
     setTaskOption,
     setAlbumOption,
     setTaskGroupByStatus,
@@ -138,7 +140,7 @@ function MyListCustomizeModalComponent({
         </SheetGroup>
       </View>
 
-      {isTasks && mode === 'gallery' && (
+      {mode === 'gallery' && (
         <View>
           <SheetLabel theme={theme}>{t('my_list.customize_gallery_columns', { defaultValue: 'Columnas' })}</SheetLabel>
           <SheetGroup theme={theme}>
@@ -148,11 +150,11 @@ function MyListCustomizeModalComponent({
               </Text>
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 {([2, 3, 4] as const).map((cols) => {
-                  const active = (taskGalleryColumns ?? 2) === cols;
+                  const active = (isTasks ? (taskGalleryColumns ?? 2) : (albumGalleryColumns ?? 2)) === cols;
                   return (
                     <Pressable
                       key={cols}
-                      onPress={() => setTaskGalleryColumns(cols)}
+                      onPress={() => (isTasks ? setTaskGalleryColumns(cols) : setAlbumGalleryColumns(cols))}
                       style={{
                         paddingHorizontal: 14,
                         paddingVertical: 7,
