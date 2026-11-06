@@ -10,6 +10,7 @@ import { Images, Lock, Users, Heart, Bookmark, MessageCircle, CheckCircle2 } fro
 import { Avatar, useTheme, gold, fontFamily, fontSize, radii } from '@bucketlist/ui';
 import { useRouter } from 'expo-router';
 import { useTranslation } from '@bucketlist/shared';
+import { getAlbumStatusType, getStatusConfig } from '../utils/statusBadge';
 import type { TaskViewMode } from './ViewModeSelector';
 import { useComments } from '../hooks/useSocial';
 import { timeAgo as getTimeAgo } from '../utils/timeAgo';
@@ -86,6 +87,8 @@ export function AlbumFeedCard({
 
   const [g1, g2] = overlay.placeholders[colorIndex % overlay.placeholders.length] ?? overlay.placeholders[0]!;
   const progress = album.total_tasks > 0 ? album.completed_tasks / album.total_tasks : 0;
+  const albumStatus = getAlbumStatusType(album);
+  const statusCfg = getStatusConfig(albumStatus, t, true);
 
   // Backwards compatibility for onToggleFavorite / isFavorite
   const actualSaved = isSaved || isFavorite;
@@ -198,11 +201,14 @@ export function AlbumFeedCard({
               )}
 
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                {album.total_tasks > 0 && album.completed_tasks === album.total_tasks && (
-                  <View style={styles.galleryCompletedBadge}>
-                    <CheckCircle2 size={12} color="#FFFFFF" strokeWidth={2.5} />
-                  </View>
-                )}
+                <View
+                  style={[
+                    styles.galleryCompletedBadge,
+                    { backgroundColor: statusCfg.badgeBg },
+                  ]}
+                >
+                  {statusCfg.renderGalleryIcon(12)}
+                </View>
                 <View style={styles.galleryAlbumBadge}>
                   <Images size={10} color="rgba(255,255,255,0.95)" />
                   <Text style={styles.galleryAlbumBadgeText}>{t('common.album', { defaultValue: 'Álbum' })}</Text>
@@ -418,11 +424,27 @@ export function AlbumFeedCard({
           </View>
         </Pressable>
 
-        {/* Top Badges (columna a la izquierda con Álbum) */}
+        {/* Top Badges (columna a la izquierda con estado y Álbum) */}
         <View style={styles.topBadgesContainer} pointerEvents="none">
-          <View style={styles.topBadge}>
-            <Images size={12} color="rgba(255,255,255,0.9)" strokeWidth={2} />
-            <Text style={styles.topBadgeText}>Álbum</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View
+              style={[
+                styles.galleryCompletedBadge,
+                {
+                  width: 24,
+                  height: 24,
+                  borderRadius: 12,
+                  backgroundColor: statusCfg.badgeBg,
+                },
+              ]}
+            >
+              {statusCfg.renderGalleryIcon(13)}
+            </View>
+
+            <View style={styles.topBadge}>
+              <Images size={12} color="rgba(255,255,255,0.9)" strokeWidth={2} />
+              <Text style={styles.topBadgeText}>Álbum</Text>
+            </View>
           </View>
 
           {album.is_closed && (

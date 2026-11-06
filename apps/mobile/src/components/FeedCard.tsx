@@ -19,6 +19,7 @@ import { OfficialBadge, isUserAdmin } from './OfficialBadge';
 import { CloneTaskDialog } from './CloneTaskDialog';
 import { useCloneTaskPreferencesStore, type CloneTaskFields } from '../stores/cloneTaskPreferences.store';
 import { useTranslation } from '@bucketlist/shared';
+import { getTaskStatusType, getStatusConfig } from '../utils/statusBadge';
 
 import type { TaskViewMode } from './ViewModeSelector';
 
@@ -65,6 +66,9 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
   const [showParticipantsModal, setShowParticipantsModal] = useState(false);
 
   if (!actor || !bucket) return null;
+
+  const statusType = getTaskStatusType(bucket);
+  const statusCfg = getStatusConfig(statusType, t);
 
   // Si el usuario actual es el creador o colabora en la tarea, no debe salir en momentos
   const isCollaborating =
@@ -245,11 +249,14 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
                 </Pressable>
               )}
 
-              {bucket.status === 'completed' && (
-                <View style={styles.galleryCompletedBadge}>
-                  <CheckCircle2 size={12} color="#FFFFFF" strokeWidth={2.5} />
-                </View>
-              )}
+              <View
+                style={[
+                  styles.galleryCompletedBadge,
+                  { backgroundColor: statusCfg.badgeBg },
+                ]}
+              >
+                {statusCfg.renderGalleryIcon(12)}
+              </View>
             </View>
 
             {/* Overlay inferior estilo mis tareas: título, meta y acciones */}
@@ -510,16 +517,21 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
           </View>
         </Pressable>
 
-        {/* Top Badges (columna a la izquierda con estado completado) */}
+        {/* Top Badges (columna a la izquierda con estado) */}
         <View style={styles.topBadgesContainer} pointerEvents="box-none">
-          {bucket.status === 'completed' && (
-            <View style={styles.completedBadge}>
-              <Check size={11} color="#FFFFFF" strokeWidth={2.5} />
-              <Text style={styles.completedText}>
-                {t('common.completed', { defaultValue: 'Completada' })}
-              </Text>
-            </View>
-          )}
+          <View
+            style={[
+              styles.galleryCompletedBadge,
+              {
+                width: 24,
+                height: 24,
+                borderRadius: 12,
+                backgroundColor: statusCfg.badgeBg,
+              },
+            ]}
+          >
+            {statusCfg.renderGalleryIcon(13)}
+          </View>
         </View>
 
         {/* Top Right Buttons: Like, Comment, Save */}
