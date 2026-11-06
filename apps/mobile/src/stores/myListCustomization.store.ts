@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export interface TaskViewCustomization {
   showThumbnails: boolean;
   showPriority: boolean;
+  showVisibility?: boolean;
   showStatus?: boolean;
   showFavorite: boolean;
   showTags: boolean;
@@ -17,6 +18,7 @@ export interface TaskViewCustomization {
 export interface AlbumViewCustomization {
   showThumbnails: boolean;
   showPriority: boolean;
+  showVisibility?: boolean;
   showStatus?: boolean;
   showTaskCount: boolean;
   showProgress: boolean;
@@ -33,6 +35,7 @@ export const DEFAULT_TASK_CUSTOMIZATION: Record<ViewModeType, TaskViewCustomizat
   list: {
     showThumbnails: true,
     showPriority: true,
+    showVisibility: true,
     showStatus: true,
     showFavorite: true,
     showTags: true,
@@ -45,6 +48,7 @@ export const DEFAULT_TASK_CUSTOMIZATION: Record<ViewModeType, TaskViewCustomizat
   gallery: {
     showThumbnails: true,
     showPriority: true,
+    showVisibility: true,
     showStatus: true,
     showFavorite: true,
     showTags: true,
@@ -57,6 +61,7 @@ export const DEFAULT_TASK_CUSTOMIZATION: Record<ViewModeType, TaskViewCustomizat
   compact: {
     showThumbnails: true,
     showPriority: true,
+    showVisibility: true,
     showStatus: true,
     showFavorite: true,
     showTags: false,
@@ -72,6 +77,7 @@ export const DEFAULT_ALBUM_CUSTOMIZATION: Record<ViewModeType, AlbumViewCustomiz
   list: {
     showThumbnails: true,
     showPriority: true,
+    showVisibility: true,
     showStatus: true,
     showTaskCount: true,
     showProgress: true,
@@ -83,6 +89,7 @@ export const DEFAULT_ALBUM_CUSTOMIZATION: Record<ViewModeType, AlbumViewCustomiz
   gallery: {
     showThumbnails: true,
     showPriority: true,
+    showVisibility: true,
     showStatus: true,
     showTaskCount: true,
     showProgress: true,
@@ -94,6 +101,7 @@ export const DEFAULT_ALBUM_CUSTOMIZATION: Record<ViewModeType, AlbumViewCustomiz
   compact: {
     showThumbnails: true,
     showPriority: false,
+    showVisibility: true,
     showStatus: true,
     showTaskCount: true,
     showProgress: false,

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, Animated, StyleSheet, Alert } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
-import { CheckCircle2, GripVertical, Star, Trash2 } from 'lucide-react-native';
+import { CheckCircle2, GripVertical, Star, Trash2, Lock, Globe, Users } from 'lucide-react-native';
 import { TaskRow, TagChip, confirm } from '@bucketlist/ui';
 import { useTranslation, resolveCounterLabel } from '@bucketlist/shared';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
@@ -126,6 +126,7 @@ function TaskItemRowComponent({
       : t('common.medium');
 
   const showStatus = customization?.showStatus ?? true;
+  const showVisibility = customization?.showVisibility ?? true;
   const taskStatus = getTaskStatusType(item);
   const statusCfg = getStatusConfig(taskStatus, t);
 
@@ -147,6 +148,38 @@ function TaskItemRowComponent({
       {statusCfg.rowIcon}
       <Text style={{ fontSize: 11, fontWeight: '700', color: statusCfg.color }}>
         {statusCfg.label}
+      </Text>
+    </View>
+  ) : null;
+
+  const visibilityBadge = showVisibility ? (
+    <View
+      key="visibility-badge"
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 3,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 8,
+        backgroundColor: theme.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+        borderWidth: 1,
+        borderColor: theme.dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
+      }}
+    >
+      {item.visibility === 'private' ? (
+        <Lock size={10} color={theme.colors.foregroundMuted} strokeWidth={2.4} />
+      ) : item.visibility === 'followers' ? (
+        <Users size={10} color={theme.colors.foregroundMuted} strokeWidth={2.4} />
+      ) : (
+        <Globe size={10} color={theme.colors.foregroundMuted} strokeWidth={2.4} />
+      )}
+      <Text style={{ fontSize: 10, fontWeight: '600', color: theme.colors.foregroundMuted }}>
+        {item.visibility === 'private'
+          ? t('bucket.visibility_private', { defaultValue: 'Privada' })
+          : item.visibility === 'followers'
+          ? t('bucket.visibility_followers', { defaultValue: 'Seguidores' })
+          : t('bucket.visibility_public', { defaultValue: 'Pública' })}
       </Text>
     </View>
   ) : null;
@@ -198,11 +231,12 @@ function TaskItemRowComponent({
 
   const visibleTags = showTags ? itemTags : [];
   const visibleParticipants = showCollab && participants && participants.length > 0 ? participants : undefined;
-  const hasTagsOrBadges = statusBadge || priorityBadge || visibleTags.length > 0;
+  const hasTagsOrBadges = statusBadge || visibilityBadge || priorityBadge || visibleTags.length > 0;
 
   const tagsElement = hasTagsOrBadges ? (
     <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
       {statusBadge}
+      {visibilityBadge}
       {priorityBadge}
       {visibleTags.slice(0, 2).map((t) => (
         <TagChip

@@ -48,6 +48,7 @@ function TaskGalleryItemCardComponent({
   const isImageCover = !!imageValue && !imageValue.startsWith('preset:');
 
   const showPriority = customization?.showPriority ?? true;
+  const showVisibility = customization?.showVisibility ?? true;
   const showFavorite = customization?.showFavorite ?? true;
   const showTags = customization?.showTags ?? true;
   const showDates = customization?.showDates ?? true;
@@ -228,28 +229,30 @@ function TaskGalleryItemCardComponent({
         {/* Columna derecha: Visibilidad + Prioridad arriba, Etiquetas debajo para no salirse */}
         <View style={{ flexDirection: 'column', alignItems: 'flex-end', gap: is4Cols ? 2 : is3Cols ? 3 : 4, flexShrink: 0, marginLeft: is4Cols ? 2 : 4 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: is4Cols ? 2 : 3 }}>
-            <View
-              style={{
-                width: is4Cols ? 12 : is3Cols ? 14 : 16,
-                height: is4Cols ? 12 : is3Cols ? 14 : 16,
-                borderRadius: (is4Cols ? 12 : is3Cols ? 14 : 16) / 2,
-                backgroundColor: 'rgba(0,0,0,0.55)',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {(() => {
-                const vis = item.visibility || 'public';
-                const iconSize = is4Cols ? 7 : is3Cols ? 8 : 9;
-                if (vis === 'private') {
-                  return <Lock size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
-                }
-                if (vis === 'followers') {
-                  return <Users size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
-                }
-                return <Globe size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
-              })()}
-            </View>
+            {showVisibility && (
+              <View
+                style={{
+                  width: is4Cols ? 12 : is3Cols ? 14 : 16,
+                  height: is4Cols ? 12 : is3Cols ? 14 : 16,
+                  borderRadius: (is4Cols ? 12 : is3Cols ? 14 : 16) / 2,
+                  backgroundColor: 'rgba(0,0,0,0.55)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {(() => {
+                  const vis = item.visibility || 'public';
+                  const iconSize = is4Cols ? 7 : is3Cols ? 8 : 9;
+                  if (vis === 'private') {
+                    return <Lock size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                  }
+                  if (vis === 'followers') {
+                    return <Users size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                  }
+                  return <Globe size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                })()}
+              </View>
+            )}
 
             {showPriority && (
               (is4Cols || is3Cols) ? (

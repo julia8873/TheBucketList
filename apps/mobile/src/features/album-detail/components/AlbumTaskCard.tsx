@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { GripVertical, Check, Plus, CheckCircle2, Lock, Globe, Users } from 'lucide-react-native';
 import type { TaskItem } from '@/services/api/albumsService';
-import type { GalleryColumns } from '@/stores/myListCustomization.store';
+import { useMyListCustomizationStore, type GalleryColumns } from '@/stores/myListCustomization.store';
 import { BucketCover } from '@/components/BucketCover';
 import { hexToRgba } from '@/constants/tagPresets';
 import { styles } from '../styles/album-detail.styles';
@@ -88,6 +88,9 @@ export function AlbumTaskCard({
   const subTitle = getSubTitle(task, t);
   const badge = getBadgeText(task.dueDate, t);
   const participants = useParticipantsOf('task', task.id);
+  const { taskViews } = useMyListCustomizationStore();
+  const customization = taskViews[viewMode === 'compact' ? 'compact' : viewMode === 'gallery' ? 'gallery' : 'list'];
+  const showVisibility = customization?.showVisibility ?? true;
 
   const itemPriority = task.priority || 'medium';
   const itemPriorityColor =
@@ -301,28 +304,30 @@ export function AlbumTaskCard({
           {/* Derecha: visibilidad, prioridad y etiquetas */}
           <View style={{ flexDirection: 'column', alignItems: 'flex-end', gap: is4Cols ? 2 : is3Cols ? 3 : 4, flexShrink: 0, marginLeft: is4Cols ? 2 : 4 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: is4Cols ? 2 : 3 }}>
-              <View
-                style={{
-                  width: is4Cols ? 12 : is3Cols ? 14 : 16,
-                  height: is4Cols ? 12 : is3Cols ? 14 : 16,
-                  borderRadius: (is4Cols ? 12 : is3Cols ? 14 : 16) / 2,
-                  backgroundColor: 'rgba(0,0,0,0.55)',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                {(() => {
-                  const vis = task.visibility || 'public';
-                  const iconSize = is4Cols ? 7 : is3Cols ? 8 : 9;
-                  if (vis === 'private') {
-                    return <Lock size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
-                  }
-                  if (vis === 'followers') {
-                    return <Users size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
-                  }
-                  return <Globe size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
-                })()}
-              </View>
+              {showVisibility && (
+                <View
+                  style={{
+                    width: is4Cols ? 12 : is3Cols ? 14 : 16,
+                    height: is4Cols ? 12 : is3Cols ? 14 : 16,
+                    borderRadius: (is4Cols ? 12 : is3Cols ? 14 : 16) / 2,
+                    backgroundColor: 'rgba(0,0,0,0.55)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {(() => {
+                    const vis = task.visibility || 'public';
+                    const iconSize = is4Cols ? 7 : is3Cols ? 8 : 9;
+                    if (vis === 'private') {
+                      return <Lock size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                    }
+                    if (vis === 'followers') {
+                      return <Users size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                    }
+                    return <Globe size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                  })()}
+                </View>
+              )}
 
               {is4Cols || is3Cols ? (
                 <View

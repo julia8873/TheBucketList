@@ -641,6 +641,8 @@ const en = {
     customize_opt_album_group_by_status_sub: 'Keep division between Favorites, In progress, Completed and Closed',
     customize_opt_priority: 'Priority',
     customize_opt_priority_sub: 'Badge with priority level (High, Medium, Low)',
+    customize_opt_visibility: 'Visibility',
+    customize_opt_visibility_sub: 'Visibility icon (Public, Followers or Private)',
     customize_opt_favorite: 'Favorite',
     customize_opt_favorite_sub: 'Star badge on favorite tasks',
     customize_opt_tags: 'Tags',

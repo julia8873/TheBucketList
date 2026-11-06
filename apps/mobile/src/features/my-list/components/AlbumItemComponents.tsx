@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { GripVertical, Lock, Star, Users, Bookmark, CheckCircle2 } from 'lucide-react-native';
+import { GripVertical, Lock, Star, Users, Bookmark, CheckCircle2, Globe } from 'lucide-react-native';
 import { useTheme, useCoverOverlay } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/my-list.styles';
@@ -143,9 +143,10 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
 
   const hasDescription = !!(customization?.showDescription && item.description && item.description.trim().length > 0);
   const hasPriority = !!((customization?.showPriority ?? false) && item.priority);
+  const showVisibility = customization?.showVisibility ?? true;
   const hasDate = !!(customization?.showDate && item.created_at);
   const hasProgress = !!((customization?.showProgress ?? false) && total > 0);
-  const hasBadgesBelowTitle = hasDescription || showBadges || hasPriority || hasDate || hasProgress;
+  const hasBadgesBelowTitle = hasDescription || showBadges || hasPriority || hasDate || hasProgress || showVisibility;
 
   return (
     <Pressable
@@ -243,6 +244,36 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
                 {statusCfg.rowIcon}
                 <Text style={{ fontSize: 10, fontWeight: '700', color: statusCfg.color }}>
                   {statusCfg.label}
+                </Text>
+              </View>
+            )}
+            {showVisibility && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 3,
+                  paddingHorizontal: 6,
+                  paddingVertical: 1.5,
+                  borderRadius: 6,
+                  backgroundColor: theme.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                  borderWidth: 1,
+                  borderColor: theme.dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
+                }}
+              >
+                {item.visibility === 'private' ? (
+                  <Lock size={10} color={theme.colors.foregroundMuted} />
+                ) : item.visibility === 'followers' ? (
+                  <Users size={10} color={theme.colors.foregroundMuted} />
+                ) : (
+                  <Globe size={10} color={theme.colors.foregroundMuted} />
+                )}
+                <Text style={{ fontSize: 10, fontWeight: '600', color: theme.colors.foregroundMuted }}>
+                  {item.visibility === 'private'
+                    ? t('bucket.visibility_private', { defaultValue: 'Privado' })
+                    : item.visibility === 'followers'
+                    ? t('bucket.visibility_followers', { defaultValue: 'Seguidores' })
+                    : t('bucket.visibility_public', { defaultValue: 'Público' })}
                 </Text>
               </View>
             )}
@@ -416,6 +447,7 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
       : t('common.medium');
 
   const showPriority = customization?.showPriority ?? true;
+  const showVisibility = customization?.showVisibility ?? true;
   const showTaskCount = customization?.showTaskCount ?? true;
   const showProgress = customization?.showProgress ?? true;
   const showBadges = customization?.showBadges ?? true;
@@ -553,6 +585,25 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
               <View style={[styles.listAlbumBadge, { backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: '#EF4444' }]}>
                 <Lock size={10} color="#EF4444" />
                 <Text style={[styles.listAlbumBadgeText, { color: '#EF4444' }]}>{t('common.closed')}</Text>
+              </View>
+            )}
+
+            {showVisibility && item.visibility && (
+              <View style={[styles.listAlbumBadge, { borderColor: theme.colors.border }]}>
+                {item.visibility === 'private' ? (
+                  <Lock size={10} color={theme.colors.foregroundMuted} />
+                ) : item.visibility === 'followers' ? (
+                  <Users size={10} color={theme.colors.foregroundMuted} />
+                ) : (
+                  <Globe size={10} color={theme.colors.foregroundMuted} />
+                )}
+                <Text style={[styles.listAlbumBadgeText, { color: theme.colors.foregroundMuted }]}>
+                  {item.visibility === 'private'
+                    ? t('bucket.visibility_private', { defaultValue: 'Privado' })
+                    : item.visibility === 'followers'
+                    ? t('bucket.visibility_followers', { defaultValue: 'Seguidores' })
+                    : t('bucket.visibility_public', { defaultValue: 'Público' })}
+                </Text>
               </View>
             )}
 
