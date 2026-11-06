@@ -28,9 +28,12 @@ import {
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { Avatar } from '@bucketlist/ui';
 import { TagSheetShell } from '@/components/TagSheetShell';
 import type { Tag } from '@/hooks/useTags';
 import { hexToRgba } from '@/constants/tagPresets';
+import { displayNameOf, initialsOf } from '@/utils/initials';
+import type { ItemParticipant } from '@/hooks/useItemParticipants';
 import type { PriorityFilter } from '../types';
 
 /* ───────────────────────── Botón-icono cuadrado (28px) ───────────────────────── */
@@ -325,6 +328,8 @@ export function ActiveFilterChips({
   onClearPriority,
   tags,
   onRemoveTag,
+  collaborators,
+  onRemoveCollaborator,
   theme,
 }: {
   statusLabel?: string | null;
@@ -333,10 +338,12 @@ export function ActiveFilterChips({
   onClearPriority: () => void;
   tags: Tag[];
   onRemoveTag: (id: string) => void;
+  collaborators?: ItemParticipant[];
+  onRemoveCollaborator?: (id: string) => void;
   theme: any;
 }) {
   const c = theme.colors;
-  if (!statusLabel && !priorityLabel && tags.length === 0) return null;
+  if (!statusLabel && !priorityLabel && tags.length === 0 && (!collaborators || collaborators.length === 0)) return null;
 
   const chipBase = {
     flexDirection: 'row' as const,
@@ -400,6 +407,32 @@ export function ActiveFilterChips({
           <X size={12} color={c.foregroundMuted} strokeWidth={2.5} />
         </Pressable>
       ))}
+      {collaborators?.map((collab) => {
+        const name = displayNameOf(collab) || collab.username || '?';
+        return (
+          <Pressable
+            key={collab.id}
+            onPress={() => onRemoveCollaborator?.(collab.id)}
+            style={[
+              chipBase,
+              {
+                backgroundColor: theme.dark ? '#1A1A1A' : c.surface,
+                borderWidth: 1,
+                borderColor: c.primary,
+                paddingLeft: 6,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={name}
+          >
+            <Avatar uri={collab.avatar_url} initials={initialsOf(collab)} size="xs" />
+            <Text numberOfLines={1} style={{ color: c.foreground, fontSize: 11, fontFamily: 'Inter_600SemiBold', maxWidth: 120 }}>
+              {name}
+            </Text>
+            <X size={12} color={c.foregroundMuted} strokeWidth={2.5} />
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
@@ -736,6 +769,9 @@ export function ListFiltersSheet<S extends string>({
   setPriority,
   selectedTagIds,
   onOpenTags,
+  collaborators,
+  selectedCollaboratorIds,
+  onToggleCollaborator,
   onReset,
   resultLabel,
   theme,
@@ -750,6 +786,9 @@ export function ListFiltersSheet<S extends string>({
   setPriority: (p: PriorityFilter) => void;
   selectedTagIds: string[];
   onOpenTags: () => void;
+  collaborators?: ItemParticipant[];
+  selectedCollaboratorIds?: string[];
+  onToggleCollaborator?: (id: string) => void;
   onReset: () => void;
   resultLabel: string;
   theme: any;
@@ -807,6 +846,51 @@ export function ListFiltersSheet<S extends string>({
           />
         </SheetGroup>
       </View>
+
+      {collaborators && collaborators.length > 0 ? (
+        <View>
+          <SheetLabel theme={theme}>{t('my_list.filter_collaborators', { defaultValue: 'Colaboradores' })}</SheetLabel>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            {collaborators.map((collab) => {
+              const on = selectedCollaboratorIds?.includes(collab.id) ?? false;
+              const name = displayNameOf(collab) || collab.username || '?';
+              return (
+                <Pressable
+                  key={collab.id}
+                  onPress={() => onToggleCollaborator?.(collab.id)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: on }}
+                  style={{
+                    height: 34,
+                    paddingHorizontal: 10,
+                    borderRadius: 17,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                    backgroundColor: on ? c.primary : theme.dark ? '#1A1A1A' : c.surface,
+                    borderWidth: 1,
+                    borderColor: on ? c.primary : theme.dark ? '#2A2A2A' : c.border,
+                  }}
+                >
+                  <Avatar uri={collab.avatar_url} initials={initialsOf(collab)} size="xs" />
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      color: on ? c.primaryForeground : c.foreground,
+                      fontSize: 12,
+                      fontFamily: on ? 'Inter_700Bold' : 'Inter_500Medium',
+                      maxWidth: 120,
+                    }}
+                  >
+                    {name}
+                  </Text>
+                  {on ? <Check size={14} color={c.primaryForeground} strokeWidth={2.5} /> : null}
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
     </SheetFrame>
   );
 }

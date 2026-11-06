@@ -16,6 +16,7 @@ import { usePullToRefresh } from '@/hooks/useAutoRefresh';
 import { supabase } from '@/services/supabase';
 import type { Tag } from '@/hooks/useTags';
 import { useTags, useTagUsage } from '@/hooks/useTags';
+import { useItemParticipants, type ItemParticipant } from '@/hooks/useItemParticipants';
 import { useToast } from '@bucketlist/ui';
 import { useTranslation } from 'react-i18next';
 
@@ -249,6 +250,15 @@ export function useMyListState() {
     });
   };
 
+  const [selectedCollaboratorIds, setSelectedCollaboratorIdsState] = useState<string[]>([]);
+  const setSelectedCollaboratorIds = (action: React.SetStateAction<string[]>) => {
+    setSelectedCollaboratorIdsState((prev) => {
+      const next = typeof action === 'function' ? action(prev) : action;
+      void AsyncStorage.setItem('@my_list_selected_collaborators', JSON.stringify(next)).catch(() => undefined);
+      return next;
+    });
+  };
+
   // Cargar filtros y ordenaciones guardadas de álbumes y tareas
   useEffect(() => {
     AsyncStorage.getItem('@my_list_album_filter')
@@ -267,6 +277,16 @@ export function useMyListState() {
           try {
             const parsed = JSON.parse(saved);
             if (Array.isArray(parsed)) setSelectedTagIdsState(parsed);
+          } catch {}
+        }
+      })
+      .catch(() => undefined);
+    AsyncStorage.getItem('@my_list_selected_collaborators')
+      .then((saved) => {
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed)) setSelectedCollaboratorIdsState(parsed);
           } catch {}
         }
       })
@@ -539,6 +559,43 @@ export function useMyListState() {
     [selectedTagIds, tagsById]
   );
 
+  // Participantes / colaboradores de las tareas de Mi lista
+  const participantTaskSources = useMemo(
+    () => (buckets ?? []).map((b: any) => ({ id: b.id as string, ownerId: (b.user_id as string | undefined) ?? null })),
+    [buckets],
+  );
+  const taskParticipantsQuery = useItemParticipants('task', participantTaskSources, true);
+  const taskParticipants = taskParticipantsQuery.data ?? {};
+
+  const availableCollaborators = useMemo(() => {
+    const map = new Map<string, ItemParticipant>();
+    Object.values(taskParticipants).forEach((list) => {
+      list.forEach((p) => {
+        if (p.id !== user?.id && !map.has(p.id)) {
+          map.set(p.id, p);
+        }
+      });
+    });
+    return Array.from(map.values()).sort((a, b) =>
+      (a.display_name || a.username || '').localeCompare(b.display_name || b.username || '')
+    );
+  }, [taskParticipants, user?.id]);
+
+  const selectedCollaborators = useMemo(() => {
+    const map = new Map(availableCollaborators.map((c) => [c.id, c]));
+    return selectedCollaboratorIds.map((id) => map.get(id)).filter(Boolean) as ItemParticipant[];
+  }, [availableCollaborators, selectedCollaboratorIds]);
+
+  const toggleCollaboratorFilter = useCallback((collabId: string) => {
+    setSelectedCollaboratorIds((prev) =>
+      prev.includes(collabId) ? prev.filter((id) => id !== collabId) : [...prev, collabId]
+    );
+  }, []);
+
+  const removeCollaboratorFilter = useCallback((collabId: string) => {
+    setSelectedCollaboratorIds((prev) => prev.filter((id) => id !== collabId));
+  }, []);
+
   const toggleSearch = () => {
     if (isSearching) setSearchQuery('');
     setIsSearching((v) => !v);
@@ -572,6 +629,14 @@ export function useMyListState() {
       result = result.filter((b: any) => (tagUsage?.byItem[b.id] ?? []).some((id) => wanted.has(id)));
     }
 
+    if (selectedCollaboratorIds.length > 0) {
+      const wantedCollabs = new Set(selectedCollaboratorIds);
+      result = result.filter((b: any) => {
+        const parts = taskParticipants[b.id] ?? [];
+        return parts.some((p) => wantedCollabs.has(p.id));
+      });
+    }
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
@@ -585,7 +650,7 @@ export function useMyListState() {
     }
 
     return result;
-  }, [buckets, filter, priorityFilter, searchQuery, selectedTagIds, tagUsage]);
+  }, [buckets, filter, priorityFilter, searchQuery, selectedTagIds, tagUsage, selectedCollaboratorIds, taskParticipants]);
 
   const byManual = (a: any, b: any) => {
     const idxA = manualOrder.indexOf(a.id);
@@ -921,6 +986,12 @@ export function useMyListState() {
     setTagSheetOpen,
     selectedTagIds,
     setSelectedTagIds,
+    selectedCollaboratorIds,
+    setSelectedCollaboratorIds,
+    availableCollaborators,
+    selectedCollaborators,
+    toggleCollaboratorFilter,
+    removeCollaboratorFilter,
     sortField,
     sortDir,
     sortMenuOpen,

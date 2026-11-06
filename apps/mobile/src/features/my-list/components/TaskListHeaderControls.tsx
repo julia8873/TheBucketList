@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { FilterType, PriorityFilter, SortField, SortDir, TaskViewMode } from '../types';
 import type { Tag } from '@/hooks/useTags';
+import type { ItemParticipant } from '@/hooks/useItemParticipants';
 import { ActiveFilterChips, ListControlsBar, ListFiltersSheet } from './ListControls';
 
 interface TaskListHeaderControlsProps {
@@ -14,6 +15,11 @@ interface TaskListHeaderControlsProps {
   selectedTagIds: string[];
   selectedTags: Tag[];
   onRemoveTagFilter: (id: string) => void;
+  selectedCollaboratorIds?: string[];
+  availableCollaborators?: ItemParticipant[];
+  selectedCollaborators?: ItemParticipant[];
+  onToggleCollaboratorId?: (id: string) => void;
+  onRemoveCollaboratorFilter?: (id: string) => void;
   isSelectionMode: boolean;
   onToggleSelectionMode: () => void;
   taskViewMode: TaskViewMode;
@@ -46,6 +52,11 @@ export function TaskListHeaderControls({
   selectedTagIds,
   selectedTags,
   onRemoveTagFilter,
+  selectedCollaboratorIds = [],
+  availableCollaborators = [],
+  selectedCollaborators = [],
+  onToggleCollaboratorId,
+  onRemoveCollaboratorFilter,
   isSelectionMode,
   onToggleSelectionMode,
   taskViewMode,
@@ -86,12 +97,17 @@ export function TaskListHeaderControls({
     low: t('my_list.priority_filter_low'),
   };
 
-  const filtersCount = (filter !== 'all' ? 1 : 0) + (priorityFilter !== 'all' ? 1 : 0) + selectedTagIds.length;
+  const filtersCount =
+    (filter !== 'all' ? 1 : 0) +
+    (priorityFilter !== 'all' ? 1 : 0) +
+    selectedTagIds.length +
+    selectedCollaboratorIds.length;
 
   const reset = () => {
     setFilter('all');
     setPriorityFilter('all');
     selectedTags.forEach((tg) => onRemoveTagFilter(tg.id));
+    selectedCollaboratorIds.forEach((id) => onRemoveCollaboratorFilter?.(id));
   };
 
   return (
@@ -126,6 +142,8 @@ export function TaskListHeaderControls({
         onClearPriority={() => setPriorityFilter('all')}
         tags={selectedTags}
         onRemoveTag={onRemoveTagFilter}
+        collaborators={selectedCollaborators}
+        onRemoveCollaborator={onRemoveCollaboratorFilter}
       />
 
       <ListFiltersSheet<FilterType>
@@ -143,6 +161,9 @@ export function TaskListHeaderControls({
           setFiltersOpen(false);
           setTimeout(onOpenTagFilterSheet, 260);
         }}
+        collaborators={availableCollaborators}
+        selectedCollaboratorIds={selectedCollaboratorIds}
+        onToggleCollaborator={onToggleCollaboratorId}
         onReset={reset}
         resultLabel={t('my_list.apply_filters_tasks', {
           count: tasksCount,

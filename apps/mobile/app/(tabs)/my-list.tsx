@@ -170,7 +170,7 @@ export default function MyListScreen() {
   const participantsValue = useParticipantsValue({
     taskSources: participantTaskSources,
     albumSources: participantAlbumSources,
-    tasksEnabled: state.activeTab === 'list' && !!taskViews[state.taskViewMode]?.showCollaborators,
+    tasksEnabled: state.activeTab === 'list',
     albumsEnabled: state.activeTab === 'albums' && !!albumViews[state.albumViewMode]?.showCollaborators,
   });
 
@@ -724,6 +724,11 @@ export default function MyListScreen() {
         onRemoveTagFilter={(id) =>
           state.setSelectedTagIds(state.selectedTagIds.filter((tid) => tid !== id))
         }
+        selectedCollaboratorIds={state.selectedCollaboratorIds}
+        availableCollaborators={state.availableCollaborators}
+        selectedCollaborators={state.selectedCollaborators}
+        onToggleCollaboratorId={state.toggleCollaboratorFilter}
+        onRemoveCollaboratorFilter={state.removeCollaboratorFilter}
         isSelectionMode={state.isSelectionMode}
         onToggleSelectionMode={() => {
           if (state.isSelectionMode) state.handleExitSelection();
