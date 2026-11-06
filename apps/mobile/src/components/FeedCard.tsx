@@ -487,23 +487,23 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
               accessibilityRole="button"
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={1}>
+                <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={1} ellipsizeMode="tail">
                   {collabTitle}
                 </Text>
               </View>
-              <Text style={[styles.handle, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
+              <Text style={[styles.handle, { color: theme.colors.foregroundMuted }]} numberOfLines={1} ellipsizeMode="tail">
                 {collabSubtitle}
               </Text>
             </Pressable>
           ) : (
             <Pressable onPress={openProfile} accessibilityRole="button">
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={1}>
+                <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={1} ellipsizeMode="tail">
                   {displayNameOf(actor)}
                 </Text>
                 {isUserAdmin(actor) && <OfficialBadge size="xs" />}
               </View>
-              <Text style={[styles.handle, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
+              <Text style={[styles.handle, { color: theme.colors.foregroundMuted }]} numberOfLines={1} ellipsizeMode="tail">
                 @{actor.username}
               </Text>
             </Pressable>
@@ -682,10 +682,18 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 2,
   },
-  headerText: { flex: 1 },
+  headerText: { flex: 1, minWidth: 0 },
   name: { fontFamily: fontFamily.semibold, fontSize: 16, color: '#FFFFFF' },
   handle: { fontFamily: fontFamily.regular, fontSize: 13, color: '#9A9A9A', marginTop: 1 },
-  time: { fontFamily: fontFamily.regular, fontSize: 13, color: '#9A9A9A', alignSelf: 'flex-start', marginTop: 4 },
+  time: {
+    fontFamily: fontFamily.regular,
+    fontSize: 12,
+    color: '#9A9A9A',
+    flexShrink: 0,
+    alignSelf: 'flex-start',
+    marginTop: 4,
+    textAlign: 'right',
+  },
   cover: {
     width: '100%',
     aspectRatio: 1.4,
