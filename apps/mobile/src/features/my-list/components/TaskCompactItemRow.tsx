@@ -123,12 +123,14 @@ function TaskCompactItemRowComponent({
   const visibleParticipants =
     (customization?.showCollaborators ?? false) && participants && participants.length > 0 ? participants : undefined;
 
-  const hasMetaBadges =
-    !!visibleParticipants ||
+  const hasBadgesBelowTitle =
+    !!extraSubtitle ||
     showPriority ||
     (showTags && itemTags && itemTags.length > 0) ||
     (showProgress && !!progressText) ||
     (showDates && !!(item.deadline || item.completed_at));
+
+  const hasMetaBadges = hasBadgesBelowTitle;
 
   const row = (
     <Pressable
@@ -136,6 +138,7 @@ function TaskCompactItemRowComponent({
       onLongPress={onLongPress}
       style={[
         localStyles.row,
+        !hasBadgesBelowTitle && localStyles.rowCompact,
         {
           backgroundColor: isCompleted
             ? theme.colors.surfaceSunken
@@ -207,9 +210,9 @@ function TaskCompactItemRowComponent({
       </View>
       ) : null}
 
-      <View style={{ flex: 1, justifyContent: 'center', minHeight: 38 }}>
+      <View style={{ flex: 1, justifyContent: 'center', minHeight: hasBadgesBelowTitle ? 38 : undefined }}>
         <Text
-          numberOfLines={2}
+          numberOfLines={hasBadgesBelowTitle ? 2 : 1}
           style={[
             localStyles.title,
             { color: isCompleted ? theme.colors.foregroundMuted : theme.colors.foreground },
@@ -338,6 +341,23 @@ function TaskCompactItemRowComponent({
         )}
       </View>
 
+      {visibleParticipants && !hasBadgesBelowTitle && (
+        <View style={{ marginLeft: 8 }}>
+          <ParticipantsStack
+            participants={visibleParticipants}
+            max={3}
+            ringColor={isCompleted ? theme.colors.surfaceSunken : theme.colors.surface}
+            disabled={isSelectionMode || !!drag}
+          />
+        </View>
+      )}
+
+      {item.is_shared && !visibleParticipants && !hasBadgesBelowTitle && (
+        <View style={{ marginLeft: 6 }}>
+          <Users size={12} color={theme.colors.primary} />
+        </View>
+      )}
+
       {isFav && showFavorite ? (
         <Pressable
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
@@ -445,6 +465,10 @@ const localStyles = themedStyleSheet({
     paddingHorizontal: 10,
     borderRadius: 12,
     borderWidth: 1,
+  },
+  rowCompact: {
+    minHeight: 40,
+    paddingVertical: 4,
   },
   dragContainer: {
     marginRight: 6,
