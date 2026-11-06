@@ -344,7 +344,6 @@ export const styles = themedStyleSheet({
     fontSize: 13,
     color: '#FFFFFF',
     lineHeight: 18,
-    minHeight: 36,
   },
   galleryCardMeta: {
     fontFamily: 'Inter_400Regular',

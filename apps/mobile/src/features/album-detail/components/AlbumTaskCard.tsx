@@ -83,6 +83,7 @@ export function AlbumTaskCard({
   const { t, i18n } = useTranslation();
   const locale = i18n.language?.startsWith('en') ? 'en-US' : 'es-ES';
   const isDone = task.isCompleted;
+  const hasAssociatedDate = !!(task.dueDate || task.completedAt);
   const statusType = getTaskStatusType({ status: task.status, deadline: task.dueDate });
   const statusCfg = getStatusConfig(statusType, t);
   const subTitle = getSubTitle(task, t);
@@ -422,16 +423,16 @@ export function AlbumTaskCard({
             is4Cols && { minHeight: 32, paddingHorizontal: 4, paddingVertical: 3, borderBottomLeftRadius: 8, borderBottomRightRadius: 8 },
           ]}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: is4Cols ? 4 : is3Cols ? 6 : 8 }}>
-            <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: is4Cols ? 4 : is3Cols ? 6 : 8 }}>
+            <View style={{ flex: 1, justifyContent: 'center' }}>
               <Text
                 style={[
                   styles.galleryCardTitle,
-                  is3Cols && { fontSize: 11, lineHeight: 14, minHeight: 14 },
-                  is4Cols && { fontSize: 10, lineHeight: 12, minHeight: 12 },
+                  is3Cols && { fontSize: 11, lineHeight: 14 },
+                  is4Cols && { fontSize: 10, lineHeight: 12 },
                   isDone && { opacity: 0.72, color: '#8A8A80' },
                 ]}
-                numberOfLines={is4Cols || is3Cols ? 1 : 2}
+                numberOfLines={hasAssociatedDate ? 1 : 2}
               >
                 {task.title}
               </Text>

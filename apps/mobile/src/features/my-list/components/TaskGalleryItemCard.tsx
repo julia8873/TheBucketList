@@ -94,8 +94,9 @@ function TaskGalleryItemCardComponent({
   if (showCategoryLoc && item.location) {
     metaParts.push(item.location);
   }
+  const targetDate = item.status === 'completed' && item.completed_at ? item.completed_at : item.deadline;
+  const hasAssociatedDate = !!targetDate;
   if (showDates) {
-    const targetDate = item.status === 'completed' && item.completed_at ? item.completed_at : item.deadline;
     if (targetDate) {
       try {
         const d = new Date(targetDate);
@@ -356,17 +357,17 @@ function TaskGalleryItemCardComponent({
           is4Cols && { minHeight: 32, paddingHorizontal: 4, paddingVertical: 3, borderBottomLeftRadius: 8, borderBottomRightRadius: 8 },
         ]}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: is4Cols ? 4 : is3Cols ? 6 : 8 }}>
-          <View style={{ flex: 1 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: is4Cols ? 4 : is3Cols ? 6 : 8 }}>
+          <View style={{ flex: 1, justifyContent: 'center' }}>
             <Text
               style={[
                 styles.galleryCardTitle,
                 { color: overlay.title },
-                effectiveSingle && { fontSize: 16, lineHeight: 22, minHeight: 44 },
-                is3Cols && { fontSize: 11, lineHeight: 14, minHeight: 14 },
-                is4Cols && { fontSize: 10, lineHeight: 12, minHeight: 12 },
+                effectiveSingle && { fontSize: 16, lineHeight: 22 },
+                is3Cols && { fontSize: 11, lineHeight: 14 },
+                is4Cols && { fontSize: 10, lineHeight: 12 },
               ]}
-              numberOfLines={is4Cols || is3Cols || (showDesc && item.description) ? 1 : 2}
+              numberOfLines={hasAssociatedDate ? 1 : 2}
             >
               {item.title}
             </Text>
