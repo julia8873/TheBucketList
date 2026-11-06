@@ -256,6 +256,8 @@ const en = {
     collaboration_settings_desc: 'Manage who can collaborate on this task',
     options_collaborators: 'Manage collaborators',
     options_collaborators_sub: 'Invite or remove people from this task',
+    options_tags: 'Manage tags',
+    options_tags_sub: 'Add or remove tags from this task',
     photo_downloaded: 'Photo saved to your gallery',
     copy_credit: 'Inspired by {{username}}',
     copy_action: 'Me too',

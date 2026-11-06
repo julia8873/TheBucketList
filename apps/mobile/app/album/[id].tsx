@@ -765,7 +765,7 @@ export default function AlbumDetailScreen() {
         )}
 
         {/* Etiquetas del álbum */}
-        {(state.albumTags.length > 0 || (state.canEdit && state.id !== 'unassigned')) && (
+        {state.albumTags.length > 0 && (
           <View style={{ paddingHorizontal: 12, marginTop: 10, marginBottom: 10 }}>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
               {state.albumTags.map((tItem) => (
@@ -796,33 +796,6 @@ export default function AlbumDetailScreen() {
                   </Text>
                 </Pressable>
               ))}
-
-              {state.canEdit && state.id !== 'unassigned' && (
-                <Pressable
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 5,
-                    paddingHorizontal: 10,
-                    paddingVertical: 5,
-                    borderRadius: 20,
-                    borderWidth: 1,
-                    borderStyle: 'dashed',
-                    borderColor: theme.colors.border,
-                    backgroundColor: theme.colors.surfaceSunken,
-                  }}
-                  onPress={() => state.setShowTagAssignSheet(true)}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('albums.tags', { defaultValue: 'Etiquetas' })}
-                >
-                  <Plus size={14} color="#8F8F8F" strokeWidth={2} />
-                  <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: '#8F8F8F' }}>
-                    {state.albumTags.length === 0
-                      ? t('albums.add_tag', { defaultValue: 'Añadir etiqueta' })
-                      : t('albums.tags', { defaultValue: 'Etiquetas' })}
-                  </Text>
-                </Pressable>
-              )}
             </View>
           </View>
         )}

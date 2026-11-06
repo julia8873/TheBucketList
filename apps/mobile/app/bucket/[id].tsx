@@ -86,6 +86,7 @@ export default function BucketDetailScreen() {
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [commentsAutoFocus, setCommentsAutoFocus] = useState(false);
   const [showLikesModal, setShowLikesModal] = useState(false);
+  const [showTagAssignSheet, setShowTagAssignSheet] = useState(false);
 
   // Al llegar desde una notificación de comentario (?openComments=1) se abre la hoja de comentarios
   const { openComments } = useLocalSearchParams<{ openComments?: string }>();
@@ -333,7 +334,12 @@ export default function BucketDetailScreen() {
           />
 
           {/* Etiquetas */}
-          <ItemTagsRow bucketId={state.id as string} isOwner={state.canEdit} />
+          <ItemTagsRow
+            bucketId={state.id as string}
+            isOwner={state.canEdit}
+            open={showTagAssignSheet}
+            onOpenChange={setShowTagAssignSheet}
+          />
 
           {/* Tarjeta de invitación/solicitud de colaboración para seguidores y otros usuarios */}
           <TaskCollaborationViewerCard
@@ -650,6 +656,7 @@ export default function BucketDetailScreen() {
         onToggleSave={state.handleToggleSaveBucket}
         onLeaveCollaboration={state.handleLeaveCollaboration}
         onOpenCollaborators={() => state.setShowCollaboratorPicker(true)}
+        onOpenTags={() => setShowTagAssignSheet(true)}
         onReport={() => setTimeout(() => setReportVisible(true), 250)}
         uploadPhotos={state.uploadPhotos}
         uploadCover={state.uploadCover}

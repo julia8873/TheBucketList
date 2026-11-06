@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
 import { useTranslation } from '@bucketlist/shared';
 import { TagFilterSheet } from './TagFilterSheet';
-import { TagEditSheet } from './TagEditSheet';
 import { useTags } from '../hooks/useTags';
 
 export interface TagItem {
@@ -18,25 +18,26 @@ interface TagAssignSheetProps {
     /** Se llama al cerrar, solo si la selección ha cambiado. */
     onChange: (tags: TagItem[]) => void;
     onClose: () => void;
+    /** Permite sobrescribir la acción de gestionar etiquetas si es necesario. */
+    onManage?: () => void;
 }
 
 /**
- * Menú para asignar / editar las etiquetas de una tarea.
+ * Menú para asignar / editar las etiquetas de una tarea o álbum.
  * Es el mismo menú que el filtro de «Mi lista» (TagFilterSheet), en modo `assign`:
  * se trabaja sobre un borrador y se confirma al cerrar la hoja.
+ * Incluye acceso directo a «Gestionar etiquetas» (/tags) para crear, editar o eliminar etiquetas.
  */
-export function TagAssignSheet({ visible, selectedTags, onChange, onClose }: TagAssignSheetProps) {
+export function TagAssignSheet({ visible, selectedTags, onChange, onClose, onManage }: TagAssignSheetProps) {
     const { t } = useTranslation();
+    const router = useRouter();
     const { data: tags = [] } = useTags();
     const [draftIds, setDraftIds] = useState<string[]>([]);
-    const [creating, setCreating] = useState(false);
 
     useEffect(() => {
         if (visible) {
             setDraftIds(selectedTags.map((t) => t.id));
-            setCreating(false);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [visible]);
 
     const commit = () => {
@@ -54,6 +55,15 @@ export function TagAssignSheet({ visible, selectedTags, onChange, onClose }: Tag
         onClose();
     };
 
+    const handleManage = () => {
+        commit();
+        if (onManage) {
+            onManage();
+        } else {
+            router.push('/tags' as any);
+        }
+    };
+
     const n = draftIds.length;
 
     return (
@@ -63,16 +73,8 @@ export function TagAssignSheet({ visible, selectedTags, onChange, onClose }: Tag
             selectedIds={draftIds}
             onChange={setDraftIds}
             onClose={commit}
+            onManage={handleManage}
             ctaLabel={n === 0 ? t('tags.save_without_tags') : n === 1 ? t('tags.save_count_single') : t('tags.save_count_plural', { count: n })}
-            onCreate={() => setCreating(true)}
-            overlay={
-                <TagEditSheet
-                    visible={creating}
-                    tag={null}
-                    onClose={() => setCreating(false)}
-                    onSaved={(created) => setDraftIds((ids) => (ids.includes(created.id) ? ids : [...ids, created.id]))}
-                />
-            }
         />
     );
 }

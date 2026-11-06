@@ -25,6 +25,7 @@ type BucketBottomSheetProps = {
   onToggleSave?: () => void;
   onLeaveCollaboration?: () => void;
   onOpenCollaborators?: () => void;
+  onOpenTags?: () => void;
   /** Reportar la tarea al administrador (solo usuarios que no son su autor). */
   onReport?: () => void;
   uploadPhotos: () => void;
@@ -56,7 +57,7 @@ type BucketBottomSheetProps = {
 };
 
 export function BucketBottomSheet({
-  sheetVisible, sheetMode, sheetTranslateY, closeSheet, theme, isOwner, canEdit, isCollaborator, isFavorite, onToggleFavorite, isSaved, onToggleSave, onLeaveCollaboration, onOpenCollaborators, onReport, uploadPhotos, uploadCover, pickAndUploadCover, takePhotoAndUploadCover, openCoverLinkModal, recropCurrentCover, removeCover, applyCoverPreset, loadAlbums, user, copyBucket, id, handleDelete, bucket, handleChangeStatus, handleChangeVisibility, handleChangeCategory, handleChangePriority, setSheetMode, albumsLoading, toggleAlbum, removeAllAlbums, albums, bucketAlbums, categories
+  sheetVisible, sheetMode, sheetTranslateY, closeSheet, theme, isOwner, canEdit, isCollaborator, isFavorite, onToggleFavorite, isSaved, onToggleSave, onLeaveCollaboration, onOpenCollaborators, onOpenTags, onReport, uploadPhotos, uploadCover, pickAndUploadCover, takePhotoAndUploadCover, openCoverLinkModal, recropCurrentCover, removeCover, applyCoverPreset, loadAlbums, user, copyBucket, id, handleDelete, bucket, handleChangeStatus, handleChangeVisibility, handleChangeCategory, handleChangePriority, setSheetMode, albumsLoading, toggleAlbum, removeAllAlbums, albums, bucketAlbums, categories
 }: BucketBottomSheetProps) {
   const { t } = useTranslation();
   const [albumSearchQuery, setAlbumSearchQuery] = useState('');
@@ -224,6 +225,23 @@ export function BucketBottomSheet({
                         </Typography>
                         <Typography variant="caption" color={theme.colors.foregroundMuted}>
                           {t('bucket.options_collaborators_sub', { defaultValue: 'Invita o quita personas de esta tarea' })}
+                        </Typography>
+                      </View>
+                    </Pressable>
+                  )}
+
+                  {canEdit && onOpenTags && (
+                    <Pressable
+                      style={styles.sheetOption}
+                      onPress={() => closeSheet(onOpenTags)}
+                    >
+                      <View style={styles.sheetIcon}><Tag color={gold[400]} size={21} /></View>
+                      <View style={styles.sheetOptionText}>
+                        <Typography variant="bodySemibold">
+                          {t('bucket.options_tags', { defaultValue: 'Gestionar etiquetas' })}
+                        </Typography>
+                        <Typography variant="caption" color={theme.colors.foregroundMuted}>
+                          {t('bucket.options_tags_sub', { defaultValue: 'Añade o quita etiquetas de esta tarea' })}
                         </Typography>
                       </View>
                     </Pressable>

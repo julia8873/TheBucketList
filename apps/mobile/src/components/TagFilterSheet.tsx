@@ -258,15 +258,15 @@ export function TagFilterSheet({
         >
           <Text style={styles.ctaText}>{ctaLabel}</Text>
         </Pressable>
-        {assign && onCreate ? (
-          <Pressable style={styles.manage} onPress={onCreate} hitSlop={8} accessibilityRole="button">
-            <Plus size={18} color={GOLD} strokeWidth={2.2} />
-            <Text style={styles.manageText}>{t('tags.new_tag')}</Text>
-          </Pressable>
-        ) : onManage ? (
+        {onManage ? (
           <Pressable style={styles.manage} onPress={onManage} hitSlop={8} accessibilityRole="button">
             <TagIcon size={18} color={GOLD} strokeWidth={2} />
             <Text style={styles.manageText}>{t('tags.manage_tags')}</Text>
+          </Pressable>
+        ) : assign && onCreate ? (
+          <Pressable style={styles.manage} onPress={onCreate} hitSlop={8} accessibilityRole="button">
+            <Plus size={18} color={GOLD} strokeWidth={2.2} />
+            <Text style={styles.manageText}>{t('tags.new_tag')}</Text>
           </Pressable>
         ) : null}
       </View>
