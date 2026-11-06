@@ -39,9 +39,8 @@ export function AlbumPickerSheet({
   const { data: albums = [], isLoading } = useAlbums(user?.id);
   const [searchQuery, setSearchQuery] = useState('');
   const { height: windowHeight } = useWindowDimensions();
-  // Altura máxima del sheet en píxeles absolutos para que el ScrollView pueda calcular
-  // correctamente su espacio disponible (el % no funciona bien dentro de KeyboardAvoidingView)
-  const sheetMaxHeight = windowHeight * 0.82;
+  // Altura del sheet para que se vea alto y muestre múltiples álbumes cómodamente
+  const sheetHeight = Math.min(Math.round(windowHeight * 0.85), 780);
 
   const filteredAlbums = albums.filter((a) =>
     a.title.toLowerCase().includes(searchQuery.trim().toLowerCase())
@@ -83,16 +82,21 @@ export function AlbumPickerSheet({
       visible={visible}
       animationType="slide"
       transparent
+      statusBarTranslucent
       onRequestClose={onClose}
     >
       <View style={styles.backdrop}>
-        <Pressable style={styles.backdropPressable} onPress={onClose} />
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityLabel={t('common.close') ?? 'Close'}
+        />
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.sheetContainer}
+          style={[styles.sheetContainer, { height: sheetHeight }]}
           keyboardVerticalOffset={0}
         >
-          <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16), maxHeight: sheetMaxHeight }]}>
+          <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) }]}>
             {/* Header */}
             <View style={styles.header}>
               <View style={styles.dragIndicator} />
@@ -227,33 +231,25 @@ const styles = themedStyleSheet({
       },
     }),
   },
-  backdropPressable: {
-    flex: 1,
-    width: '100%',
-  },
   sheetContainer: {
-    justifyContent: 'flex-end',
-    width: '100%',
-    ...Platform.select({
-      web: {
-        alignItems: 'center',
-      },
-    }),
-  },
-  sheet: {
-    backgroundColor: '#121212',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    // maxHeight se pasa como prop en píxeles absolutos para que el ScrollView
-    // tenga una referencia de altura real y pueda hacer scroll correctamente.
-    minHeight: 300,
-    borderTopWidth: 1,
-    borderColor: '#262626',
     width: '100%',
     ...Platform.select({
       web: {
         maxWidth: 620,
         alignSelf: 'center',
+      },
+    }),
+  },
+  sheet: {
+    flex: 1,
+    backgroundColor: '#121212',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderTopWidth: 1,
+    borderColor: '#262626',
+    width: '100%',
+    ...Platform.select({
+      web: {
         borderLeftWidth: 1,
         borderRightWidth: 1,
       },
