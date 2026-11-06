@@ -456,8 +456,9 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
             <Pressable
               onPress={() => setShowParticipantsModal(true)}
               accessibilityRole="button"
+              style={styles.headerTitlePressable}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              <View style={styles.headerNameRow}>
                 <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={1} ellipsizeMode="tail">
                   {collabTitle}
                 </Text>
@@ -467,8 +468,12 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
               </Text>
             </Pressable>
           ) : (
-            <Pressable onPress={openProfile} accessibilityRole="button">
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+            <Pressable
+              onPress={openProfile}
+              accessibilityRole="button"
+              style={styles.headerTitlePressable}
+            >
+              <View style={styles.headerNameRow}>
                 <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={1} ellipsizeMode="tail">
                   {displayNameOf(actor)}
                 </Text>
@@ -487,7 +492,12 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
       </View>
 
       {/* Portada */}
-      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={bucket.title}>
+      <Pressable
+        onPress={onPress}
+        style={styles.coverPressable}
+        accessibilityRole="button"
+        accessibilityLabel={bucket.title}
+      >
         <BucketCover
           value={coverValue}
           title={bucket.title}
@@ -633,12 +643,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 12,
     paddingBottom: 18,
+    width: '100%',
+    overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     marginBottom: 12,
+    width: '100%',
+    maxWidth: '100%',
   },
   collabAvatarCluster: {
     width: 46,
@@ -653,9 +667,36 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 2,
   },
-  headerText: { flex: 1, minWidth: 0 },
-  name: { fontFamily: fontFamily.semibold, fontSize: 16, color: '#FFFFFF' },
-  handle: { fontFamily: fontFamily.regular, fontSize: 13, color: '#9A9A9A', marginTop: 1 },
+  headerText: {
+    flex: 1,
+    minWidth: 0,
+    overflow: 'hidden',
+    justifyContent: 'center',
+  },
+  headerTitlePressable: {
+    minWidth: 0,
+    flexShrink: 1,
+  },
+  headerNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    minWidth: 0,
+    flexShrink: 1,
+  },
+  name: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 16,
+    color: '#FFFFFF',
+    flexShrink: 1,
+  },
+  handle: {
+    fontFamily: fontFamily.regular,
+    fontSize: 13,
+    color: '#9A9A9A',
+    marginTop: 1,
+    flexShrink: 1,
+  },
   time: {
     fontFamily: fontFamily.regular,
     fontSize: 12,
@@ -664,6 +705,9 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginTop: 4,
     textAlign: 'right',
+  },
+  coverPressable: {
+    width: '100%',
   },
   cover: {
     width: '100%',
