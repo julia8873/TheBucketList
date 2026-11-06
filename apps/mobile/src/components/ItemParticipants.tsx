@@ -81,6 +81,7 @@ interface StackProps {
   ringColor?: string;
   /** Sin interacción (p. ej. en modo selección). */
   disabled?: boolean;
+  size?: 'xs' | 'sm' | 'md';
   style?: ViewStyle;
 }
 
@@ -88,7 +89,7 @@ interface StackProps {
  * Fotos de perfil una junto a otra, cada una solapada un poco con la anterior.
  * Al tocarla se abre un menú inferior con todos los participantes.
  */
-export function ParticipantsStack({ participants, max = 4, ringColor, disabled, style }: StackProps) {
+export function ParticipantsStack({ participants, max = 4, ringColor, disabled, size = 'xs', style }: StackProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const router = useRouter();
@@ -100,7 +101,11 @@ export function ParticipantsStack({ participants, max = 4, ringColor, disabled, 
   const ring = ringColor ?? theme.colors.surface;
   const visible = participants.slice(0, max);
   const extra = participants.length - visible.length;
-  const bubble = AVATAR + RING * 2;
+
+  const avatarPx = size === 'sm' ? 32 : size === 'md' ? 40 : 24;
+  const ringPx = 2;
+  const overlapPx = size === 'sm' ? 11 : size === 'md' ? 14 : 9;
+  const bubble = avatarPx + ringPx * 2;
 
   const openProfile = (id: string) => {
     if (disabled) return;
@@ -125,11 +130,11 @@ export function ParticipantsStack({ participants, max = 4, ringColor, disabled, 
             style={({ pressed }) => [
               styles.ring,
               { width: bubble, height: bubble, borderRadius: bubble / 2, borderColor: ring },
-              i > 0 && { marginLeft: -OVERLAP },
+              i > 0 && { marginLeft: -overlapPx },
               pressed && { opacity: 0.7 },
             ]}
           >
-            <Avatar uri={p.avatar_url} initials={initialsOf(p)} size="xs" />
+            <Avatar uri={p.avatar_url} initials={initialsOf(p)} size={size} goldRing={p.isOwner} />
           </Pressable>
         ))}
         {extra > 0 && (
@@ -150,13 +155,13 @@ export function ParticipantsStack({ participants, max = 4, ringColor, disabled, 
                 height: bubble,
                 borderRadius: bubble / 2,
                 borderColor: ring,
-                marginLeft: -OVERLAP,
+                marginLeft: -overlapPx,
                 backgroundColor: theme.dark ? '#2B2B2B' : '#E8E3D8',
               },
               pressed && { opacity: 0.7 },
             ]}
           >
-            <Text style={[styles.moreText, { color: theme.colors.foreground }]}>+{extra}</Text>
+            <Text style={[styles.moreText, { color: theme.colors.foreground, fontSize: size === 'sm' ? 12 : 11 }]}>+{extra}</Text>
           </Pressable>
         )}
       </View>

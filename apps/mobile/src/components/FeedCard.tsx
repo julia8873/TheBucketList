@@ -196,39 +196,27 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
 
             {/* Badges superiores: Autor + colaboradores solapados a la izquierda, completado a la derecha */}
             <View style={styles.galleryTopBadges} pointerEvents="box-none">
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              {hasCollabs && participants ? (
+                <ParticipantsStack
+                  participants={participants}
+                  max={2}
+                  size="xs"
+                  ringColor="rgba(0,0,0,0.55)"
+                />
+              ) : (
                 <Pressable
                   onPress={(e) => {
                     e.stopPropagation();
                     openProfile();
                   }}
-                  style={[styles.galleryUserBadge, { zIndex: 2 }]}
+                  style={styles.galleryUserBadge}
                   hitSlop={8}
                   accessibilityRole="button"
                   accessibilityLabel={actor.username}
                 >
                   <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="xs" goldRing />
                 </Pressable>
-
-                {hasCollabs && collaboratorsOnly.length > 0 && (
-                  <Pressable
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      setShowParticipantsModal(true);
-                    }}
-                    hitSlop={6}
-                    style={{ marginLeft: -8, zIndex: 1 }}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('participants.title', { defaultValue: 'Colaboradores' })}
-                  >
-                    <ParticipantsStack
-                      participants={collaboratorsOnly}
-                      max={2}
-                      ringColor="rgba(0,0,0,0.5)"
-                    />
-                  </Pressable>
-                )}
-              </View>
+              )}
 
               {bucket.status === 'completed' && (
                 <View style={styles.galleryCompletedBadge}>
@@ -383,20 +371,17 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
               style={styles.compactUserHeader}
               hitSlop={4}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 0 }}>
-                <View style={{ zIndex: 2 }}>
-                  <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="xs" goldRing />
-                </View>
-                {hasCollabs && collaboratorsOnly.length > 0 && (
-                  <View style={{ marginLeft: -8, zIndex: 1 }}>
-                    <ParticipantsStack
-                      participants={collaboratorsOnly}
-                      max={2}
-                      ringColor={theme.colors.surface}
-                    />
-                  </View>
-                )}
-              </View>
+              {hasCollabs && participants ? (
+                <ParticipantsStack
+                  participants={participants}
+                  max={2}
+                  size="xs"
+                  ringColor={theme.colors.surface}
+                  style={{ marginRight: 2 }}
+                />
+              ) : (
+                <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="xs" goldRing />
+              )}
               <Text
                 style={[styles.compactUsername, { color: theme.colors.foregroundMuted, flexShrink: 1 }]}
                 numberOfLines={1}
@@ -454,26 +439,12 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
       {/* Cabecera */}
       <View style={styles.header}>
         {hasCollabs && participants ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Pressable onPress={openProfile} accessibilityRole="button" accessibilityLabel={actor.username} style={{ zIndex: 2 }}>
-              <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="md" goldRing />
-            </Pressable>
-            {collaboratorsOnly.length > 0 && (
-              <Pressable
-                onPress={() => setShowParticipantsModal(true)}
-                hitSlop={6}
-                accessibilityRole="button"
-                accessibilityLabel={t('participants.title', { defaultValue: 'Colaboradores' })}
-                style={{ marginLeft: -10, zIndex: 1 }}
-              >
-                <ParticipantsStack
-                  participants={collaboratorsOnly}
-                  max={2}
-                  ringColor={theme.colors.background}
-                />
-              </Pressable>
-            )}
-          </View>
+          <ParticipantsStack
+            participants={participants}
+            max={3}
+            size="sm"
+            ringColor={theme.colors.background}
+          />
         ) : (
           <Pressable onPress={openProfile} accessibilityRole="button">
             <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="lg" goldRing />
