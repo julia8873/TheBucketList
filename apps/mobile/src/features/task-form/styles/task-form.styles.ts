@@ -290,7 +290,7 @@ export const styles = themedStyleSheet({
     paddingHorizontal: 12,
     borderBottomWidth: 1,
   },
-  settingLabel: { fontFamily: 'Inter_500Medium', fontSize: 18, color: '#FFF', marginLeft: 16, flex: 1 },
+  settingLabel: { fontFamily: 'Inter_500Medium', fontSize: 18, color: '#FFF', marginLeft: 16, flexShrink: 0 },
   settingValue: { fontFamily: 'Inter_400Regular', fontSize: 17, color: '#9A9A9A' },
   stepsContainer: { paddingBottom: 20 },
   stepRow: { height: 58, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#2A2A2A' },

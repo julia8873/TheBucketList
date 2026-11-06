@@ -54,22 +54,24 @@ export function AlbumSettingsCard({
         onPress={() => setShowVisibilityModal(true)}
         accessibilityRole="button"
       >
-        <CurrentIcon color="#D4B13A" size={24} />
-        <Text style={[formStyles.settingLabel, { fontSize: 17, color: theme.colors.foreground }]}>
+        <CurrentIcon color="#D4B13A" size={24} style={{ flexShrink: 0 }} />
+        <Text style={[formStyles.settingLabel, { fontSize: 17, color: theme.colors.foreground, flexShrink: 0 }]}>
           {t('task_form.visibility')}
         </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={[formStyles.settingValue, { fontSize: 16 }]}>{current.title}</Text>
-          <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }] }} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, justifyContent: 'flex-end', marginLeft: 12 }}>
+          <Text style={[formStyles.settingValue, { fontSize: 16, flexShrink: 1, textAlign: 'right' }]} numberOfLines={1} ellipsizeMode="tail">{current.title}</Text>
+          <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }], flexShrink: 0 }} />
         </View>
       </Pressable>
 
       {/* Álbum compartido */}
-      <View style={[formStyles.settingRow, { height: ROW_HEIGHT, borderBottomWidth: 0 }]}>
-        <Users color="#D4B13A" size={24} />
-        <Text style={[formStyles.settingLabel, { fontSize: 17, color: theme.colors.foreground }]} numberOfLines={1}>
-          {t('albums.shared_album')}
-        </Text>
+      <View style={[formStyles.settingRow, { height: ROW_HEIGHT, borderBottomWidth: 0, justifyContent: 'space-between' }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 12 }}>
+          <Users color="#D4B13A" size={24} style={{ flexShrink: 0 }} />
+          <Text style={[formStyles.settingLabel, { fontSize: 17, color: theme.colors.foreground, flexShrink: 0 }]} numberOfLines={1}>
+            {t('albums.shared_album')}
+          </Text>
+        </View>
         <Pressable
           style={[
             styles.switchTrack,

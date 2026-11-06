@@ -101,12 +101,13 @@ export function TaskSettingsCard({
     <View style={[styles.settingsCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
       {/* Ubicación */}
       <Pressable style={[styles.settingRow, { borderBottomColor: theme.colors.border }]} onPress={onOpenLocationPicker}>
-        <MapPin color="#D4B13A" size={24} />
-        <Text style={[styles.settingLabel, { color: theme.colors.foreground }]}>{t('task_form.location', { defaultValue: 'Ubicación' })}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, justifyContent: 'flex-end' }}>
+        <MapPin color="#D4B13A" size={24} style={{ flexShrink: 0 }} />
+        <Text style={[styles.settingLabel, { color: theme.colors.foreground, flexShrink: 0 }]}>{t('task_form.location', { defaultValue: 'Ubicación' })}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, justifyContent: 'flex-end', marginLeft: 12 }}>
           <Text
-            style={[styles.settingValue, !locationText && { color: '#6B6B6B' }, { flexShrink: 1 }]}
+            style={[styles.settingValue, !locationText && { color: '#6B6B6B' }, { flexShrink: 1, textAlign: 'right' }]}
             numberOfLines={1}
+            ellipsizeMode="tail"
           >
             {locationText || t('task_form.no_location', { defaultValue: 'Sin ubicación' })}
           </Text>
@@ -118,21 +119,22 @@ export function TaskSettingsCard({
                 onClearLocation();
               }}
               accessibilityLabel={t('task_form.remove_location', { defaultValue: 'Quitar ubicación' })}
+              style={{ flexShrink: 0 }}
             >
               <X color="#6B6B6B" size={18} />
             </Pressable>
           ) : (
-            <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }] }} />
+            <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }], flexShrink: 0 }} />
           )}
         </View>
       </Pressable>
 
       {/* Fecha Límite */}
       <Pressable style={[styles.settingRow, { borderBottomColor: theme.colors.border }]} onPress={onOpenDatePicker}>
-        <Calendar color="#D4B13A" size={24} />
-        <Text style={[styles.settingLabel, { color: theme.colors.foreground }]}>{t('task_form.deadline', { defaultValue: 'Fecha límite' })}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={[styles.settingValue, !deadline && { color: '#6B6B6B' }]}>
+        <Calendar color="#D4B13A" size={24} style={{ flexShrink: 0 }} />
+        <Text style={[styles.settingLabel, { color: theme.colors.foreground, flexShrink: 0 }]}>{t('task_form.deadline', { defaultValue: 'Fecha límite' })}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, justifyContent: 'flex-end', marginLeft: 12 }}>
+          <Text style={[styles.settingValue, !deadline && { color: '#6B6B6B' }, { flexShrink: 1, textAlign: 'right' }]} numberOfLines={1} ellipsizeMode="tail">
             {formattedDeadline}
           </Text>
           {deadline ? (
@@ -143,11 +145,12 @@ export function TaskSettingsCard({
                 onClearDate();
               }}
               accessibilityLabel={t('task_form.remove_deadline', { defaultValue: 'Quitar fecha límite' })}
+              style={{ flexShrink: 0 }}
             >
               <X color="#6B6B6B" size={18} />
             </Pressable>
           ) : (
-            <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }] }} />
+            <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }], flexShrink: 0 }} />
           )}
         </View>
       </Pressable>
@@ -161,25 +164,30 @@ export function TaskSettingsCard({
 
       {/* Álbum */}
       <Pressable style={[styles.settingRow, { borderBottomColor: theme.colors.border }]} onPress={onOpenAlbumPicker}>
-        <Folder color="#D4B13A" size={24} />
-        <Text style={[styles.settingLabel, { color: theme.colors.foreground }]}>{t('task_form.album', { defaultValue: 'Álbum' })}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Text style={[styles.settingValue, !albumTitle && { color: '#6B6B6B' }]}>
+        <Folder color="#D4B13A" size={24} style={{ flexShrink: 0 }} />
+        <Text style={[styles.settingLabel, { color: theme.colors.foreground, flexShrink: 0 }]}>{t('task_form.album', { defaultValue: 'Álbum' })}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1, justifyContent: 'flex-end', marginLeft: 12 }}>
+          <Text
+            style={[styles.settingValue, !albumTitle && { color: '#6B6B6B' }, { flexShrink: 1, textAlign: 'right' }]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {albumTitle || t('task_form.no_album', { defaultValue: 'Sin álbum' })}
           </Text>
-          <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }] }} />
+          <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }], flexShrink: 0 }} />
         </View>
       </Pressable>
 
       {/* Google Drive */}
       {onOpenDriveModal && (
         <Pressable style={[styles.settingRow, { borderBottomColor: theme.colors.border }]} onPress={onOpenDriveModal}>
-          <HardDrive color="#D4B13A" size={24} />
-          <Text style={[styles.settingLabel, { color: theme.colors.foreground }]}>{t('task_form.drive', { defaultValue: 'Google Drive' })}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, justifyContent: 'flex-end' }}>
+          <HardDrive color="#D4B13A" size={24} style={{ flexShrink: 0 }} />
+          <Text style={[styles.settingLabel, { color: theme.colors.foreground, flexShrink: 0 }]}>{t('task_form.drive', { defaultValue: 'Google Drive' })}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, justifyContent: 'flex-end', marginLeft: 12 }}>
             <Text
-              style={[styles.settingValue, !driveUrl && { color: '#6B6B6B' }, { flexShrink: 1 }]}
+              style={[styles.settingValue, !driveUrl && { color: '#6B6B6B' }, { flexShrink: 1, textAlign: 'right' }]}
               numberOfLines={1}
+              ellipsizeMode="tail"
             >
               {driveUrl ? t('task_form.drive_linked', { defaultValue: 'Carpeta vinculada' }) : t('task_form.drive_no_link', { defaultValue: 'Sin enlace' })}
             </Text>
@@ -191,11 +199,12 @@ export function TaskSettingsCard({
                   onClearDriveUrl?.();
                 }}
                 accessibilityLabel={t('task_form.remove_drive', { defaultValue: 'Quitar enlace de Drive' })}
+                style={{ flexShrink: 0 }}
               >
                 <X color="#6B6B6B" size={18} />
               </Pressable>
             ) : (
-              <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }] }} />
+              <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }], flexShrink: 0 }} />
             )}
           </View>
         </Pressable>
@@ -209,11 +218,11 @@ export function TaskSettingsCard({
         style={[styles.settingRow, { borderBottomColor: theme.colors.border, borderBottomWidth: 0 }]}
         onPress={() => setShowVisibilityModal(true)}
       >
-        <CurrentVisibilityIcon color="#D4B13A" size={24} />
-        <Text style={[styles.settingLabel, { color: theme.colors.foreground }]}>{t('task_form.visibility', { defaultValue: 'Visibilidad' })}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={styles.settingValue}>{currentVisibilityConfig.title}</Text>
-          <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }] }} />
+        <CurrentVisibilityIcon color="#D4B13A" size={24} style={{ flexShrink: 0 }} />
+        <Text style={[styles.settingLabel, { color: theme.colors.foreground, flexShrink: 0 }]}>{t('task_form.visibility', { defaultValue: 'Visibilidad' })}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, justifyContent: 'flex-end', marginLeft: 12 }}>
+          <Text style={[styles.settingValue, { flexShrink: 1, textAlign: 'right' }]} numberOfLines={1} ellipsizeMode="tail">{currentVisibilityConfig.title}</Text>
+          <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }], flexShrink: 0 }} />
         </View>
       </Pressable>
 

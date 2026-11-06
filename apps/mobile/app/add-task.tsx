@@ -89,9 +89,11 @@ export default function AddTaskScreen() {
       {/* Target Album Pill */}
       {albumName && (
         <View style={styles.albumPillContainer}>
-          <View style={styles.albumPill}>
-            <Folder size={18} color="#D4B13A" strokeWidth={1.8} />
-            <Text style={styles.albumPillText}>{albumName}</Text>
+          <View style={[styles.albumPill, { maxWidth: '100%' }]}>
+            <Folder size={18} color="#D4B13A" strokeWidth={1.8} style={{ flexShrink: 0 }} />
+            <Text style={[styles.albumPillText, { flexShrink: 1 }]} numberOfLines={1} ellipsizeMode="tail">
+              {albumName}
+            </Text>
           </View>
         </View>
       )}
