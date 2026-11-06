@@ -705,6 +705,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginTop: 4,
     textAlign: 'right',
+    marginRight: 10,
   },
   coverPressable: {
     width: '100%',
