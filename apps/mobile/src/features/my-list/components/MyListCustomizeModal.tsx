@@ -42,8 +42,6 @@ function MyListCustomizeModalComponent({
     albumViews,
     taskGroupByStatus,
     albumGroupByStatus,
-    taskFavoritesAsGrid,
-    albumFavoritesAsGrid,
     taskGalleryColumns,
     albumGalleryColumns,
     setTaskGalleryColumns,
@@ -52,8 +50,6 @@ function MyListCustomizeModalComponent({
     setAlbumOption,
     setTaskGroupByStatus,
     setAlbumGroupByStatus,
-    setTaskFavoritesAsGrid,
-    setAlbumFavoritesAsGrid,
     resetTaskOptions,
     resetAlbumOptions,
   } = useMyListCustomizationStore();
@@ -65,16 +61,13 @@ function MyListCustomizeModalComponent({
     if (isTasks) {
       resetTaskOptions(mode);
       setTaskGroupByStatus(true);
-      setTaskFavoritesAsGrid(true);
     } else {
       resetAlbumOptions(mode);
       setAlbumGroupByStatus(true);
-      setAlbumFavoritesAsGrid(true);
     }
   };
 
   const groupByStatus = isTasks ? taskGroupByStatus : albumGroupByStatus;
-  const favoritesAsGrid = isTasks ? taskFavoritesAsGrid : albumFavoritesAsGrid;
 
   const taskOptions: Array<{ key: TaskKey; label: string }> = useMemo(() => [
     { key: 'showThumbnails', label: t('my_list.customize_opt_thumbnails', { defaultValue: 'Miniaturas de imagen' }) },
@@ -126,48 +119,52 @@ function MyListCustomizeModalComponent({
             value={groupByStatus}
             onChange={isTasks ? setTaskGroupByStatus : setAlbumGroupByStatus}
           />
-          {groupByStatus ? (
-            <SheetToggle
-              theme={theme}
-              label={t(
-                isTasks ? 'my_list.customize_opt_favorites_grid' : 'my_list.customize_opt_album_favorites_grid',
-                { defaultValue: isTasks ? 'Favoritas en 2 columnas' : 'Favoritos en 2 columnas' },
-              )}
-              value={favoritesAsGrid}
-              onChange={isTasks ? setTaskFavoritesAsGrid : setAlbumFavoritesAsGrid}
-            />
-          ) : null}
-        </SheetGroup>
-      </View>
-
-      {mode === 'gallery' && (
-        <View>
-          <SheetLabel theme={theme}>{t('my_list.customize_gallery_columns', { defaultValue: 'Columnas' })}</SheetLabel>
-          <SheetGroup theme={theme}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 }}>
-              <Text style={{ fontSize: 15, color: theme.colors.foreground, fontFamily: 'Inter_500Medium' }}>
+          {mode === 'gallery' && (
+            <View
+              style={{
+                height: 48,
+                paddingHorizontal: 14,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                borderTopWidth: 1,
+                borderTopColor: theme.colors.border,
+              }}
+            >
+              <Text
+                style={{
+                  color: theme.colors.foreground,
+                  fontSize: 13,
+                  fontFamily: 'Inter_400Regular',
+                  flexShrink: 1,
+                  paddingRight: 12,
+                }}
+              >
                 {t('my_list.gallery_columns_label', { defaultValue: 'Número de columnas' })}
               </Text>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
+              <View style={{ flexDirection: 'row', gap: 6 }}>
                 {([2, 3, 4] as const).map((cols) => {
-                  const active = (isTasks ? (taskGalleryColumns ?? 2) : (albumGalleryColumns ?? 2)) === cols;
+                  const active = (isTasks ? (taskGalleryColumns ?? 3) : (albumGalleryColumns ?? 3)) === cols;
                   return (
                     <Pressable
                       key={cols}
                       onPress={() => (isTasks ? setTaskGalleryColumns(cols) : setAlbumGalleryColumns(cols))}
                       style={{
-                        paddingHorizontal: 14,
-                        paddingVertical: 7,
-                        borderRadius: 10,
+                        paddingHorizontal: 12,
+                        paddingVertical: 5,
+                        borderRadius: 8,
                         backgroundColor: active ? theme.colors.primary : (theme.dark ? '#222222' : '#ECECEC'),
                         borderWidth: 1,
                         borderColor: active ? theme.colors.primary : theme.colors.border,
                       }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${cols} ${t('my_list.gallery_columns_label', { defaultValue: 'columnas' })}`}
                     >
                       <Text
                         style={{
-                          fontSize: 13,
+                          fontSize: 12,
                           fontWeight: '700',
+                          fontFamily: 'Inter_600SemiBold',
                           color: active ? theme.colors.primaryForeground : theme.colors.foregroundMuted,
                         }}
                       >
@@ -178,9 +175,9 @@ function MyListCustomizeModalComponent({
                 })}
               </View>
             </View>
-          </SheetGroup>
-        </View>
-      )}
+          )}
+        </SheetGroup>
+      </View>
 
       <View>
         <SheetLabel theme={theme}>{t('my_list.customize_section_elements')}</SheetLabel>

@@ -126,16 +126,26 @@ export function useMyListState() {
     }
   }, [params.filter]);
 
-  // Task view mode
-  const [taskViewMode, setTaskViewModeState] = useState<TaskViewMode>('list');
+  // Task view mode (por defecto galería en v3)
+  const VIEW_MODE_V3_KEY = '@my_list_default_v3_view_mode_migrated';
+  const [taskViewMode, setTaskViewModeState] = useState<TaskViewMode>('gallery');
   useEffect(() => {
-    AsyncStorage.getItem('@my_list_view_mode')
-      .then((saved) => {
+    (async () => {
+      try {
+        const migrated = await AsyncStorage.getItem(VIEW_MODE_V3_KEY);
+        if (!migrated) {
+          setTaskViewModeState('gallery');
+          await AsyncStorage.setItem('@my_list_view_mode', 'gallery');
+          await AsyncStorage.setItem('@my_list_album_view_mode', 'gallery');
+          await AsyncStorage.setItem(VIEW_MODE_V3_KEY, 'true');
+          return;
+        }
+        const saved = await AsyncStorage.getItem('@my_list_view_mode');
         if (saved === 'list' || saved === 'gallery' || saved === 'compact') {
           setTaskViewModeState(saved as TaskViewMode);
         }
-      })
-      .catch(() => undefined);
+      } catch {}
+    })();
   }, []);
 
   const setTaskViewMode = (mode: TaskViewMode) => {

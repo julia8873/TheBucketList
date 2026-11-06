@@ -145,8 +145,8 @@ export const useMyListCustomizationStore = create<MyListCustomizationStore>((set
     albumGroupByStatus: true,
     taskFavoritesAsGrid: true,
     albumFavoritesAsGrid: true,
-    taskGalleryColumns: 2,
-    albumGalleryColumns: 2,
+    taskGalleryColumns: 3,
+    albumGalleryColumns: 3,
 
     setTaskOption: (mode, key, val) => {
       const { taskViews } = get();
@@ -172,7 +172,7 @@ export const useMyListCustomizationStore = create<MyListCustomizationStore>((set
         taskViews: mode
           ? { ...taskViews, [mode]: { ...DEFAULT_TASK_CUSTOMIZATION[mode] } }
           : { ...DEFAULT_TASK_CUSTOMIZATION },
-        ...(mode === 'gallery' || !mode ? { taskGalleryColumns: 2 } : {}),
+        ...(mode === 'gallery' || !mode ? { taskGalleryColumns: 3 } : {}),
       });
     },
 
@@ -182,7 +182,7 @@ export const useMyListCustomizationStore = create<MyListCustomizationStore>((set
         albumViews: mode
           ? { ...albumViews, [mode]: { ...DEFAULT_ALBUM_CUSTOMIZATION[mode] } }
           : { ...DEFAULT_ALBUM_CUSTOMIZATION },
-        ...(mode === 'gallery' || !mode ? { albumGalleryColumns: 2 } : {}),
+        ...(mode === 'gallery' || !mode ? { albumGalleryColumns: 3 } : {}),
       });
     },
   };
@@ -208,11 +208,29 @@ async function persistState(state: MyListCustomizationStore) {
   }
 }
 
+const MIGRATION_COLS_V3_KEY = '@my_list_default_v3_cols_migrated';
+
 export async function hydrateMyListCustomization(): Promise<void> {
   try {
+    const colsMigrated = await AsyncStorage.getItem(MIGRATION_COLS_V3_KEY);
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const data = JSON.parse(raw);
+    const data = raw ? JSON.parse(raw) : {};
+
+    const initialTaskCols = !colsMigrated
+      ? 3
+      : [2, 3, 4].includes(data.taskGalleryColumns)
+      ? data.taskGalleryColumns
+      : 3;
+    const initialAlbumCols = !colsMigrated
+      ? 3
+      : [2, 3, 4].includes(data.albumGalleryColumns)
+      ? data.albumGalleryColumns
+      : 3;
+
+    if (!colsMigrated) {
+      await AsyncStorage.setItem(MIGRATION_COLS_V3_KEY, 'true');
+    }
+
     useMyListCustomizationStore.setState({
       taskViews: {
         list: { ...DEFAULT_TASK_CUSTOMIZATION.list, ...(data.taskViews?.list ?? {}) },
@@ -228,8 +246,8 @@ export async function hydrateMyListCustomization(): Promise<void> {
       albumGroupByStatus: typeof data.albumGroupByStatus === 'boolean' ? data.albumGroupByStatus : true,
       taskFavoritesAsGrid: typeof data.taskFavoritesAsGrid === 'boolean' ? data.taskFavoritesAsGrid : true,
       albumFavoritesAsGrid: typeof data.albumFavoritesAsGrid === 'boolean' ? data.albumFavoritesAsGrid : true,
-      taskGalleryColumns: [2, 3, 4].includes(data.taskGalleryColumns) ? data.taskGalleryColumns : 2,
-      albumGalleryColumns: [2, 3, 4].includes(data.albumGalleryColumns) ? data.albumGalleryColumns : 2,
+      taskGalleryColumns: initialTaskCols,
+      albumGalleryColumns: initialAlbumCols,
     });
   } catch {
     // Ignore error
