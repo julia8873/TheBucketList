@@ -416,7 +416,7 @@ export default function PublicProfileScreen() {
                 />
                 <ViewModeSelector mode={taskViewMode} onChange={setTaskViewMode} />
               </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14, marginBottom: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14, marginBottom: 12 }}>
                 <ProfileTaskFilterButton filter={filter} onChangeFilter={setFilter} />
               </View>
             </>
@@ -473,10 +473,10 @@ export default function PublicProfileScreen() {
         data={isBlocked || isLocked || activeTab !== 'list' ? [] : filtered}
         keyExtractor={(item: any) => item.id}
         numColumns={taskViewMode === 'gallery' ? 2 : 1}
-        columnWrapperStyle={taskViewMode === 'gallery' ? { gap: 12 } : undefined}
+        columnWrapperStyle={taskViewMode === 'gallery' ? { gap: 8 } : undefined}
         ListHeaderComponent={header}
         contentContainerStyle={styles.listContent}
-        ItemSeparatorComponent={() => <View style={{ height: taskViewMode === 'compact' ? 8 : 12 }} />}
+        ItemSeparatorComponent={() => <View style={{ height: taskViewMode === 'compact' ? 6 : 8 }} />}
         renderItem={({ item }) => (
           <PublicTaskRow
             bucket={item}
@@ -488,7 +488,7 @@ export default function PublicProfileScreen() {
         )}
         ListEmptyComponent={
           isBlocked || isLocked || activeTab !== 'list' ? null : bucketsLoading ? (
-            <View style={{ gap: 10, marginTop: 12 }}>
+            <View style={{ gap: 8, marginTop: 12 }}>
               <TaskRowSkeleton />
               <TaskRowSkeleton />
               <TaskRowSkeleton />

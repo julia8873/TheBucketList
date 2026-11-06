@@ -362,7 +362,7 @@ export default function CurrentUserProfileScreen() {
               alignItems: 'center',
               gap: 8,
               marginTop: 14,
-              marginBottom: 16,
+              marginBottom: 12,
             }}
           >
             <ProfileTaskFilterButton filter={filter} onChangeFilter={setFilter} />
@@ -411,10 +411,10 @@ export default function CurrentUserProfileScreen() {
           data={activeTab === 'list' ? filteredTasks : []}
           keyExtractor={(item: any) => item.id}
           numColumns={taskViewMode === 'gallery' ? 2 : 1}
-          columnWrapperStyle={taskViewMode === 'gallery' ? { gap: 12 } : undefined}
+          columnWrapperStyle={taskViewMode === 'gallery' ? { gap: 8 } : undefined}
           ListHeaderComponent={header}
           contentContainerStyle={styles.listContent}
-          ItemSeparatorComponent={() => <View style={{ height: taskViewMode === 'compact' ? 8 : 12 }} />}
+          ItemSeparatorComponent={() => <View style={{ height: taskViewMode === 'compact' ? 6 : 8 }} />}
           renderItem={({ item }) => (
             <PublicTaskRow
               bucket={item}
@@ -426,7 +426,7 @@ export default function CurrentUserProfileScreen() {
           )}
           ListEmptyComponent={
             activeTab !== 'list' ? null : bucketsLoading ? (
-              <View style={{ gap: 10, marginTop: 12, paddingHorizontal: 12 }}>
+              <View style={{ gap: 8, marginTop: 12, paddingHorizontal: 12 }}>
                 <TaskRowSkeleton />
                 <TaskRowSkeleton />
                 <TaskRowSkeleton />
