@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Plus, FolderOpen, ChevronRight, Star, Lock, Check, Bookmark } from 'lucide-react-native';
+import { Plus, FolderOpen, ChevronRight, Star, Lock, Check, Bookmark, CheckCircle2 } from 'lucide-react-native';
 
 import { useTheme } from '../theme/useTheme';
 import { useCoverOverlay } from '../theme/coverOverlay';
@@ -280,8 +280,7 @@ export function AlbumCard({
         <View style={styles.topLeftBadges}>
           {isCompleted && !isClosed && (
             <View style={styles.completedBadge}>
-              <Check size={10} color="#FFF" strokeWidth={2.5} />
-              <Text style={styles.completedText}>{t('common.completed_m')}</Text>
+              <CheckCircle2 size={12} color="#FFFFFF" />
             </View>
           )}
 
@@ -607,9 +606,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     left: 10,
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    gap: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     zIndex: 2,
   },
   sharedBadge: {
@@ -640,13 +639,12 @@ const styles = StyleSheet.create({
     color: '#D4B13A',
   },
   completedBadge: {
-    flexDirection: 'row',
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(52, 199, 89, 0.9)',
     alignItems: 'center',
-    gap: 3,
-    backgroundColor: 'rgba(34,197,94,0.9)',
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 20,
+    justifyContent: 'center',
   },
   completedText: {
     fontFamily: fontFamily.semibold,

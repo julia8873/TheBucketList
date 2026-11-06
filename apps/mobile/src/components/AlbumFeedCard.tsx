@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Images, Lock, Users, Heart, Bookmark, MessageCircle } from 'lucide-react-native';
+import { Images, Lock, Users, Heart, Bookmark, MessageCircle, CheckCircle2 } from 'lucide-react-native';
 import { Avatar, useTheme, gold, fontFamily, fontSize, radii } from '@bucketlist/ui';
 import { useRouter } from 'expo-router';
 import { useTranslation } from '@bucketlist/shared';
@@ -197,9 +197,16 @@ export function AlbumFeedCard({
                 </Pressable>
               )}
 
-              <View style={styles.galleryAlbumBadge}>
-                <Images size={10} color="rgba(255,255,255,0.95)" />
-                <Text style={styles.galleryAlbumBadgeText}>{t('common.album', { defaultValue: 'Álbum' })}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                {album.total_tasks > 0 && album.completed_tasks === album.total_tasks && (
+                  <View style={styles.galleryCompletedBadge}>
+                    <CheckCircle2 size={12} color="#FFFFFF" strokeWidth={2.5} />
+                  </View>
+                )}
+                <View style={styles.galleryAlbumBadge}>
+                  <Images size={10} color="rgba(255,255,255,0.95)" />
+                  <Text style={styles.galleryAlbumBadgeText}>{t('common.album', { defaultValue: 'Álbum' })}</Text>
+                </View>
               </View>
             </View>
 
@@ -801,6 +808,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 10,
+  },
+  galleryCompletedBadge: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(52, 199, 89, 0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   galleryAlbumBadgeText: {
     fontFamily: fontFamily.semibold,
