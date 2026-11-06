@@ -15,6 +15,7 @@ import {
   Search,
   ArrowUp,
   ArrowDown,
+  ArrowUpDown,
   Plus,
   RotateCcw,
   CheckCircle2,
@@ -867,67 +868,76 @@ export default function AlbumDetailScreen() {
             <View style={styles.tasksToolbar}>
               <ViewModeSelector mode={taskViewMode} onChange={setTaskViewMode} style={styles.viewModeWrap} />
 
-              {/* Ordenar: misma barra rectangular y centrada que en Mi lista */}
-              <View style={styles.toolbarSortContainer}>
-                <Pressable
-                  ref={state.taskSortTriggerRef}
-                  collapsable={false}
-                  style={[
-                    styles.toolbarSortBtn,
-                    {
-                      backgroundColor: theme.colors.surface,
-                      borderColor: theme.colors.border,
-                    },
-                  ]}
-                  onPress={openTaskSortMenu}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.toolbarSortText} numberOfLines={1} ellipsizeMode="tail">
-                    {state.taskSortField === 'priority'
-                      ? t('albums.sort_priority', { defaultValue: 'Prioridad' })
-                      : state.taskSortField === 'alphabetical'
-                      ? t('albums.sort_name', { defaultValue: 'Nombre' })
-                      : state.taskSortField === 'deadline'
-                      ? t('albums.sort_deadline_date', { defaultValue: 'Fecha límite' })
-                      : state.taskSortField === 'completed_at'
-                      ? t('albums.sort_completed_date', { defaultValue: 'Fecha de completado' })
-                      : state.taskSortField === 'created_at'
-                      ? t('albums.sort_created_date', { defaultValue: 'Fecha de creación' })
-                      : t('albums.sort_manual', { defaultValue: 'Manual' })}
-                  </Text>
-                  {state.taskSortField !== 'manual' &&
-                    (state.taskSortDir === 'desc' ? (
-                      <ArrowDown size={13} color="#D4B13A" />
-                    ) : (
-                      <ArrowUp size={13} color="#D4B13A" />
-                    ))}
-                </Pressable>
-              </View>
+              <View style={{ flex: 1 }} />
 
               {state.canEdit && (
                 <Pressable
-                  style={styles.toolbarIconBtn}
+                  style={[
+                    styles.toolbarIconBtn,
+                    {
+                      backgroundColor: state.isSelectionMode ? '#D4B13A' : theme.colors.surface,
+                      borderColor: state.isSelectionMode ? '#D4B13A' : theme.colors.border,
+                    },
+                  ]}
                   onPress={() => (state.isSelectionMode ? state.handleExitSelection() : state.startSelection())}
                   accessibilityLabel={state.isSelectionMode ? t('album_detail.exit_selection_a11y', { defaultValue: 'Salir de la selección' }) : t('album_detail.select_tasks_a11y', { defaultValue: 'Seleccionar tareas' })}
                 >
-                  <ListChecks size={16} color={state.isSelectionMode ? '#D4B13A' : '#8F8F8F'} />
+                  <ListChecks size={16} color={state.isSelectionMode ? '#0E0E0E' : '#8F8F8F'} />
                 </Pressable>
               )}
 
               <Pressable
-                style={styles.toolbarIconBtn}
+                style={[
+                  styles.toolbarIconBtn,
+                  {
+                    backgroundColor: state.taskSearchOpen ? '#D4B13A' : theme.colors.surface,
+                    borderColor: state.taskSearchOpen ? '#D4B13A' : theme.colors.border,
+                  },
+                ]}
                 onPress={() => {
                   if (state.taskSearchOpen) state.setTaskSearch('');
                   state.setTaskSearchOpen(!state.taskSearchOpen);
                 }}
               >
-                <Search size={16} color={state.taskSearchOpen ? '#D4B13A' : '#8F8F8F'} />
+                <Search size={16} color={state.taskSearchOpen ? '#0E0E0E' : '#8F8F8F'} />
+              </Pressable>
+
+              {/* Botón de ordenar/reordenar consistente con Mi lista */}
+              <Pressable
+                ref={state.taskSortTriggerRef}
+                collapsable={false}
+                style={[
+                  styles.toolbarIconBtn,
+                  {
+                    backgroundColor: state.isReorderingTasks ? '#D4B13A' : theme.colors.surface,
+                    borderColor: state.isReorderingTasks ? '#D4B13A' : theme.colors.border,
+                  },
+                ]}
+                onPress={openTaskSortMenu}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={t('my_list.sort_tasks', { defaultValue: 'Ordenar' })}
+              >
+                {state.taskSortField !== 'manual' && state.taskSortDir ? (
+                  state.taskSortDir === 'desc' ? (
+                    <ArrowDown size={16} color="#D4B13A" />
+                  ) : (
+                    <ArrowUp size={16} color="#D4B13A" />
+                  )
+                ) : (
+                  <ArrowUpDown size={16} color={state.isReorderingTasks ? '#0E0E0E' : '#D4B13A'} />
+                )}
               </Pressable>
 
               {(pendientes.length > 0 || completadas.length > 0) && (
                 <Pressable
-                  style={styles.toolbarIconBtn}
+                  style={[
+                    styles.toolbarIconBtn,
+                    {
+                      backgroundColor: theme.colors.surface,
+                      borderColor: theme.colors.border,
+                    },
+                  ]}
                   onPress={toggleAllSections}
                   accessibilityLabel={t('my_list.collapse_sections', { defaultValue: 'Compactar secciones' })}
                 >
@@ -936,6 +946,25 @@ export default function AlbumDetailScreen() {
                   ) : (
                     <ChevronsDownUp size={16} color="#8F8F8F" />
                   )}
+                </Pressable>
+              )}
+
+              {state.isReorderingTasks && (
+                <Pressable
+                  onPress={() => state.setIsReorderingTasks(false)}
+                  hitSlop={8}
+                  style={{
+                    height: 36,
+                    paddingHorizontal: 12,
+                    borderRadius: 18,
+                    backgroundColor: '#D4B13A',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: '#0E0E0E' }}>
+                    {t('common.done', { defaultValue: 'Listo' })}
+                  </Text>
                 </Pressable>
               )}
             </View>

@@ -173,7 +173,7 @@ export function AlbumTaskCard({
         )}
         {drag && !isSelectionMode && (
           <View {...drag.panHandlers} hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }} accessibilityLabel={t('albums.drag_reorder')}>
-            <GripVertical size={18} color="#8F8F8F" strokeWidth={1.8} />
+            <GripVertical size={18} color={drag.isActive ? '#D4B13A' : '#8F8F8F'} strokeWidth={2} />
           </View>
         )}
         {!canEdit && !isSelectionMode && (
@@ -398,7 +398,7 @@ export function AlbumTaskCard({
 
         {drag && !isSelectionMode && (
           <View {...drag.panHandlers} hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }} accessibilityLabel={t('albums.drag_reorder')}>
-            <GripVertical size={20} color="#8F8F8F" strokeWidth={1.8} />
+            <GripVertical size={20} color={drag.isActive ? '#D4B13A' : '#8F8F8F'} strokeWidth={2} />
           </View>
         )}
 
