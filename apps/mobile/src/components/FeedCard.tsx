@@ -194,15 +194,15 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
               />
             )}
 
-            {/* Badges superiores: Autor + colaboradores a la izquierda, completado a la derecha */}
+            {/* Badges superiores: Autor + colaboradores solapados a la izquierda, completado a la derecha */}
             <View style={styles.galleryTopBadges} pointerEvents="box-none">
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Pressable
                   onPress={(e) => {
                     e.stopPropagation();
                     openProfile();
                   }}
-                  style={styles.galleryUserBadge}
+                  style={[styles.galleryUserBadge, { zIndex: 2 }]}
                   hitSlop={8}
                   accessibilityRole="button"
                   accessibilityLabel={actor.username}
@@ -217,6 +217,7 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
                       setShowParticipantsModal(true);
                     }}
                     hitSlop={6}
+                    style={{ marginLeft: -8, zIndex: 1 }}
                     accessibilityRole="button"
                     accessibilityLabel={t('participants.title', { defaultValue: 'Colaboradores' })}
                   >
@@ -383,14 +384,17 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
               hitSlop={4}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 0 }}>
-                <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="xs" goldRing />
+                <View style={{ zIndex: 2 }}>
+                  <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="xs" goldRing />
+                </View>
                 {hasCollabs && collaboratorsOnly.length > 0 && (
-                  <ParticipantsStack
-                    participants={collaboratorsOnly}
-                    max={2}
-                    ringColor={theme.colors.surface}
-                    style={{ marginLeft: 3 }}
-                  />
+                  <View style={{ marginLeft: -8, zIndex: 1 }}>
+                    <ParticipantsStack
+                      participants={collaboratorsOnly}
+                      max={2}
+                      ringColor={theme.colors.surface}
+                    />
+                  </View>
                 )}
               </View>
               <Text
@@ -450,8 +454,8 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
       {/* Cabecera */}
       <View style={styles.header}>
         {hasCollabs && participants ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Pressable onPress={openProfile} accessibilityRole="button" accessibilityLabel={actor.username}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Pressable onPress={openProfile} accessibilityRole="button" accessibilityLabel={actor.username} style={{ zIndex: 2 }}>
               <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="md" goldRing />
             </Pressable>
             {collaboratorsOnly.length > 0 && (
@@ -460,6 +464,7 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
                 hitSlop={6}
                 accessibilityRole="button"
                 accessibilityLabel={t('participants.title', { defaultValue: 'Colaboradores' })}
+                style={{ marginLeft: -10, zIndex: 1 }}
               >
                 <ParticipantsStack
                   participants={collaboratorsOnly}
