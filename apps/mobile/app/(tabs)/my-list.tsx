@@ -14,7 +14,7 @@ import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
 import { useTranslation } from '@bucketlist/shared';
-import { Search, X, ChevronLeft, Sparkles, ChevronRight, Settings } from 'lucide-react-native';
+import { Search, X, ChevronLeft, Sparkles, ChevronRight, SlidersHorizontal } from 'lucide-react-native';
 import { DraggableTaskList } from '@/components/DraggableTaskList';
 import { BulkTaskActionBar } from '@/components/BulkTaskActionBar';
 import { BulkAlbumActionBar } from '@/components/BulkAlbumActionBar';
@@ -642,7 +642,7 @@ export default function MyListScreen() {
             opacity: pressed ? 0.7 : 1,
           })}
         >
-          <Settings size={17} color={theme.colors.primary} />
+          <SlidersHorizontal size={17} color={theme.colors.primary} />
         </Pressable>
       </View>
 
