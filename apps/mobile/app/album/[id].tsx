@@ -1087,7 +1087,7 @@ export default function AlbumDetailScreen() {
           <View style={[styles.sectionContainer, { marginTop: 8 }]}>
             <View style={{ paddingHorizontal: 12 }}>
               <SectionHeader
-                title={t('common.completed', { defaultValue: 'Completadas' }).toUpperCase()}
+                title={t('common.completed_plural', { defaultValue: 'Completadas' }).toUpperCase()}
                 count={completadas.length}
                 collapsed={isCompletadasCollapsed}
                 onToggle={() => toggleSection('completadas')}
