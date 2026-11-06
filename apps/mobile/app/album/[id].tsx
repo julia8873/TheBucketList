@@ -122,8 +122,9 @@ export default function AlbumDetailScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      void queryClient.invalidateQueries({ queryKey: ['album', state.id], stale: true });
-    }, [queryClient, state.id])
+      void state.refetch();
+      void queryClient.invalidateQueries({ queryKey: ['album', state.cleanId || state.id] });
+    }, [queryClient, state.cleanId, state.id, state.refetch])
   );
 
   useEffect(() => {

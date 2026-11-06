@@ -189,8 +189,8 @@ export function useAlbumDetailState() {
   const titleTimeout = useRef<any>(null);
   const descTimeout = useRef<any>(null);
 
-  const { data: album, isLoading, isError, refetch } = useAlbumDetail(id || '1');
-  const { data: albumTags = [] } = useAlbumTags(id);
+  const { data: album, isLoading, isError, refetch } = useAlbumDetail(cleanId || '1');
+  const { data: albumTags = [] } = useAlbumTags(cleanId);
   const syncAlbumTags = useSyncAlbumTags();
   const [manualRefreshing, setManualRefreshing] = useState(false);
   const handleRefresh = async () => {
@@ -1362,7 +1362,9 @@ export function useAlbumDetailState() {
   };
 
   return {
-    id,
+    id: cleanId,
+    cleanId,
+    refetch,
     router,
     queryClient,
     isSelectionMode,

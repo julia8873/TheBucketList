@@ -91,7 +91,7 @@ function patchBucketLists(qc: QueryClient, ids: Set<string>, fn: (b: any) => any
     if (!Array.isArray(old)) return old;
     let changed = false;
     const next = old.map((b: any) => {
-      if (b && typeof b === 'object' && ids.has(b.id)) {
+      if (b && typeof b === 'object' && (ids.has(b.id) || ids.has(String(b.id).toLowerCase()))) {
         changed = true;
         return fn(b);
       }
@@ -107,7 +107,13 @@ export function patchTasks(
   taskIds: string[],
   opts: { bucket?: Record<string, any>; task?: Record<string, any> },
 ) {
-  const ids = new Set(taskIds);
+  const ids = new Set<string>();
+  taskIds.forEach((id) => {
+    if (id) {
+      ids.add(String(id));
+      ids.add(String(id).trim().toLowerCase());
+    }
+  });
   const { bucket, task } = opts;
 
   // Detalle de álbum (+ contadores de progreso del listado de álbumes)
@@ -116,7 +122,7 @@ export function patchTasks(
     let dCompleted = 0;
     let touched = false;
     const tasks = data.tasks.map((t: any) => {
-      if (!ids.has(t.id)) return t;
+      if (!t?.id || (!ids.has(t.id) && !ids.has(String(t.id).toLowerCase()))) return t;
       touched = true;
       const derivedFromBucket: Record<string, any> = {};
       if (bucket) {
