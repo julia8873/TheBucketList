@@ -9,6 +9,7 @@ export interface TaskItem {
   categoryName: string;
   coverKey: string;
   isCompleted: boolean;
+  status?: string;
   dueDate?: string;
   /** Fecha en que se completó (para ordenar). */
   completedAt?: string | null;
@@ -119,6 +120,7 @@ export const albumsService = {
           imageValue: resolveTaskImage(b, { preferThumb: true }),
           categorySlug: cat?.slug ?? null,
           isCompleted: b.status === 'completed',
+          status: b.status || 'pending',
           dueDate: b.deadline || undefined,
           completedAt: (b).completed_at ?? null,
           createdAt: (b).created_at ?? null,
@@ -238,6 +240,7 @@ export const albumsService = {
           imageValue: resolveTaskImage(b as any, { preferThumb: true }),
           categorySlug: cat?.slug ?? null,
           isCompleted: b.status === 'completed',
+          status: b.status || 'pending',
           dueDate: b.deadline || undefined,
           completedAt: (b as any).completed_at ?? null,
           createdAt: (b as any).created_at ?? null,

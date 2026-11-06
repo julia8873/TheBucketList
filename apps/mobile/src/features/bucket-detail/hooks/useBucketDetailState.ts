@@ -536,7 +536,7 @@ export function useBucketDetailState() {
     // Refleja el estado al instante también en las listas y en los álbumes.
     patchTasks(queryClient, [id], {
       bucket: patch,
-      task: { isCompleted: status === 'completed', completedAt: patch.completed_at ?? null },
+      task: { status, isCompleted: status === 'completed', completedAt: patch.completed_at ?? null },
     });
     const { error } = await supabase
       .from('buckets')

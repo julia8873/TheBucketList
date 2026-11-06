@@ -1064,7 +1064,7 @@ export function useAlbumDetailState() {
     // Optimista: tarea + contador de progreso del álbum + listas, todo al instante.
     patchTasks(queryClient, [task.id], {
       bucket: { status: nextStatus, completed_at: nextCompletedAt },
-      task: { isCompleted: nextCompleted, completedAt: nextCompletedAt },
+      task: { status: nextStatus, isCompleted: nextCompleted, completedAt: nextCompletedAt },
     });
 
     const { error } = await supabase

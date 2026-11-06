@@ -8,6 +8,7 @@ import { BucketCover } from '@/components/BucketCover';
 import { hexToRgba } from '@/constants/tagPresets';
 import { styles } from '../styles/album-detail.styles';
 import { ParticipantsStack, useParticipantsOf } from '@/components/ItemParticipants';
+import { getTaskStatusType, getStatusConfig } from '@/utils/statusBadge';
 
 import { useTranslation, resolveCounterLabel } from '@bucketlist/shared';
 
@@ -82,6 +83,8 @@ export function AlbumTaskCard({
   const { t, i18n } = useTranslation();
   const locale = i18n.language?.startsWith('en') ? 'en-US' : 'es-ES';
   const isDone = task.isCompleted;
+  const statusType = getTaskStatusType({ status: task.status, deadline: task.dueDate });
+  const statusCfg = getStatusConfig(statusType, t);
   const subTitle = getSubTitle(task, t);
   const badge = getBadgeText(task.dueDate, t);
   const participants = useParticipantsOf('task', task.id);
@@ -131,6 +134,28 @@ export function AlbumTaskCard({
     </View>
   );
 
+  const statusBadge = (
+    <View
+      key="status-badge"
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 3,
+        paddingHorizontal: 7,
+        paddingVertical: 2,
+        borderRadius: 8,
+        backgroundColor: statusCfg.bg,
+        borderWidth: 1,
+        borderColor: statusCfg.color,
+      }}
+    >
+      {statusCfg.rowIcon}
+      <Text style={{ fontSize: 11, fontWeight: '700', color: statusCfg.color }}>
+        {statusCfg.label}
+      </Text>
+    </View>
+  );
+
   const handlePress = () => {
     if (isSelectionMode) onToggleSelect?.(task);
     else router.push(`/bucket/${task.id}`);
@@ -168,11 +193,9 @@ export function AlbumTaskCard({
         >
           {task.title}
         </Text>
-        {isDone && (
-          <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: 'rgba(52,199,89,0.15)', alignItems: 'center', justifyContent: 'center' }}>
-            <Check size={12} color="#22C55E" strokeWidth={2.5} />
-          </View>
-        )}
+        <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: statusCfg.bg, alignItems: 'center', justifyContent: 'center' }}>
+          {statusCfg.rowIcon}
+        </View>
         {!isDone && badge && (
           <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: '#D4B13A' }}>{badge}</Text>
         )}
@@ -198,6 +221,8 @@ export function AlbumTaskCard({
   if (viewMode === 'gallery') {
     const is4Cols = columns === 4;
     const is3Cols = columns === 3;
+    const badgeSize = is4Cols ? 16 : is3Cols ? 18 : 22;
+    const checkIconSize = is4Cols ? 10 : is3Cols ? 11 : 12;
     const imageValue = task.imageValue ?? null;
     const isImageCover = !!imageValue && !imageValue.startsWith('preset:');
     return (
@@ -232,33 +257,40 @@ export function AlbumTaskCard({
               <View
                 style={[
                   styles.galleryCheck,
-                  is4Cols && { width: 18, height: 18, borderRadius: 9 },
-                  is3Cols && { width: 20, height: 20, borderRadius: 10 },
-                  isSelected
-                    ? { backgroundColor: '#D4B13A', borderWidth: 0 }
-                    : { backgroundColor: 'rgba(0,0,0,0.6)', borderColor: '#FFFFFF' },
+                  {
+                    width: badgeSize,
+                    height: badgeSize,
+                    borderRadius: badgeSize / 2,
+                    backgroundColor: isSelected ? '#D4B13A' : 'rgba(0,0,0,0.6)',
+                    borderWidth: isSelected ? 0 : 1.5,
+                    borderColor: '#FFFFFF',
+                  },
                 ]}
               >
-                {isSelected && <Check size={is4Cols ? 10 : 14} color="#0D0D0D" strokeWidth={3} />}
+                {isSelected && <Check size={checkIconSize} color="#0D0D0D" strokeWidth={3} />}
               </View>
-            ) : isDone ? (
+            ) : (
               <View
                 style={[
                   styles.galleryCheck,
-                  is4Cols && { width: 18, height: 18, borderRadius: 9 },
-                  is3Cols && { width: 20, height: 20, borderRadius: 10 },
-                  { backgroundColor: 'rgba(52,199,89,0.9)', borderWidth: 0 },
+                  {
+                    width: badgeSize,
+                    height: badgeSize,
+                    borderRadius: badgeSize / 2,
+                    backgroundColor: statusCfg.badgeBg,
+                    borderWidth: 0,
+                  },
                 ]}
               >
-                <Check size={is4Cols ? 10 : 14} color="#FFFFFF" strokeWidth={3} />
+                {statusCfg.renderGalleryIcon(checkIconSize)}
               </View>
-            ) : null}
+            )}
             {/* Fotos de perfil inline al lado del badge */}
             {participants && participants.length > 0 && (
               <ParticipantsStack
                 participants={participants}
                 max={participants.length > 2 ? 1 : 2}
-                bubbleSize={is4Cols ? 18 : is3Cols ? 20 : 24}
+                bubbleSize={badgeSize}
                 size="xs"
                 ringColor="rgba(0,0,0,0.55)"
                 disabled={isSelectionMode}
@@ -493,6 +525,7 @@ export function AlbumTaskCard({
           ) : null
         )}
         <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 5 }}>
+          {statusBadge}
           {priorityBadge}
           {task.tags &&
             task.tags.slice(0, 3).map((t) => (
@@ -536,18 +569,34 @@ export function AlbumTaskCard({
         )}
 
         {isSelectionMode ? null : canEdit ? (
-          isDone ? (
-            <View style={styles.readOnlyDoneBadge}>
-              <Check size={14} color="#10B981" strokeWidth={2.5} />
-            </View>
-          ) : null
+          <Pressable
+            hitSlop={8}
+            onPress={(e) => onToggleCompleted(task, e)}
+            style={[
+              styles.readOnlyDoneBadge,
+              {
+                backgroundColor: statusCfg.bg,
+                borderColor: statusCfg.color,
+                borderWidth: 1,
+              },
+            ]}
+          >
+            {statusCfg.rowIcon}
+          </Pressable>
         ) : (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            {isDone && (
-              <View style={styles.readOnlyDoneBadge}>
-                <Check size={14} color="#10B981" strokeWidth={2.5} />
-              </View>
-            )}
+            <View
+              style={[
+                styles.readOnlyDoneBadge,
+                {
+                  backgroundColor: statusCfg.bg,
+                  borderColor: statusCfg.color,
+                  borderWidth: 1,
+                },
+              ]}
+            >
+              {statusCfg.rowIcon}
+            </View>
             {copiedIds?.includes(task.id) ? (
               <View style={styles.taskAddedBadge}>
                 <Check size={12} color="#D4B13A" strokeWidth={2.5} />

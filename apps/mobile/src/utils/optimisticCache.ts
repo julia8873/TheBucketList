@@ -118,8 +118,20 @@ export function patchTasks(
     const tasks = data.tasks.map((t: any) => {
       if (!ids.has(t.id)) return t;
       touched = true;
-      const merged = { ...t, ...(task ?? {}) };
-      if (task && 'isCompleted' in task && !!t.isCompleted !== !!merged.isCompleted) {
+      const derivedFromBucket: Record<string, any> = {};
+      if (bucket) {
+        if ('status' in bucket) {
+          derivedFromBucket.status = bucket.status;
+          derivedFromBucket.isCompleted = bucket.status === 'completed';
+        }
+        if ('priority' in bucket) derivedFromBucket.priority = bucket.priority;
+        if ('visibility' in bucket) derivedFromBucket.visibility = bucket.visibility;
+        if ('title' in bucket) derivedFromBucket.title = bucket.title;
+        if ('completed_at' in bucket) derivedFromBucket.completedAt = bucket.completed_at;
+        if ('deadline' in bucket) derivedFromBucket.dueDate = bucket.deadline;
+      }
+      const merged = { ...t, ...derivedFromBucket, ...(task ?? {}) };
+      if ('isCompleted' in merged && !!t.isCompleted !== !!merged.isCompleted) {
         dCompleted += merged.isCompleted ? 1 : -1;
       }
       return merged;

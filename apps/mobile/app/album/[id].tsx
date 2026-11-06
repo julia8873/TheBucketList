@@ -95,8 +95,8 @@ export default function AlbumDetailScreen() {
     const next = taskGalleryColumns === 2 ? 3 : taskGalleryColumns === 3 ? 4 : 2;
     setTaskGalleryColumns(next);
   };
-  const [collapsedSections, setCollapsedSections] = useState<{ pendientes?: boolean; completadas?: boolean }>({});
-  const toggleSection = (key: 'pendientes' | 'completadas') => {
+  const [collapsedSections, setCollapsedSections] = useState<{ en_progreso?: boolean; pendientes?: boolean; completadas?: boolean }>({});
+  const toggleSection = (key: 'en_progreso' | 'pendientes' | 'completadas') => {
     setCollapsedSections((prev) => ({ ...prev, [key]: !prev[key] }));
   };
   const isAdmin = useIsAdmin();
@@ -268,18 +268,21 @@ export default function AlbumDetailScreen() {
   const visibleTasks = isSearchingTasks
     ? tasks.filter((t) => normalizeText(t.title).includes(searchQ))
     : tasks;
-  const pendientes = visibleTasks.filter((t) => !t.isCompleted).sort(compareTasks);
+  const enProgreso = visibleTasks.filter((t) => t.status === 'in_progress' && !t.isCompleted).sort(compareTasks);
+  const pendientes = visibleTasks.filter((t) => t.status !== 'in_progress' && !t.isCompleted).sort(compareTasks);
   const completadas = visibleTasks.filter((t) => t.isCompleted).sort(compareTasks);
   const allDone = tasks.filter((t) => t.isCompleted);
 
+  const isEnProgresoCollapsed = !!collapsedSections.en_progreso;
   const isPendientesCollapsed = !!collapsedSections.pendientes;
   const isCompletadasCollapsed = !!collapsedSections.completadas;
   const allCollapsed =
+    (enProgreso.length === 0 || isEnProgresoCollapsed) &&
     (pendientes.length === 0 || isPendientesCollapsed) &&
     (completadas.length === 0 || isCompletadasCollapsed);
   const toggleAllSections = () => {
     const next = !allCollapsed;
-    setCollapsedSections({ pendientes: next, completadas: next });
+    setCollapsedSections({ en_progreso: next, pendientes: next, completadas: next });
   };
 
   const manualDragEnabled =
@@ -319,10 +322,17 @@ export default function AlbumDetailScreen() {
     void state.queryClient.invalidateQueries({ queryKey: ['album', state.id, state.user?.id] });
   };
 
-  const handleReorderSection = (section: 'pendientes' | 'completadas', orderedIds: string[]) => {
+  const handleReorderSection = (section: 'en_progreso' | 'pendientes' | 'completadas', orderedIds: string[]) => {
+    const progIds = enProgreso.map((t) => t.id);
     const pendIds = pendientes.map((t) => t.id);
     const doneIds = completadas.map((t) => t.id);
-    void persistTaskOrder(section === 'pendientes' ? [...orderedIds, ...doneIds] : [...pendIds, ...orderedIds]);
+    if (section === 'en_progreso') {
+      void persistTaskOrder([...orderedIds, ...pendIds, ...doneIds]);
+    } else if (section === 'pendientes') {
+      void persistTaskOrder([...progIds, ...orderedIds, ...doneIds]);
+    } else {
+      void persistTaskOrder([...progIds, ...pendIds, ...orderedIds]);
+    }
   };
 
   const openTaskSortMenu = () => {
@@ -409,7 +419,7 @@ export default function AlbumDetailScreen() {
     }
   }
 
-  const visibleTaskIds = [...pendientes, ...completadas].map((t) => t.id);
+  const visibleTaskIds = [...enProgreso, ...pendientes, ...completadas].map((t) => t.id);
   const isAllSelected =
     visibleTaskIds.length > 0 && visibleTaskIds.every((tid) => state.selectedTaskIds.includes(tid));
 
@@ -943,7 +953,7 @@ export default function AlbumDetailScreen() {
                 )}
               </Pressable>
 
-              {(pendientes.length > 0 || completadas.length > 0) && (
+              {(enProgreso.length > 0 || pendientes.length > 0 || completadas.length > 0) && (
                 <Pressable
                   style={[
                     styles.toolbarIconBtn,
@@ -1012,6 +1022,47 @@ export default function AlbumDetailScreen() {
                   </Pressable>
                 )}
               </View>
+            )}
+          </View>
+        )}
+
+        {/* Tareas en progreso */}
+        {enProgreso.length > 0 && (
+          <View style={[styles.sectionContainer, { marginTop: 8 }]}>
+            <View style={{ paddingHorizontal: 12 }}>
+              <SectionHeader
+                title={t('bucket.status_in_progress', { defaultValue: 'En progreso' }).toUpperCase()}
+                count={enProgreso.length}
+                collapsed={isEnProgresoCollapsed}
+                onToggle={() => toggleSection('en_progreso')}
+                theme={theme}
+              />
+            </View>
+            {!isEnProgresoCollapsed && (
+              manualDragEnabled ? (
+                <View style={styles.taskListDraggable}>
+                  <DraggableTaskList
+                    items={enProgreso}
+                    onReorder={(ids) => handleReorderSection('en_progreso', ids)}
+                    onDraggingChange={state.setDragging}
+                    renderItem={(item, drag) => renderTaskCard(item, drag)}
+                  />
+                </View>
+              ) : taskViewMode === 'gallery' ? (
+                <View
+                  style={[
+                    styles.taskGalleryGrid,
+                    taskGalleryColumns === 3 && styles.taskGalleryGrid3,
+                    taskGalleryColumns === 4 && styles.taskGalleryGrid4,
+                  ]}
+                >
+                  {enProgreso.map((task) => renderTaskCard(task))}
+                </View>
+              ) : (
+                <View style={styles.taskList}>
+                  {enProgreso.map((task) => renderTaskCard(task))}
+                </View>
+              )
             )}
           </View>
         )}
@@ -1098,7 +1149,7 @@ export default function AlbumDetailScreen() {
           </View>
         )}
 
-        {isSearchingTasks && pendientes.length === 0 && completadas.length === 0 && (
+        {isSearchingTasks && enProgreso.length === 0 && pendientes.length === 0 && completadas.length === 0 && (
           <Text style={styles.noResultsText}>
             {t('albums.no_tasks_search', { defaultValue: 'No se encontraron tareas con ese nombre' })}
           </Text>
