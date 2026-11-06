@@ -12,6 +12,7 @@ import { resolveTaskImage } from '@/utils/taskImage';
 import type { TaskViewCustomization } from '@/stores/myListCustomization.store';
 import type { Tag } from '@/hooks/useTags';
 import { ParticipantsStack, useParticipantsOf } from '@/components/ItemParticipants';
+import { getTaskStatusType, getStatusConfig } from '@/utils/statusBadge';
 
 interface TaskCompactItemRowProps {
   item: any;
@@ -114,6 +115,7 @@ function TaskCompactItemRowComponent({
   const extraSubtitle = subParts.join(' · ');
 
   // Decide which meta badges to render below the title
+  const showStatus = customization?.showStatus ?? true;
   const showPriority = customization?.showPriority ?? true;
   const showFavorite = customization?.showFavorite ?? true;
   const showTags = customization?.showTags ?? false;
@@ -123,8 +125,12 @@ function TaskCompactItemRowComponent({
   const visibleParticipants =
     (customization?.showCollaborators ?? false) && participants && participants.length > 0 ? participants : undefined;
 
+  const taskStatus = getTaskStatusType(item);
+  const statusCfg = getStatusConfig(taskStatus, t);
+
   const hasBadgesBelowTitle =
     !!extraSubtitle ||
+    showStatus ||
     showPriority ||
     (showTags && itemTags && itemTags.length > 0) ||
     (showProgress && !!progressText) ||
@@ -229,6 +235,26 @@ function TaskCompactItemRowComponent({
         {hasMetaBadges && (
           <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
             {item.is_shared && <Users size={12} color={theme.colors.primary} />}
+            {showStatus && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 3,
+                  paddingHorizontal: 6,
+                  paddingVertical: 1.5,
+                  borderRadius: 6,
+                  backgroundColor: statusCfg.bg,
+                  borderWidth: 1,
+                  borderColor: statusCfg.color,
+                }}
+              >
+                {statusCfg.rowIcon}
+                <Text style={{ fontSize: 10, fontWeight: '700', color: statusCfg.color }}>
+                  {statusCfg.label}
+                </Text>
+              </View>
+            )}
             {showPriority && (
               <View
                 style={{

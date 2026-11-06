@@ -9,6 +9,7 @@ import { styles } from '../styles/my-list.styles';
 import type { DragHandle } from '@/components/DraggableTaskList';
 import type { AlbumViewCustomization } from '@/stores/myListCustomization.store';
 import { ParticipantsStack, useParticipantsOf } from '@/components/ItemParticipants';
+import { getAlbumStatusType, getStatusConfig } from '@/utils/statusBadge';
 
 const PRESET_COVERS: Record<string, { type: 'gradient' | 'solid'; colors: [string, string, ...string[]]; diagonal?: boolean }> = {
   aurora: { type: 'gradient', colors: ['#0E4B43', '#1F8560'] },
@@ -136,11 +137,15 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
   const visibleParticipants =
     (customization?.showCollaborators ?? false) && participants && participants.length > 0 ? participants : undefined;
 
+  const showBadges = customization?.showBadges ?? true;
+  const albumStatus = getAlbumStatusType(item);
+  const statusCfg = getStatusConfig(albumStatus, t, true);
+
   const hasDescription = !!(customization?.showDescription && item.description && item.description.trim().length > 0);
   const hasPriority = !!((customization?.showPriority ?? false) && item.priority);
   const hasDate = !!(customization?.showDate && item.created_at);
   const hasProgress = !!((customization?.showProgress ?? false) && total > 0);
-  const hasBadgesBelowTitle = hasDescription || hasPriority || hasDate || hasProgress;
+  const hasBadgesBelowTitle = hasDescription || showBadges || hasPriority || hasDate || hasProgress;
 
   return (
     <Pressable
@@ -219,8 +224,28 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
             {item.description.trim()}
           </Text>
         ) : null}
-        {(hasPriority || hasProgress || hasDate) && (
+        {(hasPriority || hasProgress || hasDate || showBadges) && (
           <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
+            {showBadges && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 3,
+                  paddingHorizontal: 6,
+                  paddingVertical: 1.5,
+                  borderRadius: 6,
+                  backgroundColor: statusCfg.bg,
+                  borderWidth: 1,
+                  borderColor: statusCfg.color,
+                }}
+              >
+                {statusCfg.rowIcon}
+                <Text style={{ fontSize: 10, fontWeight: '700', color: statusCfg.color }}>
+                  {statusCfg.label}
+                </Text>
+              </View>
+            )}
             {hasPriority && (
               <View
                 style={{
@@ -399,6 +424,8 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
   const participants = useParticipantsOf('album', item.id);
   const visibleParticipants =
     (customization?.showCollaborators ?? true) && participants && participants.length > 0 ? participants : undefined;
+  const albumStatus = getAlbumStatusType(item);
+  const statusCfg = getStatusConfig(albumStatus, t, true);
 
   return (
     <View
@@ -513,6 +540,13 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
               <Text style={[styles.listAlbumMeta, { color: theme.colors.foregroundMuted }]}>
                 {new Date(item.created_at).toLocaleDateString(i18n.language?.startsWith('en') ? 'en-US' : 'es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
               </Text>
+            )}
+
+            {showBadges && (
+              <View style={[styles.listAlbumBadge, { backgroundColor: statusCfg.bg, borderColor: statusCfg.color }]}>
+                {statusCfg.rowIcon}
+                <Text style={[styles.listAlbumBadgeText, { color: statusCfg.color, fontWeight: '700' }]}>{statusCfg.label}</Text>
+              </View>
             )}
 
             {showBadges && item.is_closed && (

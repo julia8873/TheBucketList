@@ -548,6 +548,7 @@ export default function MyListScreen() {
         showDate={albumViews.gallery.showDate}
         showDescription={albumViews.gallery.showDescription}
         createdAt={item.created_at}
+        deadline={item.deadline}
         description={item.description}
         participantsElement={
           albumViews.gallery.showCollaborators && participantsValue.album[item.id] ? (

@@ -630,6 +630,8 @@ const en = {
     customize_opt_favorites_grid: 'Favorites in 2 columns',
     customize_opt_album_favorites_grid: 'Favorites in 2 columns',
     customize_opt_thumbnails: 'Image thumbnails',
+    customize_opt_status: 'Status badge',
+    customize_opt_status_sub: 'Visual badge according to status (Completed, In progress, Pending, Overdue)',
     customize_section_elements: 'Visible elements',
     customize_gallery_columns: 'Grid columns',
     gallery_columns_label: 'Number of columns',
@@ -2708,6 +2710,13 @@ const en = {
     details_placeholder: 'Add information or context for the administrator...',
     submit: 'Send report',
     submitting: 'Sending...',
+  },
+
+  status: {
+    completed: 'Completed',
+    in_progress: 'In progress',
+    pending: 'Pending',
+    overdue: 'Overdue',
   },
 
   storage: {

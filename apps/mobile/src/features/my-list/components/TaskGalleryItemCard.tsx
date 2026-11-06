@@ -10,6 +10,7 @@ import { styles } from '../styles/my-list.styles';
 import type { TaskViewCustomization, GalleryColumns } from '@/stores/myListCustomization.store';
 import type { Tag } from '@/hooks/useTags';
 import { ParticipantsStack, useParticipantsOf } from '@/components/ItemParticipants';
+import { getTaskStatusType, getStatusConfig } from '@/utils/statusBadge';
 
 interface TaskGalleryItemCardProps {
   item: any;
@@ -109,6 +110,10 @@ function TaskGalleryItemCardComponent({
   const checkIconSize = is4Cols ? 10 : is3Cols ? 11 : 12;
   const starIconSize = is4Cols ? 9 : is3Cols ? 10 : 11;
 
+  const showStatus = customization?.showStatus ?? true;
+  const statusType = getTaskStatusType(item);
+  const statusCfg = getStatusConfig(statusType, t);
+
   return (
     <Pressable
       key={item.id}
@@ -186,9 +191,19 @@ function TaskGalleryItemCardComponent({
                   <Star size={starIconSize} color={gold[500]} fill={gold[500]} />
                 </View>
               )}
-              {isCompleted && (
-                <View style={[styles.galleryCompletedBadge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2 }]}>
-                  <CheckCircle2 size={checkIconSize} color="#FFFFFF" />
+              {showStatus && (
+                <View
+                  style={[
+                    styles.galleryCompletedBadge,
+                    {
+                      width: badgeSize,
+                      height: badgeSize,
+                      borderRadius: badgeSize / 2,
+                      backgroundColor: statusCfg.badgeBg,
+                    },
+                  ]}
+                >
+                  {statusCfg.renderGalleryIcon(checkIconSize)}
                 </View>
               )}
             </>

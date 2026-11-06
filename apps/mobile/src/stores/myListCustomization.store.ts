@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export interface TaskViewCustomization {
   showThumbnails: boolean;
   showPriority: boolean;
+  showStatus?: boolean;
   showFavorite: boolean;
   showTags: boolean;
   showDates: boolean;
@@ -16,6 +17,7 @@ export interface TaskViewCustomization {
 export interface AlbumViewCustomization {
   showThumbnails: boolean;
   showPriority: boolean;
+  showStatus?: boolean;
   showTaskCount: boolean;
   showProgress: boolean;
   showBadges: boolean;
@@ -31,6 +33,7 @@ export const DEFAULT_TASK_CUSTOMIZATION: Record<ViewModeType, TaskViewCustomizat
   list: {
     showThumbnails: true,
     showPriority: true,
+    showStatus: true,
     showFavorite: true,
     showTags: true,
     showDates: true,
@@ -42,6 +45,7 @@ export const DEFAULT_TASK_CUSTOMIZATION: Record<ViewModeType, TaskViewCustomizat
   gallery: {
     showThumbnails: true,
     showPriority: true,
+    showStatus: true,
     showFavorite: true,
     showTags: true,
     showDates: true,
@@ -53,6 +57,7 @@ export const DEFAULT_TASK_CUSTOMIZATION: Record<ViewModeType, TaskViewCustomizat
   compact: {
     showThumbnails: true,
     showPriority: true,
+    showStatus: true,
     showFavorite: true,
     showTags: false,
     showDates: false,
@@ -67,6 +72,7 @@ export const DEFAULT_ALBUM_CUSTOMIZATION: Record<ViewModeType, AlbumViewCustomiz
   list: {
     showThumbnails: true,
     showPriority: true,
+    showStatus: true,
     showTaskCount: true,
     showProgress: true,
     showBadges: true,
@@ -77,6 +83,7 @@ export const DEFAULT_ALBUM_CUSTOMIZATION: Record<ViewModeType, AlbumViewCustomiz
   gallery: {
     showThumbnails: true,
     showPriority: true,
+    showStatus: true,
     showTaskCount: true,
     showProgress: true,
     showBadges: true,
@@ -87,6 +94,7 @@ export const DEFAULT_ALBUM_CUSTOMIZATION: Record<ViewModeType, AlbumViewCustomiz
   compact: {
     showThumbnails: true,
     showPriority: false,
+    showStatus: true,
     showTaskCount: true,
     showProgress: false,
     showBadges: true,

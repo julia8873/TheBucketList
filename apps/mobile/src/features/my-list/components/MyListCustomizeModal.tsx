@@ -76,6 +76,7 @@ function MyListCustomizeModalComponent({
 
   const taskOptions: Array<{ key: TaskKey; label: string }> = useMemo(() => [
     { key: 'showThumbnails', label: t('my_list.customize_opt_thumbnails', { defaultValue: 'Miniaturas de imagen' }) },
+    { key: 'showStatus', label: t('my_list.customize_opt_status', { defaultValue: 'Insignia de estado' }) },
     { key: 'showPriority', label: t('my_list.customize_opt_priority') },
     { key: 'showFavorite', label: t('my_list.customize_opt_favorite') },
     { key: 'showTags', label: t('my_list.customize_opt_tags') },
@@ -96,10 +97,10 @@ function MyListCustomizeModalComponent({
             label: t('my_list.customize_opt_thumbnails', { defaultValue: 'Miniaturas de imagen' }),
           },
         ]),
+    { key: 'showBadges', label: t('my_list.customize_opt_status', { defaultValue: 'Insignia de estado' }) },
     { key: 'showPriority', label: t('my_list.customize_opt_album_priority') },
     { key: 'showTaskCount', label: t('my_list.customize_opt_album_task_count') },
     { key: 'showProgress', label: t('my_list.customize_opt_album_progress') },
-    { key: 'showBadges', label: t('my_list.customize_opt_album_badges') },
     { key: 'showDate', label: t('my_list.customize_opt_album_date') },
     { key: 'showCollaborators', label: t('my_list.customize_opt_album_collaborators', { defaultValue: 'Colaboradores' }) },
     { key: 'showDescription', label: t('my_list.customize_opt_album_desc') },

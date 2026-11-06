@@ -630,6 +630,8 @@ const es = {
     customize_gallery_columns: 'Columnas de la cuadrícula',
     gallery_columns_label: 'Número de columnas',
     customize_reset: 'Restablecer',
+    customize_opt_status: 'Insignia de estado',
+    customize_opt_status_sub: 'Insignia visual según el estado (Completado, En curso, Pendiente, Vencido)',
     customize_opt_favorites_grid: 'Favoritas en 2 columnas',
     customize_opt_album_favorites_grid: 'Favoritos en 2 columnas',
     customize_opt_thumbnails: 'Miniaturas de imagen',
@@ -2708,6 +2710,13 @@ const es = {
     details_placeholder: 'Añade información o contexto para el administrador...',
     submit: 'Enviar reporte',
     submitting: 'Enviando...',
+  },
+
+  status: {
+    completed: 'Completado',
+    in_progress: 'En curso',
+    pending: 'Pendiente',
+    overdue: 'Vencido',
   },
 
   storage: {

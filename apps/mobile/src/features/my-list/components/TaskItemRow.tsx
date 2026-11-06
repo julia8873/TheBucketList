@@ -12,6 +12,7 @@ import type { DragHandle } from '@/components/DraggableTaskList';
 import type { Tag } from '@/hooks/useTags';
 import type { TaskViewCustomization } from '@/stores/myListCustomization.store';
 import { ParticipantsStack, useParticipantsOf } from '@/components/ItemParticipants';
+import { getTaskStatusType, getStatusConfig } from '@/utils/statusBadge';
 
 interface TaskItemRowProps {
   item: any;
@@ -124,6 +125,32 @@ function TaskItemRowComponent({
       ? t('common.low')
       : t('common.medium');
 
+  const showStatus = customization?.showStatus ?? true;
+  const taskStatus = getTaskStatusType(item);
+  const statusCfg = getStatusConfig(taskStatus, t);
+
+  const statusBadge = showStatus ? (
+    <View
+      key="status-badge"
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 3,
+        paddingHorizontal: 7,
+        paddingVertical: 2,
+        borderRadius: 8,
+        backgroundColor: statusCfg.bg,
+        borderWidth: 1,
+        borderColor: statusCfg.color,
+      }}
+    >
+      {statusCfg.rowIcon}
+      <Text style={{ fontSize: 11, fontWeight: '700', color: statusCfg.color }}>
+        {statusCfg.label}
+      </Text>
+    </View>
+  ) : null;
+
   const priorityBadge = showPriority ? (
     <View
       key="priority-badge"
@@ -171,10 +198,11 @@ function TaskItemRowComponent({
 
   const visibleTags = showTags ? itemTags : [];
   const visibleParticipants = showCollab && participants && participants.length > 0 ? participants : undefined;
-  const hasTagsOrBadges = priorityBadge || visibleTags.length > 0;
+  const hasTagsOrBadges = statusBadge || priorityBadge || visibleTags.length > 0;
 
   const tagsElement = hasTagsOrBadges ? (
     <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+      {statusBadge}
       {priorityBadge}
       {visibleTags.slice(0, 2).map((t) => (
         <TagChip

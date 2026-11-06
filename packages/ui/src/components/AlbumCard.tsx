@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Plus, FolderOpen, ChevronRight, Star, Lock, Check, Bookmark, CheckCircle2 } from 'lucide-react-native';
+import { Plus, FolderOpen, ChevronRight, Star, Lock, Check, Bookmark, CheckCircle2, MoreHorizontal, Clock, AlertCircle } from 'lucide-react-native';
 
 import { useTheme } from '../theme/useTheme';
 import { useCoverOverlay } from '../theme/coverOverlay';
@@ -63,6 +63,7 @@ interface AlbumCardProps {
   showDate?: boolean;
   showDescription?: boolean;
   createdAt?: string;
+  deadline?: string | null;
   description?: string;
   /** Elemento extra (p. ej. fotos de colaboradores) sobre la barra de progreso. */
   participantsElement?: React.ReactNode;
@@ -148,6 +149,7 @@ export function AlbumCard({
   showDate = false,
   showDescription = false,
   createdAt,
+  deadline,
   description,
   participantsElement,
 }: AlbumCardProps) {
@@ -194,6 +196,8 @@ export function AlbumCard({
   }
 
   const isCompleted = totalTasks > 0 && completedTasks === totalTasks;
+  const isExpired = !isCompleted && deadline ? new Date(deadline).getTime() < Date.now() : false;
+  const isInProgress = !isCompleted && !isExpired && totalTasks > 0 && completedTasks > 0;
   const isImageCover = !!(parsedCover && (parsedCover.type === 'image' || parsedCover.uri) && parsedCover.uri);
 
   const gradientColors: [string, string] = isImageCover
@@ -278,10 +282,24 @@ export function AlbumCard({
         </View>
       ) : showBadges && (
         <View style={styles.topLeftBadges}>
-          {isCompleted && !isClosed && (
-            <View style={styles.completedBadge}>
-              <CheckCircle2 size={12} color="#FFFFFF" />
-            </View>
+          {!isClosed && (
+            isCompleted ? (
+              <View style={[styles.completedBadge, { backgroundColor: 'rgba(52, 199, 89, 0.9)' }]}>
+                <CheckCircle2 size={12} color="#FFFFFF" strokeWidth={2.4} />
+              </View>
+            ) : isExpired ? (
+              <View style={[styles.completedBadge, { backgroundColor: 'rgba(239, 68, 68, 0.9)' }]}>
+                <AlertCircle size={12} color="#FFFFFF" strokeWidth={2.4} />
+              </View>
+            ) : isInProgress ? (
+              <View style={[styles.completedBadge, { backgroundColor: 'rgba(0, 122, 255, 0.9)' }]}>
+                <MoreHorizontal size={13} color="#FFFFFF" strokeWidth={2.4} />
+              </View>
+            ) : (
+              <View style={[styles.completedBadge, { backgroundColor: 'rgba(142, 142, 147, 0.9)' }]}>
+                <Clock size={11} color="#FFFFFF" strokeWidth={2.2} />
+              </View>
+            )
           )}
 
           {isClosed && (
