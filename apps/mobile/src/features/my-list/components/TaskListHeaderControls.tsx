@@ -38,6 +38,8 @@ interface TaskListHeaderControlsProps {
   onToggleSearch: () => void;
   allCollapsed: boolean;
   onToggleAllCollapsed: () => void;
+  galleryColumns?: 2 | 3 | 4;
+  onCycleGalleryColumns?: () => void;
   /** Se mantiene por compatibilidad: la personalización se abre desde el engranaje de la cabecera. */
   onOpenCustomize?: () => void;
   theme: any;
@@ -74,6 +76,8 @@ export function TaskListHeaderControls({
   onToggleSearch,
   allCollapsed,
   onToggleAllCollapsed,
+  galleryColumns,
+  onCycleGalleryColumns,
   theme,
 }: TaskListHeaderControlsProps) {
   const { t } = useTranslation();
@@ -132,6 +136,8 @@ export function TaskListHeaderControls({
         isReordering={isReordering}
         onFinishReordering={() => setIsReordering(false)}
         isSearching={isSearching}
+        galleryColumns={galleryColumns}
+        onCycleGalleryColumns={onCycleGalleryColumns}
       />
 
       <ActiveFilterChips

@@ -214,24 +214,58 @@ export const styles = themedStyleSheet({
   galleryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 14,
+    gap: 12,
     marginBottom: 16,
+  },
+  galleryGrid3: {
+    gap: 6,
+  },
+  galleryGrid4: {
+    gap: 4,
   },
   galleryCard: {
     ...Platform.select({
       web: {
-        width: 'calc(50% - 7px)',
+        width: 'calc(50% - 6px)',
         aspectRatio: 1 / 1.3,
         maxHeight: 320,
       } as any,
       default: {
-        width: (SCREEN_WIDTH - 40 - 14) / 2,
-        height: ((SCREEN_WIDTH - 40 - 14) / 2) * 1.3,
+        width: (SCREEN_WIDTH - 24 - 12) / 2,
+        height: ((SCREEN_WIDTH - 24 - 12) / 2) * 1.3,
       },
     }),
     borderRadius: 14,
     overflow: 'hidden',
     position: 'relative',
+  },
+  galleryCard3: {
+    ...Platform.select({
+      web: {
+        width: 'calc(33.333% - 4px)',
+        aspectRatio: 1 / 1.25,
+        maxHeight: 220,
+      } as any,
+      default: {
+        width: (SCREEN_WIDTH - 24 - 12) / 3,
+        height: ((SCREEN_WIDTH - 24 - 12) / 3) * 1.25,
+      },
+    }),
+    borderRadius: 10,
+  },
+  galleryCard4: {
+    ...Platform.select({
+      web: {
+        width: 'calc(25% - 3px)',
+        aspectRatio: 1 / 1.15,
+        maxHeight: 180,
+      } as any,
+      default: {
+        width: (SCREEN_WIDTH - 24 - 12) / 4,
+        height: ((SCREEN_WIDTH - 24 - 12) / 4) * 1.15,
+      },
+    }),
+    borderRadius: 8,
   },
   galleryCardSingle: {
     ...Platform.select({

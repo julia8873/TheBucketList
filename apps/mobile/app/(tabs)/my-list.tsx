@@ -62,7 +62,14 @@ export default function MyListScreen() {
   const state = useMyListState();
   const [goldTitle, ...restTitle] = t('nav.my_list', { defaultValue: 'Mi lista' }).split(' ');
   const [customizeModalVisible, setCustomizeModalVisible] = React.useState(false);
-  const { taskViews, albumViews, taskFavoritesAsGrid, albumFavoritesAsGrid } = useMyListCustomizationStore();
+  const {
+    taskViews,
+    albumViews,
+    taskFavoritesAsGrid,
+    albumFavoritesAsGrid,
+    taskGalleryColumns,
+    setTaskGalleryColumns,
+  } = useMyListCustomizationStore();
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [collapsed, setCollapsed] = React.useState<Record<string, boolean>>({});
   const toggleSection = useCallback(
@@ -710,6 +717,10 @@ export default function MyListScreen() {
     );
   };
 
+  const handleCycleGalleryColumns = useCallback(() => {
+    setTaskGalleryColumns(taskGalleryColumns === 2 ? 3 : taskGalleryColumns === 3 ? 4 : 2);
+  }, [taskGalleryColumns, setTaskGalleryColumns]);
+
   const taskListHeaderElement = (
     <View style={{ marginBottom: 12 }}>
       {renderTopHeader(true)}
@@ -749,6 +760,8 @@ export default function MyListScreen() {
         onToggleSearch={toggleSearchBar}
         allCollapsed={allCollapsed}
         onToggleAllCollapsed={toggleAllSections}
+        galleryColumns={taskGalleryColumns}
+        onCycleGalleryColumns={handleCycleGalleryColumns}
         theme={theme}
       />
       {renderSearchBar()}
@@ -774,9 +787,10 @@ export default function MyListScreen() {
               {taskListHeaderElement}
               <View style={{ paddingTop: 10 }}>
                 {state.taskViewMode === 'gallery' ? (
-                  <View style={styles.galleryGrid}>
-                    <TaskGallerySkeleton />
-                    <TaskGallerySkeleton />
+                  <View style={[styles.galleryGrid, taskGalleryColumns === 3 && styles.galleryGrid3, taskGalleryColumns === 4 && styles.galleryGrid4]}>
+                    {Array.from({ length: taskGalleryColumns * 2 }).map((_, i) => (
+                      <TaskGallerySkeleton key={i} columns={taskGalleryColumns} />
+                    ))}
                   </View>
                 ) : state.taskViewMode === 'compact' ? (
                   <View style={{ gap: 8 }}>
@@ -863,7 +877,7 @@ export default function MyListScreen() {
                   return (
                     <View key={sec.key} style={styles.sectionBlock}>
                       {sectionHeaderEl(sec.key, sec.title, sec.items.length)}
-                      <View style={styles.galleryGrid}>
+                      <View style={[styles.galleryGrid, taskGalleryColumns === 3 && styles.galleryGrid3, taskGalleryColumns === 4 && styles.galleryGrid4]}>
                         {visibleItems(sec).map((item: any) => {
                           const tagIds = state.tagUsage?.byItem[item.id] ?? (Array.isArray(item.tags) ? item.tags : []);
                           const itemTagObjs = tagIds.map((tid: string) => state.tagsById.get(tid)).filter(Boolean);
@@ -871,12 +885,13 @@ export default function MyListScreen() {
                             <TaskGalleryItemCard
                               key={item.id}
                               item={item}
-                              isSingle={sec.items.length === 1}
+                              isSingle={taskGalleryColumns === 2 && sec.items.length === 1}
                               isSelected={state.selectedTaskIds.includes(item.id)}
                               isSelectionMode={state.isSelectionMode}
                               isFav={state.isBucketFavorite(item.id)}
                               itemTags={itemTagObjs}
                               customization={taskViews.gallery}
+                              columns={taskGalleryColumns}
                               onPress={() => {
                                 if (state.isSelectionMode) state.toggleSelectTask(item.id);
                                 else {
@@ -898,7 +913,7 @@ export default function MyListScreen() {
                   );
                 })
               ) : (
-                <View style={styles.galleryGrid}>
+                <View style={[styles.galleryGrid, taskGalleryColumns === 3 && styles.galleryGrid3, taskGalleryColumns === 4 && styles.galleryGrid4]}>
                   {state.sortedFlatBuckets.map((item: any) => {
                     const tagIds = state.tagUsage?.byItem[item.id] ?? (Array.isArray(item.tags) ? item.tags : []);
                     const itemTagObjs = tagIds.map((tid: string) => state.tagsById.get(tid)).filter(Boolean);
@@ -906,12 +921,13 @@ export default function MyListScreen() {
                       <TaskGalleryItemCard
                         key={item.id}
                         item={item}
-                        isSingle={state.sortedFlatBuckets.length === 1}
+                        isSingle={taskGalleryColumns === 2 && state.sortedFlatBuckets.length === 1}
                         isSelected={state.selectedTaskIds.includes(item.id)}
                         isSelectionMode={state.isSelectionMode}
                         isFav={state.isBucketFavorite(item.id)}
                         itemTags={itemTagObjs}
                         customization={taskViews.gallery}
+                        columns={taskGalleryColumns}
                         onPress={() => {
                           if (state.isSelectionMode) state.toggleSelectTask(item.id);
                           else {

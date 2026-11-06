@@ -627,6 +627,8 @@ const es = {
     customize_section_general: 'General',
     customize_section_sections: 'Secciones',
     customize_section_elements: 'Elementos visibles',
+    customize_gallery_columns: 'Columnas de la cuadrícula',
+    gallery_columns_label: 'Número de columnas',
     customize_reset: 'Restablecer',
     customize_opt_favorites_grid: 'Favoritas en 2 columnas',
     customize_opt_album_favorites_grid: 'Favoritos en 2 columnas',

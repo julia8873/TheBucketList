@@ -128,6 +128,8 @@ interface ControlsBarProps {
   isReordering?: boolean;
   onFinishReordering?: () => void;
   isSearching?: boolean;
+  galleryColumns?: 2 | 3 | 4;
+  onCycleGalleryColumns?: () => void;
   theme: any;
 }
 
@@ -150,6 +152,8 @@ export function ListControlsBar({
   isReordering,
   onFinishReordering,
   isSearching,
+  galleryColumns,
+  onCycleGalleryColumns,
   theme,
 }: ControlsBarProps) {
   const { t } = useTranslation();
@@ -181,7 +185,13 @@ export function ListControlsBar({
         return (
           <Pressable
             key={v.key}
-            onPress={() => setViewMode(v.key)}
+            onPress={() => {
+              if (on && v.key === 'gallery' && onCycleGalleryColumns) {
+                onCycleGalleryColumns();
+              } else {
+                setViewMode(v.key);
+              }
+            }}
             hitSlop={4}
             accessibilityRole="button"
             accessibilityLabel={v.label}
@@ -196,6 +206,27 @@ export function ListControlsBar({
             }}
           >
             <Icon size={14} color={on ? c.primaryForeground : muted} />
+            {on && v.key === 'gallery' && galleryColumns && (
+              <View
+                style={{
+                  position: 'absolute',
+                  top: -2,
+                  right: -2,
+                  width: 12,
+                  height: 12,
+                  borderRadius: 6,
+                  backgroundColor: theme.dark ? '#000000' : '#FFFFFF',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderWidth: 1,
+                  borderColor: c.primary,
+                }}
+              >
+                <Text style={{ fontSize: 8, fontWeight: '800', color: c.primary, lineHeight: 10 }}>
+                  {galleryColumns}
+                </Text>
+              </View>
+            )}
           </Pressable>
         );
       })}

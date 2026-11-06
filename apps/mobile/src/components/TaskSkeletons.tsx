@@ -55,10 +55,11 @@ export function TaskCompactSkeleton() {
 /**
  * Skeleton para vista galería / cuadrícula (Gallery mode en Mis Tareas).
  */
-export function TaskGallerySkeleton() {
+export function TaskGallerySkeleton({ columns = 2 }: { columns?: 2 | 3 | 4 } = {}) {
   const { width } = useWindowDimensions();
   const { theme } = useTheme();
-  const cardWidth = Math.floor((width - 24 - 10 - 2) / 2);
+  const cardWidth = Math.floor((width - 24 - 12) / columns);
+  const cardHeight = Math.floor(cardWidth * (columns === 4 ? 1.15 : columns === 3 ? 1.25 : 1.3));
 
   return (
     <View
@@ -68,16 +69,16 @@ export function TaskGallerySkeleton() {
           backgroundColor: theme.colors.surface,
           borderColor: theme.colors.border,
           ...Platform.select({
-            web: { width: 'calc(50% - 7px)' } as any,
-            default: { width: cardWidth },
+            web: { width: columns === 4 ? 'calc(25% - 3px)' : columns === 3 ? 'calc(33.333% - 4px)' : 'calc(50% - 6px)' } as any,
+            default: { width: cardWidth, height: cardHeight },
           }),
         },
       ]}
     >
-      <Skeleton width="100%" height={150} borderRadius={16} />
-      <View style={{ padding: 8 }}>
-        <Skeleton width="80%" height={13} borderRadius={5} style={{ marginBottom: 6 }} />
-        <Skeleton width="50%" height={10} borderRadius={4} />
+      <Skeleton width="100%" height={columns === 4 ? 60 : columns === 3 ? 90 : 150} borderRadius={columns === 4 ? 8 : columns === 3 ? 10 : 16} />
+      <View style={{ padding: columns === 4 ? 4 : 8 }}>
+        <Skeleton width="80%" height={columns === 4 ? 9 : 13} borderRadius={5} style={{ marginBottom: 4 }} />
+        {columns !== 4 && <Skeleton width="50%" height={10} borderRadius={4} />}
       </View>
     </View>
   );

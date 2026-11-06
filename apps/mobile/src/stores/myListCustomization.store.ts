@@ -25,6 +25,7 @@ export interface AlbumViewCustomization {
 }
 
 export type ViewModeType = 'list' | 'gallery' | 'compact';
+export type GalleryColumns = 2 | 3 | 4;
 
 export const DEFAULT_TASK_CUSTOMIZATION: Record<ViewModeType, TaskViewCustomization> = {
   list: {
@@ -104,8 +105,11 @@ interface MyListCustomizationStore {
   taskFavoritesAsGrid: boolean;
   /** Favoritos (álbumes) en 2 columnas dentro de la sección FAVORITOS. */
   albumFavoritesAsGrid: boolean;
+  /** Columnas en modo galería para tareas (2, 3 o 4). */
+  taskGalleryColumns: GalleryColumns;
   setTaskOption: (mode: ViewModeType, key: keyof TaskViewCustomization, val: boolean) => void;
   setAlbumOption: (mode: ViewModeType, key: keyof AlbumViewCustomization, val: boolean) => void;
+  setTaskGalleryColumns: (cols: GalleryColumns) => void;
   setTaskGroupByStatus: (val: boolean) => void;
   setAlbumGroupByStatus: (val: boolean) => void;
   setTaskFavoritesAsGrid: (val: boolean) => void;
@@ -130,6 +134,7 @@ export const useMyListCustomizationStore = create<MyListCustomizationStore>((set
     albumGroupByStatus: true,
     taskFavoritesAsGrid: true,
     albumFavoritesAsGrid: true,
+    taskGalleryColumns: 2,
 
     setTaskOption: (mode, key, val) => {
       const { taskViews } = get();
@@ -140,6 +145,8 @@ export const useMyListCustomizationStore = create<MyListCustomizationStore>((set
       const { albumViews } = get();
       update({ albumViews: { ...albumViews, [mode]: { ...albumViews[mode], [key]: val } } });
     },
+
+    setTaskGalleryColumns: (cols) => update({ taskGalleryColumns: cols }),
 
     setTaskGroupByStatus: (val) => update({ taskGroupByStatus: val }),
     setAlbumGroupByStatus: (val) => update({ albumGroupByStatus: val }),
@@ -152,6 +159,7 @@ export const useMyListCustomizationStore = create<MyListCustomizationStore>((set
         taskViews: mode
           ? { ...taskViews, [mode]: { ...DEFAULT_TASK_CUSTOMIZATION[mode] } }
           : { ...DEFAULT_TASK_CUSTOMIZATION },
+        ...(mode === 'gallery' || !mode ? { taskGalleryColumns: 2 } : {}),
       });
     },
 
@@ -177,6 +185,7 @@ async function persistState(state: MyListCustomizationStore) {
         albumGroupByStatus: state.albumGroupByStatus,
         taskFavoritesAsGrid: state.taskFavoritesAsGrid,
         albumFavoritesAsGrid: state.albumFavoritesAsGrid,
+        taskGalleryColumns: state.taskGalleryColumns,
       }),
     );
   } catch {
@@ -204,6 +213,7 @@ export async function hydrateMyListCustomization(): Promise<void> {
       albumGroupByStatus: typeof data.albumGroupByStatus === 'boolean' ? data.albumGroupByStatus : true,
       taskFavoritesAsGrid: typeof data.taskFavoritesAsGrid === 'boolean' ? data.taskFavoritesAsGrid : true,
       albumFavoritesAsGrid: typeof data.albumFavoritesAsGrid === 'boolean' ? data.albumFavoritesAsGrid : true,
+      taskGalleryColumns: [2, 3, 4].includes(data.taskGalleryColumns) ? data.taskGalleryColumns : 2,
     });
   } catch {
     // Ignore error

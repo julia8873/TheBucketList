@@ -7,30 +7,32 @@ import { useTranslation, resolveCounterLabel } from '@bucketlist/shared';
 import { BucketCover } from '@/components/BucketCover';
 import { resolveTaskImage } from '@/utils/taskImage';
 import { styles } from '../styles/my-list.styles';
-import type { TaskViewCustomization } from '@/stores/myListCustomization.store';
+import type { TaskViewCustomization, GalleryColumns } from '@/stores/myListCustomization.store';
 import type { Tag } from '@/hooks/useTags';
 import { ParticipantsStack, useParticipantsOf } from '@/components/ItemParticipants';
 
 interface TaskGalleryItemCardProps {
   item: any;
-  isSingle: boolean;
+  isSingle?: boolean;
   isSelected: boolean;
   isSelectionMode: boolean;
   isFav: boolean;
   itemTags?: Tag[];
   customization?: TaskViewCustomization;
+  columns?: GalleryColumns;
   onPress: () => void;
   onLongPress: () => void;
 }
 
 function TaskGalleryItemCardComponent({
   item,
-  isSingle,
+  isSingle = false,
   isSelected,
   isSelectionMode,
   isFav,
   itemTags,
   customization,
+  columns = 2,
   onPress,
   onLongPress,
 }: TaskGalleryItemCardProps) {
@@ -40,7 +42,8 @@ function TaskGalleryItemCardComponent({
   const isCompleted = item.status === 'completed';
   const participants = useParticipantsOf('task', item.id);
 
-  const imageValue = resolveTaskImage(item, { preferThumb: !isSingle });
+  const effectiveSingle = isSingle && columns === 2;
+  const imageValue = resolveTaskImage(item, { preferThumb: !effectiveSingle });
   const isImageCover = !!imageValue && !imageValue.startsWith('preset:');
 
   const showPriority = customization?.showPriority ?? true;
@@ -100,6 +103,12 @@ function TaskGalleryItemCardComponent({
   }
   const metaText = metaParts.join(' · ');
 
+  const is4Cols = columns === 4;
+  const is3Cols = columns === 3;
+  const badgeSize = is4Cols ? 18 : is3Cols ? 20 : 22;
+  const checkIconSize = is4Cols ? 10 : is3Cols ? 11 : 12;
+  const starIconSize = is4Cols ? 9 : is3Cols ? 10 : 11;
+
   return (
     <Pressable
       key={item.id}
@@ -107,11 +116,13 @@ function TaskGalleryItemCardComponent({
       onLongPress={onLongPress}
       style={[
         styles.galleryCard,
+        is3Cols && styles.galleryCard3,
+        is4Cols && styles.galleryCard4,
         {
           backgroundColor: theme.dark ? dark[900] : dark[800],
           borderColor: theme.colors.border,
         },
-        isSingle && styles.galleryCardSingle,
+        effectiveSingle && styles.galleryCardSingle,
       ]}
       accessibilityRole="button"
       accessibilityLabel={item.title}
@@ -121,7 +132,7 @@ function TaskGalleryItemCardComponent({
         title={item.title}
         categorySlug={item.category?.slug}
         seed={item.id}
-        iconSize={isSingle ? 64 : 44}
+        iconSize={effectiveSingle ? 64 : is4Cols ? 26 : is3Cols ? 34 : 44}
         style={StyleSheet.absoluteFill}
       />
 
@@ -132,8 +143,8 @@ function TaskGalleryItemCardComponent({
           style={[
             StyleSheet.absoluteFill,
             {
-              borderRadius: 14,
-              borderWidth: 2.5,
+              borderRadius: is4Cols ? 8 : is3Cols ? 10 : 14,
+              borderWidth: is4Cols ? 1.5 : 2.5,
               borderColor: gold[400],
               zIndex: 10,
             },
@@ -142,14 +153,14 @@ function TaskGalleryItemCardComponent({
       )}
 
       {/* Badges superiores */}
-      <View style={styles.galleryTopBadges}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+      <View style={[styles.galleryTopBadges, is4Cols && { top: 4, left: 4, right: 4 }, is3Cols && { top: 5, left: 5, right: 5 }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: is4Cols ? 3 : is3Cols ? 4 : 6 }}>
           {isSelectionMode ? (
             <View
               style={{
-                width: 24,
-                height: 24,
-                borderRadius: 12,
+                width: is4Cols ? 18 : is3Cols ? 20 : 24,
+                height: is4Cols ? 18 : is3Cols ? 20 : 24,
+                borderRadius: is4Cols ? 9 : is3Cols ? 10 : 12,
                 backgroundColor: isSelected ? gold[400] : 'rgba(0,0,0,0.6)',
                 borderWidth: isSelected ? 0 : 1.5,
                 borderColor: '#FFFFFF',
@@ -157,7 +168,7 @@ function TaskGalleryItemCardComponent({
                 justifyContent: 'center',
               }}
             >
-              {isSelected && <Check size={14} color="#0E0E0E" strokeWidth={3} />}
+              {isSelected && <Check size={is4Cols ? 10 : 14} color="#0E0E0E" strokeWidth={3} />}
             </View>
           ) : (
             <>
@@ -165,69 +176,86 @@ function TaskGalleryItemCardComponent({
                 <View
                   style={[
                     styles.galleryFavBadge,
+                    { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2 },
                     !theme.dark && {
                       backgroundColor: 'rgba(255,255,255,0.92)',
                       borderColor: gold[400],
                     },
                   ]}
                 >
-                  <Star size={11} color={gold[500]} fill={gold[500]} />
+                  <Star size={starIconSize} color={gold[500]} fill={gold[500]} />
                 </View>
               )}
               {isCompleted && (
-                <View style={styles.galleryCompletedBadge}>
-                  <CheckCircle2 size={12} color="#FFFFFF" />
+                <View style={[styles.galleryCompletedBadge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2 }]}>
+                  <CheckCircle2 size={checkIconSize} color="#FFFFFF" />
                 </View>
               )}
             </>
           )}
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: '65%' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: is4Cols ? 2 : 4, flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: is4Cols ? '55%' : '65%' }}>
           {showPriority && (
-            <View
-              style={[
-                styles.galleryPriorityBadge,
-                {
-                  borderColor: itemPriorityColor,
-                },
-                !theme.dark && {
-                  backgroundColor: 'rgba(255,255,255,0.92)',
-                },
-              ]}
-            >
-              <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: itemPriorityColor }} />
-              <Text style={[styles.galleryPriorityText, { color: itemPriorityColor }]}>{itemPriorityLabel}</Text>
-            </View>
+            is4Cols ? (
+              <View
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: itemPriorityColor,
+                  borderWidth: 1,
+                  borderColor: 'rgba(0,0,0,0.4)',
+                }}
+              />
+            ) : (
+              <View
+                style={[
+                  styles.galleryPriorityBadge,
+                  is3Cols && { paddingHorizontal: 4, paddingVertical: 1, gap: 3 },
+                  {
+                    borderColor: itemPriorityColor,
+                  },
+                  !theme.dark && {
+                    backgroundColor: 'rgba(255,255,255,0.92)',
+                  },
+                ]}
+              >
+                <View style={{ width: is3Cols ? 4 : 5, height: is3Cols ? 4 : 5, borderRadius: 2.5, backgroundColor: itemPriorityColor }} />
+                <Text style={[styles.galleryPriorityText, is3Cols && { fontSize: 9 }, { color: itemPriorityColor }]}>{itemPriorityLabel}</Text>
+              </View>
+            )
           )}
-          {showTags && itemTags && itemTags.length > 0 && (
+          {!is4Cols && showTags && itemTags && itemTags.length > 0 && (
             itemTags.slice(0, 1).map((t) => (
               <View
                 key={t.id}
                 style={[
                   styles.galleryPriorityBadge,
+                  is3Cols && { paddingHorizontal: 4, paddingVertical: 1 },
                   {
                     backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.92)',
                     borderColor: t.color || gold[400],
                   },
                 ]}
               >
-                <Text style={{ fontSize: 10, color: t.color || (theme.dark ? '#F2EFE8' : '#141414'), fontWeight: '600' }} numberOfLines={1}>
+                <Text style={{ fontSize: is3Cols ? 9 : 10, color: t.color || (theme.dark ? '#F2EFE8' : '#141414'), fontWeight: '600' }} numberOfLines={1}>
                   {t.emoji ? `${t.emoji} ` : ''}{t.name}
                 </Text>
               </View>
             ))
           )}
-          {showTags && itemTags && itemTags.length > 1 && (
+          {!is4Cols && showTags && itemTags && itemTags.length > 1 && (
             <View
               style={[
                 styles.galleryPriorityBadge,
+                is3Cols && { paddingHorizontal: 3, paddingVertical: 1 },
                 {
                   backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.92)',
                   borderColor: theme.colors.border,
                 },
               ]}
             >
-              <Text style={{ fontSize: 10, color: theme.colors.foregroundMuted, fontWeight: '600' }}>
+              <Text style={{ fontSize: is3Cols ? 9 : 10, color: theme.colors.foregroundMuted, fontWeight: '600' }}>
                 +{itemTags.length - 1}
               </Text>
             </View>
@@ -240,22 +268,30 @@ function TaskGalleryItemCardComponent({
         style={[
           styles.galleryBottomOverlay,
           { backgroundColor: isImageCover ? 'rgba(0,0,0,0.52)' : overlay.panel },
+          is3Cols && { minHeight: 44, paddingHorizontal: 6, paddingVertical: 4, borderBottomLeftRadius: 10, borderBottomRightRadius: 10 },
+          is4Cols && { minHeight: 32, paddingHorizontal: 4, paddingVertical: 3, borderBottomLeftRadius: 8, borderBottomRightRadius: 8 },
         ]}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: is4Cols ? 4 : is3Cols ? 6 : 8 }}>
           <View style={{ flex: 1 }}>
             <Text
-              style={[styles.galleryCardTitle, { color: overlay.title }, isSingle && { fontSize: 16, lineHeight: 22, minHeight: 44 }]}
-              numberOfLines={showDesc && item.description ? 1 : 2}
+              style={[
+                styles.galleryCardTitle,
+                { color: overlay.title },
+                effectiveSingle && { fontSize: 16, lineHeight: 22, minHeight: 44 },
+                is3Cols && { fontSize: 11, lineHeight: 14, minHeight: 14 },
+                is4Cols && { fontSize: 10, lineHeight: 12, minHeight: 12 },
+              ]}
+              numberOfLines={is4Cols || is3Cols || (showDesc && item.description) ? 1 : 2}
             >
               {item.title}
             </Text>
-            {metaText ? (
-              <Text style={[styles.galleryCardMeta, { color: overlay.meta }]} numberOfLines={1}>
+            {!is4Cols && metaText ? (
+              <Text style={[styles.galleryCardMeta, { color: overlay.meta }, is3Cols && { fontSize: 9, marginTop: 1 }]} numberOfLines={1}>
                 {metaText}
               </Text>
             ) : null}
-            {showDesc && item.description ? (
+            {!is4Cols && !is3Cols && showDesc && item.description ? (
               <Text
                 style={[styles.galleryCardMeta, { color: overlay.meta, fontSize: 11, marginTop: 2 }]}
                 numberOfLines={1}
@@ -264,10 +300,10 @@ function TaskGalleryItemCardComponent({
               </Text>
             ) : null}
           </View>
-          {visibleParticipants && (
+          {visibleParticipants && !is4Cols && (
             <ParticipantsStack
               participants={visibleParticipants}
-              max={3}
+              max={is3Cols ? 2 : 3}
               ringColor={isImageCover ? '#2A2A2A' : overlay.panel}
               disabled={isSelectionMode}
             />

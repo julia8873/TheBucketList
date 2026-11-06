@@ -631,6 +631,8 @@ const en = {
     customize_opt_album_favorites_grid: 'Favorites in 2 columns',
     customize_opt_thumbnails: 'Image thumbnails',
     customize_section_elements: 'Visible elements',
+    customize_gallery_columns: 'Grid columns',
+    gallery_columns_label: 'Number of columns',
     customize_opt_group_by_status: 'Separate by status',
     customize_opt_group_by_status_sub: 'Keep division between Favorites, In progress, Pending and Completed',
     customize_opt_album_group_by_status: 'Separate by status',
