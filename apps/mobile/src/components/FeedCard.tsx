@@ -65,20 +65,9 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
 
   const [showParticipantsModal, setShowParticipantsModal] = useState(false);
 
-  if (!actor || !bucket) return null;
-
-  const statusType = getTaskStatusType(bucket);
-  const statusCfg = getStatusConfig(statusType, t);
-
-  // Si el usuario actual es el creador o colabora en la tarea, no debe salir en momentos
-  const isCollaborating =
-    isOwn ||
-    (!!user && !!participants && participants.some((p) => p.id === user.id));
-  if (isCollaborating) return null;
-
+  const creatorId = bucket?.user_id ?? actor?.id;
   const hasCollabs = !!participants && participants.length > 1;
 
-  const creatorId = bucket?.user_id ?? actor?.id;
   const collaboratorsOnly = React.useMemo(() => {
     if (!participants) return [];
     const collabs = participants.filter((p) => p.id !== creatorId && !p.isOwner);
@@ -113,6 +102,17 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
       collabSubtitle: `@${p1.username}, @${p2.username} +${remaining}`,
     };
   }, [hasCollabs, participants, i18n.language]);
+
+  if (!actor || !bucket) return null;
+
+  const statusType = getTaskStatusType(bucket);
+  const statusCfg = getStatusConfig(statusType, t);
+
+  // Si el usuario actual es el creador o colabora en la tarea, no debe salir en momentos
+  const isCollaborating =
+    isOwn ||
+    (!!user && !!participants && participants.some((p) => p.id === user.id));
+  if (isCollaborating) return null;
 
   const isBucketSaved = !isOwn && !!user && !!savedBucketIds?.includes(bucket.id);
 

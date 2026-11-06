@@ -126,7 +126,7 @@ export const albumsService = {
           createdAt: (b).created_at ?? null,
           position: null,
           priority: b.priority || 'medium',
-          visibility: (b as any).visibility || 'public',
+          visibility: b.visibility || 'public',
           stepsTotal,
           stepsCompleted,
           counterCount,
