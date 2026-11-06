@@ -396,6 +396,11 @@ export default function SettingsScreen() {
                 onPress={() => router.push('/(modals)/manage-collections' as any)}
               />
               <Row
+                title={t('settings.all_users', { defaultValue: 'Usuarios de la app' })}
+                subtitle={t('settings.all_users_desc', { defaultValue: 'Ver todas las personas registradas en la aplicación' })}
+                onPress={() => router.push('/(modals)/admin-users' as any)}
+              />
+              <Row
                 title={t('settings.user_reports')}
                 subtitle={t('settings.user_reports_desc')}
                 onPress={() => router.push('/(modals)/admin-reports' as any)}
