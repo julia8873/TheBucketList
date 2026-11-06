@@ -7,6 +7,7 @@ import type { GalleryColumns } from '@/stores/myListCustomization.store';
 import { BucketCover } from '@/components/BucketCover';
 import { hexToRgba } from '@/constants/tagPresets';
 import { styles } from '../styles/album-detail.styles';
+import { ParticipantsStack, useParticipantsOf } from '@/components/ItemParticipants';
 
 import { useTranslation, resolveCounterLabel } from '@bucketlist/shared';
 
@@ -83,6 +84,7 @@ export function AlbumTaskCard({
   const isDone = task.isCompleted;
   const subTitle = getSubTitle(task, t);
   const badge = getBadgeText(task.dueDate, t);
+  const participants = useParticipantsOf('task', task.id);
 
   const itemPriority = task.priority || 'medium';
   const itemPriorityColor =
@@ -224,31 +226,46 @@ export function AlbumTaskCard({
         />
 
         <View style={[styles.galleryTopBadges, is4Cols && { top: 4, left: 4, right: 4 }, is3Cols && { top: 5, left: 5, right: 5 }]} pointerEvents="box-none">
-          {isSelectionMode ? (
-            <View
-              style={[
-                styles.galleryCheck,
-                is4Cols && { width: 18, height: 18, borderRadius: 9 },
-                is3Cols && { width: 20, height: 20, borderRadius: 10 },
-                isSelected
-                  ? { backgroundColor: '#D4B13A', borderWidth: 0 }
-                  : { backgroundColor: 'rgba(0,0,0,0.6)', borderColor: '#FFFFFF' },
-              ]}
-            >
-              {isSelected && <Check size={is4Cols ? 10 : 14} color="#0D0D0D" strokeWidth={3} />}
-            </View>
-          ) : isDone ? (
-            <View
-              style={[
-                styles.galleryCheck,
-                is4Cols && { width: 18, height: 18, borderRadius: 9 },
-                is3Cols && { width: 20, height: 20, borderRadius: 10 },
-                { backgroundColor: 'rgba(52,199,89,0.9)', borderWidth: 0 },
-              ]}
-            >
-              <Check size={is4Cols ? 10 : 14} color="#FFFFFF" strokeWidth={3} />
-            </View>
-          ) : null}
+          {/* Izquierda: badge de estado + fotos de perfil en la misma fila */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: is4Cols ? 3 : 4 }}>
+            {isSelectionMode ? (
+              <View
+                style={[
+                  styles.galleryCheck,
+                  is4Cols && { width: 18, height: 18, borderRadius: 9 },
+                  is3Cols && { width: 20, height: 20, borderRadius: 10 },
+                  isSelected
+                    ? { backgroundColor: '#D4B13A', borderWidth: 0 }
+                    : { backgroundColor: 'rgba(0,0,0,0.6)', borderColor: '#FFFFFF' },
+                ]}
+              >
+                {isSelected && <Check size={is4Cols ? 10 : 14} color="#0D0D0D" strokeWidth={3} />}
+              </View>
+            ) : isDone ? (
+              <View
+                style={[
+                  styles.galleryCheck,
+                  is4Cols && { width: 18, height: 18, borderRadius: 9 },
+                  is3Cols && { width: 20, height: 20, borderRadius: 10 },
+                  { backgroundColor: 'rgba(52,199,89,0.9)', borderWidth: 0 },
+                ]}
+              >
+                <Check size={is4Cols ? 10 : 14} color="#FFFFFF" strokeWidth={3} />
+              </View>
+            ) : null}
+            {/* Fotos de perfil inline al lado del badge (solo en 2 y 3 cols) */}
+            {!is4Cols && participants && participants.length > 0 && (
+              <ParticipantsStack
+                participants={participants}
+                max={is3Cols ? 2 : 2}
+                size="xs"
+                ringColor="rgba(0,0,0,0.55)"
+                disabled={isSelectionMode}
+              />
+            )}
+          </View>
+
+          {/* Derecha: prioridad */}
           {is4Cols ? (
             <View
               style={{

@@ -295,38 +295,42 @@ export function AlbumCard({
         </View>
       ) : (
         <View style={[styles.topLeftBadges, is4Cols && { top: 4, left: 4 }, is3Cols && { top: 6, left: 6 }]}>
-          {showBadges && (
-            <>
-              {!isClosed && (
-                isCompleted ? (
-                  <View style={[styles.completedBadge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2, backgroundColor: 'rgba(52, 199, 89, 0.9)' }]}>
-                    <CheckCircle2 size={statusIconSize} color="#FFFFFF" strokeWidth={2.4} />
-                  </View>
-                ) : isExpired ? (
-                  <View style={[styles.completedBadge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2, backgroundColor: 'rgba(239, 68, 68, 0.9)' }]}>
-                    <AlertCircle size={statusIconSize} color="#FFFFFF" strokeWidth={2.4} />
-                  </View>
-                ) : isInProgress ? (
-                  <View style={[styles.completedBadge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2, backgroundColor: 'rgba(0, 122, 255, 0.9)' }]}>
-                    <MoreHorizontal size={statusIconSize + 1} color="#FFFFFF" strokeWidth={2.4} />
-                  </View>
-                ) : (
-                  <View style={[styles.completedBadge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2, backgroundColor: 'rgba(142, 142, 147, 0.9)' }]}>
-                    <Clock size={statusIconSize - 1} color="#FFFFFF" strokeWidth={2.2} />
-                  </View>
-                )
-              )}
+          {/* Fila: badge de estado + fotos de perfil al lado (en 2 y 3 cols) */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: is4Cols ? 3 : 4 }}>
+            {showBadges && (
+              <>
+                {!isClosed && (
+                  isCompleted ? (
+                    <View style={[styles.completedBadge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2, backgroundColor: 'rgba(52, 199, 89, 0.9)' }]}>
+                      <CheckCircle2 size={statusIconSize} color="#FFFFFF" strokeWidth={2.4} />
+                    </View>
+                  ) : isExpired ? (
+                    <View style={[styles.completedBadge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2, backgroundColor: 'rgba(239, 68, 68, 0.9)' }]}>
+                      <AlertCircle size={statusIconSize} color="#FFFFFF" strokeWidth={2.4} />
+                    </View>
+                  ) : isInProgress ? (
+                    <View style={[styles.completedBadge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2, backgroundColor: 'rgba(0, 122, 255, 0.9)' }]}>
+                      <MoreHorizontal size={statusIconSize + 1} color="#FFFFFF" strokeWidth={2.4} />
+                    </View>
+                  ) : (
+                    <View style={[styles.completedBadge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2, backgroundColor: 'rgba(142, 142, 147, 0.9)' }]}>
+                      <Clock size={statusIconSize - 1} color="#FFFFFF" strokeWidth={2.2} />
+                    </View>
+                  )
+                )}
 
-              {isClosed && (
-                <View style={[styles.closedBadge, is4Cols && { paddingHorizontal: 4, paddingVertical: 1 }]}>
-                  <Lock size={statusIconSize - 2} color="#D4B13A" />
-                  {!is4Cols && <Text style={[styles.closedText, is3Cols && { fontSize: 9 }]}>{t('common.closed')}</Text>}
-                </View>
-              )}
-            </>
-          )}
+                {isClosed && (
+                  <View style={[styles.closedBadge, is4Cols && { paddingHorizontal: 4, paddingVertical: 1 }]}>
+                    <Lock size={statusIconSize - 2} color="#D4B13A" />
+                    {!is4Cols && <Text style={[styles.closedText, is3Cols && { fontSize: 9 }]}>{t('common.closed')}</Text>}
+                  </View>
+                )}
+              </>
+            )}
 
-          {participantsElement}
+            {/* Fotos de perfil inline al lado del badge (solo 2 y 3 cols) */}
+            {!is4Cols && participantsElement}
+          </View>
         </View>
       )}
 
@@ -704,8 +708,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     left: 10,
-    flexDirection: 'column',
-    alignItems: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 4,
     zIndex: 2,
   },

@@ -178,7 +178,7 @@ function TaskGalleryItemCardComponent({
             </View>
           ) : (
             <>
-              {/* Fila superior izquierda: Estado y Favorito */}
+              {/* Fila superior izquierda: Estado, Favorito y fotos de perfil en la misma fila */}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: is4Cols ? 3 : is3Cols ? 4 : 4 }}>
                 {showStatus && (
                   <View
@@ -209,20 +209,17 @@ function TaskGalleryItemCardComponent({
                     <Star size={starIconSize} color={gold[500]} fill={gold[500]} />
                   </View>
                 )}
-              </View>
-
-              {/* Fotos de perfil debajo */}
-              {visibleParticipants && (
-                <View style={{ marginTop: 1 }}>
+                {/* Fotos de perfil inline al lado del estado (solo en 2 y 3 cols) */}
+                {!is4Cols && visibleParticipants && (
                   <ParticipantsStack
                     participants={visibleParticipants}
-                    max={is4Cols ? 1 : is3Cols ? 2 : 2}
+                    max={is3Cols ? 2 : 2}
                     size="xs"
                     ringColor="rgba(0,0,0,0.55)"
                     disabled={isSelectionMode}
                   />
-                </View>
-              )}
+                )}
+              </View>
             </>
           )}
         </View>

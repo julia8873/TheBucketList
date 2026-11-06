@@ -556,10 +556,10 @@ export default function MyListScreen() {
           deadline={item.deadline}
           description={item.description}
           participantsElement={
-            albumViews.gallery.showCollaborators && albumParticipants && albumParticipants.length > 0 ? (
+            albumViews.gallery.showCollaborators && albumParticipants && albumParticipants.length > 0 && columns !== 4 ? (
               <ParticipantsStack
                 participants={albumParticipants}
-                max={columns === 4 ? 1 : columns === 3 ? 2 : 2}
+                max={columns === 3 ? 2 : 2}
                 size="xs"
                 ringColor="rgba(0,0,0,0.55)"
                 disabled={state.isAlbumSelectionMode}
