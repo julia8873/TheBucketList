@@ -74,8 +74,9 @@ export function ToggleRow({
           value={value}
           onValueChange={onChange}
           disabled={disabled}
-          trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
-          thumbColor={value ? theme.colors.primaryForeground : '#9A9A9A'}
+          trackColor={{ false: theme.dark ? theme.colors.border : '#E2DDD3', true: theme.colors.primary }}
+          thumbColor={theme.dark ? (value ? theme.colors.primaryForeground : '#9A9A9A') : '#FFFFFF'}
+          activeThumbColor={theme.dark ? theme.colors.primaryForeground : '#FFFFFF'}
           accessibilityLabel={title}
         />
       }

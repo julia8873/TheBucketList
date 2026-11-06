@@ -64,6 +64,17 @@ export function CloneTaskDialog({
   const h = dims.height > 0 ? dims.height : win.height;
   const dialogWidth = Math.max(300, Math.min(420, w - 32));
 
+  const isDark = theme.dark;
+  const switchThumbColor = (checked: boolean) => {
+    if (!isDark) return '#FFFFFF';
+    return checked ? '#0D0D0D' : '#9A9A9A';
+  };
+  const switchActiveThumbColor = isDark ? '#0D0D0D' : '#FFFFFF';
+  const switchTrackColor = {
+    false: isDark ? theme.colors.border : '#E2DDD3',
+    true: gold[400],
+  };
+
   const toggleOption = (key: keyof CloneTaskFields) => {
     setOptions((prev) => ({ ...prev, [key]: !prev[key] }));
   };
@@ -204,8 +215,9 @@ export function CloneTaskDialog({
                     <AppSwitch
                       value={isChecked}
                       onValueChange={() => toggleOption(item.key)}
-                      trackColor={{ false: theme.colors.border, true: gold[400] }}
-                      thumbColor={isChecked ? '#0D0D0D' : '#9A9A9A'}
+                      trackColor={switchTrackColor}
+                      thumbColor={switchThumbColor(isChecked)}
+                      activeThumbColor={switchActiveThumbColor}
                       accessibilityLabel={item.title}
                     />
                   </Pressable>
@@ -227,8 +239,9 @@ export function CloneTaskDialog({
                 <AppSwitch
                   value={dontAskAgain}
                   onValueChange={setDontAskAgain}
-                  trackColor={{ false: theme.colors.border, true: gold[400] }}
-                  thumbColor={dontAskAgain ? '#0D0D0D' : '#9A9A9A'}
+                  trackColor={switchTrackColor}
+                  thumbColor={switchThumbColor(dontAskAgain)}
+                  activeThumbColor={switchActiveThumbColor}
                   accessibilityLabel={t('clone_task.dont_ask_again', { defaultValue: 'No volver a mostrar' })}
                 />
               </View>
