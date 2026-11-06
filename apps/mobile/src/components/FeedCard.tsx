@@ -532,6 +532,11 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
             <Text style={styles.coverTitle} numberOfLines={2}>
               {bucket.title}
             </Text>
+            {caption ? (
+              <Text style={styles.coverDescription} numberOfLines={2}>
+                {caption}
+              </Text>
+            ) : null}
             {bucket.location_text ? (
               <Text style={styles.coverLocation} numberOfLines={1}>
                 {bucket.location_text}
@@ -614,8 +619,6 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
         )}
       </View>
 
-      {caption ? <Text style={[styles.caption, { color: theme.colors.foregroundMuted }]}>{caption}</Text> : null}
-
       {showComments && (
         <TaskCommentsModal
           visible={showComments}
@@ -696,6 +699,21 @@ const styles = StyleSheet.create({
     fontSize: 27,
     lineHeight: 32,
     color: '#FFFFFF',
+  },
+  coverDescription: {
+    fontFamily: fontFamily.regular,
+    fontSize: 14,
+    lineHeight: 18,
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 4,
+    ...Platform.select({
+      web: { textShadow: '0 1px 3px rgba(0,0,0,0.85)' } as any,
+      default: {
+        textShadowColor: 'rgba(0,0,0,0.85)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 3,
+      },
+    }),
   },
   coverLocation: {
     fontFamily: fontFamily.regular,
