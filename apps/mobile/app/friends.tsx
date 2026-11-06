@@ -27,7 +27,7 @@ import { styles } from '../src/features/friends/styles/friends.styles';
 import { FriendsAccountsTab, type ConnectionKind } from '../src/features/friends/components/FriendsAccountsTab';
 import { FriendsRequestsTab } from '../src/features/friends/components/FriendsRequestsTab';
 
-type Tab = 'accounts' | 'requests';
+type Tab = 'following' | 'followers' | 'requests';
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -48,19 +48,29 @@ export default function FriendsScreen() {
   const targetUserId = params.userId || user?.id;
   const isOtherUser = !!params.userId && params.userId !== user?.id;
 
-  const [tab, setTab] = useState<Tab>(params.tab === 'requests' && !isOtherUser ? 'requests' : 'accounts');
+  const initialTab: Tab =
+    params.tab === 'requests' && !isOtherUser
+      ? 'requests'
+      : params.kind === 'followers'
+      ? 'followers'
+      : 'following';
+
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [kind, setKind] = useState<ConnectionKind>(params.kind === 'followers' ? 'followers' : 'following');
   const debounced = useDebounce(query, 350);
   const term = debounced.trim().replace(/^@/, '');
 
   useEffect(() => {
-    if (params.kind === 'followers' || params.kind === 'following') {
-      setKind(params.kind);
+    if (params.tab === 'requests' && !isOtherUser) {
+      setTab('requests');
+    } else if (params.kind === 'followers') {
+      setTab('followers');
+    } else if (params.kind === 'following') {
+      setTab('following');
     }
-  }, [params.kind]);
+  }, [params.tab, params.kind, isOtherUser]);
 
   const targetProfileQuery = useQuery({
     queryKey: ['profile', targetUserId],
@@ -143,6 +153,43 @@ export default function FriendsScreen() {
     }
   };
 
+  const options = isOtherUser
+    ? [
+        {
+          key: 'following',
+          label: following.data?.length
+            ? t('friends.following_count', { count: following.data.length })
+            : t('social.following'),
+        },
+        {
+          key: 'followers',
+          label: followers.data?.length
+            ? t('friends.followers_count', { count: followers.data.length })
+            : t('profile.stat_followers'),
+        },
+      ]
+    : [
+        {
+          key: 'following',
+          label: following.data?.length
+            ? t('friends.following_count', { count: following.data.length })
+            : t('social.following'),
+        },
+        {
+          key: 'followers',
+          label: followers.data?.length
+            ? t('friends.followers_count', { count: followers.data.length })
+            : t('profile.stat_followers'),
+        },
+        {
+          key: 'requests',
+          label:
+            requestsCount > 0
+              ? t('friends.requests_with_count', { count: requestsCount })
+              : t('friends.tab_requests'),
+        },
+      ];
+
   return (
     <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.header}>
@@ -159,7 +206,7 @@ export default function FriendsScreen() {
         {isOtherUser ? (
           <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
             <PageTitle
-              gold={kind === 'followers' ? t('profile.stat_followers') : t('social.following')}
+              gold={tab === 'followers' ? t('profile.stat_followers') : t('social.following')}
               numberOfLines={1}
             />
             {targetProfileQuery.data?.username ? (
@@ -173,7 +220,7 @@ export default function FriendsScreen() {
               </Text>
             ) : null}
           </View>
-        ) : tab === 'accounts' ? (
+        ) : (
           <View
             style={[
               styles.searchField,
@@ -202,25 +249,19 @@ export default function FriendsScreen() {
               </Pressable>
             ) : null}
           </View>
-        ) : (
-          <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
-            <PageTitle gold={t('friends.title_gold')} rest={` ${t('friends.title_rest')}`} numberOfLines={1} />
-          </View>
         )}
       </View>
 
-      {!isOtherUser && (
-        <View style={styles.segment}>
-          <SegmentedControl
-            options={[
-              { key: 'accounts', label: t('friends.tab_accounts') },
-              { key: 'requests', label: requestsCount > 0 ? t('friends.requests_with_count', { count: requestsCount }) : t('friends.tab_requests') },
-            ]}
-            selected={tab}
-            onChange={(key) => setTab(key as Tab)}
-          />
-        </View>
-      )}
+      <View style={styles.segment}>
+        <SegmentedControl
+          options={options}
+          selected={tab}
+          onChange={(key) => {
+            setQuery('');
+            setTab(key as Tab);
+          }}
+        />
+      </View>
 
       <ScrollView
         contentContainerStyle={styles.content}
@@ -241,12 +282,12 @@ export default function FriendsScreen() {
               message={t('friends.locked_account_desc')}
             />
           </View>
-        ) : tab === 'accounts' || isOtherUser ? (
+        ) : term.length >= 2 ? (
           <FriendsAccountsTab
             currentUserId={user?.id}
             term={term}
-            kind={kind}
-            onChangeKind={setKind}
+            kind={tab === 'requests' ? 'following' : tab}
+            onChangeKind={(k) => setTab(k)}
             followingData={following.data}
             followingLoading={following.isLoading}
             followersData={followers.data}
@@ -261,7 +302,7 @@ export default function FriendsScreen() {
             ideasData={ideasSearch.data?.tasks ?? []}
             ideasLoading={ideasSearch.isLoading}
           />
-        ) : (
+        ) : tab === 'requests' ? (
           <FriendsRequestsTab
             isLoading={incoming.isLoading || outgoing.isLoading}
             incomingList={incomingList}
@@ -290,6 +331,26 @@ export default function FriendsScreen() {
               )
             }
             onOpenProfile={openProfile}
+          />
+        ) : (
+          <FriendsAccountsTab
+            currentUserId={user?.id}
+            term={term}
+            kind={tab}
+            onChangeKind={(k) => setTab(k)}
+            followingData={following.data}
+            followingLoading={following.isLoading}
+            followersData={followers.data}
+            followersLoading={followers.isLoading}
+            searchData={search.data}
+            searchLoading={search.isLoading}
+            searchError={search.isError}
+            isDebouncing={query.trim() !== debounced.trim() && !search.data}
+            onRetrySearch={() => void search.refetch()}
+            onOpenProfile={openProfile}
+            onFollowPress={onFollowPress}
+            ideasData={ideasSearch.data?.tasks ?? []}
+            ideasLoading={ideasSearch.isLoading}
           />
         )}
       </ScrollView>

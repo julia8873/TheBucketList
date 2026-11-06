@@ -1354,6 +1354,8 @@ const en = {
     public_task_plural: 'public tasks',
     requests_empty_title: 'No pending requests',
     requests_empty_desc: 'When someone with a private account wants to follow you, or you request to follow someone, it will appear here.',
+    empty_followers_title: 'No followers yet',
+    empty_followers_desc: 'When other users follow you, they will appear here.',
     requests_received: 'Received · {{count}}',
     requests_sent: 'Sent · {{count}}',
     tab_ideas: 'Ideas',

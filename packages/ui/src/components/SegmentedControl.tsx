@@ -77,7 +77,7 @@ export function SegmentedControl({
                   color: isActive ? theme.colors.primaryForeground : theme.colors.foregroundMuted,
                   fontFamily: fontFamily.semibold,
                 },
-                options.length >= 4 && { fontSize: 13 },
+                options.length >= 3 && { fontSize: 13 },
                 labelStyle,
               ]}
             >

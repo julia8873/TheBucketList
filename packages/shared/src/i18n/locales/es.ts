@@ -1354,6 +1354,8 @@ const es = {
     public_task_plural: 'tareas públicas',
     requests_empty_title: 'Sin solicitudes pendientes',
     requests_empty_desc: 'Cuando alguien con cuenta privada quiera seguirte, o tú solicites seguir a alguien, aparecerá aquí.',
+    empty_followers_title: 'Aún no tienes seguidores',
+    empty_followers_desc: 'Cuando otros usuarios te sigan, aparecerán aquí.',
     requests_received: 'Recibidas · {{count}}',
     requests_sent: 'Enviadas · {{count}}',
     tab_ideas: 'Ideas',

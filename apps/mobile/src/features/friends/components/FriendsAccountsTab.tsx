@@ -77,38 +77,6 @@ export function FriendsAccountsTab({
 
     return (
       <View>
-        <View style={styles.chips}>
-          {([
-            ['following', t('friends.following_count', { count: followingData.length })],
-            ['followers', t('friends.followers_count', { count: followersData.length })],
-          ] as const).map(([key, label]) => {
-            const on = kind === key;
-            return (
-              <Pressable
-                key={key}
-                onPress={() => onChangeKind(key)}
-                accessibilityRole="button"
-                accessibilityState={{ selected: on }}
-                style={[
-                  styles.chip,
-                  {
-                    backgroundColor: on
-                      ? theme.dark
-                        ? '#2A2411'
-                        : '#FDF4DC'
-                      : theme.colors.surface,
-                    borderColor: on ? gold[400] : theme.colors.border,
-                  },
-                ]}
-              >
-                <Text style={[styles.chipText, { color: on ? gold[400] : theme.colors.foregroundMuted }]}>
-                  {label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
         {loading ? (
           <View style={{ marginTop: 8 }}>
             <UserRowSkeleton />
@@ -119,11 +87,15 @@ export function FriendsAccountsTab({
         ) : list.length === 0 ? (
           <EmptyState
             icon={Search}
-            title={kind === 'following' ? t('feed.empty_friends_title') : t('friends.requests_empty_title')}
+            title={
+              kind === 'following'
+                ? t('feed.empty_friends_title')
+                : t('friends.empty_followers_title', { defaultValue: 'Aún no tienes seguidores' })
+            }
             message={
               kind === 'following'
                 ? t('feed.empty_friends_desc')
-                : t('friends.requests_empty_desc')
+                : t('friends.empty_followers_desc', { defaultValue: 'Cuando otros usuarios te sigan, aparecerán aquí.' })
             }
           />
         ) : (
