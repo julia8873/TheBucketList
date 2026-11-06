@@ -617,6 +617,8 @@ export function useMyListState() {
 
     let result = buckets.filter((b: any) => {
       if (filter === 'public') return b.visibility === 'public';
+      if (filter === 'private') return b.visibility === 'private';
+      if (filter === 'followers') return b.visibility === 'followers';
       if (filter === 'all') return true;
       if (filter === 'completed') return b.status === 'completed';
 

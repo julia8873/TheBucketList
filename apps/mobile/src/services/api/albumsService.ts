@@ -27,6 +27,7 @@ export interface TaskItem {
   imageValue?: string | null;
   categorySlug?: string | null;
   priority?: string | null;
+  visibility?: 'public' | 'followers' | 'private' | string;
   tags?: Array<{ id: string; name: string; color: string; emoji?: string | null }>;
 }
 
@@ -61,7 +62,7 @@ export const albumsService = {
 
     if (id === 'unassigned') {
       const selectCols = `
-          id, title, deadline, created_at, completed_at, cover_image, thumbnail_mode, thumbnail_photo_id, status, priority,
+          id, title, deadline, created_at, completed_at, cover_image, thumbnail_mode, thumbnail_photo_id, status, priority, visibility,
           category_id, counter_count, counter_target, counter_label, counter_enabled,
           categories ( name_es, color, slug ),
           item_subtasks ( id, done ),
@@ -123,6 +124,7 @@ export const albumsService = {
           createdAt: (b).created_at ?? null,
           position: null,
           priority: b.priority || 'medium',
+          visibility: (b as any).visibility || 'public',
           stepsTotal,
           stepsCompleted,
           counterCount,
@@ -190,7 +192,7 @@ export const albumsService = {
       const { data: buckets, error: bucketsError } = await supabase
         .from('buckets')
         .select(`
-          id, title, deadline, created_at, completed_at, cover_image, thumbnail_mode, thumbnail_photo_id, status, priority,
+          id, title, deadline, created_at, completed_at, cover_image, thumbnail_mode, thumbnail_photo_id, status, priority, visibility,
           category_id, counter_count, counter_target, counter_label, counter_enabled,
           categories ( name_es, color, slug ),
           item_subtasks ( id, done ),
@@ -241,6 +243,7 @@ export const albumsService = {
           createdAt: (b as any).created_at ?? null,
           position: positionByBucket.get(b.id) ?? null,
           priority: b.priority || 'medium',
+          visibility: (b as any).visibility || 'public',
           stepsTotal,
           stepsCompleted,
           counterCount,

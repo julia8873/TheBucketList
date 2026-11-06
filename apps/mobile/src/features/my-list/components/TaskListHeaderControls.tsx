@@ -91,6 +91,8 @@ export function TaskListHeaderControls({
       { key: 'completed' as FilterType, label: t('my_list.status_filter_completed') },
       { key: 'expired' as FilterType, label: t('my_list.status_filter_expired') },
       { key: 'public' as FilterType, label: t('my_list.status_filter_public') },
+      { key: 'private' as FilterType, label: t('my_list.status_filter_private') },
+      { key: 'followers' as FilterType, label: t('my_list.status_filter_followers') },
     ],
     [t],
   );

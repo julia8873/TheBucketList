@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { Check, CheckCircle2, Star } from 'lucide-react-native';
+import { Check, CheckCircle2, Star, Lock, Globe, Users } from 'lucide-react-native';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { useTheme, useCoverOverlay } from '@bucketlist/ui';
 import { useTranslation, resolveCounterLabel } from '@bucketlist/shared';
@@ -225,44 +225,69 @@ function TaskGalleryItemCardComponent({
           )}
         </View>
 
-        {/* Columna derecha: Prioridad arriba, Etiquetas debajo para no salirse */}
+        {/* Columna derecha: Visibilidad + Prioridad arriba, Etiquetas debajo para no salirse */}
         <View style={{ flexDirection: 'column', alignItems: 'flex-end', gap: is4Cols ? 2 : is3Cols ? 3 : 4, flexShrink: 0, marginLeft: is4Cols ? 2 : 4 }}>
-          {showPriority && (
-            (is4Cols || is3Cols) ? (
-              <View
-                style={{
-                  width: is4Cols ? 8 : 10,
-                  height: is4Cols ? 8 : 10,
-                  borderRadius: is4Cols ? 4 : 5,
-                  backgroundColor: itemPriorityColor,
-                  borderWidth: 1,
-                  borderColor: 'rgba(0,0,0,0.4)',
-                }}
-              />
-            ) : (
-              <View
-                style={[
-                  styles.galleryPriorityBadge,
-                  {
-                    borderColor: itemPriorityColor,
-                    maxWidth: '100%',
-                  },
-                  !theme.dark && {
-                    backgroundColor: 'rgba(255,255,255,0.92)',
-                  },
-                ]}
-              >
-                <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: itemPriorityColor, flexShrink: 0 }} />
-                <Text
-                  style={[styles.galleryPriorityText, { color: itemPriorityColor, flexShrink: 1 }]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: is4Cols ? 2 : 3 }}>
+            <View
+              style={{
+                width: is4Cols ? 12 : is3Cols ? 14 : 16,
+                height: is4Cols ? 12 : is3Cols ? 14 : 16,
+                borderRadius: (is4Cols ? 12 : is3Cols ? 14 : 16) / 2,
+                backgroundColor: 'rgba(0,0,0,0.55)',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {(() => {
+                const vis = item.visibility || 'public';
+                const iconSize = is4Cols ? 7 : is3Cols ? 8 : 9;
+                if (vis === 'private') {
+                  return <Lock size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                }
+                if (vis === 'followers') {
+                  return <Users size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                }
+                return <Globe size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+              })()}
+            </View>
+
+            {showPriority && (
+              (is4Cols || is3Cols) ? (
+                <View
+                  style={{
+                    width: is4Cols ? 8 : 10,
+                    height: is4Cols ? 8 : 10,
+                    borderRadius: is4Cols ? 4 : 5,
+                    backgroundColor: itemPriorityColor,
+                    borderWidth: 1,
+                    borderColor: 'rgba(0,0,0,0.4)',
+                  }}
+                />
+              ) : (
+                <View
+                  style={[
+                    styles.galleryPriorityBadge,
+                    {
+                      borderColor: itemPriorityColor,
+                      maxWidth: '100%',
+                    },
+                    !theme.dark && {
+                      backgroundColor: 'rgba(255,255,255,0.92)',
+                    },
+                  ]}
                 >
-                  {itemPriorityLabel}
-                </Text>
-              </View>
-            )
-          )}
+                  <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: itemPriorityColor, flexShrink: 0 }} />
+                  <Text
+                    style={[styles.galleryPriorityText, { color: itemPriorityColor, flexShrink: 1 }]}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {itemPriorityLabel}
+                  </Text>
+                </View>
+              )
+            )}
+          </View>
           {showTags && itemTags && itemTags.length > 0 && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: is4Cols ? 2 : 3, maxWidth: is4Cols ? 36 : '100%', justifyContent: 'flex-end' }}>
               {itemTags.slice(0, 1).map((t) => (

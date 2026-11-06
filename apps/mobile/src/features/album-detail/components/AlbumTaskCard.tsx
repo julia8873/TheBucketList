@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { GripVertical, Check, Plus, CheckCircle2 } from 'lucide-react-native';
+import { GripVertical, Check, Plus, CheckCircle2, Lock, Globe, Users } from 'lucide-react-native';
 import type { TaskItem } from '@/services/api/albumsService';
 import type { GalleryColumns } from '@/stores/myListCustomization.store';
 import { BucketCover } from '@/components/BucketCover';
@@ -266,37 +266,62 @@ export function AlbumTaskCard({
             )}
           </View>
 
-          {/* Derecha: prioridad y etiquetas */}
+          {/* Derecha: visibilidad, prioridad y etiquetas */}
           <View style={{ flexDirection: 'column', alignItems: 'flex-end', gap: is4Cols ? 2 : is3Cols ? 3 : 4, flexShrink: 0, marginLeft: is4Cols ? 2 : 4 }}>
-            {is4Cols || is3Cols ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: is4Cols ? 2 : 3 }}>
               <View
                 style={{
-                  width: is4Cols ? 8 : 10,
-                  height: is4Cols ? 8 : 10,
-                  borderRadius: is4Cols ? 4 : 5,
-                  backgroundColor: itemPriorityColor,
-                  borderWidth: 1,
-                  borderColor: 'rgba(0,0,0,0.4)',
-                }}
-              />
-            ) : (
-              <View
-                style={{
-                  flexDirection: 'row',
+                  width: is4Cols ? 12 : is3Cols ? 14 : 16,
+                  height: is4Cols ? 12 : is3Cols ? 14 : 16,
+                  borderRadius: (is4Cols ? 12 : is3Cols ? 14 : 16) / 2,
+                  backgroundColor: 'rgba(0,0,0,0.55)',
                   alignItems: 'center',
-                  gap: 4,
-                  paddingHorizontal: 6,
-                  paddingVertical: 2,
-                  borderRadius: 8,
-                  backgroundColor: 'rgba(0,0,0,0.65)',
-                  borderWidth: 1,
-                  borderColor: itemPriorityColor,
+                  justifyContent: 'center',
                 }}
               >
-                <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: itemPriorityColor }} />
-                <Text style={{ fontSize: 10, fontWeight: '700', color: itemPriorityLabel }}>{itemPriorityLabel}</Text>
+                {(() => {
+                  const vis = task.visibility || 'public';
+                  const iconSize = is4Cols ? 7 : is3Cols ? 8 : 9;
+                  if (vis === 'private') {
+                    return <Lock size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                  }
+                  if (vis === 'followers') {
+                    return <Users size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                  }
+                  return <Globe size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                })()}
               </View>
-            )}
+
+              {is4Cols || is3Cols ? (
+                <View
+                  style={{
+                    width: is4Cols ? 8 : 10,
+                    height: is4Cols ? 8 : 10,
+                    borderRadius: is4Cols ? 4 : 5,
+                    backgroundColor: itemPriorityColor,
+                    borderWidth: 1,
+                    borderColor: 'rgba(0,0,0,0.4)',
+                  }}
+                />
+              ) : (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                    paddingHorizontal: 6,
+                    paddingVertical: 2,
+                    borderRadius: 8,
+                    backgroundColor: 'rgba(0,0,0,0.65)',
+                    borderWidth: 1,
+                    borderColor: itemPriorityColor,
+                  }}
+                >
+                  <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: itemPriorityColor }} />
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: itemPriorityColor }}>{itemPriorityLabel}</Text>
+                </View>
+              )}
+            </View>
 
             {task.tags && task.tags.length > 0 && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: is4Cols ? 2 : 3, maxWidth: is4Cols ? 36 : '100%', justifyContent: 'flex-end' }}>
