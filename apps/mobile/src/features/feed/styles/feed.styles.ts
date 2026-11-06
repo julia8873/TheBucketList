@@ -17,7 +17,7 @@ export const styles = themedStyleSheet({
     paddingBottom: 12,
     minHeight: 56,
   },
-  topActions: { flexDirection: 'row', alignItems: 'center', gap: 18 },
+  topActions: { flexDirection: 'row', alignItems: 'center', gap: 18, marginRight: 10 },
   bellDot: {
     position: 'absolute',
     top: -1,
