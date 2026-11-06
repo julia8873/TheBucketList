@@ -27,4 +27,5 @@ export interface CollectionItem {
   clonesCount?: number;
   likesCount?: number;
   isLiked?: boolean;
+  position?: number;
 }

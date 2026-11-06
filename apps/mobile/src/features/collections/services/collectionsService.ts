@@ -9,6 +9,7 @@ const STORAGE_CUSTOM_COLLECTIONS = '@bucketlist_custom_collections';
 const STORAGE_COLLECTION_CLONES = '@bucketlist_collection_clones';
 const STORAGE_COLLECTION_LIKES = '@bucketlist_collection_likes';
 const STORAGE_DELETED_COLLECTIONS = '@bucketlist_deleted_collections';
+const STORAGE_COLLECTIONS_ORDER = '@bucketlist_collections_order';
 
 export const collectionsService = {
   /**
@@ -65,6 +66,7 @@ export const collectionsService = {
     // Intentar consultar Supabase en caso de que exista tabla 'collections' remota
     const remoteList: CollectionItem[] = [];
     const deletedRemoteSet = new Set<string>();
+    let remoteOrderIds: string[] = [];
     try {
       const { data, error } = await supabase
         .from('collections')
@@ -73,6 +75,14 @@ export const collectionsService = {
 
       if (!error && Array.isArray(data) && data.length > 0) {
         data.forEach((item: any) => {
+          if (item.id === '__collections_order__') {
+            if (Array.isArray(item.tasks)) {
+              remoteOrderIds = item.tasks
+                .map((t: any) => (typeof t === 'string' ? t : t?.id))
+                .filter(Boolean);
+            }
+            return;
+          }
           if (item.is_deleted) {
             deletedRemoteSet.add(item.id);
             return;
@@ -97,6 +107,7 @@ export const collectionsService = {
             isLiked: false,
             tags: item.tags || [],
             tasks: Array.isArray(item.tasks) ? item.tasks : [],
+            position: typeof item.position === 'number' ? item.position : undefined,
           });
         });
       }
@@ -121,6 +132,24 @@ export const collectionsService = {
       }
     });
 
+    // Cargar orden personalizado persistido
+    let localOrderIds: string[] = [];
+    try {
+      const rawOrder = await AsyncStorage.getItem(STORAGE_COLLECTIONS_ORDER);
+      if (rawOrder) {
+        const parsed = JSON.parse(rawOrder);
+        if (Array.isArray(parsed) && parsed.length > 0) localOrderIds = parsed;
+      }
+    } catch {}
+
+    if (remoteOrderIds.length > 0 && localOrderIds.length === 0) {
+      try {
+        await AsyncStorage.setItem(STORAGE_COLLECTIONS_ORDER, JSON.stringify(remoteOrderIds));
+      } catch {}
+    }
+
+    const effectiveOrder = localOrderIds.length > 0 ? localOrderIds : remoteOrderIds;
+
     // Aplicar métricas reales (clones reales + likes reales) a todas las colecciones
     const result = Array.from(map.values()).map((col) => {
       const realClones = realClonesMap[col.id] ?? (col.clonesCount ?? 0);
@@ -132,6 +161,23 @@ export const collectionsService = {
         isLiked: userLikedSet.has(col.id),
       };
     });
+
+    // Ordenar colecciones respetando el orden establecido por los administradores
+    if (effectiveOrder.length > 0) {
+      const orderMap = new Map<string, number>();
+      effectiveOrder.forEach((id, index) => orderMap.set(id, index));
+      result.sort((a, b) => {
+        const posA = orderMap.has(a.id) ? orderMap.get(a.id)! : (typeof a.position === 'number' ? a.position : 9999);
+        const posB = orderMap.has(b.id) ? orderMap.get(b.id)! : (typeof b.position === 'number' ? b.position : 9999);
+        return posA - posB;
+      });
+    } else {
+      result.sort((a, b) => {
+        const posA = typeof a.position === 'number' ? a.position : 9999;
+        const posB = typeof b.position === 'number' ? b.position : 9999;
+        return posA - posB;
+      });
+    }
 
     return result;
   },
@@ -551,5 +597,56 @@ export const collectionsService = {
         await AsyncStorage.setItem(STORAGE_CUSTOM_COLLECTIONS, JSON.stringify(filtered));
       }
     } catch {}
+
+    // 4. Eliminar del orden guardado si existía
+    try {
+      const rawOrder = await AsyncStorage.getItem(STORAGE_COLLECTIONS_ORDER);
+      if (rawOrder) {
+        const list: string[] = JSON.parse(rawOrder);
+        const filtered = list.filter((id) => id !== collectionId);
+        await AsyncStorage.setItem(STORAGE_COLLECTIONS_ORDER, JSON.stringify(filtered));
+      }
+    } catch {}
+  },
+
+  /**
+   * Reordena la lista de colecciones (Admin).
+   * Guarda el nuevo orden en almacenamiento local y en Supabase para sincronización entre dispositivos.
+   */
+  reorderCollections: async (orderedIds: string[]): Promise<void> => {
+    // 1. Persistir inmediatamente en local
+    try {
+      await AsyncStorage.setItem(STORAGE_COLLECTIONS_ORDER, JSON.stringify(orderedIds));
+    } catch (e) {
+      console.warn('Error saving local collections order:', e);
+    }
+
+    // 2. Persistir registro global de orden en Supabase para sincronización remota
+    try {
+      await (supabase.from('collections') as any).upsert(
+        {
+          id: '__collections_order__',
+          title: '__SYSTEM_COLLECTIONS_ORDER__',
+          is_deleted: true,
+          tasks: orderedIds.map((id) => ({ id })),
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' }
+      );
+    } catch (e) {
+      console.warn('Could not save system collections order record in Supabase:', e);
+    }
+
+    // 3. Actualizar la columna position en las colecciones que existan en la tabla remota
+    try {
+      const updates = orderedIds.map((id, index) =>
+        (supabase.from('collections') as any)
+          .update({ position: index, updated_at: new Date().toISOString() })
+          .eq('id', id)
+      );
+      await Promise.allSettled(updates);
+    } catch (e) {
+      console.warn('Could not update individual collection positions in Supabase:', e);
+    }
   },
 };

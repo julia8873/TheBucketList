@@ -1,7 +1,7 @@
 import { Alert, HEART_COLOR } from '@bucketlist/ui';
 import { themedStyleSheet } from '@bucketlist/ui';
-import React, { useState, useMemo } from 'react';
-import { View, Text, FlatList, Pressable, ActivityIndicator, StyleSheet, RefreshControl, TextInput } from 'react-native';
+import React, { useState, useMemo, useEffect } from 'react';
+import { View, Text, FlatList, ScrollView, Pressable, ActivityIndicator, StyleSheet, RefreshControl, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,10 +16,20 @@ import {
   Layers,
   Heart,
   Copy,
+  ArrowUpDown,
+  Check,
+  ChevronUp,
+  ChevronDown,
+  GripVertical,
 } from 'lucide-react-native';
 import { PageTitle, fontFamily, gold, useTheme } from '@bucketlist/ui';
 import { useIsAdmin } from '../../src/hooks/useCurrentUserProfile';
-import { useCollections, useDeleteCollection } from '../../src/features/collections/hooks/useCollections';
+import {
+  useCollections,
+  useDeleteCollection,
+  useReorderCollections,
+} from '../../src/features/collections/hooks/useCollections';
+import { DraggableTaskList } from '../../src/components/DraggableTaskList';
 import type { CollectionItem } from '../../src/features/collections/types';
 import { useTranslation } from '@bucketlist/shared';
 
@@ -32,7 +42,18 @@ export default function ManageCollectionsScreen() {
 
   const { data: collections = [], isLoading, refetch, isRefetching } = useCollections();
   const deleteMutation = useDeleteCollection();
+  const reorderMutation = useReorderCollections();
+
   const [searchQuery, setSearchQuery] = useState('');
+  const [isReordering, setIsReordering] = useState(false);
+  const [localItems, setLocalItems] = useState<CollectionItem[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    if (!isReordering) {
+      setLocalItems(collections);
+    }
+  }, [collections, isReordering]);
 
   const filteredCollections = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -45,6 +66,26 @@ export default function ManageCollectionsScreen() {
         (c.badge && c.badge.toLowerCase().includes(q))
     );
   }, [collections, searchQuery]);
+
+  const handleMove = (index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    const baseList = isReordering ? localItems : collections;
+    if (targetIndex < 0 || targetIndex >= baseList.length) return;
+
+    const newItems = [...baseList];
+    const [moved] = newItems.splice(index, 1);
+    if (!moved) return;
+    newItems.splice(targetIndex, 0, moved);
+    setLocalItems(newItems);
+    reorderMutation.mutate(newItems.map((c) => c.id));
+  };
+
+  const handleReorder = (newIds: string[]) => {
+    const map = new Map(localItems.map((item) => [item.id, item]));
+    const newItems = newIds.map((id) => map.get(id)).filter(Boolean) as CollectionItem[];
+    setLocalItems(newItems);
+    reorderMutation.mutate(newIds);
+  };
 
   const handleDelete = (item: CollectionItem) => {
     Alert.alert(
@@ -89,16 +130,19 @@ export default function ManageCollectionsScreen() {
     );
   }
 
-  const renderItem = ({ item }: { item: CollectionItem }) => {
+  const renderItem = ({ item, index }: { item: CollectionItem; index: number }) => {
     const tasksCount = Array.isArray(item.tasks) ? item.tasks.length : 0;
     const gradient: [string, string, ...string[]] =
       item.gradientColors && item.gradientColors.length >= 2
         ? (item.gradientColors)
         : ['#1E1E1E', '#333333'];
+    const totalCount = collections.length;
+    const isFirst = index === 0;
+    const isLast = index === totalCount - 1;
 
     return (
       <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-        {/* Cover strip con emoji y badge */}
+        {/* Cover strip con badge de posición, emoji y badge temático */}
         <View style={styles.cardCover}>
           <LinearGradient
             colors={gradient}
@@ -111,8 +155,13 @@ export default function ManageCollectionsScreen() {
             style={StyleSheet.absoluteFill}
           />
           <View style={styles.coverRow}>
-            <View style={styles.badgePill}>
-              <Text style={styles.badgePillText}>{item.badge || t('collections.default_badge')}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View style={styles.indexBadge}>
+                <Text style={styles.indexBadgeText}>#{index + 1}</Text>
+              </View>
+              <View style={styles.badgePill}>
+                <Text style={styles.badgePillText}>{item.badge || t('collections.default_badge')}</Text>
+              </View>
             </View>
             <Text style={styles.coverEmoji}>{item.emoji || '📁'}</Text>
           </View>
@@ -145,8 +194,31 @@ export default function ManageCollectionsScreen() {
             </View>
           </View>
 
-          {/* Botones de acción: Editar y Borrar */}
+          {/* Botones de acción: Flechas de posición + Editar y Borrar */}
           <View style={[styles.actionsRow, { borderTopColor: theme.colors.border }]}>
+            <View style={styles.reorderArrowsRow}>
+              <Pressable
+                style={[styles.arrowMiniBtn, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }, isFirst && styles.arrowMiniBtnDisabled]}
+                disabled={isFirst}
+                onPress={() => handleMove(index, 'up')}
+                accessibilityRole="button"
+                accessibilityLabel={t('collections.move_up_a11y')}
+                hitSlop={4}
+              >
+                <ChevronUp size={16} color={isFirst ? theme.colors.border : theme.colors.foreground} />
+              </Pressable>
+              <Pressable
+                style={[styles.arrowMiniBtn, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }, isLast && styles.arrowMiniBtnDisabled]}
+                disabled={isLast}
+                onPress={() => handleMove(index, 'down')}
+                accessibilityRole="button"
+                accessibilityLabel={t('collections.move_down_a11y')}
+                hitSlop={4}
+              >
+                <ChevronDown size={16} color={isLast ? theme.colors.border : theme.colors.foreground} />
+              </Pressable>
+            </View>
+
             <Pressable
               style={styles.editBtn}
               onPress={() => handleEdit(item)}
@@ -177,7 +249,13 @@ export default function ManageCollectionsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable
-          onPress={() => router.back()}
+          onPress={() => {
+            if (isReordering) {
+              setIsReordering(false);
+            } else {
+              router.back();
+            }
+          }}
           style={[styles.circleBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
           hitSlop={8}
           accessibilityRole="button"
@@ -187,7 +265,10 @@ export default function ManageCollectionsScreen() {
         </Pressable>
 
         <View style={{ flex: 1, marginHorizontal: 12 }}>
-          <PageTitle gold={t('collections.manage_title_gold')} rest={t('collections.manage_title_rest')} />
+          <PageTitle
+            gold={isReordering ? t('collections.manage_reorder_title_gold') : t('collections.manage_title_gold')}
+            rest={isReordering ? t('collections.manage_reorder_title_rest') : t('collections.manage_title_rest')}
+          />
           <Text style={[styles.headerSub, { color: theme.colors.foregroundMuted }]}>
             {collections.length === 1
               ? t('collections.manage_count_single')
@@ -195,65 +276,199 @@ export default function ManageCollectionsScreen() {
           </Text>
         </View>
 
-        <Pressable
-          style={styles.newBtn}
-          onPress={() => router.push('/(modals)/create-collection' as any)}
-          accessibilityRole="button"
-          accessibilityLabel={t('collections.manage_new_a11y')}
-        >
-          <Plus size={16} color="#000" strokeWidth={2.5} />
-          <Text style={styles.newBtnText}>{t('collections.manage_new')}</Text>
-        </Pressable>
+        {isReordering ? (
+          <Pressable
+            style={styles.doneBtn}
+            onPress={() => setIsReordering(false)}
+            accessibilityRole="button"
+            accessibilityLabel={t('collections.manage_reorder_done')}
+          >
+            <Check size={16} color="#000" strokeWidth={2.5} />
+            <Text style={styles.doneBtnText}>{t('collections.manage_reorder_done')}</Text>
+          </Pressable>
+        ) : (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {collections.length > 1 && (
+              <Pressable
+                style={[styles.reorderHeaderBtn, { borderColor: theme.colors.border }]}
+                onPress={() => {
+                  setSearchQuery('');
+                  setLocalItems(collections);
+                  setIsReordering(true);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={t('collections.manage_reorder')}
+              >
+                <ArrowUpDown size={14} color={gold[400]} />
+                <Text style={[styles.reorderHeaderBtnText, { color: gold[400] }]}>
+                  {t('collections.manage_reorder')}
+                </Text>
+              </Pressable>
+            )}
+
+            <Pressable
+              style={styles.newBtn}
+              onPress={() => router.push('/(modals)/create-collection' as any)}
+              accessibilityRole="button"
+              accessibilityLabel={t('collections.manage_new_a11y')}
+            >
+              <Plus size={16} color="#000" strokeWidth={2.5} />
+              <Text style={styles.newBtnText}>{t('collections.manage_new')}</Text>
+            </Pressable>
+          </View>
+        )}
       </View>
 
-      {/* Barra de búsqueda */}
-      <View style={[styles.searchBar, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-        <Search size={16} color={theme.colors.foregroundMuted} />
-        <TextInput
-          style={[styles.searchInput, { color: theme.colors.foreground }]}
-          placeholder={t('collections.manage_search_placeholder')}
-          placeholderTextColor={theme.colors.foregroundMuted}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          returnKeyType="search"
-          clearButtonMode="while-editing"
-        />
-      </View>
+      {/* Modo Reordenar con Drag and Drop y flechas */}
+      {isReordering ? (
+        <View style={{ flex: 1 }}>
+          <View style={[styles.reorderBanner, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+            <Sparkles size={16} color={gold[400]} />
+            <Text style={[styles.reorderBannerText, { color: theme.colors.foregroundMuted }]}>
+              {t('collections.manage_reorder_banner')}
+            </Text>
+          </View>
 
-      {/* Lista */}
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator color={gold[400]} size="large" />
-          <Text style={[styles.loadingText, { color: theme.colors.foregroundMuted }]}>{t('manage_collections.loading', { defaultValue: 'Cargando colecciones...' })}</Text>
+          <ScrollView
+            scrollEnabled={!isDragging}
+            contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 32 }]}
+            showsVerticalScrollIndicator={false}
+          >
+            <DraggableTaskList
+              items={localItems}
+              gap={10}
+              defaultItemHeight={68}
+              onDraggingChange={setIsDragging}
+              onReorder={handleReorder}
+              renderItem={(item, drag) => {
+                const idx = localItems.findIndex((c) => c.id === item.id);
+                const isFirst = idx === 0;
+                const isLast = idx === localItems.length - 1;
+                const grad: [string, string, ...string[]] =
+                  item.gradientColors && item.gradientColors.length >= 2
+                    ? item.gradientColors
+                    : ['#1E1E1E', '#333333'];
+
+                return (
+                  <View style={[styles.reorderRow, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+                    {/* Asa de arrastre */}
+                    <View
+                      {...drag.panHandlers}
+                      style={styles.dragHandleBtn}
+                      accessibilityLabel={t('collections.drag_handle_a11y')}
+                    >
+                      <GripVertical size={20} color={theme.colors.foregroundMuted} />
+                    </View>
+
+                    {/* Número de posición */}
+                    <View style={styles.reorderIndexBadge}>
+                      <Text style={styles.reorderIndexText}>#{idx + 1}</Text>
+                    </View>
+
+                    {/* Mini previsualización */}
+                    <View style={styles.reorderThumb}>
+                      <LinearGradient
+                        colors={grad}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={StyleSheet.absoluteFill}
+                      />
+                      <Text style={styles.reorderThumbEmoji}>{item.emoji || '📁'}</Text>
+                    </View>
+
+                    {/* Título y badge */}
+                    <View style={styles.reorderInfo}>
+                      <Text style={[styles.reorderTitle, { color: theme.colors.foreground }]} numberOfLines={1}>
+                        {item.title}
+                      </Text>
+                      <Text style={[styles.reorderSub, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
+                        {item.badge || item.category || 'General'}
+                      </Text>
+                    </View>
+
+                    {/* Flechas Arriba / Abajo para cambio rápido */}
+                    <View style={styles.reorderArrows}>
+                      <Pressable
+                        style={[styles.arrowBtn, { backgroundColor: theme.colors.background }, isFirst && styles.arrowBtnDisabled]}
+                        disabled={isFirst}
+                        onPress={() => handleMove(idx, 'up')}
+                        hitSlop={6}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('collections.move_up_a11y')}
+                      >
+                        <ChevronUp size={18} color={isFirst ? theme.colors.border : theme.colors.foreground} />
+                      </Pressable>
+                      <Pressable
+                        style={[styles.arrowBtn, { backgroundColor: theme.colors.background }, isLast && styles.arrowBtnDisabled]}
+                        disabled={isLast}
+                        onPress={() => handleMove(idx, 'down')}
+                        hitSlop={6}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('collections.move_down_a11y')}
+                      >
+                        <ChevronDown size={18} color={isLast ? theme.colors.border : theme.colors.foreground} />
+                      </Pressable>
+                    </View>
+                  </View>
+                );
+              }}
+            />
+          </ScrollView>
         </View>
       ) : (
-        <FlatList
-          data={filteredCollections}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 32 }]}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefetching}
-              onRefresh={refetch}
-              tintColor={gold[400]}
-              colors={[gold[400]]}
+        <>
+          {/* Barra de búsqueda */}
+          <View style={[styles.searchBar, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+            <Search size={16} color={theme.colors.foregroundMuted} />
+            <TextInput
+              style={[styles.searchInput, { color: theme.colors.foreground }]}
+              placeholder={t('collections.manage_search_placeholder')}
+              placeholderTextColor={theme.colors.foregroundMuted}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              returnKeyType="search"
+              clearButtonMode="while-editing"
             />
-          }
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Layers size={44} color={theme.colors.foregroundMuted} />
-              <Text style={[styles.emptyTitle, { color: theme.colors.foreground }]}>
-                {searchQuery ? t('collections.manage_empty_title_search') : t('collections.manage_empty_title')}
-              </Text>
-              <Text style={[styles.emptySub, { color: theme.colors.foregroundMuted }]}>
-                {searchQuery
-                  ? t('collections.manage_empty_sub_search')
-                  : t('collections.manage_empty_sub')}
+          </View>
+
+          {/* Lista estándar */}
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator color={gold[400]} size="large" />
+              <Text style={[styles.loadingText, { color: theme.colors.foregroundMuted }]}>
+                {t('manage_collections.loading', { defaultValue: 'Cargando colecciones...' })}
               </Text>
             </View>
-          }
-        />
+          ) : (
+            <FlatList
+              data={filteredCollections}
+              keyExtractor={(item) => item.id}
+              renderItem={renderItem}
+              contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 32 }]}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefetching}
+                  onRefresh={refetch}
+                  tintColor={gold[400]}
+                  colors={[gold[400]]}
+                />
+              }
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <Layers size={44} color={theme.colors.foregroundMuted} />
+                  <Text style={[styles.emptyTitle, { color: theme.colors.foreground }]}>
+                    {searchQuery ? t('collections.manage_empty_title_search') : t('collections.manage_empty_title')}
+                  </Text>
+                  <Text style={[styles.emptySub, { color: theme.colors.foregroundMuted }]}>
+                    {searchQuery
+                      ? t('collections.manage_empty_sub_search')
+                      : t('collections.manage_empty_sub')}
+                  </Text>
+                </View>
+              }
+            />
+          )}
+        </>
       )}
     </View>
   );
@@ -287,6 +502,21 @@ const styles = themedStyleSheet({
     marginTop: 2,
     fontFamily: fontFamily.regular,
   },
+  reorderHeaderBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  reorderHeaderBtnText: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 12,
+  },
   newBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -300,6 +530,37 @@ const styles = themedStyleSheet({
     color: '#000',
     fontFamily: fontFamily.bold,
     fontSize: 13,
+  },
+  doneBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#D4AF37',
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 20,
+  },
+  doneBtnText: {
+    color: '#000',
+    fontFamily: fontFamily.bold,
+    fontSize: 13,
+  },
+  reorderBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginHorizontal: 12,
+    marginBottom: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  reorderBannerText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 16,
+    fontFamily: fontFamily.regular,
   },
   searchBar: {
     flexDirection: 'row',
@@ -340,6 +601,19 @@ const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  indexBadge: {
+    backgroundColor: 'rgba(212, 175, 55, 0.25)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.6)',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  indexBadgeText: {
+    color: '#D4AF37',
+    fontSize: 11,
+    fontFamily: fontFamily.bold,
   },
   badgePill: {
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -389,10 +663,27 @@ const styles = themedStyleSheet({
   actionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: '#262626',
     paddingTop: 12,
+  },
+  reorderArrowsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginRight: 4,
+  },
+  arrowMiniBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  arrowMiniBtnDisabled: {
+    opacity: 0.3,
   },
   editBtn: {
     flex: 1,
@@ -425,6 +716,78 @@ const styles = themedStyleSheet({
     color: '#EF4444',
     fontFamily: fontFamily.semibold,
     fontSize: 13,
+  },
+  reorderRow: {
+    height: 68,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    gap: 10,
+  },
+  dragHandleBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  reorderIndexBadge: {
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.4)',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 8,
+    minWidth: 32,
+    alignItems: 'center',
+  },
+  reorderIndexText: {
+    color: '#D4AF37',
+    fontSize: 12,
+    fontFamily: fontFamily.bold,
+  },
+  reorderThumb: {
+    width: 42,
+    height: 42,
+    borderRadius: 10,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reorderThumbEmoji: {
+    fontSize: 20,
+  },
+  reorderInfo: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  reorderTitle: {
+    fontSize: 14,
+    fontFamily: fontFamily.semibold,
+  },
+  reorderSub: {
+    fontSize: 12,
+    marginTop: 2,
+    fontFamily: fontFamily.regular,
+  },
+  reorderArrows: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  arrowBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  arrowBtnDisabled: {
+    opacity: 0.25,
   },
   loadingContainer: {
     flex: 1,

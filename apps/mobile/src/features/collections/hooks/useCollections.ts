@@ -227,3 +227,31 @@ export function useDeleteCollection() {
     },
   });
 }
+
+export function useReorderCollections() {
+  const queryClient = useQueryClient();
+  const { t } = useTranslation();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: async (orderedIds: string[]) => {
+      return collectionsService.reorderCollections(orderedIds);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: COLLECTIONS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
+      toast.show({
+        title: t('collections.reorder_saved_title', { defaultValue: 'Orden actualizado' }),
+        message: t('collections.reorder_saved_msg', { defaultValue: 'El orden de las colecciones se ha guardado con éxito.' }),
+        type: 'success',
+      });
+    },
+    onError: (err: any) => {
+      toast.show({
+        title: t('collections.toast_reorder_error_title', { defaultValue: 'Error al reordenar' }),
+        message: err?.message || t('common.error_generic', { defaultValue: 'No se pudo guardar el orden.' }),
+        type: 'error',
+      });
+    },
+  });
+}
