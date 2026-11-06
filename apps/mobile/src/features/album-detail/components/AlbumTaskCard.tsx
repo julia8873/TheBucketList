@@ -265,36 +265,88 @@ export function AlbumTaskCard({
             )}
           </View>
 
-          {/* Derecha: prioridad */}
-          {is4Cols ? (
-            <View
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: 4,
-                backgroundColor: itemPriorityColor,
-                borderWidth: 1,
-                borderColor: 'rgba(0,0,0,0.4)',
-              }}
-            />
-          ) : (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: is3Cols ? 3 : 4,
-                paddingHorizontal: is3Cols ? 4 : 6,
-                paddingVertical: is3Cols ? 1 : 2,
-                borderRadius: 8,
-                backgroundColor: 'rgba(0,0,0,0.65)',
-                borderWidth: 1,
-                borderColor: itemPriorityColor,
-              }}
-            >
-              <View style={{ width: is3Cols ? 4 : 5, height: is3Cols ? 4 : 5, borderRadius: 2.5, backgroundColor: itemPriorityColor }} />
-              <Text style={{ fontSize: is3Cols ? 9 : 10, fontWeight: '700', color: itemPriorityColor }}>{itemPriorityLabel}</Text>
-            </View>
-          )}
+          {/* Derecha: prioridad y etiquetas */}
+          <View style={{ flexDirection: 'column', alignItems: 'flex-end', gap: is4Cols ? 2 : is3Cols ? 3 : 4, flexShrink: 0 }}>
+            {is4Cols || is3Cols ? (
+              <View
+                style={{
+                  width: is4Cols ? 8 : 10,
+                  height: is4Cols ? 8 : 10,
+                  borderRadius: is4Cols ? 4 : 5,
+                  backgroundColor: itemPriorityColor,
+                  borderWidth: 1,
+                  borderColor: 'rgba(0,0,0,0.4)',
+                }}
+              />
+            ) : (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 4,
+                  paddingHorizontal: 6,
+                  paddingVertical: 2,
+                  borderRadius: 8,
+                  backgroundColor: 'rgba(0,0,0,0.65)',
+                  borderWidth: 1,
+                  borderColor: itemPriorityColor,
+                }}
+              >
+                <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: itemPriorityColor }} />
+                <Text style={{ fontSize: 10, fontWeight: '700', color: itemPriorityColor }}>{itemPriorityLabel}</Text>
+              </View>
+            )}
+
+            {task.tags && task.tags.length > 0 && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, maxWidth: '100%', justifyContent: 'flex-end' }}>
+                {task.tags.slice(0, 1).map((t) => (
+                  <View
+                    key={t.id}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 2,
+                      paddingHorizontal: (is3Cols || is4Cols) ? (is4Cols ? 3 : 4) : 6,
+                      paddingVertical: 1,
+                      borderRadius: 6,
+                      backgroundColor: 'rgba(0,0,0,0.65)',
+                      borderWidth: 0.5,
+                      borderColor: t.color || '#D4B13A',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: is4Cols ? 9 : is3Cols ? 10 : 10,
+                        color: t.color || '#D4B13A',
+                        fontWeight: '600',
+                      }}
+                      numberOfLines={1}
+                    >
+                      {is3Cols || is4Cols
+                        ? (t.emoji || t.name.slice(0, 2))
+                        : `${t.emoji ? `${t.emoji} ` : ''}${t.name}`}
+                    </Text>
+                  </View>
+                ))}
+                {task.tags.length > 1 && (
+                  <View
+                    style={{
+                      paddingHorizontal: is4Cols ? 2 : 3,
+                      paddingVertical: 1,
+                      borderRadius: 6,
+                      backgroundColor: 'rgba(0,0,0,0.65)',
+                      borderWidth: 0.5,
+                      borderColor: 'rgba(255,255,255,0.2)',
+                    }}
+                  >
+                    <Text style={{ fontSize: is4Cols ? 7 : is3Cols ? 8 : 9, color: '#8A8A8A', fontWeight: '700' }}>
+                      +{task.tags.length - 1}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
         </View>
 
         <View

@@ -433,50 +433,87 @@ export function AlbumCard({
               </Text>
             )}
             {showPriority && priority && (
-              <View style={[styles.priorityIndicator, { backgroundColor: chipBg }, is3Cols && { paddingHorizontal: 4, paddingVertical: 1 }]}>
+              is3Cols ? (
                 <View
-                  style={[
-                    styles.priorityDot,
-                    is3Cols && { width: 4, height: 4, borderRadius: 2 },
-                    {
-                      backgroundColor:
-                        priority === 'high' || priority === 'urgent'
-                          ? '#EF4444'
-                          : priority === 'low'
-                            ? '#10B981'
-                            : '#D4B13A',
-                    },
-                  ]}
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: 3.5,
+                    backgroundColor:
+                      priority === 'high' || priority === 'urgent'
+                        ? '#EF4444'
+                        : priority === 'low'
+                          ? '#10B981'
+                          : '#D4B13A',
+                    borderWidth: 1,
+                    borderColor: 'rgba(0,0,0,0.4)',
+                  }}
                 />
-                <Text
-                  style={[
-                    styles.priorityText,
-                    is3Cols && { fontSize: 8 },
-                    {
-                      color:
-                        priority === 'high' || priority === 'urgent'
-                          ? '#EF4444'
-                          : priority === 'low'
-                            ? '#10B981'
-                            : '#D4B13A',
-                    },
-                  ]}
-                >
-                  {priority === 'high' || priority === 'urgent'
-                    ? t('common.high')
-                    : priority === 'low'
-                    ? t('common.low')
-                    : t('common.medium')}
-                </Text>
-              </View>
+              ) : (
+                <View style={[styles.priorityIndicator, { backgroundColor: chipBg }]}>
+                  <View
+                    style={[
+                      styles.priorityDot,
+                      {
+                        backgroundColor:
+                          priority === 'high' || priority === 'urgent'
+                            ? '#EF4444'
+                            : priority === 'low'
+                              ? '#10B981'
+                              : '#D4B13A',
+                      },
+                    ]}
+                  />
+                  <Text
+                    style={[
+                      styles.priorityText,
+                      {
+                        color:
+                          priority === 'high' || priority === 'urgent'
+                            ? '#EF4444'
+                            : priority === 'low'
+                              ? '#10B981'
+                              : '#D4B13A',
+                      },
+                    ]}
+                  >
+                    {priority === 'high' || priority === 'urgent'
+                      ? t('common.high')
+                      : priority === 'low'
+                      ? t('common.low')
+                      : t('common.medium')}
+                  </Text>
+                </View>
+              )
             )}
           </View>
         )}
 
-        {is4Cols && showTaskCount && (
-          <Text style={[styles.meta, { color: metaColor, fontSize: 8, marginBottom: 2 }]} numberOfLines={1}>
-            {completedTasks}/{totalTasks}
-          </Text>
+        {is4Cols && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+            {showTaskCount && (
+              <Text style={[styles.meta, { color: metaColor, fontSize: 8 }]} numberOfLines={1}>
+                {completedTasks}/{totalTasks}
+              </Text>
+            )}
+            {showPriority && priority && (
+              <View
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 3,
+                  backgroundColor:
+                    priority === 'high' || priority === 'urgent'
+                      ? '#EF4444'
+                      : priority === 'low'
+                        ? '#10B981'
+                        : '#D4B13A',
+                  borderWidth: 1,
+                  borderColor: 'rgba(0,0,0,0.4)',
+                }}
+              />
+            )}
+          </View>
         )}
 
         {!is4Cols && showDescription && description ? (
