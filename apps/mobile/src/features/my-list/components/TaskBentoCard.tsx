@@ -174,6 +174,11 @@ function TaskBentoCardComponent({
               {progressText}
             </Text>
           ) : null}
+          {(customization?.showCategoryLocation ?? true) && item.location ? (
+            <Text style={{ color: c.foregroundSubtle, fontSize: 11, marginTop: 2 }} numberOfLines={1}>
+              {item.location}
+            </Text>
+          ) : null}
           {showDesc && item.description ? (
             <Text style={{ color: c.foregroundSubtle, fontSize: 11, marginTop: 2 }} numberOfLines={1}>
               {String(item.description).trim()}

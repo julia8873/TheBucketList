@@ -87,26 +87,24 @@ function TaskItemRowComponent({
   const subtasksTotal = item.item_subtasks?.length || 0;
   const subtasksDone = item.item_subtasks?.filter((s: any) => s.done).length || 0;
 
-  let meta = '';
+  const metaParts: string[] = [];
   if (showDates && isItemExpired && item.status !== 'completed') {
-    meta = t('tasks.expired_days_ago', { days: daysAgo, defaultValue: `Caducó hace ${daysAgo} días` });
+    metaParts.push(t('tasks.expired_days_ago', { days: daysAgo, defaultValue: `Caducó hace ${daysAgo} días` }));
   } else if (showSubtasks && subtasksTotal > 0) {
-    meta = t('tasks.steps_count', { done: subtasksDone, total: subtasksTotal, defaultValue: `${subtasksDone} de ${subtasksTotal} pasos` });
+    metaParts.push(t('tasks.steps_count', { done: subtasksDone, total: subtasksTotal, defaultValue: `${subtasksDone} de ${subtasksTotal} pasos` }));
   } else if (showSubtasks && item.counter_target && item.counter_target > 0) {
     const label = resolveCounterLabel(item.counter_label, item.counter_target, i18n.language);
-    meta = `${item.counter_count ?? 0} / ${item.counter_target} ${label}`;
+    metaParts.push(`${item.counter_count ?? 0} / ${item.counter_target} ${label}`);
   } else if (showSubtasks && item.counter_count && item.counter_count > 0) {
     const label = resolveCounterLabel(item.counter_label, item.counter_count, i18n.language);
-    meta = `${item.counter_count} ${label}`;
-  } else if (showCategoryLoc) {
-    const isEn = i18n.language?.startsWith('en');
-    const categoryName = isEn
-      ? item.category?.name_en || item.category?.name_es
-      : item.category?.name_es || item.category?.name_en;
-    if (categoryName || item.category?.name || item.location) {
-      meta = [categoryName || item.category?.name, item.location].filter(Boolean).join(' · ');
-    }
+    metaParts.push(`${item.counter_count} ${label}`);
   }
+
+  if (showCategoryLoc && item.location) {
+    metaParts.push(item.location);
+  }
+
+  const meta = metaParts.join(' · ');
 
   const itemPriority = item.priority || 'medium';
   const itemPriorityColor =

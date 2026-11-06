@@ -105,13 +105,8 @@ function TaskCompactItemRowComponent({
       : t('common.medium');
 
   const subParts: string[] = [];
-  if (customization?.showCategoryLocation) {
-    const isEn = i18n.language?.startsWith('en');
-    const categoryName = isEn
-      ? item.category?.name_en || item.category?.name_es
-      : item.category?.name_es || item.category?.name_en;
-    const catOrLoc = categoryName || item.category?.name || item.location;
-    if (catOrLoc) subParts.push(catOrLoc);
+  if (customization?.showCategoryLocation && item.location) {
+    subParts.push(item.location);
   }
   if (customization?.showDescription && item.description) {
     subParts.push(item.description.trim());

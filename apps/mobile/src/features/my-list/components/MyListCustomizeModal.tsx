@@ -77,10 +77,10 @@ function MyListCustomizeModalComponent({
     { key: 'showPriority', label: t('my_list.customize_opt_priority') },
     { key: 'showFavorite', label: t('my_list.customize_opt_favorite') },
     { key: 'showTags', label: t('my_list.customize_opt_tags') },
-    { key: 'showDates', label: t('my_list.customize_opt_dates') },
-    { key: 'showCategoryLocation', label: t('my_list.customize_opt_cat_loc') },
+    { key: 'showDates', label: t('my_list.customize_opt_dates', { defaultValue: 'Fechas límite' }) },
+    { key: 'showCategoryLocation', label: t('my_list.customize_opt_cat_loc', { defaultValue: 'Lugar' }) },
     { key: 'showSubtasksProgress', label: t('my_list.customize_opt_subtasks') },
-    { key: 'showCollaborators', label: t('my_list.customize_opt_collaborators') },
+    { key: 'showCollaborators', label: t('my_list.customize_opt_collaborators', { defaultValue: 'Colaboradores' }) },
     { key: 'showDescription', label: t('my_list.customize_opt_desc') },
   ], [t]);
 
@@ -99,7 +99,7 @@ function MyListCustomizeModalComponent({
     { key: 'showProgress', label: t('my_list.customize_opt_album_progress') },
     { key: 'showBadges', label: t('my_list.customize_opt_album_badges') },
     { key: 'showDate', label: t('my_list.customize_opt_album_date') },
-    { key: 'showCollaborators', label: t('my_list.customize_opt_album_collaborators') },
+    { key: 'showCollaborators', label: t('my_list.customize_opt_album_collaborators', { defaultValue: 'Colaboradores' }) },
     { key: 'showDescription', label: t('my_list.customize_opt_album_desc') },
   ], [t, mode]);
 

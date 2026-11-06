@@ -86,13 +86,8 @@ function TaskGalleryItemCardComponent({
       metaParts.push(`${item.counter_count} ${label}`);
     }
   }
-  if (showCategoryLoc) {
-    const isEn = i18n.language?.startsWith('en');
-    const categoryName = isEn
-      ? item.category?.name_en || item.category?.name_es
-      : item.category?.name_es || item.category?.name_en;
-    const catOrLoc = categoryName || item.category?.name || item.location;
-    if (catOrLoc) metaParts.push(catOrLoc);
+  if (showCategoryLoc && item.location) {
+    metaParts.push(item.location);
   }
   if (showDates) {
     const targetDate = item.status === 'completed' && item.completed_at ? item.completed_at : item.deadline;
