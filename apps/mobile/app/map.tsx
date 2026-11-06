@@ -138,10 +138,15 @@ export default function MapScreen() {
 
     // 2. Si no hay tareas en ese lugar, buscar y hacer zoom a la ciudad / país globalmente
     try {
-      const lang = i18n.language?.startsWith('en') ? 'en' : 'es';
+      const lang = i18n.language?.startsWith('en') ? 'en,es;q=0.8' : 'es,en;q=0.8';
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&accept-language=${lang}`,
-        { headers: { 'User-Agent': 'TheBucketListApp/1.0' } }
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&accept-language=${encodeURIComponent(lang)}`,
+        {
+          headers: {
+            'User-Agent': 'TheBucketListApp/1.0 (thebucketlist898@gmail.com)',
+            'Accept-Language': lang,
+          },
+        }
       );
       const data: any[] = await res.json();
       if (data && data.length > 0) {

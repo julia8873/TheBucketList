@@ -32,7 +32,7 @@ export function LocationAutocomplete({
   placeholder,
 }: LocationAutocompleteProps) {
   const { theme } = useTheme();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const resolvedLabel = label ?? t('location_picker.search_label');
   const resolvedPlaceholder = placeholder ?? t('location_picker.search_placeholder');
   const [query, setQuery] = useState(value);
@@ -53,8 +53,11 @@ export function LocationAutocomplete({
       return;
     }
 
-    if (searchCache[text]) {
-      setResults(searchCache[text] ?? []);
+    const lang = i18n.language?.startsWith('en') ? 'en,es;q=0.8' : 'es,en;q=0.8';
+    const cacheKey = `${lang}:${text.trim().toLowerCase()}`;
+
+    if (searchCache[cacheKey]) {
+      setResults(searchCache[cacheKey] ?? []);
       setShowDropdown(true);
       return;
     }
@@ -64,10 +67,11 @@ export function LocationAutocomplete({
 
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(text)}&limit=8&addressdetails=1`,
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(text)}&limit=8&addressdetails=1&accept-language=${encodeURIComponent(lang)}`,
         {
           headers: {
             'User-Agent': 'TheBucketListApp/1.0 (thebucketlist898@gmail.com)',
+            'Accept-Language': lang,
           },
         }
       );
@@ -81,7 +85,8 @@ export function LocationAutocomplete({
 
       for (const item of rawData) {
         const addr = item.address || {};
-        const cityName = addr.city || addr.town || addr.village || addr.municipality || item.name;
+        const isCountry = item.addresstype === 'country';
+        const cityName = addr.city || addr.town || addr.village || addr.municipality || (!isCountry ? item.name : undefined);
         const isProvinceOrCounty =
           item.addresstype === 'state_district' ||
           item.addresstype === 'county' ||
@@ -99,11 +104,17 @@ export function LocationAutocomplete({
           if (hasCityHomonym) continue;
         }
 
-        // Construir nombre limpio: "Ciudad, Comunidad/Región, País"
+        // Construir nombre limpio: "Ciudad, Comunidad/Región, País" (o sólo el nombre del país si es un país)
         const parts: string[] = [];
-        if (cityName) parts.push(cityName);
-        if (addr.state && addr.state !== cityName) parts.push(addr.state);
-        if (addr.country && addr.country !== addr.state) parts.push(addr.country);
+        if (isCountry) {
+          parts.push(addr.country || item.name);
+        } else {
+          if (cityName) parts.push(cityName);
+          if (addr.state && addr.state !== cityName) parts.push(addr.state);
+          if (addr.country && addr.country !== addr.state && addr.country !== cityName) {
+            parts.push(addr.country);
+          }
+        }
         const cleanName = parts.length > 0 ? parts.join(', ') : item.display_name;
 
         const dedupeKey = cleanName.toLowerCase();
@@ -120,7 +131,7 @@ export function LocationAutocomplete({
         if (processed.length >= 5) break;
       }
 
-      searchCache[text] = processed;
+      searchCache[cacheKey] = processed;
       setResults(processed);
     } catch (err) {
       console.error('Failed to fetch location', err);

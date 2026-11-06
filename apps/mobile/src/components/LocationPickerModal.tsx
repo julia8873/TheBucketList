@@ -28,7 +28,7 @@ export function LocationPickerModal({
   onChangeLocation,
   onClose,
 }: LocationPickerModalProps) {
-  const { t: tr } = useTranslation();
+  const { t: tr, i18n } = useTranslation();
   const [typedText, setTypedText] = useState(value);
   const [selectedLoc, setSelectedLoc] = useState<{ text: string; lat: number; lng: number } | null>(null);
   const [loadingGeocode, setLoadingGeocode] = useState(false);
@@ -53,9 +53,15 @@ export function LocationPickerModal({
 
     setLoadingGeocode(true);
     try {
+      const lang = i18n.language?.startsWith('en') ? 'en,es;q=0.8' : 'es,en;q=0.8';
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(typedText.trim())}&limit=5&addressdetails=1`,
-        { headers: { 'User-Agent': 'TheBucketListApp/1.0' } }
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(typedText.trim())}&limit=5&addressdetails=1&accept-language=${encodeURIComponent(lang)}`,
+        {
+          headers: {
+            'User-Agent': 'TheBucketListApp/1.0 (thebucketlist898@gmail.com)',
+            'Accept-Language': lang,
+          },
+        }
       );
       const items: any[] = await res.json();
       if (items && items.length > 0) {
