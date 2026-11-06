@@ -16,6 +16,8 @@ import { useCopiedBucketIds, useCopyBucket, useToggleLike, useBatchBucketSaveCou
 import { daysBetween, timeAgo } from '../utils/timeAgo';
 import { displayNameOf, initialsOf } from '../utils/initials';
 import { OfficialBadge, isUserAdmin } from './OfficialBadge';
+import { CloneTaskDialog } from './CloneTaskDialog';
+import { useCloneTaskPreferencesStore, type CloneTaskFields } from '../stores/cloneTaskPreferences.store';
 import { useTranslation } from '@bucketlist/shared';
 
 import type { TaskViewMode } from './ViewModeSelector';
@@ -43,6 +45,8 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
   const { user } = useAuthStore();
   const [showComments, setShowComments] = useState(false);
   const [showLikes, setShowLikes] = useState(false);
+  const [showCloneDialog, setShowCloneDialog] = useState(false);
+  const { askEveryTime, fields: cloneFields, savePreferences } = useCloneTaskPreferencesStore();
   const toggleLike = useToggleLike();
   const copyBucket = useCopyBucket();
   const { data: copiedIds } = useCopiedBucketIds(user?.id);
@@ -138,12 +142,35 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
     toggleLike.mutate({ bucketId: bucket.id, userId: user.id });
   };
 
+  const performCopy = (options: CloneTaskFields) => {
+    if (!user) return;
+    copyBucket.mutate(
+      { bucketId: bucket.id, userId: user.id, options },
+      {
+        onSuccess: () => {
+          setShowCloneDialog(false);
+          toast.success(t('feed.copy_success', { defaultValue: '¡Tarea añadida a tu lista!' }));
+        },
+        onError: (error: any) =>
+          toast.error(error?.message ?? t('feed.copy_error', { defaultValue: 'No se pudo añadir. Inténtalo de nuevo.' })),
+      }
+    );
+  };
+
   const handleCopy = () => {
     if (!user || alreadyCopied || copyBucket.isPending) return;
-    copyBucket.mutate(
-      { bucketId: bucket.id, userId: user.id },
-      { onError: (error: any) => toast.error(error?.message ?? t('feed.copy_error', { defaultValue: 'No se pudo añadir. Inténtalo de nuevo.' })) }
-    );
+    if (askEveryTime) {
+      setShowCloneDialog(true);
+      return;
+    }
+    performCopy(cloneFields);
+  };
+
+  const handleConfirmClone = (options: CloneTaskFields, dontAskAgain: boolean) => {
+    if (dontAskAgain) {
+      savePreferences(false, options);
+    }
+    performCopy(options);
   };
 
   if (mode === 'gallery') {
@@ -630,6 +657,16 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
           visible={showParticipantsModal}
           participants={participants}
           onClose={() => setShowParticipantsModal(false)}
+        />
+      )}
+
+      {showCloneDialog && (
+        <CloneTaskDialog
+          visible={showCloneDialog}
+          onClose={() => setShowCloneDialog(false)}
+          onConfirm={handleConfirmClone}
+          taskTitle={bucket.title}
+          isLoading={copyBucket.isPending}
         />
       )}
     </Animated.View>

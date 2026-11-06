@@ -1,6 +1,7 @@
 import { i18n } from '@bucketlist/shared';
 import { supabase } from '../supabase';
 import { sendPushNotification } from '../notifications';
+import type { CloneTaskFields } from '../../stores/cloneTaskPreferences.store';
 
 export const LIKE_EMOJI = '❤️';
 
@@ -317,7 +318,11 @@ export const socialApi = {
   },
 
   // "Yo también": copia una tarea (con sus pasos) a mi lista
-  copyBucket: async (bucketId: string, userId: string) => {
+  copyBucket: async (
+    bucketId: string,
+    userId: string,
+    options?: Partial<CloneTaskFields>
+  ) => {
     const { data: original, error: fetchErr } = await supabase
       .from('buckets')
       .select('*, item_subtasks(title, position)')
@@ -334,19 +339,28 @@ export const socialApi = {
       .limit(1);
     if (already && already.length > 0) throw new Error(i18n.t('social.already_in_list', { defaultValue: 'Ya tienes esta tarea en tu lista' }));
 
+    const opts: CloneTaskFields = {
+      description: options?.description ?? true,
+      deadline: options?.deadline ?? true,
+      location: options?.location ?? true,
+      subtasks: options?.subtasks ?? true,
+      cover: options?.cover ?? true,
+    };
+
     const { data, error } = await supabase
       .from('buckets')
       .insert({
         user_id: userId,
         category_id: original.category_id,
         title: original.title,
-        description: original.description,
-        location_text: original.location_text,
-        location_lat: original.location_lat,
-        location_lng: original.location_lng,
+        description: opts.description ? original.description : null,
+        deadline: opts.deadline ? original.deadline : null,
+        location_text: opts.location ? original.location_text : null,
+        location_lat: opts.location ? original.location_lat : null,
+        location_lng: opts.location ? original.location_lng : null,
         // Solo se reutilizan las portadas por defecto; la foto de otra persona no se copia.
         cover_image:
-          typeof original.cover_image === 'string' && original.cover_image.startsWith('preset:')
+          opts.cover && typeof original.cover_image === 'string' && original.cover_image.startsWith('preset:')
             ? original.cover_image
             : null,
         tags: original.tags ?? null,
@@ -360,17 +374,19 @@ export const socialApi = {
 
     if (error) throw error;
 
-    const subtasks = ((original).item_subtasks ?? []) as Array<{ title: string; position: number | null }>;
-    if (subtasks.length > 0) {
-      const { error: subErr } = await supabase.from('item_subtasks').insert(
-        subtasks.map((s, i) => ({
-          bucket_id: data.id,
-          title: s.title,
-          done: false,
-          position: s.position ?? i,
-        }))
-      );
-      if (subErr) throw subErr;
+    if (opts.subtasks) {
+      const subtasks = ((original).item_subtasks ?? []) as Array<{ title: string; position: number | null }>;
+      if (subtasks.length > 0) {
+        const { error: subErr } = await supabase.from('item_subtasks').insert(
+          subtasks.map((s, i) => ({
+            bucket_id: data.id,
+            title: s.title,
+            done: false,
+            position: s.position ?? i,
+          }))
+        );
+        if (subErr) throw subErr;
+      }
     }
 
     return data;

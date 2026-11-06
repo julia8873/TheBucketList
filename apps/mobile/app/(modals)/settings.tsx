@@ -25,6 +25,7 @@ import {
 import {
   Card, ConfirmDialog, OptionDialog, PillToggle, Row, SectionTitle, ToggleRow,
 } from '../../src/components/SettingsParts';
+import { CloneTaskSettingsModal } from '../../src/components/CloneTaskSettingsModal';
 import { useIsAdmin } from '../../src/hooks/useCurrentUserProfile';
 import { useAdminReports } from '../../src/hooks/useBlockReport';
 import { OfficialBadge } from '../../src/components/OfficialBadge';
@@ -46,6 +47,7 @@ export default function SettingsScreen() {
   const pendingReportsCount = adminReports.filter((r) => !r.resolved && r.status === 'pending').length;
 
   const [langOpen, setLangOpen] = useState(false);
+  const [cloneSettingsOpen, setCloneSettingsOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -326,6 +328,11 @@ export default function SettingsScreen() {
             subtitle={t('settings.vibration_desc')}
             value={hapticsEnabled}
             onChange={setHapticsEnabled}
+          />
+          <Row
+            title={t('settings.cloning_options', { defaultValue: 'Clonación de tareas' })}
+            subtitle={t('settings.cloning_options_desc', { defaultValue: 'Personaliza qué elementos se copian a tu lista' })}
+            onPress={() => setCloneSettingsOpen(true)}
             last
           />
         </Card>
@@ -469,6 +476,11 @@ export default function SettingsScreen() {
         loading={deleteAccount.isPending}
         onConfirm={() => deleteAccount.mutate()}
         onCancel={() => setDeleteOpen(false)}
+      />
+
+      <CloneTaskSettingsModal
+        visible={cloneSettingsOpen}
+        onClose={() => setCloneSettingsOpen(false)}
       />
     </SafeAreaView>
   );

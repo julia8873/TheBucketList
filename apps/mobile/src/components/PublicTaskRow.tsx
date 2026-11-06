@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { differenceInCalendarDays } from 'date-fns';
@@ -8,6 +8,8 @@ import { BucketCover } from './BucketCover';
 import { resolveTaskImage } from '../utils/taskImage';
 import { useAuthStore } from '../stores/auth.store';
 import { useCopiedBucketIds, useCopyBucket } from '../hooks/useSocial';
+import { CloneTaskDialog } from './CloneTaskDialog';
+import { useCloneTaskPreferencesStore, type CloneTaskFields } from '../stores/cloneTaskPreferences.store';
 import { useTranslation, resolveCounterLabel } from '@bucketlist/shared';
 import type { TaskViewMode } from './ViewModeSelector';
 
@@ -68,18 +70,42 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, isFavorite = false
   const { user } = useAuthStore();
   const copyBucket = useCopyBucket();
   const { data: copiedIds } = useCopiedBucketIds(user?.id);
+  const { askEveryTime, fields: cloneFields, savePreferences } = useCloneTaskPreferencesStore();
+  const [showCloneDialog, setShowCloneDialog] = useState(false);
 
   const completed = bucket.status === 'completed';
   const hasFutureDeadline = !!bucket.deadline && differenceInCalendarDays(new Date(bucket.deadline), new Date()) >= 0;
   const alreadyCopied = !!copiedIds?.includes(bucket.id);
   const progress = completed ? null : buildProgress(bucket);
 
+  const performCopy = (options: CloneTaskFields) => {
+    if (!user) return;
+    copyBucket.mutate(
+      { bucketId: bucket.id, userId: user.id, options },
+      {
+        onSuccess: () => {
+          setShowCloneDialog(false);
+          toast.success(t('feed.copy_success', { defaultValue: '¡Tarea añadida a tu lista!' }));
+        },
+        onError: (error: any) => toast.error(error?.message ?? t('common.error')),
+      }
+    );
+  };
+
   const handleCopy = () => {
     if (!user || alreadyCopied || copyBucket.isPending) return;
-    copyBucket.mutate(
-      { bucketId: bucket.id, userId: user.id },
-      { onError: (error: any) => toast.error(error?.message ?? t('common.error')) }
-    );
+    if (askEveryTime) {
+      setShowCloneDialog(true);
+      return;
+    }
+    performCopy(cloneFields);
+  };
+
+  const handleConfirmClone = (options: CloneTaskFields, dontAskAgain: boolean) => {
+    if (dontAskAgain) {
+      savePreferences(false, options);
+    }
+    performCopy(options);
   };
 
   let chip: React.ReactNode = null;
@@ -103,21 +129,22 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, isFavorite = false
     const coverVal = resolveTaskImage(bucket);
     const isImageCover = !!coverVal && !coverVal.startsWith('preset:');
     return (
-      <Pressable
-        onPress={onPress}
-        style={({ pressed }) => [
-          styles.galleryCard,
-          {
-            backgroundColor: theme.colors.surface,
-            borderColor: theme.colors.border,
-            opacity: pressed ? 0.88 : 1,
-          },
-        ]}
-        accessibilityRole="button"
-        accessibilityLabel={bucket.title}
-      >
-        <BucketCover
-          value={coverVal}
+      <>
+        <Pressable
+          onPress={onPress}
+          style={({ pressed }) => [
+            styles.galleryCard,
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border,
+              opacity: pressed ? 0.88 : 1,
+            },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={bucket.title}
+        >
+          <BucketCover
+            value={coverVal}
             title={bucket.title}
             categorySlug={bucket.category?.slug}
             seed={bucket.id}
@@ -133,45 +160,56 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, isFavorite = false
               />
             )}
 
-          {isFavorite ? (
-            <View
-              style={[
-                styles.favoriteBadge,
-                {
-                  backgroundColor: theme.dark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.92)',
-                  borderColor: gold[400],
-                  borderWidth: 1,
-                },
-              ]}
-            >
-              <Star size={13} color={gold[500]} fill={gold[500]} />
+            {isFavorite ? (
+              <View
+                style={[
+                  styles.favoriteBadge,
+                  {
+                    backgroundColor: theme.dark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.92)',
+                    borderColor: gold[400],
+                    borderWidth: 1,
+                  },
+                ]}
+              >
+                <Star size={13} color={gold[500]} fill={gold[500]} />
+              </View>
+            ) : null}
+
+            {chip ? <View style={styles.galleryTopChip}>{chip}</View> : null}
+
+            <View style={styles.galleryBottom} pointerEvents="none">
+              <Text
+                style={[
+                  styles.galleryTitle,
+                  { color: overlay.title },
+                ]}
+                numberOfLines={2}
+              >
+                {bucket.title}
+              </Text>
+              <Text style={[styles.galleryMeta, { color: overlay.meta }]} numberOfLines={1}>
+                {buildMeta(bucket, t, locale)}
+              </Text>
             </View>
-          ) : null}
-
-          {chip ? <View style={styles.galleryTopChip}>{chip}</View> : null}
-
-          <View style={styles.galleryBottom} pointerEvents="none">
-            <Text
-              style={[
-                styles.galleryTitle,
-                { color: overlay.title },
-              ]}
-              numberOfLines={2}
-            >
-              {bucket.title}
-            </Text>
-            <Text style={[styles.galleryMeta, { color: overlay.meta }]} numberOfLines={1}>
-              {buildMeta(bucket, t, locale)}
-            </Text>
-          </View>
-        </BucketCover>
-      </Pressable>
+          </BucketCover>
+        </Pressable>
+        {showCloneDialog && (
+          <CloneTaskDialog
+            visible={showCloneDialog}
+            onClose={() => setShowCloneDialog(false)}
+            onConfirm={handleConfirmClone}
+            taskTitle={bucket.title}
+            isLoading={copyBucket.isPending}
+          />
+        )}
+      </>
     );
   }
 
   if (mode === 'compact') {
     return (
-      <Pressable
+      <>
+        <Pressable
         onPress={onPress}
         style={({ pressed }) => [
           styles.compactRow,
@@ -206,46 +244,67 @@ export function PublicTaskRow({ bucket, isOwnProfile = false, isFavorite = false
 
         {chip ? <View style={styles.chip}>{chip}</View> : null}
       </Pressable>
-    );
-  }
+      {showCloneDialog && (
+        <CloneTaskDialog
+          visible={showCloneDialog}
+          onClose={() => setShowCloneDialog(false)}
+          onConfirm={handleConfirmClone}
+          taskTitle={bucket.title}
+          isLoading={copyBucket.isPending}
+        />
+      )}
+    </>
+  );
+}
 
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.row,
-        {
-          backgroundColor: pressed ? pressedBg : theme.colors.surface,
-          borderColor: theme.colors.border,
-        },
-      ]}
-      accessibilityRole="button"
-      accessibilityLabel={bucket.title}
-    >
-      <BucketCover
-        value={resolveTaskImage(bucket, { preferThumb: true })}
-        title={bucket.title}
-        categorySlug={bucket.category?.slug}
-        seed={bucket.id}
-        iconSize={56}
-        style={styles.thumb}
-      />
+    <>
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.row,
+          {
+            backgroundColor: pressed ? pressedBg : theme.colors.surface,
+            borderColor: theme.colors.border,
+          },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={bucket.title}
+      >
+        <BucketCover
+          value={resolveTaskImage(bucket, { preferThumb: true })}
+          title={bucket.title}
+          categorySlug={bucket.category?.slug}
+          seed={bucket.id}
+          iconSize={56}
+          style={styles.thumb}
+        />
 
-      <View style={styles.content}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          {isFavorite ? <Star size={14} color={gold[400]} fill={gold[400]} /> : null}
-          <Text style={[styles.title, { color: theme.colors.foreground, flex: 1 }]} numberOfLines={2}>
-            {bucket.title}
+        <View style={styles.content}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            {isFavorite ? <Star size={14} color={gold[400]} fill={gold[400]} /> : null}
+            <Text style={[styles.title, { color: theme.colors.foreground, flex: 1 }]} numberOfLines={2}>
+              {bucket.title}
+            </Text>
+          </View>
+          <Text style={[styles.meta, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
+            {buildMeta(bucket, t, locale)}
           </Text>
+          {progress !== null ? <ProgressBar value={progress} colorOverride={theme.colors.primary} style={styles.progress} /> : null}
         </View>
-        <Text style={[styles.meta, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
-          {buildMeta(bucket, t, locale)}
-        </Text>
-        {progress !== null ? <ProgressBar value={progress} colorOverride={theme.colors.primary} style={styles.progress} /> : null}
-      </View>
 
-      {chip ? <View style={styles.chip}>{chip}</View> : null}
-    </Pressable>
+        {chip ? <View style={styles.chip}>{chip}</View> : null}
+      </Pressable>
+      {showCloneDialog && (
+        <CloneTaskDialog
+          visible={showCloneDialog}
+          onClose={() => setShowCloneDialog(false)}
+          onConfirm={handleConfirmClone}
+          taskTitle={bucket.title}
+          isLoading={copyBucket.isPending}
+        />
+      )}
+    </>
   );
 }
 

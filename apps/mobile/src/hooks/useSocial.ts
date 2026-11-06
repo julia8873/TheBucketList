@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-query';
 import { socialApi, LIKE_EMOJI } from '../services/api/social';
 import type { FollowStatus, PersonResult, ProfileStats } from '../services/api/friends';
+import type { CloneTaskFields } from '../stores/cloneTaskPreferences.store';
 import { FEED_QUERY_KEY, EXPLORE_QUERY_KEY } from './useFeed';
 import { FRIENDS_QUERY_KEY } from './useFriends';
 import { supabase } from '../services/supabase';
@@ -386,8 +387,8 @@ export function useCopyBucket() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ bucketId, userId }: { bucketId: string; userId: string }) =>
-      socialApi.copyBucket(bucketId, userId),
+    mutationFn: ({ bucketId, userId, options }: { bucketId: string; userId: string; options?: Partial<CloneTaskFields> }) =>
+      socialApi.copyBucket(bucketId, userId, options),
     onSuccess: (_data, variables) => {
       queryClient.setQueryData([...COPIED_QUERY_KEY, variables.userId], (old: string[] | undefined) =>
         old && !old.includes(variables.bucketId) ? [...old, variables.bucketId] : old ?? [variables.bucketId]

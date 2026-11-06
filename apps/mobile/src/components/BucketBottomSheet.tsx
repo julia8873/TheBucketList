@@ -6,6 +6,8 @@ import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { CoverColorPicker } from '@/components/CoverColorPicker';
 import { customGradientValue, presetValue, solidCoverValue } from '@/constants/coverPresets';
 import { X, Camera, FolderPlus, ListPlus, Trash2, Circle, MoreHorizontal, CheckCircle2, Check, Eye, Users, Lock, FolderOpen, Image as ImageIcon, Tag, LogOut, Flag, Star, Crop, Link2, Bookmark } from 'lucide-react-native';
+import { CloneTaskDialog } from './CloneTaskDialog';
+import { useCloneTaskPreferencesStore, type CloneTaskFields } from '../stores/cloneTaskPreferences.store';
 import { styles } from '@/features/bucket-detail/styles/bucket-detail.styles';
 
 type BucketBottomSheetProps = {
@@ -58,6 +60,27 @@ export function BucketBottomSheet({
 }: BucketBottomSheetProps) {
   const { t } = useTranslation();
   const [albumSearchQuery, setAlbumSearchQuery] = useState('');
+  const [showCloneDialog, setShowCloneDialog] = useState(false);
+  const { askEveryTime, fields: cloneFields, savePreferences } = useCloneTaskPreferencesStore();
+
+  const handleConfirmClone = (options: CloneTaskFields, dontAskAgain: boolean) => {
+    if (!user) return;
+    if (dontAskAgain) {
+      savePreferences(false, options);
+    }
+    copyBucket.mutate(
+      { bucketId: id, userId: user.id, options },
+      {
+        onSuccess: () => {
+          setShowCloneDialog(false);
+          toast.success(t('bucket.copy_success', { defaultValue: '¡Tarea añadida a tu lista!' }));
+        },
+        onError: (error: any) => {
+          toast.error(error?.message || t('bucket.copy_error', { defaultValue: 'No se pudo clonar la tarea' }));
+        },
+      }
+    );
+  };
   const visibilityLabel = (v: string) => {
     switch (v) {
       case 'public': return t('bucket.visibility_public');
@@ -77,7 +100,8 @@ export function BucketBottomSheet({
   };
 
   return (
-    <Modal
+    <>
+      <Modal
       visible={sheetVisible}
       transparent
       animationType="none"
@@ -209,10 +233,19 @@ export function BucketBottomSheet({
                     <Pressable
                       style={styles.sheetOption}
                       onPress={() => {
-                        closeSheet(() => copyBucket.mutate({ bucketId: id, userId: user.id }, {
-                          onSuccess: () => toast.success(t('bucket.copy_success')),
-                          onError: (error: any) => toast.error(error?.message || t('bucket.copy_error')),
-                        }));
+                        if (askEveryTime) {
+                          closeSheet(() => setShowCloneDialog(true));
+                          return;
+                        }
+                        closeSheet(() =>
+                          copyBucket.mutate(
+                            { bucketId: id, userId: user.id, options: cloneFields },
+                            {
+                              onSuccess: () => toast.success(t('bucket.copy_success')),
+                              onError: (error: any) => toast.error(error?.message || t('bucket.copy_error')),
+                            }
+                          )
+                        );
                       }}
                     >
                       <View style={styles.sheetIcon}><ListPlus color={gold[400]} size={21} /></View>
@@ -504,5 +537,16 @@ export function BucketBottomSheet({
         </Animated.View>
       </View>
     </Modal>
+
+    {showCloneDialog && (
+      <CloneTaskDialog
+        visible={showCloneDialog}
+        onClose={() => setShowCloneDialog(false)}
+        onConfirm={handleConfirmClone}
+        taskTitle={bucket?.title}
+        isLoading={copyBucket.isPending}
+      />
+    )}
+  </>
   );
 }
