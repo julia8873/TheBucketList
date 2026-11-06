@@ -80,6 +80,7 @@ export function AlbumFeedCard({
   const [showComments, setShowComments] = useState(false);
   const [showLikes, setShowLikes] = useState(false);
   const participants = useParticipantsOf('album', album?.id);
+  const hasCollabs = !!participants && participants.length > 1;
   const { data: albumComments = [] } = useComments(album.id, 'album');
   const commentCount = propCommentCount !== undefined ? propCommentCount : albumComments.length;
 
@@ -167,25 +168,34 @@ export function AlbumFeedCard({
               pointerEvents="none"
             />
 
-            {/* Badges superiores: autor y badge de álbum */}
+            {/* Badges superiores: autor/colaboradores y badge de álbum */}
             <View style={styles.galleryHeaderRow} pointerEvents="box-none">
-              <Pressable
-                onPress={(e) => {
-                  e.stopPropagation();
-                  if (album.owner?.id) router.push(`/profile/${album.owner.id}` as any);
-                }}
-                style={styles.galleryHeader}
-                hitSlop={8}
-                accessibilityRole="button"
-                accessibilityLabel={album.owner?.username || ownerName}
-              >
-                <Avatar
-                  source={album.owner?.avatar_url ? { uri: album.owner.avatar_url } : undefined}
-                  fallback={ownerName.charAt(0).toUpperCase() || '?'}
+              {hasCollabs && participants ? (
+                <ParticipantsStack
+                  participants={participants}
+                  max={2}
                   size="xs"
-                  goldRing
+                  ringColor="rgba(0,0,0,0.55)"
                 />
-              </Pressable>
+              ) : (
+                <Pressable
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    if (album.owner?.id) router.push(`/profile/${album.owner.id}` as any);
+                  }}
+                  style={styles.galleryHeader}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={album.owner?.username || ownerName}
+                >
+                  <Avatar
+                    source={album.owner?.avatar_url ? { uri: album.owner.avatar_url } : undefined}
+                    fallback={ownerName.charAt(0).toUpperCase() || '?'}
+                    size="xs"
+                    goldRing
+                  />
+                </Pressable>
+              )}
 
               <View style={styles.galleryAlbumBadge}>
                 <Images size={10} color="rgba(255,255,255,0.95)" />
@@ -272,14 +282,6 @@ export function AlbumFeedCard({
                     </View>
                   )}
                 </View>
-
-                {participants && participants.length > 0 && (
-                  <ParticipantsStack
-                    participants={participants}
-                    max={2}
-                    ringColor={theme.colors.surface}
-                  />
-                )}
               </View>
             </View>
           </View>
