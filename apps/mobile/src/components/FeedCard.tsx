@@ -9,7 +9,7 @@ import { Avatar, fontFamily, gold, useTheme, toast } from '@bucketlist/ui';
 import { BucketCover } from './BucketCover';
 import { TaskCommentsModal } from './TaskCommentsModal';
 import { ItemLikesModal } from './ItemLikesModal';
-import { ParticipantsStack, useParticipantsOf } from './ItemParticipants';
+import { ParticipantsStack, useParticipantsOf, ParticipantsSheet } from './ItemParticipants';
 import { resolveTaskImage } from '../utils/taskImage';
 import { useAuthStore } from '../stores/auth.store';
 import { useCopiedBucketIds, useCopyBucket, useToggleLike, useBatchBucketSaveCounts, useSavedBucketIds, useToggleSaveBucket } from '../hooks/useSocial';
@@ -37,7 +37,7 @@ interface FeedCardProps {
  */
 function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: propSaveCount }: FeedCardProps) {
   const { theme } = useTheme();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const overlay = useCoverOverlay();
   const router = useRouter();
   const { user } = useAuthStore();
@@ -58,7 +58,46 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
   const toggleSaveBucket = useToggleSaveBucket();
   const participants = useParticipantsOf('task', bucket?.id);
 
+  const [showParticipantsModal, setShowParticipantsModal] = useState(false);
+
   if (!actor || !bucket) return null;
+
+  // Si el usuario actual es el creador o colabora en la tarea, no debe salir en momentos
+  const isCollaborating =
+    isOwn ||
+    (!!user && !!participants && participants.some((p) => p.id === user.id));
+  if (isCollaborating) return null;
+
+  const hasCollabs = !!participants && participants.length > 1;
+
+  // Textos descriptivos cuando la tarea es colaborativa
+  const { collabTitle, collabSubtitle } = React.useMemo(() => {
+    if (!hasCollabs || !participants || participants.length < 2) return { collabTitle: '', collabSubtitle: '' };
+    const p1 = participants[0];
+    const p2 = participants[1];
+    if (!p1 || !p2) return { collabTitle: '', collabSubtitle: '' };
+
+    const name1 = displayNameOf(p1);
+    const name2 = displayNameOf(p2);
+    const isEn = i18n.language === 'en';
+    const andWord = isEn ? 'and' : 'y';
+
+    if (participants.length === 2) {
+      return {
+        collabTitle: `${name1} ${andWord} ${name2}`,
+        collabSubtitle: `@${p1.username} · @${p2.username}`,
+      };
+    }
+
+    const remaining = participants.length - 2;
+    const moreWord = isEn
+      ? (remaining === 1 ? '1 more' : `${remaining} more`)
+      : (remaining === 1 ? '1 más' : `${remaining} más`);
+    return {
+      collabTitle: `${name1}, ${name2} ${andWord} ${moreWord}`,
+      collabSubtitle: `@${p1.username}, @${p2.username} +${remaining}`,
+    };
+  }, [hasCollabs, participants, i18n.language]);
 
   const isBucketSaved = !isOwn && !!user && !!savedBucketIds?.includes(bucket.id);
 
@@ -148,20 +187,30 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
               />
             )}
 
-            {/* Badges superiores: Autor a la izquierda, completado a la derecha */}
+            {/* Badges superiores: Autor o colaboradores a la izquierda, completado a la derecha */}
             <View style={styles.galleryTopBadges} pointerEvents="box-none">
-              <Pressable
-                onPress={(e) => {
-                  e.stopPropagation();
-                  openProfile();
-                }}
-                style={styles.galleryUserBadge}
-                hitSlop={8}
-                accessibilityRole="button"
-                accessibilityLabel={actor.username}
-              >
-                <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="xs" goldRing />
-              </Pressable>
+              {hasCollabs && participants ? (
+                <View style={styles.galleryUserBadge}>
+                  <ParticipantsStack
+                    participants={participants}
+                    max={2}
+                    ringColor="rgba(0,0,0,0.5)"
+                  />
+                </View>
+              ) : (
+                <Pressable
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    openProfile();
+                  }}
+                  style={styles.galleryUserBadge}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={actor.username}
+                >
+                  <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="xs" goldRing />
+                </Pressable>
+              )}
 
               {bucket.status === 'completed' && (
                 <View style={styles.galleryCompletedBadge}>
@@ -279,6 +328,14 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
             title={bucket.title}
           />
         )}
+
+        {showParticipantsModal && participants && (
+          <ParticipantsSheet
+            visible={showParticipantsModal}
+            participants={participants}
+            onClose={() => setShowParticipantsModal(false)}
+          />
+        )}
       </Animated.View>
     );
   }
@@ -310,10 +367,23 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
           </View>
 
           <View style={styles.compactInfo}>
-            <Pressable onPress={openProfile} style={styles.compactUserHeader} hitSlop={4}>
-              <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="xs" />
+            <Pressable
+              onPress={hasCollabs ? () => setShowParticipantsModal(true) : openProfile}
+              style={styles.compactUserHeader}
+              hitSlop={4}
+            >
+              {hasCollabs && participants ? (
+                <ParticipantsStack
+                  participants={participants}
+                  max={2}
+                  ringColor={theme.colors.surface}
+                  style={{ marginRight: 4 }}
+                />
+              ) : (
+                <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="xs" />
+              )}
               <Text style={[styles.compactUsername, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
-                @{actor.username}
+                {hasCollabs ? collabTitle : `@${actor.username}`}
               </Text>
               <Text style={[styles.compactDot, { color: theme.colors.foregroundSubtle }]}>·</Text>
               <Text style={[styles.compactTime, { color: theme.colors.foregroundSubtle }]}>
@@ -345,6 +415,14 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
             title={bucket.title}
           />
         )}
+
+        {showParticipantsModal && participants && (
+          <ParticipantsSheet
+            visible={showParticipantsModal}
+            participants={participants}
+            onClose={() => setShowParticipantsModal(false)}
+          />
+        )}
       </Animated.View>
     );
   }
@@ -355,21 +433,75 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
       style={styles.container}
     >
       {/* Cabecera */}
-      <Pressable onPress={openProfile} style={styles.header} accessibilityRole="button">
-        <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="lg" goldRing />
+      <View style={styles.header}>
+        {hasCollabs && participants ? (
+          <Pressable
+            onPress={() => setShowParticipantsModal(true)}
+            style={styles.collabAvatarCluster}
+            accessibilityRole="button"
+            accessibilityLabel={t('participants.title', { defaultValue: 'Colaboradores' })}
+          >
+            <View style={{ width: 46, height: 44, position: 'relative' }}>
+              <View style={{ position: 'absolute', left: 0, top: 0 }}>
+                <Avatar uri={participants[0]?.avatar_url} initials={initialsOf(participants[0] || {})} size="md" goldRing />
+              </View>
+              <View
+                style={[
+                  styles.collabSecondAvatar,
+                  { borderColor: theme.colors.background },
+                ]}
+              >
+                <Avatar uri={participants[1]?.avatar_url} initials={initialsOf(participants[1] || {})} size="xs" />
+              </View>
+            </View>
+          </Pressable>
+        ) : (
+          <Pressable onPress={openProfile} accessibilityRole="button">
+            <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="lg" goldRing />
+          </Pressable>
+        )}
+
         <View style={styles.headerText}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-            <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={1}>
-              {displayNameOf(actor)}
-            </Text>
-            {isUserAdmin(actor) && <OfficialBadge size="xs" />}
-          </View>
-          <Text style={[styles.handle, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
-            @{actor.username}
-          </Text>
+          {hasCollabs ? (
+            <Pressable
+              onPress={() => setShowParticipantsModal(true)}
+              accessibilityRole="button"
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={1}>
+                  {collabTitle}
+                </Text>
+              </View>
+              <Text style={[styles.handle, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
+                {collabSubtitle}
+              </Text>
+            </Pressable>
+          ) : (
+            <Pressable onPress={openProfile} accessibilityRole="button">
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={1}>
+                  {displayNameOf(actor)}
+                </Text>
+                {isUserAdmin(actor) && <OfficialBadge size="xs" />}
+              </View>
+              <Text style={[styles.handle, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
+                @{actor.username}
+              </Text>
+            </Pressable>
+          )}
         </View>
-        <Text style={[styles.time, { color: theme.colors.foregroundSubtle }]}>{timeAgo(event.created_at ?? bucket.completed_at ?? bucket.created_at)}</Text>
-      </Pressable>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {hasCollabs && participants && (
+            <ParticipantsStack
+              participants={participants}
+              max={2}
+              ringColor={theme.colors.background}
+            />
+          )}
+          <Text style={[styles.time, { color: theme.colors.foregroundSubtle }]}>{timeAgo(event.created_at ?? bucket.completed_at ?? bucket.created_at)}</Text>
+        </View>
+      </View>
 
       {/* Portada */}
       <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={bucket.title}>
@@ -496,6 +628,14 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
           title={bucket.title}
         />
       )}
+
+      {showParticipantsModal && participants && (
+        <ParticipantsSheet
+          visible={showParticipantsModal}
+          participants={participants}
+          onClose={() => setShowParticipantsModal(false)}
+        />
+      )}
     </Animated.View>
   );
 }
@@ -513,6 +653,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     marginBottom: 12,
+  },
+  collabAvatarCluster: {
+    width: 46,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  collabSecondAvatar: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    borderRadius: 999,
+    borderWidth: 2,
   },
   headerText: { flex: 1 },
   name: { fontFamily: fontFamily.semibold, fontSize: 16, color: '#FFFFFF' },

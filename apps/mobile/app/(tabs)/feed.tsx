@@ -294,6 +294,21 @@ export default function FeedScreen() {
     albumsEnabled: true,
   });
 
+  // Tareas de amigos visibles: excluye tareas en las que el usuario actual colabora o participa
+  const visibleFriendsItems = useMemo(() => {
+    if (!user?.id) return friendsItems;
+    return friendsItems.filter((item) => {
+      const bId = item.bucket_id || item.id || item.bucket?.id;
+      if (!bId) return true;
+      const participants = participantsValue.task[bId];
+      // Si el usuario actual está colaborando en esta tarea, no debe salir en momentos
+      if (participants?.some((p) => p.id === user.id)) {
+        return false;
+      }
+      return true;
+    });
+  }, [friendsItems, user?.id, participantsValue.task]);
+
   const openFriends = (tab?: 'requests') =>
     router.push((tab ? `/friends?tab=${tab}` : '/friends') as any);
 
@@ -332,7 +347,7 @@ export default function FeedScreen() {
             headerElement={headerElement}
             isLoading={isFriendsLoading}
             isError={isFriendsError}
-            friendsItems={friendsItems}
+            friendsItems={visibleFriendsItems}
             friendsAlbums={friendsAlbums}
             isAlbumsLoading={isFriendsAlbumsLoading}
             contentFilter={contentFilter}

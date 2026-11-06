@@ -98,7 +98,15 @@ export function FriendsFeedTab({
   // Build combined & filtered list
   const combinedItems = React.useMemo(() => {
     const tasks = contentFilter !== 'albumes'
-      ? friendsItems.map((item) => ({ ...item, _type: 'task' as const }))
+      ? friendsItems
+          .filter((item) => {
+            if (!item) return false;
+            if (currentUserId && (item.actor_id === currentUserId || item.bucket?.user_id === currentUserId)) {
+              return false;
+            }
+            return true;
+          })
+          .map((item) => ({ ...item, _type: 'task' as const }))
       : [];
     const albums = contentFilter !== 'tareas'
       ? friendsAlbums.map((a) => ({ ...a, _type: 'album' as const }))

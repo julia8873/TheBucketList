@@ -8,19 +8,48 @@ const MAX_SERVER_EXCLUDE_IDS = 150;
 
 /**
  * IDs de tareas (de otras personas) en las que el usuario ya es colaborador
- * (aceptado o con invitación pendiente). Esas tareas ya aparecen en "Mi lista",
- * así que no deben repetirse en "Momentos de amigos" ni en "Explorar".
+ * (aceptado o con invitación pendiente, ya sea directo o vía álbum compartido).
+ * Esas tareas ya pertenecen a "Mi lista", por lo que no deben salir en
+ * "Momentos de amigos" ni en "Explorar".
  */
 const getCollaboratingBucketIds = async (userId?: string): Promise<string[]> => {
   if (!userId) return [];
   try {
-    const { data, error } = await supabase
-      .from('bucket_collaborators')
-      .select('bucket_id')
-      .eq('user_id', userId)
-      .in('status', ['accepted', 'pending']);
-    if (error) throw error;
-    return Array.from(new Set((data ?? []).map((c: any) => c.bucket_id as string)));
+    const [directCollabRes, memberAlbumsRes, ownedAlbumsRes] = await Promise.all([
+      supabase
+        .from('bucket_collaborators')
+        .select('bucket_id')
+        .eq('user_id', userId)
+        .in('status', ['accepted', 'pending']),
+      supabase
+        .from('album_members')
+        .select('album_id')
+        .eq('user_id', userId)
+        .eq('status', 'accepted'),
+      supabase
+        .from('albums')
+        .select('id')
+        .eq('owner_id', userId),
+    ]);
+
+    const directIds = (directCollabRes.data ?? []).map((c: any) => c.bucket_id as string);
+    const albumIds = Array.from(
+      new Set([
+        ...(memberAlbumsRes.data ?? []).map((m: any) => m.album_id as string),
+        ...(ownedAlbumsRes.data ?? []).map((a: any) => a.id as string),
+      ])
+    );
+
+    let albumTaskIds: string[] = [];
+    if (albumIds.length > 0) {
+      const { data: albumItems } = await supabase
+        .from('album_items')
+        .select('bucket_id')
+        .in('album_id', albumIds);
+      albumTaskIds = (albumItems ?? []).map((ai: any) => ai.bucket_id as string);
+    }
+
+    return Array.from(new Set([...directIds, ...albumTaskIds]));
   } catch (err) {
     console.warn('Error fetching collaborating bucket ids:', err);
     return [];
@@ -59,6 +88,26 @@ export const feedApi = {
       };
     }
 
+    // Tareas donde amigos son colaboradores aceptados
+    let friendCollabBucketIds: string[] = [];
+    try {
+      const { data: collabData } = await supabase
+        .from('bucket_collaborators')
+        .select('bucket_id')
+        .in('user_id', targetIds)
+        .eq('status', 'accepted')
+        .limit(100);
+      friendCollabBucketIds = Array.from(
+        new Set(
+          (collabData ?? [])
+            .map((c: any) => c.bucket_id as string)
+            .filter((id: string) => !collabSet.has(id))
+        )
+      );
+    } catch (err) {
+      console.warn('Error fetching friends collaborative bucket ids:', err);
+    }
+
     // Obtenemos todas las tareas públicas y visibles para seguidores de nuestros amigos
     let feedQuery = supabase
       .from('buckets')
@@ -72,8 +121,13 @@ export const feedApi = {
         comments:comments(count)
       `
       )
-      .in('user_id', targetIds)
       .in('visibility', ['public', 'followers']);
+
+    if (friendCollabBucketIds.length > 0) {
+      feedQuery = feedQuery.or(`user_id.in.(${targetIds.join(',')}),id.in.(${friendCollabBucketIds.join(',')})`);
+    } else {
+      feedQuery = feedQuery.in('user_id', targetIds);
+    }
 
     // Excluir tareas en las que ya soy colaborador
     if (collabBucketIds.length > 0 && collabBucketIds.length <= MAX_SERVER_EXCLUDE_IDS) {
@@ -86,13 +140,19 @@ export const feedApi = {
 
     if (error) throw error;
 
-    // Mapear al formato que espera FeedCard y la lista de amigos
-    const items = (data ?? [])
-      .filter(
-        (b: any) =>
-          b.user_id !== userId && targetIds.includes(b.user_id) && !collabSet.has(b.id)
-      )
-      .map((b: any) => ({
+    // Mapear al formato que espera FeedCard y unificar las tareas que tengan colaboradores
+    // para que la misma tarea solo se muestre una vez y nunca si el usuario actual colabora en ella.
+    const seenBucketIds = new Set<string>();
+    const items: any[] = [];
+    for (const b of (data ?? [])) {
+      if (!b || b.user_id === userId || collabSet.has(b.id) || blockedSet.has(b.user_id)) {
+        continue;
+      }
+      if (seenBucketIds.has(b.id)) {
+        continue;
+      }
+      seenBucketIds.add(b.id);
+      items.push({
         id: b.id,
         actor_id: b.user_id,
         bucket_id: b.id,
@@ -100,7 +160,8 @@ export const feedApi = {
         bucket: b,
         type: b.status === 'completed' ? 'completed' : 'new_bucket',
         created_at: b.completed_at || b.created_at,
-      }));
+      });
+    }
 
     return {
       items,
