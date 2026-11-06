@@ -35,7 +35,7 @@ export function PersonRow({ person, subtitle, right, onPress }: PersonRowProps) 
     >
       <Avatar uri={person.avatar_url} initials={initialsOf(person)} size="lg" goldRing />
       <View style={styles.text}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+        <View style={styles.nameRow}>
           <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={1}>
             {displayNameOf(person)}
           </Text>
@@ -58,9 +58,10 @@ const styles = StyleSheet.create({
     gap: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  text: { flex: 1, gap: 2 },
-  name: { fontFamily: fontFamily.semibold, fontSize: 16 },
+  text: { flex: 1, gap: 2, minWidth: 0 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 5, minWidth: 0 },
+  name: { fontFamily: fontFamily.semibold, fontSize: 16, flexShrink: 1 },
   subtitle: { fontFamily: fontFamily.regular, fontSize: 13, lineHeight: 18 },
-  right: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  right: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 0 },
 });
 

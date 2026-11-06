@@ -1,6 +1,6 @@
 import { Alert } from '@bucketlist/ui';
 import React, { useEffect, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, TextInput, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Search, X } from 'lucide-react-native';
@@ -157,10 +157,22 @@ export default function FriendsScreen() {
         </Pressable>
 
         {isOtherUser ? (
-          <PageTitle
-            gold={kind === 'followers' ? t('profile.stat_followers') : t('social.following')}
-            rest={targetProfileQuery.data?.username ? ` de @${targetProfileQuery.data.username}` : ''}
-          />
+          <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
+            <PageTitle
+              gold={kind === 'followers' ? t('profile.stat_followers') : t('social.following')}
+              numberOfLines={1}
+            />
+            {targetProfileQuery.data?.username ? (
+              <Text
+                style={[styles.headerSubtitle, { color: theme.colors.foregroundMuted }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                de @{targetProfileQuery.data.username}
+                {targetProfileQuery.data.display_name ? ` (${targetProfileQuery.data.display_name})` : ''}
+              </Text>
+            ) : null}
+          </View>
         ) : tab === 'accounts' ? (
           <View
             style={[
@@ -191,7 +203,9 @@ export default function FriendsScreen() {
             ) : null}
           </View>
         ) : (
-          <PageTitle gold={t('friends.title_gold')} rest={` ${t('friends.title_rest')}`} />
+          <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
+            <PageTitle gold={t('friends.title_gold')} rest={` ${t('friends.title_rest')}`} numberOfLines={1} />
+          </View>
         )}
       </View>
 

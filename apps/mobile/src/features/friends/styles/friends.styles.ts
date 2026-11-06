@@ -42,6 +42,11 @@ export const styles = StyleSheet.create({
   },
   searchInput: { flex: 1, fontFamily: fontFamily.regular, fontSize: 16, paddingVertical: 0 },
   title: { fontFamily: fontFamily.serifBold, fontSize: 32, letterSpacing: -0.3 },
+  headerSubtitle: {
+    fontFamily: fontFamily.regular,
+    fontSize: 13,
+    marginTop: 2,
+  },
   segment: { paddingHorizontal: 12, paddingBottom: 6 },
   content: { paddingHorizontal: 12, paddingTop: 16, paddingBottom: 48, flexGrow: 1 },
   sectionLabel: { marginBottom: 4 },
