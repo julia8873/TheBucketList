@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { Typography, useTheme } from '@bucketlist/ui';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronDown } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react-native';
 import { format, isSameMonth, isSameDay } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { getDateFnsLocale } from '@/utils/dateLocale';
@@ -76,17 +76,6 @@ export function CalendarMonthGrid({
           </Typography>
         </View>
         <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center' }}>
-          {onPrevYear && (
-            <Pressable
-              onPress={onPrevYear}
-              style={[styles.navButton, { width: 30, backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
-              hitSlop={6}
-              accessibilityRole="button"
-              accessibilityLabel={t('calendar.prev_year', { defaultValue: 'Año anterior' })}
-            >
-              <ChevronsLeft color={theme.colors.primary} size={15} />
-            </Pressable>
-          )}
           <Pressable
             onPress={onPrevMonth}
             style={[styles.navButton, { width: 30, backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
@@ -116,17 +105,6 @@ export function CalendarMonthGrid({
           >
             <ChevronRight color={theme.colors.primary} size={16} />
           </Pressable>
-          {onNextYear && (
-            <Pressable
-              onPress={onNextYear}
-              style={[styles.navButton, { width: 30, backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
-              hitSlop={6}
-              accessibilityRole="button"
-              accessibilityLabel={t('calendar.next_year', { defaultValue: 'Año siguiente' })}
-            >
-              <ChevronsRight color={theme.colors.primary} size={15} />
-            </Pressable>
-          )}
         </View>
       </View>
 
