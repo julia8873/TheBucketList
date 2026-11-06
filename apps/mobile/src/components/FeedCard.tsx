@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Check, CheckCircle2, Heart, MessageCircle, Bookmark } from 'lucide-react-native';
-import { Avatar, fontFamily, gold, useTheme, toast } from '@bucketlist/ui';
+import { Avatar, fontFamily, gold, useTheme, toast, radii } from '@bucketlist/ui';
 import { BucketCover } from './BucketCover';
 import { TaskCommentsModal } from './TaskCommentsModal';
 import { ItemLikesModal } from './ItemLikesModal';
@@ -461,78 +461,28 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
   return (
     <Animated.View
       entering={index < 6 ? FadeInUp.delay(index * 60).duration(260) : undefined}
-      style={styles.container}
+      style={[
+        styles.card,
+        { borderColor: theme.dark ? '#2A2A2A' : '#E0D9CE' },
+      ]}
     >
-      {/* Cabecera */}
-      <View style={styles.header}>
-        {hasCollabs && participants ? (
-          <ParticipantsStack
-            participants={participants}
-            max={3}
-            size="sm"
-            ringColor={theme.colors.background}
-          />
-        ) : (
-          <Pressable onPress={openProfile} accessibilityRole="button">
-            <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="lg" goldRing />
-          </Pressable>
-        )}
-
-        <View style={styles.headerText}>
-          {hasCollabs ? (
-            <Pressable
-              onPress={() => setShowParticipantsModal(true)}
-              accessibilityRole="button"
-              style={styles.headerTitlePressable}
-            >
-              <View style={styles.headerNameRow}>
-                <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={1} ellipsizeMode="tail">
-                  {collabTitle}
-                </Text>
-              </View>
-              <Text style={[styles.handle, { color: theme.colors.foregroundMuted }]} numberOfLines={1} ellipsizeMode="tail">
-                {collabSubtitle}
-              </Text>
-            </Pressable>
-          ) : (
-            <Pressable
-              onPress={openProfile}
-              accessibilityRole="button"
-              style={styles.headerTitlePressable}
-            >
-              <View style={styles.headerNameRow}>
-                <Text style={[styles.name, { color: theme.colors.foreground }]} numberOfLines={1} ellipsizeMode="tail">
-                  {displayNameOf(actor)}
-                </Text>
-                {isUserAdmin(actor) && <OfficialBadge size="xs" />}
-              </View>
-              <Text style={[styles.handle, { color: theme.colors.foregroundMuted }]} numberOfLines={1} ellipsizeMode="tail">
-                @{actor.username}
-              </Text>
-            </Pressable>
-          )}
-        </View>
-
-        <Text style={[styles.time, { color: theme.colors.foregroundSubtle }]}>
-          {timeAgo(event.created_at ?? bucket.completed_at ?? bucket.created_at)}
-        </Text>
-      </View>
-
       {/* Portada */}
-      <Pressable
-        onPress={onPress}
-        style={styles.coverPressable}
-        accessibilityRole="button"
-        accessibilityLabel={bucket.title}
-      >
-        <BucketCover
-          value={coverValue}
-          title={bucket.title}
-          categorySlug={bucket.category?.slug}
-          seed={bucket.id}
-          iconSize={170}
-          style={[styles.cover, { borderColor: theme.colors.border }]}
+      <View style={styles.coverWrapper}>
+        <Pressable
+          onPress={onPress}
+          style={({ pressed }) => [StyleSheet.absoluteFill, { opacity: pressed ? 0.92 : 1 }]}
+          accessibilityRole="button"
+          accessibilityLabel={bucket.title}
         >
+          <BucketCover
+            value={coverValue}
+            title={bucket.title}
+            categorySlug={bucket.category?.slug}
+            seed={bucket.id}
+            iconSize={150}
+            style={StyleSheet.absoluteFill}
+          />
+
           {!isImageCover && (
             <LinearGradient
               colors={overlay.softFade}
@@ -541,12 +491,14 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
               pointerEvents="none"
             />
           )}
-          <View style={styles.coverText} pointerEvents="none">
-            <Text style={styles.coverTitle} numberOfLines={2}>
+
+          {/* Cover bottom: title + description + location */}
+          <View style={styles.coverBottom} pointerEvents="none">
+            <Text style={styles.title} numberOfLines={2}>
               {bucket.title}
             </Text>
             {caption ? (
-              <Text style={styles.coverDescription} numberOfLines={2}>
+              <Text style={styles.coverDescription} numberOfLines={1}>
                 {caption}
               </Text>
             ) : null}
@@ -556,81 +508,200 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
               </Text>
             ) : null}
           </View>
-        </BucketCover>
-      </Pressable>
+        </Pressable>
 
-      {/* Acciones */}
-      <View style={styles.actions}>
-        <View style={styles.action}>
-          <Pressable
-            onPress={handleLike}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={liked ? t('feed.unlike', { defaultValue: 'Quitar me gusta' }) : t('feed.like', { defaultValue: 'Me gusta' })}
-            accessibilityState={{ selected: liked }}
-          >
-            <Heart size={24} color={liked ? HEART_COLOR : theme.colors.foreground} fill={liked ? HEART_COLOR : 'transparent'} strokeWidth={1.8} />
-          </Pressable>
-          <Pressable
-            onPress={() => setShowLikes(true)}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={t('feed.view_likes', { defaultValue: 'Ver me gusta' })}
-          >
-            <Text style={[styles.count, { color: theme.colors.foreground }]}>{likeCount}</Text>
-          </Pressable>
+        {/* Top Badges (columna a la izquierda con estado completado) */}
+        <View style={styles.topBadgesContainer} pointerEvents="box-none">
+          {bucket.status === 'completed' && (
+            <View style={styles.completedBadge}>
+              <Check size={11} color="#FFFFFF" strokeWidth={2.5} />
+              <Text style={styles.completedText}>
+                {t('common.completed', { defaultValue: 'Completada' })}
+              </Text>
+            </View>
+          )}
         </View>
 
-        <Pressable
-          onPress={() => setShowComments(true)}
-          style={styles.action}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={t('feed.comments', { defaultValue: 'Comentarios' })}
-        >
-          <MessageCircle size={24} color={theme.colors.foreground} strokeWidth={1.8} />
-          <Text style={[styles.count, { color: theme.colors.foreground }]}>{commentCount}</Text>
-        </Pressable>
+        {/* Top Right Buttons: Like, Comment, Save */}
+        <View style={styles.topActions} pointerEvents="box-none">
+          <View style={styles.actionBtn}>
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation();
+                handleLike();
+              }}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={liked ? t('feed.unlike', { defaultValue: 'Quitar me gusta' }) : t('feed.like', { defaultValue: 'Me gusta' })}
+              accessibilityState={{ selected: liked }}
+            >
+              <Heart
+                size={16}
+                color={liked ? HEART_COLOR : 'rgba(255,255,255,0.85)'}
+                fill={liked ? HEART_COLOR : 'transparent'}
+                strokeWidth={2}
+              />
+            </Pressable>
+            {likeCount > 0 && (
+              <Pressable
+                onPress={(e) => {
+                  e.stopPropagation();
+                  setShowLikes(true);
+                }}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={t('feed.view_likes', { defaultValue: 'Ver me gusta' })}
+              >
+                <Text style={styles.actionCount}>{likeCount}</Text>
+              </Pressable>
+            )}
+          </View>
 
-        <Pressable
-          onPress={handleSaveBucket}
-          style={styles.action}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={isBucketSaved ? t('feed.unsave_task', { defaultValue: 'Quitar de guardados' }) : t('feed.save_task', { defaultValue: 'Guardar tarea' })}
-          disabled={isOwn}
-        >
-          <Bookmark
-            size={22}
-            color={isBucketSaved ? gold[400] : theme.colors.foreground}
-            fill={isBucketSaved ? gold[400] : 'transparent'}
-            strokeWidth={1.8}
-          />
-          <Text style={[styles.count, { color: isBucketSaved ? gold[400] : theme.colors.foreground }]}>{saveCount}</Text>
-        </Pressable>
-
-        <View style={styles.flex} />
-
-        {!isOwn && (
           <Pressable
-            onPress={handleCopy}
-            disabled={alreadyCopied || copyBucket.isPending}
+            onPress={(e) => {
+              e.stopPropagation();
+              setShowComments(true);
+            }}
+            hitSlop={10}
+            style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.7 }]}
+            accessibilityRole="button"
+            accessibilityLabel={t('feed.comments', { defaultValue: 'Comentarios' })}
+          >
+            <MessageCircle
+              size={16}
+              color="rgba(255,255,255,0.85)"
+              strokeWidth={2}
+            />
+            {commentCount > 0 && <Text style={styles.actionCount}>{commentCount}</Text>}
+          </Pressable>
+
+          <Pressable
+            onPress={(e) => {
+              e.stopPropagation();
+              handleSaveBucket();
+            }}
+            hitSlop={10}
             style={({ pressed }) => [
-              styles.copyButton,
-              { borderColor: theme.colors.primary },
-              alreadyCopied && [styles.copyButtonDone, { borderColor: theme.colors.border, backgroundColor: theme.colors.surfaceSunken }],
-              { opacity: pressed ? 0.75 : 1 },
+              styles.actionBtn,
+              isBucketSaved && styles.savedBtnActive,
+              pressed && { opacity: 0.7 },
             ]}
             accessibilityRole="button"
-            accessibilityLabel={alreadyCopied ? t('feed.already_in_list', { defaultValue: 'Ya está en tu lista' }) : t('feed.me_too', { defaultValue: 'Yo también' })}
+            accessibilityLabel={isBucketSaved ? t('feed.unsave_task', { defaultValue: 'Quitar de guardados' }) : t('feed.save_task', { defaultValue: 'Guardar tarea' })}
+            disabled={isOwn}
           >
-            {alreadyCopied ? <Check size={16} color={theme.colors.foregroundSubtle} style={styles.copyIcon} /> : null}
-            <Text style={[styles.copyText, { color: alreadyCopied ? theme.colors.foregroundSubtle : theme.colors.primary }]}>
-              {alreadyCopied ? t('feed.in_your_list', { defaultValue: 'En tu lista' }) : t('feed.me_too', { defaultValue: 'Yo también' })}
-            </Text>
+            <Bookmark
+              size={16}
+              color={isBucketSaved ? gold[400] : 'rgba(255,255,255,0.85)'}
+              fill={isBucketSaved ? gold[400] : 'transparent'}
+              strokeWidth={2}
+            />
+            <Text style={[styles.actionCount, isBucketSaved && { color: gold[400] }]}>{saveCount}</Text>
           </Pressable>
-        )}
+        </View>
       </View>
+
+      {/* Footer: info de usuario a la izquierda y 'Yo también' a la derecha */}
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.footer,
+          { backgroundColor: theme.dark ? '#111' : '#FAF8F4', opacity: pressed ? 0.95 : 1 },
+        ]}
+        accessibilityRole="button"
+      >
+        <View style={styles.ownerRow}>
+          {hasCollabs && participants ? (
+            <Pressable
+              hitSlop={8}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}
+              onPress={(e) => {
+                e.stopPropagation();
+                setShowParticipantsModal(true);
+              }}
+              accessibilityRole="button"
+            >
+              <ParticipantsStack
+                participants={participants}
+                max={2}
+                size="xs"
+                ringColor={theme.colors.surface}
+              />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={[styles.ownerName, { color: theme.colors.foreground }]} numberOfLines={1}>
+                  {collabTitle}
+                </Text>
+                <Text style={[styles.timeAgo, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
+                  {collabSubtitle} · {timeAgo(event.created_at ?? bucket.completed_at ?? bucket.created_at)}
+                </Text>
+              </View>
+            </Pressable>
+          ) : (
+            <Pressable
+              hitSlop={8}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}
+              onPress={(e) => {
+                e.stopPropagation();
+                openProfile();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Perfil de ${displayNameOf(actor)}`}
+            >
+              <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="xs" goldRing />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Text style={[styles.ownerName, { color: theme.colors.foreground }]} numberOfLines={1}>
+                    {displayNameOf(actor)}
+                  </Text>
+                  {isUserAdmin(actor) && <OfficialBadge size="xs" />}
+                </View>
+                <Text style={[styles.timeAgo, { color: theme.colors.foregroundMuted }]} numberOfLines={1}>
+                  @{actor.username} · {timeAgo(event.created_at ?? bucket.completed_at ?? bucket.created_at)}
+                </Text>
+              </View>
+            </Pressable>
+          )}
+
+          {!isOwn && (
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation();
+                handleCopy();
+              }}
+              disabled={alreadyCopied || copyBucket.isPending}
+              style={({ pressed }) => [
+                styles.copyButton,
+                { borderColor: theme.colors.primary },
+                alreadyCopied && [
+                  styles.copyButtonDone,
+                  { borderColor: theme.colors.border, backgroundColor: theme.colors.surfaceSunken },
+                ],
+                { opacity: pressed ? 0.75 : 1 },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={
+                alreadyCopied
+                  ? t('feed.already_in_list', { defaultValue: 'Ya está en tu lista' })
+                  : t('feed.me_too', { defaultValue: 'Yo también' })
+              }
+            >
+              {alreadyCopied ? (
+                <Check size={13} color={theme.colors.foregroundSubtle} style={{ marginRight: 4 }} />
+              ) : null}
+              <Text
+                style={[
+                  styles.copyText,
+                  { color: alreadyCopied ? theme.colors.foregroundSubtle : theme.colors.primary },
+                ]}
+              >
+                {alreadyCopied
+                  ? t('feed.in_your_list', { defaultValue: 'En tu lista' })
+                  : t('feed.me_too', { defaultValue: 'Yo también' })}
+              </Text>
+            </Pressable>
+          )}
+        </View>
+      </Pressable>
 
       {showComments && (
         <TaskCommentsModal
@@ -676,102 +747,46 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
 export const FeedCard = React.memo(FeedCardComponent);
 
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 12,
-    paddingTop: 12,
-    paddingBottom: 18,
-    width: '100%',
+  card: {
+    marginHorizontal: 12,
+    marginBottom: 14,
+    borderRadius: radii.xl,
     overflow: 'hidden',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
-    width: '100%',
-    maxWidth: '100%',
-  },
-  collabAvatarCluster: {
-    width: 46,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  collabSecondAvatar: {
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
-    borderRadius: 999,
-    borderWidth: 2,
-  },
-  headerText: {
-    flex: 1,
-    minWidth: 0,
-    overflow: 'hidden',
-    justifyContent: 'center',
-  },
-  headerTitlePressable: {
-    minWidth: 0,
-    flexShrink: 1,
-  },
-  headerNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    minWidth: 0,
-    flexShrink: 1,
-  },
-  name: {
-    fontFamily: fontFamily.semibold,
-    fontSize: 16,
-    color: '#FFFFFF',
-    flexShrink: 1,
-  },
-  handle: {
-    fontFamily: fontFamily.regular,
-    fontSize: 13,
-    color: '#9A9A9A',
-    marginTop: 1,
-    flexShrink: 1,
-  },
-  time: {
-    fontFamily: fontFamily.regular,
-    fontSize: 12,
-    color: '#9A9A9A',
-    flexShrink: 0,
-    alignSelf: 'flex-start',
-    marginTop: 4,
-    textAlign: 'right',
-    marginRight: 10,
-  },
-  coverPressable: {
-    width: '100%',
-  },
-  cover: {
-    width: '100%',
-    aspectRatio: 1.4,
-    borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#2A2A2A',
   },
-  coverText: {
+  coverWrapper: {
+    height: 195,
+    position: 'relative',
+  },
+  coverBottom: {
     position: 'absolute',
-    left: 20,
-    right: 20,
-    bottom: 18,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+    zIndex: 2,
   },
-  coverTitle: {
+  title: {
     fontFamily: fontFamily.serifBold,
-    fontSize: 27,
-    lineHeight: 32,
-    color: '#FFFFFF',
+    fontSize: 20,
+    color: '#FFF',
+    lineHeight: 25,
+    marginBottom: 2,
+    ...Platform.select({
+      web: { textShadow: '0 1px 3px rgba(0,0,0,0.4)' } as any,
+      default: {
+        textShadowColor: 'rgba(0,0,0,0.4)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 3,
+      },
+    }),
   },
   coverDescription: {
     fontFamily: fontFamily.regular,
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 17,
     color: 'rgba(255,255,255,0.85)',
-    marginTop: 4,
+    marginTop: 2,
     ...Platform.select({
       web: { textShadow: '0 1px 3px rgba(0,0,0,0.85)' } as any,
       default: {
@@ -783,37 +798,98 @@ const styles = StyleSheet.create({
   },
   coverLocation: {
     fontFamily: fontFamily.regular,
-    fontSize: 14,
+    fontSize: 12,
     color: 'rgba(255,255,255,0.78)',
-    marginTop: 3,
+    marginTop: 2,
   },
-  actions: {
+  topActions: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 22,
-    marginTop: 14,
+    gap: 8,
+    zIndex: 4,
   },
-  action: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  count: { fontFamily: fontFamily.medium, fontSize: 15, color: '#F2EFE8' },
-  flex: { flex: 1 },
+  actionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: 9,
+    paddingVertical: 7,
+    borderRadius: 20,
+    justifyContent: 'center',
+  },
+  savedBtnActive: {
+    backgroundColor: 'rgba(0,0,0,0.75)',
+  },
+  actionCount: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 12,
+    color: '#FFF',
+  },
+  topBadgesContainer: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 6,
+    zIndex: 2,
+  },
+  completedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(52, 199, 89, 0.9)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  completedText: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 11,
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  footer: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  ownerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  ownerName: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 13,
+  },
+  timeAgo: {
+    fontFamily: fontFamily.regular,
+    fontSize: 11,
+    marginTop: 1,
+  },
   copyButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 40,
-    paddingHorizontal: 20,
-    borderRadius: 20,
+    height: 32,
+    paddingHorizontal: 12,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: gold[400],
   },
-  copyButtonDone: { borderColor: '#2A2A2A', backgroundColor: '#161616' },
-  copyIcon: { marginRight: 6 },
-  copyText: { fontFamily: fontFamily.semibold, fontSize: 14, color: gold[400] },
-  caption: {
-    fontFamily: fontFamily.regular,
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#CFCFCF',
-    marginTop: 12,
+  copyButtonDone: {
+    borderColor: '#2A2A2A',
+    backgroundColor: '#161616',
+  },
+  copyText: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 12,
+    color: gold[400],
   },
   // Galería
   galleryCardWrapper: {

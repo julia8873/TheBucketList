@@ -1,82 +1,62 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Skeleton, useTheme } from '@bucketlist/ui';
+import { Skeleton, useTheme, radii } from '@bucketlist/ui';
 
 export function FeedCardSkeleton() {
   const { theme } = useTheme();
   return (
-    <View style={styles.container}>
-      {/* Header: Avatar, Name, Handle, Time */}
-      <View style={styles.header}>
-        <Skeleton width={44} height={44} borderRadius={22} />
-        <View style={styles.headerText}>
-          <Skeleton width="48%" height={14} borderRadius={6} style={styles.nameSkeleton} />
-          <Skeleton width="28%" height={11} borderRadius={5} />
-        </View>
-        <Skeleton width={42} height={11} borderRadius={5} />
-      </View>
-
+    <View
+      style={[
+        styles.card,
+        {
+          borderColor: theme.dark ? '#2A2A2A' : '#E0D9CE',
+          backgroundColor: theme.dark ? '#111' : '#FAF8F4',
+        },
+      ]}
+    >
       {/* Cover Skeleton */}
       <View
         style={[
           styles.coverWrapper,
-          { backgroundColor: theme.colors.surfaceSunken, borderColor: theme.colors.border },
+          { backgroundColor: theme.colors.surfaceSunken },
         ]}
       >
-        <Skeleton borderRadius={24} style={{ width: '100%', height: '100%' }} />
+        <Skeleton style={{ width: '100%', height: '100%' }} />
       </View>
 
-      {/* Actions */}
-      <View style={styles.actions}>
-        <View style={styles.actionItem}>
-          <Skeleton width={22} height={22} borderRadius={11} />
-          <Skeleton width={14} height={12} borderRadius={4} />
+      {/* Footer Skeleton: User Info on Left, Action on Right */}
+      <View style={styles.footer}>
+        <View style={styles.ownerRow}>
+          <Skeleton width={32} height={32} borderRadius={16} />
+          <View style={{ flex: 1, gap: 4 }}>
+            <Skeleton width="45%" height={12} borderRadius={5} />
+            <Skeleton width="30%" height={10} borderRadius={4} />
+          </View>
+          <Skeleton width={88} height={32} borderRadius={16} />
         </View>
-        <View style={styles.actionItem}>
-          <Skeleton width={22} height={22} borderRadius={11} />
-          <Skeleton width={14} height={12} borderRadius={4} />
-        </View>
-        <View style={{ flex: 1 }} />
-        <Skeleton width={100} height={38} borderRadius={19} />
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 12,
-    paddingTop: 12,
-    paddingBottom: 20,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
-  },
-  headerText: {
-    flex: 1,
-  },
-  nameSkeleton: {
-    marginBottom: 6,
-  },
-  coverWrapper: {
-    width: '100%',
-    aspectRatio: 1.4,
-    borderRadius: 24,
+  card: {
+    marginHorizontal: 12,
+    marginBottom: 14,
+    borderRadius: radii.xl,
     overflow: 'hidden',
     borderWidth: 1,
   },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 20,
-    marginTop: 14,
+  coverWrapper: {
+    height: 195,
   },
-  actionItem: {
+  footer: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  ownerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 10,
   },
 });
