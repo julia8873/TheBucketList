@@ -256,7 +256,7 @@ export const styles = themedStyleSheet({
     right: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   galleryFavBadge: {
     width: 22,
