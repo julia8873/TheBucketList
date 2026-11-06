@@ -1,7 +1,7 @@
 import { themedStyleSheet } from '@bucketlist/ui';
 import React from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { View, Pressable } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { LayoutList, LayoutGrid, AlignJustify } from 'lucide-react-native';
 import { useTheme } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
@@ -12,9 +12,11 @@ interface ViewModeSelectorProps {
   mode: TaskViewMode;
   onChange: (mode: TaskViewMode) => void;
   style?: StyleProp<ViewStyle>;
+  galleryColumns?: 2 | 3 | 4;
+  onCycleGalleryColumns?: () => void;
 }
 
-export function ViewModeSelector({ mode, onChange, style }: ViewModeSelectorProps) {
+export function ViewModeSelector({ mode, onChange, style, galleryColumns, onCycleGalleryColumns }: ViewModeSelectorProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const isDark = theme.dark;
@@ -44,13 +46,40 @@ export function ViewModeSelector({ mode, onChange, style }: ViewModeSelectorProp
         <AlignJustify size={14} color={mode === 'compact' ? activeIconColor : inactiveIconColor} />
       </Pressable>
       <Pressable
-        onPress={() => onChange('gallery')}
+        onPress={() => {
+          if (mode === 'gallery' && onCycleGalleryColumns) {
+            onCycleGalleryColumns();
+          } else {
+            onChange('gallery');
+          }
+        }}
         style={[styles.btn, mode === 'gallery' && { backgroundColor: activeBg }]}
         hitSlop={4}
         accessibilityRole="button"
         accessibilityLabel={t('common.gallery', { defaultValue: 'Galería' })}
       >
         <LayoutGrid size={14} color={mode === 'gallery' ? activeIconColor : inactiveIconColor} />
+        {mode === 'gallery' && galleryColumns && (
+          <View
+            style={{
+              position: 'absolute',
+              top: -2,
+              right: -2,
+              width: 12,
+              height: 12,
+              borderRadius: 6,
+              backgroundColor: theme.dark ? '#000000' : '#FFFFFF',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 1,
+              borderColor: activeBg,
+            }}
+          >
+            <Text style={{ fontSize: 8, fontWeight: '800', color: activeBg, lineHeight: 10 }}>
+              {galleryColumns}
+            </Text>
+          </View>
+        )}
       </Pressable>
       <Pressable
         onPress={() => onChange('list')}

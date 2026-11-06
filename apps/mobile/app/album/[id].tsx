@@ -59,6 +59,7 @@ import { AlbumHeaderBadges } from '@/features/album-detail/components/AlbumHeade
 import type { TaskSortField } from '@/features/album-detail/components/AlbumSortModal';
 import { AlbumSortModal } from '@/features/album-detail/components/AlbumSortModal';
 import { useAlbumDetailState } from '@/features/album-detail/hooks/useAlbumDetailState';
+import { useMyListCustomizationStore } from '@/stores/myListCustomization.store';
 import { useIsAdmin } from '@/hooks/useCurrentUserProfile';
 import { usePromoteAlbumToCollection } from '@/features/collections/hooks/useCollections';
 
@@ -86,8 +87,14 @@ export default function AlbumDetailScreen() {
   const { theme } = useTheme();
   const { t, i18n } = useTranslation();
   const state = useAlbumDetailState();
-  // Vista de las tareas dentro del álbum: normal (lista), galería (2 columnas) o compacta
-  const [taskViewMode, setTaskViewMode] = useState<AlbumTaskViewMode>('list');
+  const { taskGalleryColumns, setTaskGalleryColumns } = useMyListCustomizationStore();
+  // Vista de las tareas dentro del álbum: normal (lista), galería (2, 3 o 4 columnas) o compacta
+  const [taskViewMode, setTaskViewMode] = useState<AlbumTaskViewMode>('gallery');
+
+  const handleCycleGalleryColumns = () => {
+    const next = taskGalleryColumns === 2 ? 3 : taskGalleryColumns === 3 ? 4 : 2;
+    setTaskGalleryColumns(next);
+  };
   const [collapsedSections, setCollapsedSections] = useState<{ pendientes?: boolean; completadas?: boolean }>({});
   const toggleSection = (key: 'pendientes' | 'completadas') => {
     setCollapsedSections((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -411,6 +418,7 @@ export default function AlbumDetailScreen() {
       key={task.id}
       task={task}
       viewMode={taskViewMode}
+      columns={taskGalleryColumns}
       canEdit={state.canEdit}
       copiedIds={state.copiedIds ?? []}
       drag={drag}
@@ -866,7 +874,13 @@ export default function AlbumDetailScreen() {
             }}
           >
             <View style={styles.tasksToolbar}>
-              <ViewModeSelector mode={taskViewMode} onChange={setTaskViewMode} style={styles.viewModeWrap} />
+              <ViewModeSelector
+                mode={taskViewMode}
+                onChange={setTaskViewMode}
+                galleryColumns={taskGalleryColumns}
+                onCycleGalleryColumns={handleCycleGalleryColumns}
+                style={styles.viewModeWrap}
+              />
 
               <View style={{ flex: 1 }} />
 
@@ -1025,7 +1039,13 @@ export default function AlbumDetailScreen() {
                   />
                 </View>
               ) : taskViewMode === 'gallery' ? (
-                <View style={styles.taskGalleryGrid}>
+                <View
+                  style={[
+                    styles.taskGalleryGrid,
+                    taskGalleryColumns === 3 && styles.taskGalleryGrid3,
+                    taskGalleryColumns === 4 && styles.taskGalleryGrid4,
+                  ]}
+                >
                   {pendientes.map((task) => renderTaskCard(task))}
                 </View>
               ) : (
@@ -1060,7 +1080,13 @@ export default function AlbumDetailScreen() {
                   />
                 </View>
               ) : taskViewMode === 'gallery' ? (
-                <View style={styles.taskGalleryGrid}>
+                <View
+                  style={[
+                    styles.taskGalleryGrid,
+                    taskGalleryColumns === 3 && styles.taskGalleryGrid3,
+                    taskGalleryColumns === 4 && styles.taskGalleryGrid4,
+                  ]}
+                >
                   {completadas.map((task) => renderTaskCard(task))}
                 </View>
               ) : (

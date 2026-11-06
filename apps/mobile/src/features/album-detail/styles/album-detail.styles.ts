@@ -1,5 +1,7 @@
 import { themedStyleSheet } from '@bucketlist/ui';
-import { StyleSheet, Platform } from 'react-native';
+import { StyleSheet, Platform, Dimensions } from 'react-native';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const styles = themedStyleSheet({
   container: { flex: 1, backgroundColor: '#0D0D0D' },
@@ -207,16 +209,65 @@ export const styles = themedStyleSheet({
     alignItems: 'center', justifyContent: 'center',
   },
   taskGalleryGrid: {
-    paddingHorizontal: 12, paddingTop: 10, flexDirection: 'row', flexWrap: 'wrap',
-    justifyContent: 'space-between', rowGap: 12,
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 16,
+  },
+  taskGalleryGrid3: {
+    gap: 6,
+  },
+  taskGalleryGrid4: {
+    gap: 4,
   },
   galleryCard: {
-    width: '48.5%', aspectRatio: 1 / 1.3, borderRadius: 14, overflow: 'hidden',
-    backgroundColor: '#151515', borderWidth: 1, borderColor: '#262626',
-    position: 'relative',
     ...Platform.select({
-      web: { maxHeight: 320 } as any,
+      web: {
+        width: 'calc(50% - 6px)',
+        aspectRatio: 1 / 1.3,
+        maxHeight: 320,
+      } as any,
+      default: {
+        width: (SCREEN_WIDTH - 24 - 12) / 2,
+        height: ((SCREEN_WIDTH - 24 - 12) / 2) * 1.3,
+      },
     }),
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: '#151515',
+    borderWidth: 1,
+    borderColor: '#262626',
+    position: 'relative',
+  },
+  galleryCard3: {
+    ...Platform.select({
+      web: {
+        width: 'calc(33.333% - 4px)',
+        aspectRatio: 1 / 1.25,
+        maxHeight: 220,
+      } as any,
+      default: {
+        width: (SCREEN_WIDTH - 24 - 12) / 3,
+        height: ((SCREEN_WIDTH - 24 - 12) / 3) * 1.25,
+      },
+    }),
+    borderRadius: 10,
+  },
+  galleryCard4: {
+    ...Platform.select({
+      web: {
+        width: 'calc(25% - 3px)',
+        aspectRatio: 1 / 1.15,
+        maxHeight: 180,
+      } as any,
+      default: {
+        width: (SCREEN_WIDTH - 24 - 12) / 4,
+        height: ((SCREEN_WIDTH - 24 - 12) / 4) * 1.15,
+      },
+    }),
+    borderRadius: 8,
   },
   galleryTopBadges: {
     position: 'absolute', top: 8, left: 8, right: 8,

@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { GripVertical, Check, Plus, CheckCircle2 } from 'lucide-react-native';
 import type { TaskItem } from '@/services/api/albumsService';
+import type { GalleryColumns } from '@/stores/myListCustomization.store';
 import { BucketCover } from '@/components/BucketCover';
 import { hexToRgba } from '@/constants/tagPresets';
 import { styles } from '../styles/album-detail.styles';
@@ -47,8 +48,9 @@ export type AlbumTaskViewMode = 'list' | 'gallery' | 'compact';
 
 interface AlbumTaskCardProps {
   task: TaskItem;
-  /** Vista de la tarea dentro del álbum: normal (lista), galería (2 columnas) o compacta. */
+  /** Vista de la tarea dentro del álbum: normal (lista), galería (2, 3 o 4 columnas) o compacta. */
   viewMode?: AlbumTaskViewMode;
+  columns?: GalleryColumns;
   canEdit: boolean;
   copiedIds?: string[];
   drag?: { panHandlers: any; isActive: boolean };
@@ -64,6 +66,7 @@ interface AlbumTaskCardProps {
 export function AlbumTaskCard({
   task,
   viewMode = 'list',
+  columns = 2,
   canEdit,
   copiedIds,
   drag,
@@ -189,15 +192,19 @@ export function AlbumTaskCard({
     );
   }
 
-  // ───────────── Vista galería (2 columnas) ─────────────
+  // ───────────── Vista galería (2, 3 o 4 columnas) ─────────────
   if (viewMode === 'gallery') {
+    const is4Cols = columns === 4;
+    const is3Cols = columns === 3;
     const imageValue = task.imageValue ?? null;
     const isImageCover = !!imageValue && !imageValue.startsWith('preset:');
     return (
       <Pressable
         style={[
           styles.galleryCard,
-          isSelectionMode && isSelected && { borderColor: '#D4B13A', borderWidth: 2.5 },
+          is3Cols && styles.galleryCard3,
+          is4Cols && styles.galleryCard4,
+          isSelectionMode && isSelected && { borderColor: '#D4B13A', borderWidth: is4Cols ? 1.5 : 2.5 },
           isDone && { opacity: 0.72 },
         ]}
         onPress={handlePress}
@@ -212,73 +219,102 @@ export function AlbumTaskCard({
           title={task.title}
           categorySlug={task.categorySlug}
           seed={task.id}
-          iconSize={44}
+          iconSize={is4Cols ? 26 : is3Cols ? 34 : 44}
           style={StyleSheet.absoluteFill}
         />
 
-        <View style={styles.galleryTopBadges} pointerEvents="box-none">
+        <View style={[styles.galleryTopBadges, is4Cols && { top: 4, left: 4, right: 4 }, is3Cols && { top: 5, left: 5, right: 5 }]} pointerEvents="box-none">
           {isSelectionMode ? (
             <View
               style={[
                 styles.galleryCheck,
+                is4Cols && { width: 18, height: 18, borderRadius: 9 },
+                is3Cols && { width: 20, height: 20, borderRadius: 10 },
                 isSelected
                   ? { backgroundColor: '#D4B13A', borderWidth: 0 }
                   : { backgroundColor: 'rgba(0,0,0,0.6)', borderColor: '#FFFFFF' },
               ]}
             >
-              {isSelected && <Check size={14} color="#0D0D0D" strokeWidth={3} />}
+              {isSelected && <Check size={is4Cols ? 10 : 14} color="#0D0D0D" strokeWidth={3} />}
             </View>
           ) : isDone ? (
-            <View style={[styles.galleryCheck, { backgroundColor: 'rgba(52,199,89,0.9)', borderWidth: 0 }]}>
-              <Check size={14} color="#FFFFFF" strokeWidth={3} />
+            <View
+              style={[
+                styles.galleryCheck,
+                is4Cols && { width: 18, height: 18, borderRadius: 9 },
+                is3Cols && { width: 20, height: 20, borderRadius: 10 },
+                { backgroundColor: 'rgba(52,199,89,0.9)', borderWidth: 0 },
+              ]}
+            >
+              <Check size={is4Cols ? 10 : 14} color="#FFFFFF" strokeWidth={3} />
             </View>
           ) : null}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 4,
-              paddingHorizontal: 6,
-              paddingVertical: 2,
-              borderRadius: 8,
-              backgroundColor: 'rgba(0,0,0,0.65)',
-              borderWidth: 1,
-              borderColor: itemPriorityColor,
-            }}
-          >
-            <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: itemPriorityColor }} />
-            <Text style={{ fontSize: 10, fontWeight: '700', color: itemPriorityColor }}>{itemPriorityLabel}</Text>
-          </View>
+          {is4Cols ? (
+            <View
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: 4,
+                backgroundColor: itemPriorityColor,
+                borderWidth: 1,
+                borderColor: 'rgba(0,0,0,0.4)',
+              }}
+            />
+          ) : (
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: is3Cols ? 3 : 4,
+                paddingHorizontal: is3Cols ? 4 : 6,
+                paddingVertical: is3Cols ? 1 : 2,
+                borderRadius: 8,
+                backgroundColor: 'rgba(0,0,0,0.65)',
+                borderWidth: 1,
+                borderColor: itemPriorityColor,
+              }}
+            >
+              <View style={{ width: is3Cols ? 4 : 5, height: is3Cols ? 4 : 5, borderRadius: 2.5, backgroundColor: itemPriorityColor }} />
+              <Text style={{ fontSize: is3Cols ? 9 : 10, fontWeight: '700', color: itemPriorityColor }}>{itemPriorityLabel}</Text>
+            </View>
+          )}
         </View>
 
         <View
           style={[
             styles.galleryBottomOverlay,
             { backgroundColor: isImageCover ? 'rgba(0,0,0,0.52)' : 'rgba(0,0,0,0.72)' },
+            is3Cols && { minHeight: 44, paddingHorizontal: 6, paddingVertical: 4, borderBottomLeftRadius: 10, borderBottomRightRadius: 10 },
+            is4Cols && { minHeight: 32, paddingHorizontal: 4, paddingVertical: 3, borderBottomLeftRadius: 8, borderBottomRightRadius: 8 },
           ]}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: is4Cols ? 4 : is3Cols ? 6 : 8 }}>
             <View style={{ flex: 1 }}>
               <Text
-                style={[styles.galleryCardTitle, isDone && { opacity: 0.72, color: '#8A8A80' }]}
-                numberOfLines={2}
+                style={[
+                  styles.galleryCardTitle,
+                  is3Cols && { fontSize: 11, lineHeight: 14, minHeight: 14 },
+                  is4Cols && { fontSize: 10, lineHeight: 12, minHeight: 12 },
+                  isDone && { opacity: 0.72, color: '#8A8A80' },
+                ]}
+                numberOfLines={is4Cols || is3Cols ? 1 : 2}
               >
                 {task.title}
               </Text>
-              {subTitle.length > 0 && (
-                <Text style={styles.galleryCardMeta} numberOfLines={1}>
+              {!is4Cols && subTitle.length > 0 && (
+                <Text style={[styles.galleryCardMeta, is3Cols && { fontSize: 9, marginTop: 1 }]} numberOfLines={1}>
                   {subTitle}
                 </Text>
               )}
             </View>
-            {!canEdit && !isSelectionMode && (
+            {!is4Cols && !canEdit && !isSelectionMode && (
               isCopied ? (
-                <View style={styles.galleryAddBtn}>
-                  <Check size={14} color="#0D0D0D" strokeWidth={2.5} />
+                <View style={[styles.galleryAddBtn, is3Cols && { width: 20, height: 20, borderRadius: 10 }]}>
+                  <Check size={is3Cols ? 12 : 14} color="#0D0D0D" strokeWidth={2.5} />
                 </View>
               ) : (
-                <Pressable hitSlop={8} onPress={(e) => onCopySingleTask(task, e)} style={styles.galleryAddBtn}>
-                  <Plus size={14} color="#0D0D0D" strokeWidth={2.5} />
+                <Pressable hitSlop={8} onPress={(e) => onCopySingleTask(task, e)} style={[styles.galleryAddBtn, is3Cols && { width: 20, height: 20, borderRadius: 10 }]}>
+                  <Plus size={is3Cols ? 12 : 14} color="#0D0D0D" strokeWidth={2.5} />
                 </Pressable>
               )
             )}
