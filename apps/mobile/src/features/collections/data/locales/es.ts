@@ -1,6 +1,46 @@
 import type { CollectionTexts } from './types';
 
 export const es: CollectionTexts = {
+  'collection-antes-de-ser-millonario': {
+    title: 'Tareas antes de hacerte millonario',
+    description: 'Planes y experiencias inolvidables para disfrutar de la vida sin importar el dinero: desde planes sencillos del día a día hasta retos que recordarás siempre.',
+    badge: '💸 Experiencias',
+    tags: ['Experiencias', 'Vida', 'Metas', 'Aventuras'],
+    tasks: [
+      ['Ir al cine a ver un estreno en pantalla gigante', 'Con un buen cubo de palomitas y tu persona favorita.', 'm'],
+      ['Jugar a un deporte o echar una pachanga con amigos', 'Fútbol, pádel, baloncesto o tenis: lo importante es pasarlo bien y sudar la camiseta.', 'm'],
+      ['Ver 8 amaneceres en sitios diferentes', 'En la playa, en la montaña, de viaje o desde tu propia azotea.', 'h'],
+      ['Aprender a tocar un instrumento', 'Consigue tocar de principio a fin al menos un par de canciones con guitarra, piano o ukelele.', 'h'],
+      ['Viajar a un país que no conozcas', 'Descubre una cultura nueva, prueba su gastronomía y piérdete por sus calles.', 'h'],
+      ['Dormir una noche al aire libre bajo las estrellas', 'En el campo o en la playa con saco de dormir y sin contaminación lumínica.', 'm'],
+      ['Cocinar una cena completa para tu gente', 'Entrante, plato principal y postre preparados con mimo por ti.', 'm'],
+      ['Ir a un concierto o festival de música en directo', 'Cantar todas tus canciones favoritas a pleno pulmón.', 'h'],
+      ['Pasar 24 horas completamente desconectado del móvil', 'Sin redes sociales ni notificaciones, disfrutando 100 % del presente.', 'm'],
+      ['Leer un libro que te cambie la perspectiva', 'De esos que te dejan pensando días después de terminarlo.', 'l'],
+      ['Hacer un viaje espontáneo por carretera', 'Coge una mochila y sal a la aventura sin un itinerario cerrado.', 'h'],
+      ['Escribir una carta a tu "yo" del futuro', 'Guárdala bien cerrada para abrirla cuando alcances tus mayores sueños.', 'l'],
+    ],
+  },
+  'collection-hitos-de-vida': {
+    title: 'Grandes hitos de la vida',
+    description: 'Los momentos clave y logros personales que van marcando el camino: desde tus primeros pasos en los estudios hasta tus metas más soñadas.',
+    badge: '🌱 Hitos',
+    tags: ['Vida', 'Logros', 'Crecimiento', 'Futuro'],
+    tasks: [
+      ['Graduarte del instituto', 'Cerrar una etapa inolvidable con tus compañeros y dar el salto hacia el futuro.', 'h'],
+      ['Sacarte el carnet de conducir', 'Aprobar el teórico y el práctico y conseguir esa ansiada L.', 'h'],
+      ['Graduarte de la universidad o ciclo formativo', 'Años de esfuerzo, exámenes y proyectos que culminan con tu título en mano.', 'h'],
+      ['Cobrar tu primer sueldo', 'La satisfacción inigualable de ver el fruto de tu trabajo ingresado en el banco.', 'h'],
+      ['Tener tu primer coche', 'Esa sensación de libertad absoluta al poner música y salir a la carretera.', 'h'],
+      ['Independizarte y vivir por tu cuenta', 'Tener tu propio espacio, tus normas y aprender a llevar un hogar.', 'h'],
+      ['Comprar tu primera casa', 'Firmar las llaves de un hogar que sea verdaderamente tuyo.', 'h'],
+      ['Adoptar y cuidar de tu primera mascota', 'Un perro, un gato o ese compañero que siempre quisiste tener.', 'm'],
+      ['Conseguir el trabajo o proyecto con el que siempre soñaste', 'Dedicar tu tiempo a lo que de verdad te apasiona.', 'm'],
+      ['Crear un fondo de ahorros sólido', 'La tranquilidad y seguridad financiera de estar cubierto ante cualquier imprevisto.', 'm'],
+      ['Empezar un proyecto de vida en pareja', 'Construir un futuro compartido con la persona que elijas a tu lado.', 'h'],
+      ['Celebrar un gran aniversario o reencuentro', 'Brindar y recordar buenos momentos con los que han estado contigo desde el principio.', 'l'],
+    ],
+  },
   'collection-halloween': {
     title: 'Noche de Halloween',
     description: 'Planes de miedo (y de risa) para pasar Halloween en casa o en la calle.',

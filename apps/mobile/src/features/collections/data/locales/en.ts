@@ -1,6 +1,46 @@
 import type { CollectionTexts } from './types';
 
 export const en: CollectionTexts = {
+  'collection-antes-de-ser-millonario': {
+    title: 'Things to Do Before You Get Rich',
+    description: 'Unforgettable experiences and simple everyday joys: from accessible daily adventures to challenges that will stick with you forever.',
+    badge: '💸 Experiences',
+    tags: ['Experiences', 'Life', 'Goals', 'Adventures'],
+    tasks: [
+      ['Go to the cinema for a blockbuster on the big screen', 'With a big bucket of popcorn and your favorite person.', 'm'],
+      ['Play a sport or a casual match with friends', 'Football, padel, basketball, or tennis: the main goal is to sweat and have fun.', 'm'],
+      ['Watch 8 sunrises from different spots', 'At the beach, in the mountains, while traveling, or from your own rooftop.', 'h'],
+      ['Learn to play a musical instrument', 'Learn to play at least a couple of complete songs on guitar, piano, or ukulele.', 'h'],
+      ['Travel to a country you have never visited', 'Immerse yourself in a new culture, try the local food, and wander its streets.', 'h'],
+      ['Camp out a night under the stars', 'Outdoors in the countryside or by the beach with a sleeping bag and no light pollution.', 'm'],
+      ['Cook a three-course dinner for your loved ones', 'Appetizer, main dish, and dessert lovingly prepared by you.', 'm'],
+      ['Go to a live music concert or festival', 'Sing all your favorite anthems at the top of your lungs.', 'h'],
+      ['Spend 24 hours completely disconnected from your phone', 'No social media or notifications, living 100% in the present moment.', 'm'],
+      ['Read a book that changes your perspective', 'One of those stories that lingers in your mind long after the final page.', 'l'],
+      ['Take a spontaneous road trip', 'Pack a backpack and set off on an adventure with no fixed itinerary.', 'h'],
+      ['Write a letter to your future self', 'Seal it away to open when you achieve your biggest dreams.', 'l'],
+    ],
+  },
+  'collection-hitos-de-vida': {
+    title: 'Major Life Milestones',
+    description: 'Key steps and personal achievements that mark the journey: from school days to your most cherished lifelong dreams.',
+    badge: '🌱 Milestones',
+    tags: ['Life', 'Milestones', 'Growth', 'Future'],
+    tasks: [
+      ['Graduate from high school', 'Close an unforgettable chapter with classmates and take the next big leap.', 'h'],
+      ["Get your driver's license", 'Pass the theory and practical exams to earn your independence on the road.', 'h'],
+      ['Graduate from university or vocational college', 'Years of effort, exams, and projects culminating with your degree in hand.', 'h'],
+      ['Earn your first paycheck', 'The rewarding feeling of seeing the fruit of your work deposited in your account.', 'h'],
+      ['Get your first car', 'That feeling of pure freedom when you turn on the radio and hit the open road.', 'h'],
+      ['Move out and live on your own', 'Having your own space, your own rules, and learning to run a home.', 'h'],
+      ['Buy your first home', 'Turn the keys in the door of a place that is truly yours.', 'h'],
+      ['Adopt and care for your first pet', 'A dog, a cat, or the companion animal you always dreamed of having.', 'm'],
+      ['Land the job or project you always dreamed of', 'Dedicate your career to what genuinely sparks your passion.', 'm'],
+      ['Build a solid emergency fund', 'The financial peace of mind that comes with being prepared for any surprise.', 'm'],
+      ['Start a shared life journey with a partner', 'Build a future together side by side with the person you love.', 'h'],
+      ['Celebrate a major milestone reunion or anniversary', 'Toast and look back on wonderful memories with those who have always had your back.', 'l'],
+    ],
+  },
   'collection-halloween': {
     title: 'Halloween Night',
     description: 'Spooky (and funny) plans to spend Halloween at home or out and about.',

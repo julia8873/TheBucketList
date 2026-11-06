@@ -6,6 +6,8 @@ import type { CollectionItem } from '../types';
  * below and a text entry in EVERY locale file (TypeScript will complain if one is missing).
  */
 export const DEFAULT_COLLECTION_IDS = [
+  'collection-antes-de-ser-millonario',
+  'collection-hitos-de-vida',
   'collection-halloween',
   'collection-navidad',
   'collection-switch',
@@ -38,6 +40,18 @@ export interface CollectionBase {
 }
 
 export const COLLECTION_BASES: Record<DefaultCollectionId, CollectionBase> = {
+  'collection-antes-de-ser-millonario': {
+    category: 'experiences',
+    emoji: '💸',
+    gradientColors: ['#0F3D2E', '#16795B', '#D4AF37'],
+    cover: ['#0A291F', '#125C44', '#B8972E'],
+  },
+  'collection-hitos-de-vida': {
+    category: 'growth',
+    emoji: '🌱',
+    gradientColors: ['#0B2545', '#1D3557', '#457B9D'],
+    cover: ['#0D1B2A', '#1B263B', '#3A506B'],
+  },
   'collection-halloween': {
     category: 'seasonal',
     emoji: '🎃',

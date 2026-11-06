@@ -42,6 +42,7 @@ export const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    maxWidth: '100%',
   },
   albumPillText: {
     fontFamily: 'Inter_600SemiBold',
@@ -81,6 +82,7 @@ export const styles = themedStyleSheet({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    maxWidth: '100%',
   },
   createTaskBtnText: {
     fontFamily: 'Inter_600SemiBold',
@@ -107,6 +109,7 @@ export const styles = themedStyleSheet({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
+    maxWidth: '100%',
     backgroundColor: 'transparent',
   },
   segmentBtnActive: {
@@ -154,6 +157,7 @@ export const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    maxWidth: '100%',
   },
   tagFilterBtn: {
     height: 36,
@@ -165,6 +169,7 @@ export const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    maxWidth: '100%',
   },
   tagFilterBtnActive: {
     borderColor: '#D4B13A',
