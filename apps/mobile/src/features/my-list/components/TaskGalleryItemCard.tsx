@@ -177,6 +177,15 @@ function TaskGalleryItemCardComponent({
             </View>
           ) : (
             <>
+              {visibleParticipants && (
+                <ParticipantsStack
+                  participants={visibleParticipants}
+                  max={is4Cols ? 1 : is3Cols ? 2 : 2}
+                  size="xs"
+                  ringColor="rgba(0,0,0,0.55)"
+                  disabled={isSelectionMode}
+                />
+              )}
               {isFav && showFavorite && (
                 <View
                   style={[
@@ -315,14 +324,6 @@ function TaskGalleryItemCardComponent({
               </Text>
             ) : null}
           </View>
-          {visibleParticipants && !is4Cols && (
-            <ParticipantsStack
-              participants={visibleParticipants}
-              max={is3Cols ? 2 : 3}
-              ringColor={isImageCover ? '#2A2A2A' : overlay.panel}
-              disabled={isSelectionMode}
-            />
-          )}
         </View>
       </View>
     </Pressable>

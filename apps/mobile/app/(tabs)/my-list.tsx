@@ -523,61 +523,65 @@ export default function MyListScreen() {
   );
 
   const renderGalleryAlbum = useCallback(
-    ({ item, index = 0, columns = albumGalleryColumns }: { item: any; index?: number; columns?: GalleryColumns }) => (
-      <AlbumCard
-        key={item.id}
-        title={item.title}
-        totalTasks={item.total_tasks ?? 0}
-        completedTasks={item.completed_tasks ?? 0}
-        coverUri={item.cover_path}
-        isShared={item.is_shared}
-        isFavorite={state.isAlbumFavorite(item.id)}
-        isSelected={state.selectedAlbumIds.includes(item.id)}
-        isSelectionMode={state.isAlbumSelectionMode}
-        onToggleFavorite={() =>
-          state.toggleFavoriteAlbum.mutate({
-            albumId: item.id,
-            currentlyFavorite: state.isAlbumFavorite(item.id),
-          })
-        }
-        priority={item.priority}
-        isClosed={item.is_closed}
-        colorIndex={index}
-        columns={columns}
-        showPriority={albumViews.gallery.showPriority}
-        showTaskCount={albumViews.gallery.showTaskCount}
-        showProgress={albumViews.gallery.showProgress}
-        showBadges={albumViews.gallery.showBadges}
-        showDate={albumViews.gallery.showDate}
-        showDescription={albumViews.gallery.showDescription}
-        createdAt={item.created_at}
-        deadline={item.deadline}
-        description={item.description}
-        participantsElement={
-          albumViews.gallery.showCollaborators && participantsValue.album[item.id] ? (
-            <ParticipantsStack
-              participants={participantsValue.album[item.id]}
-              max={4}
-              ringColor="#3A3A3A"
-              disabled={state.isAlbumSelectionMode}
-            />
-          ) : undefined
-        }
-        onPress={() => {
-          if (state.isAlbumSelectionMode) state.toggleSelectAlbum(item.id);
-          else {
-            if (Date.now() - state.lastExitAlbumSelectionTimeRef.current < 450) return;
-            router.push(`/album/${item.id}` as any);
+    ({ item, index = 0, columns = albumGalleryColumns }: { item: any; index?: number; columns?: GalleryColumns }) => {
+      const albumParticipants = participantsValue?.album?.[item.id];
+      return (
+        <AlbumCard
+          key={item.id}
+          title={item.title}
+          totalTasks={item.total_tasks ?? 0}
+          completedTasks={item.completed_tasks ?? 0}
+          coverUri={item.cover_path}
+          isShared={item.is_shared}
+          isFavorite={state.isAlbumFavorite(item.id)}
+          isSelected={state.selectedAlbumIds.includes(item.id)}
+          isSelectionMode={state.isAlbumSelectionMode}
+          onToggleFavorite={() =>
+            state.toggleFavoriteAlbum.mutate({
+              albumId: item.id,
+              currentlyFavorite: state.isAlbumFavorite(item.id),
+            })
           }
-        }}
-        onLongPress={() => {
-          if (!state.isAlbumSelectionMode) {
-            state.setIsAlbumSelectionMode(true);
-            state.setSelectedAlbumIds([item.id]);
+          priority={item.priority}
+          isClosed={item.is_closed}
+          colorIndex={index}
+          columns={columns}
+          showPriority={albumViews.gallery.showPriority}
+          showTaskCount={albumViews.gallery.showTaskCount}
+          showProgress={albumViews.gallery.showProgress}
+          showBadges={albumViews.gallery.showBadges}
+          showDate={albumViews.gallery.showDate}
+          showDescription={albumViews.gallery.showDescription}
+          createdAt={item.created_at}
+          deadline={item.deadline}
+          description={item.description}
+          participantsElement={
+            albumViews.gallery.showCollaborators && albumParticipants && albumParticipants.length > 0 ? (
+              <ParticipantsStack
+                participants={albumParticipants}
+                max={columns === 4 ? 1 : columns === 3 ? 2 : 2}
+                size="xs"
+                ringColor="rgba(0,0,0,0.55)"
+                disabled={state.isAlbumSelectionMode}
+              />
+            ) : undefined
           }
-        }}
-      />
-    ),
+          onPress={() => {
+            if (state.isAlbumSelectionMode) state.toggleSelectAlbum(item.id);
+            else {
+              if (Date.now() - state.lastExitAlbumSelectionTimeRef.current < 450) return;
+              router.push(`/album/${item.id}` as any);
+            }
+          }}
+          onLongPress={() => {
+            if (!state.isAlbumSelectionMode) {
+              state.setIsAlbumSelectionMode(true);
+              state.setSelectedAlbumIds([item.id]);
+            }
+          }}
+        />
+      );
+    },
     [
       albumGalleryColumns,
       state.isAlbumFavorite,

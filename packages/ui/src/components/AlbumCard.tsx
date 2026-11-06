@@ -293,33 +293,39 @@ export function AlbumCard({
             {isSelected && <Check size={statusIconSize} color="#0E0E0E" strokeWidth={3} />}
           </View>
         </View>
-      ) : showBadges && (
+      ) : (
         <View style={[styles.topLeftBadges, is4Cols && { top: 4, left: 4 }, is3Cols && { top: 6, left: 6 }]}>
-          {!isClosed && (
-            isCompleted ? (
-              <View style={[styles.completedBadge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2, backgroundColor: 'rgba(52, 199, 89, 0.9)' }]}>
-                <CheckCircle2 size={statusIconSize} color="#FFFFFF" strokeWidth={2.4} />
-              </View>
-            ) : isExpired ? (
-              <View style={[styles.completedBadge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2, backgroundColor: 'rgba(239, 68, 68, 0.9)' }]}>
-                <AlertCircle size={statusIconSize} color="#FFFFFF" strokeWidth={2.4} />
-              </View>
-            ) : isInProgress ? (
-              <View style={[styles.completedBadge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2, backgroundColor: 'rgba(0, 122, 255, 0.9)' }]}>
-                <MoreHorizontal size={statusIconSize + 1} color="#FFFFFF" strokeWidth={2.4} />
-              </View>
-            ) : (
-              <View style={[styles.completedBadge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2, backgroundColor: 'rgba(142, 142, 147, 0.9)' }]}>
-                <Clock size={statusIconSize - 1} color="#FFFFFF" strokeWidth={2.2} />
-              </View>
-            )
-          )}
+          {participantsElement}
 
-          {isClosed && (
-            <View style={[styles.closedBadge, is4Cols && { paddingHorizontal: 4, paddingVertical: 1 }]}>
-              <Lock size={statusIconSize - 2} color="#D4B13A" />
-              {!is4Cols && <Text style={[styles.closedText, is3Cols && { fontSize: 9 }]}>{t('common.closed')}</Text>}
-            </View>
+          {showBadges && (
+            <>
+              {!isClosed && (
+                isCompleted ? (
+                  <View style={[styles.completedBadge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2, backgroundColor: 'rgba(52, 199, 89, 0.9)' }]}>
+                    <CheckCircle2 size={statusIconSize} color="#FFFFFF" strokeWidth={2.4} />
+                  </View>
+                ) : isExpired ? (
+                  <View style={[styles.completedBadge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2, backgroundColor: 'rgba(239, 68, 68, 0.9)' }]}>
+                    <AlertCircle size={statusIconSize} color="#FFFFFF" strokeWidth={2.4} />
+                  </View>
+                ) : isInProgress ? (
+                  <View style={[styles.completedBadge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2, backgroundColor: 'rgba(0, 122, 255, 0.9)' }]}>
+                    <MoreHorizontal size={statusIconSize + 1} color="#FFFFFF" strokeWidth={2.4} />
+                  </View>
+                ) : (
+                  <View style={[styles.completedBadge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2, backgroundColor: 'rgba(142, 142, 147, 0.9)' }]}>
+                    <Clock size={statusIconSize - 1} color="#FFFFFF" strokeWidth={2.2} />
+                  </View>
+                )
+              )}
+
+              {isClosed && (
+                <View style={[styles.closedBadge, is4Cols && { paddingHorizontal: 4, paddingVertical: 1 }]}>
+                  <Lock size={statusIconSize - 2} color="#D4B13A" />
+                  {!is4Cols && <Text style={[styles.closedText, is3Cols && { fontSize: 9 }]}>{t('common.closed')}</Text>}
+                </View>
+              )}
+            </>
           )}
         </View>
       )}
@@ -476,10 +482,6 @@ export function AlbumCard({
           >
             {description.trim()}
           </Text>
-        ) : null}
-
-        {participantsElement && !is4Cols ? (
-          <View style={{ alignItems: 'flex-start', marginBottom: is3Cols ? 3 : 6 }}>{participantsElement}</View>
         ) : null}
 
         {/* Progress bar */}
