@@ -732,16 +732,14 @@ export const styles = themedStyleSheet({
   calendarDayAddBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: gold[400],
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-    gap: 4,
+    gap: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
   },
   calendarDayAddBtnText: {
-    fontFamily: 'Inter_600SemiBold',
-    fontSize: 11.5,
-    color: '#0E0E0E',
+    fontFamily: 'Inter_500Medium',
+    fontSize: 11,
+    color: gold[400],
   },
   emptyContainer: {
     alignItems: 'center',

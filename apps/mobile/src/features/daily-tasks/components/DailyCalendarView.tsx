@@ -289,11 +289,12 @@ export function DailyCalendarView({
             </Text>
           </View>
           <Pressable
-            style={styles.calendarDayAddBtn}
+            hitSlop={6}
+            style={styles.weekAddQuickBtn}
             onPress={() => onOpenCreateTask(toDateString(selectedCalendarDate))}
           >
-            <Plus size={14} color="#FFFFFF" strokeWidth={2.5} />
-            <Text style={styles.calendarDayAddBtnText}>{t('daily.add_btn')}</Text>
+            <Plus size={14} color={gold[400]} />
+            <Text style={styles.weekAddQuickText}>{t('daily.add_btn')}</Text>
           </Pressable>
         </View>
 
