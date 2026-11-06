@@ -489,21 +489,86 @@ export function useAlbumDetailState() {
     queryClient.setQueryData(['album', id, user?.id], (old: any) =>
       old ? { ...old, visibility: newVisibility } : old
     );
-    closeSheet();
 
-    const { error } = await supabase
-      .from('albums')
-      .update({ visibility: newVisibility })
-      .eq('id', id);
+    const taskIds = (album?.tasks ?? []).map((t: any) => t.id).filter(Boolean);
 
-    if (error) {
-      toast.error(t('album_detail.change_visibility_error', { defaultValue: 'No se pudo cambiar la visibilidad' }));
+    const updateAlbumOnly = async () => {
+      const { error } = await supabase
+        .from('albums')
+        .update({ visibility: newVisibility })
+        .eq('id', id);
+
+      if (error) {
+        toast.error(t('album_detail.change_visibility_error', { defaultValue: 'No se pudo cambiar la visibilidad' }));
+        void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+        return;
+      }
+
       void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+      void queryClient.invalidateQueries({ queryKey: ['albums'] });
+    };
+
+    const updateAlbumAndTasks = async () => {
+      patchTasks(queryClient, taskIds, {
+        bucket: { visibility: newVisibility },
+        task: { visibility: newVisibility },
+      });
+
+      const [albumRes, tasksRes] = await Promise.all([
+        supabase.from('albums').update({ visibility: newVisibility }).eq('id', id),
+        supabase.from('buckets').update({ visibility: newVisibility }).in('id', taskIds),
+      ]);
+
+      if (albumRes.error || tasksRes.error) {
+        toast.error(t('album_detail.change_visibility_error', { defaultValue: 'No se pudo cambiar la visibilidad' }));
+        void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+        return;
+      }
+
+      toast.success(t('album_detail.visibility_all_updated', { defaultValue: 'Visibilidad actualizada para el álbum y sus tareas' }));
+      void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
+      void queryClient.invalidateQueries({ queryKey: ['albums'] });
+      settleTaskCaches(queryClient);
+    };
+
+    if (taskIds.length === 0) {
+      closeSheet();
+      void updateAlbumOnly();
       return;
     }
 
-    void queryClient.invalidateQueries({ queryKey: ['album', id, user?.id] });
-    void queryClient.invalidateQueries({ queryKey: ['albums'] });
+    const visLabel =
+      newVisibility === 'public'
+        ? t('albums.visibility_public', { defaultValue: 'Público' })
+        : newVisibility === 'followers'
+          ? t('albums.visibility_followers', { defaultValue: 'Seguidores' })
+          : t('albums.visibility_private', { defaultValue: 'Privado' });
+
+    closeSheet(() => {
+      Alert.alert(
+        t('album_detail.sync_visibility_title', { defaultValue: 'Cambiar visibilidad de las tareas' }),
+        t('album_detail.sync_visibility_msg', {
+          visibility: visLabel.toLowerCase(),
+          count: taskIds.length,
+          defaultValue: `¿Deseas cambiar también la visibilidad de todas las tareas (${taskIds.length}) de este álbum a ${visLabel.toLowerCase()}?`,
+        }),
+        [
+          {
+            text: t('album_detail.sync_visibility_only_album', { defaultValue: 'Solo del álbum' }),
+            style: 'cancel',
+            onPress: () => {
+              void updateAlbumOnly();
+            },
+          },
+          {
+            text: t('album_detail.sync_visibility_also_tasks', { defaultValue: 'También las tareas' }),
+            onPress: () => {
+              void updateAlbumAndTasks();
+            },
+          },
+        ]
+      );
+    });
   };
 
   const handleChangePriority = async (newPriority: 'low' | 'medium' | 'high') => {
