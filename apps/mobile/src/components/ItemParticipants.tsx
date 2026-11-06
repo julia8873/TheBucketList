@@ -82,6 +82,8 @@ interface StackProps {
   /** Sin interacción (p. ej. en modo selección). */
   disabled?: boolean;
   size?: 'xs' | 'sm' | 'md';
+  /** Tamaño exacto de la burbuja en píxeles (para coincidir con badges de estado) */
+  bubbleSize?: number;
   style?: ViewStyle;
 }
 
@@ -89,23 +91,33 @@ interface StackProps {
  * Fotos de perfil una junto a otra, cada una solapada un poco con la anterior.
  * Al tocarla se abre un menú inferior con todos los participantes.
  */
-export function ParticipantsStack({ participants, max = 4, ringColor, disabled, size = 'xs', style }: StackProps) {
+export function ParticipantsStack({ participants, max = 4, ringColor, disabled, size = 'xs', bubbleSize, style }: StackProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const router = useRouter();
   const myId = useAuthStore((s) => s.user?.id);
   const [open, setOpen] = useState(false);
 
-  if (!participants || participants.length === 0) return null;
+  // Asegurar que el creador (isOwner === true) esté siempre primero
+  const sorted: ItemParticipant[] = React.useMemo(() => {
+    if (!participants || participants.length <= 1) return participants ?? [];
+    const ownerIdx = participants.findIndex((p) => p.isOwner);
+    if (ownerIdx <= 0) return participants;
+    const owner = participants[ownerIdx];
+    if (!owner) return participants;
+    return [owner, ...participants.slice(0, ownerIdx), ...participants.slice(ownerIdx + 1)];
+  }, [participants]);
+
+  if (!sorted || sorted.length === 0) return null;
 
   const ring = ringColor ?? theme.colors.surface;
-  const visible = participants.slice(0, max);
-  const extra = participants.length - visible.length;
+  const visible = sorted.slice(0, max);
+  const extra = sorted.length - visible.length;
 
-  const avatarPx = size === 'sm' ? 32 : size === 'md' ? 40 : 24;
-  const ringPx = 2;
-  const overlapPx = size === 'sm' ? 11 : size === 'md' ? 14 : 9;
-  const bubble = avatarPx + ringPx * 2;
+  const bubble = bubbleSize ?? (size === 'sm' ? 36 : size === 'md' ? 44 : 28);
+  const ringPx = bubbleSize ? (bubbleSize <= 20 ? 1 : 1.5) : 2;
+  const avatarPx = Math.max(12, bubble - ringPx * 2);
+  const overlapPx = bubbleSize ? Math.round(bubble * 0.35) : (size === 'sm' ? 11 : size === 'md' ? 14 : 9);
 
   const openProfile = (id: string) => {
     if (disabled) return;
@@ -129,12 +141,12 @@ export function ParticipantsStack({ participants, max = 4, ringColor, disabled, 
             accessibilityLabel={p.display_name || p.username || t('profile.title_rest', { defaultValue: 'Perfil' })}
             style={({ pressed }) => [
               styles.ring,
-              { width: bubble, height: bubble, borderRadius: bubble / 2, borderColor: ring },
+              { width: bubble, height: bubble, borderRadius: bubble / 2, borderColor: ring, borderWidth: ringPx },
               i > 0 && { marginLeft: -overlapPx },
               pressed && { opacity: 0.7 },
             ]}
           >
-            <Avatar uri={p.avatar_url} initials={initialsOf(p)} size={size} goldRing={p.isOwner} />
+            <Avatar uri={p.avatar_url} initials={initialsOf(p)} size={size} customSize={avatarPx} goldRing={p.isOwner} />
           </Pressable>
         ))}
         {extra > 0 && (
@@ -146,7 +158,7 @@ export function ParticipantsStack({ participants, max = 4, ringColor, disabled, 
               setOpen(true);
             }}
             accessibilityRole="button"
-            accessibilityLabel={t('participants.open', { count: participants.length })}
+            accessibilityLabel={t('participants.open', { count: sorted.length })}
             style={({ pressed }) => [
               styles.ring,
               styles.more,
@@ -155,18 +167,32 @@ export function ParticipantsStack({ participants, max = 4, ringColor, disabled, 
                 height: bubble,
                 borderRadius: bubble / 2,
                 borderColor: ring,
+                borderWidth: ringPx,
                 marginLeft: -overlapPx,
                 backgroundColor: theme.dark ? '#2B2B2B' : '#E8E3D8',
+                alignItems: 'center',
+                justifyContent: 'center',
               },
               pressed && { opacity: 0.7 },
             ]}
           >
-            <Text style={[styles.moreText, { color: theme.colors.foreground, fontSize: size === 'sm' ? 12 : 11 }]}>+{extra}</Text>
+            <Text
+              style={[
+                styles.moreText,
+                {
+                  color: theme.colors.foreground,
+                  fontSize: bubble <= 18 ? 8 : bubble <= 20 ? 9 : (size === 'sm' ? 12 : 11),
+                  lineHeight: bubble <= 18 ? 10 : bubble <= 20 ? 11 : undefined,
+                },
+              ]}
+            >
+              +{extra}
+            </Text>
           </Pressable>
         )}
       </View>
 
-      <ParticipantsSheet visible={open} participants={participants} onClose={() => setOpen(false)} />
+      <ParticipantsSheet visible={open} participants={sorted} onClose={() => setOpen(false)} />
     </>
   );
 }

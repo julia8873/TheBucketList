@@ -328,8 +328,8 @@ export function AlbumCard({
               </>
             )}
 
-            {/* Fotos de perfil inline al lado del badge (solo 2 y 3 cols) */}
-            {!is4Cols && participantsElement}
+            {/* Fotos de perfil inline al lado del badge */}
+            {participantsElement}
           </View>
         </View>
       )}

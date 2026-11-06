@@ -45,6 +45,7 @@ interface AvatarProps {
   uri?: string | null;
   initials?: string;
   size?: AvatarSize;
+  customSize?: number;
   badge?: React.ReactNode;
   /** Show gold ring border (for profile headers) */
   goldRing?: boolean;
@@ -57,13 +58,19 @@ function AvatarComponent({
   uri,
   initials,
   size = 'md',
+  customSize,
   badge,
   goldRing = false,
   style,
 }: AvatarProps) {
   const { theme } = useTheme();
-  const dim = SIZES[size];
-  const { fontSize, lineHeight } = FONT_CONFIG[size];
+  const dim = customSize ?? SIZES[size];
+  const { fontSize, lineHeight } = customSize
+    ? {
+        fontSize: Math.max(7, Math.round(customSize * 0.42)),
+        lineHeight: Math.max(9, Math.round(customSize * 0.52)),
+      }
+    : FONT_CONFIG[size];
 
   // Resolve uri from either new `source` or legacy `uri` prop
   const rawUri = source?.uri ?? uri ?? null;
@@ -71,7 +78,7 @@ function AvatarComponent({
   // Resolve initials from either `fallback` or legacy `initials`
   const resolvedInitials = (fallback ?? initials ?? '?').trim().toUpperCase().slice(0, 2);
 
-  const innerDim = goldRing ? dim - 7 : dim;
+  const innerDim = goldRing ? Math.max(dim - 4, Math.round(dim * 0.75)) : dim;
   const [hasError, setHasError] = React.useState(false);
 
   React.useEffect(() => {

@@ -253,11 +253,12 @@ export function AlbumTaskCard({
                 <Check size={is4Cols ? 10 : 14} color="#FFFFFF" strokeWidth={3} />
               </View>
             ) : null}
-            {/* Fotos de perfil inline al lado del badge (solo en 2 y 3 cols) */}
-            {!is4Cols && participants && participants.length > 0 && (
+            {/* Fotos de perfil inline al lado del badge */}
+            {participants && participants.length > 0 && (
               <ParticipantsStack
                 participants={participants}
-                max={is3Cols ? 2 : 2}
+                max={participants.length > 2 ? 1 : 2}
+                bubbleSize={is4Cols ? 18 : is3Cols ? 20 : 24}
                 size="xs"
                 ringColor="rgba(0,0,0,0.55)"
                 disabled={isSelectionMode}
@@ -266,7 +267,7 @@ export function AlbumTaskCard({
           </View>
 
           {/* Derecha: prioridad y etiquetas */}
-          <View style={{ flexDirection: 'column', alignItems: 'flex-end', gap: is4Cols ? 2 : is3Cols ? 3 : 4, flexShrink: 0 }}>
+          <View style={{ flexDirection: 'column', alignItems: 'flex-end', gap: is4Cols ? 2 : is3Cols ? 3 : 4, flexShrink: 0, marginLeft: is4Cols ? 2 : 4 }}>
             {is4Cols || is3Cols ? (
               <View
                 style={{
@@ -293,12 +294,12 @@ export function AlbumTaskCard({
                 }}
               >
                 <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: itemPriorityColor }} />
-                <Text style={{ fontSize: 10, fontWeight: '700', color: itemPriorityColor }}>{itemPriorityLabel}</Text>
+                <Text style={{ fontSize: 10, fontWeight: '700', color: itemPriorityLabel }}>{itemPriorityLabel}</Text>
               </View>
             )}
 
             {task.tags && task.tags.length > 0 && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, maxWidth: '100%', justifyContent: 'flex-end' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: is4Cols ? 2 : 3, maxWidth: is4Cols ? 36 : '100%', justifyContent: 'flex-end' }}>
                 {task.tags.slice(0, 1).map((t) => (
                   <View
                     key={t.id}
@@ -306,12 +307,13 @@ export function AlbumTaskCard({
                       flexDirection: 'row',
                       alignItems: 'center',
                       gap: 2,
-                      paddingHorizontal: (is3Cols || is4Cols) ? (is4Cols ? 3 : 4) : 6,
+                      paddingHorizontal: (is3Cols || is4Cols) ? (is4Cols ? 2 : 4) : 6,
                       paddingVertical: 1,
                       borderRadius: 6,
                       backgroundColor: 'rgba(0,0,0,0.65)',
                       borderWidth: 0.5,
                       borderColor: t.color || '#D4B13A',
+                      flexShrink: 0,
                     }}
                   >
                     <Text
@@ -328,18 +330,19 @@ export function AlbumTaskCard({
                     </Text>
                   </View>
                 ))}
-                {task.tags.length > 1 && (
+                {!is4Cols && task.tags.length > 1 && (
                   <View
                     style={{
-                      paddingHorizontal: is4Cols ? 2 : 3,
+                      paddingHorizontal: 3,
                       paddingVertical: 1,
                       borderRadius: 6,
                       backgroundColor: 'rgba(0,0,0,0.65)',
                       borderWidth: 0.5,
                       borderColor: 'rgba(255,255,255,0.2)',
+                      flexShrink: 0,
                     }}
                   >
-                    <Text style={{ fontSize: is4Cols ? 7 : is3Cols ? 8 : 9, color: '#8A8A8A', fontWeight: '700' }}>
+                    <Text style={{ fontSize: is3Cols ? 8 : 9, color: '#8A8A8A', fontWeight: '700' }}>
                       +{task.tags.length - 1}
                     </Text>
                   </View>

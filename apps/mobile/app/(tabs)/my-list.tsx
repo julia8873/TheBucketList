@@ -556,10 +556,11 @@ export default function MyListScreen() {
           deadline={item.deadline}
           description={item.description}
           participantsElement={
-            albumViews.gallery.showCollaborators && albumParticipants && albumParticipants.length > 0 && columns !== 4 ? (
+            albumViews.gallery.showCollaborators && albumParticipants && albumParticipants.length > 0 ? (
               <ParticipantsStack
                 participants={albumParticipants}
-                max={columns === 3 ? 2 : 2}
+                max={albumParticipants.length > 2 ? 1 : 2}
+                bubbleSize={columns === 4 ? 18 : columns === 3 ? 20 : 22}
                 size="xs"
                 ringColor="rgba(0,0,0,0.55)"
                 disabled={state.isAlbumSelectionMode}

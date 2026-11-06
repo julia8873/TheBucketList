@@ -209,11 +209,12 @@ function TaskGalleryItemCardComponent({
                     <Star size={starIconSize} color={gold[500]} fill={gold[500]} />
                   </View>
                 )}
-                {/* Fotos de perfil inline al lado del estado (solo en 2 y 3 cols) */}
-                {!is4Cols && visibleParticipants && (
+                {/* Fotos de perfil inline al lado del estado */}
+                {visibleParticipants && (
                   <ParticipantsStack
                     participants={visibleParticipants}
-                    max={is3Cols ? 2 : 2}
+                    max={visibleParticipants.length > 2 ? 1 : 2}
+                    bubbleSize={badgeSize}
                     size="xs"
                     ringColor="rgba(0,0,0,0.55)"
                     disabled={isSelectionMode}
@@ -225,7 +226,7 @@ function TaskGalleryItemCardComponent({
         </View>
 
         {/* Columna derecha: Prioridad arriba, Etiquetas debajo para no salirse */}
-        <View style={{ flexDirection: 'column', alignItems: 'flex-end', gap: is4Cols ? 2 : is3Cols ? 3 : 4, flex: 1, marginLeft: 6 }}>
+        <View style={{ flexDirection: 'column', alignItems: 'flex-end', gap: is4Cols ? 2 : is3Cols ? 3 : 4, flexShrink: 0, marginLeft: is4Cols ? 2 : 4 }}>
           {showPriority && (
             (is4Cols || is3Cols) ? (
               <View
@@ -263,14 +264,14 @@ function TaskGalleryItemCardComponent({
             )
           )}
           {showTags && itemTags && itemTags.length > 0 && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, maxWidth: '100%', justifyContent: 'flex-end' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: is4Cols ? 2 : 3, maxWidth: is4Cols ? 36 : '100%', justifyContent: 'flex-end' }}>
               {itemTags.slice(0, 1).map((t) => (
                 <View
                   key={t.id}
                   style={[
                     styles.galleryPriorityBadge,
                     (is3Cols || is4Cols) && {
-                      paddingHorizontal: is4Cols ? 3 : 4,
+                      paddingHorizontal: is4Cols ? 2 : 4,
                       paddingVertical: 1,
                       borderRadius: 6,
                       gap: 0,
@@ -280,8 +281,7 @@ function TaskGalleryItemCardComponent({
                     {
                       backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.92)',
                       borderColor: t.color || gold[400],
-                      maxWidth: itemTags.length > 1 ? '75%' : '100%',
-                      flexShrink: 1,
+                      flexShrink: 0,
                     },
                   ]}
                 >
@@ -290,20 +290,18 @@ function TaskGalleryItemCardComponent({
                       fontSize: is4Cols ? 9 : is3Cols ? 10 : 10,
                       color: t.color || (theme.dark ? '#F2EFE8' : '#141414'),
                       fontWeight: '600',
-                      flexShrink: 1,
                     }}
                     numberOfLines={1}
-                    ellipsizeMode="tail"
                   >
                     {is3Cols || is4Cols ? (t.emoji || t.name.slice(0, 2)) : `${t.emoji ? `${t.emoji} ` : ''}${t.name}`}
                   </Text>
                 </View>
               ))}
-              {itemTags.length > 1 && (
+              {!is4Cols && itemTags.length > 1 && (
                 <View
                   style={[
                     styles.galleryPriorityBadge,
-                    (is3Cols || is4Cols) && { paddingHorizontal: is4Cols ? 2 : 3, paddingVertical: 1, borderRadius: 6, gap: 0 },
+                    (is3Cols || is4Cols) && { paddingHorizontal: 3, paddingVertical: 1, borderRadius: 6, gap: 0 },
                     {
                       backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.92)',
                       borderColor: theme.colors.border,
@@ -311,7 +309,7 @@ function TaskGalleryItemCardComponent({
                     },
                   ]}
                 >
-                  <Text style={{ fontSize: is4Cols ? 7 : is3Cols ? 8 : 9, color: theme.dark ? '#8F8F8F' : '#666666', fontWeight: '700' }}>
+                  <Text style={{ fontSize: is3Cols ? 8 : 9, color: theme.dark ? '#8F8F8F' : '#666666', fontWeight: '700' }}>
                     +{itemTags.length - 1}
                   </Text>
                 </View>
