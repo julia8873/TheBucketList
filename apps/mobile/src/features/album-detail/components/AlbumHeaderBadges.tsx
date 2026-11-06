@@ -97,8 +97,7 @@ export function AlbumHeaderBadges({
         <Pressable
           style={[
             styles.chip,
-            styles.chipMuted,
-            { borderColor: `${priorityColor}66` },
+            { borderColor: `${priorityColor}80`, backgroundColor: `${priorityColor}1F` },
             canEdit && styles.chipPressable,
           ]}
           onPress={onOpenPriority}

@@ -63,20 +63,29 @@ function TaskGalleryItemCardComponent({
   const itemPriority = item.priority || 'medium';
   const itemPriorityColor =
     itemPriority === 'urgent'
-      ? '#DC2626'
+      ? (theme.dark ? '#F87171' : '#DC2626')
       : itemPriority === 'high'
-      ? '#EF4444'
+        ? (theme.dark ? '#F87171' : '#EF4444')
+        : itemPriority === 'low'
+          ? (theme.dark ? '#34D399' : '#10B981')
+          : (theme.dark ? '#FBBF24' : '#D4B13A');
+
+  const itemPriorityBg = theme.dark
+    ? itemPriority === 'urgent' || itemPriority === 'high'
+      ? 'rgba(239, 68, 68, 0.22)'
       : itemPriority === 'low'
-      ? '#10B981'
-      : '#D4B13A';
+        ? 'rgba(16, 185, 129, 0.22)'
+        : 'rgba(212, 177, 58, 0.22)'
+    : 'rgba(255, 255, 255, 0.92)';
+
   const itemPriorityLabel =
     itemPriority === 'urgent'
       ? t('common.urgent')
       : itemPriority === 'high'
-      ? t('common.high')
-      : itemPriority === 'low'
-      ? t('common.low')
-      : t('common.medium');
+        ? t('common.high')
+        : itemPriority === 'low'
+          ? t('common.low')
+          : t('common.medium');
 
   // Build meta text according to customization
   const metaParts: string[] = [];
@@ -273,10 +282,8 @@ function TaskGalleryItemCardComponent({
                     styles.galleryPriorityBadge,
                     {
                       borderColor: itemPriorityColor,
+                      backgroundColor: itemPriorityBg,
                       maxWidth: '100%',
-                    },
-                    !theme.dark && {
-                      backgroundColor: 'rgba(255,255,255,0.92)',
                     },
                   ]}
                 >

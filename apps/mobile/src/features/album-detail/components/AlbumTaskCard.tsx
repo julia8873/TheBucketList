@@ -10,6 +10,7 @@ import { styles } from '../styles/album-detail.styles';
 import { ParticipantsStack, useParticipantsOf } from '@/components/ItemParticipants';
 import { getTaskStatusType, getStatusConfig } from '@/utils/statusBadge';
 
+import { useTheme } from '@bucketlist/ui';
 import { useTranslation, resolveCounterLabel } from '@bucketlist/shared';
 
 function getBadgeText(dateStr?: string, t?: (k: any, o?: any) => string): string | null {
@@ -80,6 +81,7 @@ export function AlbumTaskCard({
   onLongPressTask,
 }: AlbumTaskCardProps) {
   const router = useRouter();
+  const { theme } = useTheme();
   const { t, i18n } = useTranslation();
   const locale = i18n.language?.startsWith('en') ? 'en-US' : 'es-ES';
   const isDone = task.isCompleted;
@@ -96,12 +98,21 @@ export function AlbumTaskCard({
   const itemPriority = task.priority || 'medium';
   const itemPriorityColor =
     itemPriority === 'urgent'
-      ? '#DC2626'
+      ? (theme.dark ? '#F87171' : '#DC2626')
       : itemPriority === 'high'
-        ? '#EF4444'
+        ? (theme.dark ? '#F87171' : '#EF4444')
         : itemPriority === 'low'
-          ? '#10B981'
-          : '#D4B13A';
+          ? (theme.dark ? '#34D399' : '#10B981')
+          : (theme.dark ? '#FBBF24' : '#D4B13A');
+
+  const itemPriorityBg = theme.dark
+    ? itemPriority === 'urgent' || itemPriority === 'high'
+      ? 'rgba(239, 68, 68, 0.22)'
+      : itemPriority === 'low'
+        ? 'rgba(16, 185, 129, 0.22)'
+        : 'rgba(212, 177, 58, 0.22)'
+    : 'rgba(255, 255, 255, 0.92)';
+
   const itemPriorityLabel =
     itemPriority === 'urgent'
       ? t('common.urgent')
@@ -121,12 +132,7 @@ export function AlbumTaskCard({
         paddingHorizontal: 7,
         paddingVertical: 2,
         borderRadius: 8,
-        backgroundColor:
-          itemPriority === 'urgent' || itemPriority === 'high'
-            ? 'rgba(239, 68, 68, 0.16)'
-            : itemPriority === 'low'
-              ? 'rgba(16, 185, 129, 0.16)'
-              : 'rgba(212, 177, 58, 0.16)',
+        backgroundColor: itemPriorityBg,
         borderWidth: 1,
         borderColor: itemPriorityColor,
       }}
@@ -350,7 +356,7 @@ export function AlbumTaskCard({
                     paddingHorizontal: 6,
                     paddingVertical: 2,
                     borderRadius: 8,
-                    backgroundColor: 'rgba(0,0,0,0.65)',
+                    backgroundColor: itemPriorityBg,
                     borderWidth: 1,
                     borderColor: itemPriorityColor,
                   }}

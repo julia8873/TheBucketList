@@ -1725,21 +1725,37 @@ export function useBucketDetailState() {
     if (titleToSave === null || !titleToSave.trim()) return;
     if (lastSavedTitle.current !== null && titleToSave.trim() === lastSavedTitle.current) return;
 
-    lastSavedTitle.current = titleToSave.trim();
+    const trimmed = titleToSave.trim();
+    lastSavedTitle.current = trimmed;
     queryClient.setQueryData(['bucketDetail', id], (oldData: any) =>
-      oldData ? { ...oldData, title: titleToSave.trim() } : oldData
+      oldData ? { ...oldData, title: trimmed } : oldData
     );
-    const { error } = await supabase.from('buckets').update({ title: titleToSave.trim() }).eq('id', id);
+    patchTasks(queryClient, [id], {
+      bucket: { title: trimmed },
+      task: { title: trimmed },
+    });
+    const { error } = await supabase.from('buckets').update({ title: trimmed }).eq('id', id);
     if (!error) {
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
       void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+      settleTaskCaches(queryClient);
     }
   };
 
   const handleTitleChange = (newTitle: string) => {
     pendingTitle.current = newTitle;
+    const trimmed = newTitle.trim();
+    if (trimmed) {
+      queryClient.setQueryData(['bucketDetail', id], (oldData: any) =>
+        oldData ? { ...oldData, title: trimmed } : oldData
+      );
+      patchTasks(queryClient, [id], {
+        bucket: { title: trimmed },
+        task: { title: trimmed },
+      });
+    }
     if (titleTimeout.current) clearTimeout(titleTimeout.current);
-    titleTimeout.current = setTimeout(flushTitleChange, 1500);
+    titleTimeout.current = setTimeout(flushTitleChange, 600);
   };
 
   const flushDescriptionChange = async () => {
@@ -1751,21 +1767,35 @@ export function useBucketDetailState() {
     if (descToSave === null) return;
     if (lastSavedDesc.current !== null && descToSave.trim() === (lastSavedDesc.current || '').trim()) return;
 
-    lastSavedDesc.current = descToSave.trim();
+    const trimmed = descToSave.trim();
+    lastSavedDesc.current = trimmed;
     queryClient.setQueryData(['bucketDetail', id], (oldData: any) =>
-      oldData ? { ...oldData, description: descToSave.trim() } : oldData
+      oldData ? { ...oldData, description: trimmed } : oldData
     );
-    const { error } = await supabase.from('buckets').update({ description: descToSave.trim() }).eq('id', id);
+    patchTasks(queryClient, [id], {
+      bucket: { description: trimmed },
+      task: { description: trimmed },
+    });
+    const { error } = await supabase.from('buckets').update({ description: trimmed }).eq('id', id);
     if (!error) {
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', id] });
       void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+      settleTaskCaches(queryClient);
     }
   };
 
   const handleDescriptionChange = (newDesc: string) => {
     pendingDesc.current = newDesc;
+    const trimmed = newDesc.trim();
+    queryClient.setQueryData(['bucketDetail', id], (oldData: any) =>
+      oldData ? { ...oldData, description: trimmed } : oldData
+    );
+    patchTasks(queryClient, [id], {
+      bucket: { description: trimmed },
+      task: { description: trimmed },
+    });
     if (descTimeout.current) clearTimeout(descTimeout.current);
-    descTimeout.current = setTimeout(flushDescriptionChange, 1500);
+    descTimeout.current = setTimeout(flushDescriptionChange, 600);
   };
 
   useEffect(() => {
