@@ -26,6 +26,7 @@ import {
   Card, ConfirmDialog, OptionDialog, PillToggle, Row, SectionTitle, ToggleRow,
 } from '../../src/components/SettingsParts';
 import { CloneTaskSettingsModal } from '../../src/components/CloneTaskSettingsModal';
+import { VisibilityGuideModal } from '../../src/components/VisibilityGuideModal';
 import { useIsAdmin } from '../../src/hooks/useCurrentUserProfile';
 import { useAdminReports } from '../../src/hooks/useBlockReport';
 import { OfficialBadge } from '../../src/components/OfficialBadge';
@@ -48,6 +49,7 @@ export default function SettingsScreen() {
 
   const [langOpen, setLangOpen] = useState(false);
   const [cloneSettingsOpen, setCloneSettingsOpen] = useState(false);
+  const [visibilityGuideOpen, setVisibilityGuideOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -223,6 +225,11 @@ export default function SettingsScreen() {
 
         <SectionTitle gold={t('settings.privacy')} />
         <Card>
+          <Row
+            title={t('settings.visibility_guide_row', { defaultValue: 'Cómo funciona la visibilidad' })}
+            subtitle={t('settings.visibility_guide_row_desc', { defaultValue: 'Explicación sobre cuentas privadas, tareas públicas y seguidores' })}
+            onPress={() => setVisibilityGuideOpen(true)}
+          />
           <ToggleRow
             title={t('settings.private_account')}
             subtitle={t('settings.private_account_desc')}
@@ -486,6 +493,11 @@ export default function SettingsScreen() {
       <CloneTaskSettingsModal
         visible={cloneSettingsOpen}
         onClose={() => setCloneSettingsOpen(false)}
+      />
+
+      <VisibilityGuideModal
+        visible={visibilityGuideOpen}
+        onClose={() => setVisibilityGuideOpen(false)}
       />
     </SafeAreaView>
   );
