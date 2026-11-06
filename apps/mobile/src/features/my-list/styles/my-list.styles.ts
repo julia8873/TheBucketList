@@ -321,10 +321,15 @@ export const styles = themedStyleSheet({
   compactRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 44,
+    minHeight: 52,
+    paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 12,
     borderWidth: 1,
+  },
+  compactRowCompact: {
+    minHeight: 40,
+    paddingVertical: 4,
   },
   compactRowCompleted: {
     opacity: 0.85,
@@ -342,9 +347,9 @@ export const styles = themedStyleSheet({
     borderColor: '#555',
   },
   compactTitle: {
-    flex: 1,
     fontFamily: 'Inter_500Medium',
     fontSize: 12,
+    lineHeight: 16,
     color: '#F5F5F5',
   },
   compactTitleCompleted: {

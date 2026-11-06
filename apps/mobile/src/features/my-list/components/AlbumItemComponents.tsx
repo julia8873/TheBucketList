@@ -136,6 +136,12 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
   const visibleParticipants =
     (customization?.showCollaborators ?? false) && participants && participants.length > 0 ? participants : undefined;
 
+  const hasDescription = !!(customization?.showDescription && item.description && item.description.trim().length > 0);
+  const hasPriority = !!((customization?.showPriority ?? false) && item.priority);
+  const hasDate = !!(customization?.showDate && item.created_at);
+  const hasProgress = !!((customization?.showProgress ?? false) && total > 0);
+  const hasBadgesBelowTitle = hasDescription || hasPriority || hasDate || hasProgress;
+
   return (
     <Pressable
       key={item.id}
@@ -143,6 +149,7 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
       onLongPress={onLongPress}
       style={[
         styles.compactRow,
+        !hasBadgesBelowTitle && styles.compactRowCompact,
         {
           backgroundColor: isCompleted
             ? theme.colors.surfaceSunken
@@ -200,15 +207,89 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
         </View>
       )}
 
-      <View style={{ flex: 1, justifyContent: 'center' }}>
-        <Text numberOfLines={1} style={[styles.compactTitle, { color: isCompleted ? theme.colors.foregroundMuted : theme.colors.foreground }]}>
+      <View style={{ flex: 1, justifyContent: 'center', minHeight: hasBadgesBelowTitle ? 38 : undefined }}>
+        <Text
+          numberOfLines={hasBadgesBelowTitle ? (hasDescription ? 1 : 2) : 1}
+          style={[styles.compactTitle, { color: isCompleted ? theme.colors.foregroundMuted : theme.colors.foreground }]}
+        >
           {item.title}
         </Text>
-        {customization?.showDescription && item.description ? (
+        {hasDescription ? (
           <Text numberOfLines={1} style={{ fontSize: 11, color: theme.colors.foregroundMuted, marginTop: 1 }}>
             {item.description.trim()}
           </Text>
         ) : null}
+        {(hasPriority || hasProgress || hasDate) && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
+            {hasPriority && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 3,
+                  paddingHorizontal: 6,
+                  paddingVertical: 1.5,
+                  borderRadius: 6,
+                  backgroundColor:
+                    item.priority === 'high' || item.priority === 'urgent'
+                      ? 'rgba(239, 68, 68, 0.14)'
+                      : item.priority === 'low'
+                      ? 'rgba(16, 185, 129, 0.14)'
+                      : 'rgba(212, 177, 58, 0.14)',
+                  borderWidth: 1,
+                  borderColor:
+                    item.priority === 'high' || item.priority === 'urgent'
+                      ? '#EF4444'
+                      : item.priority === 'low'
+                      ? '#10B981'
+                      : theme.colors.primary,
+                }}
+              >
+                <View
+                  style={{
+                    width: 5,
+                    height: 5,
+                    borderRadius: 2.5,
+                    backgroundColor:
+                      item.priority === 'high' || item.priority === 'urgent'
+                        ? '#EF4444'
+                        : item.priority === 'low'
+                        ? '#10B981'
+                        : theme.colors.primary,
+                  }}
+                />
+                <Text
+                  style={{
+                    fontSize: 10,
+                    fontWeight: '700',
+                    color:
+                      item.priority === 'high' || item.priority === 'urgent'
+                        ? '#EF4444'
+                        : item.priority === 'low'
+                        ? '#10B981'
+                        : theme.colors.primary,
+                  }}
+                >
+                  {item.priority === 'high' || item.priority === 'urgent'
+                    ? t('common.high')
+                    : item.priority === 'low'
+                    ? t('common.low')
+                    : t('common.medium')}
+                </Text>
+              </View>
+            )}
+            {hasProgress && (
+              <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: theme.colors.border, overflow: 'hidden' }}>
+                <View style={{ width: `${Math.round((completed / total) * 100)}%`, height: '100%', backgroundColor: theme.colors.primary }} />
+              </View>
+            )}
+            {hasDate && (
+              <Text style={{ fontSize: 10, color: theme.colors.foregroundMuted }}>
+                {new Date(item.created_at).toLocaleDateString(i18n.language?.startsWith('en') ? 'en-US' : 'es-ES', { day: 'numeric', month: 'short' })}
+              </Text>
+            )}
+          </View>
+        )}
       </View>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 8 }}>
@@ -221,63 +302,6 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
           />
         )}
         {(customization?.showBadges ?? true) && item.is_closed ? <Lock size={12} color={theme.colors.foregroundMuted} /> : null}
-        {(customization?.showPriority ?? false) && item.priority && (
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 3,
-              paddingHorizontal: 6,
-              paddingVertical: 1.5,
-              borderRadius: 6,
-              backgroundColor:
-                item.priority === 'high' || item.priority === 'urgent'
-                  ? 'rgba(239, 68, 68, 0.14)'
-                  : item.priority === 'low'
-                  ? 'rgba(16, 185, 129, 0.14)'
-                  : 'rgba(212, 177, 58, 0.14)',
-              borderWidth: 1,
-              borderColor:
-                item.priority === 'high' || item.priority === 'urgent'
-                  ? '#EF4444'
-                  : item.priority === 'low'
-                  ? '#10B981'
-                  : theme.colors.primary,
-            }}
-          >
-            <View
-              style={{
-                width: 5,
-                height: 5,
-                borderRadius: 2.5,
-                backgroundColor:
-                  item.priority === 'high' || item.priority === 'urgent'
-                    ? '#EF4444'
-                    : item.priority === 'low'
-                    ? '#10B981'
-                    : theme.colors.primary,
-              }}
-            />
-            <Text
-              style={{
-                fontSize: 10,
-                fontWeight: '700',
-                color:
-                  item.priority === 'high' || item.priority === 'urgent'
-                    ? '#EF4444'
-                    : item.priority === 'low'
-                    ? '#10B981'
-                    : theme.colors.primary,
-              }}
-            >
-              {item.priority === 'high' || item.priority === 'urgent'
-                ? t('common.high')
-                : item.priority === 'low'
-                ? t('common.low')
-                : t('common.medium')}
-            </Text>
-          </View>
-        )}
         {(customization?.showTaskCount ?? true) && (
           <View
             style={{
@@ -299,16 +323,6 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
               {completed}/{total}
             </Text>
           </View>
-        )}
-        {(customization?.showProgress ?? false) && total > 0 && (
-          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: theme.colors.border, overflow: 'hidden' }}>
-            <View style={{ width: `${Math.round((completed / total) * 100)}%`, height: '100%', backgroundColor: theme.colors.primary }} />
-          </View>
-        )}
-        {customization?.showDate && item.created_at && (
-          <Text style={{ fontSize: 11, color: theme.colors.foregroundMuted }}>
-            {new Date(item.created_at).toLocaleDateString(i18n.language?.startsWith('en') ? 'en-US' : 'es-ES', { day: 'numeric', month: 'short' })}
-          </Text>
         )}
         {onToggleSave ? (
           <Pressable hitSlop={8} onPress={onToggleSave}>
