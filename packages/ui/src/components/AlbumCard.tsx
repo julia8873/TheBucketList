@@ -295,8 +295,6 @@ export function AlbumCard({
         </View>
       ) : (
         <View style={[styles.topLeftBadges, is4Cols && { top: 4, left: 4 }, is3Cols && { top: 6, left: 6 }]}>
-          {participantsElement}
-
           {showBadges && (
             <>
               {!isClosed && (
@@ -327,6 +325,8 @@ export function AlbumCard({
               )}
             </>
           )}
+
+          {participantsElement}
         </View>
       )}
 
@@ -704,9 +704,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     left: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 4,
     zIndex: 2,
   },
   sharedBadge: {

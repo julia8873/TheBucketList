@@ -159,7 +159,8 @@ function TaskGalleryItemCardComponent({
 
       {/* Badges superiores */}
       <View style={[styles.galleryTopBadges, is4Cols && { top: 4, left: 4, right: 4 }, is3Cols && { top: 5, left: 5, right: 5 }]}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: is4Cols ? 3 : is3Cols ? 4 : 6 }}>
+        {/* Columna izquierda: Estado y Favorito arriba, Fotos de perfil debajo */}
+        <View style={{ flexDirection: 'column', alignItems: 'flex-start', gap: is4Cols ? 2 : is3Cols ? 3 : 4, flexShrink: 0 }}>
           {isSelectionMode ? (
             <View
               style={{
@@ -177,48 +178,57 @@ function TaskGalleryItemCardComponent({
             </View>
           ) : (
             <>
+              {/* Fila superior izquierda: Estado y Favorito */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: is4Cols ? 3 : is3Cols ? 4 : 4 }}>
+                {showStatus && (
+                  <View
+                    style={[
+                      styles.galleryCompletedBadge,
+                      {
+                        width: badgeSize,
+                        height: badgeSize,
+                        borderRadius: badgeSize / 2,
+                        backgroundColor: statusCfg.badgeBg,
+                      },
+                    ]}
+                  >
+                    {statusCfg.renderGalleryIcon(checkIconSize)}
+                  </View>
+                )}
+                {isFav && showFavorite && (
+                  <View
+                    style={[
+                      styles.galleryFavBadge,
+                      { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2 },
+                      !theme.dark && {
+                        backgroundColor: 'rgba(255,255,255,0.92)',
+                        borderColor: gold[400],
+                      },
+                    ]}
+                  >
+                    <Star size={starIconSize} color={gold[500]} fill={gold[500]} />
+                  </View>
+                )}
+              </View>
+
+              {/* Fotos de perfil debajo */}
               {visibleParticipants && (
-                <ParticipantsStack
-                  participants={visibleParticipants}
-                  max={is4Cols ? 1 : is3Cols ? 2 : 2}
-                  size="xs"
-                  ringColor="rgba(0,0,0,0.55)"
-                  disabled={isSelectionMode}
-                />
-              )}
-              {isFav && showFavorite && (
-                <View
-                  style={[
-                    styles.galleryFavBadge,
-                    { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2 },
-                    !theme.dark && {
-                      backgroundColor: 'rgba(255,255,255,0.92)',
-                      borderColor: gold[400],
-                    },
-                  ]}
-                >
-                  <Star size={starIconSize} color={gold[500]} fill={gold[500]} />
-                </View>
-              )}
-              {showStatus && (
-                <View
-                  style={[
-                    styles.galleryCompletedBadge,
-                    {
-                      width: badgeSize,
-                      height: badgeSize,
-                      borderRadius: badgeSize / 2,
-                      backgroundColor: statusCfg.badgeBg,
-                    },
-                  ]}
-                >
-                  {statusCfg.renderGalleryIcon(checkIconSize)}
+                <View style={{ marginTop: 1 }}>
+                  <ParticipantsStack
+                    participants={visibleParticipants}
+                    max={is4Cols ? 1 : is3Cols ? 2 : 2}
+                    size="xs"
+                    ringColor="rgba(0,0,0,0.55)"
+                    disabled={isSelectionMode}
+                  />
                 </View>
               )}
             </>
           )}
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: is4Cols ? 2 : 4, flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: is4Cols ? '55%' : '65%' }}>
+
+        {/* Columna derecha: Prioridad arriba, Etiquetas debajo para no salirse */}
+        <View style={{ flexDirection: 'column', alignItems: 'flex-end', gap: is4Cols ? 2 : is3Cols ? 3 : 4, flex: 1, marginLeft: 6 }}>
           {showPriority && (
             is4Cols ? (
               <View
@@ -238,50 +248,66 @@ function TaskGalleryItemCardComponent({
                   is3Cols && { paddingHorizontal: 4, paddingVertical: 1, gap: 3 },
                   {
                     borderColor: itemPriorityColor,
+                    maxWidth: '100%',
                   },
                   !theme.dark && {
                     backgroundColor: 'rgba(255,255,255,0.92)',
                   },
                 ]}
               >
-                <View style={{ width: is3Cols ? 4 : 5, height: is3Cols ? 4 : 5, borderRadius: 2.5, backgroundColor: itemPriorityColor }} />
-                <Text style={[styles.galleryPriorityText, is3Cols && { fontSize: 9 }, { color: itemPriorityColor }]}>{itemPriorityLabel}</Text>
+                <View style={{ width: is3Cols ? 4 : 5, height: is3Cols ? 4 : 5, borderRadius: 2.5, backgroundColor: itemPriorityColor, flexShrink: 0 }} />
+                <Text
+                  style={[styles.galleryPriorityText, is3Cols && { fontSize: 9 }, { color: itemPriorityColor, flexShrink: 1 }]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {itemPriorityLabel}
+                </Text>
               </View>
             )
           )}
           {!is4Cols && showTags && itemTags && itemTags.length > 0 && (
-            itemTags.slice(0, 1).map((t) => (
-              <View
-                key={t.id}
-                style={[
-                  styles.galleryPriorityBadge,
-                  is3Cols && { paddingHorizontal: 4, paddingVertical: 1 },
-                  {
-                    backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.92)',
-                    borderColor: t.color || gold[400],
-                  },
-                ]}
-              >
-                <Text style={{ fontSize: is3Cols ? 9 : 10, color: t.color || (theme.dark ? '#F2EFE8' : '#141414'), fontWeight: '600' }} numberOfLines={1}>
-                  {t.emoji ? `${t.emoji} ` : ''}{t.name}
-                </Text>
-              </View>
-            ))
-          )}
-          {!is4Cols && showTags && itemTags && itemTags.length > 1 && (
-            <View
-              style={[
-                styles.galleryPriorityBadge,
-                is3Cols && { paddingHorizontal: 3, paddingVertical: 1 },
-                {
-                  backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.92)',
-                  borderColor: theme.colors.border,
-                },
-              ]}
-            >
-              <Text style={{ fontSize: is3Cols ? 9 : 10, color: theme.colors.foregroundMuted, fontWeight: '600' }}>
-                +{itemTags.length - 1}
-              </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, maxWidth: '100%', justifyContent: 'flex-end' }}>
+              {itemTags.slice(0, 1).map((t) => (
+                <View
+                  key={t.id}
+                  style={[
+                    styles.galleryPriorityBadge,
+                    is3Cols && { paddingHorizontal: 4, paddingVertical: 1 },
+                    {
+                      backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.92)',
+                      borderColor: t.color || gold[400],
+                      maxWidth: itemTags.length > 1 ? '75%' : '100%',
+                      flexShrink: 1,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={{ fontSize: is3Cols ? 9 : 10, color: t.color || (theme.dark ? '#F2EFE8' : '#141414'), fontWeight: '600', flexShrink: 1 }}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {t.emoji ? `${t.emoji} ` : ''}{t.name}
+                  </Text>
+                </View>
+              ))}
+              {itemTags.length > 1 && (
+                <View
+                  style={[
+                    styles.galleryPriorityBadge,
+                    is3Cols && { paddingHorizontal: 3, paddingVertical: 1 },
+                    {
+                      backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.92)',
+                      borderColor: theme.colors.border,
+                      flexShrink: 0,
+                    },
+                  ]}
+                >
+                  <Text style={{ fontSize: is3Cols ? 8 : 9, color: theme.dark ? '#8F8F8F' : '#666666', fontWeight: '700' }}>
+                    +{itemTags.length - 1}
+                  </Text>
+                </View>
+              )}
             </View>
           )}
         </View>
