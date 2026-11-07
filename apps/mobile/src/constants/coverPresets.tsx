@@ -129,7 +129,7 @@ export function getPresetByKey(key: string | null | undefined): CoverPreset | un
     morado: '#8E24AA',
   };
   if (solidMap[k]) {
-    const hex = solidMap[k];
+    const hex = solidMap[k] as string;
     return {
       key: k,
       label: k,

@@ -1,7 +1,7 @@
 import { themedStyleSheet, HEART_COLOR } from '@bucketlist/ui';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ActivityIndicator, FlatList, Pressable, Text, AppState } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Typography, useTheme, spacing, Avatar, Button, Icon, PageTitle, Skeleton, gold, toast, confirm } from '@bucketlist/ui';
 import { Check, CheckCheck, Heart, MessageCircle, UserPlus, CheckCircle, Bell, Users, X, Folder, HardDrive, ShieldAlert } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -39,25 +39,27 @@ export default function NotificationsScreen() {
 
   const [permStatus, setPermStatus] = useState<NotificationPermissionStatus | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
-    const fetchPerms = async () => {
-      const res = await checkNotificationPermissionsAsync();
-      if (isMounted) setPermStatus(res);
-    };
-    fetchPerms();
+  const fetchPerms = useCallback(async () => {
+    const res = await checkNotificationPermissionsAsync();
+    setPermStatus(res);
+  }, []);
 
+  // Re-chequea permisos cada vez que el usuario navega a esta pestaña
+  useFocusEffect(
+    useCallback(() => {
+      void fetchPerms();
+    }, [fetchPerms]),
+  );
+
+  useEffect(() => {
+    // Re-chequea al volver desde Settings (AppState active)
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
-        fetchPerms();
+        void fetchPerms();
       }
     });
-
-    return () => {
-      isMounted = false;
-      sub.remove();
-    };
-  }, []);
+    return () => sub.remove();
+  }, [fetchPerms]);
 
   const handleEnablePermissions = async () => {
     if (!permStatus?.granted && !permStatus?.canAskAgain) {
@@ -83,7 +85,7 @@ export default function NotificationsScreen() {
     setRespondingId(notification.id);
     // Optimista (solo en caché): los botones desaparecen al instante. Se marca como leída en la
     // base de datos únicamente cuando la respuesta termina bien; si falla, se restaura.
-    queryClient.setQueriesData<any[]>({ queryKey: ['notifications'] }, (old) =>
+    queryClient.setQueriesData<any[]>({ queryKey: ['notifications'] }, (old: any[] | undefined) =>
       Array.isArray(old) ? old.map((n) => (n.id === notification.id ? { ...n, is_read: true } : n)) : old,
     );
     try {

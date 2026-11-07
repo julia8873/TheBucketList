@@ -116,7 +116,7 @@ export function useMarkAsRead() {
         queryClient.setQueryData(key, old.map((n) => (n.id === id ? { ...n, is_read: true } : n)));
       });
       if (wasUnread) {
-        queryClient.setQueriesData<number>({ queryKey: UNREAD_COUNT_KEY }, (old) =>
+        queryClient.setQueriesData<number>({ queryKey: UNREAD_COUNT_KEY }, (old: number | undefined) =>
           typeof old === 'number' ? Math.max(0, old - 1) : old,
         );
       }

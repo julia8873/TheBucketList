@@ -77,6 +77,18 @@ export async function requestNotificationPermissionsAsync(): Promise<Notificatio
       allowSound: true,
     },
   });
+
+  // En Android, requestPermissionsAsync a veces devuelve el estado anterior en lugar del nuevo
+  // (race condition con el SO). Hacemos una segunda lectura para obtener el estado real.
+  if (Platform.OS === 'android') {
+    const refreshed = await Notifications.getPermissionsAsync();
+    return {
+      status: refreshed.status,
+      granted: refreshed.granted || refreshed.status === 'granted',
+      canAskAgain: refreshed.canAskAgain,
+    };
+  }
+
   return {
     status: settings.status,
     granted: settings.granted || settings.status === 'granted',

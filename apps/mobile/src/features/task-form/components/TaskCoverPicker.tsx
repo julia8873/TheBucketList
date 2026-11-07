@@ -219,7 +219,7 @@ export function TaskCoverPicker({
       morado: '#8E24AA',
     };
     if (solidMap[name]) {
-      currentSolidHex = solidMap[name];
+      currentSolidHex = solidMap[name] as string;
     }
   }
 
