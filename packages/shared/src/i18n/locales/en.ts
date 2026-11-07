@@ -1221,6 +1221,8 @@ const en = {
     visibility_guide_collabs_desc: 'People you invite to a task can always see and participate in it, even if the task is private or your account is private.',
     visibility_guide_albums_title: 'Tasks inside albums',
     visibility_guide_albums_desc: 'Each task keeps its own visibility inside the album. If an album contains private tasks, only you (and its collaborators) will see them.',
+    visibility_guide_private_album_title: 'Private album with public or followers tasks',
+    visibility_guide_private_album_desc: 'If an album is private, the album itself will not be visible to anyone else (only you and its invited collaborators). However, any public or followers-only tasks inside will still be visible individually according to their own settings, but no one will see the album or know they belong to it.',
     private_account: 'Private account',
     private_account_desc: 'You approve who can follow you',
     public_default: 'Public tasks by default',

@@ -163,7 +163,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const type = currentToast?.type ?? 'success';
   const atTop = currentToast?.position === 'top' || keyboardVisible;
-  const topOffset = Platform.OS === 'ios' ? 64 : (StatusBar.currentHeight ?? 24) + 16;
+  const topOffset = Platform.OS === 'ios' ? 76 : (StatusBar.currentHeight ?? 24) + 36;
   // Ancho explícito (nunca colapsa a 0 aunque el contenedor padre no tenga tamaño).
   // En web limitamos a 420 px para que no ocupe toda la pantalla del navegador.
   const maxToastWidth = Platform.OS === 'web' ? 420 : windowWidth - 32;

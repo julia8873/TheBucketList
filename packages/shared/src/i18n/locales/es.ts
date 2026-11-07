@@ -1221,6 +1221,8 @@ const es = {
     visibility_guide_collabs_desc: 'Las personas que invites a una tarea siempre podrán verla y participar en ella, incluso si la tarea es privada o si tu cuenta es privada.',
     visibility_guide_albums_title: 'Tareas dentro de álbumes',
     visibility_guide_albums_desc: 'Cada tarea conserva su propia visibilidad dentro del álbum. Si un álbum contiene tareas privadas, solo tú (y sus colaboradores) las veréis.',
+    visibility_guide_private_album_title: 'Álbum privado con tareas públicas o para seguidores',
+    visibility_guide_private_album_desc: 'Si un álbum es privado, nadie podrá ver ni abrir el álbum (solo tú y los colaboradores que invites). Sin embargo, las tareas públicas o para seguidores que estén dentro seguirán siendo visibles de forma individual según su propia configuración, pero nadie podrá ver el álbum ni sabrá que pertenecen a él.',
     private_account: 'Cuenta privada',
     private_account_desc: 'Aprobarás quién puede seguirte',
     public_default: 'Tareas públicas por defecto',

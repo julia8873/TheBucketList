@@ -18,9 +18,11 @@ import {
   UserCheck,
   FolderOpen,
   HelpCircle,
+  FolderLock,
 } from 'lucide-react-native';
 import { fontFamily, gold, useTheme } from '@bucketlist/ui';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card, SectionTitle } from './SettingsParts';
 
 interface VisibilityGuideModalProps {
@@ -31,12 +33,18 @@ interface VisibilityGuideModalProps {
 export function VisibilityGuideModal({ visible, onClose }: VisibilityGuideModalProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   const dims = useWindowDimensions();
   const win = Dimensions.get('window');
   const w = dims.width > 0 ? dims.width : win.width;
   const h = dims.height > 0 ? dims.height : win.height;
   const dialogWidth = Math.max(300, Math.min(460, w - 32));
+
+  // Holgura superior e inferior amplia para que nunca quede pegado a la parte de arriba del móvil (notch / status bar)
+  const topPadding = Math.max(insets.top, 32) + 24;
+  const bottomPadding = Math.max(insets.bottom, 24) + 24;
+  const dialogMaxHeight = Math.max(300, h - topPadding - bottomPadding);
 
   return (
     <Modal
@@ -46,14 +54,24 @@ export function VisibilityGuideModal({ visible, onClose }: VisibilityGuideModalP
       statusBarTranslucent
       onRequestClose={onClose}
     >
-      <View style={[styles.backdrop, { width: w, height: h }]}>
+      <View
+        style={[
+          styles.backdrop,
+          {
+            width: w,
+            height: h,
+            paddingTop: topPadding,
+            paddingBottom: bottomPadding,
+          },
+        ]}
+      >
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <View
           style={[
             styles.container,
             {
               width: dialogWidth,
-              maxHeight: Math.max(360, h - 48),
+              maxHeight: dialogMaxHeight,
               backgroundColor: theme.dark ? '#141414' : '#F6F4EE',
               borderColor: theme.colors.border,
             },
@@ -215,6 +233,26 @@ export function VisibilityGuideModal({ visible, onClose }: VisibilityGuideModalP
                     {t('settings.visibility_guide_albums_desc', {
                       defaultValue:
                         'Cada tarea conserva su propia visibilidad dentro del álbum. Si un álbum contiene tareas privadas, solo tú (y sus colaboradores) las veréis.',
+                    })}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Álbum privado con tareas públicas o para seguidores */}
+              <View style={[styles.levelRow, styles.rowBorderTop, { borderTopColor: theme.colors.border }]}>
+                <View style={[styles.iconBadge, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
+                  <FolderLock size={18} color="#EF4444" />
+                </View>
+                <View style={styles.levelContent}>
+                  <Text style={[styles.levelTitle, { color: theme.colors.foreground }]}>
+                    {t('settings.visibility_guide_private_album_title', {
+                      defaultValue: 'Álbum privado con tareas públicas o para seguidores',
+                    })}
+                  </Text>
+                  <Text style={[styles.levelDesc, { color: theme.colors.foregroundMuted }]}>
+                    {t('settings.visibility_guide_private_album_desc', {
+                      defaultValue:
+                        'Si un álbum es privado, nadie podrá ver ni abrir el álbum (solo tú y los colaboradores que invites). Sin embargo, las tareas públicas o para seguidores que estén dentro seguirán siendo visibles de forma individual según su propia configuración, pero nadie podrá ver el álbum ni sabrá que pertenecen a él.',
                     })}
                   </Text>
                 </View>
