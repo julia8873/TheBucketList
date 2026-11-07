@@ -185,4 +185,96 @@ export const friendsApi = {
       return person ? [{ ...person, follow_status: mine.get(person.id) ?? ('none' as FollowStatus), public_count: 0 }] : [];
     });
   },
+
+  /** Usuarios recomendados: usuarios seguidos por tus amigos y que tú no sigues. Máximo 5. */
+  getRecommendedUsers: async (userId: string): Promise<PersonResult[]> => {
+    // 1. Obtener a quién sigue el usuario (amigos)
+    const { data: myFollows, error: myFollowsErr } = await supabase
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', userId)
+      .eq('status', 'accepted');
+
+    if (myFollowsErr) throw myFollowsErr;
+
+    const myFollowingIds = (myFollows ?? [])
+      .map((r: any) => r.following_id)
+      .filter((id: any): id is string => Boolean(id));
+
+    if (myFollowingIds.length === 0) {
+      return [];
+    }
+
+    // 2. Obtener a quién siguen esos amigos
+    const { data: friendsFollows, error: friendsFollowsErr } = await supabase
+      .from('follows')
+      .select('following_id')
+      .in('follower_id', myFollowingIds)
+      .eq('status', 'accepted');
+
+    if (friendsFollowsErr) throw friendsFollowsErr;
+
+    // 3. Excluir al usuario actual y a los que ya sigue
+    const excludedIds = new Set(myFollowingIds);
+    excludedIds.add(userId);
+
+    const countMap = new Map<string, number>();
+    for (const row of (friendsFollows ?? []) as any[]) {
+      const fid = row.following_id;
+      if (!fid || excludedIds.has(fid)) continue;
+      countMap.set(fid, (countMap.get(fid) ?? 0) + 1);
+    }
+
+    if (countMap.size === 0) {
+      return [];
+    }
+
+    // 4. Ordenar por frecuencia (más amigos en común que los siguen) y limitar a máx 5
+    const sortedCandidateIds = Array.from(countMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([id]) => id);
+
+    // 5. Cargar perfiles y comprobar si hay solicitudes pendientes
+    const [profilesRes, pendingRes] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select(`${PERSON_FIELDS}, visibility`)
+        .in('id', sortedCandidateIds),
+      supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', userId)
+        .in('following_id', sortedCandidateIds)
+        .eq('status', 'pending'),
+    ]);
+
+    if (profilesRes.error) throw profilesRes.error;
+
+    const pendingSet = new Set(
+      (pendingRes.data ?? []).map((r: any) => r.following_id as string),
+    );
+
+    const profileMap = new Map<string, any>(
+      (profilesRes.data ?? []).map((p: any) => [p.id, p]),
+    );
+
+    const result: PersonResult[] = [];
+    for (const cid of sortedCandidateIds) {
+      const prof = profileMap.get(cid);
+      if (prof) {
+        result.push({
+          id: prof.id,
+          username: prof.username,
+          display_name: prof.display_name,
+          avatar_url: prof.avatar_url,
+          visibility: prof.visibility,
+          public_count: 0,
+          follow_status: pendingSet.has(prof.id) ? 'pending' : 'none',
+        });
+      }
+    }
+
+    return result;
+  },
 };

@@ -30,6 +30,9 @@ interface FriendsAccountsTabProps {
   onOpenProfile: (id: string) => void;
   onFollowPress: (person: PersonResult) => void;
   currentUserId?: string;
+  isOtherUser?: boolean;
+  recommendedData?: PersonResult[];
+  recommendedLoading?: boolean;
   ideasData?: any[];
   ideasLoading?: boolean;
 }
@@ -50,6 +53,9 @@ export function FriendsAccountsTab({
   onOpenProfile,
   onFollowPress,
   currentUserId,
+  isOtherUser = false,
+  recommendedData = [],
+  recommendedLoading = false,
   ideasData = [],
   ideasLoading = false,
 }: FriendsAccountsTabProps) {
@@ -77,6 +83,60 @@ export function FriendsAccountsTab({
 
     return (
       <View>
+        {kind === 'following' && !isOtherUser && (
+          <View style={{ marginBottom: 20 }}>
+            <SectionLabel
+              highlight={t('friends.recommended_highlight', { defaultValue: 'RECOMMENDED' })}
+              rest={t('friends.recommended_rest', { defaultValue: 'USERS' })}
+              style={styles.sectionLabel}
+            />
+            {recommendedLoading ? (
+              <View style={{ marginTop: 4 }}>
+                <UserRowSkeleton />
+                <UserRowSkeleton />
+              </View>
+            ) : recommendedData && recommendedData.length > 0 ? (
+              recommendedData.slice(0, 5).map((person) => {
+                const isSelf = !!activeUserId && person.id === activeUserId;
+                return (
+                  <PersonRow
+                    key={`rec-${person.id}`}
+                    person={person}
+                    subtitle={`@${person.username}`}
+                    onPress={() => onOpenProfile(person.id)}
+                    right={
+                      isSelf ? null : (
+                        <FollowButton
+                          status={person.follow_status}
+                          isPrivate={person.visibility === 'private'}
+                          onPress={() => onFollowPress(person)}
+                        />
+                      )
+                    }
+                  />
+                );
+              })
+            ) : (
+              <Text
+                style={[
+                  styles.empty,
+                  { color: theme.colors.foregroundMuted, paddingVertical: 10, paddingHorizontal: 4 },
+                ]}
+              >
+                {t('friends.no_recommended_users', { defaultValue: 'No recommended users' })}
+              </Text>
+            )}
+          </View>
+        )}
+
+        {kind === 'following' && !isOtherUser && list.length > 0 && (
+          <SectionLabel
+            highlight={t('friends.following_highlight', { defaultValue: 'FOLLOWING' })}
+            rest={t('friends.following_rest', { defaultValue: '' })}
+            style={styles.sectionLabel}
+          />
+        )}
+
         {loading ? (
           <View style={{ marginTop: 8 }}>
             <UserRowSkeleton />

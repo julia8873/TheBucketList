@@ -17,6 +17,7 @@ import {
   usePeopleSearch,
   useRejectRequest,
   useProfileStats,
+  useRecommendedUsers,
 } from '../src/hooks/useFriends';
 import { useFollowUser, useUnfollowUser } from '../src/hooks/useSocial';
 import { useSearchFeed } from '../src/hooks/useFeed';
@@ -94,6 +95,7 @@ export default function FriendsScreen() {
   const followers = useConnections(targetUserId, 'followers', user?.id);
   const incoming = useIncomingRequests(user?.id);
   const outgoing = useOutgoingRequests(user?.id);
+  const recommended = useRecommendedUsers(isOtherUser ? undefined : user?.id);
   const accept = useAcceptRequest(user?.id);
   const reject = useRejectRequest(user?.id);
   const follow = useFollowUser();
@@ -147,6 +149,7 @@ export default function FriendsScreen() {
         outgoing.refetch(),
         following.refetch(),
         followers.refetch(),
+        recommended.refetch(),
       ]);
     } finally {
       setManualRefreshing(false);
@@ -285,6 +288,7 @@ export default function FriendsScreen() {
         ) : term.length >= 2 ? (
           <FriendsAccountsTab
             currentUserId={user?.id}
+            isOtherUser={isOtherUser}
             term={term}
             kind={tab === 'requests' ? 'following' : tab}
             onChangeKind={(k) => setTab(k)}
@@ -292,6 +296,8 @@ export default function FriendsScreen() {
             followingLoading={following.isLoading}
             followersData={followers.data}
             followersLoading={followers.isLoading}
+            recommendedData={recommended.data}
+            recommendedLoading={recommended.isLoading}
             searchData={search.data}
             searchLoading={search.isLoading}
             searchError={search.isError}
@@ -335,6 +341,7 @@ export default function FriendsScreen() {
         ) : (
           <FriendsAccountsTab
             currentUserId={user?.id}
+            isOtherUser={isOtherUser}
             term={term}
             kind={tab}
             onChangeKind={(k) => setTab(k)}
@@ -342,6 +349,8 @@ export default function FriendsScreen() {
             followingLoading={following.isLoading}
             followersData={followers.data}
             followersLoading={followers.isLoading}
+            recommendedData={recommended.data}
+            recommendedLoading={recommended.isLoading}
             searchData={search.data}
             searchLoading={search.isLoading}
             searchError={search.isError}

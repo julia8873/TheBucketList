@@ -42,6 +42,16 @@ export function useOutgoingRequests(userId?: string) {
   });
 }
 
+/** Usuarios recomendados (seguidos por amigos y que el usuario no sigue). */
+export function useRecommendedUsers(userId?: string) {
+  return useQuery({
+    queryKey: [...FRIENDS_QUERY_KEY, 'recommended', userId],
+    queryFn: () => friendsApi.getRecommendedUsers(userId!),
+    enabled: !!userId,
+    staleTime: 60_000,
+  });
+}
+
 /** Nº de solicitudes recibidas pendientes (para "2 solicitudes" del feed). */
 export function useIncomingRequestCount(userId?: string) {
   return useQuery({
