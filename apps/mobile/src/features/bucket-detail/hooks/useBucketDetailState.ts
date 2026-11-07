@@ -447,6 +447,14 @@ export function useBucketDetailState() {
   };
 
   let photos: any[] = [...(bucket?.bucket_photos || [])];
+  if (!canEdit) {
+    photos = photos.filter((p: any) => {
+      const vis = p.visibility || 'public';
+      if (vis === 'public') return true;
+      if (vis === 'followers') return isFollower;
+      return false;
+    });
+  }
   if (photoSearchQuery.trim()) {
     const q = photoSearchQuery.toLowerCase();
     photos = photos.filter((p: any) => p.title?.toLowerCase().includes(q));
@@ -962,6 +970,7 @@ export function useBucketDetailState() {
           size_bytes: processed.original.sizeBytes,
           thumb_size_bytes: processed.thumbnail.sizeBytes,
           position: nextPosition++,
+          visibility: (bucket?.visibility as any) || 'public',
         });
 
         if (error) throw error;
@@ -1158,6 +1167,42 @@ export function useBucketDetailState() {
       toast.success(date ? t('bucket_detail.date_saved') : t('bucket_detail.date_removed'));
     },
     [cleanId, queryClient]
+  );
+
+  const handleUpdatePhotoVisibility = useCallback(
+    async (photoId: string, visibility: 'public' | 'followers' | 'private') => {
+      const targetId = cleanId;
+      const previous = queryClient.getQueryData(['bucketDetail', targetId]);
+
+      // 1. Actualización optimista inmediata en cache
+      queryClient.setQueryData(['bucketDetail', targetId], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          bucket_photos: (oldData.bucket_photos || []).map((p: any) =>
+            p.id === photoId ? { ...p, visibility } : p
+          ),
+        };
+      });
+
+      // 2. Persistencia en Supabase
+      const { error } = await supabase
+        .from('bucket_photos')
+        .update({ visibility })
+        .eq('id', photoId);
+
+      if (error) {
+        console.error('Error al guardar visibilidad de foto:', error);
+        queryClient.setQueryData(['bucketDetail', targetId], previous);
+        Alert.alert(t('common.error'), 'No se pudo guardar la visibilidad: ' + (error.message || 'Error desconocido'));
+        return;
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ['bucketDetail', targetId] });
+      void queryClient.invalidateQueries({ queryKey: ['buckets'] });
+      toast.success(t('bucket.photo_visibility_updated', { defaultValue: 'Visibilidad de la foto actualizada' }));
+    },
+    [cleanId, queryClient, t]
   );
 
   const uploadPhotos = () => {
@@ -2067,6 +2112,7 @@ export function useBucketDetailState() {
     copyBucket,
     handleUpdatePhotoTitle,
     handleUpdatePhotoDate,
+    handleUpdatePhotoVisibility,
     collaborationMode,
     collaborationAudience,
     isFollower,

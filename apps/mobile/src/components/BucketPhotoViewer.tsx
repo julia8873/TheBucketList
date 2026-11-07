@@ -30,6 +30,9 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
+  Globe,
+  Users,
+  Lock,
 } from 'lucide-react-native';
 import { Typography, ConfirmDialog, fontFamily, toast } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
@@ -292,6 +295,7 @@ type BucketPhotoViewerProps = {
   isOwner?: boolean;
   onUpdateTitle?: (photoId: string, title: string) => void;
   onUpdatePhotoDate?: (photoId: string, field: 'created_at' | 'completed_at', date: string | null) => void;
+  onUpdatePhotoVisibility?: (photoId: string, visibility: 'public' | 'followers' | 'private') => void;
   /** Si se pasa y el usuario puede editar, aparece el botón de borrar. Debe pedir confirmación y borrar. */
   onDelete?: (photo: any) => void;
   selectedThumbnailId?: string | null;
@@ -305,6 +309,7 @@ export function BucketPhotoViewer({
   isOwner,
   onUpdateTitle,
   onUpdatePhotoDate,
+  onUpdatePhotoVisibility,
   onDelete,
   selectedThumbnailId,
   onSetAsThumbnail,
@@ -313,6 +318,7 @@ export function BucketPhotoViewer({
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const flatListRef = useRef<FlatList>(null);
   const [isAnyPhotoZoomed, setIsAnyPhotoZoomed] = useState(false);
+  const [visibilityPickerVisible, setVisibilityPickerVisible] = useState(false);
   const [datePickerState, setDatePickerState] = useState<{
     visible: boolean;
     photoId: string;
@@ -325,6 +331,7 @@ export function BucketPhotoViewer({
 
   const handleClose = useCallback(() => {
     setIsAnyPhotoZoomed(false);
+    setVisibilityPickerVisible(false);
     setViewingPhotoIndex(null);
   }, [setViewingPhotoIndex]);
 
@@ -402,6 +409,7 @@ export function BucketPhotoViewer({
             onMomentumScrollEnd={(e) => {
               const newIndex = Math.round(e.nativeEvent.contentOffset.x / windowWidth);
               if (newIndex >= 0 && newIndex < photos.length) {
+                setVisibilityPickerVisible(false);
                 setViewingPhotoIndex(newIndex);
               }
             }}
@@ -552,6 +560,106 @@ export function BucketPhotoViewer({
                     </Text>
                   </Pressable>
                 ) : null}
+
+                {/* Chip Visibilidad */}
+                {(() => {
+                  const vis = (currentPhoto.visibility as 'public' | 'followers' | 'private') || 'public';
+                  const VisIcon = vis === 'private' ? Lock : vis === 'followers' ? Users : Globe;
+                  const visColor = vis === 'private' ? '#EF4444' : vis === 'followers' ? '#A855F7' : '#60A5FA';
+                  const visLabel = vis === 'private'
+                    ? t('bucket.visibility_private')
+                    : vis === 'followers'
+                    ? t('bucket.visibility_followers')
+                    : t('bucket.visibility_public');
+                  return (
+                    <Pressable
+                      onPress={() => isOwner && setVisibilityPickerVisible(true)}
+                      style={[styles.dateChip, { borderColor: 'rgba(255,255,255,0.15)' }]}
+                      disabled={!isOwner}
+                      hitSlop={4}
+                    >
+                      <VisIcon size={11} color={visColor} strokeWidth={2.2} />
+                      <Text style={[styles.dateChipText, { color: visColor }]}>
+                        {visLabel}
+                      </Text>
+                      {isOwner && <Pencil size={9} color="rgba(255,255,255,0.35)" style={{ marginLeft: 2 }} />}
+                    </Pressable>
+                  );
+                })()}
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Selector de Visibilidad de la foto */}
+        {visibilityPickerVisible && currentPhoto && (
+          <View style={[StyleSheet.absoluteFillObject, styles.dateModalBackdrop, { zIndex: 9999 }]}>
+            <Pressable style={StyleSheet.absoluteFillObject} onPress={() => setVisibilityPickerVisible(false)} />
+            <View style={styles.visibilityModalContent}>
+              <View style={styles.dateModalHeader}>
+                <Typography variant="bodySemibold" color="#FFF">
+                  {t('bucket.photo_visibility_title')}
+                </Typography>
+                <Pressable onPress={() => setVisibilityPickerVisible(false)} hitSlop={10}>
+                  <X size={20} color="#8E8E93" />
+                </Pressable>
+              </View>
+
+              <View style={{ marginTop: 8, gap: 8 }}>
+                {[
+                  {
+                    key: 'public' as const,
+                    icon: Globe,
+                    title: t('bucket.visibility_public'),
+                    desc: t('bucket.photo_visibility_public_desc'),
+                    color: '#60A5FA',
+                  },
+                  {
+                    key: 'followers' as const,
+                    icon: Users,
+                    title: t('bucket.visibility_followers'),
+                    desc: t('bucket.photo_visibility_followers_desc'),
+                    color: '#C084FC',
+                  },
+                  {
+                    key: 'private' as const,
+                    icon: Lock,
+                    title: t('bucket.visibility_private'),
+                    desc: t('bucket.photo_visibility_private_desc'),
+                    color: '#F87171',
+                  },
+                ].map((opt) => {
+                  const isSelected = ((currentPhoto.visibility as string) || 'public') === opt.key;
+                  const Icon = opt.icon;
+                  return (
+                    <Pressable
+                      key={opt.key}
+                      onPress={() => {
+                        onUpdatePhotoVisibility?.(currentPhoto.id, opt.key);
+                        setVisibilityPickerVisible(false);
+                      }}
+                      style={[
+                        styles.visibilityOptionRow,
+                        isSelected && { borderColor: opt.color, backgroundColor: 'rgba(255,255,255,0.06)' },
+                      ]}
+                    >
+                      <View style={[styles.visibilityOptionIcon, { backgroundColor: `${opt.color}18` }]}>
+                        <Icon size={18} color={opt.color} strokeWidth={2.2} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.visibilityOptionTitle, isSelected && { color: opt.color, fontWeight: '700' }]}>
+                          {opt.title}
+                        </Text>
+                        <Text style={styles.visibilityOptionDesc}>
+                          {opt.desc}
+                        </Text>
+                      </View>
+                      {isSelected && (
+                        <Check size={18} color={opt.color} strokeWidth={2.5} />
+                      )}
+                    </Pressable>
+                  );
+                })}
               </View>
             </View>
           </View>
@@ -989,5 +1097,42 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 13,
     fontFamily: fontFamily.semibold,
+  },
+  visibilityModalContent: {
+    backgroundColor: '#1C1C1E',
+    padding: 20,
+    paddingBottom: Platform.OS === 'ios' ? 36 : 24,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+  },
+  visibilityOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    gap: 12,
+  },
+  visibilityOptionIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  visibilityOptionTitle: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontFamily: fontFamily.semibold,
+  },
+  visibilityOptionDesc: {
+    color: '#8E8E93',
+    fontSize: 11,
+    fontFamily: fontFamily.regular,
+    marginTop: 2,
   },
 });

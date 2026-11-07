@@ -96,6 +96,8 @@ export default function CompleteBucketModal() {
         thumbPath = paths.thumbPath;
 
         // Insert into bucket_photos
+        const { data: bData } = await supabase.from('buckets').select('visibility').eq('id', id).single();
+        const photoVisibility = (bData?.visibility as 'public' | 'followers' | 'private') || 'public';
         const { error: photoError } = await supabase.from('bucket_photos').insert({
           bucket_id: id,
           user_id: user.id,
@@ -105,6 +107,7 @@ export default function CompleteBucketModal() {
           height: processedImages.original.height,
           size_bytes: processedImages.original.sizeBytes,
           thumb_size_bytes: processedImages.thumbnail.sizeBytes,
+          visibility: photoVisibility,
         });
 
         if (photoError) throw photoError;

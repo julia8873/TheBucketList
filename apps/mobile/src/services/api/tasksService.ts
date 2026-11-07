@@ -73,7 +73,7 @@ export const tasksService = {
 
     const select =
       'id, title, location_text, created_at, cover_image, thumbnail_mode, thumbnail_photo_id, visibility, priority, ' +
-      'categories(name_es, name_en, slug), album_items(album_id), bucket_photos(id, storage_path, thumb_path, created_at, completed_at, title)';
+      'categories(name_es, name_en, slug), album_items(album_id), bucket_photos(id, storage_path, thumb_path, created_at, completed_at, title, visibility)';
 
     const { data: own, error } = await supabase
       .from('buckets')

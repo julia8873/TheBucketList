@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Pressable, TextInput, useWindowDimensions, Platform } from 'react-native';
+import { View, Text, Pressable, TextInput, useWindowDimensions, Platform, StyleSheet } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { Typography } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
-import { Camera, ArrowDown, ArrowUp, GripVertical } from 'lucide-react-native';
+import { Camera, ArrowDown, ArrowUp, GripVertical, Globe, Users, Lock } from 'lucide-react-native';
 import { DraggableTaskList } from '@/components/DraggableTaskList';
 import { storageApi } from '@/services/api/storage';
 import { styles } from '../styles/bucket-detail.styles';
@@ -141,9 +141,23 @@ export function BucketPhotosSection({
                     />
                   </Pressable>
                   <View style={{ flex: 1 }}>
-                    <Typography variant="bodySemibold" color={theme.colors.foreground} numberOfLines={1}>
-                      {photo.title || t('bucket.photo_untitled')}
-                    </Typography>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Typography variant="bodySemibold" color={theme.colors.foreground} numberOfLines={1} style={{ flexShrink: 1 }}>
+                        {photo.title || t('bucket.photo_untitled')}
+                      </Typography>
+                      {(() => {
+                        const vis = (photo.visibility as 'public' | 'followers' | 'private') || 'public';
+                        const VisIcon = vis === 'private' ? Lock : vis === 'followers' ? Users : Globe;
+                        const visColor = vis === 'private' ? '#EF4444' : vis === 'followers' ? '#A855F7' : '#3B82F6';
+                        const visLabel = vis === 'private' ? t('bucket.visibility_private') : vis === 'followers' ? t('bucket.visibility_followers') : t('bucket.visibility_public');
+                        return (
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, backgroundColor: theme.colors.surfaceSunken }}>
+                            <VisIcon size={11} color={visColor} />
+                            <Text style={{ fontSize: 10, color: theme.colors.foregroundMuted }}>{visLabel}</Text>
+                          </View>
+                        );
+                      })()}
+                    </View>
                     <Typography variant="caption" color={theme.colors.foregroundMuted}>
                       {photo.created_at ? t('bucket.photo_uploaded', { date: new Date(photo.created_at).toLocaleDateString(i18n.language) }) : ''}
                       {photo.completed_at ? ` · ${t('bucket.photo_completed', { date: new Date(photo.completed_at).toLocaleDateString(i18n.language) })}` : ''}
@@ -203,6 +217,28 @@ export function BucketPhotosSection({
                   transition={200}
                   cachePolicy="memory-disk"
                 />
+                {(() => {
+                  const vis = (photo.visibility as 'public' | 'followers' | 'private') || 'public';
+                  const VisIcon = vis === 'private' ? Lock : vis === 'followers' ? Users : Globe;
+                  const visColor = vis === 'private' ? '#EF4444' : vis === 'followers' ? '#C084FC' : '#60A5FA';
+                  return (
+                    <View
+                      style={{
+                        position: 'absolute',
+                        top: 6,
+                        right: 6,
+                        width: 24,
+                        height: 24,
+                        borderRadius: 12,
+                        backgroundColor: 'rgba(0,0,0,0.65)',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <VisIcon size={12} color={visColor} strokeWidth={2.2} />
+                    </View>
+                  );
+                })()}
                 <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)', padding: 6 }}>
                   <Typography variant="caption" color="#fff" numberOfLines={1}>
                     {photo.title || t('bucket.photo_untitled')}

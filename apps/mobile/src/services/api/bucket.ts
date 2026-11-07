@@ -14,7 +14,7 @@ export const bucketApi = {
     // Seleccionamos los campos imprescindibles para la lista (portada, subtareas, álbum).
     // bucket_photos no tiene límite aquí porque Supabase no soporta .limit() en relaciones
     // embebidas; el volumen se controla desde la pantalla de detalle que usa su propia query.
-    const baseSelect = '*, category:categories(*), item_subtasks(*), album_items(album_id), bucket_photos(id, thumb_path, storage_path, created_at, completed_at, title)';
+    const baseSelect = '*, category:categories(*), item_subtasks(*), album_items(album_id), bucket_photos(id, thumb_path, storage_path, created_at, completed_at, title, visibility)';
 
     if (!userId) {
       return [];

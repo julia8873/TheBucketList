@@ -598,6 +598,7 @@ export default function BucketDetailScreen() {
         onDelete={state.deletePhoto}
         onUpdateTitle={state.handleUpdatePhotoTitle}
         onUpdatePhotoDate={state.handleUpdatePhotoDate}
+        onUpdatePhotoVisibility={state.handleUpdatePhotoVisibility}
       />
 
       {/* Botón flotante inferior para cambiar estado */}

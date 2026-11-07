@@ -19,6 +19,7 @@ import {
   FolderOpen,
   HelpCircle,
   FolderLock,
+  Camera,
 } from 'lucide-react-native';
 import { fontFamily, gold, useTheme } from '@bucketlist/ui';
 import { useTranslation } from 'react-i18next';
@@ -253,6 +254,24 @@ export function VisibilityGuideModal({ visible, onClose }: VisibilityGuideModalP
                     {t('settings.visibility_guide_private_album_desc', {
                       defaultValue:
                         'Si un álbum es privado, nadie podrá ver ni abrir el álbum (solo tú y los colaboradores que invites). Sin embargo, las tareas públicas o para seguidores que estén dentro seguirán siendo visibles de forma individual según su propia configuración, pero nadie podrá ver el álbum ni sabrá que pertenecen a él.',
+                    })}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Fotos dentro de una tarea */}
+              <View style={[styles.levelRow, styles.rowBorderTop, { borderTopColor: theme.colors.border }]}>
+                <View style={[styles.iconBadge, { backgroundColor: 'rgba(212, 177, 58, 0.15)' }]}>
+                  <Camera size={18} color={gold[400]} />
+                </View>
+                <View style={styles.levelContent}>
+                  <Text style={[styles.levelTitle, { color: theme.colors.foreground }]}>
+                    {t('settings.visibility_guide_photos_title', { defaultValue: 'Fotos dentro de las tareas' })}
+                  </Text>
+                  <Text style={[styles.levelDesc, { color: theme.colors.foregroundMuted }]}>
+                    {t('settings.visibility_guide_photos_desc', {
+                      defaultValue:
+                        'Cada foto de una tarea puede tener su propia visibilidad (Pública, Seguidores o Privada). Aunque una tarea sea pública, las fotos marcadas como privadas solo las podrás ver tú (y los colaboradores), y las fotos para seguidores solo las verán las personas que te siguen.',
                     })}
                   </Text>
                 </View>
