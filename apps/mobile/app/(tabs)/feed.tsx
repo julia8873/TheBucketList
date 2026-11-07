@@ -78,7 +78,7 @@ export default function FeedScreen() {
     }).catch(() => undefined);
     AsyncStorage.getItem('@feed_gallery_columns').then((saved) => {
       const cols = Number(saved);
-      if (cols === 2 || cols === 3 || cols === 4) setGalleryColumnsState(cols as 2 | 3 | 4);
+      if (cols === 2 || cols === 3 || cols === 4) setGalleryColumnsState(cols);
     }).catch(() => undefined);
     AsyncStorage.getItem('@feed_content_filter').then((saved) => {
       if (!params.filter && (saved === 'todo' || saved === 'tareas' || saved === 'albumes' || saved === 'colecciones')) {

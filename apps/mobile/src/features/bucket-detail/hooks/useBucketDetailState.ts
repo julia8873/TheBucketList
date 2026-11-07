@@ -981,7 +981,7 @@ export function useBucketDetailState() {
           size_bytes: processed.original.sizeBytes,
           thumb_size_bytes: processed.thumbnail.sizeBytes,
           position: nextPosition++,
-          visibility: (bucket?.visibility as any) || 'public',
+          visibility: bucket?.visibility || 'public',
         });
 
         if (error) throw error;
