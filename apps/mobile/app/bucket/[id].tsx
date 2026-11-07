@@ -562,7 +562,11 @@ export default function BucketDetailScreen() {
             pickAndUploadPhotos={() => void state.pickAndUploadPhotos()}
             onOpenAddPhotoSheet={() => {
               if (!state.isAdmin && ((bucket?.bucket_photos?.length ?? 0) >= 8)) {
-                toast.error('Solo hay un máximo de 10 fotos por tarea.');
+                toast.error(
+                  t('bucket_detail.photo_limit_message', {
+                    defaultValue: 'Solo hay un máximo de 10 fotos por tarea.',
+                  }),
+                );
                 return;
               }
               state.setShowAddPhotoSheet(true);

@@ -2693,6 +2693,8 @@ const en = {
     drive_link_saved: 'Google Drive link saved',
     link_removed: 'Link removed',
     delete_step_error: 'Could not delete step',
+    photo_limit_title: 'Photo limit',
+    photo_limit_message: 'There is a maximum of 10 photos per task.',
   },
 
   album_detail: {

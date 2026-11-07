@@ -6,7 +6,7 @@ import * as Haptics from 'expo-haptics';
 import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 import { Typography, Button, spacing, useTheme, ProgressBar, Icon, radii, Alert } from '@bucketlist/ui';
 import { Camera, Image as ImageIcon, CheckCircle } from 'lucide-react-native';
-import { processBucketImage, type ImageProcessingResult } from '@bucketlist/shared';
+import { processBucketImage, type ImageProcessingResult, useTranslation } from '@bucketlist/shared';
 import { supabase } from '../../src/services/supabase';
 import { storageApi } from '../../src/services/api/storage';
 import { useAuthStore } from '../../src/stores/auth.store';
@@ -19,6 +19,7 @@ export default function CompleteBucketModal() {
   const router = useRouter();
   const { theme } = useTheme();
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const isAdmin = useIsAdmin();
   const updateBucket = useUpdateBucket();
 
@@ -46,7 +47,10 @@ export default function CompleteBucketModal() {
         .select('*', { count: 'exact', head: true })
         .eq('bucket_id', id);
       if ((count ?? 0) >= 8) {
-        Alert.alert('Límite de fotos', 'Solo hay un máximo de 10 fotos por tarea.');
+        Alert.alert(
+          t('bucket_detail.photo_limit_title', { defaultValue: 'Límite de fotos' }),
+          t('bucket_detail.photo_limit_message', { defaultValue: 'Solo hay un máximo de 10 fotos por tarea.' }),
+        );
         return;
       }
     }
@@ -96,7 +100,11 @@ export default function CompleteBucketModal() {
             .select('*', { count: 'exact', head: true })
             .eq('bucket_id', id);
           if ((count ?? 0) >= 8) {
-            throw new Error('Solo hay un máximo de 10 fotos por tarea.');
+            throw new Error(
+              t('bucket_detail.photo_limit_message', {
+                defaultValue: 'Solo hay un máximo de 10 fotos por tarea.',
+              }),
+            );
           }
         }
 

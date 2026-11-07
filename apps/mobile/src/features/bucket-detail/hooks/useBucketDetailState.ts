@@ -60,7 +60,8 @@ export function useBucketDetailState() {
   const { user } = useAuthStore();
   const isAdmin = useIsAdmin();
   const MAX_TASK_PHOTOS = 8;
-  const PHOTO_LIMIT_MESSAGE = 'Solo hay un máximo de 10 fotos por tarea.';
+  const getPhotoLimitMessage = () =>
+    t('bucket_detail.photo_limit_message', { defaultValue: 'Solo hay un máximo de 10 fotos por tarea.' });
   const { refreshing, onRefresh } = usePullToRefresh();
 
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
@@ -927,7 +928,7 @@ export function useBucketDetailState() {
 
     const currentCount = ((bucket?.bucket_photos ?? []) as any[]).length;
     if (!isAdmin && currentCount + assets.length > MAX_TASK_PHOTOS) {
-      toast.error(PHOTO_LIMIT_MESSAGE);
+      toast.error(getPhotoLimitMessage());
       return;
     }
 
@@ -1006,7 +1007,7 @@ export function useBucketDetailState() {
 
     const currentCount = ((bucket?.bucket_photos ?? []) as any[]).length;
     if (!isAdmin && currentCount >= MAX_TASK_PHOTOS) {
-      toast.error(PHOTO_LIMIT_MESSAGE);
+      toast.error(getPhotoLimitMessage());
       return;
     }
 
@@ -1021,7 +1022,7 @@ export function useBucketDetailState() {
     if (result.canceled || !result.assets.length) return;
 
     if (!isAdmin && currentCount + result.assets.length > MAX_TASK_PHOTOS) {
-      toast.error(PHOTO_LIMIT_MESSAGE);
+      toast.error(getPhotoLimitMessage());
       return;
     }
 
@@ -1033,7 +1034,7 @@ export function useBucketDetailState() {
 
     const currentCount = ((bucket?.bucket_photos ?? []) as any[]).length;
     if (!isAdmin && currentCount >= MAX_TASK_PHOTOS) {
-      toast.error(PHOTO_LIMIT_MESSAGE);
+      toast.error(getPhotoLimitMessage());
       return;
     }
 
@@ -1057,7 +1058,7 @@ export function useBucketDetailState() {
 
     const currentCount = ((bucket?.bucket_photos ?? []) as any[]).length;
     if (!isAdmin && currentCount >= MAX_TASK_PHOTOS) {
-      toast.error(PHOTO_LIMIT_MESSAGE);
+      toast.error(getPhotoLimitMessage());
       return;
     }
 

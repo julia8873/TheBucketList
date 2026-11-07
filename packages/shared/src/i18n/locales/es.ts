@@ -2693,6 +2693,8 @@ const es = {
     drive_link_saved: 'Enlace de Google Drive guardado',
     link_removed: 'Enlace eliminado',
     delete_step_error: 'No se pudo eliminar el paso',
+    photo_limit_title: 'Límite de fotos',
+    photo_limit_message: 'Solo hay un máximo de 10 fotos por tarea.',
   },
 
   album_detail: {
