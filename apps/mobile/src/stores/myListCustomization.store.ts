@@ -30,6 +30,7 @@ export interface AlbumViewCustomization {
 
 export type ViewModeType = 'list' | 'gallery' | 'compact';
 export type GalleryColumns = 2 | 3 | 4;
+export type GroupByOption = 'status' | 'priority' | 'visibility' | 'none';
 
 export const DEFAULT_TASK_CUSTOMIZATION: Record<ViewModeType, TaskViewCustomization> = {
   list: {
@@ -115,6 +116,8 @@ export const DEFAULT_ALBUM_CUSTOMIZATION: Record<ViewModeType, AlbumViewCustomiz
 interface MyListCustomizationStore {
   taskViews: Record<ViewModeType, TaskViewCustomization>;
   albumViews: Record<ViewModeType, AlbumViewCustomization>;
+  taskGroupBy: GroupByOption;
+  albumGroupBy: GroupByOption;
   taskGroupByStatus: boolean;
   albumGroupByStatus: boolean;
   /** Favoritas (tareas) en 2 columnas dentro de la sección FAVORITAS. */
@@ -129,6 +132,8 @@ interface MyListCustomizationStore {
   setAlbumOption: (mode: ViewModeType, key: keyof AlbumViewCustomization, val: boolean) => void;
   setTaskGalleryColumns: (cols: GalleryColumns) => void;
   setAlbumGalleryColumns: (cols: GalleryColumns) => void;
+  setTaskGroupBy: (val: GroupByOption) => void;
+  setAlbumGroupBy: (val: GroupByOption) => void;
   setTaskGroupByStatus: (val: boolean) => void;
   setAlbumGroupByStatus: (val: boolean) => void;
   setTaskFavoritesAsGrid: (val: boolean) => void;
@@ -149,6 +154,8 @@ export const useMyListCustomizationStore = create<MyListCustomizationStore>((set
   return {
     taskViews: { ...DEFAULT_TASK_CUSTOMIZATION },
     albumViews: { ...DEFAULT_ALBUM_CUSTOMIZATION },
+    taskGroupBy: 'status',
+    albumGroupBy: 'status',
     taskGroupByStatus: true,
     albumGroupByStatus: true,
     taskFavoritesAsGrid: true,
@@ -169,8 +176,10 @@ export const useMyListCustomizationStore = create<MyListCustomizationStore>((set
     setTaskGalleryColumns: (cols) => update({ taskGalleryColumns: cols }),
     setAlbumGalleryColumns: (cols) => update({ albumGalleryColumns: cols }),
 
-    setTaskGroupByStatus: (val) => update({ taskGroupByStatus: val }),
-    setAlbumGroupByStatus: (val) => update({ albumGroupByStatus: val }),
+    setTaskGroupBy: (val) => update({ taskGroupBy: val, taskGroupByStatus: val === 'status' }),
+    setAlbumGroupBy: (val) => update({ albumGroupBy: val, albumGroupByStatus: val === 'status' }),
+    setTaskGroupByStatus: (val) => update({ taskGroupBy: val ? 'status' : 'none', taskGroupByStatus: val }),
+    setAlbumGroupByStatus: (val) => update({ albumGroupBy: val ? 'status' : 'none', albumGroupByStatus: val }),
     setTaskFavoritesAsGrid: (val) => update({ taskFavoritesAsGrid: val }),
     setAlbumFavoritesAsGrid: (val) => update({ albumFavoritesAsGrid: val }),
 
@@ -180,6 +189,8 @@ export const useMyListCustomizationStore = create<MyListCustomizationStore>((set
         taskViews: mode
           ? { ...taskViews, [mode]: { ...DEFAULT_TASK_CUSTOMIZATION[mode] } }
           : { ...DEFAULT_TASK_CUSTOMIZATION },
+        taskGroupBy: 'status',
+        taskGroupByStatus: true,
         ...(mode === 'gallery' || !mode ? { taskGalleryColumns: 3 } : {}),
       });
     },
@@ -190,6 +201,8 @@ export const useMyListCustomizationStore = create<MyListCustomizationStore>((set
         albumViews: mode
           ? { ...albumViews, [mode]: { ...DEFAULT_ALBUM_CUSTOMIZATION[mode] } }
           : { ...DEFAULT_ALBUM_CUSTOMIZATION },
+        albumGroupBy: 'status',
+        albumGroupByStatus: true,
         ...(mode === 'gallery' || !mode ? { albumGalleryColumns: 3 } : {}),
       });
     },
@@ -203,8 +216,10 @@ async function persistState(state: MyListCustomizationStore) {
       JSON.stringify({
         taskViews: state.taskViews,
         albumViews: state.albumViews,
-        taskGroupByStatus: state.taskGroupByStatus,
-        albumGroupByStatus: state.albumGroupByStatus,
+        taskGroupBy: state.taskGroupBy,
+        albumGroupBy: state.albumGroupBy,
+        taskGroupByStatus: state.taskGroupBy === 'status',
+        albumGroupByStatus: state.albumGroupBy === 'status',
         taskFavoritesAsGrid: state.taskFavoritesAsGrid,
         albumFavoritesAsGrid: state.albumFavoritesAsGrid,
         taskGalleryColumns: state.taskGalleryColumns,
@@ -239,6 +254,20 @@ export async function hydrateMyListCustomization(): Promise<void> {
       await AsyncStorage.setItem(MIGRATION_COLS_V3_KEY, 'true');
     }
 
+    let taskGroupBy: GroupByOption = 'status';
+    if (data.taskGroupBy && ['status', 'priority', 'visibility', 'none'].includes(data.taskGroupBy)) {
+      taskGroupBy = data.taskGroupBy;
+    } else if (typeof data.taskGroupByStatus === 'boolean') {
+      taskGroupBy = data.taskGroupByStatus ? 'status' : 'none';
+    }
+
+    let albumGroupBy: GroupByOption = 'status';
+    if (data.albumGroupBy && ['status', 'priority', 'visibility', 'none'].includes(data.albumGroupBy)) {
+      albumGroupBy = data.albumGroupBy;
+    } else if (typeof data.albumGroupByStatus === 'boolean') {
+      albumGroupBy = data.albumGroupByStatus ? 'status' : 'none';
+    }
+
     useMyListCustomizationStore.setState({
       taskViews: {
         list: { ...DEFAULT_TASK_CUSTOMIZATION.list, ...(data.taskViews?.list ?? {}) },
@@ -250,8 +279,10 @@ export async function hydrateMyListCustomization(): Promise<void> {
         gallery: { ...DEFAULT_ALBUM_CUSTOMIZATION.gallery, ...(data.albumViews?.gallery ?? {}) },
         compact: { ...DEFAULT_ALBUM_CUSTOMIZATION.compact, ...(data.albumViews?.compact ?? {}) },
       },
-      taskGroupByStatus: typeof data.taskGroupByStatus === 'boolean' ? data.taskGroupByStatus : true,
-      albumGroupByStatus: typeof data.albumGroupByStatus === 'boolean' ? data.albumGroupByStatus : true,
+      taskGroupBy,
+      albumGroupBy,
+      taskGroupByStatus: taskGroupBy === 'status',
+      albumGroupByStatus: albumGroupBy === 'status',
       taskFavoritesAsGrid: typeof data.taskFavoritesAsGrid === 'boolean' ? data.taskFavoritesAsGrid : true,
       albumFavoritesAsGrid: typeof data.albumFavoritesAsGrid === 'boolean' ? data.albumFavoritesAsGrid : true,
       taskGalleryColumns: initialTaskCols,

@@ -40,16 +40,16 @@ function MyListCustomizeModalComponent({
   const {
     taskViews,
     albumViews,
-    taskGroupByStatus,
-    albumGroupByStatus,
+    taskGroupBy,
+    albumGroupBy,
     taskGalleryColumns,
     albumGalleryColumns,
     setTaskGalleryColumns,
     setAlbumGalleryColumns,
     setTaskOption,
     setAlbumOption,
-    setTaskGroupByStatus,
-    setAlbumGroupByStatus,
+    setTaskGroupBy,
+    setAlbumGroupBy,
     resetTaskOptions,
     resetAlbumOptions,
   } = useMyListCustomizationStore();
@@ -60,14 +60,13 @@ function MyListCustomizeModalComponent({
   const handleReset = () => {
     if (isTasks) {
       resetTaskOptions(mode);
-      setTaskGroupByStatus(true);
     } else {
       resetAlbumOptions(mode);
-      setAlbumGroupByStatus(true);
     }
   };
 
-  const groupByStatus = isTasks ? taskGroupByStatus : albumGroupByStatus;
+  const currentGroupBy = isTasks ? taskGroupBy : albumGroupBy;
+  const setGroupBy = isTasks ? setTaskGroupBy : setAlbumGroupBy;
 
   const taskOptions: Array<{ key: TaskKey; label: string }> = useMemo(() => [
     { key: 'showThumbnails', label: t('my_list.customize_opt_thumbnails', { defaultValue: 'Miniaturas de imagen' }) },
@@ -118,8 +117,20 @@ function MyListCustomizeModalComponent({
           <SheetToggle
             theme={theme}
             label={t(isTasks ? 'my_list.customize_opt_group_by_status' : 'my_list.customize_opt_album_group_by_status')}
-            value={groupByStatus}
-            onChange={isTasks ? setTaskGroupByStatus : setAlbumGroupByStatus}
+            value={currentGroupBy === 'status'}
+            onChange={(v) => setGroupBy(v ? 'status' : 'none')}
+          />
+          <SheetToggle
+            theme={theme}
+            label={t('my_list.customize_opt_group_by_priority', { defaultValue: 'Separar por prioridad' })}
+            value={currentGroupBy === 'priority'}
+            onChange={(v) => setGroupBy(v ? 'priority' : 'none')}
+          />
+          <SheetToggle
+            theme={theme}
+            label={t('my_list.customize_opt_group_by_visibility', { defaultValue: 'Separar por visibilidad' })}
+            value={currentGroupBy === 'visibility'}
+            onChange={(v) => setGroupBy(v ? 'visibility' : 'none')}
           />
           {mode === 'gallery' && (
             <View

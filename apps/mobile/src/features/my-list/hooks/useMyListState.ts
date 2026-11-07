@@ -34,7 +34,7 @@ export function useMyListState() {
   const { user } = useAuthStore();
   const { t } = useTranslation();
   const toast = useToast();
-  const { taskGroupByStatus, albumGroupByStatus } = useMyListCustomizationStore();
+  const { taskGroupBy, albumGroupBy, taskGroupByStatus, albumGroupByStatus } = useMyListCustomizationStore();
   const params = useLocalSearchParams<{ filter?: string; tab?: string; from?: string }>();
 
   const [activeTab, setActiveTabState] = useState(
@@ -788,10 +788,50 @@ export function useMyListState() {
     return byManual(a, b);
   }, [sortField, sortDir, manualOrder]);
 
-  const shouldGroupTasks = taskGroupByStatus || sortField === 'status';
+  const effectiveTaskGroupBy = taskGroupBy !== 'none' ? taskGroupBy : (sortField === 'status' ? 'status' : 'none');
+  const shouldGroupTasks = effectiveTaskGroupBy !== 'none';
 
   const taskSections = useMemo(() => {
     if (!filteredBuckets || filteredBuckets.length === 0 || !shouldGroupTasks) return [];
+
+    const comparator = sortField === 'status' ? byManual : sortComparator;
+
+    const favorites = filteredBuckets.filter((b: any) => isBucketFavorite(b.id)).sort(comparator);
+    const nonFavorites = filteredBuckets.filter((b: any) => !isBucketFavorite(b.id));
+
+    if (effectiveTaskGroupBy === 'priority') {
+      const urgent = nonFavorites.filter((b: any) => b.priority === 'urgent').sort(comparator);
+      const high = nonFavorites.filter((b: any) => b.priority === 'high').sort(comparator);
+      const medium = nonFavorites.filter((b: any) => (b.priority || 'medium') === 'medium').sort(comparator);
+      const low = nonFavorites.filter((b: any) => b.priority === 'low').sort(comparator);
+
+      const prioritySections = [
+        { key: 'priority_urgent', title: t('my_list.section_priority_urgent', { defaultValue: 'URGENTE' }), items: urgent },
+        { key: 'priority_high', title: t('my_list.section_priority_high', { defaultValue: 'ALTA' }), items: high },
+        { key: 'priority_medium', title: t('my_list.section_priority_medium', { defaultValue: 'MEDIA' }), items: medium },
+        { key: 'priority_low', title: t('my_list.section_priority_low', { defaultValue: 'BAJA' }), items: low },
+      ];
+
+      if (sortField === 'priority' && sortDir === 'asc') {
+        prioritySections.reverse();
+      }
+
+      return [{ key: 'favorites', title: t('my_list.section_favorites_tasks'), items: favorites }, ...prioritySections];
+    }
+
+    if (effectiveTaskGroupBy === 'visibility') {
+      const publicTasks = nonFavorites.filter((b: any) => (b.visibility || 'public') === 'public').sort(comparator);
+      const followersTasks = nonFavorites.filter((b: any) => b.visibility === 'followers').sort(comparator);
+      const privateTasks = nonFavorites.filter((b: any) => b.visibility === 'private').sort(comparator);
+
+      const visibilitySections = [
+        { key: 'visibility_public', title: t('my_list.section_visibility_public_tasks', { defaultValue: 'PÚBLICAS' }), items: publicTasks },
+        { key: 'visibility_followers', title: t('my_list.section_visibility_followers_tasks', { defaultValue: 'SEGUIDORES' }), items: followersTasks },
+        { key: 'visibility_private', title: t('my_list.section_visibility_private_tasks', { defaultValue: 'PRIVADAS' }), items: privateTasks },
+      ];
+
+      return [{ key: 'favorites', title: t('my_list.section_favorites_tasks'), items: favorites }, ...visibilitySections];
+    }
 
     const isExpired = (b: any) => {
       const deadline = b.deadline ? new Date(b.deadline) : null;
@@ -800,11 +840,6 @@ export function useMyListState() {
     const isCompleted = (b: any) => b.status === 'completed';
     const isInProgress = (b: any) => b.status === 'in_progress' && !isCompleted(b) && !isExpired(b);
     const isPending = (b: any) => !isCompleted(b) && !isExpired(b) && !isInProgress(b);
-
-    const comparator = sortField === 'status' ? byManual : sortComparator;
-
-    const favorites = filteredBuckets.filter((b: any) => isBucketFavorite(b.id)).sort(comparator);
-    const nonFavorites = filteredBuckets.filter((b: any) => !isBucketFavorite(b.id));
 
     const inProgress = nonFavorites.filter(isInProgress).sort(comparator);
     const pending = nonFavorites.filter(isPending).sort(comparator);
@@ -823,7 +858,7 @@ export function useMyListState() {
     }
 
     return [{ key: 'favorites', title: t('my_list.section_favorites_tasks'), items: favorites }, ...otherSections];
-  }, [filteredBuckets, shouldGroupTasks, sortField, sortDir, isBucketFavorite, byManual, sortComparator, t]);
+  }, [filteredBuckets, shouldGroupTasks, effectiveTaskGroupBy, sortField, sortDir, isBucketFavorite, byManual, sortComparator, t]);
 
   const sortedFlatBuckets = useMemo(() => {
     if (!filteredBuckets || filteredBuckets.length === 0) return [];
@@ -971,7 +1006,8 @@ export function useMyListState() {
     return byAlbumManual(a, b);
   }, [albumSortField, albumSortDir, albumManualOrder]);
 
-  const shouldGroupAlbums = albumGroupByStatus || albumSortField === 'status';
+  const effectiveAlbumGroupBy = albumGroupBy !== 'none' ? albumGroupBy : (albumSortField === 'status' ? 'status' : 'none');
+  const shouldGroupAlbums = effectiveAlbumGroupBy !== 'none';
 
   const albumSections = useMemo(() => {
     if (!filteredAlbums || filteredAlbums.length === 0 || !shouldGroupAlbums) return [];
@@ -980,6 +1016,40 @@ export function useMyListState() {
 
     const favorites = filteredAlbums.filter((a: any) => isAlbumFavorite(a.id)).sort(comparator);
     const nonFavorites = filteredAlbums.filter((a: any) => !isAlbumFavorite(a.id));
+
+    if (effectiveAlbumGroupBy === 'priority') {
+      const urgent = nonFavorites.filter((a: any) => a.priority === 'urgent').sort(comparator);
+      const high = nonFavorites.filter((a: any) => a.priority === 'high').sort(comparator);
+      const medium = nonFavorites.filter((a: any) => (a.priority || 'medium') === 'medium').sort(comparator);
+      const low = nonFavorites.filter((a: any) => a.priority === 'low').sort(comparator);
+
+      const prioritySections = [
+        { key: 'priority_urgent', title: t('my_list.section_priority_urgent', { defaultValue: 'URGENTE' }), items: urgent },
+        { key: 'priority_high', title: t('my_list.section_priority_high', { defaultValue: 'ALTA' }), items: high },
+        { key: 'priority_medium', title: t('my_list.section_priority_medium', { defaultValue: 'MEDIA' }), items: medium },
+        { key: 'priority_low', title: t('my_list.section_priority_low', { defaultValue: 'BAJA' }), items: low },
+      ];
+
+      if (albumSortField === 'priority' && albumSortDir === 'asc') {
+        prioritySections.reverse();
+      }
+
+      return [{ key: 'favorites', title: t('my_list.section_favorites_albums'), items: favorites }, ...prioritySections];
+    }
+
+    if (effectiveAlbumGroupBy === 'visibility') {
+      const publicAlbums = nonFavorites.filter((a: any) => (a.visibility || 'public') === 'public').sort(comparator);
+      const followersAlbums = nonFavorites.filter((a: any) => a.visibility === 'followers').sort(comparator);
+      const privateAlbums = nonFavorites.filter((a: any) => a.visibility === 'private').sort(comparator);
+
+      const visibilitySections = [
+        { key: 'visibility_public', title: t('my_list.section_visibility_public_albums', { defaultValue: 'PÚBLICOS' }), items: publicAlbums },
+        { key: 'visibility_followers', title: t('my_list.section_visibility_followers_albums', { defaultValue: 'SEGUIDORES' }), items: followersAlbums },
+        { key: 'visibility_private', title: t('my_list.section_visibility_private_albums', { defaultValue: 'PRIVADOS' }), items: privateAlbums },
+      ];
+
+      return [{ key: 'favorites', title: t('my_list.section_favorites_albums'), items: favorites }, ...visibilitySections];
+    }
 
     const inProgress = nonFavorites
       .filter((a: any) => {
@@ -1013,7 +1083,7 @@ export function useMyListState() {
     }
 
     return [{ key: 'favorites', title: t('my_list.section_favorites_albums'), items: favorites }, ...otherSections];
-  }, [filteredAlbums, shouldGroupAlbums, albumSortField, albumSortDir, isAlbumFavorite, byAlbumManual, albumSortComparator, t]);
+  }, [filteredAlbums, shouldGroupAlbums, effectiveAlbumGroupBy, albumSortField, albumSortDir, isAlbumFavorite, byAlbumManual, albumSortComparator, t]);
 
   const sortedAlbumsList = useMemo(() => {
     if (!filteredAlbums || filteredAlbums.length === 0) return [];
@@ -1119,12 +1189,14 @@ export function useMyListState() {
     filteredBuckets,
     taskSections,
     shouldGroupTasks,
+    taskGroupBy,
     sortedFlatBuckets,
     manualDragEnabled,
     listData,
     filteredAlbums,
     albumSections,
     shouldGroupAlbums,
+    albumGroupBy,
     sortedAlbumsList,
     toast,
     from: params.from,
