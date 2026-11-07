@@ -145,7 +145,7 @@ export function FeedSearchResultsView({
                 <View
                   style={
                     viewMode === 'gallery'
-                      ? { flexDirection: 'row', flexWrap: 'wrap', gap: 10 }
+                      ? { flexDirection: 'row', flexWrap: 'wrap' }
                       : undefined
                   }
                 >
@@ -185,45 +185,53 @@ export function FeedSearchResultsView({
                   {t('feed.search_no_albums', { query })}
                 </Typography>
               ) : (
-                albums.map((album, index) => {
-                  const isLiked = !!currentUserId && !!likedAlbumIds?.includes(album.id);
-                  const isSaved = !!currentUserId && !!savedAlbumIds?.includes(album.id);
-                  const isOwn = !!currentUserId && album.owner?.id === currentUserId;
-                  const saveCount = albumSaveCounts?.[album.id] ?? 0;
-                  const likeCount = albumLikeCounts?.[album.id] ?? 0;
+                <View
+                  style={
+                    viewMode === 'gallery'
+                      ? { flexDirection: 'row', flexWrap: 'wrap' }
+                      : undefined
+                  }
+                >
+                  {albums.map((album, index) => {
+                    const isLiked = !!currentUserId && !!likedAlbumIds?.includes(album.id);
+                    const isSaved = !!currentUserId && !!savedAlbumIds?.includes(album.id);
+                    const isOwn = !!currentUserId && album.owner?.id === currentUserId;
+                    const saveCount = albumSaveCounts?.[album.id] ?? 0;
+                    const likeCount = albumLikeCounts?.[album.id] ?? 0;
 
-                  return (
-                    <AlbumFeedCard
-                      key={`album-${album.id}-${index}`}
-                      album={album}
-                      colorIndex={index}
-                      index={index}
-                      mode={viewMode}
-                      columns={galleryColumns}
-                      isLiked={isLiked}
-                      likeCount={likeCount}
-                      onToggleLike={
-                        currentUserId
-                          ? () => toggleAlbumLike.mutate({ albumId: album.id, userId: currentUserId })
-                          : undefined
-                      }
-                      isSaved={isSaved}
-                      onToggleSave={
-                        currentUserId && !isOwn
-                          ? () =>
-                              toggleSaveAlbum.mutate({
-                                albumId: album.id,
-                                userId: currentUserId,
-                                currentlySaved: isSaved,
-                              })
-                          : undefined
-                      }
-                      saveCount={saveCount}
-                      isOwn={isOwn}
-                      onPress={() => router.push(`/album/${album.id}` as any)}
-                    />
-                  );
-                })
+                    return (
+                      <AlbumFeedCard
+                        key={`album-${album.id}-${index}`}
+                        album={album}
+                        colorIndex={index}
+                        index={index}
+                        mode={viewMode}
+                        columns={galleryColumns}
+                        isLiked={isLiked}
+                        likeCount={likeCount}
+                        onToggleLike={
+                          currentUserId
+                            ? () => toggleAlbumLike.mutate({ albumId: album.id, userId: currentUserId })
+                            : undefined
+                        }
+                        isSaved={isSaved}
+                        onToggleSave={
+                          currentUserId && !isOwn
+                            ? () =>
+                                toggleSaveAlbum.mutate({
+                                  albumId: album.id,
+                                  userId: currentUserId,
+                                  currentlySaved: isSaved,
+                                })
+                            : undefined
+                        }
+                        saveCount={saveCount}
+                        isOwn={isOwn}
+                        onPress={() => router.push(`/album/${album.id}` as any)}
+                      />
+                    );
+                  })}
+                </View>
               )}
             </View>
           )}

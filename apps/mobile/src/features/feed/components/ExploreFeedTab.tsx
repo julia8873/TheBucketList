@@ -143,6 +143,7 @@ export function ExploreFeedTab({
             collection={item}
             index={index}
             mode={viewMode}
+            columns={galleryColumns}
             onPress={() => {
               setSelectedCollection(item);
               setDetailModalVisible(true);

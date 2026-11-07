@@ -230,7 +230,7 @@ export function AlbumFeedCard({
           <View
             style={[
               styles.galleryCover,
-              { width: cardWidth, height: cardHeight, aspectRatio: undefined },
+              { width: cardWidth, height: cardHeight, aspectRatio: undefined, maxHeight: undefined },
             ]}
           >
             {backgroundContent}

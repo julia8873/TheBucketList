@@ -1,6 +1,6 @@
 import React from 'react';
-import type { StyleProp, ViewStyle} from 'react-native';
-import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Platform, useWindowDimensions, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Copy, Heart, Layers } from 'lucide-react-native';
 import { useTheme, gold, fontFamily, HEART_COLOR } from '@bucketlist/ui';
@@ -16,6 +16,7 @@ interface CollectionCardProps {
   onToggleLike?: () => void;
   mode?: TaskViewMode;
   index?: number;
+  columns?: 2 | 3 | 4;
   containerStyle?: StyleProp<ViewStyle>;
 }
 
@@ -27,19 +28,76 @@ export function CollectionCard({
   onToggleLike,
   mode = 'list',
   index = 0,
+  columns = 2,
   containerStyle,
 }: CollectionCardProps) {
+  const { width: windowWidth } = useWindowDimensions();
   const { theme } = useTheme();
   const { t } = useTranslation();
 
-  // ── MODO GALERÍA (2 columnas simétricas sin solapamiento) ──────────────
+  // ── MODO GALERÍA (Columnas simétricas con altura idéntica a tareas y álbumes) ──────────────
   if (mode === 'gallery') {
-    const isLeftColumn = index % 2 === 0;
+    const is4Cols = columns === 4;
+    const is3Cols = columns === 3;
+    const cols = columns || 2;
+    const colIndex = index % cols;
+
+    // Cálculo de ancho y alto fijos idénticos para que todas las tarjetas midan exactamente lo mismo
+    const screenWidth = windowWidth > 0 ? windowWidth : Dimensions.get('window').width;
+    const sideMargin = is4Cols ? 6 : 12;
+    const totalGaps = is4Cols ? 3 * 4 : is3Cols ? 2 * 6 : 10;
+    const availableWidth = screenWidth - (sideMargin * 2) - totalGaps;
+    const cardWidth = Math.floor(availableWidth / cols);
+    const ratio = is4Cols ? 1.15 : is3Cols ? 1.25 : 1.3;
+    const cardHeight = Math.floor(cardWidth * ratio);
+
+    let paddingLeft = 0;
+    let paddingRight = 0;
+    if (is4Cols) {
+      if (colIndex === 0) {
+        paddingLeft = 6;
+        paddingRight = 0;
+      } else if (colIndex === 1) {
+        paddingLeft = 4;
+        paddingRight = 2;
+      } else if (colIndex === 2) {
+        paddingLeft = 2;
+        paddingRight = 4;
+      } else {
+        paddingLeft = 0;
+        paddingRight = 6;
+      }
+    } else if (is3Cols) {
+      if (colIndex === 0) {
+        paddingLeft = 12;
+        paddingRight = 0;
+      } else if (colIndex === 1) {
+        paddingLeft = 6;
+        paddingRight = 6;
+      } else {
+        paddingLeft = 0;
+        paddingRight = 12;
+      }
+    } else {
+      if (colIndex === 0) {
+        paddingLeft = 12;
+        paddingRight = 5;
+      } else {
+        paddingLeft = 5;
+        paddingRight = 12;
+      }
+    }
+
     return (
       <View
         style={[
           styles.galleryCardWrapper,
-          isLeftColumn ? styles.galleryLeftCol : styles.galleryRightCol,
+          {
+            paddingVertical: is4Cols ? 2 : is3Cols ? 3 : 5,
+            paddingLeft,
+            paddingRight,
+            alignItems: 'center',
+          },
           containerStyle,
         ]}
       >
@@ -48,6 +106,9 @@ export function CollectionCard({
           style={({ pressed }) => [
             styles.galleryCard,
             {
+              width: cardWidth,
+              height: cardHeight,
+              borderRadius: is4Cols ? 8 : is3Cols ? 10 : 14,
               backgroundColor: theme.dark ? '#1E1E1E' : '#F0EDE6',
               borderColor: theme.colors.border,
               opacity: pressed ? 0.9 : 1,
@@ -56,7 +117,12 @@ export function CollectionCard({
           accessibilityRole="button"
           accessibilityLabel={t('collections.card_a11y', { title: collection.title })}
         >
-          <View style={styles.galleryCover}>
+          <View
+            style={[
+              styles.galleryCover,
+              { width: cardWidth, height: cardHeight, aspectRatio: undefined, maxHeight: undefined },
+            ]}
+          >
             <LinearGradient
               colors={collection.gradientColors}
               start={{ x: 0.1, y: 0 }}
@@ -71,35 +137,111 @@ export function CollectionCard({
             />
 
             {/* Header: badge y contador de tareas */}
-            <View style={styles.galleryHeaderRow}>
-              <View style={styles.galleryBadgePill}>
-                <Text style={styles.galleryBadgeText} numberOfLines={1}>
+            <View
+              style={[
+                styles.galleryHeaderRow,
+                is4Cols && { top: 4, left: 4, right: 4 },
+                is3Cols && { top: 5, left: 5, right: 5 },
+              ]}
+            >
+              <View
+                style={[
+                  styles.galleryBadgePill,
+                  is4Cols && { paddingHorizontal: 4, paddingVertical: 1.5 },
+                  is3Cols && { paddingHorizontal: 5, paddingVertical: 2 },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.galleryBadgeText,
+                    is4Cols && { fontSize: 7.5 },
+                    is3Cols && { fontSize: 8 },
+                  ]}
+                  numberOfLines={1}
+                >
                   {collection.badge}
                 </Text>
               </View>
-              <View style={styles.galleryTaskBadge}>
-                <Layers size={10} color="#FFF" />
-                <Text style={styles.galleryTaskBadgeText}>{collection.tasks.length}</Text>
+              <View
+                style={[
+                  styles.galleryTaskBadge,
+                  is4Cols && { paddingHorizontal: 4, paddingVertical: 1.5 },
+                  is3Cols && { paddingHorizontal: 5, paddingVertical: 2 },
+                ]}
+              >
+                <Layers size={is4Cols ? 8 : is3Cols ? 9 : 10} color="#FFF" />
+                <Text
+                  style={[
+                    styles.galleryTaskBadgeText,
+                    is4Cols && { fontSize: 8 },
+                    is3Cols && { fontSize: 9 },
+                  ]}
+                >
+                  {collection.tasks.length}
+                </Text>
               </View>
             </View>
 
             {/* Inferior: emoji, título, autor y acciones */}
-            <View style={styles.galleryBottom}>
-              <Text style={styles.galleryEmoji}>{collection.emoji}</Text>
-              <Text style={styles.galleryTitle} numberOfLines={1}>
+            <View
+              style={[
+                styles.galleryBottom,
+                is4Cols && { padding: 4 },
+                is3Cols && { padding: 6 },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.galleryEmoji,
+                  is4Cols && { fontSize: 13, marginBottom: 0 },
+                  is3Cols && { fontSize: 16, marginBottom: 1 },
+                ]}
+              >
+                {collection.emoji}
+              </Text>
+              <Text
+                style={[
+                  styles.galleryTitle,
+                  is4Cols && { fontSize: 9.5, lineHeight: 12 },
+                  is3Cols && { fontSize: 11, lineHeight: 14 },
+                ]}
+                numberOfLines={1}
+              >
                 {collection.title}
               </Text>
-              <Text style={styles.gallerySubtext} numberOfLines={1}>
-                {t('collections.by_author', {
-                  name: collection.author?.name || t('collections.community'),
-                })}
-              </Text>
+              {!is4Cols && (
+                <Text
+                  style={[
+                    styles.gallerySubtext,
+                    is3Cols && { fontSize: 9, marginTop: 1 },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {t('collections.by_author', {
+                    name: collection.author?.name || t('collections.community'),
+                  })}
+                </Text>
+              )}
 
-              <View style={styles.galleryActions}>
+              <View
+                style={[
+                  styles.galleryActions,
+                  is4Cols && { marginTop: 2, gap: 4 },
+                  is3Cols && { marginTop: 3, gap: 6 },
+                ]}
+              >
                 {collection.clonesCount !== undefined && collection.clonesCount > 0 ? (
                   <View style={styles.galleryActionItem}>
-                    <Copy size={11} color="#F2EFE8" />
-                    <Text style={styles.galleryActionText}>{collection.clonesCount}</Text>
+                    <Copy size={is4Cols ? 8.5 : is3Cols ? 9.5 : 11} color="#F2EFE8" />
+                    <Text
+                      style={[
+                        styles.galleryActionText,
+                        is4Cols && { fontSize: 8 },
+                        is3Cols && { fontSize: 9.5 },
+                      ]}
+                    >
+                      {collection.clonesCount}
+                    </Text>
                   </View>
                 ) : null}
                 {onToggleLike && (
@@ -118,7 +260,7 @@ export function CollectionCard({
                     }
                   >
                     <Heart
-                      size={12}
+                      size={is4Cols ? 9.5 : is3Cols ? 10.5 : 12}
                       color={collection.isLiked ? HEART_COLOR : '#F2EFE8'}
                       fill={collection.isLiked ? HEART_COLOR : 'transparent'}
                     />
@@ -126,6 +268,8 @@ export function CollectionCard({
                       <Text
                         style={[
                           styles.galleryActionText,
+                          is4Cols && { fontSize: 8 },
+                          is3Cols && { fontSize: 9.5 },
                           collection.isLiked && { color: HEART_COLOR },
                         ]}
                       >

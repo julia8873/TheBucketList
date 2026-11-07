@@ -273,7 +273,7 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
           <View
             style={[
               styles.galleryCover,
-              { width: cardWidth, height: cardHeight, aspectRatio: undefined },
+              { width: cardWidth, height: cardHeight, aspectRatio: undefined, maxHeight: undefined },
             ]}
           >
             <BucketCover
