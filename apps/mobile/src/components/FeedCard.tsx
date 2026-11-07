@@ -30,6 +30,7 @@ interface FeedCardProps {
   index: number;
   mode?: TaskViewMode;
   saveCount?: number;
+  columns?: 2 | 3 | 4;
 }
 
 /**
@@ -38,7 +39,7 @@ interface FeedCardProps {
  * y pie con la descripción.
  * Soporta modos: 'list' (por defecto), 'gallery' y 'compact'.
  */
-function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: propSaveCount }: FeedCardProps) {
+function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: propSaveCount, columns = 2 }: FeedCardProps) {
   const { theme } = useTheme();
   const { t, i18n } = useTranslation();
   const overlay = useCoverOverlay();
@@ -178,7 +179,15 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
   };
 
   if (mode === 'gallery') {
-    const isLeftColumn = index % 2 === 0;
+    const is4Cols = columns === 4;
+    const is3Cols = columns === 3;
+    const cols = columns || 2;
+    const colIndex = index % cols;
+    const outerPad = 12;
+    const halfGap = is4Cols ? 2 : is3Cols ? 3 : 5;
+    const paddingLeft = colIndex === 0 ? outerPad : halfGap;
+    const paddingRight = colIndex === cols - 1 ? outerPad : halfGap;
+
     const timeStr = timeAgo(event.created_at ?? bucket.completed_at ?? bucket.created_at);
     const metaParts: string[] = [];
     if (bucket.location_text) {
@@ -191,28 +200,40 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
 
     return (
       <Animated.View
-        entering={index < 6 ? FadeInUp.delay(index * 40).duration(260) : undefined}
+        entering={index < 8 ? FadeInUp.delay(index * 35).duration(240) : undefined}
         style={[
           styles.galleryCardWrapper,
-          isLeftColumn ? styles.galleryLeftCol : styles.galleryRightCol,
+          {
+            paddingLeft,
+            paddingRight,
+            paddingVertical: is4Cols ? 2 : is3Cols ? 3 : 5,
+          },
         ]}
       >
         <Pressable
           onPress={onPress}
           style={({ pressed }) => [
             styles.galleryCard,
+            is3Cols && { borderRadius: 10 },
+            is4Cols && { borderRadius: 8 },
             { backgroundColor: theme.dark ? '#1E1E1E' : '#F0EDE6', borderColor: theme.colors.border, opacity: pressed ? 0.92 : 1 },
           ]}
           accessibilityRole="button"
           accessibilityLabel={bucket.title}
         >
-          <View style={styles.galleryCover}>
+          <View
+            style={[
+              styles.galleryCover,
+              is3Cols && { aspectRatio: 1 / 1.25 },
+              is4Cols && { aspectRatio: 1 / 1.15 },
+            ]}
+          >
             <BucketCover
               value={coverValue}
               title={bucket.title}
               categorySlug={bucket.category?.slug}
               seed={bucket.id}
-              iconSize={44}
+              iconSize={is4Cols ? 26 : is3Cols ? 34 : 44}
               style={StyleSheet.absoluteFill}
             />
 
@@ -226,12 +247,20 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
             )}
 
             {/* Badges superiores: Autor + colaboradores solapados a la izquierda, completado a la derecha */}
-            <View style={styles.galleryTopBadges} pointerEvents="box-none">
+            <View
+              style={[
+                styles.galleryTopBadges,
+                is4Cols && { top: 4, left: 4, right: 4 },
+                is3Cols && { top: 5, left: 5, right: 5 },
+              ]}
+              pointerEvents="box-none"
+            >
               {hasCollabs && participants ? (
                 <ParticipantsStack
                   participants={participants}
                   max={2}
                   size="xs"
+                  bubbleSize={is4Cols ? 16 : is3Cols ? 18 : undefined}
                   ringColor="rgba(0,0,0,0.55)"
                 />
               ) : (
@@ -245,17 +274,25 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
                   accessibilityRole="button"
                   accessibilityLabel={actor.username}
                 >
-                  <Avatar uri={actor.avatar_url} initials={initialsOf(actor)} size="xs" goldRing />
+                  <Avatar
+                    uri={actor.avatar_url}
+                    initials={initialsOf(actor)}
+                    size="xs"
+                    customSize={is4Cols ? 16 : is3Cols ? 20 : undefined}
+                    goldRing
+                  />
                 </Pressable>
               )}
 
               <View
                 style={[
                   styles.galleryCompletedBadge,
+                  is3Cols && { width: 18, height: 18, borderRadius: 9 },
+                  is4Cols && { width: 16, height: 16, borderRadius: 8 },
                   { backgroundColor: statusCfg.badgeBg },
                 ]}
               >
-                {statusCfg.renderGalleryIcon(12)}
+                {statusCfg.renderGalleryIcon(is4Cols ? 9 : is3Cols ? 10 : 12)}
               </View>
             </View>
 
@@ -264,34 +301,64 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
               style={[
                 styles.galleryBottomOverlay,
                 { backgroundColor: isImageCover ? 'rgba(0,0,0,0.58)' : overlay.panel },
+                is3Cols && { minHeight: 56, paddingHorizontal: 6, paddingVertical: 4, borderBottomLeftRadius: 10, borderBottomRightRadius: 10 },
+                is4Cols && { minHeight: 40, paddingHorizontal: 4, paddingVertical: 2, borderBottomLeftRadius: 8, borderBottomRightRadius: 8 },
               ]}
               pointerEvents="box-none"
             >
-              <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6 }}>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.galleryCardTitle, { color: overlay.title }]} numberOfLines={2}>
+                  <Text
+                    style={[
+                      styles.galleryCardTitle,
+                      { color: overlay.title },
+                      is3Cols && { fontSize: 11, lineHeight: 14, minHeight: 24 },
+                      is4Cols && { fontSize: 9.5, lineHeight: 12, minHeight: 12 },
+                    ]}
+                    numberOfLines={is4Cols ? 1 : 2}
+                  >
                     {bucket.title}
                   </Text>
-                  {metaText ? (
-                    <Text style={[styles.galleryCardMeta, { color: overlay.meta }]} numberOfLines={1}>
+                  {!is4Cols && metaText ? (
+                    <Text
+                      style={[
+                        styles.galleryCardMeta,
+                        { color: overlay.meta },
+                        is3Cols && { fontSize: 9, marginTop: 1 },
+                      ]}
+                      numberOfLines={1}
+                    >
                       {metaText}
                     </Text>
                   ) : null}
                 </View>
               </View>
 
-              <View style={styles.galleryActionRow} pointerEvents="box-none">
-                <View style={styles.galleryActionsGroup}>
+              <View
+                style={[
+                  styles.galleryActionRow,
+                  is3Cols && { marginTop: 3, paddingTop: 3 },
+                  is4Cols && { marginTop: 2, paddingTop: 2 },
+                ]}
+                pointerEvents="box-none"
+              >
+                <View
+                  style={[
+                    styles.galleryActionsGroup,
+                    is3Cols && { gap: 4 },
+                    is4Cols && { gap: 3 },
+                  ]}
+                >
                   <Pressable
                     onPress={(e) => {
                       e.stopPropagation();
                       handleLike();
                     }}
                     hitSlop={6}
-                    style={styles.galleryActionItem}
+                    style={[styles.galleryActionItem, is4Cols && { gap: 2 }, is3Cols && { gap: 2.5 }]}
                   >
                     <Heart
-                      size={13}
+                      size={is4Cols ? 9.5 : is3Cols ? 11 : 13}
                       color={liked ? HEART_COLOR : '#F2EFE8'}
                       fill={liked ? HEART_COLOR : 'transparent'}
                       strokeWidth={1.8}
@@ -303,7 +370,9 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
                       }}
                       hitSlop={4}
                     >
-                      <Text style={styles.galleryActionText}>{likeCount}</Text>
+                      <Text style={[styles.galleryActionText, is3Cols && { fontSize: 9.5 }, is4Cols && { fontSize: 8 }]}>
+                        {likeCount}
+                      </Text>
                     </Pressable>
                   </Pressable>
 
@@ -313,10 +382,12 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
                       setShowComments(true);
                     }}
                     hitSlop={6}
-                    style={styles.galleryActionItem}
+                    style={[styles.galleryActionItem, is4Cols && { gap: 2 }, is3Cols && { gap: 2.5 }]}
                   >
-                    <MessageCircle size={13} color="#F2EFE8" strokeWidth={1.8} />
-                    <Text style={styles.galleryActionText}>{commentCount}</Text>
+                    <MessageCircle size={is4Cols ? 9.5 : is3Cols ? 11 : 13} color="#F2EFE8" strokeWidth={1.8} />
+                    <Text style={[styles.galleryActionText, is3Cols && { fontSize: 9.5 }, is4Cols && { fontSize: 8 }]}>
+                      {commentCount}
+                    </Text>
                   </Pressable>
 
                   <Pressable
@@ -325,16 +396,18 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
                       handleSaveBucket();
                     }}
                     hitSlop={6}
-                    style={styles.galleryActionItem}
+                    style={[styles.galleryActionItem, is4Cols && { gap: 2 }, is3Cols && { gap: 2.5 }]}
                     disabled={isOwn}
                   >
                     <Bookmark
-                      size={12}
+                      size={is4Cols ? 9 : is3Cols ? 10.5 : 12}
                       color={isBucketSaved ? gold[400] : '#F2EFE8'}
                       fill={isBucketSaved ? gold[400] : 'transparent'}
                       strokeWidth={1.8}
                     />
-                    <Text style={styles.galleryActionText}>{saveCount}</Text>
+                    <Text style={[styles.galleryActionText, is3Cols && { fontSize: 9.5 }, is4Cols && { fontSize: 8 }]}>
+                      {saveCount}
+                    </Text>
                   </Pressable>
                 </View>
               </View>

@@ -28,6 +28,7 @@ interface FeedSearchResultsViewProps {
   albums?: any[];
   users?: any[];
   viewMode?: TaskViewMode;
+  galleryColumns?: 2 | 3 | 4;
 }
 
 export function FeedSearchResultsView({
@@ -37,6 +38,7 @@ export function FeedSearchResultsView({
   albums = [],
   users = [],
   viewMode = 'list',
+  galleryColumns = 3,
 }: FeedSearchResultsViewProps) {
   const router = useRouter();
   const { theme } = useTheme();
@@ -159,6 +161,7 @@ export function FeedSearchResultsView({
                       }}
                       index={index}
                       mode={viewMode}
+                      columns={galleryColumns}
                       onPress={() => router.push(`/bucket/${item.id}` as any)}
                     />
                   ))}
@@ -196,6 +199,7 @@ export function FeedSearchResultsView({
                       colorIndex={index}
                       index={index}
                       mode={viewMode}
+                      columns={galleryColumns}
                       isLiked={isLiked}
                       likeCount={likeCount}
                       onToggleLike={

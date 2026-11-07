@@ -55,6 +55,7 @@ interface AlbumFeedCardProps {
   isOwn?: boolean;
   mode?: TaskViewMode;
   index?: number;
+  columns?: 2 | 3 | 4;
 }
 
 export function AlbumFeedCard({
@@ -73,6 +74,7 @@ export function AlbumFeedCard({
   isOwn = false,
   mode = 'list',
   index = 0,
+  columns = 2,
 }: AlbumFeedCardProps) {
   const router = useRouter();
   const { t } = useTranslation();
@@ -145,24 +147,44 @@ export function AlbumFeedCard({
   const timeAgo = album.created_at ? getTimeAgo(album.created_at) : '';
 
   if (mode === 'gallery') {
-    const isLeftColumn = index % 2 === 0;
+    const is4Cols = columns === 4;
+    const is3Cols = columns === 3;
+    const cols = columns || 2;
+    const colIndex = index % cols;
+    const outerPad = 12;
+    const halfGap = is4Cols ? 2 : is3Cols ? 3 : 5;
+    const paddingLeft = colIndex === 0 ? outerPad : halfGap;
+    const paddingRight = colIndex === cols - 1 ? outerPad : halfGap;
+
     return (
       <View
         style={[
           styles.galleryCardWrapper,
-          isLeftColumn ? styles.galleryLeftCol : styles.galleryRightCol,
+          {
+            paddingLeft,
+            paddingRight,
+            paddingVertical: is4Cols ? 2 : is3Cols ? 3 : 5,
+          },
         ]}
       >
         <Pressable
           onPress={onPress}
           style={({ pressed }) => [
             styles.galleryCard,
+            is3Cols && { borderRadius: 10 },
+            is4Cols && { borderRadius: 8 },
             { backgroundColor: theme.dark ? '#1E1E1E' : '#F0EDE6', borderColor: theme.colors.border, opacity: pressed ? 0.92 : 1 },
           ]}
           accessibilityRole="button"
           accessibilityLabel={album.title}
         >
-          <View style={styles.galleryCover}>
+          <View
+            style={[
+              styles.galleryCover,
+              is3Cols && { aspectRatio: 1 / 1.25 },
+              is4Cols && { aspectRatio: 1 / 1.15 },
+            ]}
+          >
             {backgroundContent}
             <LinearGradient
               colors={overlay.softBoth}
@@ -172,12 +194,20 @@ export function AlbumFeedCard({
             />
 
             {/* Badges superiores: autor/colaboradores y badge de álbum */}
-            <View style={styles.galleryHeaderRow} pointerEvents="box-none">
+            <View
+              style={[
+                styles.galleryHeaderRow,
+                is4Cols && { top: 4, left: 4, right: 4 },
+                is3Cols && { top: 5, left: 5, right: 5 },
+              ]}
+              pointerEvents="box-none"
+            >
               {hasCollabs && participants ? (
                 <ParticipantsStack
                   participants={participants}
                   max={2}
                   size="xs"
+                  bubbleSize={is4Cols ? 16 : is3Cols ? 18 : undefined}
                   ringColor="rgba(0,0,0,0.55)"
                 />
               ) : (
@@ -195,38 +225,72 @@ export function AlbumFeedCard({
                     source={album.owner?.avatar_url ? { uri: album.owner.avatar_url } : undefined}
                     fallback={ownerName.charAt(0).toUpperCase() || '?'}
                     size="xs"
+                    customSize={is4Cols ? 16 : is3Cols ? 20 : undefined}
                     goldRing
                   />
                 </Pressable>
               )}
 
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: is4Cols ? 3 : is3Cols ? 4 : 6 }}>
                 <View
                   style={[
                     styles.galleryCompletedBadge,
+                    is3Cols && { width: 18, height: 18, borderRadius: 9 },
+                    is4Cols && { width: 16, height: 16, borderRadius: 8 },
                     { backgroundColor: statusCfg.badgeBg },
                   ]}
                 >
-                  {statusCfg.renderGalleryIcon(12)}
+                  {statusCfg.renderGalleryIcon(is4Cols ? 9 : is3Cols ? 10 : 12)}
                 </View>
-                <View style={styles.galleryAlbumBadge}>
-                  <Images size={10} color="rgba(255,255,255,0.95)" />
-                  <Text style={styles.galleryAlbumBadgeText}>{t('common.album', { defaultValue: 'Álbum' })}</Text>
-                </View>
+                {!is4Cols && (
+                  <View style={[styles.galleryAlbumBadge, is3Cols && { paddingHorizontal: 4, paddingVertical: 1.5 }]}>
+                    <Images size={is3Cols ? 9 : 10} color="rgba(255,255,255,0.95)" />
+                    <Text style={[styles.galleryAlbumBadgeText, is3Cols && { fontSize: 8.5 }]}>{t('common.album', { defaultValue: 'Álbum' })}</Text>
+                  </View>
+                )}
               </View>
             </View>
 
             {/* Overlay inferior estilo mis tareas: título, meta, acciones y colaboradores */}
-            <View style={styles.galleryBottom} pointerEvents="box-none">
-              <Text style={styles.galleryTitle} numberOfLines={2}>
+            <View
+              style={[
+                styles.galleryBottom,
+                is3Cols && { minHeight: 56, paddingHorizontal: 6, paddingVertical: 4, borderBottomLeftRadius: 10, borderBottomRightRadius: 10 },
+                is4Cols && { minHeight: 40, paddingHorizontal: 4, paddingVertical: 2, borderBottomLeftRadius: 8, borderBottomRightRadius: 8 },
+              ]}
+              pointerEvents="box-none"
+            >
+              <Text
+                style={[
+                  styles.galleryTitle,
+                  is3Cols && { fontSize: 11, lineHeight: 14, minHeight: 24 },
+                  is4Cols && { fontSize: 9.5, lineHeight: 12, minHeight: 12 },
+                ]}
+                numberOfLines={is4Cols ? 1 : 2}
+              >
                 {album.title}
               </Text>
-              <Text style={styles.gallerySubtext} numberOfLines={1}>
-                {album.completed_tasks}/{album.total_tasks} {t('albums.tasks', { defaultValue: 'tareas' })}
-              </Text>
+              {!is4Cols && (
+                <Text style={[styles.gallerySubtext, is3Cols && { fontSize: 9, marginTop: 1 }]} numberOfLines={1}>
+                  {album.completed_tasks}/{album.total_tasks} {t('albums.tasks', { defaultValue: 'tareas' })}
+                </Text>
+              )}
 
-              <View style={styles.galleryActionRow} pointerEvents="box-none">
-                <View style={styles.galleryActionsGroup}>
+              <View
+                style={[
+                  styles.galleryActionRow,
+                  is3Cols && { marginTop: 3, paddingTop: 3 },
+                  is4Cols && { marginTop: 2, paddingTop: 2 },
+                ]}
+                pointerEvents="box-none"
+              >
+                <View
+                  style={[
+                    styles.galleryActionsGroup,
+                    is3Cols && { gap: 4 },
+                    is4Cols && { gap: 3 },
+                  ]}
+                >
                   {onToggleLike && (
                     <Pressable
                       onPress={(e) => {
@@ -234,10 +298,10 @@ export function AlbumFeedCard({
                         onToggleLike();
                       }}
                       hitSlop={6}
-                      style={styles.galleryActionItem}
+                      style={[styles.galleryActionItem, is4Cols && { gap: 2 }, is3Cols && { gap: 2.5 }]}
                     >
                       <Heart
-                        size={13}
+                        size={is4Cols ? 9.5 : is3Cols ? 11 : 13}
                         color={isLiked ? HEART_COLOR : '#F2EFE8'}
                         fill={isLiked ? HEART_COLOR : 'transparent'}
                         strokeWidth={1.8}
@@ -249,7 +313,7 @@ export function AlbumFeedCard({
                         }}
                         hitSlop={4}
                       >
-                        <Text style={styles.galleryActionText}>{likeCount}</Text>
+                        <Text style={[styles.galleryActionText, is3Cols && { fontSize: 9.5 }, is4Cols && { fontSize: 8 }]}>{likeCount}</Text>
                       </Pressable>
                     </Pressable>
                   )}
@@ -260,10 +324,10 @@ export function AlbumFeedCard({
                       setShowComments(true);
                     }}
                     hitSlop={6}
-                    style={styles.galleryActionItem}
+                    style={[styles.galleryActionItem, is4Cols && { gap: 2 }, is3Cols && { gap: 2.5 }]}
                   >
-                    <MessageCircle size={13} color="#F2EFE8" strokeWidth={1.8} />
-                    <Text style={styles.galleryActionText}>{commentCount}</Text>
+                    <MessageCircle size={is4Cols ? 9.5 : is3Cols ? 11 : 13} color="#F2EFE8" strokeWidth={1.8} />
+                    <Text style={[styles.galleryActionText, is3Cols && { fontSize: 9.5 }, is4Cols && { fontSize: 8 }]}>{commentCount}</Text>
                   </Pressable>
 
                   {handleSave ? (
@@ -273,25 +337,25 @@ export function AlbumFeedCard({
                         handleSave();
                       }}
                       hitSlop={6}
-                      style={styles.galleryActionItem}
+                      style={[styles.galleryActionItem, is4Cols && { gap: 2 }, is3Cols && { gap: 2.5 }]}
                       disabled={isOwn}
                     >
                       <Bookmark
-                        size={12}
+                        size={is4Cols ? 9 : is3Cols ? 10.5 : 12}
                         color={actualSaved ? gold[400] : '#F2EFE8'}
                         fill={actualSaved ? gold[400] : 'transparent'}
                         strokeWidth={1.8}
                       />
-                      <Text style={styles.galleryActionText}>{saveCount}</Text>
+                      <Text style={[styles.galleryActionText, is3Cols && { fontSize: 9.5 }, is4Cols && { fontSize: 8 }]}>{saveCount}</Text>
                     </Pressable>
                   ) : (
-                    <View style={styles.galleryActionItem}>
+                    <View style={[styles.galleryActionItem, is4Cols && { gap: 2 }, is3Cols && { gap: 2.5 }]}>
                       <Bookmark
-                        size={12}
+                        size={is4Cols ? 9 : is3Cols ? 10.5 : 12}
                         color="#F2EFE8"
                         strokeWidth={1.8}
                       />
-                      <Text style={styles.galleryActionText}>{saveCount}</Text>
+                      <Text style={[styles.galleryActionText, is3Cols && { fontSize: 9.5 }, is4Cols && { fontSize: 8 }]}>{saveCount}</Text>
                     </View>
                   )}
                 </View>

@@ -25,6 +25,8 @@ interface FeedHeaderProps {
   onChangeFriendsSearch?: (text: string) => void;
   viewMode: TaskViewMode;
   onChangeViewMode: (mode: TaskViewMode) => void;
+  galleryColumns?: 2 | 3 | 4;
+  onCycleGalleryColumns?: () => void;
   contentFilter: ContentFilter;
   onChangeContentFilter: (f: ContentFilter) => void;
 }
@@ -43,6 +45,8 @@ export function FeedHeader({
   onChangeFriendsSearch,
   viewMode,
   onChangeViewMode,
+  galleryColumns,
+  onCycleGalleryColumns,
   contentFilter,
   onChangeContentFilter,
 }: FeedHeaderProps) {
@@ -104,7 +108,13 @@ export function FeedHeader({
       {/* Barra de controles: Modo vista, Mapa alargado, Buscador y Filtrar (mismo orden e iconos que en mi lista) */}
       <View style={styles.feedControlsRow}>
         {/* Selector de vista (al inicio, como en mi lista) */}
-        <ViewModeSelector mode={viewMode} onChange={onChangeViewMode} style={{ flexShrink: 0 }} />
+        <ViewModeSelector
+          mode={viewMode}
+          onChange={onChangeViewMode}
+          galleryColumns={galleryColumns}
+          onCycleGalleryColumns={onCycleGalleryColumns}
+          style={{ flexShrink: 0 }}
+        />
 
         {/* Mapa (alargado, ocupando el espacio disponible) */}
         {onOpenMap ? (

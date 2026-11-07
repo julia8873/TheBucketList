@@ -51,6 +51,7 @@ interface ExploreFeedTabProps {
   windowHeight: number;
   listRef?: React.RefObject<any>;
   viewMode?: TaskViewMode;
+  galleryColumns?: 2 | 3 | 4;
 }
 
 export function ExploreFeedTab({
@@ -75,6 +76,7 @@ export function ExploreFeedTab({
   windowHeight,
   listRef,
   viewMode = 'list',
+  galleryColumns = 3,
 }: ExploreFeedTabProps) {
   const router = useRouter();
   const { t } = useTranslation();
@@ -165,6 +167,7 @@ export function ExploreFeedTab({
             colorIndex={index}
             index={index}
             mode={viewMode}
+            columns={galleryColumns}
             isLiked={isLiked}
             likeCount={likeCount}
             onToggleLike={currentUserId ? () => toggleAlbumLike.mutate({ albumId: item.id, userId: currentUserId }) : undefined}
@@ -188,12 +191,13 @@ export function ExploreFeedTab({
           }}
           index={index}
           mode={viewMode}
+          columns={galleryColumns}
           saveCount={bucketSaveCounts?.[item.id] ?? 0}
           onPress={() => router.push(`/bucket/${item.id}` as any)}
         />
       );
     },
-    [viewMode, contentFilter, router, currentUserId, likedAlbumIds, savedAlbumIds, toggleAlbumLike, toggleSaveAlbum, albumSaveCounts, albumLikeCounts, bucketSaveCounts, cloneMutation, toggleCollectionLike]
+    [viewMode, galleryColumns, contentFilter, router, currentUserId, likedAlbumIds, savedAlbumIds, toggleAlbumLike, toggleSaveAlbum, albumSaveCounts, albumLikeCounts, bucketSaveCounts, cloneMutation, toggleCollectionLike]
   );
 
   if (debouncedSearch.length >= 2) {
@@ -211,6 +215,7 @@ export function ExploreFeedTab({
           albums={albums}
           users={users}
           viewMode={viewMode}
+          galleryColumns={galleryColumns}
         />
       </View>
     );
@@ -222,11 +227,10 @@ export function ExploreFeedTab({
       return (
         <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 72 }} showsVerticalScrollIndicator={false}>
           {headerElement}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 10 }}>
-            <TaskGallerySkeleton />
-            <TaskGallerySkeleton />
-            <TaskGallerySkeleton />
-            <TaskGallerySkeleton />
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: galleryColumns === 4 ? 4 : galleryColumns === 3 ? 6 : 10 }}>
+            {Array.from({ length: galleryColumns * 2 }).map((_, i) => (
+              <TaskGallerySkeleton key={i} columns={galleryColumns} />
+            ))}
           </View>
         </ScrollView>
       );
@@ -263,11 +267,11 @@ export function ExploreFeedTab({
     <View style={{ flex: 1 }}>
       <FlashList
         ref={listRef}
-        key={`${viewMode}-${contentFilter}`}
+        key={`${viewMode}-${galleryColumns}-${contentFilter}`}
         data={combinedItems}
         extraData={extraData}
         keyExtractor={(item) => `${item._type ?? 'task'}-${item.id}`}
-        numColumns={viewMode === 'gallery' ? 2 : 1}
+        numColumns={viewMode === 'gallery' ? galleryColumns : 1}
         renderItem={renderItem}
         contentContainerStyle={{ paddingBottom: 72 }}
         ListHeaderComponent={

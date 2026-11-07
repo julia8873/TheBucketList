@@ -46,6 +46,7 @@ interface FriendsFeedTabProps {
   onRetry: () => void;
   listRef?: React.RefObject<any>;
   viewMode?: TaskViewMode;
+  galleryColumns?: 2 | 3 | 4;
   debouncedSearch?: string;
   isSearchLoading?: boolean;
   searchResults?: { tasks: any[]; albums: any[]; users: any[] };
@@ -72,6 +73,7 @@ export function FriendsFeedTab({
   onRetry,
   listRef,
   viewMode = 'list',
+  galleryColumns = 3,
   debouncedSearch = '',
   isSearchLoading = false,
   searchResults,
@@ -151,6 +153,7 @@ export function FriendsFeedTab({
             colorIndex={index}
             index={index}
             mode={viewMode}
+            columns={galleryColumns}
             isLiked={isLiked}
             likeCount={likeCount}
             onToggleLike={currentUserId ? () => toggleAlbumLike.mutate({ albumId: item.id, userId: currentUserId }) : undefined}
@@ -167,12 +170,13 @@ export function FriendsFeedTab({
           event={item}
           index={index}
           mode={viewMode}
+          columns={galleryColumns}
           saveCount={bucketSaveCounts?.[item.bucket_id || item.id] ?? 0}
           onPress={() => router.push(`/bucket/${item.bucket_id}` as any)}
         />
       );
     },
-    [viewMode, contentFilter, router, currentUserId, likedAlbumIds, savedAlbumIds, toggleAlbumLike, toggleSaveAlbum, albumSaveCounts, albumLikeCounts, bucketSaveCounts]
+    [viewMode, galleryColumns, contentFilter, router, currentUserId, likedAlbumIds, savedAlbumIds, toggleAlbumLike, toggleSaveAlbum, albumSaveCounts, albumLikeCounts, bucketSaveCounts]
   );
 
   if (debouncedSearch && debouncedSearch.trim().length >= 2) {
@@ -186,6 +190,7 @@ export function FriendsFeedTab({
           albums={searchResults?.albums ?? []}
           users={searchResults?.users ?? []}
           viewMode={viewMode}
+          galleryColumns={galleryColumns}
         />
       </View>
     );
@@ -198,11 +203,10 @@ export function FriendsFeedTab({
       return (
         <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 72 }} showsVerticalScrollIndicator={false}>
           {headerElement}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 10 }}>
-            <TaskGallerySkeleton />
-            <TaskGallerySkeleton />
-            <TaskGallerySkeleton />
-            <TaskGallerySkeleton />
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: galleryColumns === 4 ? 4 : galleryColumns === 3 ? 6 : 10 }}>
+            {Array.from({ length: galleryColumns * 2 }).map((_, i) => (
+              <TaskGallerySkeleton key={i} columns={galleryColumns} />
+            ))}
           </View>
         </ScrollView>
       );
@@ -248,11 +252,11 @@ export function FriendsFeedTab({
     <View style={{ flex: 1, minHeight: 1 }}>
     <FlashList
       ref={listRef}
-      key={`${viewMode}-${contentFilter}`}
+      key={`${viewMode}-${galleryColumns}-${contentFilter}`}
       data={combinedItems}
       extraData={extraData}
       keyExtractor={(item) => `${item._type ?? 'task'}-${item.id}`}
-      numColumns={viewMode === 'gallery' ? 2 : 1}
+      numColumns={viewMode === 'gallery' ? galleryColumns : 1}
       renderItem={renderItem}
       contentContainerStyle={{ paddingBottom: 72 }}
       ListHeaderComponent={headerElement}

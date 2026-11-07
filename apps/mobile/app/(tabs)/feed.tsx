@@ -36,11 +36,21 @@ export default function FeedScreen() {
     void AsyncStorage.setItem('@feed_home_tab', tab).catch(() => undefined);
   };
 
-  const [viewMode, setViewModeState] = useState<TaskViewMode>('list');
+  const [viewMode, setViewModeState] = useState<TaskViewMode>('gallery');
+  const [galleryColumns, setGalleryColumnsState] = useState<2 | 3 | 4>(3);
+
   const setViewMode = (mode: TaskViewMode) => {
     setViewModeState(mode);
     void AsyncStorage.setItem('@feed_view_mode', mode).catch(() => undefined);
   };
+
+  const handleCycleGalleryColumns = useCallback(() => {
+    setGalleryColumnsState((prev) => {
+      const next: 2 | 3 | 4 = prev === 2 ? 3 : prev === 3 ? 4 : 2;
+      void AsyncStorage.setItem('@feed_gallery_columns', String(next)).catch(() => undefined);
+      return next;
+    });
+  }, []);
 
   const [contentFilter, setContentFilterState] = useState<ContentFilter>('todo');
   const setContentFilter = (f: ContentFilter) => {
@@ -65,6 +75,10 @@ export default function FeedScreen() {
     }).catch(() => undefined);
     AsyncStorage.getItem('@feed_view_mode').then((saved) => {
       if (saved === 'list' || saved === 'gallery' || saved === 'compact') setViewModeState(saved as TaskViewMode);
+    }).catch(() => undefined);
+    AsyncStorage.getItem('@feed_gallery_columns').then((saved) => {
+      const cols = Number(saved);
+      if (cols === 2 || cols === 3 || cols === 4) setGalleryColumnsState(cols as 2 | 3 | 4);
     }).catch(() => undefined);
     AsyncStorage.getItem('@feed_content_filter').then((saved) => {
       if (!params.filter && (saved === 'todo' || saved === 'tareas' || saved === 'albumes' || saved === 'colecciones')) {
@@ -327,6 +341,8 @@ export default function FeedScreen() {
       onChangeFriendsSearch={setFriendsSearch}
       viewMode={viewMode}
       onChangeViewMode={setViewMode}
+      galleryColumns={galleryColumns}
+      onCycleGalleryColumns={handleCycleGalleryColumns}
       contentFilter={contentFilter}
       onChangeContentFilter={setContentFilter}
     />
@@ -364,6 +380,7 @@ export default function FeedScreen() {
             onRetry={() => void refetchFriends()}
             listRef={friendsListRef}
             viewMode={viewMode}
+            galleryColumns={galleryColumns}
             debouncedSearch={debouncedFriendsSearch}
             isSearchLoading={isFriendsSearchLoading}
             searchResults={friendsSearchResults}
@@ -391,6 +408,7 @@ export default function FeedScreen() {
             windowHeight={windowHeight}
             listRef={exploreListRef}
             viewMode={viewMode}
+            galleryColumns={galleryColumns}
           />
         )}
       </SafeAreaView>
