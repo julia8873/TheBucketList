@@ -8,7 +8,7 @@ type Lang = 'es' | 'en';
 
 // ── Textos de las notificaciones push (es / en) ────────────────────────────────────────────
 const TITLES: Record<string, { es: string; en: string }> = {
-  reaction: { es: 'Nueva reacción', en: 'New reaction' },
+  reaction: { es: 'Nuevo me gusta', en: 'New like' },
   comment: { es: 'Nuevo comentario', en: 'New comment' },
   mention: { es: 'Nueva mención', en: 'New mention' },
   comment_like: { es: 'Le gustó tu comentario', en: 'Liked comment' },
@@ -64,8 +64,7 @@ function translateContentToEn(content: string): string | null {
     [/^(.+?) ha dejado un comentario en tu (álbum|tarea) "(.*)"$/s, (m) => `${m[1]} left a comment on your ${m[2] === 'álbum' ? 'album' : 'task'} "${m[3]}"`],
     [/^(.+?) te ha mencionado en un comentario en la publicación "(.*)"$/s, (m) => `${m[1]} mentioned you in a comment on "${m[2]}"`],
     [/^(.+?) te ha mencionado en un comentario en "(.*)"$/s, (m) => `${m[1]} mentioned you in a comment on "${m[2]}"`],
-    [/^(.+?) ha reaccionado a tu tarea "(.*)"$/s, (m) => `${m[1]} reacted to your task "${m[2]}"`],
-    [/^(.+?) le ha dado me gusta a tu tarea "(.*)"$/s, (m) => `${m[1]} liked your task "${m[2]}"`],
+    [/^(.+?) (?:ha reaccionado|le ha dado me gusta) a tu tarea "(.*)"$/s, (m) => `${m[1]} liked your task "${m[2]}"`],
     [/^(.+?) ha empezado a seguirte$/s, (m) => `${m[1]} started following you`],
     [/^(.+?) quiere seguirte$/s, (m) => `${m[1]} wants to follow you`],
     [/^(.+?) aceptó tu solicitud$/s, (m) => `${m[1]} accepted your follow request`],
@@ -98,7 +97,7 @@ function buildPushText(
     : `${isAlbum ? (isMine ? 'tu' : 'el') : (isMine ? 'tu' : 'la')} ${isAlbum ? 'álbum' : 'tarea'}${quoted}`;
 
   const specific: Record<string, { es: string; en: string }> = {
-    reaction: { es: `${who} ha reaccionado a ${target}`, en: `${who} reacted to ${target}` },
+    reaction: { es: `${who} le ha dado me gusta a ${target}`, en: `${who} liked ${target}` },
     comment: { es: `${who} ha dejado un comentario en ${target}`, en: `${who} commented on ${target}` },
     mention: { es: `${who} te ha mencionado en un comentario en ${target}`, en: `${who} mentioned you in a comment on ${target}` },
     comment_like: { es: `A ${who} le ha gustado tu comentario en ${target}`, en: `${who} liked your comment on ${target}` },

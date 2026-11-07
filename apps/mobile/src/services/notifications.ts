@@ -314,8 +314,8 @@ export async function displayInAppNotification(record: any, currentUserId: strin
 
     switch (record.type) {
       case 'reaction':
-        title = isEn ? 'New reaction 💛' : 'Nueva reacción 💛';
-        body = specific ?? (isEn ? `${who} reacted to your task.` : `${who} ha reaccionado a tu tarea.`);
+        title = isEn ? 'New like 💛' : 'Nuevo me gusta 💛';
+        body = specific ?? (isEn ? `${who} liked your task.` : `${who} le ha dado me gusta a tu tarea.`);
         break;
       case 'comment':
         title = isEn ? 'New comment 💬' : 'Nuevo comentario 💬';

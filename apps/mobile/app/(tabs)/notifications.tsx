@@ -226,7 +226,7 @@ export default function NotificationsScreen() {
       case 'user_reported': return `${actorName} ${t('notifications.type_user_reported')}`;
       case 'content_reported': return `${actorName} ${t('notifications.type_content_reported')}`;
       case 'reaction':
-        return isEn ? `${actorName} reacted to your task.` : (notification.content || `${actorName} ha reaccionado a tu tarea.`);
+        return isEn ? `${actorName} liked your task.` : (notification.content || `${actorName} le ha dado me gusta a tu tarea.`);
       case 'comment':
         return isEn ? `${actorName} commented on your task.` : (notification.content || `${actorName} ha dejado un comentario.`);
       case 'mention':

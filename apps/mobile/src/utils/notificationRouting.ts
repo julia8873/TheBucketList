@@ -87,8 +87,8 @@ export function getSpecificNotificationText(
   switch (type) {
     case 'reaction':
       return isEn
-        ? `${actorName} reacted to ${target}`
-        : `${actorName} ha reaccionado a ${target}`;
+        ? `${actorName} liked ${target}`
+        : `${actorName} le ha dado me gusta a ${target}`;
     case 'comment':
       return isEn
         ? `${actorName} commented on ${target}`
@@ -195,8 +195,7 @@ export function translateContentToEn(content?: string | null): string | null {
     [/^(.+?) ha dejado un comentario en tu (álbum|tarea) "(.*)"$/s, (m) => `${m[1]} left a comment on your ${m[2] === 'álbum' ? 'album' : 'task'} "${m[3]}"`],
     [/^(.+?) te ha mencionado en un comentario en la publicación "(.*)"$/s, (m) => `${m[1]} mentioned you in a comment on "${m[2]}"`],
     [/^(.+?) te ha mencionado en un comentario en "(.*)"$/s, (m) => `${m[1]} mentioned you in a comment on "${m[2]}"`],
-    [/^(.+?) ha reaccionado a tu tarea "(.*)"$/s, (m) => `${m[1]} reacted to your task "${m[2]}"`],
-    [/^(.+?) le ha dado me gusta a tu tarea "(.*)"$/s, (m) => `${m[1]} liked your task "${m[2]}"`],
+    [/^(.+?) (?:ha reaccionado|le ha dado me gusta) a tu tarea "(.*)"$/s, (m) => `${m[1]} liked your task "${m[2]}"`],
     [/^(.+?) ha empezado a seguirte$/s, (m) => `${m[1]} started following you`],
     [/^(.+?) quiere seguirte$/s, (m) => `${m[1]} wants to follow you`],
     [/^(.+?) aceptó tu solicitud$/s, (m) => `${m[1]} accepted your follow request`],
