@@ -185,15 +185,6 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
     const cols = columns || 2;
     const colIndex = index % cols;
 
-    // Cálculo de ancho y alto fijos idénticos para que todas las tarjetas midan exactamente lo mismo
-    const screenWidth = windowWidth > 0 ? windowWidth : Dimensions.get('window').width;
-    const sideMargin = is4Cols ? 6 : 12;
-    const totalGaps = is4Cols ? 3 * 4 : is3Cols ? 2 * 6 : 10;
-    const availableWidth = screenWidth - (sideMargin * 2) - totalGaps;
-    const cardWidth = Math.floor(availableWidth / cols);
-    const ratio = is4Cols ? 1.15 : is3Cols ? 1.25 : 1.3;
-    const cardHeight = Math.floor(cardWidth * ratio);
-
     let paddingLeft = 0;
     let paddingRight = 0;
     if (is4Cols) {
@@ -250,7 +241,6 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
             paddingVertical: is4Cols ? 2 : is3Cols ? 3 : 5,
             paddingLeft,
             paddingRight,
-            alignItems: 'center',
           },
         ]}
       >
@@ -259,11 +249,12 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
           style={({ pressed }) => [
             styles.galleryCard,
             {
-              width: cardWidth,
-              height: cardHeight,
+              width: '100%',
+              aspectRatio: is4Cols ? 1 / 1.15 : is3Cols ? 1 / 1.25 : 1 / 1.3,
               borderRadius: is4Cols ? 8 : is3Cols ? 10 : 14,
               backgroundColor: theme.dark ? '#1E1E1E' : '#F0EDE6',
               borderColor: theme.colors.border,
+              overflow: 'hidden',
               opacity: pressed ? 0.92 : 1,
             },
           ]}
@@ -273,7 +264,7 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
           <View
             style={[
               styles.galleryCover,
-              { width: cardWidth, height: cardHeight, aspectRatio: undefined, maxHeight: undefined },
+              { width: '100%', height: '100%', aspectRatio: undefined, maxHeight: undefined },
             ]}
           >
             <BucketCover
@@ -349,18 +340,18 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
               style={[
                 styles.galleryBottomOverlay,
                 { backgroundColor: isImageCover ? 'rgba(0,0,0,0.58)' : overlay.panel },
-                is3Cols && { minHeight: 56, paddingHorizontal: 6, paddingVertical: 4, borderBottomLeftRadius: 10, borderBottomRightRadius: 10 },
-                is4Cols && { minHeight: 40, paddingHorizontal: 4, paddingVertical: 2, borderBottomLeftRadius: 8, borderBottomRightRadius: 8 },
+                is3Cols && { minHeight: 44, paddingHorizontal: 6, paddingVertical: 4, borderBottomLeftRadius: 10, borderBottomRightRadius: 10 },
+                is4Cols && { minHeight: 28, paddingHorizontal: 4, paddingVertical: 2, borderBottomLeftRadius: 8, borderBottomRightRadius: 8 },
               ]}
               pointerEvents="box-none"
             >
-              <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6 }}>
-                <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View style={{ flex: 1, justifyContent: 'center' }}>
                   <Text
                     style={[
                       styles.galleryCardTitle,
                       { color: overlay.title },
-                      is3Cols && { fontSize: 11, lineHeight: 14, minHeight: 24 },
+                      is3Cols && { fontSize: 11, lineHeight: 14, minHeight: 14 },
                       is4Cols && { fontSize: 9.5, lineHeight: 12, minHeight: 12 },
                     ]}
                     numberOfLines={is4Cols ? 1 : 2}
@@ -382,83 +373,83 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
                 </View>
               </View>
 
-              <View
-                style={[
-                  styles.galleryActionRow,
-                  is3Cols && { marginTop: 3, paddingTop: 3 },
-                  is4Cols && { marginTop: 2, paddingTop: 2 },
-                ]}
-                pointerEvents="box-none"
-              >
+              {!is4Cols && (
                 <View
                   style={[
-                    styles.galleryActionsGroup,
-                    is3Cols && { gap: 4 },
-                    is4Cols && { gap: 3 },
+                    styles.galleryActionRow,
+                    is3Cols && { marginTop: 3, paddingTop: 3 },
                   ]}
+                  pointerEvents="box-none"
                 >
-                  <Pressable
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleLike();
-                    }}
-                    hitSlop={6}
-                    style={[styles.galleryActionItem, is4Cols && { gap: 2 }, is3Cols && { gap: 2.5 }]}
+                  <View
+                    style={[
+                      styles.galleryActionsGroup,
+                      is3Cols && { gap: 4 },
+                    ]}
                   >
-                    <Heart
-                      size={is4Cols ? 9.5 : is3Cols ? 11 : 13}
-                      color={liked ? HEART_COLOR : '#F2EFE8'}
-                      fill={liked ? HEART_COLOR : 'transparent'}
-                      strokeWidth={1.8}
-                    />
                     <Pressable
                       onPress={(e) => {
                         e.stopPropagation();
-                        setShowLikes(true);
+                        handleLike();
                       }}
-                      hitSlop={4}
+                      hitSlop={6}
+                      style={[styles.galleryActionItem, is3Cols && { gap: 2.5 }]}
                     >
-                      <Text style={[styles.galleryActionText, is3Cols && { fontSize: 9.5 }, is4Cols && { fontSize: 8 }]}>
-                        {likeCount}
+                      <Heart
+                        size={is3Cols ? 11 : 13}
+                        color={liked ? HEART_COLOR : '#F2EFE8'}
+                        fill={liked ? HEART_COLOR : 'transparent'}
+                        strokeWidth={1.8}
+                      />
+                      <Pressable
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          setShowLikes(true);
+                        }}
+                        hitSlop={4}
+                      >
+                        <Text style={[styles.galleryActionText, is3Cols && { fontSize: 9.5 }]}>
+                          {likeCount}
+                        </Text>
+                      </Pressable>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        setShowComments(true);
+                      }}
+                      hitSlop={6}
+                      style={[styles.galleryActionItem, is3Cols && { gap: 2.5 }]}
+                    >
+                      <MessageCircle size={is3Cols ? 11 : 13} color="#F2EFE8" strokeWidth={1.8} />
+                      <Text style={[styles.galleryActionText, is3Cols && { fontSize: 9.5 }]}>
+                        {commentCount}
                       </Text>
                     </Pressable>
-                  </Pressable>
 
-                  <Pressable
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      setShowComments(true);
-                    }}
-                    hitSlop={6}
-                    style={[styles.galleryActionItem, is4Cols && { gap: 2 }, is3Cols && { gap: 2.5 }]}
-                  >
-                    <MessageCircle size={is4Cols ? 9.5 : is3Cols ? 11 : 13} color="#F2EFE8" strokeWidth={1.8} />
-                    <Text style={[styles.galleryActionText, is3Cols && { fontSize: 9.5 }, is4Cols && { fontSize: 8 }]}>
-                      {commentCount}
-                    </Text>
-                  </Pressable>
-
-                  <Pressable
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleSaveBucket();
-                    }}
-                    hitSlop={6}
-                    style={[styles.galleryActionItem, is4Cols && { gap: 2 }, is3Cols && { gap: 2.5 }]}
-                    disabled={isOwn}
-                  >
-                    <Bookmark
-                      size={is4Cols ? 9 : is3Cols ? 10.5 : 12}
-                      color={isBucketSaved ? gold[400] : '#F2EFE8'}
-                      fill={isBucketSaved ? gold[400] : 'transparent'}
-                      strokeWidth={1.8}
-                    />
-                    <Text style={[styles.galleryActionText, is3Cols && { fontSize: 9.5 }, is4Cols && { fontSize: 8 }]}>
-                      {saveCount}
-                    </Text>
-                  </Pressable>
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleSaveBucket();
+                      }}
+                      hitSlop={6}
+                      style={[styles.galleryActionItem, is3Cols && { gap: 2.5 }]}
+                      disabled={isOwn}
+                    >
+                      <Bookmark
+                        size={is3Cols ? 10.5 : 12}
+                        color={isBucketSaved ? gold[400] : '#F2EFE8'}
+                        fill={isBucketSaved ? gold[400] : 'transparent'}
+                        strokeWidth={1.8}
+                      />
+                      <Text style={[styles.galleryActionText, is3Cols && { fontSize: 9.5 }]}>
+                        {saveCount}
+                      </Text>
+                    </Pressable>
+                  </View>
                 </View>
-              </View>
+              )}
             </View>
           </View>
         </Pressable>
@@ -1045,11 +1036,8 @@ const styles = StyleSheet.create({
   },
   galleryCover: {
     width: '100%',
-    aspectRatio: 1 / 1.3,
+    height: '100%',
     position: 'relative',
-    ...Platform.select({
-      web: { maxHeight: 320 } as any,
-    }),
   },
   galleryTopBadges: {
     position: 'absolute',
@@ -1104,13 +1092,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderBottomLeftRadius: 14,
     borderBottomRightRadius: 14,
-    minHeight: 96,
+    minHeight: 68,
   },
   galleryCardTitle: {
     fontFamily: fontFamily.semibold,
     fontSize: 13,
     lineHeight: 17,
-    minHeight: 34,
     color: '#FFFFFF',
     ...Platform.select({
       web: { textShadow: '0 1px 4px rgba(0,0,0,0.9)' } as any,

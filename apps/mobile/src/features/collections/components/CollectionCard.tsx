@@ -42,15 +42,6 @@ export function CollectionCard({
     const cols = columns || 2;
     const colIndex = index % cols;
 
-    // Cálculo de ancho y alto fijos idénticos para que todas las tarjetas midan exactamente lo mismo
-    const screenWidth = windowWidth > 0 ? windowWidth : Dimensions.get('window').width;
-    const sideMargin = is4Cols ? 6 : 12;
-    const totalGaps = is4Cols ? 3 * 4 : is3Cols ? 2 * 6 : 10;
-    const availableWidth = screenWidth - (sideMargin * 2) - totalGaps;
-    const cardWidth = Math.floor(availableWidth / cols);
-    const ratio = is4Cols ? 1.15 : is3Cols ? 1.25 : 1.3;
-    const cardHeight = Math.floor(cardWidth * ratio);
-
     let paddingLeft = 0;
     let paddingRight = 0;
     if (is4Cols) {
@@ -96,7 +87,6 @@ export function CollectionCard({
             paddingVertical: is4Cols ? 2 : is3Cols ? 3 : 5,
             paddingLeft,
             paddingRight,
-            alignItems: 'center',
           },
           containerStyle,
         ]}
@@ -106,11 +96,12 @@ export function CollectionCard({
           style={({ pressed }) => [
             styles.galleryCard,
             {
-              width: cardWidth,
-              height: cardHeight,
+              width: '100%',
+              aspectRatio: is4Cols ? 1 / 1.15 : is3Cols ? 1 / 1.25 : 1 / 1.3,
               borderRadius: is4Cols ? 8 : is3Cols ? 10 : 14,
               backgroundColor: theme.dark ? '#1E1E1E' : '#F0EDE6',
               borderColor: theme.colors.border,
+              overflow: 'hidden',
               opacity: pressed ? 0.9 : 1,
             },
           ]}
@@ -120,7 +111,7 @@ export function CollectionCard({
           <View
             style={[
               styles.galleryCover,
-              { width: cardWidth, height: cardHeight, aspectRatio: undefined, maxHeight: undefined },
+              { width: '100%', height: '100%', aspectRatio: undefined, maxHeight: undefined },
             ]}
           >
             <LinearGradient
@@ -223,62 +214,64 @@ export function CollectionCard({
                 </Text>
               )}
 
-              <View
-                style={[
-                  styles.galleryActions,
-                  is4Cols && { marginTop: 2, gap: 4 },
-                  is3Cols && { marginTop: 3, gap: 6 },
-                ]}
-              >
-                {collection.clonesCount !== undefined && collection.clonesCount > 0 ? (
-                  <View style={styles.galleryActionItem}>
-                    <Copy size={is4Cols ? 8.5 : is3Cols ? 9.5 : 11} color="#F2EFE8" />
-                    <Text
-                      style={[
-                        styles.galleryActionText,
-                        is4Cols && { fontSize: 8 },
-                        is3Cols && { fontSize: 9.5 },
-                      ]}
-                    >
-                      {collection.clonesCount}
-                    </Text>
-                  </View>
-                ) : null}
-                {onToggleLike && (
-                  <Pressable
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      onToggleLike();
-                    }}
-                    hitSlop={6}
-                    style={styles.galleryActionItem}
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      collection.isLiked
-                        ? t('collections.unlike')
-                        : t('collections.like')
-                    }
-                  >
-                    <Heart
-                      size={is4Cols ? 9.5 : is3Cols ? 10.5 : 12}
-                      color={collection.isLiked ? HEART_COLOR : '#F2EFE8'}
-                      fill={collection.isLiked ? HEART_COLOR : 'transparent'}
-                    />
-                    {collection.likesCount !== undefined && collection.likesCount > 0 ? (
+              {!is4Cols && (
+                <View
+                  style={[
+                    styles.galleryActions,
+                    is4Cols && { marginTop: 2, gap: 4 },
+                    is3Cols && { marginTop: 3, gap: 6 },
+                  ]}
+                >
+                  {collection.clonesCount !== undefined && collection.clonesCount > 0 ? (
+                    <View style={styles.galleryActionItem}>
+                      <Copy size={is4Cols ? 8.5 : is3Cols ? 9.5 : 11} color="#F2EFE8" />
                       <Text
                         style={[
                           styles.galleryActionText,
                           is4Cols && { fontSize: 8 },
                           is3Cols && { fontSize: 9.5 },
-                          collection.isLiked && { color: HEART_COLOR },
                         ]}
                       >
-                        {collection.likesCount}
+                        {collection.clonesCount}
                       </Text>
-                    ) : null}
-                  </Pressable>
-                )}
-              </View>
+                    </View>
+                  ) : null}
+                  {onToggleLike && (
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        onToggleLike();
+                      }}
+                      hitSlop={6}
+                      style={styles.galleryActionItem}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        collection.isLiked
+                          ? t('collections.unlike')
+                          : t('collections.like')
+                      }
+                    >
+                      <Heart
+                        size={is4Cols ? 9.5 : is3Cols ? 10.5 : 12}
+                        color={collection.isLiked ? HEART_COLOR : '#F2EFE8'}
+                        fill={collection.isLiked ? HEART_COLOR : 'transparent'}
+                      />
+                      {collection.likesCount !== undefined && collection.likesCount > 0 ? (
+                        <Text
+                          style={[
+                            styles.galleryActionText,
+                            is4Cols && { fontSize: 8 },
+                            is3Cols && { fontSize: 9.5 },
+                            collection.isLiked && { color: HEART_COLOR },
+                          ]}
+                        >
+                          {collection.likesCount}
+                        </Text>
+                      ) : null}
+                    </Pressable>
+                  )}
+                </View>
+              )}
             </View>
           </View>
         </Pressable>
@@ -719,13 +712,10 @@ const styles = StyleSheet.create({
   },
   galleryCover: {
     width: '100%',
-    aspectRatio: 0.85,
+    height: '100%',
     position: 'relative',
     justifyContent: 'space-between',
     padding: 10,
-    ...Platform.select({
-      web: { maxHeight: 260 } as any,
-    }),
   },
   galleryHeaderRow: {
     flexDirection: 'row',
