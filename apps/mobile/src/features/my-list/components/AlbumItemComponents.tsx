@@ -225,7 +225,7 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
             {item.description.trim()}
           </Text>
         ) : null}
-        {(hasPriority || hasProgress || hasDate || showBadges) && (
+        {(hasPriority || hasProgress || hasDate || showBadges || showVisibility) && (
           <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
             {showBadges && (
               <View
@@ -588,19 +588,19 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
               </View>
             )}
 
-            {showVisibility && item.visibility && (
+            {showVisibility && (
               <View style={[styles.listAlbumBadge, { borderColor: theme.colors.border }]}>
-                {item.visibility === 'private' ? (
+                {(item.visibility || 'public') === 'private' ? (
                   <Lock size={10} color={theme.colors.foregroundMuted} />
-                ) : item.visibility === 'followers' ? (
+                ) : (item.visibility || 'public') === 'followers' ? (
                   <Users size={10} color={theme.colors.foregroundMuted} />
                 ) : (
                   <Globe size={10} color={theme.colors.foregroundMuted} />
                 )}
                 <Text style={[styles.listAlbumBadgeText, { color: theme.colors.foregroundMuted }]}>
-                  {item.visibility === 'private'
+                  {(item.visibility || 'public') === 'private'
                     ? t('bucket.visibility_private', { defaultValue: 'Privado' })
-                    : item.visibility === 'followers'
+                    : (item.visibility || 'public') === 'followers'
                     ? t('bucket.visibility_followers', { defaultValue: 'Seguidores' })
                     : t('bucket.visibility_public', { defaultValue: 'Público' })}
                 </Text>

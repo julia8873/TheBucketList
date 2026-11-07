@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Plus, FolderOpen, ChevronRight, Star, Lock, Check, Bookmark, CheckCircle2, MoreHorizontal, Clock, AlertCircle } from 'lucide-react-native';
+import { Plus, FolderOpen, ChevronRight, Star, Lock, Check, Bookmark, CheckCircle2, MoreHorizontal, Clock, AlertCircle, Globe, Users } from 'lucide-react-native';
 
 import { useTheme } from '../theme/useTheme';
 import { useCoverOverlay } from '../theme/coverOverlay';
@@ -51,6 +51,8 @@ interface AlbumCardProps {
   onToggleFavorite?: () => void;
   isSaved?: boolean;
   onToggleSave?: () => void;
+  visibility?: 'public' | 'followers' | 'private' | string;
+  showVisibility?: boolean;
   priority?: 'low' | 'medium' | 'high' | 'urgent';
   isClosed?: boolean;
   colorIndex?: number;  // to pick a gradient when no cover
@@ -138,6 +140,8 @@ export function AlbumCard({
   onToggleFavorite,
   isSaved = false,
   onToggleSave,
+  visibility = 'public',
+  showVisibility = true,
   priority,
   isClosed = false,
   colorIndex = 0,
@@ -432,60 +436,86 @@ export function AlbumCard({
                 {new Date(createdAt).toLocaleDateString(i18n.language?.startsWith('en') ? 'en-US' : 'es-ES', { day: 'numeric', month: 'short' })}
               </Text>
             )}
-            {showPriority && priority && (
-              is3Cols ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: is3Cols ? 3 : 4 }}>
+              {showVisibility && (
                 <View
                   style={{
-                    width: 7,
-                    height: 7,
-                    borderRadius: 3.5,
-                    backgroundColor:
-                      priority === 'high' || priority === 'urgent'
-                        ? '#EF4444'
-                        : priority === 'low'
-                          ? '#10B981'
-                          : '#D4B13A',
-                    borderWidth: 1,
-                    borderColor: 'rgba(0,0,0,0.4)',
+                    width: is3Cols ? 14 : 16,
+                    height: is3Cols ? 14 : 16,
+                    borderRadius: (is3Cols ? 14 : 16) / 2,
+                    backgroundColor: 'rgba(0,0,0,0.55)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
-                />
-              ) : (
-                <View style={[styles.priorityIndicator, { backgroundColor: chipBg }]}>
-                  <View
-                    style={[
-                      styles.priorityDot,
-                      {
-                        backgroundColor:
-                          priority === 'high' || priority === 'urgent'
-                            ? '#EF4444'
-                            : priority === 'low'
-                              ? '#10B981'
-                              : '#D4B13A',
-                      },
-                    ]}
-                  />
-                  <Text
-                    style={[
-                      styles.priorityText,
-                      {
-                        color:
-                          priority === 'high' || priority === 'urgent'
-                            ? '#EF4444'
-                            : priority === 'low'
-                              ? '#10B981'
-                              : '#D4B13A',
-                      },
-                    ]}
-                  >
-                    {priority === 'high' || priority === 'urgent'
-                      ? t('common.high')
-                      : priority === 'low'
-                      ? t('common.low')
-                      : t('common.medium')}
-                  </Text>
+                >
+                  {(() => {
+                    const vis = visibility || 'public';
+                    const iconSize = is3Cols ? 8 : 9;
+                    if (vis === 'private') {
+                      return <Lock size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                    }
+                    if (vis === 'followers') {
+                      return <Users size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                    }
+                    return <Globe size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                  })()}
                 </View>
-              )
-            )}
+              )}
+              {showPriority && priority && (
+                is3Cols ? (
+                  <View
+                    style={{
+                      width: 7,
+                      height: 7,
+                      borderRadius: 3.5,
+                      backgroundColor:
+                        priority === 'high' || priority === 'urgent'
+                          ? '#EF4444'
+                          : priority === 'low'
+                            ? '#10B981'
+                            : '#D4B13A',
+                      borderWidth: 1,
+                      borderColor: 'rgba(0,0,0,0.4)',
+                    }}
+                  />
+                ) : (
+                  <View style={[styles.priorityIndicator, { backgroundColor: chipBg }]}>
+                    <View
+                      style={[
+                        styles.priorityDot,
+                        {
+                          backgroundColor:
+                            priority === 'high' || priority === 'urgent'
+                              ? '#EF4444'
+                              : priority === 'low'
+                                ? '#10B981'
+                                : '#D4B13A',
+                        },
+                      ]}
+                    />
+                    <Text
+                      style={[
+                        styles.priorityText,
+                        {
+                          color:
+                            priority === 'high' || priority === 'urgent'
+                              ? '#EF4444'
+                              : priority === 'low'
+                                ? '#10B981'
+                                : '#D4B13A',
+                        },
+                      ]}
+                    >
+                      {priority === 'high' || priority === 'urgent'
+                        ? t('common.high')
+                        : priority === 'low'
+                        ? t('common.low')
+                        : t('common.medium')}
+                    </Text>
+                  </View>
+                )
+              )}
+            </View>
           </View>
         )}
 
@@ -496,23 +526,49 @@ export function AlbumCard({
                 {completedTasks}/{totalTasks}
               </Text>
             )}
-            {showPriority && priority && (
-              <View
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: 3,
-                  backgroundColor:
-                    priority === 'high' || priority === 'urgent'
-                      ? '#EF4444'
-                      : priority === 'low'
-                        ? '#10B981'
-                        : '#D4B13A',
-                  borderWidth: 1,
-                  borderColor: 'rgba(0,0,0,0.4)',
-                }}
-              />
-            )}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+              {showVisibility && (
+                <View
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: 6,
+                    backgroundColor: 'rgba(0,0,0,0.55)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {(() => {
+                    const vis = visibility || 'public';
+                    const iconSize = 7;
+                    if (vis === 'private') {
+                      return <Lock size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                    }
+                    if (vis === 'followers') {
+                      return <Users size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                    }
+                    return <Globe size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                  })()}
+                </View>
+              )}
+              {showPriority && priority && (
+                <View
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: 3,
+                    backgroundColor:
+                      priority === 'high' || priority === 'urgent'
+                        ? '#EF4444'
+                        : priority === 'low'
+                          ? '#10B981'
+                          : '#D4B13A',
+                    borderWidth: 1,
+                    borderColor: 'rgba(0,0,0,0.4)',
+                  }}
+                />
+              )}
+            </View>
           </View>
         )}
 

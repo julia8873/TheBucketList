@@ -290,6 +290,7 @@ export function ProfileAlbumsTab({
                   ? () => onToggleFavoriteAlbum(item.id, isAlbumFavorite ? isAlbumFavorite(item.id) : false)
                   : undefined
               }
+              visibility={item.visibility}
               priority={item.priority}
               isClosed={item.is_closed}
               colorIndex={idx}

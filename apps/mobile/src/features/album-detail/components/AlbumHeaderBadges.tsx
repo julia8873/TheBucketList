@@ -120,22 +120,7 @@ export function AlbumHeaderBadges({
           )}
         </Pressable>
 
-        {/* Prioridad */}
-        <Pressable
-          style={[
-            styles.chip,
-            { borderColor: chipPriorityBorder, backgroundColor: chipPriorityBg },
-            canEdit && styles.chipPressable,
-          ]}
-          onPress={onOpenPriority}
-        >
-          <Flag size={13} color={chipPriorityColor} strokeWidth={2} style={{ marginRight: 5 }} />
-          <Text style={[styles.chipText, { color: chipPriorityColor, fontWeight: '700' }]}>
-            {priorityLabel}
-          </Text>
-        </Pressable>
-
-        {/* Visibilidad (misma línea que estado y prioridad) */}
+        {/* Visibilidad (a la izquierda de prioridad) */}
         <Pressable
           style={[styles.chip, styles.chipGold, canEdit && styles.chipPressable]}
           onPress={onOpenVisibility}
@@ -149,6 +134,21 @@ export function AlbumHeaderBadges({
           )}
           <Text style={[styles.chipStatusText, { color: gold[400], fontWeight: '700' }]}>
             {visibilityLabel(album.visibility)}
+          </Text>
+        </Pressable>
+
+        {/* Prioridad */}
+        <Pressable
+          style={[
+            styles.chip,
+            { borderColor: chipPriorityBorder, backgroundColor: chipPriorityBg },
+            canEdit && styles.chipPressable,
+          ]}
+          onPress={onOpenPriority}
+        >
+          <Flag size={13} color={chipPriorityColor} strokeWidth={2} style={{ marginRight: 5 }} />
+          <Text style={[styles.chipText, { color: chipPriorityColor, fontWeight: '700' }]}>
+            {priorityLabel}
           </Text>
         </Pressable>
       </View>

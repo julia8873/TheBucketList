@@ -180,7 +180,7 @@ export default function MyListScreen() {
     taskSources: participantTaskSources,
     albumSources: participantAlbumSources,
     tasksEnabled: state.activeTab === 'list',
-    albumsEnabled: state.activeTab === 'albums' && !!albumViews[state.albumViewMode]?.showCollaborators,
+    albumsEnabled: state.activeTab === 'albums',
   });
 
   const handlePressTag = useCallback(
@@ -542,6 +542,8 @@ export default function MyListScreen() {
               currentlyFavorite: state.isAlbumFavorite(item.id),
             })
           }
+          visibility={item.visibility}
+          showVisibility={albumViews.gallery.showVisibility}
           priority={item.priority}
           isClosed={item.is_closed}
           colorIndex={index}
@@ -1056,6 +1058,11 @@ export default function MyListScreen() {
               onRemoveTagFilter={(id) =>
                 state.setSelectedTagIds((prev) => prev.filter((x) => x !== id))
               }
+              selectedCollaboratorIds={state.selectedAlbumCollaboratorIds}
+              availableCollaborators={state.availableAlbumCollaborators}
+              selectedCollaborators={state.selectedAlbumCollaborators}
+              onToggleCollaboratorId={state.toggleAlbumCollaboratorFilter}
+              onRemoveCollaboratorFilter={state.removeAlbumCollaboratorFilter}
               isSelectionMode={state.isAlbumSelectionMode}
               onToggleSelectionMode={() => {
                 if (state.isAlbumSelectionMode) state.handleExitAlbumSelection();

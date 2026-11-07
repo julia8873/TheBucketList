@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { AlbumFilterType, PriorityFilter, SortField, SortDir, AlbumViewMode } from '../types';
 import type { Tag } from '@/hooks/useTags';
+import type { ItemParticipant } from '@/hooks/useItemParticipants';
 import { ActiveFilterChips, ListControlsBar, ListFiltersSheet } from './ListControls';
 
 interface AlbumListHeaderControlsProps {
@@ -14,6 +15,11 @@ interface AlbumListHeaderControlsProps {
   selectedTagIds: string[];
   selectedTags: Tag[];
   onRemoveTagFilter: (id: string) => void;
+  selectedCollaboratorIds?: string[];
+  availableCollaborators?: ItemParticipant[];
+  selectedCollaborators?: ItemParticipant[];
+  onToggleCollaboratorId?: (id: string) => void;
+  onRemoveCollaboratorFilter?: (id: string) => void;
   isSelectionMode?: boolean;
   onToggleSelectionMode?: () => void;
   albumViewMode: AlbumViewMode;
@@ -47,6 +53,11 @@ export function AlbumListHeaderControls({
   selectedTagIds,
   selectedTags,
   onRemoveTagFilter,
+  selectedCollaboratorIds = [],
+  availableCollaborators = [],
+  selectedCollaborators = [],
+  onToggleCollaboratorId,
+  onRemoveCollaboratorFilter,
   isSelectionMode,
   onToggleSelectionMode,
   albumViewMode,
@@ -86,12 +97,17 @@ export function AlbumListHeaderControls({
     low: t('my_list.priority_filter_low'),
   };
 
-  const filtersCount = (albumFilter !== 'all' ? 1 : 0) + (albumPriorityFilter !== 'all' ? 1 : 0) + selectedTagIds.length;
+  const filtersCount =
+    (albumFilter !== 'all' ? 1 : 0) +
+    (albumPriorityFilter !== 'all' ? 1 : 0) +
+    selectedTagIds.length +
+    selectedCollaboratorIds.length;
 
   const reset = () => {
     setAlbumFilter('all');
     setAlbumPriorityFilter('all');
     selectedTags.forEach((tg) => onRemoveTagFilter(tg.id));
+    selectedCollaboratorIds.forEach((id) => onRemoveCollaboratorFilter?.(id));
   };
 
   return (
@@ -128,6 +144,8 @@ export function AlbumListHeaderControls({
         onClearPriority={() => setAlbumPriorityFilter('all')}
         tags={selectedTags}
         onRemoveTag={onRemoveTagFilter}
+        collaborators={selectedCollaborators}
+        onRemoveCollaborator={onRemoveCollaboratorFilter}
       />
 
       <ListFiltersSheet<AlbumFilterType>
@@ -145,6 +163,9 @@ export function AlbumListHeaderControls({
           setFiltersOpen(false);
           setTimeout(onOpenTagFilterSheet, 260);
         }}
+        collaborators={availableCollaborators}
+        selectedCollaboratorIds={selectedCollaboratorIds}
+        onToggleCollaborator={onToggleCollaboratorId}
         onReset={reset}
         resultLabel={t('my_list.apply_filters_albums', {
           count: albumsCount,

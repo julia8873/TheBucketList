@@ -269,6 +269,15 @@ export function useMyListState() {
     });
   };
 
+  const [selectedAlbumCollaboratorIds, setSelectedAlbumCollaboratorIdsState] = useState<string[]>([]);
+  const setSelectedAlbumCollaboratorIds = (action: React.SetStateAction<string[]>) => {
+    setSelectedAlbumCollaboratorIdsState((prev) => {
+      const next = typeof action === 'function' ? action(prev) : action;
+      void AsyncStorage.setItem('@my_list_selected_album_collaborators', JSON.stringify(next)).catch(() => undefined);
+      return next;
+    });
+  };
+
   // Cargar filtros y ordenaciones guardadas de álbumes y tareas
   useEffect(() => {
     AsyncStorage.getItem('@my_list_album_filter')
@@ -297,6 +306,16 @@ export function useMyListState() {
           try {
             const parsed = JSON.parse(saved);
             if (Array.isArray(parsed)) setSelectedCollaboratorIdsState(parsed);
+          } catch {}
+        }
+      })
+      .catch(() => undefined);
+    AsyncStorage.getItem('@my_list_selected_album_collaborators')
+      .then((saved) => {
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed)) setSelectedAlbumCollaboratorIdsState(parsed);
           } catch {}
         }
       })
@@ -606,6 +625,43 @@ export function useMyListState() {
     setSelectedCollaboratorIds((prev) => prev.filter((id) => id !== collabId));
   }, []);
 
+  // Participantes / colaboradores de los álbumes de Mi lista
+  const participantAlbumSources = useMemo(
+    () => (albums ?? []).map((a: any) => ({ id: a.id as string, ownerId: (a.owner_id || a.user_id as string | undefined) ?? null })),
+    [albums],
+  );
+  const albumParticipantsQuery = useItemParticipants('album', participantAlbumSources, true);
+  const albumParticipants = albumParticipantsQuery.data ?? {};
+
+  const availableAlbumCollaborators = useMemo(() => {
+    const map = new Map<string, ItemParticipant>();
+    Object.values(albumParticipants).forEach((list) => {
+      list.forEach((p) => {
+        if (p.id !== user?.id && !map.has(p.id)) {
+          map.set(p.id, p);
+        }
+      });
+    });
+    return Array.from(map.values()).sort((a, b) =>
+      (a.display_name || a.username || '').localeCompare(b.display_name || b.username || '')
+    );
+  }, [albumParticipants, user?.id]);
+
+  const selectedAlbumCollaborators = useMemo(() => {
+    const map = new Map(availableAlbumCollaborators.map((c) => [c.id, c]));
+    return selectedAlbumCollaboratorIds.map((id) => map.get(id)).filter(Boolean) as ItemParticipant[];
+  }, [availableAlbumCollaborators, selectedAlbumCollaboratorIds]);
+
+  const toggleAlbumCollaboratorFilter = useCallback((collabId: string) => {
+    setSelectedAlbumCollaboratorIds((prev) =>
+      prev.includes(collabId) ? prev.filter((id) => id !== collabId) : [...prev, collabId]
+    );
+  }, []);
+
+  const removeAlbumCollaboratorFilter = useCallback((collabId: string) => {
+    setSelectedAlbumCollaboratorIds((prev) => prev.filter((id) => id !== collabId));
+  }, []);
+
   const toggleSearch = () => {
     if (isSearching) setSearchQuery('');
     setIsSearching((v) => !v);
@@ -821,6 +877,18 @@ export function useMyListState() {
       result = result.filter((a: any) => (a.tags ?? []).some((id: string) => wanted.has(id)));
     }
 
+    if (selectedCollaboratorIds.length > 0) {
+      // (task collaborator filter logic stays above)
+    }
+
+    if (selectedAlbumCollaboratorIds.length > 0) {
+      const wantedCollabs = new Set(selectedAlbumCollaboratorIds);
+      result = result.filter((a: any) => {
+        const parts = albumParticipants[a.id] ?? [];
+        return parts.some((p) => wantedCollabs.has(p.id));
+      });
+    }
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
@@ -832,7 +900,7 @@ export function useMyListState() {
     }
 
     return result;
-  }, [albums, albumFilter, albumPriorityFilter, searchQuery, selectedTagIds]);
+  }, [albums, albumFilter, albumPriorityFilter, searchQuery, selectedTagIds, selectedAlbumCollaboratorIds, albumParticipants]);
 
   const byAlbumManual = (a: any, b: any) => {
     const idxA = albumManualOrder.indexOf(a.id);
@@ -1004,6 +1072,13 @@ export function useMyListState() {
     selectedCollaborators,
     toggleCollaboratorFilter,
     removeCollaboratorFilter,
+    selectedAlbumCollaboratorIds,
+    setSelectedAlbumCollaboratorIds,
+    availableAlbumCollaborators,
+    selectedAlbumCollaborators,
+    toggleAlbumCollaboratorFilter,
+    removeAlbumCollaboratorFilter,
+    albumParticipants,
     sortField,
     sortDir,
     sortMenuOpen,
