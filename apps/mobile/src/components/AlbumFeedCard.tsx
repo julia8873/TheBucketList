@@ -3,7 +3,7 @@ import { useCoverOverlay, HEART_COLOR } from '@bucketlist/ui';
  * AlbumFeedCard — wide card for albums shown in the friends/explore feed.
  */
 import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Platform, useWindowDimensions, Dimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Images, Lock, Users, Heart, Bookmark, MessageCircle, CheckCircle2 } from 'lucide-react-native';
@@ -76,6 +76,7 @@ export function AlbumFeedCard({
   index = 0,
   columns = 2,
 }: AlbumFeedCardProps) {
+  const { width: windowWidth } = useWindowDimensions();
   const router = useRouter();
   const { t } = useTranslation();
   const { theme } = useTheme();
@@ -151,19 +152,62 @@ export function AlbumFeedCard({
     const is3Cols = columns === 3;
     const cols = columns || 2;
     const colIndex = index % cols;
-    const outerPad = 12;
-    const halfGap = is4Cols ? 2 : is3Cols ? 3 : 5;
-    const paddingLeft = colIndex === 0 ? outerPad : halfGap;
-    const paddingRight = colIndex === cols - 1 ? outerPad : halfGap;
+
+    // Cálculo de ancho y alto fijos idénticos para que todas las tarjetas midan exactamente lo mismo
+    const screenWidth = windowWidth > 0 ? windowWidth : Dimensions.get('window').width;
+    const sideMargin = is4Cols ? 6 : 12;
+    const totalGaps = is4Cols ? 3 * 4 : is3Cols ? 2 * 6 : 10;
+    const availableWidth = screenWidth - (sideMargin * 2) - totalGaps;
+    const cardWidth = Math.floor(availableWidth / cols);
+    const ratio = is4Cols ? 1.15 : is3Cols ? 1.25 : 1.3;
+    const cardHeight = Math.floor(cardWidth * ratio);
+
+    let paddingLeft = 0;
+    let paddingRight = 0;
+    if (is4Cols) {
+      if (colIndex === 0) {
+        paddingLeft = 6;
+        paddingRight = 0;
+      } else if (colIndex === 1) {
+        paddingLeft = 4;
+        paddingRight = 2;
+      } else if (colIndex === 2) {
+        paddingLeft = 2;
+        paddingRight = 4;
+      } else {
+        paddingLeft = 0;
+        paddingRight = 6;
+      }
+    } else if (is3Cols) {
+      if (colIndex === 0) {
+        paddingLeft = 12;
+        paddingRight = 0;
+      } else if (colIndex === 1) {
+        paddingLeft = 6;
+        paddingRight = 6;
+      } else {
+        paddingLeft = 0;
+        paddingRight = 12;
+      }
+    } else {
+      if (colIndex === 0) {
+        paddingLeft = 12;
+        paddingRight = 5;
+      } else {
+        paddingLeft = 5;
+        paddingRight = 12;
+      }
+    }
 
     return (
       <View
         style={[
           styles.galleryCardWrapper,
           {
+            paddingVertical: is4Cols ? 2 : is3Cols ? 3 : 5,
             paddingLeft,
             paddingRight,
-            paddingVertical: is4Cols ? 2 : is3Cols ? 3 : 5,
+            alignItems: 'center',
           },
         ]}
       >
@@ -171,9 +215,14 @@ export function AlbumFeedCard({
           onPress={onPress}
           style={({ pressed }) => [
             styles.galleryCard,
-            is3Cols && { borderRadius: 10 },
-            is4Cols && { borderRadius: 8 },
-            { backgroundColor: theme.dark ? '#1E1E1E' : '#F0EDE6', borderColor: theme.colors.border, opacity: pressed ? 0.92 : 1 },
+            {
+              width: cardWidth,
+              height: cardHeight,
+              borderRadius: is4Cols ? 8 : is3Cols ? 10 : 14,
+              backgroundColor: theme.dark ? '#1E1E1E' : '#F0EDE6',
+              borderColor: theme.colors.border,
+              opacity: pressed ? 0.92 : 1,
+            },
           ]}
           accessibilityRole="button"
           accessibilityLabel={album.title}
@@ -181,8 +230,7 @@ export function AlbumFeedCard({
           <View
             style={[
               styles.galleryCover,
-              is3Cols && { aspectRatio: 1 / 1.25 },
-              is4Cols && { aspectRatio: 1 / 1.15 },
+              { width: cardWidth, height: cardHeight, aspectRatio: undefined },
             ]}
           >
             {backgroundContent}
