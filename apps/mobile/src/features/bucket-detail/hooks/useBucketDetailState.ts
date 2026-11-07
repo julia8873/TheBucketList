@@ -15,6 +15,7 @@ import { bucketApi } from '@/services/api/bucket';
 import { fetchBucketDetail, fetchBucketCollaborators, fetchBucketParticipants } from '../bucketDetailQueries';
 import { processBucketImage } from '@bucketlist/shared';
 import { useAuthStore } from '@/stores/auth.store';
+import { useIsAdmin } from '@/hooks/useCurrentUserProfile';
 import { usePullToRefresh } from '@/hooks/useAutoRefresh';
 import { useAddComment, useCopyBucket, useToggleReaction, useFollowUser, useSavedBucketIds, useToggleSaveBucket } from '@/hooks/useSocial';
 import { useDeleteBucket } from '@/hooks/useBuckets';
@@ -57,6 +58,9 @@ export function useBucketDetailState() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const isAdmin = useIsAdmin();
+  const MAX_TASK_PHOTOS = 8;
+  const PHOTO_LIMIT_MESSAGE = 'Solo hay un máximo de 10 fotos por tarea.';
   const { refreshing, onRefresh } = usePullToRefresh();
 
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
@@ -921,6 +925,12 @@ export function useBucketDetailState() {
   ) => {
     if (!user || assets.length === 0) return;
 
+    const currentCount = ((bucket?.bucket_photos ?? []) as any[]).length;
+    if (!isAdmin && currentCount + assets.length > MAX_TASK_PHOTOS) {
+      toast.error(PHOTO_LIMIT_MESSAGE);
+      return;
+    }
+
     try {
       if (Platform.OS === 'ios') await new Promise((r) => setTimeout(r, 350));
 
@@ -994,19 +1004,38 @@ export function useBucketDetailState() {
   const pickAndUploadPhotos = async () => {
     if (!user) return;
 
+    const currentCount = ((bucket?.bucket_photos ?? []) as any[]).length;
+    if (!isAdmin && currentCount >= MAX_TASK_PHOTOS) {
+      toast.error(PHOTO_LIMIT_MESSAGE);
+      return;
+    }
+
+    const remaining = MAX_TASK_PHOTOS - currentCount;
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsMultipleSelection: true,
-      selectionLimit: 6,
+      ...(isAdmin ? {} : { selectionLimit: Math.max(1, remaining) }),
       quality: 1,
     });
 
     if (result.canceled || !result.assets.length) return;
+
+    if (!isAdmin && currentCount + result.assets.length > MAX_TASK_PHOTOS) {
+      toast.error(PHOTO_LIMIT_MESSAGE);
+      return;
+    }
+
     await processAndUploadPhotoAssets(result.assets);
   };
 
   const takePhotoAndUploadPhotos = async () => {
     if (!user) return;
+
+    const currentCount = ((bucket?.bucket_photos ?? []) as any[]).length;
+    if (!isAdmin && currentCount >= MAX_TASK_PHOTOS) {
+      toast.error(PHOTO_LIMIT_MESSAGE);
+      return;
+    }
 
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
@@ -1025,6 +1054,13 @@ export function useBucketDetailState() {
 
   const addPhotoFromUrl = async (targetUrl: string) => {
     if (!user) return;
+
+    const currentCount = ((bucket?.bucket_photos ?? []) as any[]).length;
+    if (!isAdmin && currentCount >= MAX_TASK_PHOTOS) {
+      toast.error(PHOTO_LIMIT_MESSAGE);
+      return;
+    }
+
     try {
       let localUri = targetUrl;
       if (targetUrl.startsWith('http') && Platform.OS !== 'web') {
@@ -2127,5 +2163,6 @@ export function useBucketDetailState() {
     handleFollowOwner,
     isSaved,
     handleToggleSaveBucket,
+    isAdmin,
   };
 }

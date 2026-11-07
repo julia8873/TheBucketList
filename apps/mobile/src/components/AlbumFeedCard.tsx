@@ -152,6 +152,7 @@ export function AlbumFeedCard({
     const is3Cols = columns === 3;
     const cols = columns || 2;
     const colIndex = index % cols;
+    const titleBoxHeight = is4Cols ? 24 : is3Cols ? 28 : 34;
 
     let paddingLeft = 0;
     let paddingRight = 0;
@@ -294,23 +295,31 @@ export function AlbumFeedCard({
             <View
               style={[
                 styles.galleryBottom,
-                is3Cols && { minHeight: 44, paddingHorizontal: 6, paddingVertical: 4, borderBottomLeftRadius: 10, borderBottomRightRadius: 10 },
-                is4Cols && { minHeight: 28, paddingHorizontal: 4, paddingVertical: 2, borderBottomLeftRadius: 8, borderBottomRightRadius: 8 },
+                is3Cols && { paddingHorizontal: 6, paddingVertical: 4, borderBottomLeftRadius: 10, borderBottomRightRadius: 10 },
+                is4Cols && { paddingHorizontal: 4, paddingVertical: 3, borderBottomLeftRadius: 8, borderBottomRightRadius: 8 },
               ]}
               pointerEvents="box-none"
             >
-              <Text
-                style={[
-                  styles.galleryTitle,
-                  is3Cols && { fontSize: 11, lineHeight: 14, minHeight: 14 },
-                  is4Cols && { fontSize: 9.5, lineHeight: 12, minHeight: 12 },
-                ]}
-                numberOfLines={is4Cols ? 1 : 2}
-              >
-                {album.title}
-              </Text>
+              <View style={{ height: titleBoxHeight, justifyContent: 'center' }}>
+                <Text
+                  style={[
+                    styles.galleryTitle,
+                    is3Cols && { fontSize: 11, lineHeight: 14 },
+                    is4Cols && { fontSize: 9.5, lineHeight: 12 },
+                  ]}
+                  numberOfLines={2}
+                >
+                  {album.title}
+                </Text>
+              </View>
               {!is4Cols && (
-                <Text style={[styles.gallerySubtext, is3Cols && { fontSize: 9, marginTop: 1 }]} numberOfLines={1}>
+                <Text
+                  style={[
+                    styles.gallerySubtext,
+                    is3Cols && { fontSize: 9, lineHeight: 12, marginTop: 1 },
+                  ]}
+                  numberOfLines={1}
+                >
                   {album.completed_tasks}/{album.total_tasks} {t('albums.tasks', { defaultValue: 'tareas' })}
                 </Text>
               )}
@@ -957,13 +966,13 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 14,
     backgroundColor: 'rgba(0,0,0,0.58)',
     zIndex: 2,
-    minHeight: 68,
   },
   galleryTitle: {
     fontFamily: fontFamily.semibold,
     fontSize: 13,
     lineHeight: 17,
     color: '#FFFFFF',
+    includeFontPadding: false,
     ...Platform.select({
       web: { textShadow: '0 1px 4px rgba(0,0,0,0.9)' } as any,
       default: {
@@ -976,6 +985,7 @@ const styles = StyleSheet.create({
   gallerySubtext: {
     fontFamily: fontFamily.regular,
     fontSize: 11,
+    lineHeight: 14,
     color: 'rgba(255,255,255,0.72)',
     marginTop: 2,
   },

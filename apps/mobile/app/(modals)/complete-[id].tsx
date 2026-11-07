@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
-import { Typography, Button, spacing, useTheme, ProgressBar, Icon, radii } from '@bucketlist/ui';
+import { Typography, Button, spacing, useTheme, ProgressBar, Icon, radii, Alert } from '@bucketlist/ui';
 import { Camera, Image as ImageIcon, CheckCircle } from 'lucide-react-native';
 import { processBucketImage, type ImageProcessingResult } from '@bucketlist/shared';
 import { supabase } from '../../src/services/supabase';
@@ -12,12 +12,14 @@ import { storageApi } from '../../src/services/api/storage';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useHapticsStore } from '../../src/stores/haptics.store';
 import { useUpdateBucket } from '../../src/hooks/useBuckets';
+import { useIsAdmin } from '../../src/hooks/useCurrentUserProfile';
 
 export default function CompleteBucketModal() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { theme } = useTheme();
   const { user } = useAuthStore();
+  const isAdmin = useIsAdmin();
   const updateBucket = useUpdateBucket();
 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -38,6 +40,17 @@ export default function CompleteBucketModal() {
   }, [user]);
 
   const pickImage = async (useCamera: boolean) => {
+    if (!isAdmin && id) {
+      const { count } = await supabase
+        .from('bucket_photos')
+        .select('*', { count: 'exact', head: true })
+        .eq('bucket_id', id);
+      if ((count ?? 0) >= 8) {
+        Alert.alert('Límite de fotos', 'Solo hay un máximo de 10 fotos por tarea.');
+        return;
+      }
+    }
+
     let result;
     if (useCamera) {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -77,6 +90,16 @@ export default function CompleteBucketModal() {
       let thumbPath = null;
 
       if (processedImages) {
+        if (!isAdmin && id) {
+          const { count } = await supabase
+            .from('bucket_photos')
+            .select('*', { count: 'exact', head: true })
+            .eq('bucket_id', id);
+          if ((count ?? 0) >= 8) {
+            throw new Error('Solo hay un máximo de 10 fotos por tarea.');
+          }
+        }
+
         // Check quota first (optimistic check locally based on profile, or just try to upload)
         const { data: profile } = await supabase.from('profiles').select('storage_used_bytes').eq('id', user.id).single();
         const totalSize = processedImages.original.sizeBytes + processedImages.thumbnail.sizeBytes;

@@ -184,6 +184,7 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
     const is3Cols = columns === 3;
     const cols = columns || 2;
     const colIndex = index % cols;
+    const titleBoxHeight = is4Cols ? 24 : is3Cols ? 28 : 34;
 
     let paddingLeft = 0;
     let paddingRight = 0;
@@ -340,36 +341,38 @@ function FeedCardComponent({ event, onPress, index, mode = 'list', saveCount: pr
               style={[
                 styles.galleryBottomOverlay,
                 { backgroundColor: isImageCover ? 'rgba(0,0,0,0.58)' : overlay.panel },
-                is3Cols && { minHeight: 44, paddingHorizontal: 6, paddingVertical: 4, borderBottomLeftRadius: 10, borderBottomRightRadius: 10 },
-                is4Cols && { minHeight: 28, paddingHorizontal: 4, paddingVertical: 2, borderBottomLeftRadius: 8, borderBottomRightRadius: 8 },
+                is3Cols && { paddingHorizontal: 6, paddingVertical: 4, borderBottomLeftRadius: 10, borderBottomRightRadius: 10 },
+                is4Cols && { paddingHorizontal: 4, paddingVertical: 3, borderBottomLeftRadius: 8, borderBottomRightRadius: 8 },
               ]}
               pointerEvents="box-none"
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <View style={{ flex: 1, justifyContent: 'center' }}>
-                  <Text
-                    style={[
-                      styles.galleryCardTitle,
-                      { color: overlay.title },
-                      is3Cols && { fontSize: 11, lineHeight: 14, minHeight: 14 },
-                      is4Cols && { fontSize: 9.5, lineHeight: 12, minHeight: 12 },
-                    ]}
-                    numberOfLines={is4Cols ? 1 : 2}
-                  >
-                    {bucket.title}
-                  </Text>
-                  {!is4Cols && metaText ? (
+                  <View style={{ height: titleBoxHeight, justifyContent: 'center' }}>
+                    <Text
+                      style={[
+                        styles.galleryCardTitle,
+                        { color: overlay.title },
+                        is3Cols && { fontSize: 11, lineHeight: 14 },
+                        is4Cols && { fontSize: 9.5, lineHeight: 12 },
+                      ]}
+                      numberOfLines={2}
+                    >
+                      {bucket.title}
+                    </Text>
+                  </View>
+                  {!is4Cols && (
                     <Text
                       style={[
                         styles.galleryCardMeta,
                         { color: overlay.meta },
-                        is3Cols && { fontSize: 9, marginTop: 1 },
+                        is3Cols && { fontSize: 9, lineHeight: 12, marginTop: 1 },
                       ]}
                       numberOfLines={1}
                     >
-                      {metaText}
+                      {metaText || ' '}
                     </Text>
-                  ) : null}
+                  )}
                 </View>
               </View>
 
@@ -1092,13 +1095,13 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderBottomLeftRadius: 14,
     borderBottomRightRadius: 14,
-    minHeight: 68,
   },
   galleryCardTitle: {
     fontFamily: fontFamily.semibold,
     fontSize: 13,
     lineHeight: 17,
     color: '#FFFFFF',
+    includeFontPadding: false,
     ...Platform.select({
       web: { textShadow: '0 1px 4px rgba(0,0,0,0.9)' } as any,
       default: {
@@ -1111,6 +1114,7 @@ const styles = StyleSheet.create({
   galleryCardMeta: {
     fontFamily: fontFamily.regular,
     fontSize: 11,
+    lineHeight: 14,
     color: 'rgba(255,255,255,0.72)',
     marginTop: 2,
   },

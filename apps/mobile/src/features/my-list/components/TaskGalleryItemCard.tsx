@@ -117,6 +117,7 @@ function TaskGalleryItemCardComponent({
 
   const is4Cols = columns === 4;
   const is3Cols = columns === 3;
+  const titleBoxHeight = is4Cols ? 24 : is3Cols ? 28 : effectiveSingle ? 44 : 34;
   const badgeSize = is4Cols ? 18 : is3Cols ? 20 : 22;
   const checkIconSize = is4Cols ? 10 : is3Cols ? 11 : 12;
   const starIconSize = is4Cols ? 9 : is3Cols ? 10 : 11;
@@ -366,18 +367,20 @@ function TaskGalleryItemCardComponent({
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: is4Cols ? 4 : is3Cols ? 6 : 8 }}>
           <View style={{ flex: 1, justifyContent: 'center' }}>
-            <Text
-              style={[
-                styles.galleryCardTitle,
-                { color: overlay.title },
-                effectiveSingle && { fontSize: 16, lineHeight: 22 },
-                is3Cols && { fontSize: 11, lineHeight: 14 },
-                is4Cols && { fontSize: 10, lineHeight: 12 },
-              ]}
-              numberOfLines={hasAssociatedDate ? 1 : 2}
-            >
-              {item.title}
-            </Text>
+            <View style={{ height: titleBoxHeight, justifyContent: 'center' }}>
+              <Text
+                style={[
+                  styles.galleryCardTitle,
+                  { color: overlay.title },
+                  effectiveSingle && { fontSize: 16, lineHeight: 22 },
+                  is3Cols && { fontSize: 11, lineHeight: 14 },
+                  is4Cols && { fontSize: 10, lineHeight: 12 },
+                ]}
+                numberOfLines={2}
+              >
+                {item.title}
+              </Text>
+            </View>
             {!is4Cols && metaText ? (
               <Text style={[styles.galleryCardMeta, { color: overlay.meta }, is3Cols && { fontSize: 9, marginTop: 1 }]} numberOfLines={1}>
                 {metaText}

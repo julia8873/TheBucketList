@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Typography, useTheme, HEART_COLOR } from '@bucketlist/ui';
+import { Typography, useTheme, HEART_COLOR, toast } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import {
@@ -560,7 +560,13 @@ export default function BucketDetailScreen() {
             persistPhotoOrder={(ids) => void state.persistPhotoOrder(ids)}
             setViewingPhotoIndex={state.setViewingPhotoIndex}
             pickAndUploadPhotos={() => void state.pickAndUploadPhotos()}
-            onOpenAddPhotoSheet={() => state.setShowAddPhotoSheet(true)}
+            onOpenAddPhotoSheet={() => {
+              if (!state.isAdmin && ((bucket?.bucket_photos?.length ?? 0) >= 8)) {
+                toast.error('Solo hay un máximo de 10 fotos por tarea.');
+                return;
+              }
+              state.setShowAddPhotoSheet(true);
+            }}
           />
 
           {/* Sección de Comentarios en la tarea */}
