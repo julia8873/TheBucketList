@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Image, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Image, ActivityIndicator, Platform, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
@@ -160,7 +160,11 @@ export default function CompleteBucketModal() {
         <Button variant="ghost" onPress={() => router.back()}>Cancel</Button>
       </View>
 
-      <View style={styles.content}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={[styles.content, Platform.OS === 'web' && { flexGrow: 1 }]}
+        keyboardShouldPersistTaps="handled"
+      >
         <Typography variant="body" style={{ marginBottom: spacing[6] }}>
           Add a photo to capture the memory (optional).
         </Typography>
@@ -213,7 +217,7 @@ export default function CompleteBucketModal() {
             <ProgressBar value={Math.round(progress * 100)} />
           </View>
         )}
-      </View>
+      </ScrollView>
 
       <View style={styles.footer}>
         <Button 
@@ -260,6 +264,14 @@ const styles = StyleSheet.create({
     height: 120,
     flexDirection: 'column',
     justifyContent: 'center',
+    alignItems: 'center',
+    ...Platform.select({
+      web: {
+        minWidth: 0,
+        height: 'auto',
+        minHeight: 120,
+      },
+    }),
   },
   imagePreviewContainer: {
     width: '100%',

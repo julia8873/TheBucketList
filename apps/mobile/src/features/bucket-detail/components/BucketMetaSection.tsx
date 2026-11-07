@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Typography } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
@@ -90,9 +90,12 @@ export function BucketMetaSection({
 
       {/* Fecha completada */}
       {bucket.completed_at ? (
-        <View style={styles.metaRowBetween}>
+        <View style={[styles.metaRowBetween, Platform.OS === 'web' && { width: '100%', flexWrap: 'wrap' }]}>
           <Pressable
-            style={styles.metaRowClickable}
+            style={[
+              styles.metaRowClickable,
+              Platform.OS === 'web' && { flexGrow: 0, flexShrink: 0, flexBasis: 'auto', width: 'auto' },
+            ]}
             onPress={() =>
               canEdit &&
               onOpenDatePicker({
@@ -104,7 +107,11 @@ export function BucketMetaSection({
             disabled={!canEdit}
           >
             <CheckCircle2 color={gold[400]} size={16} strokeWidth={1.8} />
-            <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText}>
+            <Typography
+              variant="body"
+              color={theme.colors.foregroundMuted}
+              style={[styles.metaText, Platform.OS === 'web' && ({ whiteSpace: 'nowrap' } as any)]}
+            >
               {t('bucket.completed_on', {
                 date: format(new Date(bucket.completed_at), t('bucket.date_format_long'), { locale: dateFnsLocale }),
               })}
@@ -121,9 +128,12 @@ export function BucketMetaSection({
           )}
         </View>
       ) : bucket.status === 'completed' ? (
-        <View style={styles.metaRowBetween}>
+        <View style={[styles.metaRowBetween, Platform.OS === 'web' && { width: '100%', flexWrap: 'wrap' }]}>
           <Pressable
-            style={styles.metaRowClickable}
+            style={[
+              styles.metaRowClickable,
+              Platform.OS === 'web' && { flexGrow: 0, flexShrink: 0, flexBasis: 'auto', width: 'auto' },
+            ]}
             onPress={() =>
               canEdit &&
               onOpenDatePicker({
@@ -135,11 +145,19 @@ export function BucketMetaSection({
             disabled={!canEdit}
           >
             <CheckCircle2 color={gold[400]} size={16} strokeWidth={1.8} />
-            <Typography variant="body" color={theme.colors.foregroundMuted} style={styles.metaText}>
+            <Typography
+              variant="body"
+              color={theme.colors.foregroundMuted}
+              style={[styles.metaText, Platform.OS === 'web' && ({ whiteSpace: 'nowrap' } as any)]}
+            >
               {t('bucket.status_completed', { defaultValue: 'Completada' })}
             </Typography>
             {canEdit && (
-              <Typography variant="caption" color={gold[400]} style={{ marginLeft: 8 }}>
+              <Typography
+                variant="caption"
+                color={gold[400]}
+                style={[{ marginLeft: 8 }, Platform.OS === 'web' && ({ whiteSpace: 'nowrap' } as any)]}
+              >
                 {t('bucket.add_date_action', { defaultValue: '+ Añadir fecha' })}
               </Typography>
             )}
@@ -155,20 +173,37 @@ export function BucketMetaSection({
           )}
         </View>
       ) : canEdit ? (
-        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
+        <View style={[
+          { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 14 },
+          Platform.OS === 'web' && { width: '100%' },
+        ]}>
           {onMarkCompleted && (
             <Pressable
-              style={[styles.metaRowClickable, { flex: 0 }]}
+              style={[
+                styles.metaRowClickable,
+                Platform.OS === 'web'
+                  ? { flex: undefined, flexGrow: 0, flexShrink: 0, flexBasis: 'auto', width: 'auto' }
+                  : { flex: 0 },
+              ]}
               onPress={onMarkCompleted}
             >
               <CheckCircle2 color={gold[400]} size={16} strokeWidth={1.8} />
-              <Typography variant="body" color={gold[400]} style={styles.metaText}>
+              <Typography
+                variant="body"
+                color={gold[400]}
+                style={[styles.metaText, Platform.OS === 'web' && ({ whiteSpace: 'nowrap' } as any)]}
+              >
                 {t('bucket.mark_as_completed', { defaultValue: 'Marcar completada' })}
               </Typography>
             </Pressable>
           )}
           <Pressable
-            style={[styles.metaRowClickable, { flex: 0 }]}
+            style={[
+              styles.metaRowClickable,
+              Platform.OS === 'web'
+                ? { flex: undefined, flexGrow: 0, flexShrink: 0, flexBasis: 'auto', width: 'auto' }
+                : { flex: 0 },
+            ]}
             onPress={() =>
               onOpenDatePicker({
                 visible: true,
@@ -178,7 +213,11 @@ export function BucketMetaSection({
             }
           >
             <Calendar color={gold[400]} size={15} strokeWidth={1.8} />
-            <Typography variant="body" color={gold[400]} style={styles.metaText}>
+            <Typography
+              variant="body"
+              color={gold[400]}
+              style={[styles.metaText, Platform.OS === 'web' && ({ whiteSpace: 'nowrap' } as any)]}
+            >
               {t('bucket.complete_with_date', { defaultValue: '+ Con fecha' })}
             </Typography>
           </Pressable>

@@ -79,6 +79,11 @@ export const styles = themedStyleSheet({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    ...Platform.select({
+      web: {
+        flexWrap: 'wrap',
+      },
+    }),
   },
   badgesSecondRow: {
     flexDirection: 'row',
@@ -341,6 +346,11 @@ export const styles = themedStyleSheet({
     paddingBottom: Platform.OS === 'ios' ? 34 : 16,
     paddingTop: 16,
     borderTopWidth: 1,
+    ...Platform.select({
+      web: {
+        zIndex: 20,
+      },
+    }),
   },
   actionBtn: {
     flex: 1,
