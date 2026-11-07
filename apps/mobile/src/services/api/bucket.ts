@@ -268,6 +268,16 @@ export const bucketApi = {
   },
 
   deleteBucket: async (id: string) => {
+    // Intenta desvincular copias propias antes de borrar para salvaguardar si la FK en BD aún no tiene ON DELETE SET NULL
+    try {
+      await supabase
+        .from('buckets')
+        .update({ copied_from_id: null })
+        .eq('copied_from_id', id);
+    } catch {
+      // Ignorar fallo de RLS si son copias de otros usuarios
+    }
+
     const { error } = await supabase
       .from('buckets')
       .delete()

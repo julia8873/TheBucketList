@@ -221,6 +221,14 @@ export function useBulkTaskOperations() {
   const deleteAllTasks = useMutation({
     mutationFn: async (taskIds: string[]) => {
       if (!taskIds.length) return;
+      try {
+        await supabase
+          .from('buckets')
+          .update({ copied_from_id: null })
+          .in('copied_from_id', taskIds);
+      } catch {
+        // Ignorar fallo de RLS si son copias de otros usuarios
+      }
       const { error } = await supabase
         .from('buckets')
         .delete()
