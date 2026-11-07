@@ -102,8 +102,8 @@ export function AlbumTaskCard({
       : itemPriority === 'high'
         ? (theme.dark ? '#F87171' : '#EF4444')
         : itemPriority === 'low'
-          ? (theme.dark ? '#34D399' : '#10B981')
-          : (theme.dark ? '#FBBF24' : '#D4B13A');
+          ? (theme.dark ? '#34D399' : '#059669')
+          : (theme.dark ? '#FBBF24' : '#B45309');
 
   const itemPriorityBg = theme.dark
     ? itemPriority === 'urgent' || itemPriority === 'high'
@@ -111,7 +111,11 @@ export function AlbumTaskCard({
       : itemPriority === 'low'
         ? 'rgba(16, 185, 129, 0.22)'
         : 'rgba(212, 177, 58, 0.22)'
-    : 'rgba(255, 255, 255, 0.92)';
+    : itemPriority === 'urgent' || itemPriority === 'high'
+      ? '#FEE2E2'
+      : itemPriority === 'low'
+        ? '#D1FAE5'
+        : '#FEF3C7';
 
   const itemPriorityLabel =
     itemPriority === 'urgent'

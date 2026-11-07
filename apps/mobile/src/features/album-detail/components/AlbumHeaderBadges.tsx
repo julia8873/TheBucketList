@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Lock, Flag, Eye, Users, CheckCircle2, Circle } from 'lucide-react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
+import { useTheme } from '@bucketlist/ui';
 import { styles } from '../styles/album-detail.styles';
 
 import { useTranslation } from '@bucketlist/shared';
@@ -25,6 +26,7 @@ export function AlbumHeaderBadges({
   onOpenVisibility,
   onOpenPriority,
 }: AlbumHeaderBadgesProps) {
+  const { theme } = useTheme();
   const { t } = useTranslation();
 
   const priorityColor =
@@ -33,6 +35,31 @@ export function AlbumHeaderBadges({
       : album.priority === 'low'
         ? '#10B981'
         : '#D4B13A';
+
+  const isLight = !theme.dark;
+  const chipPriorityColor = isLight
+    ? album.priority === 'high' || album.priority === 'urgent'
+      ? '#DC2626'
+      : album.priority === 'low'
+        ? '#059669'
+        : '#A17A16'
+    : priorityColor;
+
+  const chipPriorityBg = isLight
+    ? album.priority === 'high' || album.priority === 'urgent'
+      ? '#FEE2E2'
+      : album.priority === 'low'
+        ? '#D1FAE5'
+        : '#FEF3C7'
+    : `${priorityColor}1F`;
+
+  const chipPriorityBorder = isLight
+    ? album.priority === 'high' || album.priority === 'urgent'
+      ? '#EF4444'
+      : album.priority === 'low'
+        ? '#10B981'
+        : 'rgba(212, 175, 55, 0.85)'
+    : `${priorityColor}80`;
 
   const priorityLabel =
     album.priority === 'urgent'
@@ -97,13 +124,13 @@ export function AlbumHeaderBadges({
         <Pressable
           style={[
             styles.chip,
-            { borderColor: `${priorityColor}80`, backgroundColor: `${priorityColor}1F` },
+            { borderColor: chipPriorityBorder, backgroundColor: chipPriorityBg },
             canEdit && styles.chipPressable,
           ]}
           onPress={onOpenPriority}
         >
-          <Flag size={13} color={priorityColor} strokeWidth={2} style={{ marginRight: 5 }} />
-          <Text style={[styles.chipText, { color: priorityColor, fontWeight: '600' }]}>
+          <Flag size={13} color={chipPriorityColor} strokeWidth={2} style={{ marginRight: 5 }} />
+          <Text style={[styles.chipText, { color: chipPriorityColor, fontWeight: '700' }]}>
             {priorityLabel}
           </Text>
         </Pressable>
