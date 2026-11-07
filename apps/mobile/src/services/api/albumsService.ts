@@ -67,7 +67,7 @@ export const albumsService = {
           category_id, counter_count, counter_target, counter_label, counter_enabled,
           categories ( name_es, color, slug ),
           item_subtasks ( id, done ),
-          bucket_photos ( id, storage_path, thumb_path, created_at, completed_at, title, visibility ),
+          bucket_photos ( id, storage_path, thumb_path, created_at, completed_at, title ),
           album_items ( album_id )
       `;
       const { data: allUserBuckets, error: bucketsError } = await supabase
@@ -198,7 +198,7 @@ export const albumsService = {
           category_id, counter_count, counter_target, counter_label, counter_enabled,
           categories ( name_es, color, slug ),
           item_subtasks ( id, done ),
-          bucket_photos ( id, storage_path, thumb_path, created_at, completed_at, title, visibility )
+          bucket_photos ( id, storage_path, thumb_path, created_at, completed_at, title )
         `)
         .in('id', bucketIds);
 
