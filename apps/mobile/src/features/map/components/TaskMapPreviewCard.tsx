@@ -824,62 +824,6 @@ export function TaskMapPreviewCard({
         </View>
       )}
 
-      {/* Pestañas de acceso directo para cada tarea en esta ubicación */}
-      {items.length > 1 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.taskTabsScroll}
-          contentContainerStyle={styles.taskTabsContainer}
-        >
-          {items.map((item, idx) => {
-            const isSelected = idx === currentIndex;
-            return (
-              <Pressable
-                key={item.id}
-                onPress={() => {
-                  setCurrentIndex(idx);
-                  try {
-                    flatListRef.current?.scrollToIndex({ index: idx, animated: true });
-                  } catch {}
-                  onSelectTask?.(item);
-                }}
-                style={[
-                  styles.taskTabPill,
-                  {
-                    backgroundColor: isSelected
-                      ? theme.dark
-                        ? 'rgba(212, 175, 55, 0.28)'
-                        : 'rgba(212, 175, 55, 0.2)'
-                      : theme.colors.surface,
-                    borderColor: isSelected ? gold[400] : theme.colors.border,
-                  },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.tabDot,
-                    { backgroundColor: isSelected ? gold[400] : theme.colors.foregroundMuted },
-                  ]}
-                />
-                <Text
-                  numberOfLines={1}
-                  style={[
-                    styles.taskTabPillText,
-                    {
-                      color: isSelected ? (theme.dark ? '#FCD34D' : '#854D0E') : theme.colors.foreground,
-                      fontFamily: isSelected ? 'Inter_700Bold' : 'Inter_500Medium',
-                    },
-                  ]}
-                >
-                  {idx + 1}. {item.title}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      )}
-
       {/* 1. MODO CARRUSEL DESLIZABLE (SWIPEABLE CARD) */}
       {viewMode === 'card' && (
         <>
