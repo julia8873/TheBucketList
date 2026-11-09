@@ -443,35 +443,45 @@ export default function BucketDetailScreen() {
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Pressable
-                onPress={() =>
-                  state.user &&
-                  state.toggleReaction.mutate({ bucketId: state.id, userId: state.user.id, emoji: '❤️' })
-                }
-                hitSlop={6}
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  if (state.user) {
+                    state.toggleReaction.mutate({ bucketId: state.id, userId: state.user.id, emoji: '❤️' });
+                  }
+                }}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 4 }}
+                style={{ paddingVertical: 4, paddingRight: 4, justifyContent: 'center', alignItems: 'center' }}
                 accessibilityRole="button"
                 accessibilityLabel={state.myReaction ? t('common.unlike') : t('common.give_like')}
               >
                 <Heart
                   color={state.myReaction ? HEART_COLOR : theme.colors.foregroundMuted}
                   fill={state.myReaction ? HEART_COLOR : 'transparent'}
-                  size={18}
+                  size={19}
                   strokeWidth={1.8}
                 />
               </Pressable>
               <Pressable
-                onPress={() => setShowLikesModal(true)}
-                hitSlop={6}
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  if (state.totalReactions > 0) {
+                    setShowLikesModal(true);
+                  }
+                }}
+                disabled={state.totalReactions === 0}
+                hitSlop={{ top: 12, bottom: 12, left: 4, right: 14 }}
+                style={{ paddingVertical: 4, paddingLeft: 4, paddingRight: 8, justifyContent: 'center' }}
                 accessibilityRole="button"
                 accessibilityLabel={t('bucket.view_likes')}
               >
-                <Typography variant="body" color={theme.colors.foregroundMuted} style={{ marginLeft: 6 }}>
+                <Typography variant="body" color={theme.colors.foregroundMuted}>
                   {state.totalReactions}
                 </Typography>
               </Pressable>
             </View>
             <Pressable
               onPress={() => setShowCommentsModal(true)}
-              style={[styles.statItem, { marginLeft: 24 }]}
+              style={[styles.statItem, { marginLeft: 20 }]}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel={t('bucket.view_comments')}

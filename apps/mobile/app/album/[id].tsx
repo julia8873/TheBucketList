@@ -1134,18 +1134,29 @@ export default function AlbumDetailScreen() {
           <View style={{ paddingHorizontal: 12, marginTop: 24, marginBottom: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
               <Pressable
-                onPress={() => setShowLikesModal(true)}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4 }}
-                hitSlop={8}
+                onPress={state.handleToggleLikeAlbum}
+                style={{ paddingVertical: 4, paddingRight: 4, justifyContent: 'center', alignItems: 'center' }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 4 }}
                 accessibilityRole="button"
-                accessibilityLabel={t('album_detail.view_likes_a11y', { defaultValue: 'Ver me gusta' })}
+                accessibilityLabel={state.isLiked ? t('album_detail.unlike_a11y', { defaultValue: 'Quitar me gusta' }) : t('album_detail.give_like_a11y', { defaultValue: 'Dar me gusta' })}
               >
                 <Heart
-                  size={16}
+                  size={18}
                   color={HEART_COLOR}
                   fill={state.isLiked ? HEART_COLOR : 'transparent'}
                   strokeWidth={1.8}
                 />
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  if (albumLikesCount > 0) setShowLikesModal(true);
+                }}
+                disabled={albumLikesCount === 0}
+                style={{ paddingVertical: 4, paddingLeft: 4, paddingRight: 8, justifyContent: 'center' }}
+                hitSlop={{ top: 10, bottom: 10, left: 4, right: 14 }}
+                accessibilityRole="button"
+                accessibilityLabel={t('album_detail.view_likes_a11y', { defaultValue: 'Ver me gusta' })}
+              >
                 <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: theme.colors.foregroundMuted }}>
                   {albumLikesCount === 1
                     ? t('collections.likes_count_single', { count: 1, defaultValue: '1 like' })
