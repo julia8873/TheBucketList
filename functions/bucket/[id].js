@@ -114,6 +114,7 @@ export async function onRequest(context) {
         "cache-control": "no-cache, no-store, must-revalidate",
         "x-bucket-id": bucketId,
         "x-debug-rpc": debugRpc,
+        "x-version": "v2-title-bold",
       },
     });
   } catch (err) {
@@ -135,6 +136,7 @@ export async function onRequest(context) {
         "cache-control": "no-cache, no-store, must-revalidate",
         "x-bucket-id": bucketId,
         "x-debug-rpc": debugRpc,
+        "x-version": "v2-title-bold",
       },
     });
   }
