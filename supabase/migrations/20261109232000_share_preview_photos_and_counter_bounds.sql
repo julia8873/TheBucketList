@@ -74,3 +74,4 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.get_share_preview(text, uuid) TO anon, authenticated, service_role;
+

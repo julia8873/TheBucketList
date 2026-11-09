@@ -73,3 +73,4 @@ export async function onRequest(context) {
     return Response.redirect(`${siteUrl}/icon.png`, 302);
   }
 }
+

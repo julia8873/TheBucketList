@@ -43,6 +43,30 @@
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.READ_MEDIA_VISUAL_USER_SELECTED"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "thebucketlist-8zk.pages.dev",
+              "pathPrefix": "/bucket"
+            },
+            {
+              "scheme": "https",
+              "host": "thebucketlist-8zk.pages.dev",
+              "pathPrefix": "/album"
+            },
+            {
+              "scheme": "https",
+              "host": "thebucketlist-8zk.pages.dev",
+              "pathPrefix": "/profile"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
       ]
     },
     "web": {

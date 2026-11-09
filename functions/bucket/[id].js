@@ -70,7 +70,6 @@ export async function onRequest(context) {
     ? `${authorLine} • ${extraParts.join(' — ')}`
     : authorLine;
 
-  // Servir la imagen directamente a través de nuestro dominio para evitar x-robots-tag: none y bloqueos de WhatsApp
   const ogImageUrl = bucketId ? `${siteUrl}/preview-image/${bucketId}.jpg` : `${siteUrl}/icon.png`;
 
   const ogTags = `
@@ -97,8 +96,7 @@ export async function onRequest(context) {
   const userAgent = request.headers.get('user-agent') || '';
   const isCrawler = /facebookexternalhit|Facebot|WhatsApp|Twitterbot|Pinterest|TelegramBot|Slackbot|LinkedInBot|Discordbot|SkypeUriPreview/i.test(userAgent);
 
-  // Para los rastreadores de previsualizaciones (WhatsApp, Facebook, Twitter, Telegram)
-  // devolver una página HTML ultra ligera (1KB) inmediata con cabeceras de caché públicas.
+  // Para rastreadores (WhatsApp, Facebook, etc.): devolver solo metadatos ultraligeros
   if (isCrawler) {
     const crawlerHtml = `<!DOCTYPE html>
 <html lang="es">
@@ -125,14 +123,65 @@ export async function onRequest(context) {
     });
   }
 
+  // Rutas de deep linking nativo
+  const appSchemeUrl = `bucketlist://bucket/${bucketId}`;
+  const androidIntentUrl = `intent://bucket/${bucketId}#Intent;scheme=bucketlist;package=com.thebucketlist.app;end`;
+
+  // Script y banner para redirigir/abrir directamente la app instalada en móviles
+  const deepLinkInjection = `
+    ${ogTags}
+    <script>
+      (function() {
+        var isAndroid = /Android/i.test(navigator.userAgent);
+        var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isAndroid || isIOS) {
+          var targetAppUrl = isAndroid ? "${androidIntentUrl}" : "${appSchemeUrl}";
+          try {
+            window.location.href = targetAppUrl;
+          } catch (e) {}
+        }
+      })();
+    </script>
+  `;
+
+  const bannerHtml = `
+    <div id="tbl-app-banner" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:999999;width:90%;max-width:380px;background:#18181b;border:1.5px solid #D4B13A;box-shadow:0 12px 28px rgba(0,0,0,0.8);border-radius:18px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <img src="/icon.png" style="width:40px;height:40px;border-radius:10px;" />
+        <div>
+          <div style="color:#ffffff;font-size:14px;font-weight:700;">TheBucketList</div>
+          <div style="color:#a1a1aa;font-size:12px;">Abrir en la aplicación</div>
+        </div>
+      </div>
+      <a id="tbl-open-btn" href="${androidIntentUrl}" style="background:#D4B13A;color:#000000;font-weight:700;font-size:13px;padding:9px 18px;border-radius:24px;text-decoration:none;display:inline-block;box-shadow:0 2px 8px rgba(212,177,58,0.3);">
+        Abrir
+      </a>
+    </div>
+    <script>
+      (function() {
+        var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isIOS) {
+          var btn = document.getElementById('tbl-open-btn');
+          if (btn) btn.href = "${appSchemeUrl}";
+        }
+      })();
+    </script>
+  `;
+
   try {
     const assetResponse = await env.ASSETS.fetch(request);
     let html = await assetResponse.text();
 
     if (html.includes('<head>')) {
-      html = html.replace('<head>', `<head>${ogTags}`);
+      html = html.replace('<head>', `<head>${deepLinkInjection}`);
     } else {
-      html = `<head>${ogTags}</head>${html}`;
+      html = `<head>${deepLinkInjection}</head>${html}`;
+    }
+
+    if (html.includes('</body>')) {
+      html = html.replace('</body>', `${bannerHtml}</body>`);
+    } else {
+      html = `${html}${bannerHtml}`;
     }
 
     return new Response(html, {
@@ -148,14 +197,31 @@ export async function onRequest(context) {
 <html lang="es">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${escapeHtml(ogTitle)}</title>
-  ${ogTags}
-  <meta http-equiv="refresh" content="0;url=${pageUrl}" />
+  ${deepLinkInjection}
 </head>
-<body>
-  <p>Redirigiendo a <a href="${pageUrl}">${escapeHtml(title)}</a>...</p>
+<body style="background:#0F0F0F;color:#FFF;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;padding:20px;text-align:center;">
+  <div style="max-width:340px;">
+    <img src="/icon.png" style="width:72px;height:72px;border-radius:18px;margin-bottom:16px;" />
+    <h2 style="font-size:20px;margin-bottom:8px;">${escapeHtml(ogTitle)}</h2>
+    <p style="color:#aaa;font-size:14px;margin-bottom:24px;">${escapeHtml(ogDesc)}</p>
+    <a href="${androidIntentUrl}" id="tbl-fallback-btn" style="background:#D4B13A;color:#000;font-weight:700;font-size:15px;padding:12px 28px;border-radius:28px;text-decoration:none;display:inline-block;">
+      Abrir en la aplicación
+    </a>
+  </div>
+  <script>
+    (function() {
+      var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if (isIOS) {
+        var btn = document.getElementById('tbl-fallback-btn');
+        if (btn) btn.href = "${appSchemeUrl}";
+      }
+    })();
+  </script>
 </body>
 </html>`;
+
     return new Response(fallbackHtml, {
       headers: {
         "content-type": "text/html; charset=utf-8",
