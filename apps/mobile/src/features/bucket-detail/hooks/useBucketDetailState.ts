@@ -500,19 +500,17 @@ export function useBucketDetailState() {
   const shareMoment = async () => {
     try {
       const siteUrl = (process.env['EXPO_PUBLIC_SITE_URL'] || 'https://thebucketlist-8zk.pages.dev').replace(/\/$/, '');
-      const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.thebucketlist.app';
+      const shareUrl = `${siteUrl}/bucket/${bucket?.id}`;
       const title = bucket?.title || '';
-      const location = bucket?.location_text ? `\n📍 ${bucket.location_text}` : '';
-      const desc = bucket?.description ? `\n\n${bucket.description}` : '';
-      const link = bucket?.id ? `\n\n🔗 ${t('bucket.share_moment_view', { defaultValue: 'Ver plan en la app o web:' })}\n${siteUrl}/bucket/${bucket.id}` : '';
-      const storeLink = `\n\n📲 ${t('bucket.share_download_app', { defaultValue: 'Descárgate TheBucketList gratis en Google Play:' })}\n${playStoreUrl}`;
+      const location = bucket?.location_text ? ` 📍 ${bucket.location_text}` : '';
 
-      const message = `${t('bucket.share_moment_intro', { defaultValue: '✨ ¡Mira este plan en TheBucketList!' })}\n«${title}»${location}${desc}${link}${storeLink}`;
+      // La URL al inicio activa en WhatsApp / iMessage / Telegram la tarjeta visual grande con foto y logo (Open Graph estilo Instagram)
+      const message = `${shareUrl}\n\n✨ «${title}»${location}`;
 
       await Share.share({
         title: bucket?.title,
         message,
-        url: bucket?.id ? `${siteUrl}/bucket/${bucket.id}` : playStoreUrl,
+        url: shareUrl,
       });
     } catch (error) {
       console.error('Unable to share moment', error);
