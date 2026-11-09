@@ -25,24 +25,37 @@ import { useCustomColors } from '@/hooks/useCustomColors';
 import { BucketCover } from '@/components/BucketCover';
 import { storageApi } from '@/services/api/storage';
 
-interface TaskCoverPickerProps {
-  coverImage: string;
-  onChangeCover: (cover: string) => void;
-  taskTitle?: string;
+export interface TaskFormPhoto {
+  id?: string;
+  uri: string;
+  storage_path?: string;
+  thumb_path?: string;
 }
 
-export function TaskCoverPicker({
+/* =========================================================================
+   TASK COVER BANNER (Vista previa de la portada arriba del formulario)
+   ========================================================================= */
+
+export interface TaskCoverBannerProps {
+  coverImage: string;
+  taskTitle?: string;
+  isSquare?: boolean;
+  onToggleSquare?: () => void;
+  onRecrop?: (croppedUri: string) => void;
+  onRemovePhoto?: () => void;
+}
+
+export function TaskCoverBanner({
   coverImage,
-  onChangeCover,
   taskTitle = '',
-}: TaskCoverPickerProps) {
+  isSquare = false,
+  onToggleSquare,
+  onRecrop,
+  onRemovePhoto,
+}: TaskCoverBannerProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
-  const { savedColors } = useCustomColors();
 
-  const [showLinkModal, setShowLinkModal] = useState(false);
-  const [showColorPicker, setShowColorPicker] = useState(false);
-  const [isSquare, setIsSquare] = useState(false);
   const [cropTarget, setCropTarget] = useState<{ uri: string; width: number; height: number } | null>(null);
   const [showCropModal, setShowCropModal] = useState(false);
 
@@ -51,35 +64,6 @@ export function TaskCoverPicker({
       !coverImage.startsWith('preset:') &&
       !coverImage.startsWith('#')
   );
-
-  const isWebLink = hasCustomImage && Boolean(coverImage?.startsWith('http'));
-  const isLocalImage = hasCustomImage && !isWebLink;
-
-  useEffect(() => {
-    if (hasCustomImage) {
-      const uri =
-        coverImage.startsWith('http') ||
-        coverImage.startsWith('file:') ||
-        coverImage.startsWith('data:')
-          ? coverImage
-          : storageApi.getPublicUrl(coverImage);
-
-      if (uri && !uri.startsWith('data:')) {
-        RNImage.getSize(
-          uri,
-          (w, h) => {
-            if (w && h) {
-              const ratio = w / h;
-              setIsSquare(Math.abs(ratio - 1) < 0.25);
-            }
-          },
-          () => {}
-        );
-      }
-    } else {
-      setIsSquare(false);
-    }
-  }, [coverImage, hasCustomImage]);
 
   const prepareCrop = async (targetUri: string, initialW?: number, initialH?: number) => {
     let localUri = targetUri;
@@ -112,70 +96,6 @@ export function TaskCoverPicker({
     }
   };
 
-  const pickFromGallery = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        quality: 0.85,
-      });
-      if (!result.canceled && result.assets && result.assets[0]?.uri) {
-        const asset = result.assets[0];
-        if (asset.width && asset.height) {
-          setIsSquare(Math.abs(asset.width / asset.height - 1) < 0.25);
-        }
-        onChangeCover(asset.uri);
-      }
-    } catch (err) {
-      if (__DEV__) console.warn('Error seleccionando imagen:', err);
-    }
-  };
-
-  const takeCameraPhoto = async () => {
-    try {
-      const permission = await ImagePicker.requestCameraPermissionsAsync();
-      if (!permission.granted) {
-        toast.error(
-          t('albums.error_camera_permission', { defaultValue: 'Se necesita permiso para acceder a la cámara.' })
-        );
-        return;
-      }
-      const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        quality: 0.85,
-      });
-      if (!result.canceled && result.assets && result.assets[0]?.uri) {
-        const asset = result.assets[0];
-        if (asset.width && asset.height) {
-          setIsSquare(Math.abs(asset.width / asset.height - 1) < 0.25);
-        }
-        onChangeCover(asset.uri);
-      }
-    } catch {
-      toast.error(t('albums.error_camera_open', { defaultValue: 'Error al abrir la cámara.' }));
-    }
-  };
-
-  const handleUrlCover = (url: string) => {
-    setShowLinkModal(false);
-    if (!url.startsWith('data:')) {
-      RNImage.getSize(
-        url,
-        (w, h) => {
-          if (w && h) {
-            setIsSquare(Math.abs(w / h - 1) < 0.25);
-          }
-          onChangeCover(url);
-        },
-        () => {
-          onChangeCover(url);
-        }
-      );
-    } else {
-      onChangeCover(url);
-    }
-  };
-
   const handleRecropCurrent = () => {
     if (!hasCustomImage) return;
     const uri =
@@ -187,30 +107,148 @@ export function TaskCoverPicker({
     void prepareCrop(uri);
   };
 
-  const handleRemoveCover = () => {
-    setIsSquare(false);
-    onChangeCover('preset:aurora');
-  };
+  return (
+    <View style={styles.coverContainer}>
+      <View style={[styles.coverPreviewBanner, isSquare && { height: 240 }]}>
+        {hasCustomImage ? (
+          <ExpoImage
+            source={{ uri: coverImage.startsWith('http') || coverImage.startsWith('file:') || coverImage.startsWith('data:') ? coverImage : storageApi.getPublicUrl(coverImage) }}
+            style={styles.coverPreviewImage}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+          />
+        ) : (
+          <BucketCover
+            value={coverImage}
+            title={taskTitle}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.5)']}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+
+        {hasCustomImage && onRemovePhoto && (
+          <Pressable
+            style={styles.coverRemoveBadge}
+            onPress={onRemovePhoto}
+            accessibilityRole="button"
+            accessibilityLabel={t('bucket.cover_remove', { defaultValue: 'Quitar foto' })}
+            hitSlop={10}
+          >
+            <X color="#FFF" size={14} strokeWidth={2.5} />
+            <Text style={styles.coverRemoveBadgeText}>{t('bucket.remove_photo', { defaultValue: 'Quitar' })}</Text>
+          </Pressable>
+        )}
+
+        {hasCustomImage && (
+          <View style={styles.coverPreviewOverlay}>
+            <Pressable
+              style={styles.coverChangeBtn}
+              onPress={handleRecropCurrent}
+              accessibilityRole="button"
+              accessibilityLabel={t('bucket.cover_recrop', { defaultValue: 'Recortar' })}
+            >
+              <Crop color="#FFF" size={13} strokeWidth={2} />
+              <Text style={styles.coverChangeBtnText}>{t('bucket.crop_action', { defaultValue: 'Recortar' })}</Text>
+            </Pressable>
+
+            {onToggleSquare && (
+              <Pressable
+                style={[styles.coverChangeBtn, isSquare && styles.coverChangeBtnActive]}
+                onPress={onToggleSquare}
+                accessibilityRole="button"
+                accessibilityLabel={isSquare ? '16:9' : '1:1'}
+              >
+                <Maximize2 color={isSquare ? gold[400] : '#FFF'} size={13} strokeWidth={2} />
+                <Text style={[styles.coverChangeBtnText, isSquare && { color: gold[400] }]}>
+                  {isSquare ? '1:1' : '16:9'}
+                </Text>
+              </Pressable>
+            )}
+          </View>
+        )}
+      </View>
+
+      <PhotoCropModal
+        visible={showCropModal}
+        uri={cropTarget?.uri ?? null}
+        width={cropTarget?.width ?? 1200}
+        height={cropTarget?.height ?? 800}
+        index={0}
+        total={1}
+        onCancel={() => {
+          setShowCropModal(false);
+          setCropTarget(null);
+        }}
+        onDone={(croppedUri) => {
+          setShowCropModal(false);
+          setCropTarget(null);
+          onRecrop?.(croppedUri);
+        }}
+      />
+    </View>
+  );
+}
+
+/* =========================================================================
+   TASK PHOTO AND COLOR PICKER (Controles debajo de QUÉ QUIERES LOGRAR)
+   ========================================================================= */
+
+const MAX_TASK_PHOTOS = 8;
+
+export interface TaskPhotoAndColorPickerProps {
+  coverColor: string;
+  onChangeColor: (color: string) => void;
+  photos: TaskFormPhoto[];
+  selectedCoverIndex: number;
+  onSelectCoverPhoto: (index: number) => void;
+  onAddPhotos: (uris: string[]) => void;
+  onRemovePhoto: (index: number) => void;
+  isAdmin?: boolean;
+  taskTitle?: string;
+}
+
+export function TaskPhotoAndColorPicker({
+  coverColor,
+  onChangeColor,
+  photos,
+  selectedCoverIndex,
+  onSelectCoverPhoto,
+  onAddPhotos,
+  onRemovePhoto,
+  isAdmin = false,
+  taskTitle = '',
+}: TaskPhotoAndColorPickerProps) {
+  const { theme } = useTheme();
+  const { t } = useTranslation();
+  const { savedColors } = useCustomColors();
+
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
   // Mapeo del degradado activo
   const selectedGradientId =
-    coverImage === 'preset:green' || coverImage === 'preset:aurora' ? 'aurora' :
-    coverImage === 'preset:orange' || coverImage === 'preset:atardecer' ? 'atardecer' :
-    coverImage === 'preset:blue' || coverImage === 'preset:cielo' ? 'cielo' :
-    coverImage === 'preset:purple' || coverImage === 'preset:violeta' ? 'violeta' :
-    coverImage === 'preset:dorado' || coverImage === 'preset:gold' ? 'dorado' :
+    coverColor === 'preset:green' || coverColor === 'preset:aurora' ? 'aurora' :
+    coverColor === 'preset:orange' || coverColor === 'preset:atardecer' ? 'atardecer' :
+    coverColor === 'preset:blue' || coverColor === 'preset:cielo' ? 'cielo' :
+    coverColor === 'preset:purple' || coverColor === 'preset:violeta' ? 'violeta' :
+    coverColor === 'preset:dorado' || coverColor === 'preset:gold' ? 'dorado' :
     null;
 
   // Mapeo del color sólido activo
   let currentSolidHex: string | null = null;
-  if (coverImage.startsWith('preset:color:')) {
-    currentSolidHex = coverImage.replace('preset:color:', '');
-  } else if (coverImage.startsWith('preset:solid:')) {
-    currentSolidHex = coverImage.replace('preset:solid:', '');
-  } else if (coverImage.startsWith('#')) {
-    currentSolidHex = coverImage;
-  } else if (coverImage.startsWith('preset:')) {
-    const name = coverImage.replace('preset:', '');
+  if (coverColor.startsWith('preset:color:')) {
+    currentSolidHex = coverColor.replace('preset:color:', '');
+  } else if (coverColor.startsWith('preset:solid:')) {
+    currentSolidHex = coverColor.replace('preset:solid:', '');
+  } else if (coverColor.startsWith('#')) {
+    currentSolidHex = coverColor;
+  } else if (coverColor.startsWith('preset:')) {
+    const name = coverColor.replace('preset:', '');
     const solidMap: Record<string, string> = {
       rojo: '#E53935',
       azul: '#1E88E5',
@@ -228,284 +266,356 @@ export function TaskCoverPicker({
       !SOLID_COVERS.some((c) => c.colors?.[0]?.toLowerCase() === currentSolidHex?.toLowerCase())
   );
 
-  return (
-    <View style={styles.coverContainer}>
-      {/* Vista previa en vivo de la portada */}
-      <View style={[styles.coverPreviewBanner, isSquare && { height: 240 }]}>
-        {hasCustomImage ? (
-          <ExpoImage
-            source={{ uri: coverImage }}
-            style={styles.coverPreviewImage}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-          />
-        ) : (
-          <BucketCover
-            value={coverImage}
-            title={taskTitle}
-            style={StyleSheet.absoluteFill}
-          />
-        )}
+  const checkPhotoLimit = () => {
+    if (!isAdmin && photos.length >= MAX_TASK_PHOTOS) {
+      toast.error(
+        t('bucket_detail.photo_limit_message', {
+          defaultValue: 'Solo hay un máximo de 10 fotos por tarea.',
+        })
+      );
+      return false;
+    }
+    return true;
+  };
 
-        {/* Gradiente sutil inferior */}
-        <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.5)']}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
-        />
-
-        {/* Botón quitar foto si tiene imagen personalizada */}
-        {hasCustomImage && (
-          <Pressable
-            style={styles.coverRemoveBadge}
-            onPress={handleRemoveCover}
-            accessibilityRole="button"
-            accessibilityLabel={t('bucket.cover_remove', { defaultValue: 'Quitar foto' })}
-            hitSlop={10}
-          >
-            <X color="#FFF" size={14} strokeWidth={2.5} />
-            <Text style={styles.coverRemoveBadgeText}>{t('bucket.remove_photo', { defaultValue: 'Quitar' })}</Text>
-          </Pressable>
-        )}
-
-        {/* Botones inferiores en imagen: Recortar y Aspect Ratio */}
-        {hasCustomImage && (
-          <View style={styles.coverPreviewOverlay}>
-            <Pressable
-              style={styles.coverChangeBtn}
-              onPress={handleRecropCurrent}
-              accessibilityRole="button"
-              accessibilityLabel={t('bucket.cover_recrop', { defaultValue: 'Recortar' })}
-            >
-              <Crop color="#FFF" size={13} strokeWidth={2} />
-              <Text style={styles.coverChangeBtnText}>{t('bucket.crop_action', { defaultValue: 'Recortar' })}</Text>
-            </Pressable>
-
-            <Pressable
-              style={[styles.coverChangeBtn, isSquare && styles.coverChangeBtnActive]}
-              onPress={() => setIsSquare(!isSquare)}
-              accessibilityRole="button"
-              accessibilityLabel={isSquare ? '16:9' : '1:1'}
-            >
-              <Maximize2 color={isSquare ? gold[400] : '#FFF'} size={13} strokeWidth={2} />
-              <Text style={[styles.coverChangeBtnText, isSquare && { color: gold[400] }]}>
-                {isSquare ? '1:1' : '16:9'}
-              </Text>
-            </Pressable>
-          </View>
-        )}
-      </View>
-
-      {/* Botón para reajustar recorte si hay imagen seleccionada */}
-      {hasCustomImage && (
-        <Pressable
-          style={[styles.recropBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
-          onPress={handleRecropCurrent}
-          accessibilityRole="button"
-          accessibilityLabel={t('albums.recrop_photo', { defaultValue: 'Reajustar recorte de la foto' })}
-        >
-          <Crop size={15} color="#D4B13A" strokeWidth={2} />
-          <Text style={styles.recropBtnText}>{t('albums.recrop_photo', { defaultValue: 'Reajustar recorte de la foto' })}</Text>
-        </Pressable>
-      )}
-
-      {/* Fila 1: Galería, Cámara, Enlace, Gradientes */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.coversRow}>
-        {/* Galería */}
-        <Pressable
-          style={[
-            styles.coverOption,
-            isLocalImage && styles.coverOptionSelected,
-            {
-              justifyContent: 'center',
-              alignItems: 'center',
-              backgroundColor: theme.colors.surface,
-              borderColor: isLocalImage ? '#D4B13A' : theme.colors.border,
-            },
-          ]}
-          onPress={() => void pickFromGallery()}
-          accessibilityRole="button"
-          accessibilityLabel={t('albums.pick_gallery', { defaultValue: 'Galería' })}
-        >
-          <ImageIcon
-            color={isLocalImage ? '#D4B13A' : theme.colors.foregroundMuted}
-            size={24}
-          />
-        </Pressable>
-
-        {/* Cámara */}
-        <Pressable
-          style={[
-            styles.coverOption,
-            {
-              justifyContent: 'center',
-              alignItems: 'center',
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.border,
-            },
-          ]}
-          onPress={() => void takeCameraPhoto()}
-          accessibilityRole="button"
-          accessibilityLabel={t('albums.take_camera', { defaultValue: 'Cámara' })}
-        >
-          <Camera color={theme.colors.foregroundMuted} size={24} />
-        </Pressable>
-
-        {/* Pegar enlace / Google */}
-        <Pressable
-          style={[
-            styles.coverOption,
-            isWebLink && styles.coverOptionSelected,
-            {
-              justifyContent: 'center',
-              alignItems: 'center',
-              backgroundColor: theme.colors.surface,
-              borderColor: isWebLink ? '#D4B13A' : theme.colors.border,
-            },
-          ]}
-          onPress={() => setShowLinkModal(true)}
-          accessibilityRole="button"
-          accessibilityLabel={t('albums.paste_link', { defaultValue: 'Pegar enlace' })}
-        >
-          <Link2
-            color={isWebLink ? '#D4B13A' : theme.colors.foregroundMuted}
-            size={24}
-          />
-        </Pressable>
-
-        {/* Gradientes predeterminados */}
-        {COVERS.map((cover) => {
-          const isSelected = selectedGradientId === cover.id;
-          return (
-            <Pressable
-              key={cover.id}
-              style={[styles.coverOption, isSelected && styles.coverOptionSelected]}
-              onPress={() => {
-                setIsSquare(false);
-                onChangeCover(`preset:${cover.id}`);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={`Degradado ${cover.id}`}
-            >
-              <LinearGradient
-                colors={cover.colors!}
-                start={cover.diagonal ? { x: 0, y: 0 } : { x: 0.5, y: 0 }}
-                end={cover.diagonal ? { x: 1, y: 1 } : { x: 0.5, y: 1 }}
-                style={StyleSheet.absoluteFill}
-              />
-            </Pressable>
+  const pickFromGallery = async () => {
+    if (!checkPhotoLimit()) return;
+    try {
+      const remaining = MAX_TASK_PHOTOS - photos.length;
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsMultipleSelection: true,
+        quality: 0.85,
+        ...(isAdmin ? {} : { selectionLimit: Math.max(1, remaining) }),
+      });
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        if (!isAdmin && photos.length + result.assets.length > MAX_TASK_PHOTOS) {
+          toast.error(
+            t('bucket_detail.photo_limit_message', {
+              defaultValue: 'Solo hay un máximo de 10 fotos por tarea.',
+            })
           );
-        })}
-      </ScrollView>
+        }
+        const toAdd = result.assets
+          .slice(0, isAdmin ? undefined : remaining)
+          .map((a) => a.uri)
+          .filter(Boolean);
+        if (toAdd.length > 0) {
+          onAddPhotos(toAdd);
+        }
+      }
+    } catch (err) {
+      if (__DEV__) console.warn('Error seleccionando imagen:', err);
+    }
+  };
 
-      {/* Fila 2: Selector de color hexadecimal (Palette) / Colores guardados / Colores sólidos */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={{ marginTop: 4 }}
-        contentContainerStyle={styles.coversRow}
-      >
-        {/* Selector de color personalizado con ColorPickerModal */}
-        <Pressable
-          style={[
-            styles.coverOption,
-            isCustomColor && styles.coverOptionSelected,
-            {
-              justifyContent: 'center',
-              alignItems: 'center',
-              backgroundColor: isCustomColor && currentSolidHex
-                ? currentSolidHex
-                : theme.colors.surface,
-              borderColor: isCustomColor ? '#D4B13A' : theme.colors.border,
-            },
-          ]}
-          onPress={() => setShowColorPicker(true)}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.custom_color', { defaultValue: 'Color personalizado' })}
-        >
-          <Palette
-            color={
-              isCustomColor && currentSolidHex
-                ? isColorDark(currentSolidHex)
-                  ? '#FFF'
-                  : '#000'
-                : '#D4B13A'
-            }
-            size={22}
-          />
-        </Pressable>
+  const takeCameraPhoto = async () => {
+    if (!checkPhotoLimit()) return;
+    try {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        toast.error(
+          t('albums.error_camera_permission', { defaultValue: 'Se necesita permiso para acceder a la cámara.' })
+        );
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        quality: 0.85,
+      });
+      if (!result.canceled && result.assets && result.assets[0]?.uri) {
+        onAddPhotos([result.assets[0].uri]);
+      }
+    } catch {
+      toast.error(t('albums.error_camera_open', { defaultValue: 'Error al abrir la cámara.' }));
+    }
+  };
 
-        {/* Colores guardados por el usuario */}
-        {savedColors
-          .filter(
-            (sc) =>
-              !SOLID_COVERS.some((soc) => soc.colors?.[0]?.toLowerCase() === sc.toLowerCase())
-          )
-          .slice(0, 6)
-          .map((sc) => {
-            const isSelected = currentSolidHex?.toLowerCase() === sc.toLowerCase();
+  const handleUrlPhoto = (url: string) => {
+    setShowLinkModal(false);
+    if (!url.trim()) return;
+    if (!checkPhotoLimit()) return;
+    onAddPhotos([url.trim()]);
+  };
+
+  return (
+    <View style={{ gap: 14 }}>
+      {/* FILA 1: Colores predeterminados con el hex picker y gradientes */}
+      <View>
+        <Text style={{ fontSize: 12, fontWeight: '600', color: gold[400], marginBottom: 8, textTransform: 'uppercase' }}>
+          {t('task_form.colors_title', { defaultValue: 'Color o degradado de fondo' })}
+        </Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.coversRow}>
+          {/* Selector de color personalizado con ColorPickerModal */}
+          <Pressable
+            style={[
+              styles.coverOption,
+              isCustomColor && styles.coverOptionSelected,
+              {
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: isCustomColor && currentSolidHex ? currentSolidHex : theme.colors.surface,
+                borderColor: isCustomColor ? '#D4B13A' : theme.colors.border,
+              },
+            ]}
+            onPress={() => setShowColorPicker(true)}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.custom_color', { defaultValue: 'Color personalizado' })}
+          >
+            <Palette
+              color={
+                isCustomColor && currentSolidHex
+                  ? isColorDark(currentSolidHex)
+                    ? '#FFF'
+                    : '#000'
+                  : '#D4B13A'
+              }
+              size={22}
+            />
+          </Pressable>
+
+          {/* Colores guardados por el usuario */}
+          {savedColors
+            .filter((sc) => !SOLID_COVERS.some((soc) => soc.colors?.[0]?.toLowerCase() === sc.toLowerCase()))
+            .slice(0, 6)
+            .map((sc) => {
+              const isSelected = currentSolidHex?.toLowerCase() === sc.toLowerCase();
+              return (
+                <Pressable
+                  key={sc}
+                  style={[
+                    styles.coverOption,
+                    isSelected && styles.coverOptionSelected,
+                    { backgroundColor: sc, justifyContent: 'center', alignItems: 'center' },
+                  ]}
+                  onPress={() => onChangeColor(`preset:color:${sc}`)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Color guardado ${sc}`}
+                >
+                  {isSelected && (
+                    <Check size={18} color={isColorDark(sc) ? '#FFF' : '#000'} strokeWidth={2.8} />
+                  )}
+                </Pressable>
+              );
+            })}
+
+          {/* Gradientes predeterminados */}
+          {COVERS.map((cover) => {
+            const isSelected = selectedGradientId === cover.id;
             return (
               <Pressable
-                key={sc}
-                style={[
-                  styles.coverOption,
-                  isSelected && styles.coverOptionSelected,
-                  { backgroundColor: sc, justifyContent: 'center', alignItems: 'center' },
-                ]}
-                onPress={() => {
-                  setIsSquare(false);
-                  onChangeCover(`preset:color:${sc}`);
-                }}
+                key={cover.id}
+                style={[styles.coverOption, isSelected && styles.coverOptionSelected]}
+                onPress={() => onChangeColor(`preset:${cover.id}`)}
                 accessibilityRole="button"
-                accessibilityLabel={`Color guardado ${sc}`}
+                accessibilityLabel={`Degradado ${cover.id}`}
               >
-                {isSelected && (
-                  <Check
-                    size={18}
-                    color={isColorDark(sc) ? '#FFF' : '#000'}
-                    strokeWidth={2.8}
-                  />
-                )}
+                <LinearGradient
+                  colors={cover.colors!}
+                  start={cover.diagonal ? { x: 0, y: 0 } : { x: 0.5, y: 0 }}
+                  end={cover.diagonal ? { x: 1, y: 1 } : { x: 0.5, y: 1 }}
+                  style={StyleSheet.absoluteFill}
+                />
               </Pressable>
             );
           })}
 
-        {/* Colores sólidos predeterminados */}
-        {SOLID_COVERS.map((cover) => {
-          const colorHex = cover.colors![0];
-          const isSelected = currentSolidHex?.toLowerCase() === colorHex.toLowerCase();
-          return (
-            <Pressable
-              key={cover.id}
-              style={[
-                styles.coverOption,
-                isSelected && styles.coverOptionSelected,
-                {
-                  backgroundColor: colorHex,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                },
-              ]}
-              onPress={() => {
-                setIsSquare(false);
-                onChangeCover(`preset:color:${colorHex}`);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={`Color ${cover.id}`}
-            >
-              {isSelected && <Check size={18} color="#FFF" strokeWidth={2.8} />}
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+          {/* Colores sólidos predeterminados */}
+          {SOLID_COVERS.map((cover) => {
+            const colorHex = cover.colors![0];
+            const isSelected = currentSolidHex?.toLowerCase() === colorHex.toLowerCase();
+            return (
+              <Pressable
+                key={cover.id}
+                style={[
+                  styles.coverOption,
+                  isSelected && styles.coverOptionSelected,
+                  {
+                    backgroundColor: colorHex,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  },
+                ]}
+                onPress={() => onChangeColor(`preset:color:${colorHex}`)}
+                accessibilityRole="button"
+                accessibilityLabel={`Color ${cover.id}`}
+              >
+                {isSelected && <Check size={18} color="#FFF" strokeWidth={2.8} />}
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      {/* FILA 2: Botones para añadir fotos (Galería, Cámara, Enlace Google) */}
+      <View>
+        <Text style={{ fontSize: 12, fontWeight: '600', color: gold[400], marginBottom: 8, textTransform: 'uppercase' }}>
+          {t('task_form.photos_title', { defaultValue: 'Subir imágenes' })}
+        </Text>
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          {/* Galería */}
+          <Pressable
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              paddingVertical: 12,
+              borderRadius: 12,
+              backgroundColor: theme.colors.surface,
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+            }}
+            onPress={() => void pickFromGallery()}
+            accessibilityRole="button"
+          >
+            <ImageIcon color={gold[400]} size={18} />
+            <Text style={{ fontSize: 13, fontWeight: '600', color: theme.colors.foreground }}>
+              {t('albums.pick_gallery', { defaultValue: 'Galería' })}
+            </Text>
+          </Pressable>
+
+          {/* Cámara */}
+          <Pressable
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              paddingVertical: 12,
+              borderRadius: 12,
+              backgroundColor: theme.colors.surface,
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+            }}
+            onPress={() => void takeCameraPhoto()}
+            accessibilityRole="button"
+          >
+            <Camera color={gold[400]} size={18} />
+            <Text style={{ fontSize: 13, fontWeight: '600', color: theme.colors.foreground }}>
+              {t('albums.take_camera', { defaultValue: 'Cámara' })}
+            </Text>
+          </Pressable>
+
+          {/* Enlace Google / Web */}
+          <Pressable
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              paddingVertical: 12,
+              borderRadius: 12,
+              backgroundColor: theme.colors.surface,
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+            }}
+            onPress={() => setShowLinkModal(true)}
+            accessibilityRole="button"
+          >
+            <Link2 color={gold[400]} size={18} />
+            <Text style={{ fontSize: 13, fontWeight: '600', color: theme.colors.foreground }}>
+              {t('albums.paste_link', { defaultValue: 'Enlace' })}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+
+      {/* FILA 3: Fotos subidas */}
+      {photos.length > 0 && (
+        <View style={{ marginTop: 2 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: theme.colors.foregroundMuted }}>
+              {t('task_form.uploaded_photos', { defaultValue: 'Fotos añadidas' })} ({photos.length}{!isAdmin ? '/8' : ''})
+            </Text>
+            <Text style={{ fontSize: 11, color: gold[400] }}>
+              {t('task_form.tap_cover_hint', { defaultValue: 'Toca una foto para elegir la portada' })}
+            </Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+            {photos.map((item, idx) => {
+              const isCover = idx === selectedCoverIndex;
+              const photoUri = item.uri.startsWith('http') || item.uri.startsWith('file:') || item.uri.startsWith('data:')
+                ? item.uri
+                : storageApi.getPublicUrl(item.thumb_path || item.storage_path || item.uri);
+
+              return (
+                <Pressable
+                  key={`${item.id || item.uri}_${idx}`}
+                  onPress={() => onSelectCoverPhoto(idx)}
+                  style={{
+                    width: 76,
+                    height: 76,
+                    borderRadius: 12,
+                    overflow: 'hidden',
+                    borderWidth: 2,
+                    borderColor: isCover ? gold[400] : theme.colors.border,
+                    backgroundColor: theme.colors.surface,
+                    position: 'relative',
+                  }}
+                >
+                  <ExpoImage
+                    source={{ uri: photoUri }}
+                    style={StyleSheet.absoluteFill}
+                    contentFit="cover"
+                  />
+
+                  {/* Badge de Portada */}
+                  {isCover && (
+                    <View
+                      style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        backgroundColor: 'rgba(212, 177, 58, 0.9)',
+                        paddingVertical: 2,
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Text style={{ fontSize: 9, fontWeight: '700', color: '#0D0D0D' }}>
+                        {t('bucket.thumbnail_cover', { defaultValue: 'PORTADA' })}
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* Botón quitar foto */}
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      onRemovePhoto(idx);
+                    }}
+                    hitSlop={8}
+                    style={{
+                      position: 'absolute',
+                      top: 4,
+                      right: 4,
+                      width: 20,
+                      height: 20,
+                      borderRadius: 10,
+                      backgroundColor: 'rgba(0,0,0,0.7)',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <X size={12} color="#FFF" strokeWidth={2.5} />
+                  </Pressable>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
 
       {/* ColorPickerModal para portadas */}
       <ColorPickerModal
         visible={showColorPicker}
         initialColor={currentSolidHex || '#D4B13A'}
         onSelectColor={(color) => {
-          setIsSquare(false);
-          onChangeCover(`preset:color:${color}`);
+          onChangeColor(`preset:color:${color}`);
         }}
         onClose={() => setShowColorPicker(false)}
         title={t('albums.custom_cover_color', { defaultValue: 'Color de portada' })}
@@ -515,36 +625,80 @@ export function TaskCoverPicker({
       <ImageLinkModal
         visible={showLinkModal}
         onClose={() => setShowLinkModal(false)}
-        onApplyImage={handleUrlCover}
+        onApplyImage={handleUrlPhoto}
         initialQuery={taskTitle}
       />
+    </View>
+  );
+}
 
-      {/* Editor interactivo de recorte */}
-      <PhotoCropModal
-        visible={showCropModal}
-        uri={cropTarget?.uri ?? null}
-        width={cropTarget?.width ?? 1200}
-        height={cropTarget?.height ?? 800}
-        index={0}
-        total={1}
-        onCancel={() => {
-          setShowCropModal(false);
-          setCropTarget(null);
+/* =========================================================================
+   LEGACY / WRAPPER TASK COVER PICKER (Para compatibilidad existente)
+   ========================================================================= */
+
+interface TaskCoverPickerProps {
+  coverImage: string;
+  onChangeCover: (cover: string) => void;
+  taskTitle?: string;
+}
+
+export function TaskCoverPicker({
+  coverImage,
+  onChangeCover,
+  taskTitle = '',
+}: TaskCoverPickerProps) {
+  const [photos, setPhotos] = useState<TaskFormPhoto[]>(() => {
+    if (coverImage && !coverImage.startsWith('preset:') && !coverImage.startsWith('#')) {
+      return [{ uri: coverImage }];
+    }
+    return [];
+  });
+  const [selectedCoverIndex, setSelectedCoverIndex] = useState(0);
+
+  const activeCover = photos[selectedCoverIndex]?.uri || coverImage;
+
+  return (
+    <View style={{ gap: 16 }}>
+      <TaskCoverBanner
+        coverImage={activeCover}
+        taskTitle={taskTitle}
+        onRemovePhoto={() => {
+          setPhotos([]);
+          onChangeCover('preset:aurora');
         }}
-        onDone={(croppedUri) => {
-          setShowCropModal(false);
-          setCropTarget(null);
-          RNImage.getSize(
-            croppedUri,
-            (w, h) => {
-              if (w && h) {
-                setIsSquare(Math.abs(w / h - 1) < 0.25);
-              }
-            },
-            () => {}
-          );
-          onChangeCover(croppedUri);
+      />
+      <TaskPhotoAndColorPicker
+        coverColor={coverImage.startsWith('preset:') || coverImage.startsWith('#') ? coverImage : 'preset:aurora'}
+        onChangeColor={(col) => {
+          setPhotos([]);
+          onChangeCover(col);
         }}
+        photos={photos}
+        selectedCoverIndex={selectedCoverIndex}
+        onSelectCoverPhoto={(idx) => {
+          setSelectedCoverIndex(idx);
+          if (photos[idx]) onChangeCover(photos[idx].uri);
+        }}
+        onAddPhotos={(newUris) => {
+          const next = [...photos, ...newUris.map((u) => ({ uri: u }))];
+          setPhotos(next);
+          if (photos.length === 0 && next[0]) {
+            setSelectedCoverIndex(0);
+            onChangeCover(next[0].uri);
+          }
+        }}
+        onRemovePhoto={(idx) => {
+          const next = photos.filter((_, i) => i !== idx);
+          setPhotos(next);
+          if (next.length === 0) {
+            onChangeCover('preset:aurora');
+          } else {
+            const nextIdx = Math.min(selectedCoverIndex, next.length - 1);
+            setSelectedCoverIndex(nextIdx);
+            onChangeCover(next[nextIdx]!.uri);
+          }
+        }}
+        taskTitle={taskTitle}
       />
     </View>
   );

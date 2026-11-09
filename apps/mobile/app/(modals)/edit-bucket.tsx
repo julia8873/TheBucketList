@@ -24,7 +24,13 @@ import { styles } from '../../src/features/task-form/styles/task-form.styles';
 import { SectionTitle } from '../../src/features/task-form/components/SectionTitle';
 import { TaskSettingsCard } from '../../src/features/task-form/components/TaskSettingsCard';
 import { TaskCollaboratorsSection } from '../../src/features/task-form/components/TaskCollaboratorsSection';
-import { TaskCoverPicker } from '../../src/features/task-form/components/TaskCoverPicker';
+import { processBucketImage } from '@bucketlist/shared';
+import { useIsAdmin } from '../../src/hooks/useCurrentUserProfile';
+import {
+  TaskCoverBanner,
+  TaskPhotoAndColorPicker,
+  type TaskFormPhoto,
+} from '../../src/features/task-form/components/TaskCoverPicker';
 import { storageApi } from '../../src/services/api/storage';
 import { applyMoveTasks, settleTaskCaches } from '../../src/utils/optimisticCache';
 
@@ -67,9 +73,14 @@ export default function EditBucketModal() {
   const [showCollaboratorPicker, setShowCollaboratorPicker] = useState(false);
   const collaboratorsInitialized = useRef(false);
 
-  // Portada
-  const [coverImage, setCoverImage] = useState<string>('preset:green');
-  const initialCoverImage = useRef<string>('preset:green');
+  // Portada y Fotos
+  const isAdmin = useIsAdmin();
+  const [coverColor, setCoverColor] = useState<string>('preset:aurora');
+  const [taskPhotos, setTaskPhotos] = useState<TaskFormPhoto[]>([]);
+  const [selectedCoverIndex, setSelectedCoverIndex] = useState(0);
+  const [isSquare, setIsSquare] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const deletedPhotoIds = useRef<string[]>([]);
 
   // Álbum
   const queryClient = useQueryClient();
@@ -121,7 +132,7 @@ export default function EditBucketModal() {
 
     supabase
       .from('buckets')
-      .select('title, description, visibility, priority, location_text, location_lat, location_lng, deadline, cover_image, drive_url')
+      .select('title, description, visibility, priority, location_text, location_lat, location_lng, deadline, cover_image, drive_url, thumbnail_mode, thumbnail_photo_id, bucket_photos(id, storage_path, thumb_path, position, created_at)')
       .eq('id', id)
       .single()
       .then(({ data, error }) => {
@@ -141,10 +152,32 @@ export default function EditBucketModal() {
         setLocationLat(data.location_lat ?? null);
         setLocationLng(data.location_lng ?? null);
         setDeadline(data.deadline ? new Date(data.deadline) : null);
-        if ((data as any).cover_image) {
-          setCoverImage((data as any).cover_image);
-          initialCoverImage.current = (data as any).cover_image;
+
+        const loadedCover = (data as any).cover_image;
+        if (loadedCover && (loadedCover.startsWith('preset:') || loadedCover.startsWith('#'))) {
+          setCoverColor(loadedCover);
         }
+
+        const photosFromDb: TaskFormPhoto[] = ((data as any).bucket_photos || [])
+          .filter((p: any) => !!p.storage_path)
+          .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+          .map((p: any) => ({
+            id: p.id,
+            uri: storageApi.getPublicUrl(p.thumb_path || p.storage_path),
+            storage_path: p.storage_path,
+            thumb_path: p.thumb_path,
+          }));
+        setTaskPhotos(photosFromDb);
+
+        const thumbPhotoId = (data as any).thumbnail_photo_id;
+        if (thumbPhotoId) {
+          const idx = photosFromDb.findIndex((p) => p.id === thumbPhotoId);
+          if (idx !== -1) setSelectedCoverIndex(idx);
+          else setSelectedCoverIndex(0);
+        } else {
+          setSelectedCoverIndex(0);
+        }
+
         if ((data as any).drive_url) {
           setDriveUrl((data as any).drive_url);
         }
@@ -164,7 +197,28 @@ export default function EditBucketModal() {
       });
   }, [id, router]);
 
-  const isSaving = updateBucket.isPending || syncTags.isPending;
+  const activeCoverPhotoUri = taskPhotos[selectedCoverIndex]?.uri ?? null;
+  const activeCoverValue = activeCoverPhotoUri || coverColor;
+
+  const handleAddPhotos = (newUris: string[]) => {
+    setTaskPhotos((prev) => [...prev, ...newUris.map((u) => ({ uri: u }))]);
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    const photo = taskPhotos[index];
+    if (photo?.id) {
+      deletedPhotoIds.current.push(photo.id);
+    }
+    setTaskPhotos((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      if (selectedCoverIndex >= next.length) {
+        setSelectedCoverIndex(Math.max(0, next.length - 1));
+      }
+      return next;
+    });
+  };
+
+  const isSaving = updateBucket.isPending || syncTags.isPending || isUploading;
 
   const handleSave = async () => {
     if (!id || !title.trim()) {
@@ -172,37 +226,76 @@ export default function EditBucketModal() {
       return;
     }
 
-    let finalCoverImage = coverImage;
-    if (
-      coverImage &&
-      coverImage !== initialCoverImage.current &&
-      !coverImage.startsWith('preset:') &&
-      !coverImage.startsWith('http')
-    ) {
-      try {
-        finalCoverImage = await storageApi.uploadCover(user?.id || 'anon', coverImage);
-      } catch (uploadErr) {
-        console.error('Failed to upload cover image:', uploadErr);
-        // Nunca guardar la URI local / base64 en la BD: se conserva la portada anterior.
-        finalCoverImage = initialCoverImage.current ?? null;
-      }
-    }
-
-    const data: UpdateBucketForm = {
-      title: title.trim(),
-      description: description.trim() || undefined,
-      visibility,
-      location_text: locationText.trim() || null,
-      location_lat: locationText.trim() ? locationLat : null,
-      location_lng: locationText.trim() ? locationLng : null,
-      deadline,
-      cover_image: finalCoverImage,
-      drive_url: driveUrl,
-      // Solo se envía si cambió (al igualarla a la del álbum): así no se pisa un cambio hecho en otro sitio.
-      ...(priority !== initialPriority.current ? { priority } : {}),
-    } as any;
-
+    setIsUploading(true);
     try {
+      // 1. Eliminar fotos de la BD que se hayan borrado
+      if (deletedPhotoIds.current.length > 0) {
+        await supabase.from('bucket_photos').delete().in('id', deletedPhotoIds.current);
+      }
+
+      // 2. Subir fotos nuevas (sin id)
+      const photoListWithIds: TaskFormPhoto[] = [...taskPhotos];
+      for (let i = 0; i < photoListWithIds.length; i++) {
+        const item = photoListWithIds[i];
+        if (!item || !item.uri) continue;
+        if (!item.id && user?.id) {
+          try {
+            const processed = await processBucketImage(item.uri);
+            const paths = await storageApi.uploadPhoto(
+              user.id,
+              id,
+              processed.original.uri,
+              processed.thumbnail.uri,
+            );
+            const { data: inserted, error: photoErr } = await supabase
+              .from('bucket_photos')
+              .insert({
+                bucket_id: id,
+                user_id: user.id,
+                storage_path: paths.photoPath,
+                thumb_path: paths.thumbPath,
+                width: processed.original.width,
+                height: processed.original.height,
+                size_bytes: processed.original.sizeBytes,
+                thumb_size_bytes: processed.thumbnail.sizeBytes,
+                position: i,
+                visibility,
+              })
+              .select('id')
+              .single();
+
+            if (!photoErr && inserted) {
+              photoListWithIds[i] = { ...item, id: inserted.id, uri: item.uri };
+            }
+          } catch (uploadErr) {
+            console.error('Failed to upload task photo in edit:', uploadErr);
+          }
+        }
+      }
+
+      let chosenPhotoId: string | null = null;
+      if (photoListWithIds[selectedCoverIndex]?.id) {
+        chosenPhotoId = photoListWithIds[selectedCoverIndex].id;
+      } else if (photoListWithIds[0]?.id) {
+        chosenPhotoId = photoListWithIds[0].id;
+      }
+
+      const data: UpdateBucketForm = {
+        title: title.trim(),
+        description: description.trim() || undefined,
+        visibility,
+        location_text: locationText.trim() || null,
+        location_lat: locationText.trim() ? locationLat : null,
+        location_lng: locationText.trim() ? locationLng : null,
+        deadline,
+        cover_image: coverColor,
+        drive_url: driveUrl,
+        thumbnail_mode: photoListWithIds.length > 0 ? 'photo' : 'auto',
+        thumbnail_photo_id: chosenPhotoId,
+        // Solo se envía si cambió (al igualarla a la del álbum): así no se pisa un cambio hecho en otro sitio.
+        ...(priority !== initialPriority.current ? { priority } : {}),
+      } as any;
+
       // Todo lo independiente se envía a la vez (antes eran 5-6 esperas seguidas).
       const saveCollaborators = async () => {
         const { data: existingCollabs } = await supabase
@@ -256,6 +349,8 @@ export default function EditBucketModal() {
         t('task_form.alert_save_error_title', { defaultValue: 'No se pudo guardar la tarea' }),
         error?.message ?? t('common.retry', { defaultValue: 'Inténtalo de nuevo.' })
       );
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -323,10 +418,21 @@ export default function EditBucketModal() {
               highlight={t('task_form.section_cover_gold', { defaultValue: 'TU' })}
               rest={t('task_form.section_cover_rest', { defaultValue: 'PORTADA' })}
             />
-            <TaskCoverPicker
-              coverImage={coverImage}
-              onChangeCover={setCoverImage}
+            <TaskCoverBanner
+              coverImage={activeCoverValue}
               taskTitle={title}
+              isSquare={isSquare}
+              onToggleSquare={() => setIsSquare(!isSquare)}
+              onRecrop={(croppedUri) => {
+                if (taskPhotos.length > 0) {
+                  setTaskPhotos((prev) =>
+                    prev.map((p, i) => (i === selectedCoverIndex ? { ...p, uri: croppedUri } : p))
+                  );
+                }
+              }}
+              onRemovePhoto={
+                taskPhotos.length > 0 ? () => handleRemovePhoto(selectedCoverIndex) : undefined
+              }
             />
           </View>
 
@@ -393,6 +499,25 @@ export default function EditBucketModal() {
               onBlur={() => setIsDescFocused(false)}
               multiline
               accessibilityLabel={t('task_form.desc_placeholder', { defaultValue: 'Descripción de la tarea' })}
+            />
+          </View>
+
+          {/* PERSONALIZACIÓN DE COLOR Y FOTOS */}
+          <View style={styles.section}>
+            <SectionTitle
+              highlight={t('task_form.section_media_gold', { defaultValue: 'COLOR Y' })}
+              rest={t('task_form.section_media_rest', { defaultValue: 'FOTOS' })}
+            />
+            <TaskPhotoAndColorPicker
+              coverColor={coverColor}
+              onChangeColor={setCoverColor}
+              photos={taskPhotos}
+              selectedCoverIndex={selectedCoverIndex}
+              onSelectCoverPhoto={setSelectedCoverIndex}
+              onAddPhotos={handleAddPhotos}
+              onRemovePhoto={handleRemovePhoto}
+              isAdmin={isAdmin}
+              taskTitle={title}
             />
           </View>
 

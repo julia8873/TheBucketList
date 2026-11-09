@@ -357,6 +357,19 @@ export default function BucketDetailScreen() {
             onFollowOwner={state.handleFollowOwner}
           />
 
+          {/* Portada selector (entre perfiles y añadir ubicación) */}
+          {state.showThumbnailPicker && (
+            <BucketThumbnailSelector
+              bucket={bucket}
+              hasCover={state.hasCover}
+              thumbSelection={state.thumbSelection}
+              chosenPhotoId={state.chosenPhotoId}
+              thumbPhotos={state.thumbPhotos}
+              theme={theme}
+              onChooseThumbnail={(photoId) => void state.chooseThumbnail(photoId)}
+            />
+          )}
+
           {/* Meta (Ubicación, fechas, Google Drive) */}
           <BucketMetaSection
             bucket={bucket}
@@ -529,19 +542,6 @@ export default function BucketDetailScreen() {
                 </View>
               )}
             </View>
-          )}
-
-          {/* Imagen de la tarea */}
-          {state.showThumbnailPicker && (
-            <BucketThumbnailSelector
-              bucket={bucket}
-              hasCover={state.hasCover}
-              thumbSelection={state.thumbSelection}
-              chosenPhotoId={state.chosenPhotoId}
-              thumbPhotos={state.thumbPhotos}
-              theme={theme}
-              onChooseThumbnail={(mode, photoId) => void state.chooseThumbnail(mode, photoId)}
-            />
           )}
 
           {/* Fotos */}

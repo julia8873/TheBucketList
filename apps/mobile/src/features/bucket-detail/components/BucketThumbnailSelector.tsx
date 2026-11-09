@@ -71,77 +71,45 @@ function ThumbOption({
 }
 
 interface BucketThumbnailSelectorProps {
-  bucket: any;
-  hasCover: boolean;
-  thumbSelection: 'auto' | 'cover' | 'photo';
+  bucket?: any;
+  hasCover?: boolean;
+  thumbSelection?: 'auto' | 'cover' | 'photo';
   chosenPhotoId?: string | null;
   thumbPhotos: any[];
   theme: any;
-  onChooseThumbnail: (mode: 'auto' | 'cover' | 'photo', photoId?: string) => void;
+  onChooseThumbnail: (photoId: string) => void;
 }
 
 export function BucketThumbnailSelector({
-
-  bucket,
-  hasCover,
-  thumbSelection,
   chosenPhotoId,
   thumbPhotos,
   theme,
   onChooseThumbnail,
 }: BucketThumbnailSelectorProps) {
   const { t } = useTranslation();
+  if (!thumbPhotos || thumbPhotos.length === 0) return null;
+
   return (
-    <>
-      <View style={[styles.divider, { backgroundColor: theme.colors.border, marginTop: 20 }]} />
-      <View style={styles.photosSection}>
-        <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
-          {t('bucket.thumbnail_title')}
-        </Typography>
-        <Typography variant="caption" color={theme.colors.foregroundMuted} style={{ marginTop: 4, marginBottom: 12 }}>
-          {t('bucket.thumbnail_desc')}
-        </Typography>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 10, paddingRight: 8 }}
-        >
-          <ThumbOption
-            label={t('bucket.thumbnail_auto')}
-            selected={thumbSelection === 'auto'}
-            onPress={() => onChooseThumbnail('auto')}
-          >
-            <BucketCover
-              value={resolveTaskImage({ ...bucket, thumbnail_mode: 'auto' }, { preferThumb: true })}
-              title={bucket.title}
-              categorySlug={bucket.category?.slug}
-              seed={bucket.id}
-              iconSize={64}
-              style={StyleSheet.absoluteFill}
-            />
-          </ThumbOption>
-          {hasCover && (
-            <ThumbOption
-              label={t('bucket.thumbnail_cover')}
-              selected={thumbSelection === 'cover'}
-              onPress={() => onChooseThumbnail('cover')}
-            >
-              <BucketCover
-                value={bucket.cover_image}
-                title={bucket.title}
-                categorySlug={bucket.category?.slug}
-                seed={bucket.id}
-                iconSize={64}
-                style={StyleSheet.absoluteFill}
-              />
-            </ThumbOption>
-          )}
-          {thumbPhotos.map((photo: any, index: number) => (
+    <View style={{ marginVertical: 14 }}>
+      <Typography variant="caption" color={gold[400]} style={styles.subtasksLabel}>
+        {t('bucket.thumbnail_title', { defaultValue: 'PORTADA' })}
+      </Typography>
+      <Typography variant="caption" color={theme.colors.foregroundMuted} style={{ marginTop: 2, marginBottom: 10 }}>
+        {t('bucket.thumbnail_desc', { defaultValue: 'Elige la foto que se mostrará como portada de la tarea.' })}
+      </Typography>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ gap: 10, paddingRight: 8 }}
+      >
+        {thumbPhotos.map((photo: any, index: number) => {
+          const isSelected = chosenPhotoId ? chosenPhotoId === photo.id : index === 0;
+          return (
             <ThumbOption
               key={photo.id}
               label={t('bucket.thumbnail_photo', { number: thumbPhotos.length - index })}
-              selected={thumbSelection === 'photo' && chosenPhotoId === photo.id}
-              onPress={() => onChooseThumbnail('photo', photo.id)}
+              selected={isSelected}
+              onPress={() => onChooseThumbnail(photo.id)}
             >
               <Image
                 source={{ uri: storageApi.getPublicUrl(photo.thumb_path || photo.storage_path) }}
@@ -149,9 +117,9 @@ export function BucketThumbnailSelector({
                 resizeMode="cover"
               />
             </ThumbOption>
-          ))}
-        </ScrollView>
-      </View>
-    </>
+          );
+        })}
+      </ScrollView>
+    </View>
   );
 }

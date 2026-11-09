@@ -483,18 +483,14 @@ export function useBucketDetailState() {
     .filter((p: any) => !!p.storage_path)
     .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
   const hasCover = !!bucket?.cover_image;
-  const resolvedCover = bucket?.cover_image || null;
+  const resolvedCover = resolveTaskImage(bucket);
   const isCustomCover = !!resolvedCover && !resolvedCover.startsWith('preset:');
   const chosenPhotoId =
-    bucket?.thumbnail_mode === 'photo' && thumbPhotos.some((p: any) => p.id === bucket?.thumbnail_photo_id)
+    thumbPhotos.some((p: any) => p.id === bucket?.thumbnail_photo_id)
       ? (bucket.thumbnail_photo_id as string)
-      : null;
-  const thumbSelection: ThumbnailMode = chosenPhotoId
-    ? 'photo'
-    : bucket?.thumbnail_mode === 'cover' && hasCover
-      ? 'cover'
-      : 'auto';
-  const showThumbnailPicker = canEdit && (thumbPhotos.length > 0 || hasCover);
+      : (thumbPhotos[0]?.id as string | null) ?? null;
+  const thumbSelection: ThumbnailMode = chosenPhotoId ? 'photo' : 'auto';
+  const showThumbnailPicker = Boolean(canEdit && thumbPhotos.length > 0);
   const subtasks: any[] = [...(bucket?.item_subtasks || [])].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
   const comments: any[] = commentsData || [];
   const subtasksDone = subtasks.filter((s) => s.done).length;
@@ -1509,11 +1505,12 @@ export function useBucketDetailState() {
     setSheetVisible(true);
   };
 
-  const chooseThumbnail = async (mode: ThumbnailMode, photoId: string | null = null) => {
+  const chooseThumbnail = async (modeOrPhotoId: string, photoId?: string | null) => {
     const targetId = Array.isArray(id) ? id[0] : id;
+    const finalPhotoId = photoId !== undefined ? photoId : modeOrPhotoId;
     const patch = {
-      thumbnail_mode: mode,
-      thumbnail_photo_id: mode === 'photo' ? photoId : null,
+      thumbnail_mode: 'photo',
+      thumbnail_photo_id: finalPhotoId,
     };
     const previous = queryClient.getQueryData(['bucketDetail', targetId]);
     queryClient.setQueryData(['bucketDetail', targetId], (oldData: any) =>

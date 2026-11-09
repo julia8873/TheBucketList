@@ -1,13 +1,11 @@
 /**
  * Qué imagen representa a una tarea (feed, explorar, álbumes, añadir tareas,
- * Mi lista, calendario y perfiles).
+ * Mi lista, calendario, perfiles y cabecera de la tarea).
  *
- * Regla por defecto (`thumbnail_mode = 'auto'`):
- *   1. la foto subida más reciente,
- *   2. si no hay fotos, la portada (`cover_image`),
- *   3. si tampoco hay portada → `null`, y `BucketCover` dibuja un degradado propio por tarea.
- *
- * El usuario puede forzar la portada (`'cover'`) o fijar una foto concreta (`'photo'`).
+ * Regla:
+ *   1. Si el usuario seleccionó una foto concreta como portada (`thumbnail_photo_id`).
+ *   2. Si no, por defecto la foto subida más reciente (`latestPhoto`).
+ *   3. Si no hay fotos: degradado por defecto (preset/color si existe o 'preset:aurora').
  */
 
 export type ThumbnailMode = 'auto' | 'cover' | 'photo';
@@ -46,7 +44,6 @@ function photoValue(photo: TaskPhotoLike, preferThumb?: boolean): string | null 
 
 /**
  * Devuelve el valor que espera `BucketCover` (`preset:<clave>`, ruta de storage, URL o `null`).
- * `null` significa "degradado automático".
  */
 export function resolveTaskImage(
   task: TaskImageSource | null | undefined,
@@ -56,15 +53,20 @@ export function resolveTaskImage(
   const photos = task.bucket_photos ?? [];
   const cover = task.cover_image || null;
 
-  if (task.thumbnail_mode === 'cover' && cover) return cover;
-
-  if (task.thumbnail_mode === 'photo' && task.thumbnail_photo_id) {
+  // 1. Si el usuario eligió una foto concreta como portada:
+  if (task.thumbnail_photo_id) {
     const chosen = photos.find((p) => p.id === task.thumbnail_photo_id && !!p.storage_path);
     if (chosen) return photoValue(chosen, options.preferThumb);
-    // La foto elegida ya no existe → vuelve a automático.
   }
 
+  // 2. Por defecto: última foto subida
   const latest = latestPhoto(photos);
   if (latest) return photoValue(latest, options.preferThumb);
-  return cover;
+
+  // 3. Si no hay fotos:
+  // "Las tareas que tenían cover, ponles un gradiente por defecto y ya."
+  if (cover && (cover.startsWith('preset:') || cover.startsWith('#'))) {
+    return cover;
+  }
+  return 'preset:aurora';
 }

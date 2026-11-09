@@ -23,7 +23,13 @@ import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context'
 
 import { styles } from '../../src/features/task-form/styles/task-form.styles';
 import { SectionTitle } from '../../src/features/task-form/components/SectionTitle';
-import { TaskCoverPicker } from '../../src/features/task-form/components/TaskCoverPicker';
+import { processBucketImage } from '@bucketlist/shared';
+import { useIsAdmin } from '../../src/hooks/useCurrentUserProfile';
+import {
+  TaskCoverBanner,
+  TaskPhotoAndColorPicker,
+  type TaskFormPhoto,
+} from '../../src/features/task-form/components/TaskCoverPicker';
 import { TaskPriorityPicker } from '../../src/features/task-form/components/TaskPriorityPicker';
 import { TaskSettingsCard } from '../../src/features/task-form/components/TaskSettingsCard';
 import { TaskStepsSection, type TaskStepItem } from '../../src/features/task-form/components/TaskStepsSection';
@@ -40,7 +46,11 @@ export default function CreateBucketModal() {
   const { data: albums = [] } = useAlbums(user?.id);
   const { askAlbumSync, albumSyncSheet } = useAlbumSync();
 
-  const [coverImage, setCoverImage] = useState<string>('preset:green');
+  const isAdmin = useIsAdmin();
+  const [coverColor, setCoverColor] = useState<string>('preset:aurora');
+  const [taskPhotos, setTaskPhotos] = useState<TaskFormPhoto[]>([]);
+  const [selectedCoverIndex, setSelectedCoverIndex] = useState<number>(0);
+  const [isSquare, setIsSquare] = useState<boolean>(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [albumId, setAlbumId] = useState<string | null>(
     params.albumId && params.albumId !== 'new' ? String(params.albumId) : null
@@ -134,8 +144,26 @@ export default function CreateBucketModal() {
     if (answer.priority) setValue('priority', answer.priority);
   };
 
+  const activeCoverPhotoUri = taskPhotos[selectedCoverIndex]?.uri ?? null;
+  const activeCoverValue = activeCoverPhotoUri || coverColor;
+
+  const handleAddPhotos = (newUris: string[]) => {
+    setTaskPhotos((prev) => [...prev, ...newUris.map((u) => ({ uri: u }))]);
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    setTaskPhotos((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      if (selectedCoverIndex >= next.length) {
+        setSelectedCoverIndex(Math.max(0, next.length - 1));
+      }
+      return next;
+    });
+  };
+
   const onSubmit = async (data: CreateBucketForm) => {
     try {
+      setIsUploadingCover(true);
       data.subtasks = steps
         .filter((s) => s.title.trim() !== '')
         .map((s, i) => ({
@@ -146,30 +174,11 @@ export default function CreateBucketModal() {
 
       const tag_ids = selectedTags.map((t) => t.id);
       const collaborator_ids = selectedCollaborators.map((c) => c.id);
-      let finalCoverImage: string | null = coverImage;
-
-      const isPreset = !!coverImage && coverImage.startsWith('preset:');
-      const isAlreadyOurStorage = !!coverImage && (
-        coverImage.includes('/storage/v1/object/public/photos/') ||
-        (coverImage.startsWith('covers/') && !coverImage.includes('://'))
-      );
-
-      if (coverImage && !isPreset && !isAlreadyOurStorage) {
-        setIsUploadingCover(true);
-        try {
-          finalCoverImage = await storageApi.uploadCover(user?.id || 'anon', coverImage);
-        } catch (uploadErr) {
-          // Nunca guardar la URI local / base64 / URL externa larga en la BD: viola la restricción o dispara el egress.
-          console.error('Failed to upload cover image, saving without cover:', uploadErr);
-          finalCoverImage = null;
-        } finally {
-          setIsUploadingCover(false);
-        }
-      }
 
       const payload = {
         ...data,
-        cover_image: finalCoverImage,
+        cover_image: coverColor,
+        thumbnail_mode: taskPhotos.length > 0 ? 'photo' : 'auto',
         drive_url: driveUrl,
         album_id: albumId,
         tag_ids,
@@ -177,10 +186,60 @@ export default function CreateBucketModal() {
       } as any;
 
       createBucket.mutate(payload, {
-        onSuccess: () => {
+        onSuccess: async (newBucket: any) => {
+          if (taskPhotos.length > 0 && newBucket?.id && user?.id) {
+            try {
+              let chosenDbPhotoId: string | null = null;
+              for (let i = 0; i < taskPhotos.length; i++) {
+                const photo = taskPhotos[i];
+                if (!photo?.uri) continue;
+                const processed = await processBucketImage(photo.uri);
+                const paths = await storageApi.uploadPhoto(
+                  user.id,
+                  newBucket.id,
+                  processed.original.uri,
+                  processed.thumbnail.uri,
+                );
+                const { data: insertedPhoto, error: pErr } = await supabase
+                  .from('bucket_photos')
+                  .insert({
+                    bucket_id: newBucket.id,
+                    user_id: user.id,
+                    storage_path: paths.photoPath,
+                    thumb_path: paths.thumbPath,
+                    width: processed.original.width,
+                    height: processed.original.height,
+                    size_bytes: processed.original.sizeBytes,
+                    thumb_size_bytes: processed.thumbnail.sizeBytes,
+                    position: i,
+                    visibility: data.visibility || 'public',
+                  })
+                  .select('id')
+                  .single();
+
+                if (!pErr && insertedPhoto && (i === selectedCoverIndex || (selectedCoverIndex >= taskPhotos.length && i === 0))) {
+                  chosenDbPhotoId = insertedPhoto.id;
+                }
+              }
+
+              if (chosenDbPhotoId) {
+                await supabase
+                  .from('buckets')
+                  .update({
+                    thumbnail_mode: 'photo',
+                    thumbnail_photo_id: chosenDbPhotoId,
+                  })
+                  .eq('id', newBucket.id);
+              }
+            } catch (uploadErr) {
+              console.error('Failed to upload task photos:', uploadErr);
+            }
+          }
+          setIsUploadingCover(false);
           router.back();
         },
         onError: (error) => {
+          setIsUploadingCover(false);
           console.error('Failed to create bucket:', error);
           Alert.alert(
             t('task_form.alert_create_error_title', { defaultValue: 'No se pudo crear la tarea' }),
@@ -249,7 +308,22 @@ export default function CreateBucketModal() {
               highlight={t('task_form.section_cover_gold', { defaultValue: 'TU' })}
               rest={t('task_form.section_cover_rest', { defaultValue: 'PORTADA' })}
             />
-            <TaskCoverPicker coverImage={coverImage} onChangeCover={setCoverImage} taskTitle={titleValue} />
+            <TaskCoverBanner
+              coverImage={activeCoverValue}
+              taskTitle={titleValue}
+              isSquare={isSquare}
+              onToggleSquare={() => setIsSquare(!isSquare)}
+              onRecrop={(croppedUri) => {
+                if (taskPhotos.length > 0) {
+                  setTaskPhotos((prev) =>
+                    prev.map((p, i) => (i === selectedCoverIndex ? { ...p, uri: croppedUri } : p))
+                  );
+                }
+              }}
+              onRemovePhoto={
+                taskPhotos.length > 0 ? () => handleRemovePhoto(selectedCoverIndex) : undefined
+              }
+            />
           </View>
 
           {/* QUÉ QUIERES LOGRAR */}
@@ -335,6 +409,25 @@ export default function CreateBucketModal() {
                   onBlur={() => setIsDescFocused(false)}
                 />
               )}
+            />
+          </View>
+
+          {/* PERSONALIZACIÓN DE PORTADA Y FOTOS */}
+          <View style={styles.section}>
+            <SectionTitle
+              highlight={t('task_form.section_media_gold', { defaultValue: 'COLOR Y' })}
+              rest={t('task_form.section_media_rest', { defaultValue: 'FOTOS' })}
+            />
+            <TaskPhotoAndColorPicker
+              coverColor={coverColor}
+              onChangeColor={setCoverColor}
+              photos={taskPhotos}
+              selectedCoverIndex={selectedCoverIndex}
+              onSelectCoverPhoto={setSelectedCoverIndex}
+              onAddPhotos={handleAddPhotos}
+              onRemovePhoto={handleRemovePhoto}
+              isAdmin={isAdmin}
+              taskTitle={titleValue}
             />
           </View>
 
