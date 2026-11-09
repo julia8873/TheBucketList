@@ -708,6 +708,101 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
       renderMarkers();
     }
 
+    // Helpers de normalización y agrupación inteligente de ubicaciones
+    function normalizeLoc(str) {
+      if (!str) return '';
+      return String(str)
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function isExactPoi(locStr) {
+      if (!locStr) return false;
+      var s = String(locStr).toLowerCase().trim();
+      var poiKeywords = [
+        'castillo', 'castell', 'castle', 'museo', 'museu', 'museum', 'playa', 'platja', 'beach',
+        'parque', 'parc', 'park', 'jardín', 'jardin', 'garden', 'palacio', 'palau', 'palace',
+        'catedral', 'cathedral', 'iglesia', 'church', 'basílica', 'basilica', 'monasterio', 'monastery',
+        'teatro', 'theatre', 'theater', 'estadio', 'stadium', 'puerto', 'port',
+        'calle', 'carrer', 'street', 'avenida', 'avda', 'avenue', 'paseo', 'plaza', 'square',
+        'mirador', 'viewpoint', 'torre', 'tower', 'puente', 'bridge', 'restaurante', 'restaurant',
+        'bar', 'café', 'cafe', 'hotel', 'aeropuerto', 'airport', 'estación', 'station',
+        'alhambra', 'sagrada familia', 'retiro', 'camp nou', 'bernabeu', 'alcazar', 'alcázar',
+        'mezquita', 'giralda', 'teide', 'prado', 'reina sofia', 'guggenheim'
+      ];
+      for (var k = 0; k < poiKeywords.length; k++) {
+        if (s.indexOf(poiKeywords[k]) !== -1) return true;
+      }
+      var parts = s.split(',').map(function(p) { return p.trim(); }).filter(Boolean);
+      if (parts.length >= 3 && /\d/.test(parts[0])) return true;
+      return false;
+    }
+
+    function getDistanceMeters(lat1, lng1, lat2, lng2) {
+      var dLat = (lat2 - lat1) * 111139;
+      var dLng = (lng2 - lng1) * 85000;
+      return Math.sqrt(dLat * dLat + dLng * dLng);
+    }
+
+    function areTasksInSameHub(t1, t2) {
+      var dist = getDistanceMeters(t1.lat, t1.lng, t2.lat, t2.lng);
+      if (dist <= 35) return true;
+
+      var full1 = normalizeLoc(t1.fullLocation || t1.location);
+      var full2 = normalizeLoc(t2.fullLocation || t2.location);
+      if (full1 && full2 && full1 === full2 && dist <= 45000) return true;
+
+      var isPoi1 = isExactPoi(t1.fullLocation || t1.location);
+      var isPoi2 = isExactPoi(t2.fullLocation || t2.location);
+
+      // Si ninguna de las dos es un sitio específico (son ubicaciones de provincia o ciudad general)
+      if (!isPoi1 && !isPoi2) {
+        var loc1 = normalizeLoc(t1.location);
+        var loc2 = normalizeLoc(t2.location);
+        if (loc1 && loc2 && (loc1 === loc2 || full1.indexOf(loc2) !== -1 || full2.indexOf(loc1) !== -1)) {
+          if (dist <= 35000) return true;
+        }
+      }
+
+      // Si ambas son el mismo POI específico (ej: dos tareas en la Alhambra a < 500m)
+      if (isPoi1 && isPoi2 && dist <= 500) {
+        var p1 = normalizeLoc(t1.location);
+        var p2 = normalizeLoc(t2.location);
+        if (p1 && p2 && p1 === p2) return true;
+      }
+
+      return false;
+    }
+
+    function buildHubs(taskList) {
+      var hubs = [];
+      taskList.forEach(function(t) {
+        var targetHub = null;
+        for (var i = 0; i < hubs.length; i++) {
+          if (areTasksInSameHub(t, hubs[i])) {
+            targetHub = hubs[i];
+            break;
+          }
+        }
+        if (targetHub) {
+          targetHub.tasks.push(t);
+        } else {
+          hubs.push({
+            lat: t.lat,
+            lng: t.lng,
+            location: t.location,
+            fullLocation: t.fullLocation,
+            tasks: [t]
+          });
+        }
+      });
+      return hubs;
+    }
+
     // Algoritmo de Agrupación Multi-Nivel, Anti-Solapamiento y Rendimiento
     function renderMarkers() {
       if (!map) return;
@@ -718,12 +813,6 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
       if (!currentTasks || currentTasks.length === 0) return;
 
       var currentZoom = map.getZoom();
-
-      function getDistanceMeters(lat1, lng1, lat2, lng2) {
-        var dLat = (lat2 - lat1) * 111139;
-        var dLng = (lng2 - lng1) * 85000;
-        return Math.sqrt(dLat * dLat + dLng * dLng);
-      }
 
       // =========================================================================
       // NIVEL 1: ZOOM LEJANO (< 10) -> Agrupación Provincial / Regional
@@ -793,16 +882,11 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
             return;
           }
 
-          // Si es 1 sola tarea o contiene la seleccionada:
-          cluster.tasks.forEach(function(t) {
-            var isSel = t.id === selectedTaskId;
-            renderSingleHub({
-              lat: t.lat,
-              lng: t.lng,
-              location: t.location,
-              fullLocation: t.fullLocation,
-              tasks: [t]
-            }, isSel, 0, 0);
+          // Si es 1 sola tarea o contiene la seleccionada: renderizar hubs agrupados
+          var clusterHubs = buildHubs(cluster.tasks);
+          clusterHubs.forEach(function(h) {
+            var isSel = h.tasks.some(function(t) { return t.id === selectedTaskId; });
+            renderSingleHub(h, isSel, 0, 0);
           });
         });
         return;
@@ -875,16 +959,11 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
             return;
           }
 
-          // Si es 1 sola tarea o contiene la seleccionada:
-          cluster.tasks.forEach(function(t) {
-            var isSel = t.id === selectedTaskId;
-            renderSingleHub({
-              lat: t.lat,
-              lng: t.lng,
-              location: t.location,
-              fullLocation: t.fullLocation,
-              tasks: [t]
-            }, isSel, 0, 0);
+          // Si es 1 sola tarea o contiene la seleccionada: renderizar hubs agrupados
+          var clusterHubs = buildHubs(cluster.tasks);
+          clusterHubs.forEach(function(h) {
+            var isSel = h.tasks.some(function(t) { return t.id === selectedTaskId; });
+            renderSingleHub(h, isSel, 0, 0);
           });
         });
         return;
@@ -893,30 +972,10 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
       // =========================================================================
       // NIVEL 3: ZOOM CERCANO / DETALLADO (zoom >= 14) -> Sitios Exactos con Anti-Solapamiento
       // =========================================================================
-      // 1. Agrupar tareas en las MISMAS coordenadas exactas (< 35m) en un Hub
-      var hubs = [];
-      currentTasks.forEach(function(t) {
-        var targetHub = null;
-        for (var i = 0; i < hubs.length; i++) {
-          var dist = getDistanceMeters(t.lat, t.lng, hubs[i].lat, hubs[i].lng);
-          if (dist <= 35) {
-            targetHub = hubs[i];
-            break;
-          }
-        }
-
-        if (targetHub) {
-          targetHub.tasks.push(t);
-        } else {
-          hubs.push({
-            lat: t.lat,
-            lng: t.lng,
-            location: t.location,
-            fullLocation: t.fullLocation,
-            tasks: [t]
-          });
-        }
-      });
+      // 1. Agrupar tareas en Hubs inteligentes:
+      // - Las tareas de provincia o ciudad general (ej: "Granada, Andalucía") se agrupan juntas en el mismo hub
+      // - Los sitios exactos (POIs, castillos, museos) se colocan en su ubicación exacta
+      var hubs = buildHubs(currentTasks);
 
       // 2. Priorizar el hub que contiene la tarea seleccionada
       hubs.sort(function(a, b) {

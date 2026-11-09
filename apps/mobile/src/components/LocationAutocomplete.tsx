@@ -5,13 +5,14 @@ import { MapPin } from 'lucide-react-native';
 import { useTranslation } from '@bucketlist/shared';
 
 export interface LocationResult {
-  place_id: number;
+  place_id: string | number;
   title: string;
   subtitle: string;
   display_name: string;
   lat: string;
   lon: string;
   isExactSite?: boolean;
+  googlePlaceId?: string;
 }
 
 interface LocationAutocompleteProps {
@@ -22,6 +23,9 @@ interface LocationAutocompleteProps {
   label?: string;
   placeholder?: string;
 }
+
+// Google Places API Key (opcional, si está configurada se usa para máxima cobertura)
+const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY || '';
 
 // Simple in-memory cache
 const searchCache: Record<string, LocationResult[]> = {};
@@ -168,6 +172,7 @@ export function LocationAutocomplete({
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sessionTokenRef = useRef<string>(Math.random().toString(36).substring(2) + Date.now().toString(36));
 
   // Sync prop value when it changes externally
   useEffect(() => {
@@ -181,7 +186,7 @@ export function LocationAutocomplete({
       return;
     }
 
-    const lang = i18n.language?.startsWith('en') ? 'en,es;q=0.8' : 'es,en;q=0.8';
+    const lang = i18n.language?.startsWith('en') ? 'en' : 'es';
     const cacheKey = `${lang}:${text.trim().toLowerCase()}`;
 
     if (searchCache[cacheKey]) {
@@ -193,13 +198,102 @@ export function LocationAutocomplete({
     setLoading(true);
     setShowDropdown(true);
 
+    // 1. Si hay clave de Google Places, intentar primero con Google Places API (New & Legacy)
+    if (GOOGLE_PLACES_API_KEY) {
+      // 1a. Places API (New) - Recomendada por Google para proyectos nuevos
+      try {
+        const newGoogleRes = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+          },
+          body: JSON.stringify({
+            input: text,
+            languageCode: lang,
+          }),
+        });
+        const newGoogleData = await newGoogleRes.json();
+        if (newGoogleData.suggestions && Array.isArray(newGoogleData.suggestions) && newGoogleData.suggestions.length > 0) {
+          const processedGoogle: LocationResult[] = newGoogleData.suggestions.slice(0, 6).map((s: any) => {
+            const p = s.placePrediction;
+            const main = p?.structuredFormat?.mainText?.text || p?.text?.text?.split(',')[0]?.trim() || '';
+            const sub = p?.structuredFormat?.secondaryText?.text || '';
+            const full = p?.text?.text || `${main}${sub ? ', ' + sub : ''}`;
+            const types = p?.types || [];
+            const isBroad =
+              types.includes('country') ||
+              types.includes('administrative_area_level_1') ||
+              types.includes('administrative_area_level_2');
+
+            const rawId = p?.placeId || (p?.place?.startsWith('places/') ? p.place.replace('places/', '') : p?.place);
+
+            return {
+              place_id: rawId || full,
+              title: main,
+              subtitle: sub,
+              display_name: full,
+              lat: '',
+              lon: '',
+              isExactSite: !isBroad,
+              googlePlaceId: rawId,
+            };
+          });
+
+          searchCache[cacheKey] = processedGoogle;
+          setResults(processedGoogle);
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.warn('Google Places (New) autocomplete error, trying legacy:', err);
+      }
+
+      // 1b. Places API (Legacy) - Fallback
+      try {
+        const googleRes = await fetch(
+          `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(text)}&key=${GOOGLE_PLACES_API_KEY}&language=${lang}&sessiontoken=${sessionTokenRef.current}`
+        );
+        const googleData = await googleRes.json();
+        if (googleData.status === 'OK' && Array.isArray(googleData.predictions) && googleData.predictions.length > 0) {
+          const processedGoogle: LocationResult[] = googleData.predictions.slice(0, 6).map((p: any) => {
+            const types = p.types || [];
+            const isBroadArea =
+              types.includes('country') ||
+              types.includes('administrative_area_level_1') ||
+              types.includes('administrative_area_level_2');
+
+            return {
+              place_id: p.place_id,
+              title: p.structured_formatting?.main_text || p.description.split(',')[0].trim(),
+              subtitle: p.structured_formatting?.secondary_text || '',
+              display_name: p.description,
+              lat: '',
+              lon: '',
+              isExactSite: !isBroadArea,
+              googlePlaceId: p.place_id,
+            };
+          });
+
+          searchCache[cacheKey] = processedGoogle;
+          setResults(processedGoogle);
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.warn('Google Places autocomplete fallback to Nominatim:', err);
+      }
+    }
+
+    // 2. Fallback resiliente y gratuito: OpenStreetMap (Nominatim)
     try {
+      const langHeader = lang === 'en' ? 'en,es;q=0.8' : 'es,en;q=0.8';
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(text)}&limit=8&addressdetails=1&accept-language=${encodeURIComponent(lang)}`,
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(text)}&limit=8&addressdetails=1&accept-language=${encodeURIComponent(langHeader)}`,
         {
           headers: {
             'User-Agent': 'TheBucketListApp/1.0 (thebucketlist898@gmail.com)',
-            'Accept-Language': lang,
+            'Accept-Language': langHeader,
           },
         }
       );
@@ -226,16 +320,78 @@ export function LocationAutocomplete({
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
       void searchLocation(text);
-    }, 500); // 500ms debounce
+    }, 400); // 400ms debounce
   };
 
-  const handleSelect = (item: LocationResult) => {
+  const handleSelect = async (item: LocationResult) => {
     setQuery(item.display_name);
     setShowDropdown(false);
+
+    // Si viene de Google Places y aún no tenemos las coordenadas lat/lon, obtenerlas mediante Place Details
+    if (item.googlePlaceId && (!item.lat || !item.lon) && GOOGLE_PLACES_API_KEY) {
+      setLoading(true);
+      const cleanId = item.googlePlaceId.startsWith('places/')
+        ? item.googlePlaceId.replace('places/', '')
+        : item.googlePlaceId;
+
+      // 1. Intentar Place Details (New)
+      try {
+        const newDetailsRes = await fetch(
+          `https://places.googleapis.com/v1/places/${cleanId}?fields=location&key=${GOOGLE_PLACES_API_KEY}`,
+          {
+            headers: {
+              'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+              'X-Goog-FieldMask': 'location',
+            },
+          }
+        );
+        const newDetailsData = await newDetailsRes.json();
+        if (
+          newDetailsData.location &&
+          typeof newDetailsData.location.latitude === 'number' &&
+          typeof newDetailsData.location.longitude === 'number'
+        ) {
+          sessionTokenRef.current = Math.random().toString(36).substring(2) + Date.now().toString(36);
+          onChangeLocation({
+            text: item.display_name,
+            lat: newDetailsData.location.latitude,
+            lng: newDetailsData.location.longitude,
+          });
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.warn('Google Place Details (New) error, trying legacy:', err);
+      }
+
+      // 2. Fallback a Place Details (Legacy)
+      try {
+        const detailsRes = await fetch(
+          `https://maps.googleapis.com/maps/api/place/details/json?place_id=${cleanId}&fields=geometry&key=${GOOGLE_PLACES_API_KEY}&sessiontoken=${sessionTokenRef.current}`
+        );
+        const detailsData = await detailsRes.json();
+        if (detailsData.result?.geometry?.location) {
+          const loc = detailsData.result.geometry.location;
+          sessionTokenRef.current = Math.random().toString(36).substring(2) + Date.now().toString(36);
+          onChangeLocation({
+            text: item.display_name,
+            lat: loc.lat,
+            lng: loc.lng,
+          });
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.warn('Google Place Details error:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
     onChangeLocation({
       text: item.display_name,
-      lat: parseFloat(item.lat),
-      lng: parseFloat(item.lon),
+      lat: parseFloat(item.lat || '40.4168'),
+      lng: parseFloat(item.lon || '-3.7038'),
     });
   };
 

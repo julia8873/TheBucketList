@@ -33,7 +33,7 @@ interface ExploreFeedTabProps {
   headerElement: React.ReactElement;
   debouncedSearch: string;
   isSearchLoading: boolean;
-  searchResults?: { tasks: any[]; albums: any[]; users: any[] } | any;
+  searchResults?: { tasks: any[]; places?: any[]; albums: any[]; users: any[] } | any;
   isExploreLoading: boolean;
   isAlbumsLoading: boolean;
   exploreBuckets: any[];
@@ -203,6 +203,7 @@ export function ExploreFeedTab({
 
   if (debouncedSearch.length >= 2) {
     const tasks = Array.isArray(searchResults) ? [] : (searchResults?.tasks ?? []);
+    const places = Array.isArray(searchResults) ? [] : (searchResults?.places ?? []);
     const albums = Array.isArray(searchResults) ? [] : (searchResults?.albums ?? []);
     const users = Array.isArray(searchResults) ? searchResults : (searchResults?.users ?? []);
 
@@ -213,6 +214,7 @@ export function ExploreFeedTab({
           query={debouncedSearch}
           isLoading={isSearchLoading}
           tasks={tasks}
+          places={places}
           albums={albums}
           users={users}
           viewMode={viewMode}

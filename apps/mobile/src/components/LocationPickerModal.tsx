@@ -15,6 +15,8 @@ import { fontFamily } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { LocationAutocomplete, parseNominatimResults } from './LocationAutocomplete';
 
+const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY || '';
+
 interface LocationPickerModalProps {
   visible: boolean;
   value: string;
@@ -53,33 +55,53 @@ export function LocationPickerModal({
 
     setLoadingGeocode(true);
     try {
-      const lang = i18n.language?.startsWith('en') ? 'en,es;q=0.8' : 'es,en;q=0.8';
+      const lang = i18n.language?.startsWith('en') ? 'en' : 'es';
+
+      // 1. Si existe clave de Google, intentar geocodificar directamente con Google
+      if (GOOGLE_PLACES_API_KEY) {
+        try {
+          const gRes = await fetch(
+            `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(typedText.trim())}&key=${GOOGLE_PLACES_API_KEY}&language=${lang}`
+          );
+          const gData = await gRes.json();
+          if (gData.status === 'OK' && Array.isArray(gData.results) && gData.results.length > 0) {
+            const first = gData.results[0];
+            if (first?.geometry?.location) {
+              onChangeLocation({
+                text: first.formatted_address || typedText.trim(),
+                lat: first.geometry.location.lat,
+                lng: first.geometry.location.lng,
+              });
+              onClose();
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('Google geocoding fallback to Nominatim:', e);
+        }
+      }
+
+      // 2. Fallback resiliente a OpenStreetMap (Nominatim)
+      const langHeader = lang === 'en' ? 'en,es;q=0.8' : 'es,en;q=0.8';
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(typedText.trim())}&limit=6&addressdetails=1&accept-language=${encodeURIComponent(lang)}`,
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(typedText.trim())}&limit=6&addressdetails=1&accept-language=${encodeURIComponent(langHeader)}`,
         {
           headers: {
             'User-Agent': 'TheBucketListApp/1.0 (thebucketlist898@gmail.com)',
-            'Accept-Language': lang,
+            'Accept-Language': langHeader,
           },
         }
       );
       const items: any[] = await res.json();
-        const processed = parseNominatimResults(items, lang);
-        if (processed && processed.length > 0) {
-          const target = processed[0];
-          if (target) {
-            onChangeLocation({
-              text: target.display_name,
-              lat: parseFloat(target.lat),
-              lng: parseFloat(target.lon),
-            });
-          } else {
-            onChangeLocation({
-              text: typedText.trim(),
-              lat: 40.4168,
-              lng: -3.7038,
-            });
-          }
+      const processed = parseNominatimResults(items, lang);
+      if (processed && processed.length > 0) {
+        const target = processed[0];
+        if (target) {
+          onChangeLocation({
+            text: target.display_name,
+            lat: parseFloat(target.lat),
+            lng: parseFloat(target.lon),
+          });
         } else {
           onChangeLocation({
             text: typedText.trim(),
@@ -87,16 +109,23 @@ export function LocationPickerModal({
             lng: -3.7038,
           });
         }
-      } catch {
+      } else {
         onChangeLocation({
           text: typedText.trim(),
           lat: 40.4168,
           lng: -3.7038,
         });
-      } finally {
-        setLoadingGeocode(false);
-        onClose();
       }
+    } catch {
+      onChangeLocation({
+        text: typedText.trim(),
+        lat: 40.4168,
+        lng: -3.7038,
+      });
+    } finally {
+      setLoadingGeocode(false);
+      onClose();
+    }
     };
 
     return (

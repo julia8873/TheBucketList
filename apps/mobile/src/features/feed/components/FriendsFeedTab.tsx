@@ -49,7 +49,7 @@ interface FriendsFeedTabProps {
   galleryColumns?: 2 | 3 | 4;
   debouncedSearch?: string;
   isSearchLoading?: boolean;
-  searchResults?: { tasks: any[]; albums: any[]; users: any[] };
+  searchResults?: { tasks: any[]; places?: any[]; albums: any[]; users: any[] };
 }
 
 export function FriendsFeedTab({
@@ -187,6 +187,7 @@ export function FriendsFeedTab({
           query={debouncedSearch}
           isLoading={isSearchLoading}
           tasks={searchResults?.tasks ?? []}
+          places={searchResults?.places ?? []}
           albums={searchResults?.albums ?? []}
           users={searchResults?.users ?? []}
           viewMode={viewMode}

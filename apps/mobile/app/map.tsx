@@ -39,7 +39,12 @@ export default function MapScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const { t, i18n } = useTranslation();
-  const params = useLocalSearchParams<{ initialTaskId?: string }>();
+  const params = useLocalSearchParams<{
+    initialTaskId?: string;
+    query?: string;
+    lat?: string;
+    lng?: string;
+  }>();
 
   const filterOptions: { id: MapFilterType; label: string; emoji: string }[] = React.useMemo(() => [
     { id: 'all', label: t('map.filter_all'), emoji: '🌍' },
@@ -189,6 +194,22 @@ export default function MapScreen() {
       }
     }
   }, [params.initialTaskId, tasks]);
+
+  // Si se pasa una ubicación inicial (query / lat / lng) desde el buscador de momentos
+  React.useEffect(() => {
+    if (params.query && !searchQuery) {
+      setSearchQuery(params.query);
+    }
+    if (params.lat && params.lng) {
+      const lat = parseFloat(params.lat);
+      const lng = parseFloat(params.lng);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        setTimeout(() => {
+          mapRef.current?.flyToLocation(lat, lng, 15);
+        }, 500);
+      }
+    }
+  }, [params.query, params.lat, params.lng]);
 
   const selectMapType = (type: MapLayerMode) => {
     setMapType(type);

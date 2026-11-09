@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import { MapPin, Map } from 'lucide-react-native';
 import { useTranslation } from '@bucketlist/shared';
 import { useTheme, Typography, Avatar, EmptyState, SectionLabel, gold } from '@bucketlist/ui';
 import { FeedCard } from '../../../components/FeedCard';
@@ -19,12 +20,21 @@ import {
 } from '../../../hooks/useSocial';
 import { useAuthStore } from '../../../stores/auth.store';
 
-export type SearchTabFilter = 'todo' | 'ideas' | 'albumes' | 'personas';
+export type SearchTabFilter = 'todo' | 'ideas' | 'sitios' | 'albumes' | 'personas';
+
+export interface FeedPlaceItem {
+  location_text: string;
+  lat?: number;
+  lng?: number;
+  taskCount: number;
+  tasks?: any[];
+}
 
 interface FeedSearchResultsViewProps {
   query: string;
   isLoading: boolean;
   tasks?: any[];
+  places?: FeedPlaceItem[];
   albums?: any[];
   users?: any[];
   viewMode?: TaskViewMode;
@@ -35,6 +45,7 @@ export function FeedSearchResultsView({
   query,
   isLoading,
   tasks = [],
+  places = [],
   albums = [],
   users = [],
   viewMode = 'list',
@@ -56,7 +67,7 @@ export function FeedSearchResultsView({
   const { data: albumSaveCounts } = useBatchAlbumSaveCounts(albumIds);
   const { data: albumLikeCounts } = useBatchAlbumLikeCounts(albumIds);
 
-  const totalResults = tasks.length + albums.length + users.length;
+  const totalResults = tasks.length + places.length + albums.length + users.length;
 
   if (isLoading) {
     return (
@@ -80,6 +91,7 @@ export function FeedSearchResultsView({
           {([
             { key: 'todo', label: t('feed.search_tab_all'), count: totalResults },
             { key: 'ideas', label: t('feed.search_tab_ideas'), count: tasks.length },
+            { key: 'sitios', label: t('feed.search_tab_places', { defaultValue: 'Sitios' }), count: places.length },
             { key: 'albumes', label: t('feed.search_tab_albums'), count: albums.length },
             { key: 'personas', label: t('feed.search_tab_people'), count: users.length },
           ] as const).map(({ key, label, count }) => {
@@ -127,6 +139,77 @@ export function FeedSearchResultsView({
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {/* SECCIÓN SITIOS / LUGARES */}
+          {(activeTab === 'todo' || activeTab === 'sitios') && (
+            <View style={{ marginBottom: 20 }}>
+              {activeTab === 'todo' && places.length > 0 && (
+                <SectionLabel
+                  highlight={t('feed.search_section_places', { defaultValue: 'Sitios' })}
+                  rest={` (${places.length})`}
+                  style={{ marginBottom: 12 }}
+                />
+              )}
+              {places.length === 0 && activeTab === 'sitios' ? (
+                <Typography variant="body" color="textSecondary" style={{ textAlign: 'center', marginTop: 20 }}>
+                  {t('feed.search_no_places', { defaultValue: `No se encontraron sitios para «${query}».`, query })}
+                </Typography>
+              ) : (
+                <View style={{ gap: 10 }}>
+                  {places.map((place, index) => (
+                    <Pressable
+                      key={`place-${index}`}
+                      style={[
+                        styles.placeCard,
+                        {
+                          backgroundColor: theme.colors.surface,
+                          borderColor: theme.colors.border,
+                        },
+                      ]}
+                      onPress={() => {
+                        if (place.lat && place.lng) {
+                          router.push({
+                            pathname: '/map',
+                            params: {
+                              lat: String(place.lat),
+                              lng: String(place.lng),
+                              query: place.location_text,
+                            },
+                          } as any);
+                        } else {
+                          router.push({
+                            pathname: '/map',
+                            params: { query: place.location_text },
+                          } as any);
+                        }
+                      }}
+                    >
+                      <View style={[styles.placeIconWrap, { backgroundColor: theme.dark ? '#252932' : '#F4F0E4' }]}>
+                        <MapPin size={18} color={gold[400]} />
+                      </View>
+                      <View style={{ flex: 1, minWidth: 0 }}>
+                        <Typography variant="body" style={{ fontWeight: '700', fontSize: 14.5 }} numberOfLines={1}>
+                          {place.location_text}
+                        </Typography>
+                        <Typography variant="caption" color="textSecondary" style={{ marginTop: 2 }}>
+                          {place.taskCount}{' '}
+                          {place.taskCount === 1
+                            ? t('feed.moments_in_place', { defaultValue: 'momento' })
+                            : t('feed.moments_in_place_plural', { defaultValue: 'momentos' })}
+                        </Typography>
+                      </View>
+                      <View style={[styles.viewMapPill, { borderColor: theme.colors.border }]}>
+                        <Map size={13} color={gold[400]} />
+                        <Text style={[styles.viewMapText, { color: theme.colors.foreground }]}>
+                          {t('feed.view_on_map', { defaultValue: 'Ver en mapa' })}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+
           {/* SECCIÓN IDEAS / TAREAS */}
           {(activeTab === 'todo' || activeTab === 'ideas') && (
             <View style={{ marginBottom: 20 }}>

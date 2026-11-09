@@ -272,4 +272,32 @@ export const styles = themedStyleSheet({
     fontFamily: fontFamily.semibold,
     fontSize: 12,
   },
+  placeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 12,
+  },
+  placeIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewMapPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  viewMapText: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 12,
+  },
 });

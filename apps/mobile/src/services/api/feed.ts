@@ -408,7 +408,7 @@ export const feedApi = {
   }) => {
     const clean = query.trim().replace(/[%_()]/g, '');
     if (clean.length < 2) {
-      return { tasks: [], albums: [], users: [] };
+      return { tasks: [], places: [], albums: [], users: [] };
     }
 
     // 1. Resolver usuarios bloqueados y amigos si aplica
@@ -465,12 +465,25 @@ export const feedApi = {
 
     const extraTaskIds = Array.from(new Set([...taggedTaskIds, ...subtaskBucketIds]));
 
-    // 5. Query de tareas/ideas
-    const taskOrParts: string[] = [
-      `title.ilike.%${clean}%`,
-      `description.ilike.%${clean}%`,
-      `location_text.ilike.%${clean}%`,
-    ];
+    // 5. Query de tareas/ideas con búsqueda flexible de texto y sitios
+    const cleanNoAccents = clean.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const searchTerms = new Set<string>([clean]);
+    if (cleanNoAccents && cleanNoAccents !== clean) {
+      searchTerms.add(cleanNoAccents);
+    }
+    const words = clean.split(/\s+/).filter((w) => w.length >= 3);
+    words.forEach((w) => {
+      searchTerms.add(w);
+      const wNoAcc = w.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      if (wNoAcc !== w) searchTerms.add(wNoAcc);
+    });
+
+    const taskOrParts: string[] = [];
+    searchTerms.forEach((term) => {
+      taskOrParts.push(`title.ilike.%${term}%`);
+      taskOrParts.push(`description.ilike.%${term}%`);
+      taskOrParts.push(`location_text.ilike.%${term}%`);
+    });
     if (categoryIds.length > 0) {
       taskOrParts.push(`category_id.in.(${categoryIds.join(',')})`);
     }
@@ -523,7 +536,7 @@ export const feedApi = {
     if (scope === 'friends') {
       const targetIds = friendIds.filter((id) => !blockedIds.includes(id) && id !== userId);
       if (targetIds.length === 0) {
-        return { tasks: [], albums: [], users: [] };
+        return { tasks: [], places: [], albums: [], users: [] };
       }
       taskQuery = taskQuery
         .in('user_id', targetIds)
@@ -616,8 +629,43 @@ export const feedApi = {
       };
     });
 
+    // Extraer y agrupar sitios únicos que coinciden con la búsqueda
+    const placeMap = new Map<string, {
+      location_text: string;
+      lat?: number;
+      lng?: number;
+      tasks: any[];
+    }>();
+
+    mappedTasks.forEach((item: any) => {
+      const b = item.bucket || item;
+      const loc = (b.location_text || '').trim();
+      if (!loc) return;
+      const norm = loc.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const existing = placeMap.get(norm);
+      if (existing) {
+        existing.tasks.push(item);
+      } else {
+        placeMap.set(norm, {
+          location_text: loc,
+          lat: typeof b.location_lat === 'number' ? b.location_lat : parseFloat(b.location_lat),
+          lng: typeof b.location_lng === 'number' ? b.location_lng : parseFloat(b.location_lng),
+          tasks: [item],
+        });
+      }
+    });
+
+    const places = Array.from(placeMap.values()).map((p) => ({
+      location_text: p.location_text,
+      lat: isNaN(p.lat as number) ? undefined : p.lat,
+      lng: isNaN(p.lng as number) ? undefined : p.lng,
+      taskCount: p.tasks.length,
+      tasks: p.tasks,
+    }));
+
     return {
       tasks: mappedTasks,
+      places,
       albums: mappedAlbums,
       users: userRes.data ?? [],
     };
