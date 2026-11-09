@@ -493,7 +493,7 @@ function Stat({ value, label, onPress }: { value: number; label: string; onPress
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  listContent: { paddingHorizontal: 12, paddingBottom: 48 },
+  listContent: { paddingHorizontal: 12, paddingBottom: 110 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

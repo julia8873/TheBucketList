@@ -202,7 +202,7 @@ export function FriendsFeedTab({
   if (loading && combinedItems.length === 0) {
     if (viewMode === 'gallery') {
       return (
-        <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 72 }} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
           {headerElement}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: galleryColumns === 4 ? 4 : galleryColumns === 3 ? 6 : 10 }}>
             {Array.from({ length: galleryColumns * 2 }).map((_, i) => (
@@ -213,7 +213,7 @@ export function FriendsFeedTab({
       );
     }
     return (
-      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 72 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
         {headerElement}
         <FeedCardSkeleton />
         <FeedCardSkeleton />
@@ -259,7 +259,7 @@ export function FriendsFeedTab({
       keyExtractor={(item) => `${item._type ?? 'task'}-${item.id}`}
       numColumns={viewMode === 'gallery' ? galleryColumns : 1}
       renderItem={renderItem}
-      contentContainerStyle={{ paddingBottom: 72 }}
+      contentContainerStyle={{ paddingBottom: 110 }}
       ListHeaderComponent={headerElement}
       refreshing={manualRefreshing}
       onRefresh={onRefresh}

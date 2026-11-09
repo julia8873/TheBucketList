@@ -8,6 +8,7 @@ import { useAuthStore } from '../../src/stores/auth.store';
 import { checkNotificationPermissionsAsync, registerForPushNotificationsAsync } from '../../src/services/notifications';
 import { useTranslation } from 'react-i18next';
 import { Platform, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQueryClient } from '@tanstack/react-query';
 import { gold, dark } from '@bucketlist/ui';
 
@@ -28,6 +29,18 @@ export default function TabsLayout() {
   const { user } = useAuthStore();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const insets = useSafeAreaInsets();
+
+  const isIos = Platform.OS === 'ios';
+  const bottomInset = insets.bottom;
+
+  // En dispositivos con barra de navegación por botones (Atrás, Inicio, Recientes en Android) o Home bar en iOS,
+  // insets.bottom contiene la altura exacta de la barra del sistema (p. ej. ~48px en Android con botones, ~34px en iPhone).
+  // En dispositivos con gestos / pantalla completa sin barra o en Web, insets.bottom es 0.
+  const paddingBottom = bottomInset > 0 ? bottomInset : (isIos ? 28 : 8);
+  const tabHeight = isIos
+    ? (bottomInset > 0 ? 54 + bottomInset : 84)
+    : (bottomInset > 0 ? 56 + bottomInset : 60);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -100,8 +113,8 @@ export default function TabsLayout() {
           backgroundColor: theme.colors.background,
           borderTopColor: theme.colors.border,
           borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? 84 : 60,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 8,
+          height: tabHeight,
+          paddingBottom: paddingBottom,
         },
         tabBarItemStyle: {
           borderTopWidth: 0,
