@@ -61,18 +61,21 @@ export async function onRequest(context) {
   }
 
   const locPrefix = locationText ? `📍 ${locationText}` : '';
-  const finalDesc = description
-    ? (locPrefix ? `${locPrefix} — ${description}` : description)
-    : (locPrefix ? `${locPrefix} • Descubre y comparte planes en TheBucketList` : 'Descubre y comparte planes increíbles en TheBucketList.');
 
-  // Formato Instagram: "@usuario en TheBucketList" arriba, y la tarea en la descripción
-  const ogTitle = username
+  // Título en negrita arriba (og:title), y autor en TheBucketList abajo (og:description)
+  const ogTitle = title || 'TheBucketList';
+
+  const authorLine = username
     ? `@${username} en TheBucketList`
-    : `«${title}» en TheBucketList`;
+    : 'TheBucketList';
 
-  const ogDesc = username
-    ? `«${title}»${locPrefix ? ` • ${locPrefix}` : ''}`
-    : finalDesc;
+  const extraParts = [];
+  if (locPrefix) extraParts.push(locPrefix);
+  if (description) extraParts.push(description);
+
+  const ogDesc = extraParts.length > 0
+    ? `${authorLine} • ${extraParts.join(' — ')}`
+    : authorLine;
 
   const ogTags = `
     <!-- Open Graph / WhatsApp / Instagram / Facebook -->

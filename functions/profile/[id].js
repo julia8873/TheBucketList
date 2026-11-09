@@ -49,13 +49,13 @@ export async function onRequest(context) {
   }
 
   const shownName = displayName || username || "Usuario";
-  const ogTitle = username
-    ? `@${username} en TheBucketList`
-    : `${shownName} en TheBucketList`;
 
+  // Título en negrita arriba (og:title), y @usuario en TheBucketList abajo (og:description)
+  const ogTitle = shownName;
+  const authorLine = username ? `@${username} en TheBucketList` : `${shownName} en TheBucketList`;
   const ogDesc = bio
-    ? `${bio} • ¡Sigue sus planes y aventuras en TheBucketList!`
-    : `¡Descubre la lista de deseos y aventuras de @${username || shownName} en TheBucketList!`;
+    ? `${authorLine} • ${bio}`
+    : `${authorLine} • Descubre su lista de deseos y aventuras`;
 
   const ogTags = `
     <!-- Open Graph / WhatsApp / Instagram / Facebook -->

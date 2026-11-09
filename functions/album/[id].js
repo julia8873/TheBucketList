@@ -49,13 +49,16 @@ export async function onRequest(context) {
     console.error("Error in get_share_preview for album:", e);
   }
 
-  const ogTitle = username
-    ? `@${username} en TheBucketList`
-    : `Álbum «${title}» en TheBucketList`;
+  // Título en negrita arriba (og:title), y autor en TheBucketList abajo (og:description)
+  const ogTitle = title || 'Álbum en TheBucketList';
 
-  const ogDesc = username
-    ? `Álbum «${title}» • Colección en TheBucketList`
-    : (description || 'Colección de planes y momentos en TheBucketList.');
+  const authorLine = username
+    ? `@${username} en TheBucketList`
+    : 'TheBucketList';
+
+  const ogDesc = description
+    ? `${authorLine} • ${description}`
+    : `${authorLine} • Colección de momentos`;
 
   const ogTags = `
     <!-- Open Graph / WhatsApp / Instagram / Facebook -->
