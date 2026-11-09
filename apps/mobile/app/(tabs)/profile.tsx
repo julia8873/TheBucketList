@@ -243,16 +243,8 @@ export default function CurrentUserProfileScreen() {
     if (!profile) return;
     try {
       const siteUrl = (process.env['EXPO_PUBLIC_SITE_URL'] || 'https://thebucketlist-8zk.pages.dev').replace(/\/$/, '');
+      const shareUrl = `${siteUrl}/profile/${profile.id}`;
       const profileName = displayNameOf(profile) || profile.username;
-      const avatarUrl = profile.avatar_url || '';
-
-      const params = new URLSearchParams();
-      if (profileName) params.set('name', profileName);
-      if (profile.username) params.set('u', profile.username);
-      if (avatarUrl) params.set('img', avatarUrl);
-
-      const qs = params.toString();
-      const shareUrl = `${siteUrl}/profile/${profile.id}${qs ? `?${qs}` : ''}`;
 
       await Share.share({
         title: `${profileName} (@${profile.username})`,

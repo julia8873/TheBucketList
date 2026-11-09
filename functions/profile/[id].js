@@ -1,60 +1,55 @@
 export async function onRequest(context) {
   const { request, env, params } = context;
   const profileId = params.id;
-  const url = new URL(request.url);
-
-  const qName = url.searchParams.get("name");
-  const qUser = url.searchParams.get("u");
-  const qAvatar = url.searchParams.get("img");
-
-  let displayName = qName ? decodeURIComponent(qName) : null;
-  let username = qUser ? decodeURIComponent(qUser) : null;
-  let avatarUrl = qAvatar ? decodeURIComponent(qAvatar) : null;
-  let bio = null;
 
   const siteUrl = 'https://thebucketlist-8zk.pages.dev';
   const pageUrl = `${siteUrl}/profile/${profileId}`;
 
-  if (!username || !avatarUrl) {
-    try {
-      const supabaseUrl = env.EXPO_PUBLIC_SUPABASE_URL || 'https://fazxqjznuehrwkungmjm.supabase.co';
-      const anonKey = env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhenhxanpudWVocndrdW5nbWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzE5NDEsImV4cCI6MjEwNzMwNzk0MX0.1i4vocM3OAet2tzm3hLJYy-RcV03XuIPbZDdlKNTtlM';
+  let username = "";
+  let displayName = "";
+  let avatarUrl = `${siteUrl}/icon.png`;
+  let bio = "";
 
-      const response = await fetch(
-        `${supabaseUrl}/rest/v1/profiles?id=eq.${profileId}&select=username,display_name,bio,avatar_url&limit=1`,
-        {
-          headers: {
-            apikey: anonKey,
-            Authorization: `Bearer ${anonKey}`,
-          },
+  try {
+    const supabaseUrl = env.EXPO_PUBLIC_SUPABASE_URL || 'https://fazxqjznuehrwkungmjm.supabase.co';
+    const anonKey = env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhenhxanpudWVocndrdW5nbWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzE5NDEsImV4cCI6MjEwNzMwNzk0MX0.1i4vocM3OAet2tzm3hLJYy-RcV03XuIPbZDdlKNTtlM';
+
+    const rpcResponse = await fetch(`${supabaseUrl}/rest/v1/rpc/get_share_preview`, {
+      method: 'POST',
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${anonKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        p_type: 'profile',
+        p_id: profileId,
+      }),
+    });
+
+    if (rpcResponse.ok) {
+      const data = await rpcResponse.json();
+      if (data) {
+        username = data.username || '';
+        displayName = data.title || data.username || '';
+        bio = data.description || '';
+        if (data.avatar_url) {
+          avatarUrl = data.avatar_url;
         }
-      );
-
-      const data = await response.json();
-      const prof = data && data[0];
-
-      if (prof) {
-        if (!username) username = prof.username;
-        if (!displayName) displayName = prof.display_name || prof.username;
-        if (!bio && prof.bio) bio = prof.bio.trim();
-        if (!avatarUrl && prof.avatar_url) avatarUrl = prof.avatar_url;
       }
-    } catch (e) {
-      console.error("Error fetching profile preview:", e);
     }
+  } catch (e) {
+    console.error("Error in get_share_preview for profile:", e);
   }
 
   const shownName = displayName || username || "Usuario";
-  // EXACTAMENTE estilo Instagram: "@username en TheBucketList"
   const ogTitle = username
     ? `@${username} en TheBucketList`
     : `${shownName} en TheBucketList`;
 
-  const finalDesc = bio
+  const ogDesc = bio
     ? `${bio} • ¡Sigue sus planes y aventuras en TheBucketList!`
     : `¡Descubre la lista de deseos y aventuras de @${username || shownName} en TheBucketList!`;
-
-  const finalAvatar = avatarUrl || `${siteUrl}/icon.png`;
 
   const ogTags = `
     <!-- Open Graph / WhatsApp / Instagram / Facebook -->
@@ -62,9 +57,9 @@ export async function onRequest(context) {
     <meta property="og:site_name" content="TheBucketList" />
     <meta property="og:url" content="${escapeHtml(pageUrl)}" />
     <meta property="og:title" content="${escapeHtml(ogTitle)}" />
-    <meta property="og:description" content="${escapeHtml(finalDesc)}" />
-    <meta property="og:image" content="${escapeHtml(finalAvatar)}" />
-    <meta property="og:image:secure_url" content="${escapeHtml(finalAvatar)}" />
+    <meta property="og:description" content="${escapeHtml(ogDesc)}" />
+    <meta property="og:image" content="${escapeHtml(avatarUrl)}" />
+    <meta property="og:image:secure_url" content="${escapeHtml(avatarUrl)}" />
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="600" />
     <meta property="og:image:height" content="600" />
@@ -73,8 +68,8 @@ export async function onRequest(context) {
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:site" content="@TheBucketList" />
     <meta name="twitter:title" content="${escapeHtml(ogTitle)}" />
-    <meta name="twitter:description" content="${escapeHtml(finalDesc)}" />
-    <meta name="twitter:image" content="${escapeHtml(finalAvatar)}" />
+    <meta name="twitter:description" content="${escapeHtml(ogDesc)}" />
+    <meta name="twitter:image" content="${escapeHtml(avatarUrl)}" />
 `;
 
   try {
@@ -123,4 +118,3 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
-

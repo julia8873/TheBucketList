@@ -1,62 +1,55 @@
 export async function onRequest(context) {
   const { request, env, params } = context;
   const albumId = params.id;
-  const url = new URL(request.url);
-
-  const qTitle = url.searchParams.get("t");
-  const qImg = url.searchParams.get("img");
-  const qUser = url.searchParams.get("u");
-
-  let title = qTitle ? decodeURIComponent(qTitle) : null;
-  let imageUrl = qImg ? decodeURIComponent(qImg) : null;
-  let username = qUser ? decodeURIComponent(qUser) : null;
-  let description = null;
 
   const siteUrl = 'https://thebucketlist-8zk.pages.dev';
   const pageUrl = `${siteUrl}/album/${albumId}`;
 
-  if (!title || !imageUrl) {
-    try {
-      const supabaseUrl = env.EXPO_PUBLIC_SUPABASE_URL || 'https://fazxqjznuehrwkungmjm.supabase.co';
-      const anonKey = env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhenhxanpudWVocndrdW5nbWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzE5NDEsImV4cCI6MjEwNzMwNzk0MX0.1i4vocM3OAet2tzm3hLJYy-RcV03XuIPbZDdlKNTtlM';
+  let title = "Álbum en TheBucketList";
+  let imageUrl = `${siteUrl}/icon.png`;
+  let username = "";
+  let description = "";
 
-      const response = await fetch(
-        `${supabaseUrl}/rest/v1/albums?id=eq.${albumId}&select=title,description,cover_image,profiles!owner_id(username,display_name)&limit=1`,
-        {
-          headers: {
-            apikey: anonKey,
-            Authorization: `Bearer ${anonKey}`,
-          },
-        }
-      );
+  try {
+    const supabaseUrl = env.EXPO_PUBLIC_SUPABASE_URL || 'https://fazxqjznuehrwkungmjm.supabase.co';
+    const anonKey = env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhenhxanpudWVocndrdW5nbWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzE5NDEsImV4cCI6MjEwNzMwNzk0MX0.1i4vocM3OAet2tzm3hLJYy-RcV03XuIPbZDdlKNTtlM';
 
-      const data = await response.json();
-      const album = data && data[0];
+    const rpcResponse = await fetch(`${supabaseUrl}/rest/v1/rpc/get_share_preview`, {
+      method: 'POST',
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${anonKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        p_type: 'album',
+        p_id: albumId,
+      }),
+    });
 
-      if (album) {
-        if (!title) title = album.title;
-        if (!description && album.description) description = album.description.trim();
-        if (!username && album.profiles?.username) username = album.profiles.username;
+    if (rpcResponse.ok) {
+      const data = await rpcResponse.json();
+      if (data && data.title) {
+        title = data.title;
+        description = data.description || '';
+        username = data.creator_username || '';
 
-        if (!imageUrl && album.cover_image && !album.cover_image.startsWith('preset:') && !album.cover_image.startsWith('#')) {
-          imageUrl = `${supabaseUrl}/storage/v1/object/public/photos/${album.cover_image}`;
+        if (data.cover_image && !data.cover_image.startsWith('preset:') && !data.cover_image.startsWith('#')) {
+          imageUrl = `${supabaseUrl}/storage/v1/object/public/photos/${data.cover_image}`;
         }
       }
-    } catch (e) {
-      console.error("Error fetching album preview:", e);
     }
+  } catch (e) {
+    console.error("Error in get_share_preview for album:", e);
   }
 
-  if (!title) title = "Álbum en TheBucketList";
-  if (!imageUrl) imageUrl = `${siteUrl}/icon.png`;
-
-  const finalDesc = description
-    ? description
-    : 'Colección de planes y momentos increíbles en TheBucketList.';
-
   const ogTitle = username
-    ? `@${username} en TheBucketList: Álbum «${title}»`
+    ? `@${username} en TheBucketList`
     : `Álbum «${title}» en TheBucketList`;
+
+  const ogDesc = username
+    ? `Álbum «${title}» • Colección en TheBucketList`
+    : (description || 'Colección de planes y momentos en TheBucketList.');
 
   const ogTags = `
     <!-- Open Graph / WhatsApp / Instagram / Facebook -->
@@ -64,7 +57,7 @@ export async function onRequest(context) {
     <meta property="og:site_name" content="TheBucketList" />
     <meta property="og:url" content="${escapeHtml(pageUrl)}" />
     <meta property="og:title" content="${escapeHtml(ogTitle)}" />
-    <meta property="og:description" content="${escapeHtml(finalDesc)}" />
+    <meta property="og:description" content="${escapeHtml(ogDesc)}" />
     <meta property="og:image" content="${escapeHtml(imageUrl)}" />
     <meta property="og:image:secure_url" content="${escapeHtml(imageUrl)}" />
     <meta property="og:image:type" content="image/jpeg" />
@@ -75,7 +68,7 @@ export async function onRequest(context) {
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@TheBucketList" />
     <meta name="twitter:title" content="${escapeHtml(ogTitle)}" />
-    <meta name="twitter:description" content="${escapeHtml(finalDesc)}" />
+    <meta name="twitter:description" content="${escapeHtml(ogDesc)}" />
     <meta name="twitter:image" content="${escapeHtml(imageUrl)}" />
 `;
 
@@ -125,4 +118,3 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
-
