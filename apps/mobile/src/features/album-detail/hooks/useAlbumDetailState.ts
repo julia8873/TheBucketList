@@ -1,7 +1,8 @@
 import { Alert } from '@bucketlist/ui';
 import { useState, useRef, useEffect } from 'react';
 import type { View, ScrollView} from 'react-native';
-import { Share, Platform, Dimensions, Keyboard, Animated, Image as RNImage } from 'react-native';
+import { Platform, Dimensions, Keyboard, Animated, Image as RNImage } from 'react-native';
+import { shareLink } from '@/utils/shareUtils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
@@ -1201,9 +1202,8 @@ export function useAlbumDetailState() {
       const siteUrl = (process.env['EXPO_PUBLIC_SITE_URL'] || 'https://thebucketlist-8zk.pages.dev').replace(/\/$/, '');
       const shareUrl = `${siteUrl}/album/${album.id}`;
 
-      await Share.share({
+      await shareLink({
         title: album.title,
-        message: shareUrl,
         url: shareUrl,
       });
     } catch (error) {

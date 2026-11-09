@@ -42,6 +42,7 @@ import { MENTION_TASK_COLUMNS } from '@/components/TaskMentionPickerSheet';
 import type { CollaboratorItem } from '@/components/CollaboratorPickerSheet';
 import type { ThumbnailMode} from '@/utils/taskImage';
 import { resolveTaskImage } from '@/utils/taskImage';
+import { shareLink } from '@/utils/shareUtils';
 import type { PhotoSortField, PhotoSortDir } from '../components/PhotoSortModal';
 import type { DatePickerConfig } from '../components/BucketDatePickerModal';
 import type { CollaborationMode, CollaborationAudience } from '../collaboration.types';
@@ -502,9 +503,8 @@ export function useBucketDetailState() {
       const siteUrl = (process.env['EXPO_PUBLIC_SITE_URL'] || 'https://thebucketlist-8zk.pages.dev').replace(/\/$/, '');
       const shareUrl = `${siteUrl}/bucket/${bucket?.id}`;
 
-      await Share.share({
+      await shareLink({
         title: bucket?.title,
-        message: shareUrl,
         url: shareUrl,
       });
     } catch (error) {

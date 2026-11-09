@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, Share } from 'react-native';
+import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { shareLink } from '../../src/utils/shareUtils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useNavigation } from 'expo-router';
@@ -246,9 +247,8 @@ export default function CurrentUserProfileScreen() {
       const shareUrl = `${siteUrl}/profile/${profile.id}`;
       const profileName = displayNameOf(profile) || profile.username;
 
-      await Share.share({
+      await shareLink({
         title: `${profileName} (@${profile.username})`,
-        message: shareUrl,
         url: shareUrl,
       });
     } catch (err) {

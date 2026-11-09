@@ -1,6 +1,7 @@
 import { Alert } from '@bucketlist/ui';
 import React, { useEffect, useMemo, useState } from 'react';
-import { FlatList, Pressable, Text, View, Share } from 'react-native';
+import { FlatList, Pressable, Text, View } from 'react-native';
+import { shareLink } from '../../src/utils/shareUtils';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, MoreHorizontal, UserX, Share2 } from 'lucide-react-native';
@@ -281,9 +282,8 @@ export default function PublicProfileScreen() {
       const shareUrl = `${siteUrl}/profile/${profile.id}`;
       const name = profile.display_name || profile.username;
 
-      await Share.share({
+      await shareLink({
         title: `${name} (@${profile.username})`,
-        message: shareUrl,
         url: shareUrl,
       });
     } catch (err) {
