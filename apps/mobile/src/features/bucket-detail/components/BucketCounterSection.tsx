@@ -5,6 +5,9 @@ import { useTranslation } from '@bucketlist/shared';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { Trash2, Minus, Plus } from 'lucide-react-native';
 import { styles } from '../styles/bucket-detail.styles';
+import { truncateChars } from '../../../utils/unicodeUtils';
+
+const COUNTER_MAX = 999_999_999;
 
 export function ProgressBar({ value, total, color, track }: { value: number; total: number; color: string; track: string }) {
   const pct = total > 0 ? Math.min(1, value / total) : 0;
@@ -119,16 +122,20 @@ export function BucketCounterSection({
                 {canEdit ? (
                   <TextInput
                     value={localLabel}
+                    maxLength={30}
                     onFocus={() => {
                       isLabelFocused.current = true;
                     }}
                     onBlur={() => {
                       isLabelFocused.current = false;
-                      handleCounterLabelChange(localLabel);
+                      const safe = truncateChars(localLabel, 30);
+                      setLocalLabel(safe);
+                      handleCounterLabelChange(safe);
                     }}
                     onChangeText={(text) => {
-                      setLocalLabel(text);
-                      handleCounterLabelChange(text);
+                      const safe = truncateChars(text, 30);
+                      setLocalLabel(safe);
+                      handleCounterLabelChange(safe);
                     }}
                     placeholder={t('bucket.counter_what')}
                     placeholderTextColor={theme.colors.foregroundMuted}
@@ -143,21 +150,28 @@ export function BucketCounterSection({
                 {canEdit ? (
                   <TextInput
                     value={localCount}
+                    maxLength={9}
                     onFocus={() => {
                       isCountFocused.current = true;
                     }}
                     onBlur={() => {
                       isCountFocused.current = false;
-                      const n = parseInt(localCount.replace(/[^0-9]/g, ''), 10);
-                      const safe = Number.isNaN(n) ? 0 : n;
+                      const clean = localCount.replace(/[^0-9]/g, '').slice(0, 9);
+                      const n = parseInt(clean, 10);
+                      const safe = Number.isFinite(n) ? Math.max(0, Math.min(COUNTER_MAX, n)) : 0;
                       setLocalCount(String(safe));
                       handleCounterCountChange(safe);
                     }}
                     onChangeText={(text) => {
-                      setLocalCount(text);
-                      const clean = text.replace(/[^0-9]/g, '');
-                      const n = parseInt(clean, 10);
-                      handleCounterCountChange(Number.isNaN(n) ? 0 : n);
+                      const clean = text.replace(/[^0-9]/g, '').slice(0, 9);
+                      setLocalCount(clean);
+                      if (clean === '') {
+                        handleCounterCountChange(0);
+                      } else {
+                        const n = parseInt(clean, 10);
+                        const safe = Number.isFinite(n) ? Math.max(0, Math.min(COUNTER_MAX, n)) : 0;
+                        handleCounterCountChange(safe);
+                      }
                     }}
                     keyboardType="number-pad"
                     style={{
@@ -179,6 +193,7 @@ export function BucketCounterSection({
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <Pressable
                     onPress={() => changeCounter(-1)}
+                    disabled={(bucket.counter_count ?? 0) <= 0}
                     style={{
                       width: 44,
                       height: 44,
@@ -188,12 +203,14 @@ export function BucketCounterSection({
                       borderWidth: 1,
                       borderColor: theme.colors.border,
                       backgroundColor: theme.colors.surface,
+                      opacity: (bucket.counter_count ?? 0) <= 0 ? 0.35 : 1,
                     }}
                   >
                     <Minus color={theme.colors.foregroundMuted} size={20} strokeWidth={2} />
                   </Pressable>
                   <Pressable
                     onPress={() => changeCounter(1)}
+                    disabled={(bucket.counter_count ?? 0) >= COUNTER_MAX}
                     style={{
                       width: 44,
                       height: 44,
@@ -201,6 +218,7 @@ export function BucketCounterSection({
                       alignItems: 'center',
                       justifyContent: 'center',
                       backgroundColor: gold[400],
+                      opacity: (bucket.counter_count ?? 0) >= COUNTER_MAX ? 0.35 : 1,
                     }}
                   >
                     <Plus color="#FFFFFF" size={20} strokeWidth={2.4} />
@@ -231,16 +249,22 @@ export function BucketCounterSection({
                       <Typography variant="body" color={theme.colors.foreground}>{t('bucket.counter_target')}</Typography>
                       <TextInput
                         value={localTarget}
+                        maxLength={9}
                         onFocus={() => {
                           isTargetFocused.current = true;
                         }}
                         onBlur={() => {
                           isTargetFocused.current = false;
-                          handleCounterTargetChange(localTarget);
+                          const clean = localTarget.replace(/[^0-9]/g, '').slice(0, 9);
+                          const n = parseInt(clean, 10);
+                          const safe = Number.isFinite(n) && n > 0 ? Math.min(COUNTER_MAX, n) : null;
+                          setLocalTarget(safe ? String(safe) : '');
+                          handleCounterTargetChange(safe ? String(safe) : '');
                         }}
                         onChangeText={(text) => {
-                          setLocalTarget(text);
-                          handleCounterTargetChange(text);
+                          const clean = text.replace(/[^0-9]/g, '').slice(0, 9);
+                          setLocalTarget(clean);
+                          handleCounterTargetChange(clean);
                         }}
                         keyboardType="number-pad"
                         placeholder="0"

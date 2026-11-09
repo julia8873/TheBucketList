@@ -10,7 +10,6 @@ export async function onRequest(context) {
   const pageUrl = `${siteUrl}/bucket/${bucketId}`;
 
   let title = "Plan en TheBucketList";
-  let imageUrl = `${siteUrl}/icon.png`;
   let locationText = "";
   let username = "";
   let description = "";
@@ -42,12 +41,6 @@ export async function onRequest(context) {
           description = data.description || '';
           locationText = data.location || '';
           username = data.creator_username || '';
-
-          if (data.photo_path) {
-            imageUrl = `${supabaseUrl}/storage/v1/object/public/photos/${data.photo_path}`;
-          } else if (data.cover_image && !data.cover_image.startsWith('preset:') && !data.cover_image.startsWith('#')) {
-            imageUrl = `${supabaseUrl}/storage/v1/object/public/photos/${data.cover_image}`;
-          }
         }
       } else {
         const errText = await rpcResponse.text();
@@ -77,6 +70,9 @@ export async function onRequest(context) {
     ? `${authorLine} • ${extraParts.join(' — ')}`
     : authorLine;
 
+  // Servir la imagen directamente a través de nuestro dominio para evitar x-robots-tag: none y bloqueos de WhatsApp
+  const ogImageUrl = bucketId ? `${siteUrl}/preview-image/${bucketId}.jpg` : `${siteUrl}/icon.png`;
+
   const ogTags = `
     <!-- Open Graph / WhatsApp / Instagram / Facebook -->
     <meta property="og:type" content="article" />
@@ -84,19 +80,50 @@ export async function onRequest(context) {
     <meta property="og:url" content="${escapeHtml(pageUrl)}" />
     <meta property="og:title" content="${escapeHtml(ogTitle)}" />
     <meta property="og:description" content="${escapeHtml(ogDesc)}" />
-    <meta property="og:image" content="${escapeHtml(imageUrl)}" />
-    <meta property="og:image:secure_url" content="${escapeHtml(imageUrl)}" />
+    <meta property="og:image" content="${escapeHtml(ogImageUrl)}" />
+    <meta property="og:image:secure_url" content="${escapeHtml(ogImageUrl)}" />
     <meta property="og:image:type" content="image/jpeg" />
-    <meta property="og:image:width" content="600" />
-    <meta property="og:image:height" content="600" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@TheBucketList" />
     <meta name="twitter:title" content="${escapeHtml(ogTitle)}" />
     <meta name="twitter:description" content="${escapeHtml(ogDesc)}" />
-    <meta name="twitter:image" content="${escapeHtml(imageUrl)}" />
+    <meta name="twitter:image" content="${escapeHtml(ogImageUrl)}" />
 `;
+
+  const userAgent = request.headers.get('user-agent') || '';
+  const isCrawler = /facebookexternalhit|Facebot|WhatsApp|Twitterbot|Pinterest|TelegramBot|Slackbot|LinkedInBot|Discordbot|SkypeUriPreview/i.test(userAgent);
+
+  // Para los rastreadores de previsualizaciones (WhatsApp, Facebook, Twitter, Telegram)
+  // devolver una página HTML ultra ligera (1KB) inmediata con cabeceras de caché públicas.
+  if (isCrawler) {
+    const crawlerHtml = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>${escapeHtml(ogTitle)}</title>
+  ${ogTags}
+</head>
+<body>
+  <h1>${escapeHtml(ogTitle)}</h1>
+  <p>${escapeHtml(ogDesc)}</p>
+  <img src="${escapeHtml(ogImageUrl)}" alt="${escapeHtml(ogTitle)}" />
+</body>
+</html>`;
+
+    return new Response(crawlerHtml, {
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "public, max-age=3600, s-maxage=3600",
+        "x-bucket-id": bucketId,
+        "x-debug-rpc": debugRpc,
+        "x-crawler": "true",
+      },
+    });
+  }
 
   try {
     const assetResponse = await env.ASSETS.fetch(request);
@@ -111,10 +138,9 @@ export async function onRequest(context) {
     return new Response(html, {
       headers: {
         "content-type": "text/html; charset=utf-8",
-        "cache-control": "no-cache, no-store, must-revalidate",
+        "cache-control": "public, max-age=300",
         "x-bucket-id": bucketId,
         "x-debug-rpc": debugRpc,
-        "x-version": "v2-title-bold",
       },
     });
   } catch (err) {
@@ -133,10 +159,9 @@ export async function onRequest(context) {
     return new Response(fallbackHtml, {
       headers: {
         "content-type": "text/html; charset=utf-8",
-        "cache-control": "no-cache, no-store, must-revalidate",
+        "cache-control": "public, max-age=300",
         "x-bucket-id": bucketId,
         "x-debug-rpc": debugRpc,
-        "x-version": "v2-title-bold",
       },
     });
   }
@@ -149,5 +174,5 @@ function escapeHtml(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/'/g, '&#039;');
 }

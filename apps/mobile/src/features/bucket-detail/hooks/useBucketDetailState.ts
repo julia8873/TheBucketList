@@ -43,6 +43,7 @@ import type { CollaboratorItem } from '@/components/CollaboratorPickerSheet';
 import type { ThumbnailMode} from '@/utils/taskImage';
 import { resolveTaskImage } from '@/utils/taskImage';
 import { shareLink } from '@/utils/shareUtils';
+import { truncateChars } from '@/utils/unicodeUtils';
 import type { PhotoSortField, PhotoSortDir } from '../components/PhotoSortModal';
 import type { DatePickerConfig } from '../components/BucketDatePickerModal';
 import type { CollaborationMode, CollaborationAudience } from '../collaboration.types';
@@ -1609,27 +1610,32 @@ export function useBucketDetailState() {
     void queryClient.invalidateQueries({ queryKey: ['albums'] });
   };
 
+  const COUNTER_MAX = 999_999_999;
+
   const changeCounter = (delta: number) => {
     const current = queryClient.getQueryData<any>(['bucketDetail', id])?.counter_count ?? 0;
-    const nextVal = Math.max(0, current + delta);
+    const safeCurrent = typeof current === 'number' && Number.isFinite(current) ? current : 0;
+    const nextVal = Math.max(0, Math.min(COUNTER_MAX, Math.floor(safeCurrent + delta)));
     void updateCounter({ counter_count: nextVal });
   };
 
   const handleCounterCountChange = (n: number) => {
-    queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, counter_count: n } : oldData);
+    const safeN = Number.isFinite(n) ? Math.max(0, Math.min(COUNTER_MAX, Math.floor(n))) : 0;
+    queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, counter_count: safeN } : oldData);
     patchTasks(queryClient, [id], {
-      bucket: { counter_count: n },
-      task: { counterCount: n },
+      bucket: { counter_count: safeN },
+      task: { counterCount: safeN },
     });
     if (counterCountTimeout.current) clearTimeout(counterCountTimeout.current);
     counterCountTimeout.current = setTimeout(() => {
-      void updateCounter({ counter_count: n });
+      void updateCounter({ counter_count: safeN });
     }, 500);
   };
 
   const handleCounterLabelChange = (text: string) => {
-    const trimmed = text.trim() || null;
-    queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, counter_label: text } : oldData);
+    const safeText = truncateChars(text, 30);
+    const trimmed = safeText.trim() || null;
+    queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, counter_label: safeText } : oldData);
     patchTasks(queryClient, [id], {
       bucket: { counter_label: trimmed },
       task: { counterLabel: trimmed },
@@ -1641,8 +1647,9 @@ export function useBucketDetailState() {
   };
 
   const handleCounterTargetChange = (text: string) => {
-    const n = parseInt(text.replace(/[^0-9]/g, ''), 10);
-    const value = Number.isFinite(n) && n > 0 ? n : null;
+    const clean = text.replace(/[^0-9]/g, '').slice(0, 9);
+    const n = parseInt(clean, 10);
+    const value = Number.isFinite(n) && n > 0 ? Math.min(COUNTER_MAX, n) : null;
 
     queryClient.setQueryData(['bucketDetail', id], (oldData: any) => oldData ? { ...oldData, counter_target: value } : oldData);
     patchTasks(queryClient, [id], {

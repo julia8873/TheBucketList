@@ -57,6 +57,8 @@ export async function onRequest(context) {
     ? `${authorLine} • ${bio}`
     : `${authorLine} • Descubre su lista de deseos y aventuras`;
 
+  const ogImageUrl = profileId ? `${siteUrl}/preview-image/${profileId}.jpg` : `${siteUrl}/icon.png`;
+
   const ogTags = `
     <!-- Open Graph / WhatsApp / Instagram / Facebook -->
     <meta property="og:type" content="profile" />
@@ -64,19 +66,47 @@ export async function onRequest(context) {
     <meta property="og:url" content="${escapeHtml(pageUrl)}" />
     <meta property="og:title" content="${escapeHtml(ogTitle)}" />
     <meta property="og:description" content="${escapeHtml(ogDesc)}" />
-    <meta property="og:image" content="${escapeHtml(avatarUrl)}" />
-    <meta property="og:image:secure_url" content="${escapeHtml(avatarUrl)}" />
+    <meta property="og:image" content="${escapeHtml(ogImageUrl)}" />
+    <meta property="og:image:secure_url" content="${escapeHtml(ogImageUrl)}" />
     <meta property="og:image:type" content="image/jpeg" />
-    <meta property="og:image:width" content="600" />
-    <meta property="og:image:height" content="600" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
 
     <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@TheBucketList" />
     <meta name="twitter:title" content="${escapeHtml(ogTitle)}" />
     <meta name="twitter:description" content="${escapeHtml(ogDesc)}" />
-    <meta name="twitter:image" content="${escapeHtml(avatarUrl)}" />
+    <meta name="twitter:image" content="${escapeHtml(ogImageUrl)}" />
 `;
+
+  const userAgent = request.headers.get('user-agent') || '';
+  const isCrawler = /facebookexternalhit|Facebot|WhatsApp|Twitterbot|Pinterest|TelegramBot|Slackbot|LinkedInBot|Discordbot|SkypeUriPreview/i.test(userAgent);
+
+  if (isCrawler) {
+    const crawlerHtml = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>${escapeHtml(ogTitle)}</title>
+  ${ogTags}
+</head>
+<body>
+  <h1>${escapeHtml(ogTitle)}</h1>
+  <p>${escapeHtml(ogDesc)}</p>
+  <img src="${escapeHtml(ogImageUrl)}" alt="${escapeHtml(ogTitle)}" />
+</body>
+</html>`;
+
+    return new Response(crawlerHtml, {
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "public, max-age=3600, s-maxage=3600",
+        "x-profile-id": profileId,
+        "x-crawler": "true",
+      },
+    });
+  }
 
   try {
     const assetResponse = await env.ASSETS.fetch(request);
@@ -91,7 +121,8 @@ export async function onRequest(context) {
     return new Response(html, {
       headers: {
         "content-type": "text/html; charset=utf-8",
-        "cache-control": "no-cache, no-store, must-revalidate",
+        "cache-control": "public, max-age=300",
+        "x-profile-id": profileId,
       },
     });
   } catch (err) {
@@ -104,13 +135,14 @@ export async function onRequest(context) {
   <meta http-equiv="refresh" content="0;url=${pageUrl}" />
 </head>
 <body>
-  <p>Redirigiendo a <a href="${pageUrl}">@${escapeHtml(username || shownName)}</a>...</p>
+  <p>Redirigiendo a <a href="${pageUrl}">${escapeHtml(shownName)}</a>...</p>
 </body>
 </html>`;
     return new Response(fallbackHtml, {
       headers: {
         "content-type": "text/html; charset=utf-8",
-        "cache-control": "no-cache, no-store, must-revalidate",
+        "cache-control": "public, max-age=300",
+        "x-profile-id": profileId,
       },
     });
   }
@@ -123,5 +155,5 @@ function escapeHtml(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/'/g, '&#039;');
 }
