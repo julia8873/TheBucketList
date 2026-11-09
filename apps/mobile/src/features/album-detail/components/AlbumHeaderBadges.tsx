@@ -51,7 +51,7 @@ export function AlbumHeaderBadges({
       : album.priority === 'low'
         ? '#D1FAE5'
         : '#FEF3C7'
-    : `${priorityColor}1F`;
+    : '#181818';
 
   const chipPriorityBorder = isLight
     ? album.priority === 'high' || album.priority === 'urgent'

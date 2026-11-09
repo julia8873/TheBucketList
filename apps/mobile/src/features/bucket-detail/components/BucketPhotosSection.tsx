@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, TextInput, useWindowDimensions, Platform, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image as ExpoImage } from 'expo-image';
 import { Typography } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
@@ -47,9 +48,31 @@ export function BucketPhotosSection({
 }: BucketPhotosSectionProps) {
   const { t, i18n } = useTranslation();
   const { width: windowWidth } = useWindowDimensions();
+  const [photoColumns, setPhotoColumns] = useState<2 | 3 | 4>(2);
+
+  useEffect(() => {
+    AsyncStorage.getItem('@task_detail_photo_columns').then((val) => {
+      if (val === '2' || val === '3' || val === '4') {
+        setPhotoColumns(Number(val) as 2 | 3 | 4);
+      }
+    });
+  }, []);
+
+  const handleSetPhotoColumns = (cols: 2 | 3 | 4) => {
+    setPhotoColumns(cols);
+    void AsyncStorage.setItem('@task_detail_photo_columns', String(cols));
+  };
+
   const containerWidth = Platform.OS === 'web' ? Math.min(windowWidth, 620) - 40 : windowWidth - 40;
-  const thumbWidth = Math.max(120, Math.floor((containerWidth - 10) / 2));
-  const thumbHeight = Math.floor(thumbWidth * 1.25);
+  const gap = photoColumns === 4 ? 4 : photoColumns === 3 ? 6 : 10;
+  const totalGaps = (photoColumns - 1) * gap;
+  const thumbWidth = Math.max(70, Math.floor((containerWidth - totalGaps) / photoColumns));
+  const thumbHeight =
+    photoColumns === 4
+      ? Math.floor(thumbWidth * 1.1)
+      : photoColumns === 3
+        ? Math.floor(thumbWidth * 1.18)
+        : Math.floor(thumbWidth * 1.25);
 
   if (!bucket.bucket_photos?.length && !canEdit) return null;
 
@@ -62,26 +85,70 @@ export function BucketPhotosSection({
             {t('bucket.photos_title')}{bucket.bucket_photos?.length > 0 ? ` · ${bucket.bucket_photos?.length}` : ''}
           </Typography>
           {bucket.bucket_photos?.length > 0 && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Typography variant="caption" color={theme.colors.foregroundMuted}>
-                {t('bucket.sort_by')}
-              </Typography>
-              <Pressable
-                ref={sortTriggerRef}
-                collapsable={false}
-                onPress={openSortMenu}
-                hitSlop={8}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              {/* Selector de 2, 3, 4 columnas */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: theme.dark ? '#1A1A1A' : theme.colors.surface,
+                  borderWidth: 1,
+                  borderColor: theme.dark ? '#2A2A2A' : theme.colors.border,
+                  borderRadius: 8,
+                  padding: 2,
+                }}
               >
-                <Typography variant="caption" color={gold[400]}>
-                  {photoSortField === 'date' ? t('bucket.sort_date') : photoSortField === 'title' ? t('bucket.sort_title') : t('bucket.sort_manual')}
+                {([2, 3, 4] as const).map((col) => {
+                  const isSelected = photoColumns === col;
+                  return (
+                    <Pressable
+                      key={col}
+                      onPress={() => handleSetPhotoColumns(col)}
+                      hitSlop={4}
+                      style={{
+                        paddingHorizontal: 7,
+                        paddingVertical: 3,
+                        borderRadius: 6,
+                        backgroundColor: isSelected ? gold[400] : 'transparent',
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${col} columnas`}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          fontWeight: isSelected ? '700' : '600',
+                          color: isSelected ? '#0D0D0D' : theme.colors.foregroundMuted,
+                        }}
+                      >
+                        {col}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Typography variant="caption" color={theme.colors.foregroundMuted}>
+                  {t('bucket.sort_by')}
                 </Typography>
-                {photoSortField === 'manual' ? null : photoSortDir === 'desc' ? (
-                  <ArrowDown color={gold[400]} size={14} />
-                ) : (
-                  <ArrowUp color={gold[400]} size={14} />
-                )}
-              </Pressable>
+                <Pressable
+                  ref={sortTriggerRef}
+                  collapsable={false}
+                  onPress={openSortMenu}
+                  hitSlop={8}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+                >
+                  <Typography variant="caption" color={gold[400]}>
+                    {photoSortField === 'date' ? t('bucket.sort_date') : photoSortField === 'title' ? t('bucket.sort_title') : t('bucket.sort_manual')}
+                  </Typography>
+                  {photoSortField === 'manual' ? null : photoSortDir === 'desc' ? (
+                    <ArrowDown color={gold[400]} size={14} />
+                  ) : (
+                    <ArrowUp color={gold[400]} size={14} />
+                  )}
+                </Pressable>
+              </View>
             </View>
           )}
         </View>
@@ -185,72 +252,106 @@ export function BucketPhotosSection({
             </Pressable>
           </>
         ) : (
-          <View style={styles.photosGrid}>
-            {photos.map((photo, index) => (
-              <Pressable
-                key={photo.id}
-                onPress={() => setViewingPhotoIndex(index)}
-                style={[
-                  styles.photoThumb,
-                  photos.length === 1 && !canEdit
-                    ? {
-                        width: '100%',
-                        height: Math.min(Math.round(containerWidth * 0.65), 300),
-                        marginBottom: 12,
-                      }
-                    : Platform.select({
-                        web: {
-                          width: 'calc(50% - 6px)',
-                          aspectRatio: 1 / 1.25,
-                        } as any,
-                        default: {
-                          width: thumbWidth,
-                          height: thumbHeight,
-                        },
-                      }),
-                ]}
-              >
-                <ExpoImage
-                  source={{ uri: storageApi.getPublicUrl(photo.thumb_path || photo.storage_path) }}
-                  style={styles.photoThumbImage}
-                  contentFit="cover"
-                  transition={200}
-                  cachePolicy="memory-disk"
-                />
-                {(() => {
-                  const vis = (photo.visibility as 'public' | 'followers' | 'private') || 'public';
-                  const VisIcon = vis === 'private' ? Lock : vis === 'followers' ? Users : Globe;
-                  const visColor = vis === 'private' ? '#EF4444' : vis === 'followers' ? '#C084FC' : '#60A5FA';
-                  return (
-                    <View
+          <View style={[styles.photosGrid, { gap }]}>
+            {photos.map((photo, index) => {
+              const is4Cols = photoColumns === 4;
+              const is3Cols = photoColumns === 3;
+              const visIconSize = is4Cols ? 10 : is3Cols ? 11 : 12;
+              const visBadgeSize = is4Cols ? 18 : is3Cols ? 20 : 24;
+
+              return (
+                <Pressable
+                  key={photo.id}
+                  onPress={() => setViewingPhotoIndex(index)}
+                  style={[
+                    styles.photoThumb,
+                    photos.length === 1 && !canEdit
+                      ? {
+                          width: '100%',
+                          height: Math.min(Math.round(containerWidth * 0.65), 300),
+                          marginBottom: 12,
+                        }
+                      : Platform.select({
+                          web: {
+                            width: `${((100 - (photoColumns - 1) * 2) / photoColumns).toFixed(2)}%`,
+                            aspectRatio: is4Cols ? 1 / 1.1 : is3Cols ? 1 / 1.18 : 1 / 1.25,
+                          } as any,
+                          default: {
+                            width: thumbWidth,
+                            height: thumbHeight,
+                          },
+                        }),
+                  ]}
+                >
+                  <ExpoImage
+                    source={{ uri: storageApi.getPublicUrl(photo.thumb_path || photo.storage_path) }}
+                    style={styles.photoThumbImage}
+                    contentFit="cover"
+                    transition={200}
+                    cachePolicy="memory-disk"
+                  />
+                  {(() => {
+                    const vis = (photo.visibility as 'public' | 'followers' | 'private') || 'public';
+                    const VisIcon = vis === 'private' ? Lock : vis === 'followers' ? Users : Globe;
+                    const visColor = vis === 'private' ? '#EF4444' : vis === 'followers' ? '#C084FC' : '#60A5FA';
+                    return (
+                      <View
+                        style={{
+                          position: 'absolute',
+                          top: is4Cols ? 3 : 5,
+                          right: is4Cols ? 3 : 5,
+                          width: visBadgeSize,
+                          height: visBadgeSize,
+                          borderRadius: visBadgeSize / 2,
+                          backgroundColor: 'rgba(0,0,0,0.65)',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <VisIcon size={visIconSize} color={visColor} strokeWidth={2.2} />
+                      </View>
+                    );
+                  })()}
+                  <View
+                    style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      backgroundColor: 'rgba(0,0,0,0.65)',
+                      paddingHorizontal: is4Cols ? 4 : 6,
+                      paddingVertical: is4Cols ? 3 : 5,
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      color="#fff"
+                      numberOfLines={1}
                       style={{
-                        position: 'absolute',
-                        top: 6,
-                        right: 6,
-                        width: 24,
-                        height: 24,
-                        borderRadius: 12,
-                        backgroundColor: 'rgba(0,0,0,0.65)',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        fontSize: is4Cols ? 9.5 : is3Cols ? 10.5 : 12,
+                        fontWeight: '600',
                       }}
                     >
-                      <VisIcon size={12} color={visColor} strokeWidth={2.2} />
-                    </View>
-                  );
-                })()}
-                <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)', padding: 6 }}>
-                  <Typography variant="caption" color="#fff" numberOfLines={1}>
-                    {photo.title || t('bucket.photo_untitled')}
-                  </Typography>
-                  <Typography variant="caption" color="rgba(255,255,255,0.7)">
-                    {photo.completed_at
-                      ? t('bucket.photo_completed', { date: new Date(photo.completed_at).toLocaleDateString(i18n.language) })
-                      : (photo.created_at ? t('bucket.photo_uploaded', { date: new Date(photo.created_at).toLocaleDateString(i18n.language) }) : '')}
-                  </Typography>
-                </View>
-              </Pressable>
-            ))}
+                      {photo.title || t('bucket.photo_untitled')}
+                    </Typography>
+                    {!is4Cols && (
+                      <Typography
+                        variant="caption"
+                        color="rgba(255,255,255,0.7)"
+                        numberOfLines={1}
+                        style={{
+                          fontSize: is3Cols ? 9 : 11,
+                        }}
+                      >
+                        {photo.completed_at
+                          ? t('bucket.photo_completed', { date: new Date(photo.completed_at).toLocaleDateString(i18n.language) })
+                          : (photo.created_at ? t('bucket.photo_uploaded', { date: new Date(photo.created_at).toLocaleDateString(i18n.language) }) : '')}
+                      </Typography>
+                    )}
+                  </View>
+                </Pressable>
+              );
+            })}
             {canEdit && (
               <Pressable
                 style={[
@@ -259,8 +360,8 @@ export function BucketPhotosSection({
                     ? { width: '100%', height: 72, flexDirection: 'row' }
                     : Platform.select({
                         web: {
-                          width: 'calc(50% - 6px)',
-                          aspectRatio: 1 / 1.25,
+                          width: `${((100 - (photoColumns - 1) * 2) / photoColumns).toFixed(2)}%`,
+                          aspectRatio: photoColumns === 4 ? 1 / 1.1 : photoColumns === 3 ? 1 / 1.18 : 1 / 1.25,
                         } as any,
                         default: {
                           width: thumbWidth,
@@ -270,7 +371,7 @@ export function BucketPhotosSection({
                 ]}
                 onPress={() => onOpenAddPhotoSheet ? onOpenAddPhotoSheet() : void pickAndUploadPhotos()}
               >
-                <Camera color={gold[400]} size={24} strokeWidth={1.8} />
+                <Camera color={gold[400]} size={photoColumns === 4 ? 18 : photoColumns === 3 ? 20 : 24} strokeWidth={1.8} />
                 {photos.length === 0 && (
                   <Typography variant="bodySemibold" color={gold[400]} style={{ marginLeft: 10 }}>
                     {t('bucket.add_photo')}
