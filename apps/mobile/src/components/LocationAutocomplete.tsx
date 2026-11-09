@@ -24,8 +24,10 @@ interface LocationAutocompleteProps {
   placeholder?: string;
 }
 
-// Google Places API Key (opcional, si está configurada se usa para máxima cobertura)
-const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY || '';
+// Google Places API Key (con fallback directo para que funcione de inmediato sin esperar a reiniciar Metro)
+const GOOGLE_PLACES_API_KEY =
+  process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY ||
+  'AIzaSyD_D_O0H5-j9EtKlu9-Nl3QHNP2fB_IbUg';
 
 // Simple in-memory cache
 const searchCache: Record<string, LocationResult[]> = {};
@@ -214,6 +216,9 @@ export function LocationAutocomplete({
           }),
         });
         const newGoogleData = await newGoogleRes.json();
+        if (newGoogleData?.error) {
+          console.warn('[LocationAutocomplete] Google Places (New) error:', newGoogleData.error);
+        }
         if (newGoogleData.suggestions && Array.isArray(newGoogleData.suggestions) && newGoogleData.suggestions.length > 0) {
           const processedGoogle: LocationResult[] = newGoogleData.suggestions.slice(0, 6).map((s: any) => {
             const p = s.placePrediction;
@@ -281,7 +286,38 @@ export function LocationAutocomplete({
           return;
         }
       } catch (err) {
-        console.warn('Google Places autocomplete fallback to Nominatim:', err);
+        console.warn('Google Places autocomplete fallback to Geocoding:', err);
+      }
+
+      // 1c. Google Geocoding API - Excelente respaldo para búsquedas con nombre y ciudad
+      try {
+        const geoRes = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(text)}&key=${GOOGLE_PLACES_API_KEY}&language=${lang}`
+        );
+        const geoData = await geoRes.json();
+        if (geoData.status === 'OK' && Array.isArray(geoData.results) && geoData.results.length > 0) {
+          const processedGeo: LocationResult[] = geoData.results.slice(0, 6).map((g: any) => {
+            const parts = (g.formatted_address || '').split(',');
+            const main = parts[0]?.trim() || g.formatted_address;
+            const sub = parts.slice(1).join(',').trim();
+            return {
+              place_id: g.place_id || g.formatted_address,
+              title: main,
+              subtitle: sub,
+              display_name: g.formatted_address,
+              lat: String(g.geometry?.location?.lat || ''),
+              lon: String(g.geometry?.location?.lng || ''),
+              isExactSite: true,
+              googlePlaceId: g.place_id,
+            };
+          });
+          searchCache[cacheKey] = processedGeo;
+          setResults(processedGeo);
+          setLoading(false);
+          return;
+        }
+      } catch (geoErr) {
+        console.warn('Google Geocoding error:', geoErr);
       }
     }
 
@@ -453,19 +489,21 @@ export function LocationAutocomplete({
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
-    zIndex: 10,
+    zIndex: 999,
+    elevation: 25,
   },
   dropdown: {
     position: 'absolute',
     top: 70, // Below the input
     left: 0,
     right: 0,
-    maxHeight: 220,
+    maxHeight: 240,
     borderWidth: 1,
     borderRadius: radii.md,
     ...shadows.md,
     overflow: 'hidden',
-    zIndex: 20,
+    zIndex: 9999,
+    elevation: 30,
   },
   resultItem: {
     flexDirection: 'row',

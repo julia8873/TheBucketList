@@ -15,7 +15,9 @@ import { fontFamily } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { LocationAutocomplete, parseNominatimResults } from './LocationAutocomplete';
 
-const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY || '';
+const GOOGLE_PLACES_API_KEY =
+  process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY ||
+  'AIzaSyD_D_O0H5-j9EtKlu9-Nl3QHNP2fB_IbUg';
 
 interface LocationPickerModalProps {
   visible: boolean;

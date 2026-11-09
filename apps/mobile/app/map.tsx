@@ -35,6 +35,10 @@ import {
 import { TaskMapPreviewCard } from '../src/features/map/components/TaskMapPreviewCard';
 import type { MapFilterType, MapTaskItem } from '../src/features/map/types';
 
+const GOOGLE_PLACES_API_KEY =
+  process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY ||
+  'AIzaSyD_D_O0H5-j9EtKlu9-Nl3QHNP2fB_IbUg';
+
 export default function MapScreen() {
   const router = useRouter();
   const { theme } = useTheme();
@@ -141,15 +145,83 @@ export default function MapScreen() {
       return;
     }
 
-    // 2. Si no hay tareas en ese lugar, buscar y hacer zoom a la ciudad / país globalmente
+    // 2. Si no hay tareas en ese lugar, buscar en Google Places / Geocoding para encontrar cualquier sitio o ciudad
+    const lang = i18n.language?.startsWith('en') ? 'en' : 'es';
+
+    if (GOOGLE_PLACES_API_KEY) {
+      // 2a. Intentar primero con Google Places API (New) para encontrar sitios concretos, bares, restaurantes o monumentos
+      try {
+        const pRes = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+          },
+          body: JSON.stringify({
+            input: query,
+            languageCode: lang,
+          }),
+        });
+        const pData = await pRes.json();
+        const firstPred = pData?.suggestions?.[0]?.placePrediction;
+        const rawPlaceId = firstPred?.placeId || (firstPred?.place?.startsWith('places/') ? firstPred.place.replace('places/', '') : firstPred?.place);
+        if (rawPlaceId) {
+          const dRes = await fetch(`https://places.googleapis.com/v1/places/${rawPlaceId}`, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+              'X-Goog-FieldMask': 'location,types',
+            },
+          });
+          const dData = await dRes.json();
+          if (dData?.location?.latitude && dData?.location?.longitude) {
+            const lat = Number(dData.location.latitude);
+            const lon = Number(dData.location.longitude);
+            const types = dData.types || [];
+            const isCountry = types.includes('country');
+            const isCity = types.includes('locality') || types.includes('administrative_area_level_2');
+            const targetZoom = isCountry ? 6 : isCity ? 12 : 16;
+            mapRef.current?.flyToLocation(lat, lon, targetZoom);
+            return;
+          }
+        }
+      } catch (gErr) {
+        console.warn('Error en Google Places en el mapa:', gErr);
+      }
+
+      // 2b. Intentar con Google Geocoding API como respaldo
+      try {
+        const geoRes = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${GOOGLE_PLACES_API_KEY}&language=${lang}`
+        );
+        const geoData = await geoRes.json();
+        if (geoData.status === 'OK' && Array.isArray(geoData.results) && geoData.results.length > 0) {
+          const first = geoData.results[0];
+          const lat = first?.geometry?.location?.lat;
+          const lon = first?.geometry?.location?.lng;
+          if (typeof lat === 'number' && typeof lon === 'number') {
+            const types = first.types || [];
+            const isCountry = types.includes('country');
+            const isCity = types.includes('locality') || types.includes('administrative_area_level_2');
+            const targetZoom = isCountry ? 6 : isCity ? 12 : 16;
+            mapRef.current?.flyToLocation(lat, lon, targetZoom);
+            return;
+          }
+        }
+      } catch (geoErr) {
+        console.warn('Error en Google Geocoding en el mapa:', geoErr);
+      }
+    }
+
+    // 3. Fallback a OpenStreetMap (Nominatim) si no hay clave de Google o falló la conexión
     try {
-      const lang = i18n.language?.startsWith('en') ? 'en,es;q=0.8' : 'es,en;q=0.8';
+      const langHeader = lang === 'en' ? 'en,es;q=0.8' : 'es,en;q=0.8';
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&accept-language=${encodeURIComponent(lang)}`,
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&accept-language=${encodeURIComponent(langHeader)}`,
         {
           headers: {
             'User-Agent': 'TheBucketListApp/1.0 (thebucketlist898@gmail.com)',
-            'Accept-Language': lang,
+            'Accept-Language': langHeader,
           },
         }
       );

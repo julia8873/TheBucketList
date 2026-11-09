@@ -55,6 +55,8 @@ export function BucketLocationModal({
               borderColor: theme.colors.border,
               padding: 20,
               minHeight: 320,
+              overflow: 'visible',
+              zIndex: 100,
             }}
             onPress={(e) => e.stopPropagation()}
           >

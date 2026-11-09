@@ -1,6 +1,10 @@
 import { supabase } from '../supabase';
 import { blockReportApi } from './blockReport';
 
+const GOOGLE_PLACES_API_KEY =
+  process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY ||
+  'AIzaSyD_D_O0H5-j9EtKlu9-Nl3QHNP2fB_IbUg';
+
 const PAGE_SIZE = 10;
 // Máximo de IDs que se envían en el filtro `not in` del servidor (evita URLs enormes).
 // Siempre se vuelve a filtrar en cliente, así que el resultado es correcto aunque se supere.
@@ -662,6 +666,58 @@ export const feedApi = {
       taskCount: p.tasks.length,
       tasks: p.tasks,
     }));
+
+    // Si no hay sitios con momentos publicados, buscar en Google Places para sugerir el lugar exacto y poder verlo en el mapa
+    if (GOOGLE_PLACES_API_KEY && places.length === 0 && clean.length >= 3) {
+      try {
+        const pRes = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+          },
+          body: JSON.stringify({
+            input: clean,
+            languageCode: 'es',
+          }),
+        });
+        const pData = await pRes.json();
+        const suggestions = (pData?.suggestions || []).slice(0, 3);
+        for (const s of suggestions) {
+          const pred = s.placePrediction;
+          const fullText = pred?.text?.text || pred?.structuredFormat?.mainText?.text;
+          const rawId = pred?.placeId || (pred?.place?.startsWith('places/') ? pred.place.replace('places/', '') : pred?.place);
+          if (rawId && fullText) {
+            let lat: number | undefined;
+            let lng: number | undefined;
+            try {
+              const dRes = await fetch(`https://places.googleapis.com/v1/places/${rawId}`, {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+                  'X-Goog-FieldMask': 'location',
+                },
+              });
+              const dData = await dRes.json();
+              if (dData?.location) {
+                lat = Number(dData.location.latitude);
+                lng = Number(dData.location.longitude);
+              }
+            } catch {}
+
+            places.push({
+              location_text: fullText,
+              lat,
+              lng,
+              taskCount: 0,
+              tasks: [],
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Error fetching Google Places in feed search:', err);
+      }
+    }
 
     return {
       tasks: mappedTasks,

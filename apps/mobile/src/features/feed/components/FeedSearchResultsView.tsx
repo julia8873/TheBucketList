@@ -191,10 +191,13 @@ export function FeedSearchResultsView({
                           {place.location_text}
                         </Typography>
                         <Typography variant="caption" color="textSecondary" style={{ marginTop: 2 }}>
-                          {place.taskCount}{' '}
-                          {place.taskCount === 1
-                            ? t('feed.moments_in_place', { defaultValue: 'momento' })
-                            : t('feed.moments_in_place_plural', { defaultValue: 'momentos' })}
+                          {place.taskCount === 0
+                            ? t('feed.first_moment_in_place', { defaultValue: 'Sé el primero en añadir un momento' })
+                            : `${place.taskCount} ${
+                                place.taskCount === 1
+                                  ? t('feed.moments_in_place', { defaultValue: 'momento' })
+                                  : t('feed.moments_in_place_plural', { defaultValue: 'momentos' })
+                              }`}
                         </Typography>
                       </View>
                       <View style={[styles.viewMapPill, { borderColor: theme.colors.border }]}>
