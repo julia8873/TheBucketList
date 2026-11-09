@@ -140,7 +140,6 @@ export default {
   fetch: withSupabase({ auth: ["secret"] }, async (req, ctx) => {
     try {
       const payload = await req.json();
-      console.log('Webhook payload:', payload);
 
       if (payload.type === 'INSERT' && payload.table === 'notifications') {
         const record = payload.record;
@@ -168,7 +167,6 @@ export default {
         }
 
         if (!pushToken) {
-          console.log('No push token found for user:', record.recipient_id);
           return Response.json({ message: 'No push token' });
         }
 
@@ -259,7 +257,6 @@ export default {
         });
 
         const expoResult = await response.json();
-        console.log('Expo Push Result:', expoResult);
         return Response.json(expoResult);
       }
 

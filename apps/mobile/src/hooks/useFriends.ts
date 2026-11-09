@@ -58,8 +58,7 @@ export function useIncomingRequestCount(userId?: string) {
     queryKey: [...FRIENDS_QUERY_KEY, 'incomingCount', userId],
     queryFn: () => friendsApi.getIncomingCount(userId!),
     enabled: !!userId,
-    staleTime: 30_000,
-    refetchInterval: 60_000,
+    staleTime: 60_000,
   });
 }
 
