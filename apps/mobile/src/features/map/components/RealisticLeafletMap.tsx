@@ -82,13 +82,12 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
         execInMap(`
           if (window.map) {
             window.map.stop();
-            ${
-              zoom !== undefined
-                ? `var curZ = window.map.getZoom();
+            ${zoom !== undefined
+            ? `var curZ = window.map.getZoom();
                    var tarZ = Math.max(curZ, ${zoom});
                    window.map.flyTo([${lat}, ${lng}], tarZ, { animate: true, duration: 1.0, easeLinearity: 0.25 });`
-                : `window.map.panTo([${lat}, ${lng}], { animate: true, duration: 0.5, easeLinearity: 0.25 });`
-            }
+            : `window.map.panTo([${lat}, ${lng}], { animate: true, duration: 0.5, easeLinearity: 0.25 });`
+          }
           }
         `);
       },
@@ -152,8 +151,8 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
       if (imageVal && !imageVal.startsWith('preset:')) {
         coverUrl =
           imageVal.startsWith('http') ||
-          imageVal.startsWith('file:') ||
-          imageVal.startsWith('content:')
+            imageVal.startsWith('file:') ||
+            imageVal.startsWith('content:')
             ? imageVal
             : storageApi.getPublicUrl(imageVal);
       }
@@ -257,7 +256,7 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
         try {
           const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
           handleIncomingMessage(data);
-        } catch {}
+        } catch { }
       };
       window.addEventListener('message', onWindowMsg);
       return () => window.removeEventListener('message', onWindowMsg);
@@ -680,11 +679,15 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
         currentLayer.addTo(map);
       };
 
-      // Debounce para re-renderizado suave en zoom
+      // Debounce para re-renderizado suave en zoom y paneo
       var zoomTimer = null;
       map.on('zoomend', function() {
         if (zoomTimer) clearTimeout(zoomTimer);
-        zoomTimer = setTimeout(renderMarkers, 60);
+        zoomTimer = setTimeout(renderMarkers, 50);
+      });
+      map.on('moveend', function() {
+        if (zoomTimer) clearTimeout(zoomTimer);
+        zoomTimer = setTimeout(renderMarkers, 50);
       });
 
       map.whenReady(function() {
@@ -705,7 +708,7 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
       renderMarkers();
     }
 
-    // Algoritmo de Agrupación, Anti-Solapamiento y Rendimiento
+    // Algoritmo de Agrupación Multi-Nivel, Anti-Solapamiento y Rendimiento
     function renderMarkers() {
       if (!map) return;
 
@@ -715,13 +718,6 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
       if (!currentTasks || currentTasks.length === 0) return;
 
       var currentZoom = map.getZoom();
-      var isZoomedIn = currentZoom >= ZOOM_THRESHOLD;
-
-      // 1. Agrupar tareas en 'Location Hubs' de forma inteligente por ciudad y radio urbano
-      // A nivel calle (zoom >= 16), mostramos puntos separados si distan más de 45m.
-      // A nivel ciudad/área (zoom < 16), agrupamos por proximidad urbana (~3.5km) y localidad.
-      var hubs = [];
-      var MERGE_DISTANCE_METERS = currentZoom >= 16 ? 45 : 3500;
 
       function getDistanceMeters(lat1, lng1, lat2, lng2) {
         var dLat = (lat2 - lat1) * 111139;
@@ -729,90 +725,43 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
         return Math.sqrt(dLat * dLat + dLng * dLng);
       }
 
-      function normalizeLoc(str) {
-        if (!str) return '';
-        return String(str).toLowerCase()
-          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-          .replace(/[^a-z0-9]/g, ' ')
-          .trim();
-      }
+      // =========================================================================
+      // NIVEL 1: ZOOM LEJANO (< 10) -> Agrupación Provincial / Regional
+      // =========================================================================
+      if (currentZoom < 10) {
+        var regionalClusters = [];
+        var REGION_RADIUS_PX = currentZoom <= 6 ? 85 : 75;
 
-      function areLocationsInSameHub(t1, t2) {
-        var dist = getDistanceMeters(t1.lat, t1.lng, t2.lat, t2.lng);
-        if (dist <= MERGE_DISTANCE_METERS) return true;
-
-        if (currentZoom < 16 && dist <= 7000) {
-          var n1 = normalizeLoc(t1.location || t1.fullLocation);
-          var n2 = normalizeLoc(t2.location || t2.fullLocation);
-          if (n1 && n2) {
-            var words1 = n1.split(/\s+/).filter(function(w) { return w.length > 2; });
-            var words2 = n2.split(/\s+/).filter(function(w) { return w.length > 2; });
-            var common = words1.some(function(w) { return words2.indexOf(w) !== -1; });
-            if (common) return true;
-          }
-        }
-        return false;
-      }
-
-      currentTasks.forEach(function(t) {
-        var targetHub = null;
-        for (var i = 0; i < hubs.length; i++) {
-          if (areLocationsInSameHub(t, hubs[i])) {
-            targetHub = hubs[i];
-            break;
-          }
-        }
-
-        if (targetHub) {
-          targetHub.tasks.push(t);
-        } else {
-          hubs.push({
-            lat: t.lat,
-            lng: t.lng,
-            location: t.location,
-            fullLocation: t.fullLocation,
-            tasks: [t]
-          });
-        }
-      });
-
-      // 2. Si el zoom es lejano (< 11): agrupar en clusters visuales para evitar solapamiento
-      if (!isZoomedIn) {
-        var clusters = [];
-        var CLUSTER_RADIUS_PX = 46;
-
-        hubs.forEach(function(hub) {
-          var pt = map.latLngToContainerPoint([hub.lat, hub.lng]);
+        currentTasks.forEach(function(t) {
+          var pt = map.latLngToContainerPoint([t.lat, t.lng]);
           var merged = false;
 
-          for (var i = 0; i < clusters.length; i++) {
-            var c = clusters[i];
+          for (var i = 0; i < regionalClusters.length; i++) {
+            var c = regionalClusters[i];
             var dist = Math.hypot(c.pt.x - pt.x, c.pt.y - pt.y);
-            if (dist < CLUSTER_RADIUS_PX) {
-              c.hubs.push(hub);
-              c.tasks = c.tasks.concat(hub.tasks);
-              c.pt.x = (c.pt.x + pt.x) / 2;
-              c.pt.y = (c.pt.y + pt.y) / 2;
+            if (dist < REGION_RADIUS_PX) {
+              c.tasks.push(t);
+              c.pt.x = (c.pt.x * (c.tasks.length - 1) + pt.x) / c.tasks.length;
+              c.pt.y = (c.pt.y * (c.tasks.length - 1) + pt.y) / c.tasks.length;
               merged = true;
               break;
             }
           }
 
           if (!merged) {
-            clusters.push({
+            regionalClusters.push({
               pt: { x: pt.x, y: pt.y },
-              center: [hub.lat, hub.lng],
-              hubs: [hub],
-              tasks: hub.tasks.slice()
+              center: [t.lat, t.lng],
+              tasks: [t]
             });
           }
         });
 
-        clusters.forEach(function(cluster) {
+        regionalClusters.forEach(function(cluster) {
           var totalInCluster = cluster.tasks.length;
           var hasSelected = cluster.tasks.some(function(t) { return t.id === selectedTaskId; });
 
-          // Si hay más de 1 tarea y ninguna seleccionada: mostrar burbuja de cluster
+          // Si hay más de 1 tarea y ninguna seleccionada: mostrar burbuja provincial de cluster
           if (totalInCluster > 1 && !hasSelected) {
             var isAllDone = cluster.tasks.every(function(t) { return t.status === 'completed'; });
             var diameter = totalInCluster > 50 ? 46 : (totalInCluster > 10 ? 40 : 34);
@@ -833,9 +782,9 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
             clusterMarker.on('click', function() {
               var bounds = L.latLngBounds(cluster.tasks.map(function(t) { return [t.lat, t.lng]; }));
               if (bounds.isValid()) {
-                map.flyToBounds(bounds.pad(0.35), { maxZoom: 14, duration: 0.9 });
+                map.flyToBounds(bounds.pad(0.35), { maxZoom: 13, duration: 0.95 });
               } else {
-                map.flyTo(cluster.center, currentZoom + 3, { duration: 0.9 });
+                map.flyTo(cluster.center, 12, { duration: 0.95 });
               }
             });
 
@@ -844,33 +793,173 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
             return;
           }
 
-          // Si es 1 sola tarea o contiene la seleccionada: mostrar marcadores de todos los hubs del cluster
-          cluster.hubs.forEach(function(h) {
-            renderSingleHub(h, isZoomedIn);
+          // Si es 1 sola tarea o contiene la seleccionada:
+          cluster.tasks.forEach(function(t) {
+            var isSel = t.id === selectedTaskId;
+            renderSingleHub({
+              lat: t.lat,
+              lng: t.lng,
+              location: t.location,
+              fullLocation: t.fullLocation,
+              tasks: [t]
+            }, isSel, 0, 0);
           });
         });
         return;
       }
 
-      // 3. Si el zoom es de ciudad o cercano (>= 11): renderizar cada Hub con tarjeta o etiqueta
-      // Aplicar micro-offset anti-solapamiento si dos hubs están muy cerca en pantalla
-      for (var i = 0; i < hubs.length; i++) {
-        var h1 = hubs[i];
-        var pt1 = map.latLngToContainerPoint([h1.lat, h1.lng]);
-        var offsetLat = 0;
-        var offsetLng = 0;
+      // =========================================================================
+      // NIVEL 2: ZOOM MEDIO (10 <= zoom < 14) -> Agrupación por Ciudad / Municipio
+      // =========================================================================
+      if (currentZoom < 14) {
+        var cityClusters = [];
+        var CITY_RADIUS_PX = 48;
 
-        for (var j = 0; j < i; j++) {
-          var h2 = hubs[j];
-          var pt2 = map.latLngToContainerPoint([h2.lat, h2.lng]);
-          if (Math.hypot(pt1.x - pt2.x, pt1.y - pt2.y) < 26) {
-            offsetLat += (i % 2 === 0 ? 0.00012 : -0.00012);
-            offsetLng += (i % 3 === 0 ? 0.00018 : -0.00018);
+        currentTasks.forEach(function(t) {
+          var pt = map.latLngToContainerPoint([t.lat, t.lng]);
+          var merged = false;
+
+          for (var i = 0; i < cityClusters.length; i++) {
+            var c = cityClusters[i];
+            var dist = Math.hypot(c.pt.x - pt.x, c.pt.y - pt.y);
+            if (dist < CITY_RADIUS_PX) {
+              c.tasks.push(t);
+              c.pt.x = (c.pt.x * (c.tasks.length - 1) + pt.x) / c.tasks.length;
+              c.pt.y = (c.pt.y * (c.tasks.length - 1) + pt.y) / c.tasks.length;
+              merged = true;
+              break;
+            }
+          }
+
+          if (!merged) {
+            cityClusters.push({
+              pt: { x: pt.x, y: pt.y },
+              center: [t.lat, t.lng],
+              tasks: [t]
+            });
+          }
+        });
+
+        cityClusters.forEach(function(cluster) {
+          var totalInCluster = cluster.tasks.length;
+          var hasSelected = cluster.tasks.some(function(t) { return t.id === selectedTaskId; });
+
+          if (totalInCluster > 1 && !hasSelected) {
+            var isAllDone = cluster.tasks.every(function(t) { return t.status === 'completed'; });
+            var diameter = totalInCluster > 20 ? 42 : (totalInCluster > 5 ? 36 : 32);
+            var fontSize = diameter > 36 ? 12 : 11;
+
+            var clusterHtml = '<div class="cluster-bubble ' + (isAllDone ? 'all-completed' : '') + '" style="width:' + diameter + 'px;height:' + diameter + 'px;font-size:' + fontSize + 'px;">' +
+                                totalInCluster +
+                              '</div>';
+
+            var clusterIcon = L.divIcon({
+              html: clusterHtml,
+              className: '',
+              iconSize: [diameter, diameter],
+              iconAnchor: [diameter / 2, diameter / 2]
+            });
+
+            var clusterMarker = L.marker(cluster.center, { icon: clusterIcon });
+            clusterMarker.on('click', function() {
+              var bounds = L.latLngBounds(cluster.tasks.map(function(t) { return [t.lat, t.lng]; }));
+              if (bounds.isValid()) {
+                map.flyToBounds(bounds.pad(0.35), { maxZoom: 15, duration: 0.95 });
+              } else {
+                map.flyTo(cluster.center, 15, { duration: 0.95 });
+              }
+            });
+
+            clusterMarker.addTo(map);
+            currentMarkers.push(clusterMarker);
+            return;
+          }
+
+          // Si es 1 sola tarea o contiene la seleccionada:
+          cluster.tasks.forEach(function(t) {
+            var isSel = t.id === selectedTaskId;
+            renderSingleHub({
+              lat: t.lat,
+              lng: t.lng,
+              location: t.location,
+              fullLocation: t.fullLocation,
+              tasks: [t]
+            }, isSel, 0, 0);
+          });
+        });
+        return;
+      }
+
+      // =========================================================================
+      // NIVEL 3: ZOOM CERCANO / DETALLADO (zoom >= 14) -> Sitios Exactos con Anti-Solapamiento
+      // =========================================================================
+      // 1. Agrupar tareas en las MISMAS coordenadas exactas (< 35m) en un Hub
+      var hubs = [];
+      currentTasks.forEach(function(t) {
+        var targetHub = null;
+        for (var i = 0; i < hubs.length; i++) {
+          var dist = getDistanceMeters(t.lat, t.lng, hubs[i].lat, hubs[i].lng);
+          if (dist <= 35) {
+            targetHub = hubs[i];
+            break;
           }
         }
 
-        renderSingleHub(h1, true, offsetLat, offsetLng);
-      }
+        if (targetHub) {
+          targetHub.tasks.push(t);
+        } else {
+          hubs.push({
+            lat: t.lat,
+            lng: t.lng,
+            location: t.location,
+            fullLocation: t.fullLocation,
+            tasks: [t]
+          });
+        }
+      });
+
+      // 2. Priorizar el hub que contiene la tarea seleccionada
+      hubs.sort(function(a, b) {
+        var aHasSel = a.tasks.some(function(t) { return t.id === selectedTaskId; });
+        var bHasSel = b.tasks.some(function(t) { return t.id === selectedTaskId; });
+        if (aHasSel && !bHasSel) return -1;
+        if (!aHasSel && bHasSel) return 1;
+        return 0;
+      });
+
+      // 3. Detección de colisión de bounding boxes en pantalla para prevenir solapamiento de tarjetas
+      var placedCardBoxes = [];
+
+      hubs.forEach(function(hub) {
+        var pt = map.latLngToContainerPoint([hub.lat, hub.lng]);
+        var hasSel = hub.tasks.some(function(t) { return t.id === selectedTaskId; });
+
+        // Caja de la tarjeta detallada (~195px de ancho por ~46px de alto, anclada en el fondo)
+        var cardBox = {
+          x1: pt.x - 98,
+          x2: pt.x + 98,
+          y1: pt.y - 48,
+          y2: pt.y + 4
+        };
+
+        var collides = false;
+        for (var b = 0; b < placedCardBoxes.length; b++) {
+          var o = placedCardBoxes[b];
+          if (!(cardBox.x2 < o.x1 || cardBox.x1 > o.x2 || cardBox.y2 < o.y1 || cardBox.y1 > o.y2)) {
+            collides = true;
+            break;
+          }
+        }
+
+        // Si es la seleccionada o no colisiona con otra tarjeta existente: mostrar tarjeta completa
+        if (hasSel || !collides) {
+          placedCardBoxes.push(cardBox);
+          renderSingleHub(hub, true, 0, 0);
+        } else {
+          // Si colisiona: mostrar elegante pin compacto (evitando solapamiento visual de textos)
+          renderSingleHub(hub, false, 0, 0);
+        }
+      });
     }
 
     function renderSingleHub(hub, isDetailed, offsetLat, offsetLng) {

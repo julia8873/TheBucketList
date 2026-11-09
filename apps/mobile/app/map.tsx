@@ -27,7 +27,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMapTasks } from '../src/features/map/hooks/useMapTasks';
 import type {
   RealisticMapRef,
-  MapLayerMode} from '../src/features/map/components/RealisticLeafletMap';
+  MapLayerMode
+} from '../src/features/map/components/RealisticLeafletMap';
 import {
   RealisticLeafletMap
 } from '../src/features/map/components/RealisticLeafletMap';
@@ -95,17 +96,16 @@ export default function MapScreen() {
         const dLat = (t.location_lat - task.location_lat) * 111139;
         const dLng = (t.location_lng - task.location_lng) * 85000;
         const dist = Math.sqrt(dLat * dLat + dLng * dLng);
-        if (dist <= 3500) return true;
-        // Comprobar coincidencia de nombre de ciudad si dist < 7km
-        if (dist <= 7000 && t.location_text && task.location_text) {
-          const loc1 = t.location_text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-          const loc2 = task.location_text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-          const words1 = loc1.split(/[^a-z0-9]+/).filter((w) => w.length > 2);
-          const words2 = loc2.split(/[^a-z0-9]+/).filter((w) => w.length > 2);
-          if (words1.some((w) => words2.includes(w))) return true;
-        }
-        return false;
-      });
+          if (dist <= 45) return true;
+          if (
+            t.location_text &&
+            task.location_text &&
+            t.location_text.toLowerCase().trim() === task.location_text.toLowerCase().trim()
+          ) {
+            return true;
+          }
+          return false;
+        });
       setSelectedLocationTasks(sameLocation.length > 0 ? sameLocation : [task]);
     }
     // Centrar suavemente manteniendo el nivel de zoom actual del usuario (sin cambiar zoom)
