@@ -1,6 +1,10 @@
 export async function onRequest(context) {
   const { request, env, params } = context;
-  const profileId = params.id;
+  const url = new URL(request.url);
+
+  const rawId = params?.id;
+  const pathParts = url.pathname.split('/').filter(Boolean);
+  const profileId = String(Array.isArray(rawId) ? rawId[0] : (rawId || pathParts[1] || '')).trim();
 
   const siteUrl = 'https://thebucketlist-8zk.pages.dev';
   const pageUrl = `${siteUrl}/profile/${profileId}`;
@@ -11,30 +15,32 @@ export async function onRequest(context) {
   let bio = "";
 
   try {
-    const supabaseUrl = env.EXPO_PUBLIC_SUPABASE_URL || 'https://fazxqjznuehrwkungmjm.supabase.co';
-    const anonKey = env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhenhxanpudWVocndrdW5nbWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzE5NDEsImV4cCI6MjEwNzMwNzk0MX0.1i4vocM3OAet2tzm3hLJYy-RcV03XuIPbZDdlKNTtlM';
+    const supabaseUrl = (env?.EXPO_PUBLIC_SUPABASE_URL || 'https://fazxqjznuehrwkungmjm.supabase.co').trim();
+    const anonKey = (env?.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhenhxanpudWVocndrdW5nbWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzE5NDEsImV4cCI6MjEwNzMwNzk0MX0.1i4vocM3OAet2tzm3hLJYy-RcV03XuIPbZDdlKNTtlM').trim();
 
-    const rpcResponse = await fetch(`${supabaseUrl}/rest/v1/rpc/get_share_preview`, {
-      method: 'POST',
-      headers: {
-        apikey: anonKey,
-        Authorization: `Bearer ${anonKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        p_type: 'profile',
-        p_id: profileId,
-      }),
-    });
+    if (profileId) {
+      const rpcResponse = await fetch(`${supabaseUrl}/rest/v1/rpc/get_share_preview`, {
+        method: 'POST',
+        headers: {
+          apikey: anonKey,
+          Authorization: `Bearer ${anonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          p_type: 'profile',
+          p_id: profileId,
+        }),
+      });
 
-    if (rpcResponse.ok) {
-      const data = await rpcResponse.json();
-      if (data) {
-        username = data.username || '';
-        displayName = data.title || data.username || '';
-        bio = data.description || '';
-        if (data.avatar_url) {
-          avatarUrl = data.avatar_url;
+      if (rpcResponse.ok) {
+        const data = await rpcResponse.json();
+        if (data) {
+          username = data.username || '';
+          displayName = data.title || data.username || '';
+          bio = data.description || '';
+          if (data.avatar_url) {
+            avatarUrl = data.avatar_url;
+          }
         }
       }
     }
@@ -85,7 +91,7 @@ export async function onRequest(context) {
     return new Response(html, {
       headers: {
         "content-type": "text/html; charset=utf-8",
-        "cache-control": "public, max-age=300",
+        "cache-control": "no-cache, no-store, must-revalidate",
       },
     });
   } catch (err) {
@@ -104,6 +110,7 @@ export async function onRequest(context) {
     return new Response(fallbackHtml, {
       headers: {
         "content-type": "text/html; charset=utf-8",
+        "cache-control": "no-cache, no-store, must-revalidate",
       },
     });
   }

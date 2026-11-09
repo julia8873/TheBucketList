@@ -1,6 +1,10 @@
 export async function onRequest(context) {
   const { request, env, params } = context;
-  const albumId = params.id;
+  const url = new URL(request.url);
+
+  const rawId = params?.id;
+  const pathParts = url.pathname.split('/').filter(Boolean);
+  const albumId = String(Array.isArray(rawId) ? rawId[0] : (rawId || pathParts[1] || '')).trim();
 
   const siteUrl = 'https://thebucketlist-8zk.pages.dev';
   const pageUrl = `${siteUrl}/album/${albumId}`;
@@ -11,31 +15,33 @@ export async function onRequest(context) {
   let description = "";
 
   try {
-    const supabaseUrl = env.EXPO_PUBLIC_SUPABASE_URL || 'https://fazxqjznuehrwkungmjm.supabase.co';
-    const anonKey = env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhenhxanpudWVocndrdW5nbWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzE5NDEsImV4cCI6MjEwNzMwNzk0MX0.1i4vocM3OAet2tzm3hLJYy-RcV03XuIPbZDdlKNTtlM';
+    const supabaseUrl = (env?.EXPO_PUBLIC_SUPABASE_URL || 'https://fazxqjznuehrwkungmjm.supabase.co').trim();
+    const anonKey = (env?.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhenhxanpudWVocndrdW5nbWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzE5NDEsImV4cCI6MjEwNzMwNzk0MX0.1i4vocM3OAet2tzm3hLJYy-RcV03XuIPbZDdlKNTtlM').trim();
 
-    const rpcResponse = await fetch(`${supabaseUrl}/rest/v1/rpc/get_share_preview`, {
-      method: 'POST',
-      headers: {
-        apikey: anonKey,
-        Authorization: `Bearer ${anonKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        p_type: 'album',
-        p_id: albumId,
-      }),
-    });
+    if (albumId) {
+      const rpcResponse = await fetch(`${supabaseUrl}/rest/v1/rpc/get_share_preview`, {
+        method: 'POST',
+        headers: {
+          apikey: anonKey,
+          Authorization: `Bearer ${anonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          p_type: 'album',
+          p_id: albumId,
+        }),
+      });
 
-    if (rpcResponse.ok) {
-      const data = await rpcResponse.json();
-      if (data && data.title) {
-        title = data.title;
-        description = data.description || '';
-        username = data.creator_username || '';
+      if (rpcResponse.ok) {
+        const data = await rpcResponse.json();
+        if (data && data.title) {
+          title = data.title;
+          description = data.description || '';
+          username = data.creator_username || '';
 
-        if (data.cover_image && !data.cover_image.startsWith('preset:') && !data.cover_image.startsWith('#')) {
-          imageUrl = `${supabaseUrl}/storage/v1/object/public/photos/${data.cover_image}`;
+          if (data.cover_image && !data.cover_image.startsWith('preset:') && !data.cover_image.startsWith('#')) {
+            imageUrl = `${supabaseUrl}/storage/v1/object/public/photos/${data.cover_image}`;
+          }
         }
       }
     }
@@ -85,7 +91,7 @@ export async function onRequest(context) {
     return new Response(html, {
       headers: {
         "content-type": "text/html; charset=utf-8",
-        "cache-control": "public, max-age=300",
+        "cache-control": "no-cache, no-store, must-revalidate",
       },
     });
   } catch (err) {
@@ -104,6 +110,7 @@ export async function onRequest(context) {
     return new Response(fallbackHtml, {
       headers: {
         "content-type": "text/html; charset=utf-8",
+        "cache-control": "no-cache, no-store, must-revalidate",
       },
     });
   }
