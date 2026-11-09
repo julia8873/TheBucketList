@@ -357,6 +357,9 @@ const es = {
     profile_of: 'Perfil de {{name}}',
     location_title: 'Ubicación',
     remove_location: 'Quitar ubicación',
+    share_moment_intro: '✨ ¡Mira este plan en TheBucketList!',
+    share_moment_view: 'Ver plan en la app o web:',
+    share_download_app: 'Descárgate TheBucketList gratis en Google Play:',
     add_photo_sheet_title: 'Añadir foto',
     add_photo_sheet_subtitle: 'Elige el origen de tu foto',
     camera_option: 'Cámara',
@@ -2706,6 +2709,9 @@ const es = {
   },
 
   album_detail: {
+    share_album_intro: '✨ ¡Mira este álbum en TheBucketList!',
+    share_album_view: 'Ver álbum en la app o web:',
+    share_download_app: 'Descárgate TheBucketList gratis en Google Play:',
     follow_error: 'No se pudo seguir al usuario',
     remove_collab_error: 'No se pudo quitar al colaborador',
     update_collabs_error: 'No se pudo actualizar a los colaboradores',

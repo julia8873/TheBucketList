@@ -1198,8 +1198,19 @@ export function useAlbumDetailState() {
   const handleShare = async () => {
     if (!album) return;
     try {
+      const siteUrl = (process.env['EXPO_PUBLIC_SITE_URL'] || 'https://thebucketlist-8zk.pages.dev').replace(/\/$/, '');
+      const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.thebucketlist.app';
+      const title = album.title;
+      const desc = album.description ? `\n\n${album.description}` : '';
+      const link = `\n\n🔗 ${t('album_detail.share_album_view', { defaultValue: 'Ver álbum en la app o web:' })}\n${siteUrl}/album/${album.id}`;
+      const storeLink = `\n\n📲 ${t('album_detail.share_download_app', { defaultValue: 'Descárgate TheBucketList gratis en Google Play:' })}\n${playStoreUrl}`;
+
+      const message = `${t('album_detail.share_album_intro', { defaultValue: '✨ ¡Mira este álbum en TheBucketList!' })}\n«${title}»${desc}${link}${storeLink}`;
+
       await Share.share({
-        message: `Mira mi álbum «${album.title}» en TheBucketList`,
+        title: album.title,
+        message,
+        url: `${siteUrl}/album/${album.id}`,
       });
     } catch (error) {
       console.error(error);

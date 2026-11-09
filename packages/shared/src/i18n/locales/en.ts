@@ -357,6 +357,9 @@ const en = {
     profile_of: "{{name}}'s profile",
     location_title: 'Location',
     remove_location: 'Remove location',
+    share_moment_intro: '✨ Check out this bucket list idea on TheBucketList!',
+    share_moment_view: 'View idea in app or web:',
+    share_download_app: 'Get TheBucketList free on Google Play:',
     add_photo_sheet_title: 'Add photo',
     add_photo_sheet_subtitle: 'Choose photo source',
     camera_option: 'Camera',
@@ -2706,6 +2709,9 @@ const en = {
   },
 
   album_detail: {
+    share_album_intro: '✨ Check out this album on TheBucketList!',
+    share_album_view: 'View album in app or web:',
+    share_download_app: 'Get TheBucketList free on Google Play:',
     follow_error: 'Could not follow user',
     remove_collab_error: 'Could not remove collaborator',
     update_collabs_error: 'Could not update collaborators',
