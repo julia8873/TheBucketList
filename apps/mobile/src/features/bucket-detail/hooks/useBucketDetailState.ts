@@ -500,16 +500,30 @@ export function useBucketDetailState() {
   const shareMoment = async () => {
     try {
       const siteUrl = (process.env['EXPO_PUBLIC_SITE_URL'] || 'https://thebucketlist-8zk.pages.dev').replace(/\/$/, '');
-      const shareUrl = `${siteUrl}/bucket/${bucket?.id}`;
       const title = bucket?.title || '';
-      const location = bucket?.location_text ? ` 📍 ${bucket.location_text}` : '';
+      const location = bucket?.location_text || '';
+      const authorUsername = bucket?.user?.username || (user as any)?.user_metadata?.username || '';
 
-      // La URL al inicio activa en WhatsApp / iMessage / Telegram la tarjeta visual grande con foto y logo (Open Graph estilo Instagram)
-      const message = `${shareUrl}\n\n✨ «${title}»${location}`;
+      const rawImg = resolveTaskImage(bucket);
+      let photoUrl = '';
+      if (rawImg && !rawImg.startsWith('preset:') && !rawImg.startsWith('#')) {
+        photoUrl = rawImg.startsWith('http')
+          ? rawImg
+          : `https://fazxqjznuehrwkungmjm.supabase.co/storage/v1/object/public/photos/${rawImg}`;
+      }
+
+      const params = new URLSearchParams();
+      if (title) params.set('t', title);
+      if (photoUrl) params.set('img', photoUrl);
+      if (location) params.set('loc', location);
+      if (authorUsername) params.set('u', authorUsername);
+
+      const qs = params.toString();
+      const shareUrl = `${siteUrl}/bucket/${bucket?.id}${qs ? `?${qs}` : ''}`;
 
       await Share.share({
         title: bucket?.title,
-        message,
+        message: shareUrl,
         url: shareUrl,
       });
     } catch (error) {

@@ -1199,15 +1199,26 @@ export function useAlbumDetailState() {
     if (!album) return;
     try {
       const siteUrl = (process.env['EXPO_PUBLIC_SITE_URL'] || 'https://thebucketlist-8zk.pages.dev').replace(/\/$/, '');
-      const shareUrl = `${siteUrl}/album/${album.id}`;
-      const title = album.title;
+      const title = album.title || '';
+      const authorUsername = album.owner?.username || '';
+      let photoUrl = '';
+      if (album.coverPath && !album.coverPath.startsWith('preset:') && !album.coverPath.startsWith('#')) {
+        photoUrl = album.coverPath.startsWith('http')
+          ? album.coverPath
+          : `https://fazxqjznuehrwkungmjm.supabase.co/storage/v1/object/public/photos/${album.coverPath}`;
+      }
 
-      // La URL al inicio activa la tarjeta enriquecida con foto en WhatsApp y redes sociales
-      const message = `${shareUrl}\n\n✨ «${title}»`;
+      const params = new URLSearchParams();
+      if (title) params.set('t', title);
+      if (photoUrl) params.set('img', photoUrl);
+      if (authorUsername) params.set('u', authorUsername);
+
+      const qs = params.toString();
+      const shareUrl = `${siteUrl}/album/${album.id}${qs ? `?${qs}` : ''}`;
 
       await Share.share({
         title: album.title,
-        message,
+        message: shareUrl,
         url: shareUrl,
       });
     } catch (error) {
