@@ -14,6 +14,7 @@ import { useAuthStore } from '../../src/stores/auth.store';
 import { OptionDialog } from '../../src/components/SettingsParts';
 import { initialsOf } from '../../src/utils/initials';
 import { uploadAvatar } from '../../src/services/api/avatar';
+import { getCharCount, truncateChars } from '../../src/utils/unicodeUtils';
 
 const BIO_MAX = 120;
 const USERNAME_RE = /^[a-z0-9._]{3,20}$/;
@@ -244,8 +245,7 @@ export default function EditProfileScreen() {
           <Label gold={t('profile.display_name')} />
           <TextInput
             value={displayName}
-            onChangeText={setDisplayName}
-            maxLength={40}
+            onChangeText={(v) => setDisplayName(truncateChars(v, 40))}
             placeholderTextColor={theme.colors.foregroundSubtle}
             style={[fieldStyle, styles.input, { color: theme.colors.foreground }]}
           />
@@ -255,7 +255,7 @@ export default function EditProfileScreen() {
             <Text style={[{ color: theme.colors.foregroundMuted, fontFamily: fontFamily.regular, fontSize: 16, lineHeight: 52, paddingHorizontal: 0, includeFontPadding: false }]}>@</Text>
             <TextInput
               value={username}
-              onChangeText={(v) => setUsername(v.replace(/\s/g, '').toLowerCase())}
+              onChangeText={(v) => setUsername(v.replace(/\s/g, '').toLowerCase().slice(0, 20))}
               autoCapitalize="none"
               autoCorrect={false}
               maxLength={20}
@@ -268,7 +268,7 @@ export default function EditProfileScreen() {
           <Label gold={t('profile.bio_a')} rest={t('profile.bio_b')} />
           <TextInput
             value={bio}
-            onChangeText={(v) => setBio(v.slice(0, BIO_MAX))}
+            onChangeText={(v) => setBio(truncateChars(v, BIO_MAX))}
             onFocus={() => setBioFocused(true)}
             onBlur={() => setBioFocused(false)}
             multiline
@@ -281,7 +281,7 @@ export default function EditProfileScreen() {
               bioFocused && { borderColor: theme.colors.primary },
             ]}
           />
-          <Text style={[styles.counter, { color: theme.colors.foregroundMuted }]}>{bio.length}/{BIO_MAX}</Text>
+          <Text style={[styles.counter, { color: theme.colors.foregroundMuted }]}>{getCharCount(bio)}/{BIO_MAX}</Text>
 
           <Label gold={t('profile.email_a')} rest={t('profile.email_b')} />
           <TextInput

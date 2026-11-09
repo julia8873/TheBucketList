@@ -20,6 +20,7 @@ import { displayNameOf, initialsOf } from '../utils/initials';
 import { OfficialBadge, isUserAdmin } from './OfficialBadge';
 import { FollowButton } from './FollowButton';
 import type { FollowStatus } from '../services/api/friends';
+import { getCharCount, truncateChars } from '../utils/unicodeUtils';
 
 interface ItemLikesModalProps {
   visible: boolean;
@@ -170,7 +171,7 @@ function ItemLikesModalContent({
                     numberOfLines={1}
                     ellipsizeMode="tail"
                   >
-                    {title.length > 55 ? `${title.slice(0, 52).trim()}...` : title}
+                    {getCharCount(title) > 55 ? `${truncateChars(title, 52).trim()}...` : title}
                   </Text>
                 ) : null}
               </View>

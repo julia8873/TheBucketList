@@ -8,6 +8,7 @@ import { TagSheetShell } from './TagSheetShell';
 import { TagAppearanceFields, GoldLabel } from './TagAppearanceFields';
 import { ConfirmDialog } from './SettingsParts';
 import { TAG_COLORS, TAG_NAME_MAX, hexToRgba } from '../constants/tagPresets';
+import { getCharCount, truncateChars } from '../utils/unicodeUtils';
 import { useCreateTag, useDeleteTag, useTags, useUpdateTag, type Tag } from '../hooks/useTags';
 
 const GOLD = '#D4B13A';
@@ -142,19 +143,18 @@ export function TagEditSheet({ visible, tag, usageCount = 0, onClose, onSaved, o
               style={[styles.input, { color: theme.colors.foreground }]}
               value={name}
               onChangeText={(t2) => {
-                setName(t2.slice(0, TAG_NAME_MAX));
+                setName(truncateChars(t2, TAG_NAME_MAX));
                 setError(null);
               }}
               placeholder={t('tags.name_placeholder')}
               placeholderTextColor={theme.colors.foregroundSubtle ?? '#6B6B6B'}
-              maxLength={TAG_NAME_MAX}
               autoFocus={!isEdit}
               returnKeyType="done"
               onSubmitEditing={() => void save()}
               accessibilityLabel={t('tags.name_accessibility')}
             />
             <Text style={[styles.counter, { color: theme.colors.foregroundMuted }]}>
-              {name.length}/{TAG_NAME_MAX}
+              {getCharCount(name)}/{TAG_NAME_MAX}
             </Text>
           </View>
           {!!errorText && <Text style={styles.errorText}>{errorText}</Text>}

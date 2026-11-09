@@ -21,6 +21,7 @@ import { useTranslation } from '@bucketlist/shared';
 import { useTags, useCreateTag } from '../hooks/useTags';
 import { TagAppearanceFields } from './TagAppearanceFields';
 import { TAG_COLORS, TAG_NAME_MAX, defaultColorForEmoji, defaultEmojiFor, hexToRgba } from '../constants/tagPresets';
+import { truncateChars } from '../utils/unicodeUtils';
 
 export interface TagItem {
     id: string;
@@ -158,7 +159,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
     };
 
     const openCreate = (prefill = '') => {
-        setName(prefill.slice(0, TAG_NAME_MAX));
+        setName(truncateChars(prefill, TAG_NAME_MAX));
         setColor(nextColor);
         setEmoji(null);
         setCreateSession((n) => n + 1);
@@ -346,7 +347,7 @@ export function TagPickerSheet({ visible, selectedTags, onChange, onClose }: Tag
                     ]}
                     value={name}
                     onChangeText={(t) => {
-                        setName(t.slice(0, TAG_NAME_MAX));
+                        setName(truncateChars(t, TAG_NAME_MAX));
                         setSubmitError(null);
                     }}
                     placeholder={t('tags.name_placeholder')}

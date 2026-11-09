@@ -8,6 +8,7 @@ import { supabase } from '../../src/services/supabase';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useOnboardingStore } from '../../src/stores/onboarding.store';
 import { AuthScreen, AuthInput, PillButton, TextAction } from '../../src/components/auth/AuthParts';
+import { getCharCount, truncateChars } from '../../src/utils/unicodeUtils';
 
 const MAX = 120;
 
@@ -60,21 +61,20 @@ export default function BioScreen() {
           label={t('onboarding.bio_label')}
           placeholder={t('onboarding.bio_placeholder')}
           value={bio}
-          onChangeText={(v) => { setBio(v.slice(0, MAX)); setError(null); }}
-          maxLength={MAX}
+          onChangeText={(v) => { setBio(truncateChars(v, MAX)); setError(null); }}
           multiline
           autoCapitalize="sentences"
           autoCorrect
           error={error}
         />
-        <Text style={[styles.counter, { color: theme.colors.foregroundSubtle }]}>{bio.length}/{MAX}</Text>
+        <Text style={[styles.counter, { color: theme.colors.foregroundSubtle }]}>{getCharCount(bio)}/{MAX}</Text>
       </View>
 
       <View style={styles.chips}>
         {suggestions.map((sug) => (
           <Pressable
             key={sug}
-            onPress={() => setBio(sug.slice(0, MAX))}
+            onPress={() => setBio(truncateChars(sug, MAX))}
             accessibilityRole="button"
             style={[styles.chip, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
           >

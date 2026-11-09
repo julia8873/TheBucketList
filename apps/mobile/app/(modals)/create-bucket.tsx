@@ -24,6 +24,7 @@ import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context'
 import { styles } from '../../src/features/task-form/styles/task-form.styles';
 import { SectionTitle } from '../../src/features/task-form/components/SectionTitle';
 import { processBucketImage } from '@bucketlist/shared';
+import { getCharCount, truncateChars } from '../../src/utils/unicodeUtils';
 import { useIsAdmin } from '../../src/hooks/useCurrentUserProfile';
 import {
   TaskCoverBanner,
@@ -350,8 +351,7 @@ export default function CreateBucketModal() {
                     placeholder={t('task_form.title_placeholder', { defaultValue: 'Ej. Ver auroras boreales' })}
                     placeholderTextColor={theme.colors.foregroundMuted}
                     value={value}
-                    onChangeText={onChange}
-                    maxLength={200}
+                    onChangeText={(text) => onChange(truncateChars(text, 200))}
                     onFocus={() => {
                       setIsTitleFocused(true);
                       // Baja la pantalla para que el título quede por encima del teclado.
@@ -362,9 +362,9 @@ export default function CreateBucketModal() {
                     onBlur={() => setIsTitleFocused(false)}
                     accessibilityLabel={t('task_form.title_placeholder', { defaultValue: 'Título de la tarea' })}
                   />
-                  {value && value.length > 150 ? (
+                  {value && getCharCount(value) > 150 ? (
                     <Text style={{ alignSelf: 'flex-end', fontSize: 12, color: theme.colors.foregroundMuted, marginTop: 4 }}>
-                      {value.length}/200
+                      {getCharCount(value)}/200
                     </Text>
                   ) : null}
                 </View>
@@ -399,8 +399,7 @@ export default function CreateBucketModal() {
                     isDescFocused && { borderColor: '#D4B13A' },
                   ]}
                   value={value || ''}
-                  onChangeText={onChange}
-                  maxLength={1000}
+                  onChangeText={(text) => onChange(truncateChars(text, 1000))}
                   placeholder={t('task_form.desc_placeholder', { defaultValue: 'Cuéntanos más sobre esta tarea…' })}
                   placeholderTextColor={theme.colors.foregroundMuted}
                   accessibilityLabel={t('task_form.desc_placeholder', { defaultValue: 'Descripción de la tarea' })}

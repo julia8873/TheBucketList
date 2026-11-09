@@ -28,6 +28,7 @@ import { AlbumTasksSection } from '../../src/features/album-form/components/Albu
 import { AlbumCollaboratorsSection } from '../../src/features/album-form/components/AlbumCollaboratorsSection';
 import { TaskPriorityPicker } from '../../src/features/task-form/components/TaskPriorityPicker';
 import { useAlbumFormData } from '../../src/features/album-form/hooks/useAlbumFormData';
+import { truncateChars } from '../../src/utils/unicodeUtils';
 
 export default function CreateAlbumScreen() {
   const router = useRouter();
@@ -137,7 +138,7 @@ export default function CreateAlbumScreen() {
                 isNameFocused && { borderColor: '#D4B13A' },
               ]}
               value={name}
-              onChangeText={setName}
+              onChangeText={(text) => setName(truncateChars(text, 200))}
               onFocus={() => setIsNameFocused(true)}
               onBlur={() => setIsNameFocused(false)}
               placeholder={t('albums.name_placeholder')}
@@ -163,7 +164,7 @@ export default function CreateAlbumScreen() {
                 isDescFocused && { borderColor: '#D4B13A' },
               ]}
               value={description}
-              onChangeText={setDescription}
+              onChangeText={(text) => setDescription(truncateChars(text, 1000))}
               onFocus={() => setIsDescFocused(true)}
               onBlur={() => setIsDescFocused(false)}
               placeholder={t('albums.description_placeholder')}

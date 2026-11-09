@@ -16,6 +16,7 @@ import { useTranslation } from '@bucketlist/shared';
 import { ReportModal } from './ReportModal';
 import { CommentThreadView } from './comments/CommentRow';
 import { useCommentsController } from './comments/useCommentsController';
+import { getCharCount, truncateChars } from '../utils/unicodeUtils';
 
 interface TaskCommentsModalProps {
   visible: boolean;
@@ -145,10 +146,11 @@ function TaskCommentsModalContent({
   };
 
   const handleTextChange = (newText: string) => {
-    setText(newText);
+    const safeText = truncateChars(newText, 1000);
+    setText(safeText);
 
     // Detectar si el usuario está escribiendo una mención con @
-    const lastAtIndex = newText.lastIndexOf('@');
+    const lastAtIndex = safeText.lastIndexOf('@');
     if (lastAtIndex !== -1) {
       const textAfterAt = newText.slice(lastAtIndex + 1);
       if (!textAfterAt.includes(' ') && !textAfterAt.includes('\n')) {
@@ -245,7 +247,7 @@ function TaskCommentsModalContent({
                     numberOfLines={1}
                     ellipsizeMode="tail"
                   >
-                    {effectiveTitle.length > 55 ? `${effectiveTitle.slice(0, 52).trim()}...` : effectiveTitle}
+                    {getCharCount(effectiveTitle) > 55 ? `${truncateChars(effectiveTitle, 52).trim()}...` : effectiveTitle}
                   </Text>
                 ) : null}
               </View>
@@ -421,7 +423,6 @@ function TaskCommentsModalContent({
                 onChangeText={handleTextChange}
                 onFocus={scrollToLatest}
                 multiline
-                maxLength={1000}
               />
               <Pressable
                 onPress={handleSend}

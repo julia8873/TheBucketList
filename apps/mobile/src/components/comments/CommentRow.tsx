@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Avatar, fontFamily, gold, useTheme, HEART_COLOR } from '@bucketlist/ui';
 import { displayNameOf, initialsOf } from '../../utils/initials';
 import { timeAgo } from '../../utils/timeAgo';
+import { truncateChars } from '../../utils/unicodeUtils';
 import { OfficialBadge, isUserAdmin } from '../OfficialBadge';
 import type { CommentThread } from './commentTree';
 import type { CommentsController } from './useCommentsController';
@@ -94,9 +95,8 @@ export function CommentRow({ comment, ctrl, isReply = false }: CommentRowProps) 
                 },
               ]}
               value={ctrl.editingText}
-              onChangeText={ctrl.setEditingText}
+              onChangeText={(t) => ctrl.setEditingText(truncateChars(t, 1000))}
               multiline
-              maxLength={1000}
               autoFocus
             />
             <View style={styles.editActions}>

@@ -33,6 +33,7 @@ import {
 } from '../../src/features/task-form/components/TaskCoverPicker';
 import { storageApi } from '../../src/services/api/storage';
 import { applyMoveTasks, settleTaskCaches } from '../../src/utils/optimisticCache';
+import { getCharCount, truncateChars } from '../../src/utils/unicodeUtils';
 
 type Visibility = 'public' | 'followers' | 'private';
 
@@ -455,15 +456,14 @@ export default function EditBucketModal() {
               placeholder={t('task_form.title_placeholder', { defaultValue: 'Ej. Ver auroras boreales' })}
               placeholderTextColor={theme.colors.foregroundMuted}
               value={title}
-              onChangeText={setTitle}
-              maxLength={200}
+              onChangeText={(text) => setTitle(truncateChars(text, 200))}
               onFocus={() => setIsTitleFocused(true)}
               onBlur={() => setIsTitleFocused(false)}
               accessibilityLabel={t('task_form.title_placeholder', { defaultValue: 'Título de la tarea' })}
             />
-            {title && title.length > 150 ? (
+            {title && getCharCount(title) > 150 ? (
               <Text style={{ alignSelf: 'flex-end', fontSize: 12, color: theme.colors.foregroundMuted, marginTop: 4 }}>
-                {title.length}/200
+                {getCharCount(title)}/200
               </Text>
             ) : null}
           </View>
@@ -493,8 +493,7 @@ export default function EditBucketModal() {
               placeholder={t('task_form.desc_placeholder', { defaultValue: 'Cuéntanos más sobre esta tarea…' })}
               placeholderTextColor={theme.colors.foregroundMuted}
               value={description}
-              onChangeText={setDescription}
-              maxLength={1000}
+              onChangeText={(text) => setDescription(truncateChars(text, 1000))}
               onFocus={() => setIsDescFocused(true)}
               onBlur={() => setIsDescFocused(false)}
               multiline
