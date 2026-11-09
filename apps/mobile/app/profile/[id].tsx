@@ -1,9 +1,9 @@
 import { Alert } from '@bucketlist/ui';
 import React, { useEffect, useMemo, useState } from 'react';
-import { FlatList, Pressable, Text, View } from 'react-native';
+import { FlatList, Pressable, Text, View, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, MoreHorizontal, UserX } from 'lucide-react-native';
+import { ChevronLeft, MoreHorizontal, UserX, Share2 } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import {
   EmptyState,
@@ -274,6 +274,24 @@ export default function PublicProfileScreen() {
     });
   };
 
+  const handleShareProfile = async () => {
+    if (!profile) return;
+    try {
+      const siteUrl = (process.env['EXPO_PUBLIC_SITE_URL'] || 'https://thebucketlist-8zk.pages.dev').replace(/\/$/, '');
+      const shareUrl = `${siteUrl}/profile/${profile.id}`;
+      const name = profile.display_name || profile.username;
+      const message = `${shareUrl}\n\n✨ ${t('profile.share_intro', { defaultValue: '¡Mira el perfil de' })} ${name} (@${profile.username}) en TheBucketList!`;
+
+      await Share.share({
+        title: `${name} (@${profile.username})`,
+        message,
+        url: shareUrl,
+      });
+    } catch (err) {
+      console.error('Error sharing profile:', err);
+    }
+  };
+
   if (blockedByLoading) {
     return (
       <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -451,19 +469,28 @@ export default function PublicProfileScreen() {
         >
           <ChevronLeft size={22} color={theme.colors.foreground} strokeWidth={2} />
         </Pressable>
-        {!isOwnProfile ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Pressable
-            onPress={openMenu}
+            onPress={() => void handleShareProfile()}
             style={[styles.circleButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel={t('common.more_options')}
+            accessibilityLabel={t('profile.share_profile', { defaultValue: 'Compartir perfil' })}
           >
-            <MoreHorizontal size={22} color={theme.colors.foreground} strokeWidth={2} />
+            <Share2 size={20} color={theme.colors.foreground} strokeWidth={2} />
           </Pressable>
-        ) : (
-          <View style={[styles.circleButton, { backgroundColor: 'transparent', borderColor: 'transparent' }]} />
-        )}
+          {!isOwnProfile && (
+            <Pressable
+              onPress={openMenu}
+              style={[styles.circleButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.more_options')}
+            >
+              <MoreHorizontal size={22} color={theme.colors.foreground} strokeWidth={2} />
+            </Pressable>
+          )}
+        </View>
       </View>
 
       <FlatList
@@ -513,6 +540,7 @@ export default function PublicProfileScreen() {
               avatar_url: profile.avatar_url,
             }}
             isBlocked={Boolean(isBlocked)}
+            onShareProfile={() => void handleShareProfile()}
             onConfirmBlock={handleConfirmBlock}
             onConfirmUnblock={handleConfirmUnblock}
             onOpenReport={() => setReportModalVisible(true)}

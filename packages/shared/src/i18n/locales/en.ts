@@ -1198,6 +1198,10 @@ const en = {
     block_notice_title: 'You have blocked this user',
     block_notice_desc: 'Their tasks and albums are hidden. Tap "Blocked" if you wish to unblock this profile.',
     follow: 'Follow',
+    share_profile: 'Share profile',
+    share_profile_desc: 'Send a link with photo to WhatsApp or socials',
+    share_intro: 'Check out the profile of',
+    share_my_profile_intro: 'Check out my profile on TheBucketList!',
   },
 
   settings: {

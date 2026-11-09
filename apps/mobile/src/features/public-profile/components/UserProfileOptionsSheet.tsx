@@ -12,6 +12,7 @@ import {
   UserX,
   UserCheck,
   Flag,
+  Share2,
 } from 'lucide-react-native';
 import { Avatar, fontFamily } from '@bucketlist/ui';
 
@@ -27,6 +28,7 @@ interface UserProfileOptionsSheetProps {
     avatar_url?: string | null;
   };
   isBlocked?: boolean;
+  onShareProfile?: () => void;
   onConfirmBlock: () => void;
   onConfirmUnblock: () => void;
   onOpenReport: () => void;
@@ -37,6 +39,7 @@ export function UserProfileOptionsSheet({
   onClose,
   user,
   isBlocked = false,
+  onShareProfile,
   onConfirmBlock,
   onConfirmUnblock,
   onOpenReport,
@@ -79,6 +82,34 @@ export function UserProfileOptionsSheet({
 
           {/* Opciones */}
           <View style={styles.optionsList}>
+            {/* Compartir perfil */}
+            {onShareProfile && (
+              <Pressable
+                style={styles.optionRow}
+                onPress={() => {
+                  onClose();
+                  onShareProfile();
+                }}
+              >
+                <View
+                  style={[
+                    styles.iconBox,
+                    { backgroundColor: 'rgba(212, 177, 58, 0.15)' },
+                  ]}
+                >
+                  <Share2 color="#D4B13A" size={20} />
+                </View>
+                <View style={styles.optionTexts}>
+                  <Text style={[styles.optionTitle, { color: '#FFF' }]}>
+                    {t('profile.share_profile', { defaultValue: 'Compartir perfil' })}
+                  </Text>
+                  <Text style={styles.optionSubtitle}>
+                    {t('profile.share_profile_desc', { defaultValue: 'Envía un enlace con foto a WhatsApp o redes' })}
+                  </Text>
+                </View>
+              </Pressable>
+            )}
+
             {/* Bloquear / Desbloquear */}
             <Pressable
               style={styles.optionRow}

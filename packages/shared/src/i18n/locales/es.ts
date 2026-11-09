@@ -1198,6 +1198,10 @@ const es = {
     block_notice_title: 'Has bloqueado a este usuario',
     block_notice_desc: 'Sus tareas y álbumes están ocultos. Pulsa en "Bloqueado" si deseas desbloquear a este perfil.',
     follow: 'Seguir a',
+    share_profile: 'Compartir perfil',
+    share_profile_desc: 'Envía un enlace con foto a WhatsApp o redes',
+    share_intro: '¡Mira el perfil de',
+    share_my_profile_intro: '¡Mira mi perfil en TheBucketList!',
   },
 
   settings: {

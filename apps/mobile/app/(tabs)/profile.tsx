@@ -1,10 +1,10 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, Share } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useNavigation } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { Settings, Users } from 'lucide-react-native';
+import { Settings, Users, Share2 } from 'lucide-react-native';
 import { useTranslation } from '@bucketlist/shared';
 import {
   Avatar,
@@ -239,6 +239,24 @@ export default function CurrentUserProfileScreen() {
 
   const taskCount = filteredTasks.length;
 
+  const handleShareProfile = async () => {
+    if (!profile) return;
+    try {
+      const siteUrl = (process.env['EXPO_PUBLIC_SITE_URL'] || 'https://thebucketlist-8zk.pages.dev').replace(/\/$/, '');
+      const shareUrl = `${siteUrl}/profile/${profile.id}`;
+      const profileName = displayNameOf(profile) || profile.username;
+      const message = `${shareUrl}\n\n✨ ${t('profile.share_my_profile_intro', { defaultValue: '¡Mira mi perfil en TheBucketList!' })} (@${profile.username})`;
+
+      await Share.share({
+        title: `${profileName} (@${profile.username})`,
+        message,
+        url: shareUrl,
+      });
+    } catch (err) {
+      console.error('Error sharing profile:', err);
+    }
+  };
+
   const headerTop = (
     <View style={[styles.header, { marginHorizontal: -12 }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 10 }}>
@@ -248,14 +266,24 @@ export default function CurrentUserProfileScreen() {
           style={{ fontSize: 24 }}
         />
       </View>
-      <Pressable
-        onPress={() => router.push('/(modals)/settings' as any)}
-        accessibilityRole="button"
-        accessibilityLabel={t('settings.title')}
-        style={[styles.roundBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
-      >
-        <Settings size={20} color={theme.colors.foreground} />
-      </Pressable>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Pressable
+          onPress={() => void handleShareProfile()}
+          accessibilityRole="button"
+          accessibilityLabel={t('profile.share_profile', { defaultValue: 'Compartir perfil' })}
+          style={[styles.roundBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+        >
+          <Share2 size={20} color={theme.colors.foreground} />
+        </Pressable>
+        <Pressable
+          onPress={() => router.push('/(modals)/settings' as any)}
+          accessibilityRole="button"
+          accessibilityLabel={t('settings.title')}
+          style={[styles.roundBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+        >
+          <Settings size={20} color={theme.colors.foreground} />
+        </Pressable>
+      </View>
     </View>
   );
 
