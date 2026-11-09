@@ -105,16 +105,18 @@ export default function MapScreen() {
         const dLat = (t.location_lat - task.location_lat) * 111139;
         const dLng = (t.location_lng - task.location_lng) * 85000;
         const dist = Math.sqrt(dLat * dLat + dLng * dLng);
-          if (dist <= 45) return true;
-          if (
-            t.location_text &&
-            task.location_text &&
-            t.location_text.toLowerCase().trim() === task.location_text.toLowerCase().trim()
-          ) {
-            return true;
+        if (dist <= 80) return true;
+        if (t.location_text && task.location_text) {
+          const loc1 = t.location_text.toLowerCase().trim();
+          const loc2 = task.location_text.toLowerCase().trim();
+          const part1 = loc1.split(',')[0]?.trim() || '';
+          const part2 = loc2.split(',')[0]?.trim() || '';
+          if (loc1 === loc2 || (part1 && part2 && (part1 === part2 || loc1.includes(part2) || loc2.includes(part1)))) {
+            if (dist <= 600) return true;
           }
-          return false;
-        });
+        }
+        return false;
+      });
       setSelectedLocationTasks(sameLocation.length > 0 ? sameLocation : [task]);
     }
     // Centrar suavemente manteniendo el nivel de zoom actual del usuario (sin cambiar zoom)

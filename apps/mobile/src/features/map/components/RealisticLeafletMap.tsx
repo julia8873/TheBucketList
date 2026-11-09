@@ -750,7 +750,7 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
 
     function areTasksInSameHub(t1, t2) {
       var dist = getDistanceMeters(t1.lat, t1.lng, t2.lat, t2.lng);
-      if (dist <= 35) return true;
+      if (dist <= 60) return true;
 
       var full1 = normalizeLoc(t1.fullLocation || t1.location);
       var full2 = normalizeLoc(t2.fullLocation || t2.location);
@@ -768,11 +768,11 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
         }
       }
 
-      // Si ambas son el mismo POI específico (ej: dos tareas en la Alhambra a < 500m)
-      if (isPoi1 && isPoi2 && dist <= 500) {
+      // Si ambas son el mismo POI específico (ej: dos tareas en la Torre Eiffel a < 600m)
+      if (isPoi1 && isPoi2 && dist <= 600) {
         var p1 = normalizeLoc(t1.location);
         var p2 = normalizeLoc(t2.location);
-        if (p1 && p2 && p1 === p2) return true;
+        if (p1 && p2 && (p1 === p2 || p1.indexOf(p2) !== -1 || p2.indexOf(p1) !== -1)) return true;
       }
 
       return false;
@@ -1093,9 +1093,14 @@ export const RealisticLeafletMap = forwardRef<RealisticMapRef, RealisticLeafletM
       var marker = L.marker([markerLat, markerLng], { icon: customIcon });
 
       marker.on('click', function() {
+        var nextIdx = 0;
+        if (isHubSelected && tasksInHub.length > 1) {
+          nextIdx = (selIdx + 1) % tasksInHub.length;
+        }
+        var nextTask = tasksInHub[nextIdx];
         postMsg({
           type: 'SELECT_TASK_GROUP',
-          taskId: activeTask.id,
+          taskId: nextTask.id,
           taskIds: tasksInHub.map(function(t) { return t.id; })
         });
       });

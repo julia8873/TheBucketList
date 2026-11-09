@@ -9,6 +9,7 @@ import {
   FlatList,
   ScrollView,
   PanResponder,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -520,6 +521,193 @@ export function TaskMapPreviewCard({
   }
 
   // MODO FLOTANTE INFERIOR (COMPACTO / DESLIZABLE)
+  const renderSingleCard = (item: MapTaskItem, index: number = currentIndex) => {
+    const isCompleted = item.status === 'completed';
+    const authorName = item.user?.display_name || item.user?.username || t('map.default_user');
+    const authorHandle = item.user?.username ? `@${item.user.username}` : '';
+    const authorAvatar = item.user?.avatar_url;
+
+    return (
+      <View
+        key={item.id}
+        style={[
+          styles.card,
+          {
+            width: CARD_WIDTH,
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.border,
+          },
+        ]}
+      >
+        {/* Cabecera del autor y botón de cerrar / expandir */}
+        <View style={styles.headerRow}>
+          <View style={styles.authorGroup}>
+            {authorAvatar ? (
+              <Image source={{ uri: authorAvatar }} style={styles.authorAvatar} />
+            ) : (
+              <View
+                style={[
+                  styles.authorAvatarFallback,
+                  { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.border },
+                ]}
+              >
+                <Text style={[styles.avatarInitial, { color: theme.colors.foreground }]}>
+                  {authorName[0]?.toUpperCase() || 'U'}
+                </Text>
+              </View>
+            )}
+            <View style={{ flex: 1 }}>
+              <Text
+                numberOfLines={1}
+                style={[styles.authorName, { color: theme.colors.foreground }]}
+              >
+                {authorName}
+              </Text>
+              {authorHandle ? (
+                <Text
+                  numberOfLines={1}
+                  style={[styles.authorHandle, { color: theme.colors.foregroundMuted }]}
+                >
+                  {authorHandle}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            {items.length > 1 && (
+              <View
+                style={[
+                  styles.cardIndexBadge,
+                  { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.border },
+                ]}
+              >
+                <Text style={[styles.cardIndexText, { color: gold[400] }]}>
+                  {index + 1}/{items.length}
+                </Text>
+              </View>
+            )}
+            {items.length > 1 && (
+              <Pressable
+                hitSlop={8}
+                onPress={() => setIsExpanded(true)}
+                style={[
+                  styles.closeBtn,
+                  {
+                    backgroundColor: theme.colors.surfaceElevated ?? theme.colors.border,
+                  },
+                ]}
+                accessibilityLabel={t('map.fullscreen')}
+              >
+                <Maximize2 size={13} color={theme.colors.foregroundMuted} />
+              </Pressable>
+            )}
+            <Pressable
+              hitSlop={10}
+              onPress={onClose}
+              style={[
+                styles.closeBtn,
+                {
+                  backgroundColor: theme.colors.surfaceElevated ?? theme.colors.border,
+                },
+              ]}
+              accessibilityLabel={t('map.close_preview')}
+            >
+              <X size={15} color={theme.colors.foregroundMuted} />
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Fila con Foto de portada e información */}
+        <Pressable
+          style={styles.contentRow}
+          onPress={() => handleOpenTask(item)}
+        >
+          <View style={styles.coverImage}>
+            <BucketCover
+              value={resolveTaskImage(item, { preferThumb: true })}
+              title={item.title}
+              categorySlug={item.category?.slug}
+              seed={item.id}
+              iconSize={48}
+              style={StyleSheet.absoluteFill}
+            />
+          </View>
+
+          <View style={styles.detailsCol}>
+            <Text
+              numberOfLines={2}
+              style={[styles.title, { color: theme.colors.foreground }]}
+            >
+              {item.title}
+            </Text>
+
+            <View style={styles.locationRow}>
+              <MapPin size={13} color={gold[400]} strokeWidth={2} />
+              <Text
+                numberOfLines={1}
+                style={[styles.locationText, { color: theme.colors.foregroundMuted }]}
+              >
+                {item.location_text}
+              </Text>
+            </View>
+
+            {/* Fila de insignias de estado y categoría */}
+            <View style={styles.badgesRow}>
+              {isCompleted ? (
+                <View style={styles.completedBadge}>
+                  <Check size={11} color="#FFFFFF" strokeWidth={3} />
+                  <Text style={styles.completedBadgeText}>{t('map.completed')}</Text>
+                </View>
+              ) : (
+                <View
+                  style={[
+                    styles.pendingBadge,
+                    {
+                      backgroundColor: theme.dark
+                        ? 'rgba(212, 177, 58, 0.15)'
+                        : 'rgba(212, 177, 58, 0.2)',
+                    },
+                  ]}
+                >
+                  <Text style={[styles.pendingBadgeText, { color: gold[500] }]}>
+                    {t('map.pending_fulfill')}
+                  </Text>
+                </View>
+              )}
+
+              {item.category ? (
+                <View
+                  style={[
+                    styles.categoryBadge,
+                    { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.border },
+                  ]}
+                >
+                  <Text
+                    style={[styles.categoryBadgeText, { color: theme.colors.foregroundMuted }]}
+                  >
+                    {i18n.language?.startsWith('en')
+                      ? (item.category.name_en || item.category.name)
+                      : (item.category.name_es || item.category.name)}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          </View>
+        </Pressable>
+
+        {/* Botón de acción */}
+        <Pressable
+          style={[styles.actionBtn, { backgroundColor: gold[400] }]}
+          onPress={() => handleOpenTask(item)}
+        >
+          <Text style={styles.actionBtnText}>{t('map.view_task_details')}</Text>
+          <ArrowUpRight size={17} color="#000000" strokeWidth={2.5} />
+        </Pressable>
+      </View>
+    );
+  };
+
   return (
     <View style={styles.floatingContainer} pointerEvents="box-none">
       {/* Tirador superior para deslizar hacia arriba */}
@@ -636,213 +824,103 @@ export function TaskMapPreviewCard({
         </View>
       )}
 
-      {/* 1. MODO CARRUSEL DESLIZABLE (SWIPEABLE CARD) */}
-      {viewMode === 'card' && (
-        <>
-          <FlatList
-            ref={flatListRef}
-            data={items}
-            keyExtractor={(item) => item.id}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            snapToInterval={CARD_WIDTH}
-            decelerationRate="fast"
-            style={{ width: CARD_WIDTH }}
-            onMomentumScrollEnd={(e) => {
-              const newIdx = Math.round(e.nativeEvent.contentOffset.x / CARD_WIDTH);
-              if (newIdx >= 0 && newIdx < items.length && newIdx !== currentIndex) {
-                setCurrentIndex(newIdx);
-                const target = items[newIdx];
-                if (target) {
-                  onSelectTask?.(target);
-                }
-              }
-            }}
-            getItemLayout={(_, index) => ({
-              length: CARD_WIDTH,
-              offset: CARD_WIDTH * index,
-              index,
-            })}
-            onScrollToIndexFailed={(info) => {
-              setTimeout(() => {
-                flatListRef.current?.scrollToIndex({ index: info.index, animated: false });
-              }, 100);
-            }}
-            renderItem={({ item }) => {
-              const isCompleted = item.status === 'completed';
-              const authorName = item.user?.display_name || item.user?.username || t('map.default_user');
-              const authorHandle = item.user?.username ? `@${item.user.username}` : '';
-              const authorAvatar = item.user?.avatar_url;
-
-              return (
+      {/* Pestañas de acceso directo para cada tarea en esta ubicación */}
+      {items.length > 1 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.taskTabsScroll}
+          contentContainerStyle={styles.taskTabsContainer}
+        >
+          {items.map((item, idx) => {
+            const isSelected = idx === currentIndex;
+            return (
+              <Pressable
+                key={item.id}
+                onPress={() => {
+                  setCurrentIndex(idx);
+                  try {
+                    flatListRef.current?.scrollToIndex({ index: idx, animated: true });
+                  } catch {}
+                  onSelectTask?.(item);
+                }}
+                style={[
+                  styles.taskTabPill,
+                  {
+                    backgroundColor: isSelected
+                      ? theme.dark
+                        ? 'rgba(212, 175, 55, 0.28)'
+                        : 'rgba(212, 175, 55, 0.2)'
+                      : theme.colors.surface,
+                    borderColor: isSelected ? gold[400] : theme.colors.border,
+                  },
+                ]}
+              >
                 <View
                   style={[
-                    styles.card,
+                    styles.tabDot,
+                    { backgroundColor: isSelected ? gold[400] : theme.colors.foregroundMuted },
+                  ]}
+                />
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles.taskTabPillText,
                     {
-                      width: CARD_WIDTH,
-                      backgroundColor: theme.colors.surface,
-                      borderColor: theme.colors.border,
+                      color: isSelected ? (theme.dark ? '#FCD34D' : '#854D0E') : theme.colors.foreground,
+                      fontFamily: isSelected ? 'Inter_700Bold' : 'Inter_500Medium',
                     },
                   ]}
                 >
-                  {/* Cabecera del autor y botón de cerrar / expandir */}
-                  <View style={styles.headerRow}>
-                    <View style={styles.authorGroup}>
-                      {authorAvatar ? (
-                        <Image source={{ uri: authorAvatar }} style={styles.authorAvatar} />
-                      ) : (
-                        <View
-                          style={[
-                            styles.authorAvatarFallback,
-                            { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.border },
-                          ]}
-                        >
-                          <Text style={[styles.avatarInitial, { color: theme.colors.foreground }]}>
-                            {authorName[0]?.toUpperCase() || 'U'}
-                          </Text>
-                        </View>
-                      )}
-                      <View style={{ flex: 1 }}>
-                        <Text
-                          numberOfLines={1}
-                          style={[styles.authorName, { color: theme.colors.foreground }]}
-                        >
-                          {authorName}
-                        </Text>
-                        {authorHandle ? (
-                          <Text
-                            numberOfLines={1}
-                            style={[styles.authorHandle, { color: theme.colors.foregroundMuted }]}
-                          >
-                            {authorHandle}
-                          </Text>
-                        ) : null}
-                      </View>
-                    </View>
+                  {idx + 1}. {item.title}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      )}
 
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      {items.length > 1 && (
-                        <Pressable
-                          hitSlop={8}
-                          onPress={() => setIsExpanded(true)}
-                          style={[
-                            styles.closeBtn,
-                            {
-                              backgroundColor: theme.colors.surfaceElevated ?? theme.colors.border,
-                            },
-                          ]}
-                          accessibilityLabel={t('map.fullscreen')}
-                        >
-                          <Maximize2 size={13} color={theme.colors.foregroundMuted} />
-                        </Pressable>
-                      )}
-                      <Pressable
-                        hitSlop={10}
-                        onPress={onClose}
-                        style={[
-                          styles.closeBtn,
-                          {
-                            backgroundColor: theme.colors.surfaceElevated ?? theme.colors.border,
-                          },
-                        ]}
-                        accessibilityLabel={t('map.close_preview')}
-                      >
-                        <X size={15} color={theme.colors.foregroundMuted} />
-                      </Pressable>
-                    </View>
-                  </View>
-
-                  {/* Fila con Foto de portada e información */}
-                  <Pressable
-                    style={styles.contentRow}
-                    onPress={() => handleOpenTask(item)}
-                  >
-                    <View style={styles.coverImage}>
-                      <BucketCover
-                        value={resolveTaskImage(item, { preferThumb: true })}
-                        title={item.title}
-                        categorySlug={item.category?.slug}
-                        seed={item.id}
-                        iconSize={48}
-                        style={StyleSheet.absoluteFill}
-                      />
-                    </View>
-
-                    <View style={styles.detailsCol}>
-                      <Text
-                        numberOfLines={2}
-                        style={[styles.title, { color: theme.colors.foreground }]}
-                      >
-                        {item.title}
-                      </Text>
-
-                      <View style={styles.locationRow}>
-                        <MapPin size={13} color={gold[400]} strokeWidth={2} />
-                        <Text
-                          numberOfLines={1}
-                          style={[styles.locationText, { color: theme.colors.foregroundMuted }]}
-                        >
-                          {item.location_text}
-                        </Text>
-                      </View>
-
-                      {/* Fila de insignias de estado y categoría */}
-                      <View style={styles.badgesRow}>
-                        {isCompleted ? (
-                          <View style={styles.completedBadge}>
-                            <Check size={11} color="#FFFFFF" strokeWidth={3} />
-                            <Text style={styles.completedBadgeText}>{t('map.completed')}</Text>
-                          </View>
-                        ) : (
-                          <View
-                            style={[
-                              styles.pendingBadge,
-                              {
-                                backgroundColor: theme.dark
-                                  ? 'rgba(212, 177, 58, 0.15)'
-                                  : 'rgba(212, 177, 58, 0.2)',
-                              },
-                            ]}
-                          >
-                            <Text style={[styles.pendingBadgeText, { color: gold[500] }]}>
-                              {t('map.pending_fulfill')}
-                            </Text>
-                          </View>
-                        )}
-
-                        {item.category ? (
-                          <View
-                            style={[
-                              styles.categoryBadge,
-                              { backgroundColor: theme.colors.surfaceElevated ?? theme.colors.border },
-                            ]}
-                          >
-                            <Text
-                              style={[styles.categoryBadgeText, { color: theme.colors.foregroundMuted }]}
-                            >
-                              {i18n.language?.startsWith('en')
-                                ? (item.category.name_en || item.category.name)
-                                : (item.category.name_es || item.category.name)}
-                            </Text>
-                          </View>
-                        ) : null}
-                      </View>
-                    </View>
-                  </Pressable>
-
-                  {/* Botón de acción */}
-                  <Pressable
-                    style={[styles.actionBtn, { backgroundColor: gold[400] }]}
-                    onPress={() => handleOpenTask(item)}
-                  >
-                    <Text style={styles.actionBtnText}>{t('map.view_task_details')}</Text>
-                    <ArrowUpRight size={17} color="#000000" strokeWidth={2.5} />
-                  </Pressable>
-                </View>
-              );
-            }}
-          />
+      {/* 1. MODO CARRUSEL DESLIZABLE (SWIPEABLE CARD) */}
+      {viewMode === 'card' && (
+        <>
+          {Platform.OS === 'web' ? (
+            <View style={{ width: CARD_WIDTH }}>
+              {renderSingleCard((items[currentIndex] || items[0])!, currentIndex)}
+            </View>
+          ) : (
+            <FlatList
+              ref={flatListRef}
+              data={items}
+              keyExtractor={(item) => item.id}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={CARD_WIDTH}
+              decelerationRate="fast"
+              style={{ width: CARD_WIDTH }}
+              onMomentumScrollEnd={(e) => {
+                const newIdx = Math.round(e.nativeEvent.contentOffset.x / CARD_WIDTH);
+                if (newIdx >= 0 && newIdx < items.length && newIdx !== currentIndex) {
+                  setCurrentIndex(newIdx);
+                  const target = items[newIdx];
+                  if (target) {
+                    onSelectTask?.(target);
+                  }
+                }
+              }}
+              getItemLayout={(_, index) => ({
+                length: CARD_WIDTH,
+                offset: CARD_WIDTH * index,
+                index,
+              })}
+              onScrollToIndexFailed={(info) => {
+                setTimeout(() => {
+                  flatListRef.current?.scrollToIndex({ index: info.index, animated: false });
+                }, 100);
+              }}
+              renderItem={({ item, index }) => renderSingleCard(item, index)}
+            />
+          )}
 
           {/* Indicadores de puntos (dots) si hay múltiples tareas */}
           {items.length > 1 && (
@@ -1261,6 +1339,44 @@ const styles = StyleSheet.create({
   },
   viewModeBtnActive: {
     backgroundColor: gold[400],
+  },
+  taskTabsScroll: {
+    maxWidth: CARD_WIDTH,
+    maxHeight: 38,
+    marginVertical: 4,
+  },
+  taskTabsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 2,
+  },
+  taskTabPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+    maxWidth: 200,
+  },
+  tabDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  taskTabPillText: {
+    fontSize: 11.5,
+  },
+  cardIndexBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  cardIndexText: {
+    fontSize: 11,
+    fontFamily: 'Inter_600SemiBold',
   },
   card: {
     borderRadius: 22,

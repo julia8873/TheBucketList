@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from '@bucketlist/shared';
 import { supabase } from '../../../services/supabase';
 import { useAuthStore } from '../../../stores/auth.store';
+import { formatLocalizedLocation, getLocationSynonyms } from '../../../utils/locationI18n';
 import type { MapTaskItem, MapFilterType } from '../types';
 
 export function useMapTasks({
@@ -134,16 +135,26 @@ export function useMapTasks({
       if (filter === 'completed' && task.status !== 'completed') return false;
       if (filter === 'pending' && task.status === 'completed') return false;
 
-      // Filter by search query
+      // Filter by search query (búsqueda unificada multilingüe para títulos, descripciones y sitios)
       if (searchQuery.trim().length > 0) {
-        const q = searchQuery.toLowerCase().trim();
-        const matchTitle = task.title?.toLowerCase().includes(q);
-        const matchLocation = task.location_text?.toLowerCase().includes(q);
-        const matchDesc = task.description?.toLowerCase().includes(q);
-        const matchAuthor =
-          task.user?.display_name?.toLowerCase().includes(q) ||
-          task.user?.username?.toLowerCase().includes(q);
-        if (!matchTitle && !matchLocation && !matchDesc && !matchAuthor) {
+        const synonyms = getLocationSynonyms(searchQuery);
+        const locLower = (task.location_text || '').toLowerCase();
+        const titleLower = (task.title || '').toLowerCase();
+        const descLower = (task.description || '').toLowerCase();
+        const authorLower = (
+          (task.user?.display_name || '') + ' ' + (task.user?.username || '')
+        ).toLowerCase();
+
+        const matches = synonyms.some((q) => {
+          return (
+            titleLower.includes(q) ||
+            locLower.includes(q) ||
+            descLower.includes(q) ||
+            authorLower.includes(q)
+          );
+        });
+
+        if (!matches) {
           return false;
         }
       }
@@ -151,17 +162,27 @@ export function useMapTasks({
       return true;
     })
     .map((task) => {
-      if (!task.category) return task;
-      const localizedName = isEn
-        ? task.category.name_en || task.category.name_es || task.category.name
-        : task.category.name_es || task.category.name_en || task.category.name;
-      if (task.category.name === localizedName) return task;
+      const localizedLocation = formatLocalizedLocation(
+        task.location_text,
+        isEn ? 'en' : 'es'
+      );
+
+      const catData = task.category;
+      const localizedCatName = catData
+        ? (isEn
+            ? catData.name_en || catData.name_es || catData.name
+            : catData.name_es || catData.name_en || catData.name)
+        : undefined;
+
       return {
         ...task,
-        category: {
-          ...task.category,
-          name: localizedName,
-        },
+        location_text: localizedLocation || task.location_text,
+        category: catData
+          ? {
+              ...catData,
+              name: localizedCatName || catData.name,
+            }
+          : null,
       };
     });
 
