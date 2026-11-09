@@ -257,12 +257,17 @@ export default function MapScreen() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Si se pasa una tarea inicial por params, enfocarla
+  const initialTaskFocusedRef = React.useRef<string | null>(null);
+
+  // Si se pasa una tarea inicial por params, enfocarla SOLO una vez al cargar
   React.useEffect(() => {
     if (params.initialTaskId && tasks.length > 0) {
-      const found = tasks.find((t) => t.id === params.initialTaskId);
-      if (found) {
-        handleSelectTask(found);
+      if (initialTaskFocusedRef.current !== params.initialTaskId) {
+        const found = tasks.find((t) => t.id === params.initialTaskId);
+        if (found) {
+          initialTaskFocusedRef.current = params.initialTaskId;
+          handleSelectTask(found);
+        }
       }
     }
   }, [params.initialTaskId, tasks]);
@@ -561,6 +566,9 @@ export default function MapScreen() {
         onClose={() => {
           setSelectedTask(null);
           setSelectedLocationTasks([]);
+          if (params.initialTaskId) {
+            router.setParams({ initialTaskId: undefined });
+          }
         }}
       />
     </View>
