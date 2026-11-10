@@ -155,7 +155,7 @@ export async function onRequest(context) {
       </p>
 
       <div style="display:flex;flex-direction:column;gap:8px;">
-        <a id="tbl-open-btn" href="${androidIntentUrl}" style="background:#D4B13A;color:#000000;font-weight:700;font-size:13.5px;padding:11px;border-radius:12px;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 3px 12px rgba(212,177,58,0.35);">
+        <a id="tbl-open-btn" href="${playStoreUrl}" target="_blank" rel="noopener noreferrer" onclick="tblOpenApp(event)" style="background:#D4B13A;color:#000000;font-weight:700;font-size:13.5px;padding:11px;border-radius:12px;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 3px 12px rgba(212,177,58,0.35);">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
             <path d="M3.609 1.814L13.792 12 3.61 22.186a2.404 2.404 0 0 1-.22-.387V2.2c.068-.138.143-.267.22-.387zm11.235 11.236l2.164-2.165-9.664-5.58 7.5 7.745zm0 1.898l-7.5 7.746 9.664-5.58-2.164-2.166zm3.265-2.22l2.67-1.542a1.442 1.442 0 0 0 0-2.372l-2.67-1.542-2.316 2.316 2.316 2.14z"/>
           </svg>
@@ -168,13 +168,26 @@ export async function onRequest(context) {
       </div>
     </div>
     <script>
-      (function() {
+      function tblOpenApp(e) {
+        var isAndroid = /Android/i.test(navigator.userAgent);
         var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-        if (isIOS) {
-          var btn = document.getElementById('tbl-open-btn');
-          if (btn) btn.href = "${appSchemeUrl}";
+        var playStore = "${playStoreUrl}";
+        if (isAndroid) {
+          if (e) e.preventDefault();
+          var start = Date.now();
+          window.location.href = "${androidIntentUrl}";
+          setTimeout(function() {
+            if (document.hidden || document.webkitHidden) return;
+            if (Date.now() - start < 2000) {
+              window.location.href = playStore;
+            }
+          }, 1200);
+        } else if (isIOS) {
+          if (e) e.preventDefault();
+          window.location.href = "${appSchemeUrl}";
         }
-      })();
+        // En PC/Mac el enlace abre directamente Google Play Store en una pestaña nueva
+      }
     </script>
   `;
 
@@ -215,7 +228,7 @@ export async function onRequest(context) {
     <img src="/icon.png" style="width:72px;height:72px;border-radius:18px;margin-bottom:16px;" />
     <h2 style="font-size:20px;margin-bottom:8px;">${escapeHtml(ogTitle)}</h2>
     <p style="color:#aaa;font-size:14px;margin-bottom:24px;">${escapeHtml(ogDesc)}</p>
-    <a href="${androidIntentUrl}" id="tbl-fallback-btn" style="background:#D4B13A;color:#000;font-weight:700;font-size:14px;padding:12px 24px;border-radius:24px;text-decoration:none;display:inline-block;margin-bottom:12px;box-shadow:0 3px 12px rgba(212,177,58,0.35);">
+    <a href="${playStoreUrl}" id="tbl-fallback-btn" target="_blank" rel="noopener noreferrer" onclick="tblOpenApp(event)" style="background:#D4B13A;color:#000;font-weight:700;font-size:14px;padding:12px 24px;border-radius:24px;text-decoration:none;display:inline-block;margin-bottom:12px;box-shadow:0 3px 12px rgba(212,177,58,0.35);">
       Abrir o Descargar en Google Play
     </a>
     <div>
