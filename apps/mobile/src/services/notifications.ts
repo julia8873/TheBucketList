@@ -193,13 +193,14 @@ export async function registerForPushNotificationsAsync(userId: string): Promise
 
       // Guardar en tabla push_tokens
       try {
+        const safePlatform = Platform.OS === 'android' ? 'android' : 'web';
         await supabase.from('push_tokens').upsert(
           {
             user_id: userId,
             token: token,
-            platform: Platform.OS,
+            platform: safePlatform,
           },
-          { onConflict: 'token' }
+          { onConflict: 'user_id,token' }
         );
       } catch (err) {
         console.warn('Error saving to push_tokens table:', err);
