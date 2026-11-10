@@ -123,21 +123,26 @@ export async function onRequest(context) {
     });
   }
 
-  // Rutas de deep linking nativo
+  // Rutas de deep linking nativo y Play Store
+  const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.thebucketlist.app';
   const appSchemeUrl = `bucketlist://bucket/${bucketId}`;
-  const androidIntentUrl = `intent://bucket/${bucketId}#Intent;scheme=bucketlist;package=com.thebucketlist.app;end`;
+  const androidIntentUrl = `intent://bucket/${bucketId}#Intent;scheme=bucketlist;package=com.thebucketlist.app;S.browser_fallback_url=${encodeURIComponent(playStoreUrl)};end`;
 
-  // Script y banner para redirigir/abrir directamente la app instalada en móviles
+  // Script y banner para redirigir/abrir directamente la app instalada en móviles (o Play Store si no está instalada)
   const deepLinkInjection = `
     ${ogTags}
     <script>
       (function() {
         var isAndroid = /Android/i.test(navigator.userAgent);
         var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-        if (isAndroid || isIOS) {
-          var targetAppUrl = isAndroid ? "${androidIntentUrl}" : "${appSchemeUrl}";
+        if (sessionStorage.getItem('tbl_banner_dismissed') === '1') return;
+        if (isAndroid) {
           try {
-            window.location.href = targetAppUrl;
+            window.location.href = "${androidIntentUrl}";
+          } catch (e) {}
+        } else if (isIOS) {
+          try {
+            window.location.href = "${appSchemeUrl}";
           } catch (e) {}
         }
       })();
@@ -145,17 +150,37 @@ export async function onRequest(context) {
   `;
 
   const bannerHtml = `
-    <div id="tbl-app-banner" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:999999;width:90%;max-width:380px;background:#18181b;border:1.5px solid #D4B13A;box-shadow:0 12px 28px rgba(0,0,0,0.8);border-radius:18px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <img src="/icon.png" style="width:40px;height:40px;border-radius:10px;" />
-        <div>
-          <div style="color:#ffffff;font-size:14px;font-weight:700;">TheBucketList</div>
-          <div style="color:#a1a1aa;font-size:12px;">Abrir en la aplicación</div>
+    <div id="tbl-app-banner" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999999;width:calc(100% - 24px);max-width:400px;background:#18181b;border:1.5px solid #D4B13A;box-shadow:0 16px 36px rgba(0,0,0,0.85);border-radius:20px;padding:14px 16px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <img src="/icon.png" style="width:42px;height:42px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.4);" />
+          <div>
+            <div style="color:#ffffff;font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;">
+              TheBucketList
+              <span style="background:rgba(212,177,58,0.2);color:#D4B13A;font-size:10px;font-weight:700;padding:2px 5px;border-radius:5px;border:1px solid rgba(212,177,58,0.35);">APP</span>
+            </div>
+            <div style="color:#a1a1aa;font-size:12px;margin-top:2px;">Disponible en Google Play</div>
+          </div>
         </div>
+        <button onclick="document.getElementById('tbl-app-banner').style.display='none';sessionStorage.setItem('tbl_banner_dismissed','1');" style="background:none;border:none;color:#71717a;font-size:22px;line-height:1;cursor:pointer;padding:4px;" aria-label="Cerrar">×</button>
       </div>
-      <a id="tbl-open-btn" href="${androidIntentUrl}" style="background:#D4B13A;color:#000000;font-weight:700;font-size:13px;padding:9px 18px;border-radius:24px;text-decoration:none;display:inline-block;box-shadow:0 2px 8px rgba(212,177,58,0.3);">
-        Abrir
-      </a>
+
+      <p style="color:#d4d4d8;font-size:12.5px;line-height:1.4;margin:0 0 12px 0;">
+        Abre o descarga la app para guardar esta tarea en tu lista, ver fotos en alta calidad y conectar con amigos.
+      </p>
+
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <a id="tbl-open-btn" href="${androidIntentUrl}" style="background:#D4B13A;color:#000000;font-weight:700;font-size:13.5px;padding:11px;border-radius:12px;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 3px 12px rgba(212,177,58,0.35);">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3.609 1.814L13.792 12 3.61 22.186a2.404 2.404 0 0 1-.22-.387V2.2c.068-.138.143-.267.22-.387zm11.235 11.236l2.164-2.165-9.664-5.58 7.5 7.745zm0 1.898l-7.5 7.746 9.664-5.58-2.164-2.166zm3.265-2.22l2.67-1.542a1.442 1.442 0 0 0 0-2.372l-2.67-1.542-2.316 2.316 2.316 2.14z"/>
+          </svg>
+          Abrir o Instalar en Google Play
+        </a>
+
+        <button onclick="document.getElementById('tbl-app-banner').style.display='none';sessionStorage.setItem('tbl_banner_dismissed','1');" style="background:transparent;border:1px solid #3f3f46;color:#a1a1aa;font-size:12px;font-weight:600;padding:8px;border-radius:10px;cursor:pointer;">
+          Continuar viendo en la versión web
+        </button>
+      </div>
     </div>
     <script>
       (function() {
@@ -206,9 +231,12 @@ export async function onRequest(context) {
     <img src="/icon.png" style="width:72px;height:72px;border-radius:18px;margin-bottom:16px;" />
     <h2 style="font-size:20px;margin-bottom:8px;">${escapeHtml(ogTitle)}</h2>
     <p style="color:#aaa;font-size:14px;margin-bottom:24px;">${escapeHtml(ogDesc)}</p>
-    <a href="${androidIntentUrl}" id="tbl-fallback-btn" style="background:#D4B13A;color:#000;font-weight:700;font-size:15px;padding:12px 28px;border-radius:28px;text-decoration:none;display:inline-block;">
-      Abrir en la aplicación
+    <a href="${androidIntentUrl}" id="tbl-fallback-btn" style="background:#D4B13A;color:#000;font-weight:700;font-size:14px;padding:12px 24px;border-radius:24px;text-decoration:none;display:inline-block;margin-bottom:12px;box-shadow:0 3px 12px rgba(212,177,58,0.35);">
+      Abrir o Descargar en Google Play
     </a>
+    <div>
+      <a href="${pageUrl}" style="color:#a1a1aa;font-size:13px;text-decoration:underline;">Ver en la versión web</a>
+    </div>
   </div>
   <script>
     (function() {

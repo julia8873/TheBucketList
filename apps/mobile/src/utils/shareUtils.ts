@@ -23,6 +23,13 @@ export async function shareLink({ title, url }: ShareLinkOptions): Promise<void>
         console.warn('Web Share API error:', err);
       }
     }
+
+    if (typeof navigator !== 'undefined' && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      try {
+        await navigator.clipboard.writeText(url);
+        return;
+      } catch (_) {}
+    }
   }
 
   if (Platform.OS === 'ios') {
