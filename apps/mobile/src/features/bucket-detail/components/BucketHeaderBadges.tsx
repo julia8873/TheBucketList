@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Pressable } from 'react-native';
-import { Typography, useTheme } from '@bucketlist/ui';
+import { Typography, useTheme, getVisibilityStyle } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { CheckCircle2, Circle, Flag, Eye, Users, Lock, FolderOpen } from 'lucide-react-native';
@@ -133,25 +133,30 @@ export function BucketHeaderBadges({
         </Pressable>
 
         {/* Visibility */}
-        <Pressable
-          style={[
-            styles.badge,
-            badgeShadow,
-            { backgroundColor: mutedBg, borderColor: mutedBorder },
-          ]}
-          onPress={() => canEdit && onOpenVisibilitySheet()}
-        >
-          {bucket.visibility === 'public' ? (
-            <Eye color={mutedIconColor} size={13} strokeWidth={2} style={{ marginRight: 5 }} />
-          ) : bucket.visibility === 'followers' ? (
-            <Users color={mutedIconColor} size={13} strokeWidth={2} style={{ marginRight: 5 }} />
-          ) : (
-            <Lock color={mutedIconColor} size={13} strokeWidth={2} style={{ marginRight: 5 }} />
-          )}
-          <Typography variant="caption" color={mutedTextColor} style={{ fontWeight: '600' }}>
-            {visibilityLabel(bucket.visibility)}
-          </Typography>
-        </Pressable>
+        {(() => {
+          const visStyle = getVisibilityStyle(bucket.visibility, isDark);
+          return (
+            <Pressable
+              style={[
+                styles.badge,
+                badgeShadow,
+                { backgroundColor: visStyle.bg, borderColor: visStyle.border },
+              ]}
+              onPress={() => canEdit && onOpenVisibilitySheet()}
+            >
+              {bucket.visibility === 'public' ? (
+                <Eye color={visStyle.color} size={13} strokeWidth={2} style={{ marginRight: 5 }} />
+              ) : bucket.visibility === 'followers' ? (
+                <Users color={visStyle.color} size={13} strokeWidth={2} style={{ marginRight: 5 }} />
+              ) : (
+                <Lock color={visStyle.color} size={13} strokeWidth={2} style={{ marginRight: 5 }} />
+              )}
+              <Typography variant="caption" color={visStyle.color} style={{ fontWeight: '700' }}>
+                {visibilityLabel(bucket.visibility)}
+              </Typography>
+            </Pressable>
+          );
+        })()}
       </View>
 
       {/* Album */}

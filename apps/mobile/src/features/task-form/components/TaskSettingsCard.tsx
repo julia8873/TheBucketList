@@ -3,7 +3,7 @@ import { View, Text, Pressable, Modal, StyleSheet } from 'react-native';
 import { MapPin, Calendar, Folder, Eye, Users, Lock, Check, ChevronLeft, X, HardDrive } from 'lucide-react-native';
 import { UniversalDatePicker } from '../../../components/UniversalDatePicker';
 import { format } from 'date-fns';
-import { gold, useTheme } from '@bucketlist/ui';
+import { gold, useTheme, VISIBILITY_COLORS } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { getDateFnsLocale } from '@/utils/dateLocale';
 import { styles } from '../styles/task-form.styles';
@@ -69,18 +69,21 @@ export function TaskSettingsCard({
       title: t('task_form.vis_public_title', { defaultValue: 'Pública' }),
       subtitle: t('task_form.vis_public_sub', { defaultValue: 'Cualquiera puede ver este momento' }),
       icon: Eye,
+      color: VISIBILITY_COLORS.public,
     },
     {
       value: 'followers' as const,
       title: t('task_form.vis_followers_title', { defaultValue: 'Seguidores' }),
       subtitle: t('task_form.vis_followers_sub', { defaultValue: 'Solo tus seguidores pueden verlo' }),
       icon: Users,
+      color: VISIBILITY_COLORS.followers,
     },
     {
       value: 'private' as const,
       title: t('task_form.vis_private_title', { defaultValue: 'Privada' }),
       subtitle: t('task_form.vis_private_sub', { defaultValue: 'Solo tú puedes verlo' }),
       icon: Lock,
+      color: VISIBILITY_COLORS.private,
     },
   ];
 
@@ -218,10 +221,10 @@ export function TaskSettingsCard({
         style={[styles.settingRow, { borderBottomColor: theme.colors.border, borderBottomWidth: 0 }]}
         onPress={() => setShowVisibilityModal(true)}
       >
-        <CurrentVisibilityIcon color="#D4B13A" size={24} style={{ flexShrink: 0 }} />
+        <CurrentVisibilityIcon color={currentVisibilityConfig.color} size={24} style={{ flexShrink: 0 }} />
         <Text style={[styles.settingLabel, { color: theme.colors.foreground, flexShrink: 0 }]}>{t('task_form.visibility', { defaultValue: 'Visibilidad' })}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, justifyContent: 'flex-end', marginLeft: 12 }}>
-          <Text style={[styles.settingValue, { flexShrink: 1, textAlign: 'right' }]} numberOfLines={1} ellipsizeMode="tail">{currentVisibilityConfig.title}</Text>
+          <Text style={[styles.settingValue, { color: currentVisibilityConfig.color, fontWeight: '600', flexShrink: 1, textAlign: 'right' }]} numberOfLines={1} ellipsizeMode="tail">{currentVisibilityConfig.title}</Text>
           <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }], flexShrink: 0 }} />
         </View>
       </Pressable>
@@ -259,9 +262,9 @@ export function TaskSettingsCard({
                       styles.visibilitySheetOption,
                       {
                         backgroundColor: isSelected
-                          ? (theme.dark ? '#262010' : '#FDF4DC')
+                          ? (theme.dark ? `${item.color}20` : `${item.color}15`)
                           : (theme.dark ? '#1A1A1A' : '#F7F5F0'),
-                        borderColor: isSelected ? gold[400] : theme.colors.border,
+                        borderColor: isSelected ? item.color : theme.colors.border,
                       },
                     ]}
                     onPress={() => {
@@ -274,12 +277,12 @@ export function TaskSettingsCard({
                         styles.visibilitySheetIcon,
                         {
                           backgroundColor: isSelected
-                            ? 'rgba(212, 177, 58, 0.15)'
+                            ? `${item.color}30`
                             : (theme.dark ? '#262626' : '#ECE8DF'),
                         },
                       ]}
                     >
-                      <IconComponent color={gold[400]} size={21} />
+                      <IconComponent color={item.color} size={21} />
                     </View>
                     <View style={styles.visibilitySheetOptionText}>
                       <Text style={[styles.visibilitySheetOptionTitle, { color: theme.colors.foreground }]}>
@@ -289,7 +292,7 @@ export function TaskSettingsCard({
                         {item.subtitle}
                       </Text>
                     </View>
-                    {isSelected && <Check color={gold[400]} size={21} />}
+                    {isSelected && <Check color={item.color} size={21} />}
                   </Pressable>
                 );
               })}

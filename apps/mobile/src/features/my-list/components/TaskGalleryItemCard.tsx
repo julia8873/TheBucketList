@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Check, CheckCircle2, Star, Lock, Globe, Users } from 'lucide-react-native';
-import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
+import { gold, dark, getVisibilityColor } from '@bucketlist/ui/src/tokens/colors';
 import { useTheme, useCoverOverlay } from '@bucketlist/ui';
 import { useTranslation, resolveCounterLabel } from '@bucketlist/shared';
 import { BucketCover } from '@/components/BucketCover';
@@ -243,10 +243,10 @@ function TaskGalleryItemCardComponent({
             {showVisibility && (
               <View
                 style={{
-                  width: is4Cols ? 12 : is3Cols ? 14 : 16,
-                  height: is4Cols ? 12 : is3Cols ? 14 : 16,
-                  borderRadius: (is4Cols ? 12 : is3Cols ? 14 : 16) / 2,
-                  backgroundColor: 'rgba(0,0,0,0.55)',
+                  width: is4Cols ? 14 : is3Cols ? 14 : 16,
+                  height: is4Cols ? 14 : is3Cols ? 14 : 16,
+                  borderRadius: (is4Cols ? 14 : is3Cols ? 14 : 16) / 2,
+                  backgroundColor: 'rgba(0,0,0,0.65)',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
@@ -254,13 +254,14 @@ function TaskGalleryItemCardComponent({
                 {(() => {
                   const vis = item.visibility || 'public';
                   const iconSize = is4Cols ? 7 : is3Cols ? 8 : 9;
+                  const visColor = getVisibilityColor(vis, true);
                   if (vis === 'private') {
-                    return <Lock size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                    return <Lock size={iconSize} color={visColor} strokeWidth={2.4} />;
                   }
                   if (vis === 'followers') {
-                    return <Users size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                    return <Users size={iconSize} color={visColor} strokeWidth={2.4} />;
                   }
-                  return <Globe size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                  return <Globe size={iconSize} color={visColor} strokeWidth={2.4} />;
                 })()}
               </View>
             )}

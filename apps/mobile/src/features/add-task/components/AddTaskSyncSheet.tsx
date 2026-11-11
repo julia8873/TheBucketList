@@ -3,6 +3,7 @@ import { View, Text, Pressable, Modal, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Check, Flag, Eye, Users, Lock } from 'lucide-react-native';
 import { useTranslation } from '@bucketlist/shared';
+import { getVisibilityPrimaryColor } from '@bucketlist/ui';
 import type { AddTaskSyncPrompt } from '../hooks/useAddTaskState';
 
 interface AddTaskSyncSheetProps {
@@ -121,7 +122,7 @@ export function AddTaskSyncSheet({ prompt, onClose, onConfirm, single = false }:
               renderRow(
                 applyVisibility,
                 () => setApplyVisibility((v) => !v),
-                <VisibilityIcon size={20} color={GOLD} strokeWidth={2} />,
+                <VisibilityIcon size={20} color={getVisibilityPrimaryColor(prompt.albumVisibility)} strokeWidth={2} />,
                 t('add_task.sync_visibility_title', { label: visibilityLabel }),
                 countText(prompt.visibilityCount, 'visibility'),
               )}

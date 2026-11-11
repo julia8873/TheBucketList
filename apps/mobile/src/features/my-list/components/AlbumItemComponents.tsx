@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GripVertical, Lock, Star, Users, Bookmark, CheckCircle2, Globe } from 'lucide-react-native';
-import { useTheme, useCoverOverlay } from '@bucketlist/ui';
+import { useTheme, useCoverOverlay, getVisibilityStyle } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/my-list.styles';
 import type { DragHandle } from '@/components/DraggableTaskList';
@@ -247,36 +247,40 @@ export const AlbumCompactItemRow = React.memo(function AlbumCompactItemRow({
                 </Text>
               </View>
             )}
-            {showVisibility && (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 3,
-                  paddingHorizontal: 6,
-                  paddingVertical: 1.5,
-                  borderRadius: 6,
-                  backgroundColor: theme.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-                  borderWidth: 1,
-                  borderColor: theme.dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
-                }}
-              >
-                {item.visibility === 'private' ? (
-                  <Lock size={10} color={theme.colors.foregroundMuted} />
-                ) : item.visibility === 'followers' ? (
-                  <Users size={10} color={theme.colors.foregroundMuted} />
-                ) : (
-                  <Globe size={10} color={theme.colors.foregroundMuted} />
-                )}
-                <Text style={{ fontSize: 10, fontWeight: '600', color: theme.colors.foregroundMuted }}>
-                  {item.visibility === 'private'
-                    ? t('bucket.visibility_private', { defaultValue: 'Privado' })
-                    : item.visibility === 'followers'
-                    ? t('bucket.visibility_followers', { defaultValue: 'Seguidores' })
-                    : t('bucket.visibility_public', { defaultValue: 'Público' })}
-                </Text>
-              </View>
-            )}
+            {showVisibility && (() => {
+              const itemVis = (item.visibility as string) || 'public';
+              const visStyle = getVisibilityStyle(itemVis, theme.dark);
+              return (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 3,
+                    paddingHorizontal: 6,
+                    paddingVertical: 1.5,
+                    borderRadius: 6,
+                    backgroundColor: visStyle.bg,
+                    borderWidth: 1,
+                    borderColor: visStyle.border,
+                  }}
+                >
+                  {itemVis === 'private' ? (
+                    <Lock size={10} color={visStyle.color} strokeWidth={2.4} />
+                  ) : itemVis === 'followers' ? (
+                    <Users size={10} color={visStyle.color} strokeWidth={2.4} />
+                  ) : (
+                    <Globe size={10} color={visStyle.color} strokeWidth={2.4} />
+                  )}
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: visStyle.color }}>
+                    {itemVis === 'private'
+                      ? t('bucket.visibility_private', { defaultValue: 'Privado' })
+                      : itemVis === 'followers'
+                      ? t('bucket.visibility_followers', { defaultValue: 'Seguidores' })
+                      : t('bucket.visibility_public', { defaultValue: 'Público' })}
+                  </Text>
+                </View>
+              );
+            })()}
             {hasPriority && (
               <View
                 style={{
@@ -588,24 +592,28 @@ export const AlbumListItemRow = React.memo(function AlbumListItemRow({
               </View>
             )}
 
-            {showVisibility && (
-              <View style={[styles.listAlbumBadge, { borderColor: theme.colors.border }]}>
-                {(item.visibility || 'public') === 'private' ? (
-                  <Lock size={10} color={theme.colors.foregroundMuted} />
-                ) : (item.visibility || 'public') === 'followers' ? (
-                  <Users size={10} color={theme.colors.foregroundMuted} />
-                ) : (
-                  <Globe size={10} color={theme.colors.foregroundMuted} />
-                )}
-                <Text style={[styles.listAlbumBadgeText, { color: theme.colors.foregroundMuted }]}>
-                  {(item.visibility || 'public') === 'private'
-                    ? t('bucket.visibility_private', { defaultValue: 'Privado' })
-                    : (item.visibility || 'public') === 'followers'
-                    ? t('bucket.visibility_followers', { defaultValue: 'Seguidores' })
-                    : t('bucket.visibility_public', { defaultValue: 'Público' })}
-                </Text>
-              </View>
-            )}
+            {showVisibility && (() => {
+              const itemVis = (item.visibility as string) || 'public';
+              const visStyle = getVisibilityStyle(itemVis, theme.dark);
+              return (
+                <View style={[styles.listAlbumBadge, { backgroundColor: visStyle.bg, borderColor: visStyle.border }]}>
+                  {itemVis === 'private' ? (
+                    <Lock size={10} color={visStyle.color} strokeWidth={2.4} />
+                  ) : itemVis === 'followers' ? (
+                    <Users size={10} color={visStyle.color} strokeWidth={2.4} />
+                  ) : (
+                    <Globe size={10} color={visStyle.color} strokeWidth={2.4} />
+                  )}
+                  <Text style={[styles.listAlbumBadgeText, { color: visStyle.color, fontWeight: '700' }]}>
+                    {itemVis === 'private'
+                      ? t('bucket.visibility_private', { defaultValue: 'Privado' })
+                      : itemVis === 'followers'
+                      ? t('bucket.visibility_followers', { defaultValue: 'Seguidores' })
+                      : t('bucket.visibility_public', { defaultValue: 'Público' })}
+                  </Text>
+                </View>
+              );
+            })()}
 
             {showPriority && priority && (
               <View style={[styles.listAlbumBadge, { borderColor: priorityColor }]}>

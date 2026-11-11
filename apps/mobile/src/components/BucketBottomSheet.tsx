@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, View, Pressable, Animated, ActivityIndicator, StyleSheet, TextInput, ScrollView } from 'react-native';
 import { useTranslation } from '@bucketlist/shared';
-import { Typography, toast } from '@bucketlist/ui';
+import { Typography, toast, VISIBILITY_COLORS } from '@bucketlist/ui';
 import { gold, dark } from '@bucketlist/ui/src/tokens/colors';
 import { CoverColorPicker } from '@/components/CoverColorPicker';
 import { customGradientValue, presetValue, solidCoverValue } from '@/constants/coverPresets';
@@ -337,19 +337,21 @@ export function BucketBottomSheet({
               </View>
               <View style={styles.sheetOptions}>
                 {([
-                  { value: 'public', title: t('bucket.visibility_public'), subtitle: t('bucket.visibility_public_desc'), icon: Eye },
-                  { value: 'followers', title: t('bucket.visibility_followers'), subtitle: t('bucket.visibility_followers_desc'), icon: Users },
-                  { value: 'private', title: t('bucket.visibility_private'), subtitle: t('bucket.visibility_private_desc'), icon: Lock },
+                  { value: 'public', title: t('bucket.visibility_public'), subtitle: t('bucket.visibility_public_desc'), icon: Eye, color: VISIBILITY_COLORS.public },
+                  { value: 'followers', title: t('bucket.visibility_followers'), subtitle: t('bucket.visibility_followers_desc'), icon: Users, color: VISIBILITY_COLORS.followers },
+                  { value: 'private', title: t('bucket.visibility_private'), subtitle: t('bucket.visibility_private_desc'), icon: Lock, color: VISIBILITY_COLORS.private },
                 ] as const).map((item) => {
                   const IconComponent = item.icon;
                   return (
                     <Pressable key={item.value} style={styles.sheetOption} onPress={() => void handleChangeVisibility(item.value)}>
-                      <View style={styles.sheetIcon}><IconComponent color={gold[400]} size={21} /></View>
+                      <View style={[styles.sheetIcon, { backgroundColor: `${item.color}20` }]}>
+                        <IconComponent color={item.color} size={21} />
+                      </View>
                       <View style={styles.sheetOptionText}>
                         <Typography variant="bodySemibold">{item.title}</Typography>
                         <Typography variant="caption" color={theme.colors.foregroundMuted}>{item.subtitle}</Typography>
                       </View>
-                      {bucket.visibility === item.value && <Check color={gold[400]} size={21} />}
+                      {bucket.visibility === item.value && <Check color={item.color} size={21} />}
                     </Pressable>
                   );
                 })}

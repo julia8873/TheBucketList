@@ -107,7 +107,7 @@ export function ProfileBioAndStats({
             <Text style={[styles.handle, { color: theme.colors.foregroundMuted }]} numberOfLines={1} ellipsizeMode="tail">
               @{profile.username}
             </Text>
-            {isPrivate ? <Lock size={13} color={theme.colors.foregroundMuted} strokeWidth={1.8} /> : null}
+            {isPrivate ? <Lock size={13} color="#EF4444" strokeWidth={2.2} /> : null}
           </View>
         </View>
       </View>

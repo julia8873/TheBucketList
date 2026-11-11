@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Lock, Flag, Eye, Users, CheckCircle2, Circle } from 'lucide-react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
-import { useTheme } from '@bucketlist/ui';
+import { useTheme, getVisibilityStyle } from '@bucketlist/ui';
 import { styles } from '../styles/album-detail.styles';
 
 import { useTranslation } from '@bucketlist/shared';
@@ -121,21 +121,30 @@ export function AlbumHeaderBadges({
         </Pressable>
 
         {/* Visibilidad (a la izquierda de prioridad) */}
-        <Pressable
-          style={[styles.chip, styles.chipGold, canEdit && styles.chipPressable]}
-          onPress={onOpenVisibility}
-        >
-          {album.visibility === 'public' ? (
-            <Eye size={13} color={gold[400]} strokeWidth={2} style={{ marginRight: 5 }} />
-          ) : album.visibility === 'followers' ? (
-            <Users size={13} color={gold[400]} strokeWidth={2} style={{ marginRight: 5 }} />
-          ) : (
-            <Lock size={13} color={gold[400]} strokeWidth={2} style={{ marginRight: 5 }} />
-          )}
-          <Text style={[styles.chipStatusText, { color: gold[400], fontWeight: '700' }]}>
-            {visibilityLabel(album.visibility)}
-          </Text>
-        </Pressable>
+        {(() => {
+          const visStyle = getVisibilityStyle(album.visibility, theme.dark);
+          return (
+            <Pressable
+              style={[
+                styles.chip,
+                { borderColor: visStyle.border, backgroundColor: visStyle.bg },
+                canEdit && styles.chipPressable,
+              ]}
+              onPress={onOpenVisibility}
+            >
+              {album.visibility === 'public' ? (
+                <Eye size={13} color={visStyle.color} strokeWidth={2} style={{ marginRight: 5 }} />
+              ) : album.visibility === 'followers' ? (
+                <Users size={13} color={visStyle.color} strokeWidth={2} style={{ marginRight: 5 }} />
+              ) : (
+                <Lock size={13} color={visStyle.color} strokeWidth={2} style={{ marginRight: 5 }} />
+              )}
+              <Text style={[styles.chipStatusText, { color: visStyle.color, fontWeight: '700' }]}>
+                {visibilityLabel(album.visibility)}
+              </Text>
+            </Pressable>
+          );
+        })()}
 
         {/* Prioridad */}
         <Pressable

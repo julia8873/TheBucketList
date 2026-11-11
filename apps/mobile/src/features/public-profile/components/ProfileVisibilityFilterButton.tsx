@@ -11,7 +11,7 @@ import {
 import { useTranslation } from '@bucketlist/shared';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Globe, Users, ChevronDown, Check, Eye } from 'lucide-react-native';
-import { useTheme, fontFamily } from '@bucketlist/ui';
+import { useTheme, fontFamily, VISIBILITY_COLORS } from '@bucketlist/ui';
 
 export type VisibilityMode = 'all' | 'public' | 'followers';
 
@@ -102,6 +102,13 @@ export function ProfileVisibilityFilterButton({
     setModalVisible(false);
   };
 
+  const activeFilterColor =
+    currentMode === 'public'
+      ? VISIBILITY_COLORS.public
+      : currentMode === 'followers'
+      ? VISIBILITY_COLORS.followers
+      : theme.colors.primary;
+
   return (
     <>
       <Pressable
@@ -110,14 +117,12 @@ export function ProfileVisibilityFilterButton({
           styles.filterButton,
           {
             backgroundColor: isFiltered
-              ? theme.dark
-                ? 'rgba(212, 177, 58, 0.15)'
-                : 'rgba(212, 177, 58, 0.18)'
+              ? `${activeFilterColor}20`
               : theme.dark
               ? '#1B1B1B'
               : '#EAE5DB',
             borderColor: isFiltered
-              ? theme.colors.primary
+              ? activeFilterColor
               : theme.dark
               ? '#2B2B2B'
               : '#D9D3C7',
@@ -128,14 +133,14 @@ export function ProfileVisibilityFilterButton({
       >
         <ButtonIcon
           size={14}
-          color={isFiltered ? theme.colors.primary : theme.colors.foreground}
+          color={isFiltered ? activeFilterColor : theme.colors.foreground}
           strokeWidth={2}
         />
         <Text
           style={[
             styles.filterButtonText,
             {
-              color: isFiltered ? theme.colors.primary : theme.colors.foreground,
+              color: isFiltered ? activeFilterColor : theme.colors.foreground,
               fontFamily: isFiltered ? fontFamily.semibold : fontFamily.medium,
             },
           ]}
@@ -144,7 +149,7 @@ export function ProfileVisibilityFilterButton({
         </Text>
         <ChevronDown
           size={14}
-          color={isFiltered ? theme.colors.primary : theme.colors.foregroundMuted}
+          color={isFiltered ? activeFilterColor : theme.colors.foregroundMuted}
           strokeWidth={2}
         />
       </Pressable>
@@ -191,6 +196,12 @@ export function ProfileVisibilityFilterButton({
               {options.map((option) => {
                 const isSelected = option.key === currentMode;
                 const IconComp = option.icon;
+                const optColor =
+                  option.key === 'public'
+                    ? VISIBILITY_COLORS.public
+                    : option.key === 'followers'
+                    ? VISIBILITY_COLORS.followers
+                    : theme.colors.primary;
                 return (
                   <Pressable
                     key={option.key}
@@ -200,8 +211,8 @@ export function ProfileVisibilityFilterButton({
                       {
                         backgroundColor: isSelected
                           ? theme.dark
-                            ? 'rgba(212,175,55,0.08)'
-                            : 'rgba(184,134,11,0.08)'
+                            ? `${optColor}15`
+                            : `${optColor}10`
                           : pressed
                           ? theme.dark
                             ? '#202020'
@@ -209,8 +220,8 @@ export function ProfileVisibilityFilterButton({
                           : 'transparent',
                         borderColor: isSelected
                           ? theme.dark
-                            ? 'rgba(212,175,55,0.35)'
-                            : 'rgba(184,134,11,0.35)'
+                            ? `${optColor}40`
+                            : `${optColor}35`
                           : 'transparent',
                       },
                     ]}
@@ -222,9 +233,7 @@ export function ProfileVisibilityFilterButton({
                         styles.iconWrap,
                         {
                           backgroundColor: isSelected
-                            ? theme.dark
-                              ? 'rgba(212,175,55,0.18)'
-                              : 'rgba(184,134,11,0.15)'
+                            ? `${optColor}25`
                             : theme.dark
                             ? '#222222'
                             : '#EDE8DF',
@@ -233,7 +242,7 @@ export function ProfileVisibilityFilterButton({
                     >
                       <IconComp
                         size={17}
-                        color={isSelected ? theme.colors.primary : theme.colors.foregroundMuted}
+                        color={isSelected ? optColor : theme.colors.foregroundMuted}
                         strokeWidth={2}
                       />
                     </View>
@@ -244,7 +253,7 @@ export function ProfileVisibilityFilterButton({
                           styles.optionLabel,
                           {
                             color: isSelected
-                              ? theme.colors.primary
+                              ? optColor
                               : theme.colors.foreground,
                             fontFamily: isSelected
                               ? fontFamily.bold
@@ -267,7 +276,7 @@ export function ProfileVisibilityFilterButton({
                     {isSelected && (
                       <Check
                         size={18}
-                        color={theme.colors.primary}
+                        color={optColor}
                         strokeWidth={2.5}
                       />
                     )}

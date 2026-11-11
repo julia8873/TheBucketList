@@ -32,7 +32,7 @@ import {
   Sparkles,
 } from 'lucide-react-native';
 import { CoverColorPicker } from '@/components/CoverColorPicker';
-import { Typography, useTheme } from '@bucketlist/ui';
+import { Typography, useTheme, VISIBILITY_COLORS } from '@bucketlist/ui';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 // Mismos estilos que el menú de las tareas (BucketBottomSheet) para que la app sea consistente.
 import { styles } from '@/features/bucket-detail/styles/bucket-detail.styles';
@@ -349,19 +349,21 @@ export function AlbumOptionsSheet({
               </View>
               <View style={styles.sheetOptions}>
                 {([
-                  { value: 'public' as const, title: t('albums.visibility_public', { defaultValue: 'Público' }), subtitle: t('albums.visibility_public_sub', { defaultValue: 'Cualquier persona puede ver este álbum' }), icon: Eye },
-                  { value: 'followers' as const, title: t('albums.visibility_followers', { defaultValue: 'Seguidores' }), subtitle: t('albums.visibility_followers_sub', { defaultValue: 'Solo tus seguidores pueden verlo' }), icon: Users },
-                  { value: 'private' as const, title: t('albums.visibility_private', { defaultValue: 'Privado' }), subtitle: t('albums.visibility_private_sub', { defaultValue: 'Solo tú y los colaboradores podéis verlo' }), icon: Lock },
+                  { value: 'public' as const, title: t('albums.visibility_public', { defaultValue: 'Público' }), subtitle: t('albums.visibility_public_sub', { defaultValue: 'Cualquier persona puede ver este álbum' }), icon: Eye, color: VISIBILITY_COLORS.public },
+                  { value: 'followers' as const, title: t('albums.visibility_followers', { defaultValue: 'Seguidores' }), subtitle: t('albums.visibility_followers_sub', { defaultValue: 'Solo tus seguidores pueden verlo' }), icon: Users, color: VISIBILITY_COLORS.followers },
+                  { value: 'private' as const, title: t('albums.visibility_private', { defaultValue: 'Privado' }), subtitle: t('albums.visibility_private_sub', { defaultValue: 'Solo tú y los colaboradores podéis verlo' }), icon: Lock, color: VISIBILITY_COLORS.private },
                 ]).map((item) => {
                   const IconComponent = item.icon;
                   return (
                     <Pressable key={item.value} style={styles.sheetOption} onPress={() => onChangeVisibility(item.value)}>
-                      <View style={styles.sheetIcon}><IconComponent color={gold[400]} size={21} /></View>
+                      <View style={[styles.sheetIcon, { backgroundColor: `${item.color}20` }]}>
+                        <IconComponent color={item.color} size={21} />
+                      </View>
                       <View style={styles.sheetOptionText}>
                         <Typography variant="bodySemibold">{item.title}</Typography>
                         <Typography variant="caption" color={theme.colors.foregroundMuted}>{item.subtitle}</Typography>
                       </View>
-                      {albumVisibility === item.value && <Check color={gold[400]} size={21} />}
+                      {albumVisibility === item.value && <Check color={item.color} size={21} />}
                     </Pressable>
                   );
                 })}

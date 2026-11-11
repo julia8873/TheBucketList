@@ -189,9 +189,9 @@ export default function AdminUsersScreen() {
           )}
 
           {isPrivate && (
-            <View style={[styles.privatePill, { borderColor: theme.colors.border }]}>
-              <Lock size={10} color={theme.colors.foregroundMuted} />
-              <Text style={[styles.privatePillText, { color: theme.colors.foregroundMuted }]}>
+            <View style={[styles.privatePill, { borderColor: 'rgba(239, 68, 68, 0.4)', backgroundColor: 'rgba(239, 68, 68, 0.12)' }]}>
+              <Lock size={10} color="#EF4444" />
+              <Text style={[styles.privatePillText, { color: '#EF4444', fontWeight: '700' }]}>
                 {t('admin_users.visibility_private', { defaultValue: 'Privado' })}
               </Text>
             </View>

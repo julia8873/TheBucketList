@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, Pressable, Modal } from 'react-native';
-import { Flag, Lock } from 'lucide-react-native';
+import { Flag, Lock, Globe, Users } from 'lucide-react-native';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
+import { VISIBILITY_COLORS } from '@bucketlist/ui';
 import { styles } from '../styles/bulk-actions.styles';
 import { useTranslation } from '@bucketlist/shared';
 
@@ -89,22 +90,23 @@ export function BulkVisibilityModal({
             <Text style={styles.modalTitle}>{title || t('bulk_actions.visibility_modal_title', { count })}</Text>
           </View>
 
-          {(['public', 'followers', 'private'] as const).map((v) => {
-            const label =
-              v === 'public'
-                ? t('albums.visibility_public')
-                : v === 'followers'
-                ? t('albums.visibility_followers')
-                : t('albums.visibility_private');
+          {([
+            { value: 'public' as const, label: t('albums.visibility_public'), icon: Globe, color: VISIBILITY_COLORS.public },
+            { value: 'followers' as const, label: t('albums.visibility_followers'), icon: Users, color: VISIBILITY_COLORS.followers },
+            { value: 'private' as const, label: t('albums.visibility_private'), icon: Lock, color: VISIBILITY_COLORS.private },
+          ]).map((item) => {
+            const Icon = item.icon;
             return (
               <Pressable
-                key={v}
+                key={item.value}
                 style={styles.albumOptionRow}
-                onPress={() => onSelectVisibility(v)}
+                onPress={() => onSelectVisibility(item.value)}
               >
                 <View style={styles.albumOptionLeft}>
-                  <Lock size={18} color={gold[400]} />
-                  <Text style={styles.albumOptionTitle}>{label}</Text>
+                  <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: `${item.color}20`, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
+                    <Icon size={16} color={item.color} />
+                  </View>
+                  <Text style={[styles.albumOptionTitle, { color: item.color, fontWeight: '600' }]}>{item.label}</Text>
                 </View>
               </Pressable>
             );

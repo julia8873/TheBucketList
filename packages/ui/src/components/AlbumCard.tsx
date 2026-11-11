@@ -22,7 +22,7 @@ import { useTheme } from '../theme/useTheme';
 import { useCoverOverlay } from '../theme/coverOverlay';
 import { useTranslation } from '@bucketlist/shared';
 import { fontFamily, fontSize } from '../tokens/typography';
-import { gold, dark, green } from '../tokens/colors';
+import { gold, dark, green, getVisibilityColor } from '../tokens/colors';
 import { radii } from '../tokens/radii';
 
 export function getAlbumCardDimensions(windowWidth: number, columns: 2 | 3 | 4 = 2) {
@@ -443,7 +443,7 @@ export function AlbumCard({
                     width: is3Cols ? 14 : 16,
                     height: is3Cols ? 14 : 16,
                     borderRadius: (is3Cols ? 14 : 16) / 2,
-                    backgroundColor: 'rgba(0,0,0,0.55)',
+                    backgroundColor: 'rgba(0,0,0,0.65)',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
@@ -451,13 +451,14 @@ export function AlbumCard({
                   {(() => {
                     const vis = visibility || 'public';
                     const iconSize = is3Cols ? 8 : 9;
+                    const visColor = getVisibilityColor(vis, true);
                     if (vis === 'private') {
-                      return <Lock size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                      return <Lock size={iconSize} color={visColor} strokeWidth={2.4} />;
                     }
                     if (vis === 'followers') {
-                      return <Users size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                      return <Users size={iconSize} color={visColor} strokeWidth={2.4} />;
                     }
-                    return <Globe size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                    return <Globe size={iconSize} color={visColor} strokeWidth={2.4} />;
                   })()}
                 </View>
               )}
@@ -530,10 +531,10 @@ export function AlbumCard({
               {showVisibility && (
                 <View
                   style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: 6,
-                    backgroundColor: 'rgba(0,0,0,0.55)',
+                    width: 14,
+                    height: 14,
+                    borderRadius: 7,
+                    backgroundColor: 'rgba(0,0,0,0.65)',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
@@ -541,13 +542,14 @@ export function AlbumCard({
                   {(() => {
                     const vis = visibility || 'public';
                     const iconSize = 7;
+                    const visColor = getVisibilityColor(vis, true);
                     if (vis === 'private') {
-                      return <Lock size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                      return <Lock size={iconSize} color={visColor} strokeWidth={2.4} />;
                     }
                     if (vis === 'followers') {
-                      return <Users size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                      return <Users size={iconSize} color={visColor} strokeWidth={2.4} />;
                     }
-                    return <Globe size={iconSize} color="#FFFFFF" strokeWidth={2.4} />;
+                    return <Globe size={iconSize} color={visColor} strokeWidth={2.4} />;
                   })()}
                 </View>
               )}

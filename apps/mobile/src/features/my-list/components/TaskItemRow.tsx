@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, Animated, StyleSheet, Alert } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { CheckCircle2, GripVertical, Star, Trash2, Lock, Globe, Users } from 'lucide-react-native';
-import { TaskRow, TagChip, confirm } from '@bucketlist/ui';
+import { TaskRow, TagChip, confirm, getVisibilityStyle } from '@bucketlist/ui';
 import { useTranslation, resolveCounterLabel } from '@bucketlist/shared';
 import { gold } from '@bucketlist/ui/src/tokens/colors';
 import { BucketCover } from '@/components/BucketCover';
@@ -152,6 +152,9 @@ function TaskItemRowComponent({
     </View>
   ) : null;
 
+  const itemVis = (item.visibility as string) || 'public';
+  const visStyle = getVisibilityStyle(itemVis, theme.dark);
+
   const visibilityBadge = showVisibility ? (
     <View
       key="visibility-badge"
@@ -162,22 +165,22 @@ function TaskItemRowComponent({
         paddingHorizontal: 6,
         paddingVertical: 2,
         borderRadius: 8,
-        backgroundColor: theme.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+        backgroundColor: visStyle.bg,
         borderWidth: 1,
-        borderColor: theme.dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
+        borderColor: visStyle.border,
       }}
     >
-      {item.visibility === 'private' ? (
-        <Lock size={10} color={theme.colors.foregroundMuted} strokeWidth={2.4} />
-      ) : item.visibility === 'followers' ? (
-        <Users size={10} color={theme.colors.foregroundMuted} strokeWidth={2.4} />
+      {itemVis === 'private' ? (
+        <Lock size={10} color={visStyle.color} strokeWidth={2.4} />
+      ) : itemVis === 'followers' ? (
+        <Users size={10} color={visStyle.color} strokeWidth={2.4} />
       ) : (
-        <Globe size={10} color={theme.colors.foregroundMuted} strokeWidth={2.4} />
+        <Globe size={10} color={visStyle.color} strokeWidth={2.4} />
       )}
-      <Text style={{ fontSize: 10, fontWeight: '600', color: theme.colors.foregroundMuted }}>
-        {item.visibility === 'private'
+      <Text style={{ fontSize: 10, fontWeight: '700', color: visStyle.color }}>
+        {itemVis === 'private'
           ? t('bucket.visibility_private', { defaultValue: 'Privada' })
-          : item.visibility === 'followers'
+          : itemVis === 'followers'
           ? t('bucket.visibility_followers', { defaultValue: 'Seguidores' })
           : t('bucket.visibility_public', { defaultValue: 'Pública' })}
       </Text>

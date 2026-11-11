@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Search, Check, Folder, FolderOpen, X, Globe, Lock, Users } from 'lucide-react-native';
-import { fontFamily } from '@bucketlist/ui';
+import { fontFamily, useTheme, getVisibilityStyle } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { useAlbums, type AlbumWithProgress } from '../hooks/useAlbums';
 import { useAuthStore } from '../stores/auth.store';
@@ -51,6 +51,8 @@ export function AlbumPickerSheet({
     onClose();
   };
 
+  const { theme } = useTheme();
+
   const getVisibilityLabel = (visibility: string) => {
     switch (visibility) {
       case 'public':
@@ -64,14 +66,14 @@ export function AlbumPickerSheet({
     }
   };
 
-  const getVisibilityIcon = (visibility: string) => {
+  const getVisibilityIcon = (visibility: string, color: string) => {
     switch (visibility) {
       case 'public':
-        return <Globe color="#888" size={12} />;
+        return <Globe color={color} size={12} />;
       case 'followers':
-        return <Users color="#888" size={12} />;
+        return <Users color={color} size={12} />;
       case 'private':
-        return <Lock color="#888" size={12} />;
+        return <Lock color={color} size={12} />;
       default:
         return null;
     }
@@ -176,14 +178,17 @@ export function AlbumPickerSheet({
                           {album.title}
                         </Text>
                         <View style={styles.albumMeta}>
-                          {album.visibility && (
-                            <View style={styles.visibilityBadge}>
-                              {getVisibilityIcon(album.visibility)}
-                              <Text style={styles.visibilityText}>
-                                {getVisibilityLabel(album.visibility)}
-                              </Text>
-                            </View>
-                          )}
+                          {album.visibility && (() => {
+                            const visStyle = getVisibilityStyle(album.visibility, theme.dark);
+                            return (
+                              <View style={[styles.visibilityBadge, { backgroundColor: visStyle.bg, borderWidth: 1, borderColor: visStyle.border, paddingHorizontal: 6, paddingVertical: 1.5, borderRadius: 6 }]}>
+                                {getVisibilityIcon(album.visibility, visStyle.color)}
+                                <Text style={[styles.visibilityText, { color: visStyle.color, fontWeight: '700' }]}>
+                                  {getVisibilityLabel(album.visibility)}
+                                </Text>
+                              </View>
+                            );
+                          })()}
                           <Text style={styles.taskCount}>
                             {album.total_tasks} {t(album.total_tasks === 1 ? 'album_picker.task_one' : 'album_picker.task_other')}
                           </Text>

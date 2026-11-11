@@ -2,8 +2,8 @@ import { themedStyleSheet } from '@bucketlist/ui';
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
-import { CheckCircle2, GripVertical, Star, Trash2, Users } from 'lucide-react-native';
-import { useTheme, confirm } from '@bucketlist/ui';
+import { CheckCircle2, GripVertical, Star, Trash2, Users, Lock, Globe } from 'lucide-react-native';
+import { useTheme, confirm, getVisibilityStyle } from '@bucketlist/ui';
 import { useTranslation, resolveCounterLabel } from '@bucketlist/shared';
 import { styles } from '../styles/my-list.styles';
 import type { DragHandle } from '@/components/DraggableTaskList';
@@ -116,6 +116,7 @@ function TaskCompactItemRowComponent({
 
   // Decide which meta badges to render below the title
   const showStatus = customization?.showStatus ?? true;
+  const showVisibility = customization?.showVisibility ?? true;
   const showPriority = customization?.showPriority ?? true;
   const showFavorite = customization?.showFavorite ?? true;
   const showTags = customization?.showTags ?? false;
@@ -125,12 +126,16 @@ function TaskCompactItemRowComponent({
   const visibleParticipants =
     (customization?.showCollaborators ?? false) && participants && participants.length > 0 ? participants : undefined;
 
+  const itemVis = (item.visibility as string) || 'public';
+  const visStyle = getVisibilityStyle(itemVis, theme.dark);
+
   const taskStatus = getTaskStatusType(item);
   const statusCfg = getStatusConfig(taskStatus, t);
 
   const hasBadgesBelowTitle =
     !!extraSubtitle ||
     showStatus ||
+    showVisibility ||
     showPriority ||
     (showTags && itemTags && itemTags.length > 0) ||
     (showProgress && !!progressText) ||
@@ -252,6 +257,36 @@ function TaskCompactItemRowComponent({
                 {statusCfg.rowIcon}
                 <Text style={{ fontSize: 10, fontWeight: '700', color: statusCfg.color }}>
                   {statusCfg.label}
+                </Text>
+              </View>
+            )}
+            {showVisibility && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 3,
+                  paddingHorizontal: 6,
+                  paddingVertical: 1.5,
+                  borderRadius: 6,
+                  backgroundColor: visStyle.bg,
+                  borderWidth: 1,
+                  borderColor: visStyle.border,
+                }}
+              >
+                {itemVis === 'private' ? (
+                  <Lock size={9} color={visStyle.color} strokeWidth={2.4} />
+                ) : itemVis === 'followers' ? (
+                  <Users size={9} color={visStyle.color} strokeWidth={2.4} />
+                ) : (
+                  <Globe size={9} color={visStyle.color} strokeWidth={2.4} />
+                )}
+                <Text style={{ fontSize: 10, fontWeight: '700', color: visStyle.color }}>
+                  {itemVis === 'private'
+                    ? t('bucket.visibility_private', { defaultValue: 'Privada' })
+                    : itemVis === 'followers'
+                    ? t('bucket.visibility_followers', { defaultValue: 'Seguidores' })
+                    : t('bucket.visibility_public', { defaultValue: 'Pública' })}
                 </Text>
               </View>
             )}

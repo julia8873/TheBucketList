@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, Modal } from 'react-native';
 import { Eye, Users, Lock, Check, ChevronLeft } from 'lucide-react-native';
-import { gold, useTheme } from '@bucketlist/ui';
+import { gold, useTheme, VISIBILITY_COLORS } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { styles as formStyles } from '../../task-form/styles/task-form.styles';
 import { styles } from '../styles/album-form.styles';
@@ -36,9 +36,9 @@ export function AlbumSettingsCard({
   const [showVisibilityModal, setShowVisibilityModal] = useState(false);
 
   const options = [
-    { value: 'public' as const, title: t('albums.visibility_public'), subtitle: t('albums.visibility_public_desc'), icon: Eye },
-    { value: 'followers' as const, title: t('albums.visibility_followers'), subtitle: t('albums.visibility_followers_desc'), icon: Users },
-    { value: 'private' as const, title: t('albums.visibility_private'), subtitle: t('albums.visibility_private_desc'), icon: Lock },
+    { value: 'public' as const, title: t('albums.visibility_public'), subtitle: t('albums.visibility_public_desc'), icon: Eye, color: VISIBILITY_COLORS.public },
+    { value: 'followers' as const, title: t('albums.visibility_followers'), subtitle: t('albums.visibility_followers_desc'), icon: Users, color: VISIBILITY_COLORS.followers },
+    { value: 'private' as const, title: t('albums.visibility_private'), subtitle: t('albums.visibility_private_desc'), icon: Lock, color: VISIBILITY_COLORS.private },
   ];
   const current = options.find((o) => o.value === visibility) ?? options[2]!;
   const CurrentIcon = current.icon;
@@ -54,12 +54,12 @@ export function AlbumSettingsCard({
         onPress={() => setShowVisibilityModal(true)}
         accessibilityRole="button"
       >
-        <CurrentIcon color="#D4B13A" size={24} style={{ flexShrink: 0 }} />
+        <CurrentIcon color={current.color} size={24} style={{ flexShrink: 0 }} />
         <Text style={[formStyles.settingLabel, { fontSize: 17, color: theme.colors.foreground, flexShrink: 0 }]}>
           {t('task_form.visibility')}
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, justifyContent: 'flex-end', marginLeft: 12 }}>
-          <Text style={[formStyles.settingValue, { fontSize: 16, flexShrink: 1, textAlign: 'right' }]} numberOfLines={1} ellipsizeMode="tail">{current.title}</Text>
+          <Text style={[formStyles.settingValue, { fontSize: 16, color: current.color, fontWeight: '600', flexShrink: 1, textAlign: 'right' }]} numberOfLines={1} ellipsizeMode="tail">{current.title}</Text>
           <ChevronLeft color="#6B6B6B" size={20} style={{ transform: [{ rotate: '180deg' }], flexShrink: 0 }} />
         </View>
       </Pressable>
@@ -127,9 +127,9 @@ export function AlbumSettingsCard({
                       formStyles.visibilitySheetOption,
                       {
                         backgroundColor: isSelected
-                          ? theme.dark ? '#262010' : '#FDF4DC'
+                          ? theme.dark ? `${item.color}20` : `${item.color}15`
                           : theme.dark ? '#1A1A1A' : '#F7F5F0',
-                        borderColor: isSelected ? gold[400] : theme.colors.border,
+                        borderColor: isSelected ? item.color : theme.colors.border,
                       },
                     ]}
                     onPress={() => {
@@ -142,12 +142,12 @@ export function AlbumSettingsCard({
                         formStyles.visibilitySheetIcon,
                         {
                           backgroundColor: isSelected
-                            ? 'rgba(212, 177, 58, 0.15)'
+                            ? `${item.color}30`
                             : theme.dark ? '#262626' : '#ECE8DF',
                         },
                       ]}
                     >
-                      <Icon color={gold[400]} size={21} />
+                      <Icon color={item.color} size={21} />
                     </View>
                     <View style={formStyles.visibilitySheetOptionText}>
                       <Text style={[formStyles.visibilitySheetOptionTitle, { color: theme.colors.foreground }]}>
@@ -157,7 +157,7 @@ export function AlbumSettingsCard({
                         {item.subtitle}
                       </Text>
                     </View>
-                    {isSelected && <Check color={gold[400]} size={21} />}
+                    {isSelected && <Check color={item.color} size={21} />}
                   </Pressable>
                 );
               })}
