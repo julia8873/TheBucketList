@@ -468,6 +468,25 @@ export default function EditBucketModal() {
             ) : null}
           </View>
 
+          {/* PERSONALIZACIÓN DE COLOR Y FOTOS */}
+          <View style={styles.section}>
+            <SectionTitle
+              highlight={t('task_form.section_color_photos_gold', { defaultValue: 'COLOR Y' })}
+              rest={t('task_form.section_color_photos_rest', { defaultValue: 'FOTOS' })}
+            />
+            <TaskPhotoAndColorPicker
+              coverColor={coverColor}
+              onChangeColor={setCoverColor}
+              photos={taskPhotos}
+              selectedCoverIndex={selectedCoverIndex}
+              onSelectCoverPhoto={setSelectedCoverIndex}
+              onAddPhotos={handleAddPhotos}
+              onRemovePhoto={handleRemovePhoto}
+              isAdmin={isAdmin}
+              taskTitle={title}
+            />
+          </View>
+
           {/* DESCRIPCIÓN */}
           <View style={[styles.section, { marginBottom: 4 }]}>
             <SectionTitle
@@ -498,25 +517,6 @@ export default function EditBucketModal() {
               onBlur={() => setIsDescFocused(false)}
               multiline
               accessibilityLabel={t('task_form.desc_placeholder', { defaultValue: 'Descripción de la tarea' })}
-            />
-          </View>
-
-          {/* PERSONALIZACIÓN DE COLOR Y FOTOS */}
-          <View style={styles.section}>
-            <SectionTitle
-              highlight={t('task_form.section_media_gold', { defaultValue: 'FOTOS Y' })}
-              rest={t('task_form.section_media_rest', { defaultValue: 'PORTADA' })}
-            />
-            <TaskPhotoAndColorPicker
-              coverColor={coverColor}
-              onChangeColor={setCoverColor}
-              photos={taskPhotos}
-              selectedCoverIndex={selectedCoverIndex}
-              onSelectCoverPhoto={setSelectedCoverIndex}
-              onAddPhotos={handleAddPhotos}
-              onRemovePhoto={handleRemovePhoto}
-              isAdmin={isAdmin}
-              taskTitle={title}
             />
           </View>
 

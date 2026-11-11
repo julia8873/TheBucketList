@@ -372,6 +372,25 @@ export default function CreateBucketModal() {
             />
           </View>
 
+          {/* PERSONALIZACIÓN DE COLOR Y FOTOS */}
+          <View style={styles.section}>
+            <SectionTitle
+              highlight={t('task_form.section_color_photos_gold', { defaultValue: 'COLOR Y' })}
+              rest={t('task_form.section_color_photos_rest', { defaultValue: 'FOTOS' })}
+            />
+            <TaskPhotoAndColorPicker
+              coverColor={coverColor}
+              onChangeColor={setCoverColor}
+              photos={taskPhotos}
+              selectedCoverIndex={selectedCoverIndex}
+              onSelectCoverPhoto={setSelectedCoverIndex}
+              onAddPhotos={handleAddPhotos}
+              onRemovePhoto={handleRemovePhoto}
+              isAdmin={isAdmin}
+              taskTitle={titleValue}
+            />
+          </View>
+
           {/* DESCRIPCIÓN */}
           <View style={[styles.section, { marginBottom: 4 }]}>
             <SectionTitle
@@ -408,25 +427,6 @@ export default function CreateBucketModal() {
                   onBlur={() => setIsDescFocused(false)}
                 />
               )}
-            />
-          </View>
-
-          {/* PERSONALIZACIÓN DE PORTADA Y FOTOS */}
-          <View style={styles.section}>
-            <SectionTitle
-              highlight={t('task_form.section_media_gold', { defaultValue: 'FOTOS Y' })}
-              rest={t('task_form.section_media_rest', { defaultValue: 'PORTADA' })}
-            />
-            <TaskPhotoAndColorPicker
-              coverColor={coverColor}
-              onChangeColor={setCoverColor}
-              photos={taskPhotos}
-              selectedCoverIndex={selectedCoverIndex}
-              onSelectCoverPhoto={setSelectedCoverIndex}
-              onAddPhotos={handleAddPhotos}
-              onRemovePhoto={handleRemovePhoto}
-              isAdmin={isAdmin}
-              taskTitle={titleValue}
             />
           </View>
 

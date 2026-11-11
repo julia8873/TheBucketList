@@ -339,12 +339,9 @@ export function TaskPhotoAndColorPicker({
   };
 
   return (
-    <View style={{ gap: 14 }}>
+    <View style={{ gap: 12 }}>
       {/* FILA 1: Colores predeterminados con el hex picker y gradientes */}
       <View>
-        <Text style={{ fontSize: 12, fontWeight: '600', color: gold[400], marginBottom: 8, textTransform: 'uppercase' }}>
-          {t('task_form.colors_title', { defaultValue: 'Color o degradado de fondo' })}
-        </Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.coversRow}>
           {/* Selector de color personalizado con ColorPickerModal */}
           <Pressable
@@ -447,81 +444,70 @@ export function TaskPhotoAndColorPicker({
         </ScrollView>
       </View>
 
-      {/* FILA 2: Botones para añadir fotos (Galería, Cámara, Enlace Google) */}
-      <View>
-        <Text style={{ fontSize: 12, fontWeight: '600', color: gold[400], marginBottom: 8, textTransform: 'uppercase' }}>
-          {t('task_form.photos_title', { defaultValue: 'Subir fotos a tarea/Portada' })}
-        </Text>
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          {/* Galería */}
-          <Pressable
-            style={{
+      {/* FILA 2: Botones para añadir fotos (Galería, Cámara, Enlace Google) - Solo iconos */}
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        {/* Galería */}
+        <Pressable
+          style={({ pressed }) => [
+            {
               flex: 1,
-              flexDirection: 'row',
+              height: 46,
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 8,
-              paddingVertical: 12,
               borderRadius: 12,
-              backgroundColor: theme.colors.surface,
+              backgroundColor: pressed ? (theme.dark ? '#222222' : '#E8E4DA') : theme.colors.surface,
               borderWidth: 1,
               borderColor: theme.colors.border,
-            }}
-            onPress={() => void pickFromGallery()}
-            accessibilityRole="button"
-          >
-            <ImageIcon color={gold[400]} size={18} />
-            <Text style={{ fontSize: 13, fontWeight: '600', color: theme.colors.foreground }}>
-              {t('albums.pick_gallery', { defaultValue: 'Galería' })}
-            </Text>
-          </Pressable>
+            },
+          ]}
+          onPress={() => void pickFromGallery()}
+          accessibilityRole="button"
+          accessibilityLabel={t('albums.pick_gallery', { defaultValue: 'Galería' })}
+        >
+          <ImageIcon color={gold[400]} size={22} strokeWidth={2} />
+        </Pressable>
 
-          {/* Cámara */}
-          <Pressable
-            style={{
+        {/* Cámara */}
+        <Pressable
+          style={({ pressed }) => [
+            {
               flex: 1,
-              flexDirection: 'row',
+              height: 46,
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 8,
-              paddingVertical: 12,
               borderRadius: 12,
-              backgroundColor: theme.colors.surface,
+              backgroundColor: pressed ? (theme.dark ? '#222222' : '#E8E4DA') : theme.colors.surface,
               borderWidth: 1,
               borderColor: theme.colors.border,
-            }}
-            onPress={() => void takeCameraPhoto()}
-            accessibilityRole="button"
-          >
-            <Camera color={gold[400]} size={18} />
-            <Text style={{ fontSize: 13, fontWeight: '600', color: theme.colors.foreground }}>
-              {t('albums.take_camera', { defaultValue: 'Cámara' })}
-            </Text>
-          </Pressable>
+            },
+          ]}
+          onPress={() => void takeCameraPhoto()}
+          accessibilityRole="button"
+          accessibilityLabel={t('albums.take_camera', { defaultValue: 'Cámara' })}
+        >
+          <Camera color={gold[400]} size={22} strokeWidth={2} />
+        </Pressable>
 
-          {/* Enlace Google / Web */}
-          <Pressable
-            style={{
+        {/* Enlace Google / Web */}
+        <Pressable
+          style={({ pressed }) => [
+            {
               flex: 1,
-              flexDirection: 'row',
+              height: 46,
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 8,
-              paddingVertical: 12,
               borderRadius: 12,
-              backgroundColor: theme.colors.surface,
+              backgroundColor: pressed ? (theme.dark ? '#222222' : '#E8E4DA') : theme.colors.surface,
               borderWidth: 1,
               borderColor: theme.colors.border,
-            }}
-            onPress={() => setShowLinkModal(true)}
-            accessibilityRole="button"
-          >
-            <Link2 color={gold[400]} size={18} />
-            <Text style={{ fontSize: 13, fontWeight: '600', color: theme.colors.foreground }}>
-              {t('albums.paste_link', { defaultValue: 'Enlace' })}
-            </Text>
-          </Pressable>
-        </View>
+            },
+          ]}
+          onPress={() => setShowLinkModal(true)}
+          accessibilityRole="button"
+          accessibilityLabel={t('albums.paste_link', { defaultValue: 'Enlace' })}
+        >
+          <Link2 color={gold[400]} size={22} strokeWidth={2} />
+        </Pressable>
       </View>
 
       {/* FILA 3: Fotos subidas */}
