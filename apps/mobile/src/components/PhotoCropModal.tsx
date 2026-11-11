@@ -49,6 +49,7 @@ type Props = {
   total: number;
   onCancel: () => void;
   onDone: (uri: string) => void;
+  inline?: boolean;
 };
 
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
@@ -64,7 +65,7 @@ function fitRatio(dw: number, dh: number, ratio: number): Rect {
   return { x: (dw - w) / 2, y: (dh - h) / 2, w, h };
 }
 
-export function PhotoCropModal({ visible, uri, width, height, index, total, onCancel, onDone }: Props) {
+export function PhotoCropModal({ visible, uri, width, height, index, total, onCancel, onDone, inline = false }: Props) {
   const { t } = useTranslation();
   const [current, setCurrent] = useState<{ uri: string; width: number; height: number } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -229,15 +230,8 @@ export function PhotoCropModal({ visible, uri, width, height, index, total, onCa
 
   const thirds = [1, 2].map((i) => i / 3);
 
-  return (
-    <Modal
-      visible={visible}
-      animationType="fade"
-      presentationStyle="fullScreen"
-      statusBarTranslucent
-      onRequestClose={onCancel}
-    >
-      <View style={styles.root}>
+  const content = (
+    <View style={styles.root}>
         {/* Cabecera */}
         <View style={styles.header}>
           <Pressable onPress={onCancel} hitSlop={10} disabled={busy}>
@@ -372,6 +366,26 @@ export function PhotoCropModal({ visible, uri, width, height, index, total, onCa
           )}
         </View>
       </View>
+  );
+
+  if (inline) {
+    if (!visible) return null;
+    return (
+      <View style={[StyleSheet.absoluteFillObject, { zIndex: 99999, backgroundColor: '#000' }]}>
+        {content}
+      </View>
+    );
+  }
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="fade"
+      presentationStyle="fullScreen"
+      statusBarTranslucent
+      onRequestClose={onCancel}
+    >
+      {content}
     </Modal>
   );
 }

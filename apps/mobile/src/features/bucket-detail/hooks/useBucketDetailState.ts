@@ -936,7 +936,7 @@ export function useBucketDetailState() {
     try {
       if (Platform.OS === 'ios') await new Promise((r) => setTimeout(r, 350));
 
-      const editedUris: string[] = [];
+      const uploadUris: string[] = [];
       for (let i = 0; i < assets.length; i++) {
         const asset = assets[i]!;
         const base = await ImageManipulator.manipulateAsync(
@@ -944,18 +944,8 @@ export function useBucketDetailState() {
           asset.width && asset.width > 1600 ? [{ resize: { width: 1600 } }] : [],
           { compress: 1, format: ImageManipulator.SaveFormat.JPEG },
         );
-        const edited = await requestPhotoEdit(base, i, assets.length);
-        if (edited === null) {
-          setCropRequest(null);
-          return;
-        }
-        editedUris.push(edited);
-        if (i + 1 < assets.length) {
-          setCropRequest(null);
-          await new Promise((r) => setTimeout(r, 50));
-        }
+        uploadUris.push(base.uri);
       }
-      setCropRequest(null);
 
       const maxPosition = Math.max(
         -1,
@@ -963,7 +953,7 @@ export function useBucketDetailState() {
       );
       let nextPosition = maxPosition + 1;
 
-      for (const uri of editedUris) {
+      for (const uri of uploadUris) {
         const processed = await processBucketImage(uri);
         const paths = await storageApi.uploadPhoto(
           user.id,
@@ -996,9 +986,8 @@ export function useBucketDetailState() {
 
       void queryClient.invalidateQueries({ queryKey: ['bucketDetail', cleanId] });
       invalidateBucket();
-      toast.success(editedUris.length > 1 ? t('bucket_detail.photos_added_plural') : t('bucket_detail.photos_added_single'));
+      toast.success(uploadUris.length > 1 ? t('bucket_detail.photos_added_plural') : t('bucket_detail.photos_added_single'));
     } catch (error: any) {
-      setCropRequest(null);
       Alert.alert(t('bucket_detail.upload_photos_error_title'), error?.message || t('common.retry'));
     }
   };
@@ -1241,6 +1230,84 @@ export function useBucketDetailState() {
       toast.success(t('bucket.photo_visibility_updated', { defaultValue: 'Visibilidad de la foto actualizada' }));
     },
     [cleanId, queryClient, t]
+  );
+
+  const handleRecropPhoto = useCallback(
+    async (photoId: string, croppedUri: string) => {
+      if (!user) return;
+      try {
+        const processed = await processBucketImage(croppedUri);
+        const paths = await storageApi.uploadPhoto(
+          user.id,
+          cleanId,
+          processed.original.uri,
+          processed.thumbnail.uri,
+        );
+
+        const currentBucket = queryClient.getQueryData<any>(['bucketDetail', cleanId]);
+        const oldPhoto = (currentBucket?.bucket_photos || []).find((p: any) => p.id === photoId);
+
+        queryClient.setQueryData(['bucketDetail', cleanId], (oldData: any) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            bucket_photos: (oldData.bucket_photos || []).map((p: any) =>
+              p.id === photoId
+                ? {
+                    ...p,
+                    storage_path: paths.photoPath,
+                    thumb_path: paths.thumbPath,
+                    width: processed.original.width,
+                    height: processed.original.height,
+                    size_bytes: processed.original.sizeBytes,
+                    thumb_size_bytes: processed.thumbnail.sizeBytes,
+                  }
+                : p
+            ),
+          };
+        });
+
+        const { error } = await supabase
+          .from('bucket_photos')
+          .update({
+            storage_path: paths.photoPath,
+            thumb_path: paths.thumbPath,
+            width: processed.original.width,
+            height: processed.original.height,
+            size_bytes: processed.original.sizeBytes,
+            thumb_size_bytes: processed.thumbnail.sizeBytes,
+          })
+          .eq('id', photoId);
+
+        if (error) throw error;
+
+        if (oldPhoto) {
+          try {
+            const filesToRemove = [oldPhoto.storage_path, oldPhoto.thumb_path].filter(Boolean);
+            if (filesToRemove.length > 0) {
+              await supabase.storage.from('photos').remove(filesToRemove);
+            }
+          } catch (e) {
+            console.warn('Error eliminando fotos viejas tras recorte:', e);
+          }
+        }
+
+        const nextImage = resolveTaskImage(
+          queryClient.getQueryData<any>(['bucketDetail', cleanId]),
+          { preferThumb: true },
+        );
+        patchTasks(queryClient, [cleanId], {
+          task: { imageValue: nextImage },
+        });
+
+        void queryClient.invalidateQueries({ queryKey: ['bucketDetail', cleanId] });
+        invalidateBucket();
+        toast.success(t('bucket.photo_crop_saved', { defaultValue: 'Foto actualizada' }));
+      } catch (err: any) {
+        Alert.alert(t('common.error'), err?.message || 'Error al actualizar la foto');
+      }
+    },
+    [user, cleanId, queryClient, invalidateBucket, t]
   );
 
   const uploadPhotos = () => {
@@ -2158,6 +2225,7 @@ export function useBucketDetailState() {
     handleUpdatePhotoTitle,
     handleUpdatePhotoDate,
     handleUpdatePhotoVisibility,
+    handleRecropPhoto,
     collaborationMode,
     collaborationAudience,
     isFollower,

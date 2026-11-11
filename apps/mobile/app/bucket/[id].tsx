@@ -619,6 +619,7 @@ export default function BucketDetailScreen() {
         onUpdateTitle={state.handleUpdatePhotoTitle}
         onUpdatePhotoDate={state.handleUpdatePhotoDate}
         onUpdatePhotoVisibility={state.handleUpdatePhotoVisibility}
+        onRecropPhoto={state.handleRecropPhoto}
       />
 
       {/* Botón flotante inferior para cambiar estado */}

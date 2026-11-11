@@ -10,6 +10,8 @@ import {
   Text,
   ActivityIndicator,
   useWindowDimensions,
+  Image,
+  Alert,
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -33,6 +35,7 @@ import {
   Globe,
   Users,
   Lock,
+  Crop,
 } from 'lucide-react-native';
 import { Typography, ConfirmDialog, fontFamily, toast } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
@@ -42,6 +45,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { UniversalDatePicker } from './UniversalDatePicker';
+import { PhotoCropModal } from './PhotoCropModal';
 import { format } from 'date-fns';
 import { getDateFnsLocale } from '@/utils/dateLocale';
 
@@ -296,6 +300,7 @@ type BucketPhotoViewerProps = {
   onUpdateTitle?: (photoId: string, title: string) => void;
   onUpdatePhotoDate?: (photoId: string, field: 'created_at' | 'completed_at', date: string | null) => void;
   onUpdatePhotoVisibility?: (photoId: string, visibility: 'public' | 'followers' | 'private') => void;
+  onRecropPhoto?: (photoId: string, croppedUri: string) => Promise<void> | void;
   /** Si se pasa y el usuario puede editar, aparece el botón de borrar. Debe pedir confirmación y borrar. */
   onDelete?: (photo: any) => void;
   selectedThumbnailId?: string | null;
@@ -310,6 +315,7 @@ export function BucketPhotoViewer({
   onUpdateTitle,
   onUpdatePhotoDate,
   onUpdatePhotoVisibility,
+  onRecropPhoto,
   onDelete,
   selectedThumbnailId,
   onSetAsThumbnail,
@@ -326,12 +332,19 @@ export function BucketPhotoViewer({
     date: Date;
   } | null>(null);
   const [pickerTempDate, setPickerTempDate] = useState<Date>(new Date());
+  const [cropTarget, setCropTarget] = useState<{
+    uri: string;
+    width: number;
+    height: number;
+  } | null>(null);
+  const [isPreparingCrop, setIsPreparingCrop] = useState(false);
 
   const currentPhoto = viewingPhotoIndex !== null && photos ? photos[viewingPhotoIndex] : null;
 
   const handleClose = useCallback(() => {
     setIsAnyPhotoZoomed(false);
     setVisibilityPickerVisible(false);
+    setCropTarget(null);
     setViewingPhotoIndex(null);
   }, [setViewingPhotoIndex]);
 
@@ -373,6 +386,125 @@ export function BucketPhotoViewer({
 
   const handleRemoveCompletedAt = (photoId: string) => {
     setRemoveCompletedConfirmId(photoId);
+  };
+
+  const handleUploadedPress = () => {
+    if (!currentPhoto) return;
+    if (!isOwner) {
+      if (currentPhoto.created_at) {
+        toast.info(t('bucket.photo_uploaded', { date: formatPhotoDate(currentPhoto.created_at, i18n.language) }));
+      }
+      return;
+    }
+    openDatePicker(currentPhoto.id, 'created_at', currentPhoto.created_at);
+  };
+
+  const handleCompletedPress = () => {
+    if (!currentPhoto) return;
+    if (!isOwner) {
+      if (currentPhoto.completed_at) {
+        toast.info(t('bucket.photo_completed', { date: formatPhotoDate(currentPhoto.completed_at, i18n.language) }));
+      }
+      return;
+    }
+    if (currentPhoto.completed_at) {
+      Alert.alert(
+        t('bucket.photo_completed_date') || 'Fecha completada',
+        formatPhotoDate(currentPhoto.completed_at, i18n.language),
+        [
+          {
+            text: t('bucket.photo_change_date', { defaultValue: 'Cambiar fecha' }),
+            onPress: () => openDatePicker(currentPhoto.id, 'completed_at', currentPhoto.completed_at),
+          },
+          {
+            text: t('bucket.photo_remove_completed', { defaultValue: 'Quitar fecha' }),
+            style: 'destructive',
+            onPress: () => onUpdatePhotoDate?.(currentPhoto.id, 'completed_at', null),
+          },
+          { text: t('common.cancel'), style: 'cancel' },
+        ]
+      );
+    } else {
+      openDatePicker(currentPhoto.id, 'completed_at', null);
+    }
+  };
+
+  const handleStartCrop = async () => {
+    if (!currentPhoto || isPreparingCrop) return;
+    setIsPreparingCrop(true);
+    try {
+      const remoteUrl = storageApi.getPublicUrl(currentPhoto.storage_path);
+      let localUri = remoteUrl;
+      let imgW = currentPhoto.width || 0;
+      let imgH = currentPhoto.height || 0;
+
+      if (Platform.OS !== 'web') {
+        const ext = currentPhoto.storage_path?.endsWith('.png') ? 'png' : 'jpg';
+        const filename = `crop_temp_${Date.now()}.${ext}`;
+        const targetPath = `${FileSystem.cacheDirectory}${filename}`;
+        const downloadRes = await FileSystem.downloadAsync(remoteUrl, targetPath);
+        localUri = downloadRes.uri;
+      }
+
+      if (!imgW || !imgH) {
+        await new Promise<void>((resolve) => {
+          Image.getSize(
+            localUri,
+            (w, h) => {
+              imgW = w;
+              imgH = h;
+              resolve();
+            },
+            () => {
+              imgW = windowWidth;
+              imgH = windowHeight;
+              resolve();
+            }
+          );
+        });
+      }
+
+      setCropTarget({
+        uri: localUri,
+        width: imgW,
+        height: imgH,
+      });
+    } catch (e: any) {
+      toast.error(t('common.error') || 'Error al preparar la imagen para recortar');
+    } finally {
+      setIsPreparingCrop(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!currentPhoto || isDownloading) return;
+    try {
+      setIsDownloading(true);
+      if (Platform.OS === 'web') {
+        const url = storageApi.getPublicUrl(currentPhoto.storage_path);
+        if (typeof window !== 'undefined') window.open(url, '_blank');
+        setIsDownloading(false);
+        return;
+      }
+      const { status } = await MediaLibrary.requestPermissionsAsync(true);
+      if (status !== 'granted') {
+        setIsDownloading(false);
+        triggerDownloadToast(t('bucket.photo_download_permission'), true);
+        return;
+      }
+      const url = storageApi.getPublicUrl(currentPhoto.storage_path);
+      const filename = url.split('/').pop() ?? 'foto.jpg';
+      const localUri = FileSystem.cacheDirectory + filename;
+      await FileSystem.downloadAsync(url, localUri);
+      await MediaLibrary.saveToLibraryAsync(localUri);
+      setIsDownloading(false);
+      triggerDownloadToast(t('bucket.photo_download_saved'));
+      toast.success(t('bucket.photo_download_saved'));
+    } catch {
+      setIsDownloading(false);
+      triggerDownloadToast(t('bucket.photo_download_error'), true);
+      toast.error(t('bucket.photo_download_error'));
+    }
   };
 
   return (
@@ -461,132 +593,36 @@ export function BucketPhotoViewer({
           </>
         )}
 
-        {/* Cabecera superior unificada: Título de foto, X de cerrar y Fechas */}
+        {/* Cabecera superior mínima flotante: Paginación y Botón cerrar (X) */}
         {currentPhoto && (
-          <View style={styles.topHeaderWrapper}>
-            <View style={styles.topHeaderCard}>
-              {/* Fila superior: Título de la foto + Badge de paginación + Botón cerrar (X) */}
-              <View style={styles.titleRow}>
-                <View style={styles.titleContainer}>
-                  {isOwner ? (
-                    <TextInput
-                      key={currentPhoto.id}
-                      placeholder={t('bucket.photo_add_title')}
-                      placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                      defaultValue={currentPhoto.title || ''}
-                      onChangeText={(text) => onUpdateTitle?.(currentPhoto.id, text)}
-                      style={styles.titleInput}
-                      maxLength={60}
-                    />
-                  ) : (
-                    <Text style={styles.titleStaticText} numberOfLines={1}>
-                      {currentPhoto.title || t('bucket.photo_untitled')}
+          <View style={styles.topHeaderWrapper} pointerEvents="box-none">
+            <View style={styles.topHeaderRow} pointerEvents="box-none">
+              <View style={styles.topLeftContainer}>
+                {photos && photos.length > 1 && (
+                  <View style={styles.photoIndexBadge}>
+                    <Text style={styles.photoIndexText}>
+                      {(viewingPhotoIndex ?? 0) + 1}/{photos.length}
                     </Text>
-                  )}
-                </View>
-
-                <View style={styles.topRightActions}>
-                  {photos && photos.length > 1 && (
-                    <View style={styles.photoIndexBadge}>
-                      <Text style={styles.photoIndexText}>
-                        {(viewingPhotoIndex ?? 0) + 1}/{photos.length}
-                      </Text>
-                    </View>
-                  )}
-                  <Pressable
-                    style={styles.closeBtn}
-                    onPress={handleClose}
-                    hitSlop={8}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('bucket.photo_close_viewer')}
-                  >
-                    <X color="#FFFFFF" size={17} strokeWidth={2.4} />
-                  </Pressable>
-                </View>
-              </View>
-
-              {/* Fila inferior de Fechas con diseño de Chips modernos */}
-              <View style={styles.datesRow}>
-                {/* Chip Fecha de subida */}
-                <Pressable
-                  onPress={() => isOwner && openDatePicker(currentPhoto.id, 'created_at', currentPhoto.created_at)}
-                  style={styles.dateChip}
-                  disabled={!isOwner}
-                  hitSlop={4}
-                >
-                  <Calendar size={11} color="#A0A0A0" strokeWidth={2} />
-                  <Text style={styles.dateChipText}>
-                    {t('bucket.photo_uploaded', { date: formatPhotoDate(currentPhoto.created_at, i18n.language) })}
-                  </Text>
-                  {isOwner && <Pencil size={9} color="rgba(255,255,255,0.35)" style={{ marginLeft: 2 }} />}
-                </Pressable>
-
-                {/* Chip Fecha en que se completó esa foto */}
-                {currentPhoto.completed_at ? (
-                  <View style={styles.completedChip}>
-                    <Pressable
-                      onPress={() => isOwner && openDatePicker(currentPhoto.id, 'completed_at', currentPhoto.completed_at)}
-                      style={styles.completedChipInner}
-                      disabled={!isOwner}
-                      hitSlop={4}
-                    >
-                      <CheckCircle2 size={11} color="#34C759" strokeWidth={2.2} />
-                      <Text style={[styles.dateChipText, { color: '#34C759' }]}>
-                        {t('bucket.photo_completed', { date: formatPhotoDate(currentPhoto.completed_at, i18n.language) })}
-                      </Text>
-                      {isOwner && <Pencil size={9} color="rgba(52, 199, 89, 0.5)" style={{ marginLeft: 2 }} />}
-                    </Pressable>
-                    {isOwner && (
-                      <Pressable
-                        hitSlop={8}
-                        onPress={() => handleRemoveCompletedAt(currentPhoto.id)}
-                        style={styles.removeDateXBtn}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('bucket.photo_remove_completed')}
-                      >
-                        <X size={10} color="rgba(255,255,255,0.7)" strokeWidth={2.4} />
-                      </Pressable>
-                    )}
                   </View>
-                ) : isOwner ? (
-                  <Pressable
-                    onPress={() => openDatePicker(currentPhoto.id, 'completed_at', null)}
-                    style={styles.addCompletedChip}
-                    hitSlop={4}
-                  >
-                    <CheckCircle2 size={11} color={gold[400]} strokeWidth={2} />
-                    <Text style={[styles.dateChipText, { color: gold[400], fontWeight: '600' }]}>
-                      {t('bucket.photo_add_completed')}
+                )}
+                {!!currentPhoto.title && (
+                  <View style={styles.photoTitleBadge}>
+                    <Text style={styles.photoTitleBadgeText} numberOfLines={1}>
+                      {currentPhoto.title}
                     </Text>
-                  </Pressable>
-                ) : null}
-
-                {/* Chip Visibilidad */}
-                {(() => {
-                  const vis = (currentPhoto.visibility as 'public' | 'followers' | 'private') || 'public';
-                  const VisIcon = vis === 'private' ? Lock : vis === 'followers' ? Users : Globe;
-                  const visColor = vis === 'private' ? '#EF4444' : vis === 'followers' ? '#A855F7' : '#60A5FA';
-                  const visLabel = vis === 'private'
-                    ? t('bucket.visibility_private')
-                    : vis === 'followers'
-                    ? t('bucket.visibility_followers')
-                    : t('bucket.visibility_public');
-                  return (
-                    <Pressable
-                      onPress={() => isOwner && setVisibilityPickerVisible(true)}
-                      style={[styles.dateChip, { borderColor: 'rgba(255,255,255,0.15)' }]}
-                      disabled={!isOwner}
-                      hitSlop={4}
-                    >
-                      <VisIcon size={11} color={visColor} strokeWidth={2.2} />
-                      <Text style={[styles.dateChipText, { color: visColor }]}>
-                        {visLabel}
-                      </Text>
-                      {isOwner && <Pencil size={9} color="rgba(255,255,255,0.35)" style={{ marginLeft: 2 }} />}
-                    </Pressable>
-                  );
-                })()}
+                  </View>
+                )}
               </View>
+
+              <Pressable
+                style={styles.closeBtn}
+                onPress={handleClose}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel={t('bucket.photo_close_viewer')}
+              >
+                <X color="#FFFFFF" size={18} strokeWidth={2.4} />
+              </Pressable>
             </View>
           </View>
         )}
@@ -713,73 +749,149 @@ export function BucketPhotoViewer({
           />
         )}
 
-        {/* Barra de acciones inferior: Borrar y Descargar */}
+        {/* Barra de acciones inferior flotante con iconos */}
         {currentPhoto && (
-          <View style={styles.actionBarWrapper}>
-            <View style={styles.actionBarInner}>
+          <View style={styles.actionBarWrapper} pointerEvents="box-none">
+            <View style={styles.actionBarDock}>
+              {/* 1. Calendario (fecha de subida) */}
+              <Pressable
+                style={styles.dockIconBtn}
+                onPress={handleUploadedPress}
+                hitSlop={6}
+                accessibilityRole="button"
+                accessibilityLabel={t('bucket.photo_upload_date', { defaultValue: 'Fecha de subida' })}
+              >
+                <Calendar color="#FFFFFF" size={20} strokeWidth={2} />
+              </Pressable>
+
+              {/* 2. Check (fecha completada) */}
+              {(() => {
+                const isCompleted = !!currentPhoto.completed_at;
+                return (
+                  <Pressable
+                    style={[
+                      styles.dockIconBtn,
+                      isCompleted && styles.dockIconBtnCompleted,
+                    ]}
+                    onPress={handleCompletedPress}
+                    hitSlop={6}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('bucket.photo_completed_date', { defaultValue: 'Fecha completada' })}
+                  >
+                    <CheckCircle2
+                      color={isCompleted ? '#34C759' : 'rgba(255, 255, 255, 0.65)'}
+                      size={20}
+                      strokeWidth={isCompleted ? 2.4 : 2}
+                    />
+                  </Pressable>
+                );
+              })()}
+
+              {/* 3. Crop (recortar foto) */}
+              {isOwner && onRecropPhoto && (
+                <Pressable
+                  style={styles.dockIconBtn}
+                  onPress={handleStartCrop}
+                  disabled={isPreparingCrop}
+                  hitSlop={6}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('photo_crop.title', { defaultValue: 'Recortar foto' })}
+                >
+                  {isPreparingCrop ? (
+                    <ActivityIndicator size="small" color={gold[400]} />
+                  ) : (
+                    <Crop color={gold[400]} size={20} strokeWidth={2.2} />
+                  )}
+                </Pressable>
+              )}
+
+              {/* 4. Bola de visibilidad */}
+              {(() => {
+                const vis = (currentPhoto.visibility as 'public' | 'followers' | 'private') || 'public';
+                const VisIcon = vis === 'private' ? Lock : vis === 'followers' ? Users : Globe;
+                const visColor = vis === 'private' ? '#EF4444' : vis === 'followers' ? '#A855F7' : '#60A5FA';
+                return (
+                  <Pressable
+                    style={[
+                      styles.dockIconBtn,
+                      {
+                        backgroundColor: `${visColor}1A`,
+                        borderColor: `${visColor}55`,
+                      },
+                    ]}
+                    onPress={() => {
+                      if (!isOwner) {
+                        const label =
+                          vis === 'private'
+                            ? t('bucket.visibility_private')
+                            : vis === 'followers'
+                            ? t('bucket.visibility_followers')
+                            : t('bucket.visibility_public');
+                        toast.info(`${t('bucket.photo_visibility_title')}: ${label}`);
+                        return;
+                      }
+                      setVisibilityPickerVisible(true);
+                    }}
+                    hitSlop={6}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('bucket.photo_visibility_title')}
+                  >
+                    <VisIcon color={visColor} size={20} strokeWidth={2.2} />
+                  </Pressable>
+                );
+              })()}
+
+              {/* 5. Descargar */}
+              <Pressable
+                style={styles.dockIconBtn}
+                onPress={handleDownload}
+                disabled={isDownloading}
+                hitSlop={6}
+                accessibilityRole="button"
+                accessibilityLabel={t('bucket.photo_download')}
+              >
+                {isDownloading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Download color="#FFFFFF" size={20} strokeWidth={2} />
+                )}
+              </Pressable>
+
+              {/* 6. Basura (borrar foto) */}
               {isOwner && onDelete && (
                 <Pressable
-                  accessibilityLabel={t('bucket.photo_delete_label')}
-                  style={styles.deleteBtn}
-                  unstable_pressDelay={0}
-                  hitSlop={8}
+                  style={[styles.dockIconBtn, styles.dockIconBtnDelete]}
                   onPress={() => setDeleteConfirmVisible(true)}
+                  hitSlop={6}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('bucket.photo_delete_label')}
                 >
                   <Trash2 color="#F87171" size={20} strokeWidth={2} />
                 </Pressable>
               )}
-              <Pressable
-                style={[
-                  styles.actionBtn,
-                  styles.actionBtnFilled,
-                  { backgroundColor: gold[400] },
-                  isDownloading && { opacity: 0.75 },
-                ]}
-                disabled={isDownloading}
-                onPress={async () => {
-                  if (isDownloading) return;
-                  try {
-                    setIsDownloading(true);
-                    if (Platform.OS === 'web') {
-                      const url = storageApi.getPublicUrl(currentPhoto.storage_path);
-                      if (typeof window !== 'undefined') window.open(url, '_blank');
-                      setIsDownloading(false);
-                      return;
-                    }
-                    const { status } = await MediaLibrary.requestPermissionsAsync(true);
-                    if (status !== 'granted') {
-                      setIsDownloading(false);
-                      triggerDownloadToast(t('bucket.photo_download_permission'), true);
-                      return;
-                    }
-                    const url = storageApi.getPublicUrl(currentPhoto.storage_path);
-                    const filename = url.split('/').pop() ?? 'foto.jpg';
-                    const localUri = FileSystem.cacheDirectory + filename;
-                    await FileSystem.downloadAsync(url, localUri);
-                    await MediaLibrary.saveToLibraryAsync(localUri);
-                    setIsDownloading(false);
-                    triggerDownloadToast(t('bucket.photo_download_saved'));
-                    toast.success(t('bucket.photo_download_saved'));
-                  } catch {
-                    setIsDownloading(false);
-                    triggerDownloadToast(t('bucket.photo_download_error'), true);
-                    toast.error(t('bucket.photo_download_error'));
-                  }
-                }}
-              >
-                {isDownloading ? (
-                  <ActivityIndicator size="small" color="#000" />
-                ) : (
-                  <Download color="#000" size={18} strokeWidth={2} />
-                )}
-                <Typography variant="bodySemibold" color="#000" style={{ marginLeft: 8 }}>
-                  {isDownloading
-                    ? t('bucket.photo_downloading', { defaultValue: 'Descargando...' })
-                    : t('bucket.photo_download')}
-                </Typography>
-              </Pressable>
             </View>
           </View>
+        )}
+
+        {/* Modal de recorte inline para la foto actual */}
+        {cropTarget && (
+          <PhotoCropModal
+            inline={true}
+            visible={!!cropTarget}
+            uri={cropTarget.uri}
+            width={cropTarget.width}
+            height={cropTarget.height}
+            index={viewingPhotoIndex ?? 0}
+            total={photos.length}
+            onCancel={() => setCropTarget(null)}
+            onDone={async (croppedUri) => {
+              const pid = currentPhoto?.id;
+              setCropTarget(null);
+              if (pid && onRecropPhoto) {
+                await onRecropPhoto(pid, croppedUri);
+              }
+            }}
+          />
         )}
 
         {/* Diálogo / Toast flotante dentro del visor (visible sin cerrar la foto) */}
@@ -851,140 +963,61 @@ const styles = StyleSheet.create({
   },
   topHeaderWrapper: {
     position: 'absolute',
-    top: Platform.OS === 'ios' ? 52 : 30,
+    top: Platform.OS === 'ios' ? 52 : 32,
     left: 0,
     right: 0,
-    alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     zIndex: 20,
   },
-  topHeaderCard: {
-    width: '100%',
-    maxWidth: 580,
-    backgroundColor: 'rgba(18, 18, 18, 0.88)',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    paddingHorizontal: 14,
-    paddingTop: 10,
-    paddingBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  titleRow: {
+  topHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 10,
   },
-  titleContainer: {
-    flex: 1,
-    minHeight: 32,
-    justifyContent: 'center',
-  },
-  titleInput: {
-    color: '#FFF',
-    fontSize: 15,
-    fontFamily: 'Inter_600SemiBold',
-    paddingVertical: 2,
-    paddingHorizontal: 0,
-    letterSpacing: 0.2,
-  },
-  titleStaticText: {
-    color: '#FFF',
-    fontSize: 15,
-    fontFamily: 'Inter_600SemiBold',
-    letterSpacing: 0.2,
-  },
-  topRightActions: {
+  topLeftContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
+    marginRight: 12,
   },
   photoIndexBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   photoIndexText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 12,
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  photoTitleBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    maxWidth: '70%',
+  },
+  photoTitleBadgeText: {
     fontFamily: 'Inter_500Medium',
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.65)',
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.9)',
   },
   closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  datesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 7,
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  dateChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  dateChipText: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.82)',
-  },
-  completedChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingLeft: 8,
-    paddingRight: 4,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: 'rgba(52, 199, 89, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(52, 199, 89, 0.25)',
-  },
-  completedChipInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  removeDateXBtn: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: 'rgba(255, 255, 255, 0.14)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 2,
-  },
-  addCompletedChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: 'rgba(212, 177, 58, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(212, 177, 58, 0.25)',
   },
   arrowLeft: {
     position: 'absolute',
@@ -1018,37 +1051,48 @@ const styles = StyleSheet.create({
   },
   actionBarWrapper: {
     position: 'absolute',
-    bottom: 36,
+    bottom: Platform.OS === 'ios' ? 36 : 24,
     left: 0,
     right: 0,
     alignItems: 'center',
-    paddingHorizontal: 12,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
     zIndex: 20,
   },
-  actionBarInner: {
-    width: '100%',
-    maxWidth: 580,
+  actionBarDock: {
     flexDirection: 'row',
-    gap: 12,
-  },
-  actionBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    height: 52,
-    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  actionBtnFilled: {},
-  deleteBtn: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(248,113,113,0.12)',
+    backgroundColor: 'rgba(18, 18, 20, 0.92)',
+    borderRadius: 28,
     borderWidth: 1,
-    borderColor: 'rgba(248,113,113,0.45)',
+    borderColor: 'rgba(255, 255, 255, 0.14)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.45,
+    shadowRadius: 14,
+    elevation: 12,
+  },
+  dockIconBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  dockIconBtnCompleted: {
+    backgroundColor: 'rgba(52, 199, 89, 0.16)',
+    borderColor: 'rgba(52, 199, 89, 0.45)',
+  },
+  dockIconBtnDelete: {
+    backgroundColor: 'rgba(248, 113, 113, 0.14)',
+    borderColor: 'rgba(248, 113, 113, 0.35)',
   },
   dateModalBackdrop: {
     flex: 1,
