@@ -175,18 +175,12 @@ export function BucketBottomSheet({
                     <Pressable style={styles.sheetOption} onPress={() => void uploadPhotos()}>
                       <View style={styles.sheetIcon}><Camera color={gold[400]} size={21} /></View>
                       <View style={styles.sheetOptionText}>
-                        <Typography variant="bodySemibold">{t('bucket.upload_photos')}</Typography>
-                        <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.upload_photos_desc')}</Typography>
-                      </View>
-                    </Pressable>
-                  )}
-
-                  {canEdit && (
-                    <Pressable style={styles.sheetOption} onPress={() => setSheetMode('cover')}>
-                      <View style={styles.sheetIcon}><ImageIcon color={gold[400]} size={21} /></View>
-                      <View style={styles.sheetOptionText}>
-                        <Typography variant="bodySemibold">{t('bucket.change_cover')}</Typography>
-                        <Typography variant="caption" color={theme.colors.foregroundMuted}>{t('bucket.change_cover_desc')}</Typography>
+                        <Typography variant="bodySemibold">
+                          {t('bucket.upload_photos', { defaultValue: 'Subir fotos a tarea/Portada' })}
+                        </Typography>
+                        <Typography variant="caption" color={theme.colors.foregroundMuted}>
+                          {t('bucket.upload_photos_desc', { defaultValue: 'Añade fotos a esta tarea o úsalas como portada' })}
+                        </Typography>
                       </View>
                     </Pressable>
                   )}

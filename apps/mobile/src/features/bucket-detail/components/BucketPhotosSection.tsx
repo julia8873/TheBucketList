@@ -374,7 +374,7 @@ export function BucketPhotosSection({
                 <Camera color={gold[400]} size={photoColumns === 4 ? 18 : photoColumns === 3 ? 20 : 24} strokeWidth={1.8} />
                 {photos.length === 0 && (
                   <Typography variant="bodySemibold" color={gold[400]} style={{ marginLeft: 10 }}>
-                    {t('bucket.add_photo')}
+                    {t('bucket.add_photo', { defaultValue: 'Subir fotos a tarea/Portada' })}
                   </Typography>
                 )}
               </Pressable>

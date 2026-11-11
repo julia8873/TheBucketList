@@ -450,7 +450,7 @@ export function TaskPhotoAndColorPicker({
       {/* FILA 2: Botones para añadir fotos (Galería, Cámara, Enlace Google) */}
       <View>
         <Text style={{ fontSize: 12, fontWeight: '600', color: gold[400], marginBottom: 8, textTransform: 'uppercase' }}>
-          {t('task_form.photos_title', { defaultValue: 'Subir imágenes' })}
+          {t('task_form.photos_title', { defaultValue: 'Subir fotos a tarea/Portada' })}
         </Text>
         <View style={{ flexDirection: 'row', gap: 10 }}>
           {/* Galería */}

@@ -414,8 +414,8 @@ export default function CreateBucketModal() {
           {/* PERSONALIZACIÓN DE PORTADA Y FOTOS */}
           <View style={styles.section}>
             <SectionTitle
-              highlight={t('task_form.section_media_gold', { defaultValue: 'COLOR Y' })}
-              rest={t('task_form.section_media_rest', { defaultValue: 'FOTOS' })}
+              highlight={t('task_form.section_media_gold', { defaultValue: 'FOTOS Y' })}
+              rest={t('task_form.section_media_rest', { defaultValue: 'PORTADA' })}
             />
             <TaskPhotoAndColorPicker
               coverColor={coverColor}

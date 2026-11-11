@@ -28,9 +28,11 @@ export function AddPhotoSheet({
       <View style={styles.container}>
         <View style={styles.header}>
           <View style={{ alignItems: 'center' }}>
-            <Text style={[styles.title, { color: theme.colors.foreground, textAlign: 'center' }]}>{t('bucket.add_photo_sheet_title')}</Text>
+            <Text style={[styles.title, { color: theme.colors.foreground, textAlign: 'center' }]}>
+              {t('bucket.add_photo_sheet_title', { defaultValue: 'Subir fotos a tarea/Portada' })}
+            </Text>
             <Text style={[styles.subtitle, { color: theme.colors.foregroundMuted, textAlign: 'center' }]}>
-              {t('bucket.add_photo_sheet_subtitle')}
+              {t('bucket.add_photo_sheet_subtitle', { defaultValue: 'Elige el origen de tus fotos o imagen de portada' })}
             </Text>
           </View>
         </View>
