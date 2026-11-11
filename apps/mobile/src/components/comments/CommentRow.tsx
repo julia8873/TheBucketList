@@ -123,24 +123,35 @@ export function CommentRow({ comment, ctrl, isReply = false }: CommentRowProps) 
 
         {!isEditing && (
           <View style={styles.actionsRow}>
-            {/* Me gusta (siempre disponible, también en comentarios propios) */}
-            <Pressable
-              hitSlop={6}
-              onPress={() => ctrl.toggleLike(comment.id)}
-              style={styles.likeBtn}
-              accessibilityRole="button"
-              accessibilityLabel={isLiked ? t('comments.unlike_action') : t('comments.like_action')}
-            >
-              <Heart
-                size={15}
-                color={isLiked ? LIKE_COLOR : muted}
-                fill={isLiked ? LIKE_COLOR : 'transparent'}
-                strokeWidth={2}
-              />
+            {/* Me gusta: Corazón para dar/quitar like, y número para ver quién ha dado like */}
+            <View style={styles.likeGroup}>
+              <Pressable
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 3 }}
+                onPress={() => ctrl.toggleLike(comment.id)}
+                onLongPress={() => likes.length > 0 && ctrl.openLikesModal({ id: comment.id, body: comment.body })}
+                style={styles.likeIconBtn}
+                accessibilityRole="button"
+                accessibilityLabel={isLiked ? t('comments.unlike_action') : t('comments.like_action')}
+              >
+                <Heart
+                  size={15}
+                  color={isLiked ? LIKE_COLOR : muted}
+                  fill={isLiked ? LIKE_COLOR : 'transparent'}
+                  strokeWidth={2}
+                />
+              </Pressable>
               {likes.length > 0 && (
-                <Text style={[styles.likeCount, { color: isLiked ? LIKE_COLOR : muted }]}>{likes.length}</Text>
+                <Pressable
+                  hitSlop={{ top: 8, bottom: 8, left: 3, right: 8 }}
+                  onPress={() => ctrl.openLikesModal({ id: comment.id, body: comment.body })}
+                  style={styles.likeCountBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('bucket.view_likes', { defaultValue: 'Ver me gusta' })}
+                >
+                  <Text style={[styles.likeCount, { color: isLiked ? LIKE_COLOR : muted }]}>{likes.length}</Text>
+                </Pressable>
               )}
-            </Pressable>
+            </View>
 
             <Pressable
               hitSlop={6}
@@ -282,7 +293,9 @@ const styles = StyleSheet.create({
   actionsRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginTop: 6 },
   actionText: { fontSize: 12, fontFamily: fontFamily.semibold, letterSpacing: 0.2 },
   deleteText: { color: 'rgba(248, 113, 113, 0.9)' },
-  likeBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  likeGroup: { flexDirection: 'row', alignItems: 'center' },
+  likeIconBtn: { paddingVertical: 2, paddingRight: 3, justifyContent: 'center', alignItems: 'center' },
+  likeCountBtn: { paddingVertical: 2, paddingLeft: 2, paddingRight: 4, justifyContent: 'center', alignItems: 'center' },
   likeCount: { fontSize: 12, fontFamily: fontFamily.semibold },
   toggleRow: { flexDirection: 'row', alignItems: 'center', marginLeft: 46, gap: 8 },
   toggleLine: { width: 22, height: 1.5 },

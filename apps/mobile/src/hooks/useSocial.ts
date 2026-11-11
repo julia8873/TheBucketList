@@ -374,6 +374,7 @@ export function useToggleCommentLike() {
     },
     onSettled: (_data, _err, variables) => {
       void queryClient.invalidateQueries({ queryKey: likeQueryKey(variables) });
+      void queryClient.invalidateQueries({ queryKey: ['itemLikes', 'comment', variables.commentId] });
     },
   });
 }
@@ -561,8 +562,8 @@ export function useToggleAlbumLike() {
   });
 }
 
-/** Hook para consultar la lista de personas que le han dado me gusta a una tarea o álbum */
-export function useItemLikes(targetId?: string, targetType: 'bucket' | 'album' = 'bucket') {
+/** Hook para consultar la lista de personas que le han dado me gusta a una tarea, álbum o comentario */
+export function useItemLikes(targetId?: string, targetType: 'bucket' | 'album' | 'comment' = 'bucket') {
   return useQuery({
     queryKey: ['itemLikes', targetType, targetId],
     queryFn: () => (targetId ? socialApi.getItemLikes(targetId, targetType) : Promise.resolve([])),

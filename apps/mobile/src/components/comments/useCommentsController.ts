@@ -48,6 +48,15 @@ export function useCommentsController({ targetId, targetType, ownerId, onReplySt
   const [editingText, setEditingText] = useState('');
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [reportingComment, setReportingComment] = useState<{ id: string; author: string } | null>(null);
+  const [likesModalComment, setLikesModalComment] = useState<{ id: string; body?: string } | null>(null);
+
+  const openLikesModal = useCallback((comment: { id: string; body?: string }) => {
+    setLikesModalComment(comment);
+  }, []);
+
+  const closeLikesModal = useCallback(() => {
+    setLikesModalComment(null);
+  }, []);
 
   const onReplyStartRef = useRef(onReplyStart);
   onReplyStartRef.current = onReplyStart;
@@ -223,6 +232,10 @@ export function useCommentsController({ targetId, targetType, ownerId, onReplySt
     setReportingComment,
     submitReport,
     isReporting: reportContent.isPending,
+    // me gusta modal
+    likesModalComment,
+    openLikesModal,
+    closeLikesModal,
   };
 }
 

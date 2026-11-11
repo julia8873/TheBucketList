@@ -102,6 +102,7 @@ export function useRealtimeSync(userId?: string) {
           schedule('comment_likes', () => {
             invalidate('comments');
             invalidate('bucketComments');
+            invalidate('itemLikes', 'comment');
           });
         })
         // ── Album items: solo los álbumes afectados ───────────────────────────────

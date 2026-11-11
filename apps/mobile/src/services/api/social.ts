@@ -560,15 +560,19 @@ export const socialApi = {
     return (data || []).map((r: any) => r.album_id as string);
   },
 
-  /** Obtiene la lista de usuarios que dieron like a una tarea o a un álbum */
-  getItemLikes: async (targetId: string, targetType: 'bucket' | 'album' = 'bucket') => {
+  /** Obtiene la lista de usuarios que dieron like a una tarea, a un álbum o a un comentario */
+  getItemLikes: async (targetId: string, targetType: 'bucket' | 'album' | 'comment' = 'bucket') => {
     if (!targetId) return [];
-    const table = targetType === 'album' ? 'album_reactions' : 'reactions';
-    const foreignKey = targetType === 'album' ? 'album_id' : 'bucket_id';
+    const table = targetType === 'album' ? 'album_reactions' : targetType === 'comment' ? 'comment_likes' : 'reactions';
+    const foreignKey = targetType === 'album' ? 'album_id' : targetType === 'comment' ? 'comment_id' : 'bucket_id';
+
+    const selectQuery = targetType === 'comment'
+      ? 'id, user_id, created_at, user:profiles(*)'
+      : 'id, user_id, emoji, created_at, user:profiles(*)';
 
     const { data, error } = await supabase
       .from(table)
-      .select('id, user_id, emoji, created_at, user:profiles(*)')
+      .select(selectQuery)
       .eq(foreignKey, targetId)
       .order('created_at', { ascending: false });
 
@@ -576,16 +580,22 @@ export const socialApi = {
       return (data as any[]).map((row) => ({
         id: row.id,
         user_id: row.user_id,
-        emoji: row.emoji,
+        emoji: row.emoji ?? '❤️',
         created_at: row.created_at,
         user: row.user,
       }));
     }
 
+    if (!error && data && data.length === 0) return [];
+
     // Fallback: si el join directo falla o no devuelve perfiles
+    const fallbackSelect = targetType === 'comment'
+      ? 'id, user_id, created_at'
+      : 'id, user_id, emoji, created_at';
+
     const { data: reactionsData, error: rErr } = await supabase
       .from(table)
-      .select('id, user_id, emoji, created_at')
+      .select(fallbackSelect)
       .eq(foreignKey, targetId)
       .order('created_at', { ascending: false });
 
@@ -604,7 +614,7 @@ export const socialApi = {
     return reactionsData.map((row: any) => ({
       id: row.id,
       user_id: row.user_id,
-      emoji: row.emoji,
+      emoji: row.emoji ?? '❤️',
       created_at: row.created_at,
       user: profileMap.get(row.user_id) || null,
     }));

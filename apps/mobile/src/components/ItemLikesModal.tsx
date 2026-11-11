@@ -26,7 +26,7 @@ interface ItemLikesModalProps {
   visible: boolean;
   onClose: () => void;
   targetId: string;
-  targetType?: 'bucket' | 'album';
+  targetType?: 'bucket' | 'album' | 'comment';
   title?: string;
 }
 
@@ -210,9 +210,13 @@ function ItemLikesModalContent({
                   { color: theme.dark ? 'rgba(255,255,255,0.5)' : theme.colors.foregroundMuted },
                 ]}
               >
-                {t('likes.empty_subtitle', {
-                  defaultValue: 'Sé el primero en darle me gusta a esta publicación.',
-                })}
+                {targetType === 'comment'
+                  ? t('likes.empty_comment_subtitle', {
+                      defaultValue: 'Sé el primero en darle me gusta a este comentario.',
+                    })
+                  : t('likes.empty_subtitle', {
+                      defaultValue: 'Sé el primero en darle me gusta a esta publicación.',
+                    })}
               </Text>
             </View>
           ) : (

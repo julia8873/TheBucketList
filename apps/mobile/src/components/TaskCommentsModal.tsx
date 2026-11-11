@@ -14,6 +14,7 @@ import { useConnections, usePeopleSearch } from '../hooks/useFriends';
 import { displayNameOf, initialsOf } from '../utils/initials';
 import { useTranslation } from '@bucketlist/shared';
 import { ReportModal } from './ReportModal';
+import { ItemLikesModal } from './ItemLikesModal';
 import { CommentThreadView } from './comments/CommentRow';
 import { useCommentsController } from './comments/useCommentsController';
 import { getCharCount, truncateChars } from '../utils/unicodeUtils';
@@ -452,6 +453,14 @@ function TaskCommentsModalContent({
         subject={ctrl.reportingComment ? t('comments.comment_by_author', { author: ctrl.reportingComment.author }) : undefined}
         isLoading={ctrl.isReporting}
         onSubmit={ctrl.submitReport}
+      />
+
+      <ItemLikesModal
+        visible={!!ctrl.likesModalComment}
+        onClose={ctrl.closeLikesModal}
+        targetId={ctrl.likesModalComment?.id ?? ''}
+        targetType="comment"
+        title={ctrl.likesModalComment?.body}
       />
     </Modal>
   );
