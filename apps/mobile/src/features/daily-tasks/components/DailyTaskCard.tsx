@@ -31,6 +31,7 @@ export interface DailyTaskCardProps {
   timeView: TimeView;
   tagMap: Map<string, DailyTag>;
   customization?: DailyTaskCustomization;
+  viewMode?: 'detailed' | 'compact' | 'grouped';
   onToggle: (task: DailyTask) => void;
   onOpenEdit: (task: DailyTask) => void;
   onToggleFavorite: (task: DailyTask) => void;
@@ -43,6 +44,7 @@ export function DailyTaskCard({
   isLast,
   tagMap,
   customization,
+  viewMode = 'detailed',
   onToggle,
   onOpenEdit,
   onToggleFavorite,
@@ -53,6 +55,7 @@ export function DailyTaskCard({
   const storeCustomization = useDailyTasksCustomizationStore((s) => s.customization);
   const activeCustomization = customization ?? storeCustomization;
   const isCompleted = item.is_completed;
+  const isCompact = viewMode === 'compact';
   const itemTags = (item.tag_ids || [])
     .map((id) => tagMap.get(id))
     .filter(Boolean) as DailyTag[];
@@ -67,22 +70,184 @@ export function DailyTaskCard({
       ? '#3B82F6'
       : gold[400]);
 
+  /* Modo Compacto: Fila ultra-compacta en una sola línea horizontal */
+  if (isCompact) {
+    return (
+      <View
+        key={item.id}
+        style={[
+          styles.compactRow,
+          {
+            minHeight: 40,
+            paddingVertical: 5,
+            paddingHorizontal: 10,
+            backgroundColor: isCompleted
+              ? (theme.dark ? '#101010' : theme.colors.surface)
+              : theme.colors.surface,
+            borderBottomColor: theme.colors.border,
+            borderLeftWidth: 3.5,
+            borderLeftColor: accentColor,
+          },
+          isCompleted && styles.compactRowCompleted,
+          drag?.isActive && styles.compactRowDragging,
+          isLast && { borderBottomWidth: 0 },
+          Platform.OS === 'web' && ({ userSelect: 'none', WebkitUserSelect: 'none', cursor: drag?.isActive ? 'grabbing' : 'default', touchAction: drag?.isActive ? 'none' : 'pan-y' } as any),
+        ]}
+      >
+        {/* Checkbox */}
+        <Pressable
+          hitSlop={8}
+          onPress={() => {
+            if (drag?.isActive || drag?.justDropped?.()) return;
+            onToggle(item);
+          }}
+          style={{ marginRight: 8, alignItems: 'center', justifyContent: 'center' }}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: isCompleted }}
+        >
+          {isCompleted ? (
+            <CheckCircle2 size={16} color="#34C759" />
+          ) : (
+            <View style={[styles.compactUncheckedCircle, { width: 16, height: 16, borderRadius: 8, borderColor: theme.colors.border }]} />
+          )}
+        </Pressable>
+
+        {/* Título + chips inline en la misma fila */}
+        <Pressable
+          style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginRight: 6 }}
+          onPress={() => {
+            if (drag?.isActive || drag?.justDropped?.()) return;
+            onOpenEdit(item);
+          }}
+          accessibilityLabel={t('daily.edit_task_a11y', { title: item.title, defaultValue: `Editar tarea ${item.title}` })}
+        >
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={[
+              {
+                fontSize: 13,
+                fontFamily: 'Inter_500Medium',
+                color: isCompleted ? theme.colors.foregroundMuted : theme.colors.foreground,
+                flexShrink: 1,
+              },
+              isCompleted && styles.compactTitleCompleted,
+            ]}
+          >
+            {item.title}
+          </Text>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 8 }}>
+            {activeCustomization.showTags && itemTags[0] && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 3,
+                  paddingHorizontal: 6,
+                  paddingVertical: 1,
+                  borderRadius: 4,
+                  borderWidth: 1,
+                  borderColor: itemTags[0].color ? `${itemTags[0].color}66` : theme.colors.border,
+                  backgroundColor: itemTags[0].color
+                    ? (theme.dark ? `${itemTags[0].color}22` : `${itemTags[0].color}15`)
+                    : (theme.dark ? '#1E1E1E' : '#F3EFE6'),
+                }}
+              >
+                {itemTags[0].emoji && <Text style={{ fontSize: 9 }}>{itemTags[0].emoji}</Text>}
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    fontSize: 10,
+                    fontFamily: 'Inter_500Medium',
+                    color: itemTags[0].color || theme.colors.foreground,
+                    maxWidth: 70,
+                  }}
+                >
+                  {itemTags[0].name}
+                </Text>
+              </View>
+            )}
+
+            {/* Punto de prioridad si es alta o urgente */}
+            {activeCustomization.showPriority && item.priority && item.priority !== 'medium' && (() => {
+              const pCfg = getPriorityConfig(item.priority, theme.dark, i18n.language);
+              return (
+                <View
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: 3.5,
+                    backgroundColor: pCfg.color,
+                  }}
+                />
+              );
+            })()}
+
+            {/* Subtasks mini badge */}
+            {activeCustomization.showSubtasksProgress && item.subtasks && item.subtasks.length > 0 && (
+              <Text style={{ fontSize: 10, color: theme.colors.foregroundMuted, fontFamily: 'Inter_500Medium' }}>
+                {item.subtasks.filter((s) => s.is_completed).length}/{item.subtasks.length}
+              </Text>
+            )}
+          </View>
+        </Pressable>
+
+        {/* Pin */}
+        <Pressable
+          hitSlop={6}
+          onPress={() => {
+            if (drag?.isActive || drag?.justDropped?.()) return;
+            onToggleFavorite(item);
+          }}
+          style={{ padding: 4 }}
+          accessibilityLabel={item.is_favorite ? t('daily.unpin_task', { defaultValue: 'Desfijar tarea' }) : t('daily.pin_task', { defaultValue: 'Fijar tarea' })}
+        >
+          <Pin
+            size={13}
+            color={item.is_favorite ? gold[400] : theme.colors.foregroundMuted}
+            fill={item.is_favorite ? gold[400] : 'transparent'}
+            strokeWidth={1.8}
+          />
+        </Pressable>
+
+        {/* Delete */}
+        <Pressable
+          hitSlop={6}
+          onPress={() => {
+            if (drag?.isActive || drag?.justDropped?.()) return;
+            onDelete(item);
+          }}
+          style={{ padding: 4 }}
+          accessibilityLabel={t('daily.delete_task', { defaultValue: 'Eliminar tarea' })}
+        >
+          <Trash2 size={13} color={theme.colors.foregroundMuted} strokeWidth={1.8} />
+        </Pressable>
+      </View>
+    );
+  }
+
+  /* Modo Detallado / Normal: Tarjeta espaciosa con descripción multilínea y fila de chips */
   return (
     <View
       key={item.id}
       style={[
         styles.compactRow,
         {
+          minHeight: 56,
+          paddingVertical: 10,
+          paddingHorizontal: 12,
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
           backgroundColor: isCompleted
             ? (theme.dark ? '#101010' : theme.colors.surface)
             : theme.colors.surface,
-          borderBottomColor: theme.colors.border,
-          borderLeftWidth: 3.5,
+          borderLeftWidth: 4,
           borderLeftColor: accentColor,
         },
         isCompleted && styles.compactRowCompleted,
         drag?.isActive && styles.compactRowDragging,
-        isLast && { borderBottomWidth: 0 },
         Platform.OS === 'web' && ({ userSelect: 'none', WebkitUserSelect: 'none', cursor: drag?.isActive ? 'grabbing' : 'default', touchAction: drag?.isActive ? 'none' : 'pan-y' } as any),
       ]}
     >
@@ -93,12 +258,12 @@ export function DailyTaskCard({
           if (drag?.isActive || drag?.justDropped?.()) return;
           onToggle(item);
         }}
-        style={styles.compactCheckBtn}
+        style={[styles.compactCheckBtn, { marginTop: 2 }]}
         accessibilityRole="checkbox"
         accessibilityState={{ checked: isCompleted }}
       >
         {isCompleted ? (
-          <CheckCircle2 size={18} color="#34C759" />
+          <CheckCircle2 size={19} color="#34C759" />
         ) : (
           <View style={[styles.compactUncheckedCircle, { borderColor: theme.colors.border }]} />
         )}
@@ -114,11 +279,16 @@ export function DailyTaskCard({
         accessibilityLabel={t('daily.edit_task_a11y', { title: item.title, defaultValue: `Editar tarea ${item.title}` })}
       >
         <Text
-          numberOfLines={1}
+          numberOfLines={2}
           ellipsizeMode="tail"
           style={[
             styles.compactTitle,
-            { color: isCompleted ? theme.colors.foregroundMuted : theme.colors.foreground },
+            {
+              fontSize: 14,
+              fontFamily: 'Inter_600SemiBold',
+              lineHeight: 19,
+              color: isCompleted ? theme.colors.foregroundMuted : theme.colors.foreground,
+            },
             isCompleted && styles.compactTitleCompleted,
           ]}
         >
@@ -127,11 +297,11 @@ export function DailyTaskCard({
 
         {activeCustomization.showDescription && item.description ? (
           <Text
-            numberOfLines={1}
+            numberOfLines={2}
             ellipsizeMode="tail"
             style={[
               styles.compactDescription,
-              { color: theme.colors.foregroundMuted },
+              { color: theme.colors.foregroundMuted, marginTop: 3 },
               isCompleted && styles.compactDescriptionCompleted,
             ]}
           >
@@ -139,7 +309,7 @@ export function DailyTaskCard({
           </Text>
         ) : null}
 
-        <View style={styles.chipsRow}>
+        <View style={[styles.chipsRow, { marginTop: 6, gap: 6 }]}>
           {/* Tag chips */}
           {activeCustomization.showTags && itemTags.length > 0
             ? itemTags.map((tag) => (
@@ -251,7 +421,7 @@ export function DailyTaskCard({
         />
       </Pressable>
 
-      {/* Delete icon button */}
+      {/* Delete action */}
       <Pressable
         hitSlop={8}
         onPress={() => {
@@ -275,6 +445,7 @@ export interface DailyOverdueTaskCardProps {
   tagMap: Map<string, DailyTag>;
   upcomingWeekDays: { date: Date; dateStr: string; label: string; dayNum: string; isToday: boolean }[];
   customization?: DailyTaskCustomization;
+  viewMode?: 'detailed' | 'compact' | 'grouped';
   onToggle: (task: DailyTask) => void;
   onOpenEdit: (task: DailyTask) => void;
   onToggleFavorite: (task: DailyTask) => void;
@@ -290,6 +461,7 @@ export function DailyOverdueTaskCard({
   tagMap,
   upcomingWeekDays,
   customization,
+  viewMode = 'detailed',
   onToggle,
   onOpenEdit,
   onToggleFavorite,
@@ -316,6 +488,165 @@ export function DailyOverdueTaskCard({
       : item.priority === 'low'
       ? '#3B82F6'
       : gold[400]);
+
+  /* Modo Compacto: Fila ultra-compacta idéntica a la captura de diseño */
+  if (viewMode === 'compact') {
+    return (
+      <View
+        key={item.id}
+        style={[
+          styles.compactRow,
+          {
+            flexDirection: 'row',
+            alignItems: 'center',
+            minHeight: 42,
+            paddingVertical: 5,
+            paddingHorizontal: 10,
+            borderRadius: 8,
+            backgroundColor: isCompleted
+              ? (theme.dark ? '#101010' : theme.colors.surface)
+              : (theme.dark ? '#18140B' : '#FFFDF7'),
+            borderWidth: 1,
+            borderColor: theme.dark ? '#33240D' : '#F4DFC0',
+            borderLeftWidth: 3.5,
+            borderLeftColor: accentColor,
+            marginBottom: 4,
+          },
+          isCompleted && styles.compactRowCompleted,
+          drag?.isActive && styles.compactRowDragging,
+          Platform.OS === 'web' && ({ userSelect: 'none', WebkitUserSelect: 'none', cursor: drag?.isActive ? 'grabbing' : 'default' } as any),
+        ]}
+      >
+        {/* Checkbox */}
+        <Pressable
+          hitSlop={8}
+          onPress={() => {
+            if (drag?.isActive || drag?.justDropped?.()) return;
+            onToggle(item);
+          }}
+          style={{ marginRight: 8, alignItems: 'center', justifyContent: 'center' }}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: isCompleted }}
+        >
+          {isCompleted ? (
+            <CheckCircle2 size={16} color="#34C759" />
+          ) : (
+            <View style={[styles.compactUncheckedCircle, { width: 16, height: 16, borderRadius: 8, borderColor: '#F59E0B' }]} />
+          )}
+        </Pressable>
+
+        {/* Título + insignias inline en la misma fila */}
+        <Pressable
+          style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginRight: 6 }}
+          onPress={() => {
+            if (drag?.isActive || drag?.justDropped?.()) return;
+            onOpenEdit(item);
+          }}
+          accessibilityLabel={t('daily.edit_task_a11y', { title: item.title, defaultValue: `Editar tarea ${item.title}` })}
+        >
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={[
+              {
+                fontSize: 13,
+                fontFamily: 'Inter_600SemiBold',
+                color: isCompleted ? theme.colors.foregroundMuted : theme.colors.foreground,
+                flexShrink: 1,
+              },
+              isCompleted && styles.compactTitleCompleted,
+            ]}
+          >
+            {item.title}
+          </Text>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginLeft: 8 }}>
+            {activeCustomization.showTags && itemTags[0] && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 3,
+                  paddingHorizontal: 6,
+                  paddingVertical: 1,
+                  borderRadius: 4,
+                  borderWidth: 1,
+                  borderColor: itemTags[0].color ? `${itemTags[0].color}66` : theme.colors.border,
+                  backgroundColor: itemTags[0].color
+                    ? (theme.dark ? `${itemTags[0].color}26` : `${itemTags[0].color}18`)
+                    : (theme.dark ? '#242424' : '#E8E8E8'),
+                }}
+              >
+                {itemTags[0].emoji && <Text style={{ fontSize: 9 }}>{itemTags[0].emoji}</Text>}
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    fontSize: 10,
+                    fontFamily: 'Inter_600SemiBold',
+                    color: itemTags[0].color || theme.colors.foreground,
+                    maxWidth: 70,
+                  }}
+                >
+                  {itemTags[0].name}
+                </Text>
+              </View>
+            )}
+
+            {/* Overdue date badge (e.g. 8 nov) */}
+            {activeCustomization.showDates && (
+              <View
+                style={{
+                  paddingHorizontal: 6,
+                  paddingVertical: 1,
+                  borderRadius: 4,
+                  backgroundColor: theme.dark ? '#2E1D06' : '#FDF4DC',
+                  borderWidth: 1,
+                  borderColor: theme.dark ? '#5B3908' : '#E8C56A',
+                }}
+              >
+                <Text style={{ fontSize: 10, fontFamily: 'Inter_600SemiBold', color: '#F59E0B' }}>
+                  {dateBadge.text}
+                </Text>
+              </View>
+            )}
+          </View>
+        </Pressable>
+
+        {/* Pin */}
+        <Pressable
+          hitSlop={6}
+          onPress={() => {
+            if (drag?.isActive || drag?.justDropped?.()) return;
+            onToggleFavorite(item);
+          }}
+          style={{ padding: 4 }}
+          accessibilityLabel={item.is_favorite ? t('daily.unpin_task', { defaultValue: 'Desfijar tarea' }) : t('daily.pin_task', { defaultValue: 'Fijar tarea' })}
+        >
+          <Pin
+            size={13}
+            color={item.is_favorite ? gold[400] : theme.colors.foregroundMuted}
+            fill={item.is_favorite ? gold[400] : 'transparent'}
+            strokeWidth={1.8}
+          />
+        </Pressable>
+
+        {/* Delete */}
+        <Pressable
+          hitSlop={6}
+          onPress={() => {
+            if (drag?.isActive || drag?.justDropped?.()) return;
+            onDelete(item);
+          }}
+          style={{ padding: 4 }}
+          accessibilityLabel={t('daily.delete_task', { defaultValue: 'Eliminar tarea' })}
+        >
+          <Trash2 size={13} color={theme.colors.foregroundMuted} strokeWidth={1.8} />
+        </Pressable>
+      </View>
+    );
+  }
+
+  /* Modo Detallado: Con fila de reprogramación extendida ("Mover a: L M X J V S D") */
 
   return (
     <View

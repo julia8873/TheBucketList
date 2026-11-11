@@ -6,6 +6,7 @@ import {
   Platform,
   Pressable,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from 'expo-router';
 import { UniversalDatePicker } from '@/components/UniversalDatePicker';
@@ -56,6 +57,25 @@ export default function DailyTasksScreen() {
   const [viewMode, setViewMode] = useState<'detailed' | 'compact' | 'grouped'>('detailed');
   const scrollRef = useRef<ScrollView>(null);
 
+  // Cargar modo de vista guardado
+  useEffect(() => {
+    AsyncStorage.getItem('@daily_tasks_view_mode').then((saved) => {
+      if (saved === 'detailed' || saved === 'compact' || saved === 'grouped') {
+        setViewMode(saved);
+        if (saved === 'grouped' && !state.groupByTag) {
+          state.handleToggleGroupByTag();
+        } else if (saved !== 'grouped' && state.groupByTag) {
+          state.handleToggleGroupByTag();
+        }
+      }
+    }).catch(() => {});
+  }, []);
+
+  const handleSetViewMode = (mode: 'detailed' | 'compact' | 'grouped') => {
+    setViewMode(mode);
+    AsyncStorage.setItem('@daily_tasks_view_mode', mode).catch(() => {});
+  };
+
   const filterBySearch = (list: DailyTask[]) => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return list;
@@ -101,6 +121,7 @@ export default function DailyTasksScreen() {
       sortField={state.sortField}
       timeView={state.timeView}
       tagMap={state.tagMap}
+      viewMode={viewMode}
       onToggle={state.handleToggle}
       onOpenEdit={state.openEditTask}
       onToggleFavorite={state.handleToggleFavorite}
@@ -120,6 +141,7 @@ export default function DailyTasksScreen() {
       sortField={state.sortField}
       tagMap={state.tagMap}
       upcomingWeekDays={state.upcomingWeekDays}
+      viewMode={viewMode}
       onToggle={state.handleToggle}
       onOpenEdit={state.openEditTask}
       onToggleFavorite={state.handleToggleFavorite}
@@ -192,7 +214,7 @@ export default function DailyTasksScreen() {
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             viewMode={viewMode}
-            setViewMode={setViewMode}
+            setViewMode={handleSetViewMode}
             displayedWeeks={state.displayedWeeks}
             weeksToShow={state.weeksToShow}
             setWeeksToShow={state.setWeeksToShow}
@@ -227,7 +249,13 @@ export default function DailyTasksScreen() {
                   </Typography>
                 </View>
               ) : (
-                <View style={[styles.compactListCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+                <View
+                  style={
+                    viewMode === 'detailed'
+                      ? { gap: 8 }
+                      : [styles.compactListCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]
+                  }
+                >
                   {state.completedList.map((item, idx) =>
                     renderCompletedRow(item, idx === state.completedList.length - 1)
                   )}
@@ -271,10 +299,16 @@ export default function DailyTasksScreen() {
                       onDraggingChange={state.handleDraggingChange}
                     />
                   ) : (
-                    <View style={[styles.compactListCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+                    <View
+                      style={
+                        viewMode === 'detailed'
+                          ? { gap: 8 }
+                          : [styles.compactListCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]
+                      }
+                    >
                       <DraggableTaskList
                         items={displayedTodayTasks}
-                        gap={0}
+                        gap={viewMode === 'detailed' ? 8 : 0}
                         renderItem={(item, drag) =>
                           renderTaskRow(
                             item,
@@ -312,7 +346,13 @@ export default function DailyTasksScreen() {
                         </Typography>
                       </Pressable>
                       {!state.isTodayCompletedCollapsed && (
-                        <View style={[styles.compactListCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+                        <View
+                          style={
+                            viewMode === 'detailed'
+                              ? { gap: 8, marginTop: 10 }
+                              : [styles.compactListCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, marginTop: 10 }]
+                          }
+                        >
                           {state.completedList.map((item, idx) =>
                             renderCompletedRow(item, idx === state.completedList.length - 1)
                           )}
@@ -398,10 +438,16 @@ export default function DailyTasksScreen() {
                       onDraggingChange={state.handleDraggingChange}
                     />
                   ) : (
-                    <View style={[styles.compactListCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+                    <View
+                      style={
+                        viewMode === 'detailed'
+                          ? { gap: 8 }
+                          : [styles.compactListCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]
+                      }
+                    >
                       <DraggableTaskList
                         items={displayedAllTasks}
-                        gap={0}
+                        gap={viewMode === 'detailed' ? 8 : 0}
                         renderItem={(item, drag) =>
                           renderTaskRow(
                             item,
