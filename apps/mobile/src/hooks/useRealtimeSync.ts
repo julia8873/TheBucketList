@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
-import { displayInAppNotification } from '../services/notifications';
 import { isLocalEcho } from '../utils/optimisticCache';
 
 /**
@@ -137,14 +136,9 @@ export function useRealtimeSync(userId?: string) {
             table: 'notifications',
             filter: `recipient_id=eq.${userId}`,
           },
-          async (payload: any) => {
+          async () => {
             invalidate('notifications');
             invalidate('unreadNotificationsCount');
-
-            const record = payload.new;
-            if (record && record.actor_id !== userId) {
-              void displayInAppNotification(record, userId);
-            }
           }
         )
         .subscribe();
