@@ -1,11 +1,17 @@
-import { Alert } from '@bucketlist/ui';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { InteractionManager } from 'react-native';
 import { Tabs } from 'expo-router';
-import { useTheme } from '@bucketlist/ui';
+import { useTheme, toast } from '@bucketlist/ui';
 import { Home, ShoppingBag, ListTodo, User } from 'lucide-react-native';
 import { useAuthStore } from '../../src/stores/auth.store';
-import { checkNotificationPermissionsAsync, registerForPushNotificationsAsync } from '../../src/services/notifications';
+import {
+  checkNotificationPermissionsAsync,
+  registerForPushNotificationsAsync,
+  openAppNotificationSettings,
+  shouldShowNotificationReminder,
+  markNotificationReminderHandled,
+} from '../../src/services/notifications';
+import { NotificationReminderModal } from '../../src/components/NotificationReminderModal';
 import { useTranslation } from 'react-i18next';
 import { Platform, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -42,6 +48,9 @@ export default function TabsLayout() {
     ? (bottomInset > 0 ? 54 + bottomInset : 84)
     : (bottomInset > 0 ? 56 + bottomInset : 60);
 
+  const [reminderVisible, setReminderVisible] = useState(false);
+  const [canAskAgain, setCanAskAgain] = useState(true);
+
   useEffect(() => {
     if (!user?.id) return;
     const userId = user.id;
@@ -55,30 +64,25 @@ export default function TabsLayout() {
         })
         .catch(console.error);
 
-    // Esperamos a que termine la transición login → pestañas (y el cierre del teclado de la
-    // pantalla anterior) antes de mostrar el diálogo. Si se muestra mientras la pantalla aún se
-    // está montando, Android lo dibuja arriba y con los botones fuera de la zona visible.
     const task = InteractionManager.runAfterInteractions(() => {
-      timer = setTimeout(() => {
+      timer = setTimeout(async () => {
         if (cancelled) return;
-        checkNotificationPermissionsAsync()
-          .then((perm) => {
-            if (cancelled) return;
-            if (!perm.granted && perm.canAskAgain) {
-              Alert.alert(
-                t('notifications.push_prompt_title'),
-                t('notifications.push_prompt_msg'),
-                [
-                  { text: t('common.not_now'), style: 'cancel' },
-                  { text: t('common.activate'), onPress: () => void syncPushToken() },
-                ],
-              );
-            } else if (perm.granted) {
+        try {
+          const { shouldShow, canAskAgain: canAsk } = await shouldShowNotificationReminder();
+          if (cancelled) return;
+          if (shouldShow) {
+            setCanAskAgain(canAsk);
+            setReminderVisible(true);
+          } else {
+            const perm = await checkNotificationPermissionsAsync();
+            if (perm.granted) {
               void syncPushToken();
             }
-          })
-          .catch(console.error);
-      }, 700);
+          }
+        } catch (e) {
+          console.warn('Error checking notification prompt:', e);
+        }
+      }, 1000);
     });
 
     return () => {
@@ -88,10 +92,35 @@ export default function TabsLayout() {
     };
   }, [user?.id, queryClient]);
 
+  const handleCloseReminder = async (dontAskAgain: boolean) => {
+    setReminderVisible(false);
+    await markNotificationReminderHandled(dontAskAgain);
+  };
+
+  const handleEnableReminder = async (dontAskAgain: boolean) => {
+    setReminderVisible(false);
+    await markNotificationReminderHandled(dontAskAgain);
+
+    if (canAskAgain && user?.id) {
+      try {
+        const res = await registerForPushNotificationsAsync(user.id);
+        if (res.granted) {
+          void queryClient.invalidateQueries({ queryKey: ['notification_prefs', user.id] });
+          toast.success(t('notifications.push_activated_toast'));
+        }
+      } catch (e) {
+        console.warn('Error registering push notifications:', e);
+      }
+    } else {
+      openAppNotificationSettings();
+    }
+  };
+
   return (
-    <Tabs
-      backBehavior="history"
-      initialRouteName="my-list"
+    <>
+      <Tabs
+        backBehavior="history"
+        initialRouteName="my-list"
       screenListeners={{
         // Al cambiar de pestaña, recarga los datos que lleven más de 30 s sin actualizarse
         focus: () => {
@@ -222,5 +251,13 @@ export default function TabsLayout() {
       {/* ── Hidden tabs ─────────────────────────────────────── */}
       <Tabs.Screen name="notifications" options={{ href: null }} />
     </Tabs>
+
+    <NotificationReminderModal
+      visible={reminderVisible}
+      canAskAgain={canAskAgain}
+      onClose={handleCloseReminder}
+      onEnable={handleEnableReminder}
+    />
+  </>
   );
 }

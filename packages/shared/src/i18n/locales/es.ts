@@ -1046,6 +1046,7 @@ const es = {
     dialog_perm_msg: 'Las notificaciones están bloqueadas en los ajustes de tu teléfono. Pulsa "Abrir Ajustes" para activarlas.',
     push_prompt_title: '¿Activar notificaciones?',
     push_prompt_msg: 'Recibe avisos al instante en tu móvil cuando tus amigos reaccionen, comenten tus publicaciones o te inviten a colaborar.',
+    reminder_dont_ask_again: 'No volver a recordar',
     push_activated_toast: '¡Notificaciones activadas! Ahora recibirás avisos en tu móvil.',
     accept: 'Aceptar',
     decline: 'Rechazar',

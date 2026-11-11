@@ -5,6 +5,7 @@ import * as Notifications from 'expo-notifications';
 import * as Linking from 'expo-linking';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { i18n } from '@bucketlist/shared';
 import { supabase } from './supabase';
 
@@ -100,6 +101,55 @@ export async function requestNotificationPermissionsAsync(): Promise<Notificatio
 export function openAppNotificationSettings() {
   if (Platform.OS !== 'web') {
     Linking.openSettings().catch((err) => console.warn('Could not open system settings:', err));
+  }
+}
+
+export const NOTIF_DONT_ASK_AGAIN_KEY = '@notifications_prompt_dont_ask_again';
+export const NOTIF_LAST_SHOWN_KEY = '@notifications_prompt_last_shown';
+export const NOTIF_REMINDER_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 días ("de vez en cuando, no ser pesados")
+
+/** Determina si se debe mostrar el recordatorio de notificaciones al usuario */
+export async function shouldShowNotificationReminder(): Promise<{ shouldShow: boolean; canAskAgain: boolean }> {
+  if (Platform.OS === 'web') return { shouldShow: false, canAskAgain: false };
+
+  try {
+    // 1. Si el usuario marcó no volver a recordar, no mostrar
+    const dontAskAgain = await AsyncStorage.getItem(NOTIF_DONT_ASK_AGAIN_KEY);
+    if (dontAskAgain === 'true') {
+      return { shouldShow: false, canAskAgain: false };
+    }
+
+    // 2. Si ya tiene permisos concedidos, no mostrar
+    const perm = await checkNotificationPermissionsAsync();
+    if (perm.granted) {
+      return { shouldShow: false, canAskAgain: false };
+    }
+
+    // 3. Comprobar intervalo de tiempo ("de vez en cuando, no ser pesados")
+    const lastShownStr = await AsyncStorage.getItem(NOTIF_LAST_SHOWN_KEY);
+    if (lastShownStr) {
+      const lastShown = Number(lastShownStr);
+      if (!isNaN(lastShown) && Date.now() - lastShown < NOTIF_REMINDER_INTERVAL_MS) {
+        return { shouldShow: false, canAskAgain: perm.canAskAgain };
+      }
+    }
+
+    return { shouldShow: true, canAskAgain: perm.canAskAgain };
+  } catch (e) {
+    console.warn('Error checking notification reminder condition:', e);
+    return { shouldShow: false, canAskAgain: false };
+  }
+}
+
+/** Guarda la fecha en que se mostró el recordatorio y si se marcó "no volver a recordar" */
+export async function markNotificationReminderHandled(dontAskAgain = false): Promise<void> {
+  try {
+    await AsyncStorage.setItem(NOTIF_LAST_SHOWN_KEY, Date.now().toString());
+    if (dontAskAgain) {
+      await AsyncStorage.setItem(NOTIF_DONT_ASK_AGAIN_KEY, 'true');
+    }
+  } catch (e) {
+    console.warn('Error saving notification reminder handled state:', e);
   }
 }
 

@@ -1046,6 +1046,7 @@ const en = {
     dialog_perm_msg: 'Notifications are blocked in your phone settings. Tap "Open Settings" to enable them.',
     push_prompt_title: 'Enable notifications?',
     push_prompt_msg: 'Get instant notifications on your phone when friends react, comment on your posts or invite you to collaborate.',
+    reminder_dont_ask_again: "Don't ask again",
     push_activated_toast: 'Notifications enabled! You will now receive alerts on your phone.',
     accept: 'Accept',
     decline: 'Decline',
