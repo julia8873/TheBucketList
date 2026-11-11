@@ -567,8 +567,8 @@ export const socialApi = {
     const foreignKey = targetType === 'album' ? 'album_id' : targetType === 'comment' ? 'comment_id' : 'bucket_id';
 
     const selectQuery = targetType === 'comment'
-      ? 'id, user_id, created_at, user:profiles(*)'
-      : 'id, user_id, emoji, created_at, user:profiles(*)';
+      ? 'id, user_id, created_at, user:profiles(id, username, display_name, avatar_url, role, is_private, visibility)'
+      : 'id, user_id, emoji, created_at, user:profiles(id, username, display_name, avatar_url, role, is_private, visibility)';
 
     const { data, error } = await supabase
       .from(table)
@@ -606,7 +606,7 @@ export const socialApi = {
 
     const { data: profilesData } = await supabase
       .from('profiles')
-      .select('id, username, display_name, avatar_url, role')
+      .select('id, username, display_name, avatar_url, role, is_private, visibility')
       .in('id', userIds);
 
     const profileMap = new Map((profilesData || []).map((p: any) => [p.id, p]));
