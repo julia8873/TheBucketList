@@ -3,7 +3,7 @@ import { supabase } from '../supabase';
 import { sendPushNotification } from '../notifications';
 import type { CloneTaskFields } from '../../stores/cloneTaskPreferences.store';
 
-export const LIKE_EMOJI = '❤️';
+export const LIKE_EMOJI = '💛';
 
 export const socialApi = {
   // Follows
@@ -70,7 +70,7 @@ export const socialApi = {
     }
   },
 
-  /** "Me gusta" del feed: si ya hay cualquier reacción mía la quita; si no, pone ❤️. */
+  /** "Me gusta" del feed: si ya hay cualquier reacción mía la quita; si no, pone 💛. */
   toggleLike: async (bucketId: string, userId: string) => {
     const { data: existing, error: fetchErr } = await supabase
       .from('reactions')
@@ -580,7 +580,7 @@ export const socialApi = {
       return (data as any[]).map((row) => ({
         id: row.id,
         user_id: row.user_id,
-        emoji: row.emoji ?? '❤️',
+        emoji: row.emoji ?? '💛',
         created_at: row.created_at,
         user: row.user,
       }));
@@ -614,7 +614,7 @@ export const socialApi = {
     return reactionsData.map((row: any) => ({
       id: row.id,
       user_id: row.user_id,
-      emoji: row.emoji ?? '❤️',
+      emoji: row.emoji ?? '💛',
       created_at: row.created_at,
       user: profileMap.get(row.user_id) || null,
     }));

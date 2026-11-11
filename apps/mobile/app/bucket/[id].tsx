@@ -446,7 +446,7 @@ export default function BucketDetailScreen() {
                 onPress={(e) => {
                   e.stopPropagation?.();
                   if (state.user) {
-                    state.toggleReaction.mutate({ bucketId: state.id, userId: state.user.id, emoji: '❤️' });
+                    state.toggleReaction.mutate({ bucketId: state.id, userId: state.user.id, emoji: '💛' });
                   }
                 }}
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 4 }}
