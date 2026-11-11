@@ -268,6 +268,7 @@ Deno.serve(async (req: Request) => {
           to: pushToken,
           sound: 'default',
           channelId: 'default',
+          priority: 'high',
           title,
           body,
           data: {
