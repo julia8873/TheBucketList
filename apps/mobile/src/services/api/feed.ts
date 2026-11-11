@@ -10,14 +10,26 @@ const PAGE_SIZE = 10;
 // Siempre se vuelve a filtrar en cliente, así que el resultado es correcto aunque se supere.
 const MAX_SERVER_EXCLUDE_IDS = 150;
 
+// Caché en memoria de corta duración (45 segundos) para evitar consultas duplicadas
+// simultáneas entre pestañas del feed y acelerar la paginación a 0ms de subconsultas.
+const CACHE_TTL_MS = 45 * 1000;
+const collabBucketCache = new Map<string, { ids: string[]; expires: number }>();
+const followsCache = new Map<string, { ids: string[]; expires: number }>();
+
 /**
  * IDs de tareas (de otras personas) en las que el usuario ya es colaborador
  * (aceptado o con invitación pendiente, ya sea directo o vía álbum compartido).
  * Esas tareas ya pertenecen a "Mi lista", por lo que no deben salir en
  * "Momentos de amigos" ni en "Explorar".
  */
-const getCollaboratingBucketIds = async (userId?: string): Promise<string[]> => {
+const getCollaboratingBucketIds = async (userId?: string, forceFresh: boolean = false): Promise<string[]> => {
   if (!userId) return [];
+  const now = Date.now();
+  if (!forceFresh) {
+    const cached = collabBucketCache.get(userId);
+    if (cached && cached.expires > now) return cached.ids;
+  }
+
   try {
     const [directCollabRes, memberAlbumsRes, ownedAlbumsRes] = await Promise.all([
       supabase
@@ -53,11 +65,32 @@ const getCollaboratingBucketIds = async (userId?: string): Promise<string[]> => 
       albumTaskIds = (albumItems ?? []).map((ai: any) => ai.bucket_id as string);
     }
 
-    return Array.from(new Set([...directIds, ...albumTaskIds]));
+    const result = Array.from(new Set([...directIds, ...albumTaskIds]));
+    collabBucketCache.set(userId, { ids: result, expires: now + CACHE_TTL_MS });
+    return result;
   } catch (err) {
     console.warn('Error fetching collaborating bucket ids:', err);
     return [];
   }
+};
+
+const getAcceptedFollowingIds = async (userId: string, forceFresh: boolean = false): Promise<string[]> => {
+  const now = Date.now();
+  if (!forceFresh) {
+    const cached = followsCache.get(userId);
+    if (cached && cached.expires > now) return cached.ids;
+  }
+
+  const { data, error } = await supabase
+    .from('follows')
+    .select('following_id')
+    .eq('follower_id', userId)
+    .eq('status', 'accepted');
+
+  if (error) throw error;
+  const ids = (data ?? []).map((f: any) => f.following_id as string);
+  followsCache.set(userId, { ids, expires: now + CACHE_TTL_MS });
+  return ids;
 };
 
 export const feedApi = {
@@ -66,24 +99,17 @@ export const feedApi = {
    * Se excluyen las tareas del propio usuario y de usuarios bloqueados.
    */
   getFeed: async (userId: string, pageParam: number = 0) => {
-    const [followsRes, blockedIds, collabBucketIds] = await Promise.all([
-      supabase
-        .from('follows')
-        .select('following_id')
-        .eq('follower_id', userId)
-        .eq('status', 'accepted'),
+    const [followingIds, blockedIds, collabBucketIds] = await Promise.all([
+      getAcceptedFollowingIds(userId),
       blockReportApi.getMutualBlockedUserIds(userId),
       getCollaboratingBucketIds(userId),
     ]);
-    if (followsRes.error) throw followsRes.error;
 
     const blockedSet = new Set(blockedIds);
     const collabSet = new Set(collabBucketIds);
 
     // Solo amigos seguidos (excluyendo al propio usuario y a usuarios con bloqueo)
-    const targetIds = (followsRes.data ?? [])
-      .map((f: any) => f.following_id as string)
-      .filter((id: string) => id !== userId && !blockedSet.has(id));
+    const targetIds = followingIds.filter((id: string) => id !== userId && !blockedSet.has(id));
 
     if (targetIds.length === 0) {
       return {
@@ -182,18 +208,12 @@ export const feedApi = {
     let collabBucketIds: string[] = [];
 
     if (userId) {
-      const [followsRes, blockedIds, collabIds] = await Promise.all([
-        supabase
-          .from('follows')
-          .select('following_id')
-          .eq('follower_id', userId)
-          .eq('status', 'accepted'),
+      const [friendIds, blockedIds, collabIds] = await Promise.all([
+        getAcceptedFollowingIds(userId),
         blockReportApi.getMutualBlockedUserIds(userId),
         getCollaboratingBucketIds(userId),
       ]);
       collabBucketIds = collabIds;
-
-      const friendIds = (followsRes.data ?? []).map((f: any) => f.following_id as string);
       // Excluir al propio usuario, a todos sus amigos Y a usuarios con bloqueo
       excludedUserIds = Array.from(new Set([userId, ...friendIds, ...blockedIds]));
     }
@@ -247,20 +267,13 @@ export const feedApi = {
    */
   getFriendsAlbums: async (userId: string, pageParam: number = 0) => {
     const PAGE = 10;
-    const [followsRes, blockedIds] = await Promise.all([
-      supabase
-        .from('follows')
-        .select('following_id')
-        .eq('follower_id', userId)
-        .eq('status', 'accepted'),
+    const [followingIds, blockedIds] = await Promise.all([
+      getAcceptedFollowingIds(userId),
       blockReportApi.getMutualBlockedUserIds(userId),
     ]);
-    if (followsRes.error) throw followsRes.error;
 
     const blockedSet = new Set(blockedIds);
-    const targetIds = (followsRes.data ?? [])
-      .map((f: any) => f.following_id as string)
-      .filter((id: string) => id !== userId && !blockedSet.has(id));
+    const targetIds = followingIds.filter((id: string) => id !== userId && !blockedSet.has(id));
 
     if (targetIds.length === 0) return { items: [], nextCursor: undefined };
 
@@ -325,15 +338,10 @@ export const feedApi = {
     let excludedUserIds: string[] = [];
 
     if (userId) {
-      const [followsRes, blockedIds] = await Promise.all([
-        supabase
-          .from('follows')
-          .select('following_id')
-          .eq('follower_id', userId)
-          .eq('status', 'accepted'),
+      const [friendIds, blockedIds] = await Promise.all([
+        getAcceptedFollowingIds(userId),
         blockReportApi.getMutualBlockedUserIds(userId),
       ]);
-      const friendIds = (followsRes.data ?? []).map((f: any) => f.following_id as string);
       excludedUserIds = Array.from(new Set([userId, ...friendIds, ...blockedIds]));
     }
 

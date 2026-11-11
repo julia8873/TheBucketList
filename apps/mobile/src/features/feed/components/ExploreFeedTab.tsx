@@ -224,7 +224,15 @@ export function ExploreFeedTab({
     );
   }
 
-  const loading = (isExploreLoading || isAlbumsLoading) && contentFilter !== 'colecciones';
+  const isInitialTasksLoading = contentFilter !== 'albumes' && isExploreLoading && exploreBuckets.length === 0;
+  const isInitialAlbumsLoading = contentFilter !== 'tareas' && isAlbumsLoading && exploreAlbums.length === 0;
+  const loading = contentFilter === 'colecciones'
+    ? false
+    : contentFilter === 'tareas'
+    ? isInitialTasksLoading
+    : contentFilter === 'albumes'
+    ? isInitialAlbumsLoading
+    : (isInitialTasksLoading && isInitialAlbumsLoading);
   if (loading && combinedItems.length === 0) {
     if (viewMode === 'gallery') {
       return (

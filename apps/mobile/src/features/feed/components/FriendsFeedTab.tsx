@@ -197,7 +197,13 @@ export function FriendsFeedTab({
     );
   }
 
-  const loading = isLoading || isAlbumsLoading;
+  const isInitialTasksLoading = contentFilter !== 'albumes' && isLoading && friendsItems.length === 0;
+  const isInitialAlbumsLoading = contentFilter !== 'tareas' && isAlbumsLoading && friendsAlbums.length === 0;
+  const loading = contentFilter === 'tareas'
+    ? isInitialTasksLoading
+    : contentFilter === 'albumes'
+    ? isInitialAlbumsLoading
+    : (isInitialTasksLoading && isInitialAlbumsLoading);
 
   if (loading && combinedItems.length === 0) {
     if (viewMode === 'gallery') {

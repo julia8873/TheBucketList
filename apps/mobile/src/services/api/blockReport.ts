@@ -76,11 +76,14 @@ function normalizeReport(item: any): UserReportItem {
   };
 }
 
+const mutualBlockedCache = new Map<string, { ids: string[]; expires: number }>();
+
 export const blockReportApi = {
   /**
    * Bloquea a un usuario y elimina cualquier relación de seguimiento mutuo
    */
   blockUser: async (targetUserId: string): Promise<boolean> => {
+    mutualBlockedCache.clear();
     const { error } = await (supabase.rpc as any)('block_user', {
       p_target_user_id: targetUserId,
     });
@@ -92,6 +95,7 @@ export const blockReportApi = {
    * Desbloquea a un usuario
    */
   unblockUser: async (targetUserId: string): Promise<boolean> => {
+    mutualBlockedCache.clear();
     const { error } = await (supabase.rpc as any)('unblock_user', {
       p_target_user_id: targetUserId,
     });
@@ -165,8 +169,14 @@ export const blockReportApi = {
    * Obtiene todos los IDs de usuarios con bloqueo mutuo (bloqueados o que te han bloqueado).
    * Para administradores, no se oculta a quienes hayan bloqueado al admin para poder moderar.
    */
-  getMutualBlockedUserIds: async (currentUserId: string): Promise<string[]> => {
+  getMutualBlockedUserIds: async (currentUserId: string, forceFresh: boolean = false): Promise<string[]> => {
     if (!currentUserId) return [];
+
+    const now = Date.now();
+    if (!forceFresh) {
+      const cached = mutualBlockedCache.get(currentUserId);
+      if (cached && cached.expires > now) return cached.ids;
+    }
 
     const { data: myProfile } = await supabase
       .from('profiles')
@@ -190,7 +200,9 @@ export const blockReportApi = {
       // Solo ocultamos a quienes nos bloquearon si NO somos admin
       if (!isAdmin && row.blocked_id === currentUserId) ids.add(row.blocker_id);
     }
-    return Array.from(ids);
+    const result = Array.from(ids);
+    mutualBlockedCache.set(currentUserId, { ids: result, expires: now + 60 * 1000 });
+    return result;
   },
 
   /**
