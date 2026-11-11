@@ -166,7 +166,6 @@ export default function DailyTasksScreen() {
               handleQuickAddTask={state.handleQuickAddTask}
               inputRef={state.inputRef}
               containerStyle={{ marginHorizontal: -12 }}
-              userTags={state.userTags}
             />
           )}
 
@@ -240,35 +239,30 @@ export default function DailyTasksScreen() {
               {/* 1. TODAY VIEW */}
               {state.timeView === 'today' && (
                 <>
-                  {/* Tareas de hoy o tarjeta de estado vacío (idéntica al mockup) */}
+                  <DailyOverdueSection
+                    tasks={displayedOverdueTasks}
+                    renderOverdueTaskRow={renderOverdueTaskRow}
+                    onReorder={state.handleReorder}
+                    onDraggingChange={state.handleDraggingChange}
+                    onMoveAllToToday={state.handleMoveAllOverdueToToday}
+                    onCompleteAll={state.handleCompleteAllOverdue}
+                    onDeleteAll={state.handleDeleteAllOverdue}
+                  />
+
                   {state.todayTasks.length === 0 ? (
-                    <View
-                      style={{
-                        paddingVertical: 18,
-                        paddingHorizontal: 16,
-                        borderRadius: 14,
-                        borderWidth: 1,
-                        borderColor: theme.dark ? '#222222' : theme.colors.border,
-                        backgroundColor: theme.dark ? '#141414' : theme.colors.surface,
-                        marginBottom: 16,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 13,
-                          fontFamily: 'Inter_400Regular',
-                          color: theme.colors.foregroundMuted,
-                          textAlign: 'center',
-                          lineHeight: 20,
-                        }}
-                      >
-                        {t('daily.no_tasks_today_hint', {
-                          defaultValue: 'No tienes tareas nuevas para hoy. Revisa tus pendientes abajo o añade una arriba.',
-                        })}
-                      </Text>
-                    </View>
+                    state.completedList.length === 0 && state.sortedOverdueTasks.length === 0 ? (
+                      <View style={styles.emptyContainer}>
+                        <View style={styles.emptyIconCircle}>
+                          <ListTodo size={32} color={gold[400]} strokeWidth={1.8} />
+                        </View>
+                        <Typography variant="bodySemibold" style={[styles.emptyTitle, { color: theme.colors.foreground }]}>
+                          {t('daily.all_done_today_title')}
+                        </Typography>
+                        <Typography variant="caption" color="textSecondary" style={styles.emptySubtitle}>
+                          {t('daily.all_done_today_desc')}
+                        </Typography>
+                      </View>
+                    ) : null
                   ) : state.groupByTag ? (
                     <DailyGroupedTasksView
                       groups={state.todayTagGroups}
@@ -277,7 +271,7 @@ export default function DailyTasksScreen() {
                       onDraggingChange={state.handleDraggingChange}
                     />
                   ) : (
-                    <View style={[styles.compactListCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, marginBottom: 16 }]}>
+                    <View style={[styles.compactListCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
                       <DraggableTaskList
                         items={displayedTodayTasks}
                         gap={0}
@@ -293,17 +287,6 @@ export default function DailyTasksScreen() {
                       />
                     </View>
                   )}
-
-                  {/* Sección de tareas atrasadas (debajo de las de hoy, idéntica al mockup) */}
-                  <DailyOverdueSection
-                    tasks={displayedOverdueTasks}
-                    renderOverdueTaskRow={renderOverdueTaskRow}
-                    onReorder={state.handleReorder}
-                    onDraggingChange={state.handleDraggingChange}
-                    onMoveAllToToday={state.handleMoveAllOverdueToToday}
-                    onCompleteAll={state.handleCompleteAllOverdue}
-                    onDeleteAll={state.handleDeleteAllOverdue}
-                  />
 
                   {state.statusFilter === 'all' && state.completedList.length > 0 && (
                     <View style={styles.completedSectionWrapper}>

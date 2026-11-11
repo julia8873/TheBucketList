@@ -78,9 +78,6 @@ export interface DailyQuickAddBarProps {
   handleQuickAddTask: () => void;
   inputRef: React.RefObject<TextInput | null> | React.RefObject<TextInput>;
   containerStyle?: any;
-  userTags?: DailyTag[];
-  selectedTagId?: string | null;
-  onSelectTagId?: (id: string | null) => void;
 }
 
 /**
@@ -92,14 +89,9 @@ export function DailyQuickAddBar({
   handleQuickAddTask,
   inputRef,
   containerStyle,
-  userTags = [],
-  selectedTagId,
-  onSelectTagId,
 }: DailyQuickAddBarProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
-
-  const selectedTag = selectedTagId ? userTags.find((tg) => tg.id === selectedTagId) : null;
 
   return (
     <View style={containerStyle}>
@@ -109,15 +101,12 @@ export function DailyQuickAddBar({
           {
             backgroundColor: theme.colors.surface,
             borderColor: theme.colors.border,
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingRight: 6,
           },
         ]}
       >
         <TextInput
           ref={inputRef as any}
-          style={[styles.exploreSearchInput, { color: theme.colors.foreground, flex: 1 }]}
+          style={[styles.exploreSearchInput, { color: theme.colors.foreground }]}
           placeholder={t('daily.quick_add_placeholder', { defaultValue: '¿Qué quieres hacer hoy?' })}
           placeholderTextColor={theme.colors.foregroundMuted}
           value={newTitle}
@@ -125,41 +114,6 @@ export function DailyQuickAddBar({
           onSubmitEditing={handleQuickAddTask}
           returnKeyType="done"
         />
-
-        {/* Tag chip if tag selected or available */}
-        {selectedTag ? (
-          <Pressable
-            onPress={() => onSelectTagId?.(null)}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 4,
-              paddingHorizontal: 8,
-              paddingVertical: 3,
-              borderRadius: 6,
-              marginRight: 6,
-              backgroundColor: selectedTag.color
-                ? `${selectedTag.color}22`
-                : (theme.dark ? '#222' : '#E8E8E8'),
-              borderWidth: 1,
-              borderColor: selectedTag.color ? `${selectedTag.color}66` : theme.colors.border,
-            }}
-          >
-            {selectedTag.emoji ? <Text style={{ fontSize: 11 }}>{selectedTag.emoji}</Text> : null}
-            <Text
-              style={{
-                fontSize: 11,
-                fontFamily: 'Inter_600SemiBold',
-                color: selectedTag.color || theme.colors.foreground,
-                maxWidth: 70,
-              }}
-              numberOfLines={1}
-            >
-              {selectedTag.name}
-            </Text>
-            <X size={11} color={theme.colors.foregroundMuted} />
-          </Pressable>
-        ) : null}
 
         <Pressable
           style={[styles.addBtn, !newTitle.trim() && styles.addBtnDisabled]}
