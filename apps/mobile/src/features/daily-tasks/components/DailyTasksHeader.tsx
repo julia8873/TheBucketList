@@ -1,31 +1,37 @@
-import { themedStyleSheet } from '@bucketlist/ui';
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
 import {
   Plus,
   Tag as TagIcon,
   X,
-  ListTodo,
-  CheckCircle2,
-  Pin,
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
-  Check,
   SlidersHorizontal,
+  Search,
+  Clock,
+  Flag,
+  List as ListIcon,
+  AlignJustify,
+  Layers,
+  Check,
 } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { getDateFnsLocale } from '@/utils/dateLocale';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { gold } from '@bucketlist/ui/src/tokens/colors';
-import { PageTitle, useTheme, FilterChip, SegmentedControl, Typography } from '@bucketlist/ui';
+import { PageTitle, useTheme, SegmentedControl } from '@bucketlist/ui';
 import { useTranslation } from '@bucketlist/shared';
 import { styles } from '../styles/explore.styles';
 import type { DailyTag, DailySortField, DailySortDirection, TimeView, StatusFilter } from '../types';
 import type { WeekBlockItem } from './DailyWeekView';
-import { TagSheetShell } from '@/components/TagSheetShell';
+import {
+  IconBtn,
+  SheetFrame,
+  SheetGroup,
+  SheetOption,
+  SheetLabel,
+} from '@/features/my-list/components/ListControls';
 import { useDailyTasksCustomizationStore } from '@/stores/dailyTasksCustomization.store';
 
 export interface DailyTasksTopBarProps {
@@ -38,7 +44,6 @@ export interface DailyTasksTopBarProps {
  * Barra superior con el título y las pestañas temporales (Hoy, Semana, Calendario, Todas).
  */
 export function DailyTasksTopBar({ timeView, setTimeView, style }: DailyTasksTopBarProps) {
-  const { theme } = useTheme();
   const { t } = useTranslation();
   const [goldDaily, ...restDaily] = t('nav.daily', { defaultValue: 'Día a día' }).split(' ');
 
@@ -54,10 +59,10 @@ export function DailyTasksTopBar({ timeView, setTimeView, style }: DailyTasksTop
       <View style={styles.tabsContainer}>
         <SegmentedControl
           options={[
-            { key: 'today', label: t('daily.tab_today') },
-            { key: 'week', label: t('daily.tab_week') },
-            { key: 'calendar', label: t('daily.tab_calendar') },
-            { key: 'all', label: t('daily.tab_all') },
+            { key: 'today', label: t('daily.tab_today', { defaultValue: 'Hoy' }) },
+            { key: 'week', label: t('daily.tab_week', { defaultValue: 'Semana' }) },
+            { key: 'calendar', label: t('daily.tab_calendar', { defaultValue: 'Calendario' }) },
+            { key: 'all', label: t('daily.tab_all', { defaultValue: 'Todas' }) },
           ]}
           selected={timeView}
           onChange={(val) => setTimeView(val as TimeView)}
@@ -73,6 +78,9 @@ export interface DailyQuickAddBarProps {
   handleQuickAddTask: () => void;
   inputRef: React.RefObject<TextInput | null> | React.RefObject<TextInput>;
   containerStyle?: any;
+  userTags?: DailyTag[];
+  selectedTagId?: string | null;
+  onSelectTagId?: (id: string | null) => void;
 }
 
 /**
@@ -84,9 +92,14 @@ export function DailyQuickAddBar({
   handleQuickAddTask,
   inputRef,
   containerStyle,
+  userTags = [],
+  selectedTagId,
+  onSelectTagId,
 }: DailyQuickAddBarProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
+
+  const selectedTag = selectedTagId ? userTags.find((tg) => tg.id === selectedTagId) : null;
 
   return (
     <View style={containerStyle}>
@@ -96,13 +109,16 @@ export function DailyQuickAddBar({
           {
             backgroundColor: theme.colors.surface,
             borderColor: theme.colors.border,
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingRight: 6,
           },
         ]}
       >
         <TextInput
-          ref={inputRef}
-          style={[styles.exploreSearchInput, { color: theme.colors.foreground }]}
-          placeholder={t('daily.quick_add_placeholder')}
+          ref={inputRef as any}
+          style={[styles.exploreSearchInput, { color: theme.colors.foreground, flex: 1 }]}
+          placeholder={t('daily.quick_add_placeholder', { defaultValue: '¿Qué quieres hacer hoy?' })}
           placeholderTextColor={theme.colors.foregroundMuted}
           value={newTitle}
           onChangeText={setNewTitle}
@@ -110,12 +126,47 @@ export function DailyQuickAddBar({
           returnKeyType="done"
         />
 
+        {/* Tag chip if tag selected or available */}
+        {selectedTag ? (
+          <Pressable
+            onPress={() => onSelectTagId?.(null)}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+              paddingHorizontal: 8,
+              paddingVertical: 3,
+              borderRadius: 6,
+              marginRight: 6,
+              backgroundColor: selectedTag.color
+                ? `${selectedTag.color}22`
+                : (theme.dark ? '#222' : '#E8E8E8'),
+              borderWidth: 1,
+              borderColor: selectedTag.color ? `${selectedTag.color}66` : theme.colors.border,
+            }}
+          >
+            {selectedTag.emoji ? <Text style={{ fontSize: 11 }}>{selectedTag.emoji}</Text> : null}
+            <Text
+              style={{
+                fontSize: 11,
+                fontFamily: 'Inter_600SemiBold',
+                color: selectedTag.color || theme.colors.foreground,
+                maxWidth: 70,
+              }}
+              numberOfLines={1}
+            >
+              {selectedTag.name}
+            </Text>
+            <X size={11} color={theme.colors.foregroundMuted} />
+          </Pressable>
+        ) : null}
+
         <Pressable
           style={[styles.addBtn, !newTitle.trim() && styles.addBtnDisabled]}
           onPress={handleQuickAddTask}
           disabled={!newTitle.trim()}
           accessibilityRole="button"
-          accessibilityLabel={t('daily.quick_add_placeholder')}
+          accessibilityLabel={t('daily.quick_add_placeholder', { defaultValue: 'Añadir tarea' })}
         >
           <Plus size={16} color="#0E0E0E" strokeWidth={2.4} />
         </Pressable>
@@ -146,6 +197,11 @@ export interface DailyTasksScrollControlsProps {
   groupByTag: boolean;
   onOpenSortModal: () => void;
   onOpenCustomize?: () => void;
+  onToggleGroupByTag?: () => void;
+  searchQuery?: string;
+  setSearchQuery?: (q: string) => void;
+  viewMode?: 'detailed' | 'compact' | 'grouped';
+  setViewMode?: (m: 'detailed' | 'compact' | 'grouped') => void;
   displayedWeeks?: WeekBlockItem[];
   weeksToShow?: number;
   setWeeksToShow?: (n: number) => void;
@@ -155,8 +211,7 @@ export interface DailyTasksScrollControlsProps {
 }
 
 /**
- * Controles de filtrado y etiquetas que se mueven dentro del ScrollView.
- * En la vista Semana se muestra el selector de semana sobre los filtros de etiquetas.
+ * Controles de filtrado y toolbar unificada que coinciden con el diseño de Mi Lista.
  */
 export function DailyTasksScrollControls({
   timeView,
@@ -172,10 +227,14 @@ export function DailyTasksScrollControls({
   priorityFilter,
   setPriorityFilter,
   sortField,
-  sortDirection,
   groupByTag,
   onOpenSortModal,
   onOpenCustomize,
+  onToggleGroupByTag,
+  searchQuery = '',
+  setSearchQuery,
+  viewMode = groupByTag ? 'grouped' : 'detailed',
+  setViewMode,
   displayedWeeks,
   weeksToShow = 1,
   setWeeksToShow,
@@ -185,45 +244,67 @@ export function DailyTasksScrollControls({
 }: DailyTasksScrollControlsProps) {
   const { theme } = useTheme();
   const { t, i18n } = useTranslation();
-  const insets = useSafeAreaInsets();
   const [statusSheetVisible, setStatusSheetVisible] = useState(false);
   const [prioritySheetVisible, setPrioritySheetVisible] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const isStatusActive = statusFilter !== 'all' || onlyFavorites;
   const isPriorityActive = priorityFilter !== 'all';
   const hasActiveFilters = isStatusActive || isPriorityActive || selectedTagFilters.length > 0;
+  const isSortActive = sortField !== 'manual' || groupByTag;
+  const isSearching = searchOpen || !!searchQuery.trim();
+
   const dateFnsLocale = getDateFnsLocale(i18n.language);
   const customization = useDailyTasksCustomizationStore((s) => s.customization);
   const isCustomized = Object.values(customization).some((val) => !val);
 
-  const dailyStatusOptions: Array<{ key: 'all' | 'pending' | 'completed' | 'favorites'; label: string; desc: string }> = [
-    { key: 'all', label: t('daily.filter_status_all'), desc: t('daily.filter_status_all_desc') },
-    { key: 'pending', label: t('daily.filter_status_pending'), desc: t('daily.filter_status_pending_desc') },
-    { key: 'completed', label: t('daily.filter_status_completed'), desc: t('daily.filter_status_completed_desc') },
-    { key: 'favorites', label: t('daily.filter_status_favorites'), desc: t('daily.filter_status_favorites_desc') },
+  const dailyStatusOptions: Array<{ key: 'all' | 'pending' | 'completed' | 'favorites'; label: string }> = [
+    { key: 'all', label: t('daily.filter_status_all', { defaultValue: 'Todas' }) },
+    { key: 'pending', label: t('daily.filter_status_pending', { defaultValue: 'Pendientes' }) },
+    { key: 'completed', label: t('daily.filter_status_completed', { defaultValue: 'Completadas' }) },
+    { key: 'favorites', label: t('daily.filter_status_favorites', { defaultValue: 'Favoritas' }) },
   ];
 
-  const dailyPriorityOptions: Array<{ key: string; label: string; desc: string }> = [
-    { key: 'all', label: t('daily.filter_priority_all'), desc: t('daily.filter_priority_all_desc') },
-    { key: 'urgent', label: t('daily.filter_priority_urgent'), desc: t('daily.filter_priority_urgent_desc') },
-    { key: 'high', label: t('daily.filter_priority_high'), desc: t('daily.filter_priority_high_desc') },
-    { key: 'medium', label: t('daily.filter_priority_medium'), desc: t('daily.filter_priority_medium_desc') },
-    { key: 'low', label: t('daily.filter_priority_low'), desc: t('daily.filter_priority_low_desc') },
+  const dailyPriorityOptions: Array<{ key: string; label: string }> = [
+    { key: 'all', label: t('daily.filter_priority_all', { defaultValue: 'Todas las prioridades' }) },
+    { key: 'urgent', label: t('daily.filter_priority_urgent', { defaultValue: 'Urgente' }) },
+    { key: 'high', label: t('daily.filter_priority_high', { defaultValue: 'Alta' }) },
+    { key: 'medium', label: t('daily.filter_priority_medium', { defaultValue: 'Media' }) },
+    { key: 'low', label: t('daily.filter_priority_low', { defaultValue: 'Baja' }) },
   ];
 
-  const dailyPriorityShortLabel: Record<string, string> = {
-    all: t('daily.filter_priority'),
-    urgent: `${t('daily.filter_priority')}: ${t('daily.filter_priority_urgent')}`,
-    high: `${t('daily.filter_priority')}: ${t('daily.filter_priority_high')}`,
-    medium: `${t('daily.filter_priority')}: ${t('daily.filter_priority_medium')}`,
-    low: `${t('daily.filter_priority')}: ${t('daily.filter_priority_low')}`,
+  const currentView: 'detailed' | 'compact' | 'grouped' = groupByTag
+    ? 'grouped'
+    : (viewMode || 'detailed');
+
+  const handleSelectViewMode = (key: 'detailed' | 'compact' | 'grouped') => {
+    if (setViewMode) {
+      setViewMode(key);
+    }
+    if (key === 'grouped' && !groupByTag && onToggleGroupByTag) {
+      onToggleGroupByTag();
+    } else if (key !== 'grouped' && groupByTag && onToggleGroupByTag) {
+      onToggleGroupByTag();
+    }
+  };
+
+  const getCountText = () => {
+    const num = typeof tasksCount === 'number' ? tasksCount : 0;
+    if (timeView === 'today') {
+      return num === 1 ? '1 TAREA HOY' : `${num} TAREAS HOY`;
+    } else if (timeView === 'week') {
+      return num === 1 ? '1 TAREA EN SEMANA' : `${num} TAREAS EN SEMANA`;
+    } else if (timeView === 'calendar') {
+      return num === 1 ? '1 TAREA EN CALENDARIO' : `${num} TAREAS EN CALENDARIO`;
+    }
+    return num === 1 ? '1 TAREA' : `${num} TAREAS`;
   };
 
   return (
     <View style={{ marginBottom: 6 }}>
-      {/* Week Navigation Card: En vista Semana se sitúa aquí, justo encima del filtrado de etiquetas */}
+      {/* Week Navigation Card: En vista Semana */}
       {timeView === 'week' && displayedWeeks && displayedWeeks.length > 0 && (
-        <View style={[styles.weekNavigationCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+        <View style={[styles.weekNavigationCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, marginBottom: 12 }]}>
           <View style={styles.weekNavRow}>
             <Pressable
               style={[
@@ -234,7 +315,7 @@ export function DailyTasksScrollControls({
               onPress={() => setWeekOffset?.((prev) => Math.max(0, prev - 1))}
               disabled={weekOffset <= 0}
               hitSlop={8}
-              accessibilityLabel={t('calendar.prev_month')}
+              accessibilityLabel={t('calendar.prev_month', { defaultValue: 'Semana anterior' })}
             >
               <ChevronLeft size={18} color={weekOffset <= 0 ? theme.colors.foregroundSubtle : theme.colors.foreground} />
             </Pressable>
@@ -243,7 +324,7 @@ export function DailyTasksScrollControls({
               <Text style={[styles.weekNavTitle, { color: theme.colors.foreground }]}>
                 {weeksToShow === 1
                   ? displayedWeeks[0]?.weekLabel
-                  : `${t('daily.weeks_count', { count: weeksToShow })} (${format(displayedWeeks[0]?.monday || new Date(), 'd MMM', { locale: dateFnsLocale })} – ${format(displayedWeeks[displayedWeeks.length - 1]?.sunday || new Date(), 'd MMM', { locale: dateFnsLocale })})`}
+                  : `${t('daily.weeks_count', { count: weeksToShow, defaultValue: `${weeksToShow} semanas` })} (${format(displayedWeeks[0]?.monday || new Date(), 'd MMM', { locale: dateFnsLocale })} – ${format(displayedWeeks[displayedWeeks.length - 1]?.sunday || new Date(), 'd MMM', { locale: dateFnsLocale })})`}
               </Text>
               {weekOffset > 0 && (
                 <Pressable
@@ -256,7 +337,7 @@ export function DailyTasksScrollControls({
                   ]}
                   onPress={() => setWeekOffset?.(0)}
                 >
-                  <Text style={styles.weekNavTodayText}>{t('daily.back_to_today')}</Text>
+                  <Text style={styles.weekNavTodayText}>{t('daily.back_to_today', { defaultValue: 'Volver a hoy' })}</Text>
                 </Pressable>
               )}
             </View>
@@ -268,7 +349,7 @@ export function DailyTasksScrollControls({
               ]}
               onPress={() => setWeekOffset?.((prev) => prev + 1)}
               hitSlop={8}
-              accessibilityLabel={t('calendar.next_month')}
+              accessibilityLabel={t('calendar.next_month', { defaultValue: 'Semana siguiente' })}
             >
               <ChevronRight size={18} color={theme.colors.foreground} />
             </Pressable>
@@ -277,7 +358,7 @@ export function DailyTasksScrollControls({
           {/* Selector de número de semanas (1 sem | 2 sems | 3 sems | 4 sems) */}
           {setWeeksToShow && (
             <View style={styles.weekSpanSelector}>
-              <Text style={[styles.weekSpanLabel, { color: theme.colors.foregroundMuted }]}>{t('daily.show_label')}</Text>
+              <Text style={[styles.weekSpanLabel, { color: theme.colors.foregroundMuted }]}>{t('daily.show_label', { defaultValue: 'Ver:' })}</Text>
               {[1, 2, 3, 4].map((n) => (
                 <Pressable
                   key={n}
@@ -298,7 +379,7 @@ export function DailyTasksScrollControls({
                       weeksToShow === n && styles.weekSpanPillTextActive,
                     ]}
                   >
-                    {n} {n === 1 ? t('daily.week_abbr') : t('daily.weeks_abbr')}
+                    {n} {n === 1 ? t('daily.week_abbr', { defaultValue: 'sem' }) : t('daily.weeks_abbr', { defaultValue: 'sems' })}
                   </Text>
                 </Pressable>
               ))}
@@ -307,317 +388,366 @@ export function DailyTasksScrollControls({
         </View>
       )}
 
-      {/* Quick Filters Bar agrupada y consistente */}
-      <View style={[styles.tagsFilterScroll, { flexWrap: 'wrap', gap: 8, marginBottom: 16 }]}>
-        {/* Todas */}
-        <FilterChip
-          label={t('daily.filter_all')}
-          active={statusFilter === 'all' && !onlyFavorites && priorityFilter === 'all'}
-          style={{ flexGrow: 1, flexShrink: 0, paddingHorizontal: 10 }}
-          onPress={() => {
-            setStatusFilter('all');
-            setOnlyFavorites(false);
-            setPriorityFilter('all');
+      {/* ──────────────── Toolbar idéntica a Mi lista y al Mockup ──────────────── */}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          width: '100%',
+          marginBottom: 10,
+        }}
+      >
+        {/* Lado izquierdo: Selector de modo de vista [ ≡  ☰  ▦ ] */}
+        <View
+          style={{
+            flexDirection: 'row',
+            padding: 2,
+            borderRadius: 14,
+            backgroundColor: theme.dark ? '#1A1A1A' : theme.colors.surface,
+            borderWidth: 1,
+            borderColor: theme.dark ? '#2A2A2A' : theme.colors.border,
+            height: 30,
+            alignItems: 'center',
           }}
-        />
-
-        {/* Filtrar por estado */}
-        <Pressable
-          style={[
-            styles.tagFilterBtn,
-            {
-              flexGrow: 1,
-              flexShrink: 1,
-              maxWidth: '100%',
-              justifyContent: 'center',
-              paddingHorizontal: 10,
-              backgroundColor: isStatusActive
-                ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
-                : theme.colors.surface,
-              borderColor: isStatusActive ? gold[400] : theme.colors.border,
-            },
-          ]}
-          onPress={() => setStatusSheetVisible(true)}
-          accessibilityRole="button"
-          accessibilityLabel={t('daily.filter_status_title')}
         >
-          <Text
-            numberOfLines={1}
-            style={[
-              styles.tagFilterText,
-              { color: isStatusActive ? gold[400] : theme.colors.foregroundMuted },
-            ]}
-          >
-            {onlyFavorites
-              ? `${t('daily.filter_status')}: ${t('daily.filter_status_favorites')}${favoritesCount > 0 ? ` (${favoritesCount})` : ''}`
-              : statusFilter === 'pending'
-                ? `${t('daily.filter_status')}: ${t('daily.filter_status_pending')}`
-                : statusFilter === 'completed'
-                  ? `${t('daily.filter_status')}: ${t('daily.filter_status_completed')}`
-                  : t('daily.filter_status')}
-          </Text>
-          <ChevronDown size={14} color={isStatusActive ? gold[400] : theme.colors.foregroundMuted} />
-        </Pressable>
-
-        {/* Filtrar por prioridad */}
-        <Pressable
-          style={[
-            styles.tagFilterBtn,
-            {
-              flexGrow: 1,
-              flexShrink: 1,
-              maxWidth: '100%',
-              justifyContent: 'center',
-              paddingHorizontal: 10,
-              backgroundColor: isPriorityActive
-                ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
-                : theme.colors.surface,
-              borderColor: isPriorityActive ? gold[400] : theme.colors.border,
-            },
-          ]}
-          onPress={() => setPrioritySheetVisible(true)}
-          accessibilityRole="button"
-          accessibilityLabel={t('daily.filter_priority_title')}
-        >
-          <Text
-            numberOfLines={1}
-            style={[
-              styles.tagFilterText,
-              { color: isPriorityActive ? gold[400] : theme.colors.foregroundMuted },
-            ]}
-          >
-            {dailyPriorityShortLabel[priorityFilter] || t('daily.filter_priority')}
-          </Text>
-          <ChevronDown size={14} color={isPriorityActive ? gold[400] : theme.colors.foregroundMuted} />
-        </Pressable>
-
-        {/* Botón Etiquetas */}
-        <Pressable
-          style={[
-            styles.tagFilterBtn,
-            {
-              flexGrow: 1,
-              flexShrink: 1,
-              maxWidth: '100%',
-              justifyContent: 'center',
-              paddingHorizontal: 10,
-              backgroundColor: selectedTagFilters.length > 0
-                ? (theme.dark ? 'transparent' : 'rgba(212, 175, 55, 0.12)')
-                : theme.colors.surface,
-              borderColor: selectedTagFilters.length > 0 ? gold[400] : theme.colors.border,
-            },
-          ]}
-          onPress={onOpenTagFilterSheet}
-          accessibilityRole="button"
-          accessibilityLabel={t('daily.filter_tags_title')}
-        >
-          <TagIcon
-            size={14}
-            color={selectedTagFilters.length > 0 ? gold[400] : theme.colors.foregroundMuted}
-            strokeWidth={2}
-          />
-          <Text
-            numberOfLines={1}
-            style={[
-              styles.tagFilterText,
-              { color: selectedTagFilters.length > 0 ? gold[400] : theme.colors.foregroundMuted },
-            ]}
-          >
-            {selectedTagFilters.length === 0
-              ? t('daily.filter_tags')
-              : selectedTagFilters.length === 1
-                ? `${selectedTagFilters.length} ${t('daily.filter_tags')}`
-                : `${selectedTagFilters.length} ${t('daily.filter_tags')}`}
-          </Text>
-        </Pressable>
-
-      </View>
-      {(selectedTagFilters.length > 0 || hasActiveFilters) && (
-      <View style={[styles.tagsFilterScroll, { flexWrap: 'wrap', gap: 8, marginTop: -8, marginBottom: 16 }]}>
-        {/* Etiquetas activas individuales seleccionadas con icono/emoji y nombre */}
-        {selectedTagFilters.map((id) => {
-          const tag = tagMap.get(id);
-          if (!tag) return null;
-          return (
-            <Pressable
-              key={tag.id}
-              style={[
-                styles.activeTagChip,
-                {
-                  backgroundColor: theme.colors.surface,
-                  borderColor: tag.color ? `${tag.color}88` : theme.colors.border,
-                  flexShrink: 1,
-                  maxWidth: '100%',
-                },
-              ]}
-              onPress={() => {
-                setSelectedTagFilters((prev) => prev.filter((tid) => tid !== tag.id));
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={t('daily.remove_filter_named', { name: tag.name })}
-            >
-              {tag.emoji ? (
-                <View
-                  style={[
-                    styles.activeTagEmoji,
-                    {
-                      backgroundColor: tag.color
-                        ? `${tag.color}33`
-                        : theme.dark
-                          ? 'rgba(212, 175, 55, 0.2)'
-                          : 'rgba(212, 175, 55, 0.15)',
-                    },
-                  ]}
-                >
-                  <Text style={styles.activeTagEmojiText}>{tag.emoji}</Text>
-                </View>
-              ) : (
-                <View
-                  style={[
-                    styles.activeTagDot,
-                    { backgroundColor: tag.color || '#D4B13A' },
-                  ]}
-                />
-              )}
-              <Text style={[styles.activeTagText, { color: theme.colors.foreground }]} numberOfLines={1}>
-                {tag.name}
-              </Text>
-              <X size={15} color={theme.colors.foregroundMuted} strokeWidth={2} />
-            </Pressable>
-          );
-        })}
-
-        {/* Botón rápido para limpiar filtros activos */}
-        {hasActiveFilters && (
+          {/* 1. Detallada */}
           <Pressable
-            style={[styles.clearFiltersPill, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, flexShrink: 0 }]}
+            onPress={() => handleSelectViewMode('detailed')}
+            hitSlop={4}
+            accessibilityRole="button"
+            accessibilityLabel={t('daily.view_detailed', { defaultValue: 'Vista detallada' })}
+            style={{
+              width: 26,
+              height: 24,
+              borderRadius: 10,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: currentView === 'detailed' ? theme.colors.primary : 'transparent',
+            }}
+          >
+            <ListIcon
+              size={14}
+              color={currentView === 'detailed' ? theme.colors.primaryForeground : theme.colors.foregroundMuted}
+            />
+          </Pressable>
+
+          {/* 2. Compacta */}
+          <Pressable
+            onPress={() => handleSelectViewMode('compact')}
+            hitSlop={4}
+            accessibilityRole="button"
+            accessibilityLabel={t('daily.view_compact', { defaultValue: 'Vista compacta' })}
+            style={{
+              width: 26,
+              height: 24,
+              borderRadius: 10,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: currentView === 'compact' ? theme.colors.primary : 'transparent',
+            }}
+          >
+            <AlignJustify
+              size={14}
+              color={currentView === 'compact' ? theme.colors.primaryForeground : theme.colors.foregroundMuted}
+            />
+          </Pressable>
+
+          {/* 3. Agrupada por etiquetas */}
+          <Pressable
+            onPress={() => handleSelectViewMode('grouped')}
+            hitSlop={4}
+            accessibilityRole="button"
+            accessibilityLabel={t('daily.view_grouped', { defaultValue: 'Agrupar por etiquetas' })}
+            style={{
+              width: 26,
+              height: 24,
+              borderRadius: 10,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: currentView === 'grouped' ? theme.colors.primary : 'transparent',
+            }}
+          >
+            <Layers
+              size={14}
+              color={currentView === 'grouped' ? theme.colors.primaryForeground : theme.colors.foregroundMuted}
+            />
+          </Pressable>
+        </View>
+
+        {/* Lado derecho: Botones icono (30x30 rounded 10) */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          {/* 1. Búsqueda */}
+          <IconBtn
+            theme={theme}
+            active={isSearching}
+            onPress={() => {
+              if (searchOpen && searchQuery && setSearchQuery) {
+                setSearchQuery('');
+              }
+              setSearchOpen(!searchOpen);
+            }}
+            label={t('common.search', { defaultValue: 'Buscar' })}
+          >
+            <Search size={14} color={isSearching ? theme.colors.primaryForeground : theme.colors.primary} />
+          </IconBtn>
+
+          {/* 2. Filtrar por estado / tiempo */}
+          <IconBtn
+            theme={theme}
+            active={isStatusActive}
+            badge={isStatusActive ? 1 : 0}
+            onPress={() => setStatusSheetVisible(true)}
+            label={t('daily.filter_status_title', { defaultValue: 'Filtrar por estado' })}
+          >
+            <Clock size={14} color={isStatusActive ? theme.colors.primaryForeground : theme.colors.primary} />
+          </IconBtn>
+
+          {/* 3. Filtrar por prioridad */}
+          <IconBtn
+            theme={theme}
+            active={isPriorityActive}
+            badge={isPriorityActive ? 1 : 0}
+            onPress={() => setPrioritySheetVisible(true)}
+            label={t('daily.filter_priority_title', { defaultValue: 'Filtrar por prioridad' })}
+          >
+            <Flag size={14} color={isPriorityActive ? theme.colors.primaryForeground : theme.colors.primary} />
+          </IconBtn>
+
+          {/* 4. Filtrar por etiquetas */}
+          <IconBtn
+            theme={theme}
+            active={selectedTagFilters.length > 0}
+            badge={selectedTagFilters.length}
+            onPress={onOpenTagFilterSheet}
+            label={t('daily.filter_tags_title', { defaultValue: 'Etiquetas' })}
+          >
+            <TagIcon size={14} color={selectedTagFilters.length > 0 ? theme.colors.primaryForeground : theme.colors.primary} />
+          </IconBtn>
+
+          {/* 5. Personalizar vista */}
+          {onOpenCustomize && (
+            <IconBtn
+              theme={theme}
+              active={isCustomized}
+              onPress={onOpenCustomize}
+              label={t('daily.customize_view', { defaultValue: 'Personalizar vista' })}
+            >
+              <SlidersHorizontal size={14} color={isCustomized ? theme.colors.primaryForeground : theme.colors.primary} />
+            </IconBtn>
+          )}
+
+          {/* 6. Ordenar y clasificar */}
+          <IconBtn
+            theme={theme}
+            active={isSortActive}
+            onPress={onOpenSortModal}
+            label={t('daily.sort_and_classify', { defaultValue: 'Ordenar' })}
+          >
+            <ArrowUpDown size={14} color={isSortActive ? theme.colors.primaryForeground : theme.colors.primary} />
+          </IconBtn>
+        </View>
+      </View>
+
+      {/* Barra de búsqueda si está abierta */}
+      {searchOpen && (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            height: 38,
+            paddingHorizontal: 12,
+            borderRadius: 12,
+            backgroundColor: theme.dark ? '#181818' : theme.colors.surface,
+            borderWidth: 1,
+            borderColor: theme.dark ? '#2E2E2E' : theme.colors.border,
+            marginBottom: 10,
+          }}
+        >
+          <Search size={14} color={theme.colors.foregroundMuted} style={{ marginRight: 8 }} />
+          <TextInput
+            autoFocus
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder={t('common.search_placeholder', { defaultValue: 'Buscar en tareas...' })}
+            placeholderTextColor={theme.colors.foregroundMuted}
+            style={{
+              flex: 1,
+              color: theme.colors.foreground,
+              fontSize: 13,
+              fontFamily: 'Inter_400Regular',
+              padding: 0,
+            }}
+          />
+          {!!searchQuery && (
+            <Pressable onPress={() => setSearchQuery?.('')} hitSlop={6}>
+              <X size={14} color={theme.colors.foregroundMuted} />
+            </Pressable>
+          )}
+        </View>
+      )}
+
+      {/* Chips de filtros activos (descartables con ✕) */}
+      {hasActiveFilters && (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+          {isStatusActive && (
+            <Pressable
+              onPress={() => {
+                setStatusFilter('all');
+                setOnlyFavorites(false);
+              }}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 5,
+                height: 26,
+                paddingHorizontal: 9,
+                borderRadius: 13,
+                backgroundColor: theme.colors.primary,
+              }}
+            >
+              <Text style={{ color: theme.colors.primaryForeground, fontSize: 11, fontFamily: 'Inter_700Bold' }}>
+                {onlyFavorites
+                  ? `${t('daily.filter_status_favorites', { defaultValue: 'Favoritas' })}${favoritesCount > 0 ? ` (${favoritesCount})` : ''}`
+                  : statusFilter === 'pending'
+                  ? t('daily.filter_status_pending', { defaultValue: 'Pendientes' })
+                  : t('daily.filter_status_completed', { defaultValue: 'Completadas' })}
+              </Text>
+              <X size={12} color={theme.colors.primaryForeground} strokeWidth={2.5} />
+            </Pressable>
+          )}
+
+          {isPriorityActive && (
+            <Pressable
+              onPress={() => setPriorityFilter('all')}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 5,
+                height: 26,
+                paddingHorizontal: 9,
+                borderRadius: 13,
+                backgroundColor: theme.colors.primary,
+              }}
+            >
+              <Text style={{ color: theme.colors.primaryForeground, fontSize: 11, fontFamily: 'Inter_700Bold' }}>
+                {priorityFilter === 'urgent'
+                  ? t('daily.filter_priority_urgent', { defaultValue: 'Urgente' })
+                  : priorityFilter === 'high'
+                  ? t('daily.filter_priority_high', { defaultValue: 'Alta' })
+                  : priorityFilter === 'medium'
+                  ? t('daily.filter_priority_medium', { defaultValue: 'Media' })
+                  : t('daily.filter_priority_low', { defaultValue: 'Baja' })}
+              </Text>
+              <X size={12} color={theme.colors.primaryForeground} strokeWidth={2.5} />
+            </Pressable>
+          )}
+
+          {selectedTagFilters.map((id) => {
+            const tag = tagMap.get(id);
+            if (!tag) return null;
+            return (
+              <Pressable
+                key={tag.id}
+                onPress={() => setSelectedTagFilters((prev) => prev.filter((tid) => tid !== tag.id))}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 5,
+                  height: 26,
+                  paddingHorizontal: 9,
+                  borderRadius: 13,
+                  backgroundColor: tag.color ? `${tag.color}22` : (theme.dark ? '#222' : '#EAE6DC'),
+                  borderWidth: 1,
+                  borderColor: tag.color ? `${tag.color}66` : theme.colors.border,
+                }}
+              >
+                {tag.emoji ? <Text style={{ fontSize: 11 }}>{tag.emoji}</Text> : (
+                  <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: tag.color || gold[400] }} />
+                )}
+                <Text
+                  style={{
+                    color: theme.colors.foreground,
+                    fontSize: 11,
+                    fontFamily: 'Inter_600SemiBold',
+                    maxWidth: 100,
+                  }}
+                  numberOfLines={1}
+                >
+                  {tag.name}
+                </Text>
+                <X size={12} color={theme.colors.foregroundMuted} strokeWidth={2.5} />
+              </Pressable>
+            );
+          })}
+
+          <Pressable
             onPress={() => {
               setStatusFilter('all');
               setOnlyFavorites(false);
               setPriorityFilter('all');
               setSelectedTagFilters([]);
             }}
-            accessibilityRole="button"
-            accessibilityLabel={t('daily.clear_filters')}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+              height: 26,
+              paddingHorizontal: 8,
+              borderRadius: 13,
+              backgroundColor: theme.dark ? '#1A1A1A' : theme.colors.surface,
+              borderWidth: 1,
+              borderColor: theme.dark ? '#2A2A2A' : theme.colors.border,
+            }}
           >
-            <X size={14} color={theme.colors.foregroundMuted} strokeWidth={2} />
-            <Text style={[styles.clearFiltersPillText, { color: theme.colors.foregroundMuted }]}>{t('daily.clear_filters')}</Text>
-          </Pressable>
-        )}
-      </View>
-      )}
-
-      {/* Fila: Contador de tareas (izq) + Personalizar y Ordenar (der) */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 14,
-        }}
-      >
-        {/* Izquierda: Contador de tareas */}
-        <Typography variant="caption" color={theme.colors.foregroundMuted} style={styles.tasksCountLabel}>
-          {typeof tasksCount === 'number'
-            ? tasksCount === 1
-              ? t('my_list.tasks_count_single', { count: tasksCount, defaultValue: '1 tarea' })
-              : t('my_list.tasks_count_plural', { count: tasksCount, defaultValue: `${tasksCount} tareas` })
-            : ''}
-        </Typography>
-
-        {/* Derecha: Personalizar y Ordenar */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          {/* Botón Personalizar */}
-          {onOpenCustomize && (
-            <Pressable
-              onPress={onOpenCustomize}
-              hitSlop={8}
-              style={[
-                styles.sortTriggerBtn,
-                {
-                  height: 32,
-                  paddingHorizontal: 8,
-                  borderRadius: 8,
-                  backgroundColor: isCustomized
-                    ? (theme.dark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.14)')
-                    : theme.colors.surface,
-                  borderWidth: 1,
-                  borderColor: isCustomized ? gold[400] : theme.colors.border,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={t('daily.customize_view', 'Personalizar vista')}
-            >
-              <SlidersHorizontal size={14} color={gold[400]} />
-            </Pressable>
-          )}
-
-          {/* Botón Ordenar */}
-          <Pressable
-            style={[
-              styles.sortTriggerBtn,
-              {
-                height: 32,
-                paddingHorizontal: 8,
-                borderRadius: 8,
-                backgroundColor: theme.colors.surface,
-                borderWidth: 1,
-                borderColor: (sortField !== 'manual' || groupByTag) ? gold[400] : theme.colors.border,
-              },
-              (sortField !== 'manual' || groupByTag) && [
-                styles.sortTriggerBtnActive,
-                { backgroundColor: theme.dark ? '#262010' : '#FDF4DC' },
-              ],
-            ]}
-            onPress={onOpenSortModal}
-            accessibilityRole="button"
-            accessibilityLabel={t('daily.sort_and_classify')}
-          >
-            <ArrowUpDown
-              size={12}
-              color={sortField !== 'manual' || groupByTag ? gold[400] : theme.colors.foregroundMuted}
-              strokeWidth={2.2}
-            />
-            <Text
-              style={[
-                styles.sortTriggerText,
-                { color: theme.colors.foregroundMuted },
-                (sortField !== 'manual' || groupByTag) && styles.sortTriggerTextActive,
-              ]}
-            >
-              {sortField === 'manual'
-                ? (groupByTag ? t('daily.filter_tags') : t('daily.filter_priority'))
-                : sortField === 'priority'
-                  ? `${t('daily.sort_priority')} ${sortDirection === 'desc' ? '↓' : '↑'}`
-                  : sortField === 'name'
-                    ? `${t('daily.sort_name')} ${sortDirection === 'asc' ? 'A-Z' : 'Z-A'}`
-                    : sortField === 'created_at'
-                      ? `${t('daily.sort_created_at')} ${sortDirection === 'asc' ? '↑' : '↓'}`
-                      : `${t('daily.sort_date')} ${sortDirection === 'asc' ? '↑' : '↓'}`}
+            <X size={12} color={theme.colors.foregroundMuted} />
+            <Text style={{ color: theme.colors.foregroundMuted, fontSize: 11, fontFamily: 'Inter_500Medium' }}>
+              {t('daily.clear_filters', { defaultValue: 'Limpiar' })}
             </Text>
-            {(sortField !== 'manual' || groupByTag) && <View style={styles.sortActiveDot} />}
           </Pressable>
         </View>
-      </View>
+      )}
 
-      {/* Bottom Sheet: Filtrar por Estado */}
-      <TagSheetShell visible={statusSheetVisible} onClose={() => setStatusSheetVisible(false)}>
-        <View style={[dailySheetStyles.sheetContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
-          <View style={dailySheetStyles.sheetHeader}>
-            <Text style={[dailySheetStyles.sheetTitle, { color: theme.colors.foreground }]}>{t('daily.filter_status_title')}</Text>
-          </View>
+      {/* Contador de tareas: exactamente como en el screenshot */}
+      <Text
+        style={{
+          fontFamily: 'Inter_600SemiBold',
+          fontSize: 11,
+          letterSpacing: 0.9,
+          textTransform: 'uppercase',
+          color: theme.colors.foregroundMuted,
+          marginBottom: 10,
+        }}
+      >
+        {getCountText()}
+      </Text>
 
-          <View style={dailySheetStyles.sheetOptionList}>
+      {/* ──────────────── Menú desde abajo: Filtrar por Estado ──────────────── */}
+      <SheetFrame
+        visible={statusSheetVisible}
+        onClose={() => setStatusSheetVisible(false)}
+        theme={theme}
+        title={t('daily.filter_status_title', { defaultValue: 'Filtrar por estado' })}
+        footerLabel={t('common.done', { defaultValue: 'Listo' })}
+      >
+        <View>
+          <SheetLabel theme={theme}>
+            {t('daily.filter_status_title', { defaultValue: 'Estado' })}
+          </SheetLabel>
+          <SheetGroup theme={theme}>
             {dailyStatusOptions.map((opt) => {
               const isSelected =
                 opt.key === 'favorites'
                   ? onlyFavorites
                   : !onlyFavorites && statusFilter === opt.key;
+
               return (
-                <Pressable
+                <SheetOption
                   key={opt.key}
+                  theme={theme}
+                  label={opt.label}
+                  selected={isSelected}
+                  right={isSelected ? <Check size={16} color={theme.colors.primary} strokeWidth={2.5} /> : null}
                   onPress={() => {
                     if (opt.key === 'favorites') {
                       setOnlyFavorites(true);
@@ -628,138 +758,49 @@ export function DailyTasksScrollControls({
                     }
                     setStatusSheetVisible(false);
                   }}
-                  style={({ pressed }) => [
-                    dailySheetStyles.sheetOptionRow,
-                    {
-                      backgroundColor: isSelected
-                        ? (theme.dark ? 'rgba(212, 177, 58, 0.08)' : 'rgba(212, 177, 58, 0.12)')
-                        : theme.colors.surface,
-                      borderColor: isSelected ? gold[400] : theme.colors.border,
-                    },
-                    pressed && { opacity: 0.8 },
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${t('daily.filter_status')}: ${opt.label}`}
-                >
-                  <View style={{ flex: 1, marginRight: 12 }}>
-                    <Text
-                      style={[
-                        dailySheetStyles.sheetOptionTitle,
-                        { color: isSelected ? gold[400] : theme.colors.foreground },
-                      ]}
-                    >
-                      {opt.label}
-                    </Text>
-                    <Text style={[dailySheetStyles.sheetOptionDesc, { color: theme.colors.foregroundMuted }]}>{opt.desc}</Text>
-                  </View>
-                  {isSelected && <Check size={18} color={gold[400]} strokeWidth={2.5} />}
-                </Pressable>
+                />
               );
             })}
-          </View>
+          </SheetGroup>
         </View>
-      </TagSheetShell>
+      </SheetFrame>
 
-      {/* Bottom Sheet: Filtrar por Prioridad */}
-      <TagSheetShell visible={prioritySheetVisible} onClose={() => setPrioritySheetVisible(false)}>
-        <View style={[dailySheetStyles.sheetContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
-          <View style={dailySheetStyles.sheetHeader}>
-            <Text style={[dailySheetStyles.sheetTitle, { color: theme.colors.foreground }]}>{t('daily.filter_priority_title')}</Text>
-          </View>
-
-          <View style={dailySheetStyles.sheetOptionList}>
+      {/* ──────────────── Menú desde abajo: Filtrar por Prioridad ──────────────── */}
+      <SheetFrame
+        visible={prioritySheetVisible}
+        onClose={() => setPrioritySheetVisible(false)}
+        theme={theme}
+        title={t('daily.filter_priority_title', { defaultValue: 'Filtrar por prioridad' })}
+        footerLabel={t('common.done', { defaultValue: 'Listo' })}
+      >
+        <View>
+          <SheetLabel theme={theme}>
+            {t('daily.filter_priority_title', { defaultValue: 'Prioridad' })}
+          </SheetLabel>
+          <SheetGroup theme={theme}>
             {dailyPriorityOptions.map((opt) => {
               const isSelected = priorityFilter === opt.key;
+
               return (
-                <Pressable
+                <SheetOption
                   key={opt.key}
+                  theme={theme}
+                  label={opt.label}
+                  selected={isSelected}
+                  right={isSelected ? <Check size={16} color={theme.colors.primary} strokeWidth={2.5} /> : null}
                   onPress={() => {
                     setPriorityFilter(opt.key);
                     setPrioritySheetVisible(false);
                   }}
-                  style={({ pressed }) => [
-                    dailySheetStyles.sheetOptionRow,
-                    {
-                      backgroundColor: isSelected
-                        ? (theme.dark ? 'rgba(212, 177, 58, 0.08)' : 'rgba(212, 177, 58, 0.12)')
-                        : theme.colors.surface,
-                      borderColor: isSelected ? gold[400] : theme.colors.border,
-                    },
-                    pressed && { opacity: 0.8 },
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${t('daily.filter_priority')}: ${opt.label}`}
-                >
-                  <View style={{ flex: 1, marginRight: 12 }}>
-                    <Text
-                      style={[
-                        dailySheetStyles.sheetOptionTitle,
-                        { color: isSelected ? gold[400] : theme.colors.foreground },
-                      ]}
-                    >
-                      {opt.label}
-                    </Text>
-                    <Text style={[dailySheetStyles.sheetOptionDesc, { color: theme.colors.foregroundMuted }]}>{opt.desc}</Text>
-                  </View>
-                  {isSelected && <Check size={18} color={gold[400]} strokeWidth={2.5} />}
-                </Pressable>
+                />
               );
             })}
-          </View>
+          </SheetGroup>
         </View>
-      </TagSheetShell>
+      </SheetFrame>
     </View>
   );
 }
-
-const dailySheetStyles = themedStyleSheet({
-  sheetContent: {
-    paddingHorizontal: 12,
-    paddingTop: 8,
-  },
-  sheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
-  },
-  sheetTitle: {
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '700',
-    fontFamily: 'Newsreader_700Bold',
-  },
-  sheetCloseBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sheetOptionList: {
-    gap: 8,
-  },
-  sheetOptionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  sheetOptionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  sheetOptionDesc: {
-    fontSize: 12,
-  },
-});
 
 export interface DailyTasksHeaderProps extends DailyTasksTopBarProps, DailyTasksScrollControlsProps { }
 

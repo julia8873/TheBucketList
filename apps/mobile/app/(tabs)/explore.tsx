@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
+  Text,
   ScrollView,
   Platform,
   Pressable,
@@ -51,7 +52,23 @@ export default function DailyTasksScreen() {
   const state = useDailyTasksState();
   const [showCreateDatePicker, setShowCreateDatePicker] = useState(false);
   const [customizeModalVisible, setCustomizeModalVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'detailed' | 'compact' | 'grouped'>('detailed');
   const scrollRef = useRef<ScrollView>(null);
+
+  const filterBySearch = (list: DailyTask[]) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return list;
+    return list.filter(
+      (t) =>
+        t.title.toLowerCase().includes(q) ||
+        (t.description && t.description.toLowerCase().includes(q))
+    );
+  };
+
+  const displayedTodayTasks = filterBySearch(state.sortedTodayTasks);
+  const displayedOverdueTasks = filterBySearch(state.sortedOverdueTasks);
+  const displayedAllTasks = filterBySearch(state.sortedAllTasks);
 
   // Al pulsar de nuevo la pestaña en la barra inferior, vuelve al principio
   useEffect(() => {
@@ -149,10 +166,11 @@ export default function DailyTasksScreen() {
               handleQuickAddTask={state.handleQuickAddTask}
               inputRef={state.inputRef}
               containerStyle={{ marginHorizontal: -12 }}
+              userTags={state.userTags}
             />
           )}
 
-          {/* Controles scrolleables: selector de semana y filtros de etiquetas/estado */}
+          {/* Controles scrolleables: selector de semana y toolbar unificada */}
           <DailyTasksScrollControls
             timeView={state.timeView}
             selectedTagFilters={state.selectedTagFilters}
@@ -171,6 +189,11 @@ export default function DailyTasksScreen() {
             groupByTag={state.groupByTag}
             onOpenSortModal={() => state.setShowSortModal(true)}
             onOpenCustomize={() => setCustomizeModalVisible(true)}
+            onToggleGroupByTag={state.handleToggleGroupByTag}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
             displayedWeeks={state.displayedWeeks}
             weeksToShow={state.weeksToShow}
             setWeeksToShow={state.setWeeksToShow}
@@ -178,9 +201,9 @@ export default function DailyTasksScreen() {
             setWeekOffset={state.setWeekOffset}
             tasksCount={
               state.timeView === 'today'
-                ? (state.statusFilter === 'completed' ? state.completedList.length : state.sortedTodayTasks.length)
+                ? (state.statusFilter === 'completed' ? state.completedList.length : displayedTodayTasks.length)
                 : state.timeView === 'all'
-                ? state.sortedAllTasks.length
+                ? displayedAllTasks.length
                 : state.filteredByTagAndStatus.length
             }
           />
@@ -217,30 +240,35 @@ export default function DailyTasksScreen() {
               {/* 1. TODAY VIEW */}
               {state.timeView === 'today' && (
                 <>
-                  <DailyOverdueSection
-                    tasks={state.sortedOverdueTasks}
-                    renderOverdueTaskRow={renderOverdueTaskRow}
-                    onReorder={state.handleReorder}
-                    onDraggingChange={state.handleDraggingChange}
-                    onMoveAllToToday={state.handleMoveAllOverdueToToday}
-                    onCompleteAll={state.handleCompleteAllOverdue}
-                    onDeleteAll={state.handleDeleteAllOverdue}
-                  />
-
+                  {/* Tareas de hoy o tarjeta de estado vacío (idéntica al mockup) */}
                   {state.todayTasks.length === 0 ? (
-                    state.completedList.length === 0 && state.sortedOverdueTasks.length === 0 ? (
-                      <View style={styles.emptyContainer}>
-                        <View style={styles.emptyIconCircle}>
-                          <ListTodo size={32} color={gold[400]} strokeWidth={1.8} />
-                        </View>
-                        <Typography variant="bodySemibold" style={[styles.emptyTitle, { color: theme.colors.foreground }]}>
-                          {t('daily.all_done_today_title')}
-                        </Typography>
-                        <Typography variant="caption" color="textSecondary" style={styles.emptySubtitle}>
-                          {t('daily.all_done_today_desc')}
-                        </Typography>
-                      </View>
-                    ) : null
+                    <View
+                      style={{
+                        paddingVertical: 18,
+                        paddingHorizontal: 16,
+                        borderRadius: 14,
+                        borderWidth: 1,
+                        borderColor: theme.dark ? '#222222' : theme.colors.border,
+                        backgroundColor: theme.dark ? '#141414' : theme.colors.surface,
+                        marginBottom: 16,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 13,
+                          fontFamily: 'Inter_400Regular',
+                          color: theme.colors.foregroundMuted,
+                          textAlign: 'center',
+                          lineHeight: 20,
+                        }}
+                      >
+                        {t('daily.no_tasks_today_hint', {
+                          defaultValue: 'No tienes tareas nuevas para hoy. Revisa tus pendientes abajo o añade una arriba.',
+                        })}
+                      </Text>
+                    </View>
                   ) : state.groupByTag ? (
                     <DailyGroupedTasksView
                       groups={state.todayTagGroups}
@@ -249,15 +277,15 @@ export default function DailyTasksScreen() {
                       onDraggingChange={state.handleDraggingChange}
                     />
                   ) : (
-                    <View style={[styles.compactListCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+                    <View style={[styles.compactListCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, marginBottom: 16 }]}>
                       <DraggableTaskList
-                        items={state.sortedTodayTasks}
+                        items={displayedTodayTasks}
                         gap={0}
                         renderItem={(item, drag) =>
                           renderTaskRow(
                             item,
                             drag,
-                            state.sortedTodayTasks.indexOf(item) === state.sortedTodayTasks.length - 1
+                            displayedTodayTasks.indexOf(item) === displayedTodayTasks.length - 1
                           )
                         }
                         onReorder={state.handleReorder}
@@ -265,6 +293,17 @@ export default function DailyTasksScreen() {
                       />
                     </View>
                   )}
+
+                  {/* Sección de tareas atrasadas (debajo de las de hoy, idéntica al mockup) */}
+                  <DailyOverdueSection
+                    tasks={displayedOverdueTasks}
+                    renderOverdueTaskRow={renderOverdueTaskRow}
+                    onReorder={state.handleReorder}
+                    onDraggingChange={state.handleDraggingChange}
+                    onMoveAllToToday={state.handleMoveAllOverdueToToday}
+                    onCompleteAll={state.handleCompleteAllOverdue}
+                    onDeleteAll={state.handleDeleteAllOverdue}
+                  />
 
                   {state.statusFilter === 'all' && state.completedList.length > 0 && (
                     <View style={styles.completedSectionWrapper}>
@@ -378,13 +417,13 @@ export default function DailyTasksScreen() {
                   ) : (
                     <View style={[styles.compactListCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
                       <DraggableTaskList
-                        items={state.sortedAllTasks}
+                        items={displayedAllTasks}
                         gap={0}
                         renderItem={(item, drag) =>
                           renderTaskRow(
                             item,
                             drag,
-                            state.sortedAllTasks.indexOf(item) === state.sortedAllTasks.length - 1
+                            displayedAllTasks.indexOf(item) === displayedAllTasks.length - 1
                           )
                         }
                         onReorder={state.handleReorder}
