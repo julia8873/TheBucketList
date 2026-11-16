@@ -128,21 +128,21 @@ export const getVisibilityStyle = (visibility?: string | null, isDark: boolean =
   if (vis === 'private') {
     return {
       color: isDark ? '#F87171' : '#DC2626',
-      bg: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(220, 38, 38, 0.10)',
-      border: isDark ? 'rgba(239, 68, 68, 0.35)' : 'rgba(220, 38, 38, 0.28)',
+      bg: isDark ? '#201314' : 'rgba(220, 38, 38, 0.10)',
+      border: isDark ? 'rgba(248, 113, 113, 0.55)' : 'rgba(220, 38, 38, 0.28)',
     };
   }
   if (vis === 'followers') {
     return {
       color: isDark ? '#C084FC' : '#9333EA',
-      bg: isDark ? 'rgba(168, 85, 247, 0.15)' : 'rgba(147, 51, 234, 0.10)',
-      border: isDark ? 'rgba(168, 85, 247, 0.35)' : 'rgba(147, 51, 234, 0.28)',
+      bg: isDark ? '#1C1425' : 'rgba(147, 51, 234, 0.10)',
+      border: isDark ? 'rgba(192, 132, 252, 0.55)' : 'rgba(147, 51, 234, 0.28)',
     };
   }
   return {
     color: isDark ? '#60A5FA' : '#2563EB',
-    bg: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(37, 99, 235, 0.10)',
-    border: isDark ? 'rgba(59, 130, 246, 0.35)' : 'rgba(37, 99, 235, 0.28)',
+    bg: isDark ? '#121926' : 'rgba(37, 99, 235, 0.10)',
+    border: isDark ? 'rgba(96, 165, 250, 0.55)' : 'rgba(37, 99, 235, 0.28)',
   };
 };
 

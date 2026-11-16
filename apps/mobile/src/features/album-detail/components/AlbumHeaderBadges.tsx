@@ -127,8 +127,8 @@ export function AlbumHeaderBadges({
             <Pressable
               style={[
                 styles.chip,
-                { borderColor: visStyle.border, backgroundColor: visStyle.bg },
                 canEdit && styles.chipPressable,
+                { borderColor: visStyle.border, backgroundColor: visStyle.bg },
               ]}
               onPress={onOpenVisibility}
             >
