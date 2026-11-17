@@ -1,6 +1,5 @@
 import { i18n } from '@bucketlist/shared';
 import { supabase } from '../supabase';
-import { sendPushNotification } from '../notifications';
 import type { CloneTaskFields } from '../../stores/cloneTaskPreferences.store';
 
 export const LIKE_EMOJI = '💛';
@@ -16,19 +15,6 @@ export const socialApi = {
       .single();
 
     if (error) throw error;
-
-    // Notificar por push al usuario seguido
-    try {
-      const { data: follower } = await supabase.from('profiles').select('display_name, username').eq('id', followerId).maybeSingle();
-      const followerName = follower?.display_name || follower?.username || 'Alguien';
-      void sendPushNotification(
-        followingId,
-        'Nuevo seguidor 👋',
-        `${followerName} ha empezado a seguirte`,
-        { type: 'follow', followerId }
-      );
-    } catch {}
-
     return data;
   },
 
@@ -89,21 +75,6 @@ export const socialApi = {
       .from('reactions')
       .insert({ bucket_id: bucketId, user_id: userId, emoji: LIKE_EMOJI });
     if (error) throw error;
-
-    // Notificar al dueño de la tarea
-    try {
-      const { data: bucket } = await supabase.from('buckets').select('user_id, title').eq('id', bucketId).single();
-      if (bucket?.user_id && bucket.user_id !== userId) {
-        const { data: actor } = await supabase.from('profiles').select('display_name, username').eq('id', userId).single();
-        const actorName = actor?.display_name || actor?.username || 'Alguien';
-        void sendPushNotification(
-          bucket.user_id,
-          'Nueva reacción 💛',
-          `${actorName} le ha dado me gusta a tu tarea "${bucket.title || 'tarea'}"`,
-          { bucketId, type: 'reaction' }
-        );
-      }
-    } catch {}
 
     return { liked: true };
   },
@@ -190,71 +161,6 @@ export const socialApi = {
       .single();
 
     if (error) throw error;
-
-    // Enviar push al dueño de la publicación y a usuarios mencionados
-    try {
-      let ownerId: string | undefined;
-      let itemTitle: string = 'tu publicación';
-
-      if (targetType === 'album') {
-        const { data: albumData } = await supabase
-          .from('albums')
-          .select('owner_id, title')
-          .eq('id', targetId)
-          .single();
-        ownerId = albumData?.owner_id;
-        itemTitle = albumData?.title || 'tu álbum';
-      } else {
-        const { data: bucketData } = await supabase
-          .from('buckets')
-          .select('user_id, title')
-          .eq('id', targetId)
-          .single();
-        ownerId = bucketData?.user_id;
-        itemTitle = bucketData?.title || 'tu tarea';
-      }
-
-      const authorName = data?.user?.display_name || data?.user?.username || 'Alguien';
-
-      // 1. Al dueño de la tarea o álbum
-      if (ownerId && ownerId !== userId) {
-        void sendPushNotification(
-          ownerId,
-          'Nuevo comentario 💬',
-          `${authorName} ha dejado un comentario en tu ${targetType === 'album' ? 'álbum' : 'tarea'} "${itemTitle}"`,
-          targetType === 'album'
-            ? { albumId: targetId, commentId: data.id, type: 'comment' }
-            : { bucketId: targetId, commentId: data.id, type: 'comment' }
-        );
-      }
-
-      // 2. A usuarios mencionados (@username)
-      const matches = body.match(/@([a-zA-Z0-9_.-]+)/g);
-      if (matches) {
-        const usernames = [...new Set(matches.map((m) => m.slice(1).toLowerCase()))];
-        for (const un of usernames) {
-          const { data: mentionedUser } = await supabase
-            .from('profiles')
-            .select('id')
-            .ilike('username', un)
-            .maybeSingle();
-
-          if (mentionedUser?.id && mentionedUser.id !== userId && mentionedUser.id !== ownerId) {
-            void sendPushNotification(
-              mentionedUser.id,
-              'Nueva mención 🏷️',
-              `${authorName} te ha mencionado en un comentario en "${itemTitle}"`,
-              targetType === 'album'
-                ? { albumId: targetId, commentId: data.id, type: 'mention' }
-                : { bucketId: targetId, commentId: data.id, type: 'mention' }
-            );
-          }
-        }
-      }
-    } catch (err) {
-      console.warn('Error sending remote push for comment:', err);
-    }
-
     return data;
   },
 

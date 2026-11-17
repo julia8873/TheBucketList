@@ -137,6 +137,25 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
+// Caché en memoria para evitar duplicados si el webhook se reintenta o llega repetido
+const processedNotifications = new Map<string, number>();
+
+function isDuplicateNotification(id: string): boolean {
+  const now = Date.now();
+  // Limpieza periódica de registros de más de 2 minutos
+  for (const [key, timestamp] of processedNotifications.entries()) {
+    if (now - timestamp > 120_000) {
+      processedNotifications.delete(key);
+    }
+  }
+
+  if (processedNotifications.has(id)) {
+    return true;
+  }
+  processedNotifications.set(id, now);
+  return false;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
@@ -160,6 +179,14 @@ Deno.serve(async (req: Request) => {
       // No enviar notificación al propio usuario que realiza la acción
       if (record.actor_id && record.actor_id === record.recipient_id) {
         return new Response(JSON.stringify({ message: 'Self action ignored' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Evitar envíos duplicados si el webhook se reintenta o llega por duplicado
+      if (record.id && isDuplicateNotification(record.id)) {
+        return new Response(JSON.stringify({ message: 'Duplicate webhook event ignored' }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         });

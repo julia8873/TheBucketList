@@ -512,7 +512,12 @@ export async function displayInAppNotification(record: any, currentUserId: strin
   }
 }
 
-/** Envía una notificación push remota mediante la API de Expo a un usuario o token */
+/**
+ * Envía una notificación push remota mediante la API de Expo.
+ * @deprecated Las notificaciones push se gestionan centralmente en el backend mediante el
+ * webhook sobre la tabla `notifications` y la Edge Function `push-notifications`. No debe
+ * llamarse desde el cliente para evitar notificaciones duplicadas en los dispositivos físicos.
+ */
 export async function sendPushNotification(
   tokenOrUserId: string,
   title: string,
